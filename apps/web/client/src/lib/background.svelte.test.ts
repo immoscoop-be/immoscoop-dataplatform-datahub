@@ -25,12 +25,12 @@ describe('the background on screen (DEC-UX-108)', () => {
 
   it('is the one the User chose for the theme, kept per theme', () => {
     const save = vi.fn(async () => {});
-    const backgrounds = new Backgrounds(new Settings({ 'background.dark': 'aurora' }, save));
-    expect(backgrounds.of('dark').id).toBe('aurora');
+    const backgrounds = new Backgrounds(new Settings({ 'background.dark': 'borealis' }, save));
+    expect(backgrounds.of('dark').id).toBe('borealis');
     backgrounds.choose('light', 'concrete');
     expect(save).toHaveBeenCalledWith('background.light', 'concrete');
     expect(backgrounds.of('light').id).toBe('concrete');
-    expect(backgrounds.of('dark').id).toBe('aurora');
+    expect(backgrounds.of('dark').id).toBe('borealis');
   });
 
   it('picks again when the User chooses Random', () => {

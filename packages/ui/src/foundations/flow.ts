@@ -236,9 +236,9 @@ const AFTERGLOW = HEAD + `
     gl_FragColor = vec4(col, 1.0);
   }`;
 
-// Nova, by night: a very light yellow streak in the middle in orange, waving out to the left in magenta
+// Lumen, by night: a very light yellow streak in the middle in orange, waving out to the left in magenta
 // and purple, blue towards the bottom, the dark in the bottom right, dark orange in the top right
-const NOVA = HEAD + `
+const LUMEN = HEAD + `
   void main() {
     float asp = uRes.x / uRes.y, t = uT;
     vec2 uv = gl_FragCoord.xy / uRes;
@@ -387,7 +387,7 @@ const TIDE = sides({ corners: ['#2558A8', '#A6C6EA', '#3E74C0', '#F6782C'], band
       spheres: [[0.88, 0.12, 0.42, 1, '#F7934E', 0.55], [0.40, 0.88, 0.40, 0, '#CADFF4', 0.55], [0.0, 1.05, 0.30, 0, '#1A4A9A', 0.6]] });
 
 /** The painted scenes, each its own shader, built the first time it is shown. */
-export const PAINTED: Readonly<Record<string, string>> = { prism: PRISM, cinnamon: CINNAMON, evening: EVENING, citrus: CITRUS, orchid: ORCHID, tide: TIDE, afterglow: AFTERGLOW, nova: NOVA, cobalt: COBALT, midnight: MIDNIGHT };
+export const PAINTED: Readonly<Record<string, string>> = { prism: PRISM, cinnamon: CINNAMON, evening: EVENING, citrus: CITRUS, orchid: ORCHID, tide: TIDE, afterglow: AFTERGLOW, lumen: LUMEN, cobalt: COBALT, midnight: MIDNIGHT };
 
 /** A light: x, y, softness, arc, r, g, b, strength. */
 type Light = readonly [number, number, number, number, number, number, number, number];
@@ -402,7 +402,7 @@ const NONE: Light = [0, 0, 0.1, 0, 0, 0, 0, 0];
 
 // The scenes, after the pictures Max chose on 2026-10-28.
 export const SCENES: Readonly<Record<string, Scene>> = {
-  aurora: { paint: 0, base: [0.0, 0.0, 0.01], lights: [
+  borealis: { paint: 0, base: [0.0, 0.0, 0.01], lights: [
     [1.15, 1.05, 0.07, 0.90, 0.04, 0.08, 1.00, 2.6], [0.95, 0.40, 0.32, 0, 1.00, 0.41, 0.86, 2.2], [1.05, 0.30, 0.18, 0, 1.00, 0.88, 1.00, 1.6],
     [0.95, 0.80, 0.22, 0, 1.00, 0.15, 0.21, 2.4], [0.90, 1.05, 0.18, 0, 1.00, 0.17, 0.00, 0.9], [0.62, 0.55, 0.28, 0, 0.50, 0.25, 1.00, 1.0], NONE] },
   ember: { paint: 0, base: [0.0, 0.0, 0.0], lights: [

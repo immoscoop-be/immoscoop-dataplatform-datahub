@@ -6,14 +6,14 @@ import { BACKGROUNDS, backgroundsOf, chooseBackground, RANDOM } from './backgrou
 describe('the backgrounds, a set per theme (DEC-UX-108, DEC-UX-109, DEC-UX-173)', () => {
   it('holds by day the clouds, the flowing gradient, five lights, six painted scenes and Concrete; by night the gradient, the flow, four lights and four painted scenes', () => {
     expect(backgroundsOf('light').map((b) => b.id)).toEqual(['gradient', 'flow', 'periwinkle', 'sunrise', 'apricot', 'blush', 'sky', 'prism', 'cinnamon', 'evening', 'citrus', 'orchid', 'tide', 'concrete']);
-    expect(backgroundsOf('dark').map((b) => b.id)).toEqual(['gradient', 'flow', 'aurora', 'ember', 'dusk', 'horizon', 'afterglow', 'nova', 'cobalt', 'midnight']);
+    expect(backgroundsOf('dark').map((b) => b.id)).toEqual(['gradient', 'flow', 'borealis', 'ember', 'dusk', 'horizon', 'afterglow', 'lumen', 'cobalt', 'midnight']);
     expect(new Set(BACKGROUNDS.map((b) => b.id)).size).toBe(BACKGROUNDS.length);
   });
 
   it('paints Prism and five scenes of two sides by day, and four scenes by night (DEC-UX-198, DEC-UX-199)', () => {
     expect(BACKGROUNDS.filter((b) => b.kind === 'painted').map((b) => [b.id, b.themes[0]])).toEqual([
       ['prism', 'light'], ['cinnamon', 'light'], ['evening', 'light'], ['citrus', 'light'], ['orchid', 'light'], ['tide', 'light'],
-      ['afterglow', 'dark'], ['nova', 'dark'], ['cobalt', 'dark'], ['midnight', 'dark'],
+      ['afterglow', 'dark'], ['lumen', 'dark'], ['cobalt', 'dark'], ['midnight', 'dark'],
     ]);
   });
 
@@ -22,7 +22,7 @@ describe('the backgrounds, a set per theme (DEC-UX-108, DEC-UX-109, DEC-UX-173)'
   });
 
   it('takes the background the User chose for the theme', () => {
-    expect(chooseBackground('dark', 'aurora').id).toBe('aurora');
+    expect(chooseBackground('dark', 'borealis').id).toBe('borealis');
     expect(chooseBackground('light', 'gradient').id).toBe('gradient');
   });
 

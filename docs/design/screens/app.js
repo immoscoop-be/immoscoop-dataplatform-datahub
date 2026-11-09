@@ -18,13 +18,13 @@ showThemeBtn();
 // night, each from the set of its theme, or Random, the default: one picked at random when Data Hub starts, kept for the
 // session, and picked again when the theme switches. ?bg= in the address still sets one, for the prototype
 const BACKGROUNDS = { light: ['', 'concrete', 'flow', 'periwinkle', 'sunrise', 'apricot', 'blush', 'sky', 'prism', 'cinnamon', 'evening', 'citrus', 'orchid', 'tide'],
-  dark: ['', 'flow', 'aurora', 'ember', 'dusk', 'horizon', 'afterglow', 'nova', 'cobalt', 'midnight'] };
+  dark: ['', 'flow', 'borealis', 'ember', 'dusk', 'horizon', 'afterglow', 'lumen', 'cobalt', 'midnight'] };
 // The sign-in does not know the User yet: it always picks one of the set at random (DEC-UX-173)
 const signingIn = document.body.classList.contains('signin');
 // The backgrounds drawn live with WebGL: the flowing gradient, the flowing lights (DEC-UX-109) and the painted shapes
 // (DEC-UX-198)
-const FLOWS = ['flow', 'aurora', 'ember', 'dusk', 'horizon', 'periwinkle', 'sunrise', 'apricot', 'blush', 'sky', 'prism', 'cinnamon', 'evening',
-  'citrus', 'orchid', 'tide', 'afterglow', 'nova', 'cobalt', 'midnight'];
+const FLOWS = ['flow', 'borealis', 'ember', 'dusk', 'horizon', 'periwinkle', 'sunrise', 'apricot', 'blush', 'sky', 'prism', 'cinnamon', 'evening',
+  'citrus', 'orchid', 'tide', 'afterglow', 'lumen', 'cobalt', 'midnight'];
 const setBg = bg => { if (bg) document.documentElement.dataset.bg = bg; else delete document.documentElement.dataset.bg; };
 const pickBg = theme => {
   const set = BACKGROUNDS[theme] || BACKGROUNDS.light, bg = set[Math.floor(Math.random() * set.length)];
@@ -437,7 +437,7 @@ if (FLOWS.includes(document.documentElement.dataset.bg)) (() => {
   // The scenes, after pictures Max chose on 2026-10-28; per light [x, y, softness, arc, r, g, b, strength]
   const SCENES = {
     // By night: light on black
-    aurora: { paint: 0, base: [0.0, 0.0, 0.01], lights: [
+    borealis: { paint: 0, base: [0.0, 0.0, 0.01], lights: [
       [1.15, 1.05, 0.07, 0.90, 0.04, 0.08, 1.00, 2.6], [0.95, 0.40, 0.32, 0, 1.00, 0.41, 0.86, 2.2], [1.05, 0.30, 0.18, 0, 1.00, 0.88, 1.00, 1.6],
       [0.95, 0.80, 0.22, 0, 1.00, 0.15, 0.21, 2.4], [0.90, 1.05, 0.18, 0, 1.00, 0.17, 0.00, 0.9], [0.62, 0.55, 0.28, 0, 0.50, 0.25, 1.00, 1.0], [0, 0, 0.1, 0, 0, 0, 0, 0]] },
     ember: { paint: 0, base: [0.0, 0.0, 0.0], lights: [
@@ -588,9 +588,9 @@ if (FLOWS.includes(document.documentElement.dataset.bg)) (() => {
       gl_FragColor = vec4(col, 1.0);
     }`;
 
-  // Nova, by night: a very light yellow streak in the middle in orange, waving out to the left in magenta
+  // Lumen, by night: a very light yellow streak in the middle in orange, waving out to the left in magenta
   // and purple, blue towards the bottom, the dark in the bottom right, dark orange in the top right
-  const NOVA = HEAD + `
+  const LUMEN = HEAD + `
     void main() {
       float asp = uRes.x / uRes.y, t = uT;
       vec2 uv = gl_FragCoord.xy / uRes;
@@ -726,7 +726,7 @@ if (FLOWS.includes(document.documentElement.dataset.bg)) (() => {
   // right
   const TIDE = sides({ corners: ['#2558A8', '#A6C6EA', '#3E74C0', '#F6782C'], bands: [[0.62, 0.02, 0.34, 0.05, '#EDE4DA', 0.72]],
         spheres: [[0.88, 0.12, 0.42, 1, '#F7934E', 0.55], [0.40, 0.88, 0.40, 0, '#CADFF4', 0.55], [0.0, 1.05, 0.30, 0, '#1A4A9A', 0.6]] });
-  const PAINTED = { prism: PRISM, cinnamon: CINNAMON, evening: EVENING, citrus: CITRUS, orchid: ORCHID, tide: TIDE, afterglow: AFTERGLOW, nova: NOVA, cobalt: COBALT, midnight: MIDNIGHT };
+  const PAINTED = { prism: PRISM, cinnamon: CINNAMON, evening: EVENING, citrus: CITRUS, orchid: ORCHID, tide: TIDE, afterglow: AFTERGLOW, lumen: LUMEN, cobalt: COBALT, midnight: MIDNIGHT };
   const shader = (type, src) => { const sh = gl.createShader(type); gl.shaderSource(sh, src); gl.compileShader(sh); return sh; };
   const build = fragment => {
     const program = gl.createProgram();

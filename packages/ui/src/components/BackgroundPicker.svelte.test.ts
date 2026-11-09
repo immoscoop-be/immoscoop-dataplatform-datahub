@@ -7,14 +7,14 @@ const names = () => screen.getAllByRole('radio').map((option) => option.querySel
 describe('the background picker (DEC-UX-108)', () => {
   it('offers Random first, then the set of the theme', () => {
     render(BackgroundPicker, { theme: 'dark', choice: 'random', onchoose: () => {} });
-    expect(names()).toEqual(['Willekeurig', 'Verloop', 'Vloeiend verloop', 'Aurora', 'Embers', 'Dusk', 'Horizon', 'Afterglow', 'Nova', 'Cobalt', 'Midnight']);
+    expect(names()).toEqual(['Willekeurig', 'Verloop', 'Vloeiend verloop', 'Borealis', 'Embers', 'Dusk', 'Horizon', 'Afterglow', 'Lumen', 'Cobalt', 'Midnight']);
     expect(screen.getByRole('radio', { name: /Willekeurig/ }).getAttribute('aria-checked')).toBe('true');
   });
 
   it('rings the chosen one, and shows Random when the choice is not of this set', () => {
     const { rerender } = render(BackgroundPicker, { theme: 'light', choice: 'concrete', onchoose: () => {} });
     expect(screen.getByRole('radio', { checked: true }).textContent).toContain('Concrete');
-    rerender({ theme: 'light', choice: 'aurora', onchoose: () => {} });
+    rerender({ theme: 'light', choice: 'borealis', onchoose: () => {} });
     expect(screen.getByRole('radio', { checked: true }).textContent).toContain('Willekeurig');
   });
 
