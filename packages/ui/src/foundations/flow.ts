@@ -1,4 +1,5 @@
-// The flowing gradient and the flowing lights (DEC-UX-80, DEC-UX-109), drawn live with WebGL on a
+// The flowing gradient, the flowing lights and the painted shapes (DEC-UX-80, DEC-UX-109, DEC-UX-198),
+// drawn live with WebGL on a
 // canvas fixed behind the app, as the prototype draws them. By day sky blue, a warm orange band and
 // cream; by night a dark sky with a band of teal, violet and magenta and a warm coral glow. Their
 // colours live in their shaders, as the colours of a picture live in the picture.
@@ -109,6 +110,82 @@ const LIGHTS = `
     gl_FragColor = vec4(col, 1.0);
   }`;
 
+// Painted shapes (DEC-UX-198): many kinds of shapes and many colours painted over each other, each
+// drifting, turning, swaying or breathing at a speed of its own, in periods of 20 to 60 seconds. Iris, by
+// day, after a picture Max shared on 2026-11-09: a ground of lilac to sky blue and blush to peach, a
+// tilted eye of violet and periwinkle, a field of pink whose edge is an S that cuts into the eye, a ribbon
+// of rose behind it, sky blue on the right, butter, peach and coral low down, and arcs of mint and mauve.
+const IRIS = `
+  precision highp float;
+  uniform vec2 uRes;
+  uniform float uT;        // seconds, three times as fast as the clock, from a random start
+  uniform vec2 uPointer;   // the eased pointer, 0 to 1 from the bottom left
+  uniform float uPull;     // how present the pointer is, 0 to 1
+  float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+  float noise(vec2 p) {
+    vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hash(i), hash(i + vec2(1, 0)), f.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), f.x), f.y);
+  }
+  float fbm(vec2 p) { return 0.55 * noise(p) + 0.30 * noise(p * 2.1 + 3.7) + 0.15 * noise(p * 4.3 + 9.1); }
+  vec3 hex(float r, float g, float b) { return vec3(r, g, b) / 255.0; }
+  mat2 rot(float a) { float c = cos(a), s = sin(a); return mat2(c, -s, s, c); }
+  // a soft ellipse: 1 inside, 0 outside, its edge as soft as e
+  float ellipse(vec2 p, vec2 c, vec2 r, float a, float e) { float d = length(rot(a) * (p - c) / r); return 1.0 - smoothstep(1.0 - e, 1.0 + e, d); }
+  float glow(vec2 p, vec2 c, float r) { vec2 d = p - c; return exp(-dot(d, d) / (r * r)); }
+  void main() {
+    float asp = uRes.x / uRes.y, t = uT;
+    vec2 uv = gl_FragCoord.xy / uRes;
+    vec2 p = vec2(uv.x * asp, uv.y);
+    // the whole field breathes: a slow warp, so that no edge is ever quite straight
+    vec2 w = vec2(fbm(p * 1.3 + vec2(0.0, t * 0.021)), fbm(p * 1.3 + vec2(5.2, -t * 0.017))) - 0.5;
+    vec2 q = p + 0.16 * w - 0.04 * vec2(asp, 1.0) * (uPointer - 0.5) * uPull;
+    float X = q.x / asp;                                  // 0 to 1 across, whatever the window
+
+    vec3 LILAC = hex(206.,169.,226.), MAUVE = hex(192.,169.,229.), SKY = hex(140.,197.,245.), PINK = hex(242.,176.,214.),
+         ROSE = hex(240.,150.,205.), VIOLET = hex(182.,138.,245.), PERI = hex(136.,146.,247.), BUTTER = hex(248.,222.,172.),
+         PEACH = hex(247.,198.,168.), CORAL = hex(242.,170.,168.), BLUSH = hex(251.,229.,238.), MINT = hex(176.,226.,222.);
+
+    // 1 · the ground: lilac turning to mauve and sky blue along the top, blush turning to peach along the bottom
+    vec3 top = mix(mix(LILAC, MAUVE, smoothstep(0.05, 0.55, X)), SKY, smoothstep(0.55, 1.0, X));
+    vec3 low = mix(BLUSH, PEACH, smoothstep(0.2, 1.0, X));
+    vec3 col = mix(low, top, smoothstep(0.10, 0.62, q.y));
+    // 2 · the eye: a tilted ellipse with a soft halo, violet at its rim, periwinkle deep inside, drifting and turning
+    vec2 cc = vec2((0.73 + 0.025 * sin(t * 0.061)) * asp, 0.52 + 0.035 * cos(t * 0.047));
+    float ang = -0.45 + 0.10 * sin(t * 0.033);
+    vec2 er = vec2(0.32, 0.25) * (1.0 + 0.05 * sin(t * 0.09));
+    col = mix(col, mix(MAUVE, SKY, 0.4), ellipse(q, cc, er * 1.35, ang, 0.5) * 0.35);
+    float eye = ellipse(q, cc, er, ang, 0.16);
+    col = mix(col, mix(VIOLET, PERI, smoothstep(-0.25, 0.25, q.x - cc.x)), eye * 0.95);
+    col = mix(col, PERI, ellipse(q, cc + vec2(0.06, -0.01), vec2(0.17, 0.12), ang, 0.7) * 0.9);
+    // 3 · a field of pink from the left, laid over the eye: its edge an S that sways, cuts into the eye and sweeps
+    //     round under it
+    float edge = 0.60 + 0.06 * sin(q.y * 3.1 + 0.8 + t * 0.071) + 0.025 * sin(q.y * 7.3 - t * 0.043) + 0.32 * smoothstep(0.40, 0.05, q.y);
+    float field = (1.0 - smoothstep(-0.010, 0.030, X - edge)) * smoothstep(0.98, 0.66, q.y + 0.12 * X);
+    col = mix(col, PINK, field);
+    // 4 · a ribbon of rose that wraps under the eye, from the pink field to the right edge
+    float ry = 0.24 + 0.10 * sin(X * 4.2 + 0.9 + t * 0.052) + 0.05 * sin(X * 9.0 - t * 0.031);
+    float ribbon = (1.0 - smoothstep(0.035, 0.075, abs(q.y - ry))) * smoothstep(0.30, 0.55, X);
+    col = mix(col, ROSE, ribbon * 0.7 * (1.0 - 0.65 * eye * (1.0 - field)));   // it seems to pass behind the eye
+    // 5 · sky blue standing along the right edge, a tall soft ellipse
+    col = mix(col, SKY, ellipse(q, vec2(1.04 * asp, 0.78), vec2(0.22, 0.42), 0.15, 0.5) * 0.9);
+    // 6 · warm light low down: butter in the middle, peach around it, coral in the corner
+    col = mix(col, PEACH, glow(q, vec2((0.62 + 0.04 * sin(t * 0.039)) * asp, -0.04), 0.34) * 0.85);
+    col = mix(col, BUTTER, glow(q, vec2((0.58 + 0.05 * sin(t * 0.044)) * asp, -0.10), 0.26) * 0.9);
+    col = mix(col, CORAL, glow(q, vec2(0.97 * asp, 0.06 + 0.04 * sin(t * 0.057)), 0.26) * 0.9);
+    // 7 · blush, almost white, in the bottom left corner
+    col = mix(col, BLUSH, glow(q, vec2(0.10 * asp, -0.06), 0.42) * 0.9);
+    // 8 · a thin arc of mint high on the right, and a lilac one crossing the top left: a different shape, a fresh colour
+    float arc1 = exp(-pow((length(q - vec2(1.05 * asp, 1.25)) - (0.48 + 0.02 * sin(t * 0.05))) / 0.05, 2.0));
+    col = mix(col, MINT, arc1 * 0.55);
+    float arc2 = exp(-pow((length(q - vec2(-0.10 * asp, 1.30)) - (0.62 + 0.03 * sin(t * 0.041))) / 0.07, 2.0));
+    col = mix(col, MAUVE, arc2 * 0.45);
+    col += (hash(gl_FragCoord.xy) - 0.5) / 255.0;
+    gl_FragColor = vec4(col, 1.0);
+  }`;
+
+/** The painted scenes, each its own shader, built the first time it is shown. */
+export const PAINTED: Readonly<Record<string, string>> = { iris: IRIS };
+
 /** A light: x, y, softness, arc, r, g, b, strength. */
 type Light = readonly [number, number, number, number, number, number, number, number];
 
@@ -152,7 +229,7 @@ export const SCENES: Readonly<Record<string, Scene>> = {
 };
 
 export interface FlowView {
-  /** The background drawn: `flow`, or the name of a scene of lights. */
+  /** The background drawn: `flow`, or the name of a scene of lights or of a painted scene. */
   readonly id: string;
   readonly theme: Theme;
 }
@@ -247,12 +324,36 @@ export function startFlow(canvas: HTMLCanvasElement, view: () => FlowView, still
   // Each light drifts on two axes, breathes, and its arc swells, each in a period of 8 to 18 seconds.
   const wobble = () => ({ w: Array.from({ length: 4 }, () => TURN / rnd(8, 18)), o: Array.from({ length: 4 }, () => rnd(0, TURN)) });
   const motion = Object.fromEntries(Object.entries(SCENES).map(([id, scene]) => [id, scene.lights.map(wobble)]));
+  // A painted scene is built the first time it is shown; its clock runs three times as fast as the
+  // seconds, from a random start, so that it starts at a random moment.
+  const painted = new Map<string, Program | undefined>();
+  const paint = (id: string): Program | undefined => {
+    const source = PAINTED[id];
+    if (!source) {
+      return undefined;
+    }
+    if (!painted.has(id)) {
+      painted.set(id, build(source));
+    }
+    return painted.get(id);
+  };
+  const paintStart = rnd(0, 1000);
   const positions = new Float32Array(28);
   const colours = new Float32Array(28);
   let seconds = 0;
 
   const draw = (s: number) => {
     const { id, theme } = view();
+    const art = paint(id);
+    if (art) {
+      gl.useProgram(art.program);
+      gl.uniform2f(art.uniforms('uRes'), canvas.width, canvas.height);
+      gl.uniform1f(art.uniforms('uT'), paintStart + 3 * s);
+      gl.uniform2f(art.uniforms('uPointer'), pointer.x, pointer.y);
+      gl.uniform1f(art.uniforms('uPull'), pointer.pull);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      return;
+    }
     const scene = SCENES[id];
     if (scene) {
       gl.useProgram(lights.program);

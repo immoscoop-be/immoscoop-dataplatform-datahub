@@ -2,10 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { BACKGROUNDS, backgroundsOf, chooseBackground, RANDOM } from './backgrounds.js';
 
 describe('the backgrounds, a set per theme (DEC-UX-108, DEC-UX-109, DEC-UX-173)', () => {
-  it('holds by day the clouds, the flowing gradient, five lights and Concrete; by night the gradient, the flow and four lights', () => {
-    expect(backgroundsOf('light').map((b) => b.id)).toEqual(['gradient', 'flow', 'periwinkle', 'sunrise', 'apricot', 'blush', 'sky', 'concrete']);
+  it('holds by day the clouds, the flowing gradient, five lights, Iris and Concrete; by night the gradient, the flow and four lights', () => {
+    expect(backgroundsOf('light').map((b) => b.id)).toEqual(['gradient', 'flow', 'periwinkle', 'sunrise', 'apricot', 'blush', 'sky', 'iris', 'concrete']);
     expect(backgroundsOf('dark').map((b) => b.id)).toEqual(['gradient', 'flow', 'aurora', 'ember', 'dusk', 'horizon']);
     expect(new Set(BACKGROUNDS.map((b) => b.id)).size).toBe(BACKGROUNDS.length);
+  });
+
+  it('paints Iris, a scene of painted shapes by day, with a shader of its own (DEC-UX-198)', () => {
+    expect(BACKGROUNDS.filter((b) => b.kind === 'painted').map((b) => [b.id, b.themes])).toEqual([['iris', ['light']]]);
   });
 
   it('shows the photo of Concrete as it is, covering the window (DEC-UX-113)', () => {

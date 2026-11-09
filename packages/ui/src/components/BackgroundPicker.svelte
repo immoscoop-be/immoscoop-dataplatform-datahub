@@ -14,10 +14,16 @@
   const title = (background: Background) =>
     background.name ?? (background.kind === 'flow' ? t('background.flow') : t('background.gradient'));
   const meta = (background: Background) =>
-    background.kind === 'flow' ? t('background.flowMeta') : background.kind === 'lights' ? t('background.lightsMeta') : undefined;
+    background.kind === 'flow'
+      ? t('background.flowMeta')
+      : background.kind === 'lights'
+        ? t('background.lightsMeta')
+        : background.kind === 'painted'
+          ? t('background.paintedMeta')
+          : undefined;
   /** The still picture of a flowing background, as tokens.css draws it. */
   const preview = (background: Background) =>
-    background.kind === 'flow' || background.kind === 'lights' ? `var(--bg-prev-${background.id})` : undefined;
+    background.kind === 'flow' || background.kind === 'lights' || background.kind === 'painted' ? `var(--bg-prev-${background.id})` : undefined;
 
   const set = $derived(backgroundsOf(theme));
   /** Random is on when the choice is not one of the set (any more), as the background then is one at random. */
