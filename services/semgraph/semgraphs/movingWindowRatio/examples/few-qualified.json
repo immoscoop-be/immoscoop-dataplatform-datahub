@@ -1,0 +1,25 @@
+{
+  "semgraph": "movingWindowRatio",
+  "metric": "qualifiedLeadShare",
+  "title": "Gekwalificeerde leads (voorbeelddata)",
+  "measureType": "ratio",
+  "numeratorName": "gekwalificeerde leads",
+  "denominatorName": "leads",
+  "window": 7,
+  "locale": "nl-BE",
+  "context": {
+    "domain": "Leads",
+    "dataset": "creditLeads",
+    "reliability": "voorbeelddata"
+  },
+  "points": [
+    { "end": "2026-08-12", "numerator": 24, "denominator": 71 },
+    { "end": "2026-08-19", "numerator": 22, "denominator": 68 },
+    { "end": "2026-08-26", "numerator": 25, "denominator": 74 },
+    { "end": "2026-09-02", "numerator": 8, "denominator": 64 },
+    { "end": "2026-09-09", "numerator": 23, "denominator": 70 },
+    { "end": "2026-09-16", "numerator": 27, "denominator": 77 },
+    { "end": "2026-09-23", "numerator": 26, "denominator": 73 },
+    { "end": "2026-09-30", "numerator": 29, "denominator": 79 }
+  ]
+}

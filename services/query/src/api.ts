@@ -1,0 +1,849 @@
+import { randomUUID } from 'node:crypto';
+import type { ExcelKeyExchanger, ServiceCallerVerifier, TokenVerifier } from '@datahub/auth';
+import { can, rangesOf, reach } from '@datahub/contracts';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { forbidden, ownerUnitsOf, permissionsOf } from './access.js';
+import { type BigQuery, BigQueryRefused, BigQueryUnavailable, type Finished, type Page, ResultExpired } from './bigquery.js';
+import { missingIn, missingOf } from './broken.js';
+import { type Catalogue, CatalogueUnavailable, type QueryRequest, type QueryResource } from './catalogue.js';
+import type { NamedResource, QueryKind } from './database.js';
+import { lensRoutes } from './lens-api.js';
+import type { Lenses } from './lenses.js';
+import { bind, type Parameter, parseParameters } from './parameters.js';
+import { type Preflight, preflight, type ResourceOfQuery, sound, type Thresholds } from './preflight.js';
+import { type Choice, choicesOf, chosenParameters, previewSql, type StorageReader, valuesSql, type Window, WINDOWS, windowFilter } from './preview.js';
+import { type ListOptions, type Queries, type Query, type QueryOnResource, type Run, SHOWN, type Shown, type Viewer } from './queries.js';
+import { inOwnCase, template } from './sql.js';
+import { createUpkeep, type Lost } from './upkeep.js';
+
+export interface ApiOptions {
+  queries: Queries;
+  /** Who may start a check of Lenses and queries: the scheduler once a day (DEC-LE-20), catalogue after a new Current Version (FR-SR-52). */
+  checkers: ServiceCallerVerifier;
+  /** The Lenses, made from queries and run on their pages (DEC-PF-30). */
+  lenses: Lenses;
+  catalogue: Catalogue;
+  bigquery: BigQuery;
+  /** The tables beneath a Resource, as BigQuery reads them (see createBeneath). */
+  beneath: (resource: QueryResource) => Promise<string[]>;
+  /** The project the jobs run in: a Key in it may be written without its project. */
+  project: string;
+  /**
+   * The ranges of one run of a Lens, for its size check, its growth and its daily check (DEC-SR-29, DEC-LE-11): about
+   * the Lens, not one User. A query and a Preview run within the ranges of their User (`runs.ranges`).
+   */
+  thresholds: Thresholds;
+  /** The size and partitions of a Resource, and its newest partitions (FR-SR-39, DEC-SR-39). */
+  storage: StorageReader;
+  /** Excel, which signs in with an Excel key, exchanged at identity for an Access Token (TR-PF-07, DEC-CH-06). */
+  excel?: { exchanger: ExcelKeyExchanger; verifier: TokenVerifier };
+}
+
+/** A page of a result has 100 rows (FR-SR-51). */
+export const PAGE_SIZE = 100;
+/** How many runs of its history a page holds at most (DEC-UX-74). */
+const HISTORY_LIMIT = 50;
+/** Above an accepted Request, BigQuery bills at most this much more than the Pre-flight said (DEC-SR-36). */
+const ACCEPTED_MARGIN = 1.1;
+const NO_QUERY = { error: 'not_found', message: 'There is no such query, or it is not yours.' };
+const NO_RESOURCE = { error: 'not_found', message: 'There is no such Resource, or you may not see it.' };
+/** The numbers on top of the tab History count the last 30 days (FR-SR-44). */
+const MONTH = 30 * 86_400_000;
+const NOT_YOURS = { error: 'forbidden', message: 'Only who made a query writes and runs it.' };
+const ALL_QUERIES = 'Only who sees every query lists the queries of everyone.';
+
+/** A query as the web app gets it: without the SQL Data Hub keeps for its own checks (DEC-SR-44). */
+const shown = ({ checkSql: _checkSql, checkParameters: _checkParameters, ...query }: Query) => query;
+
+/**
+ * A run as the web app shows it: its SQL and values, what it read, its result's columns and how many rows.
+ * Only who may read the query sees it (DEC-SR-31, `queries.seeOthers`).
+ */
+function runView(run: Run) {
+  return {
+    ref: run.queryRef,
+    number: run.number,
+    sql: run.sql,
+    parameters: run.parameters,
+    state: run.state,
+    error: run.error,
+    userName: run.userName,
+    // Run through Claude, or in the web app (DEC-CL-11).
+    through: run.through,
+    estimatedBytes: run.estimatedBytes,
+    approved: run.approved,
+    processedBytes: run.processedBytes,
+    billedBytes: run.billedBytes,
+    partitions: run.partitions,
+    rowCount: run.rowCount,
+    columns: run.columns,
+    startedAt: run.startedAt,
+    finishedAt: run.finishedAt,
+  };
+}
+
+/** A Request as the bar of the Pre-flight and the panel show it (DEC-UX-116). */
+const requestView = (request: QueryRequest | undefined) => (request ? { state: request.state, sentAt: request.createdAt, reads: request.reads, text: request.text } : null);
+
+export interface QueryFields {
+  name?: string;
+  question?: string;
+  resources?: string[];
+  sql?: string;
+  parameters?: Parameter[];
+  /** The query a new one is started from, with another set of Resources (DEC-UX-73). */
+  startedFrom?: string;
+  /** The Collection whose page started it with "New Lens", offered first when it becomes a Lens (DEC-UX-123). */
+  forCollection?: string;
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** The fields of a new query, or of a change to one; a string says what does not fit. */
+export function parseQuery(body: unknown, creating: boolean): QueryFields | string {
+  if (typeof body !== 'object' || body === null || Array.isArray(body)) return 'Send a JSON object.';
+  const fields = body as Record<string, unknown>;
+  const known = new Set(creating ? ['name', 'question', 'resources', 'sql', 'parameters', 'startedFrom', 'forCollection'] : ['name', 'question', 'sql', 'parameters']);
+  const unknown = Object.keys(fields).find((key) => !known.has(key));
+  if (unknown) return `A query has no field ${unknown} here.`;
+  const result: QueryFields = {};
+  if (fields.name !== undefined || creating) {
+    // A query without a name cannot be run, so it has one from the start (FR-SR-45).
+    if (typeof fields.name !== 'string' || fields.name.trim().length < 1 || fields.name.trim().length > 120) return 'The name has 1 to 120 characters.';
+    result.name = fields.name.trim();
+  }
+  if (fields.question !== undefined) {
+    if (typeof fields.question !== 'string' || fields.question.trim().length > 500) return 'The question has at most 500 characters.';
+    result.question = fields.question.trim();
+  }
+  if (creating) {
+    const ids = fields.resources;
+    if (!Array.isArray(ids) || ids.length < 1 || ids.length > 10 || !ids.every((id) => typeof id === 'string' && /^[0-9a-f-]{36}$/i.test(id)) || new Set(ids).size !== ids.length) {
+      return 'A query reads 1 to 10 Resources, each named once by its ID.';
+    }
+    result.resources = ids as string[];
+  }
+  if (fields.sql !== undefined) {
+    if (typeof fields.sql !== 'string' || fields.sql.length > 100_000) return 'The SQL has at most 100,000 characters.';
+    result.sql = fields.sql;
+  }
+  if (fields.parameters !== undefined) {
+    const parameters = parseParameters(fields.parameters);
+    if (typeof parameters === 'string') return parameters;
+    result.parameters = parameters;
+  }
+  if (fields.startedFrom !== undefined) {
+    if (typeof fields.startedFrom !== 'string' || !UUID.test(fields.startedFrom)) return 'A query is started from another by its ID.';
+    result.startedFrom = fields.startedFrom.toLowerCase();
+  }
+  if (fields.forCollection !== undefined) {
+    if (typeof fields.forCollection !== 'string' || !UUID.test(fields.forCollection)) return 'A query is started for a Collection by its ID.';
+    result.forCollection = fields.forCollection.toLowerCase();
+  }
+  if (!creating && Object.keys(result).length === 0) return 'Send at least one field to change.';
+  return result;
+}
+
+/** The SQL and Parameters to check or run, whether its author approves what it reads (DEC-SR-29), and a word for the Data Team. */
+export function parseRun(body: unknown): { sql: string; parameters: Parameter[]; approve: boolean; text: string } | string {
+  if (typeof body !== 'object' || body === null || Array.isArray(body)) return 'Send a JSON object.';
+  const { sql, parameters = [], approve = false, text = '' } = body as Record<string, unknown>;
+  if (typeof sql !== 'string' || sql.length > 100_000) return 'The SQL has at most 100,000 characters.';
+  const parsed = parseParameters(parameters);
+  if (typeof parsed === 'string') return parsed;
+  if (typeof approve !== 'boolean') return 'approve is true or false.';
+  if (typeof text !== 'string' || text.trim().length > 500) return 'A word for the Data Team has at most 500 characters.';
+  return { sql, parameters: parsed, approve, text: text.trim() };
+}
+
+/** Whether two lists of Parameters are the same, to keep only what changed. */
+const same = (a: readonly Parameter[], b: readonly Parameter[]) => JSON.stringify(a) === JSON.stringify(b);
+
+/**
+ * The routes of query (TR-SR-15, TR-SR-16): queries, their Pre-flight, their runs and the pages of a result.
+ * Every route has the Access Token of the User, and refuses what their Permissions do not allow (TR-PL-06): a
+ * query is written and run only by who made it, with `queries.make`, and seen by them and by who sees the queries
+ * of others (DEC-LN-01, `queries.seeOthers`).
+ */
+export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Promise<void> {
+  const { queries, lenses, catalogue, bigquery, beneath, project, thresholds, storage, checkers, excel } = options;
+  /** What keeps queries and Lenses Broken while what they read is missing, and working again (FR-SR-52). */
+  const upkeep = createUpkeep({ queries, lenses, catalogue, bigquery });
+
+  function viewer(request: FastifyRequest): Viewer {
+    const user = request.user;
+    return { id: user?.sub ?? '', name: user?.name || user?.email || '', through: user?.client ?? null };
+  }
+
+  const authorization = (request: FastifyRequest) => request.headers.authorization ?? '';
+
+  /** Whether a Resource is of an Owner Unit of the User: the Owner Unit of its Collection is one of their groups (FR-PL-05). */
+  async function owns(request: FastifyRequest, resource: QueryResource): Promise<boolean> {
+    if (resource.collectionId === null) return false;
+    const ownerUnit = await catalogue.ownerUnit(resource.collectionId, authorization(request));
+    return ownerUnit !== null && ownerUnitsOf(request).includes(ownerUnit);
+  }
+
+  /**
+   * Whether the User may read the query (DEC-SR-31, DEC-SR-41): their own; with `queries.seeOthers`, every query, or
+   * those on the Resources of their Owner Units, as the History of a Resource shows them. The runs of a Lens carry
+   * its SQL, which only who sees every query reads here; a User runs it on its page (FR-LE-14).
+   */
+  async function readable(request: FastifyRequest, query: Query): Promise<boolean> {
+    const others = reach(permissionsOf(request), 'queries.seeOthers');
+    if (others === 'every') return true;
+    if (query.kind === 'lens') return false;
+    if (query.ownerId === viewer(request).id) return true;
+    if (others !== 'theirs') return false;
+    for (const named of query.resources) {
+      const resource = await catalogue.resource(named.id, authorization(request));
+      if (resource && (await owns(request, resource))) return true;
+    }
+    return false;
+  }
+
+  /** The query, if the User may read it; otherwise answered as not found. */
+  async function seen(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply): Promise<Query | undefined> {
+    const query = await queries.get(request.params.id);
+    try {
+      if (!query || !(await readable(request, query))) {
+        void reply.code(404).send(NO_QUERY);
+        return undefined;
+      }
+    } catch (error) {
+      unavailable(error, reply, request);
+      return undefined;
+    }
+    return query;
+  }
+
+  /** The query, if it is the User's own, to write or run, and they may make queries (`queries.make`). */
+  async function own(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply): Promise<Query | undefined> {
+    if (!can(permissionsOf(request), 'queries.make')) {
+      void forbidden(reply, 'queries.make', 'Only who may make queries writes and runs one.');
+      return undefined;
+    }
+    const query = await seen(request, reply);
+    if (query && query.ownerId !== viewer(request).id) {
+      void reply.code(403).send(NOT_YOURS);
+      return undefined;
+    }
+    if (query?.kind === 'lens') {
+      void reply.code(403).send({ error: 'forbidden', message: 'A Lens runs on its own page.' });
+      return undefined;
+    }
+    return query;
+  }
+
+  /** Its Resources as catalogue gives them to this User now. */
+  async function resourcesOf(request: FastifyRequest, query: { resources: NamedResource[] }): Promise<ResourceOfQuery[]> {
+    return Promise.all(query.resources.map(async (named) => ({ named, resource: await catalogue.resource(named.id, authorization(request)) })));
+  }
+
+  const check = (sql: string, parameters: Parameter[], resources: ResourceOfQuery[], ranges: Thresholds): Promise<Preflight> =>
+    preflight(sql, resources, { bigquery, beneath, project, thresholds: ranges }, parameters);
+
+  /**
+   * The ranges of one run (DEC-SR-29): those of the User for a query and a Preview (`runs.ranges`); for a run of a
+   * Lens those of Data Hub, which measured the Lens itself (FR-LE-08).
+   */
+  const rangesFor = (request: FastifyRequest, kind: QueryKind): Required<Thresholds> =>
+    kind === 'lens' ? { approve: thresholds.approve, request: thresholds.request, above: 'request' } : rangesOf(permissionsOf(request));
+
+  /** The SQL as BigQuery gets it: each Resource the User sees by its full name in its own case (DEC-SR-44). */
+  const ownCase = (sql: string, resources: ResourceOfQuery[]): string =>
+    inOwnCase(sql, resources.flatMap((entry) => (entry.resource ? [entry.resource] : [])), project);
+
+  /** The Requests of who made the query on it, newest first (DEC-SR-36). */
+  async function requestsOf(request: FastifyRequest, query: Query): Promise<QueryRequest[]> {
+    return (await catalogue.requests(query.id, authorization(request))).filter((sent) => sent.writerId === query.ownerId);
+  }
+
+  /** Where a query started: the query, by its name now, and after which of its runs (DEC-UX-73). */
+  async function startedFromOf(query: Query) {
+    if (!query.startedFrom) return null;
+    const from = await queries.get(query.startedFrom);
+    return from ? { id: from.id, name: from.name, afterRun: query.startedAfterRun } : null;
+  }
+
+  /** A query as its page shows it: its Resources as the User may see them now, its last run, its Request and where it started. */
+  async function queryView(request: FastifyRequest, query: Query) {
+    const resources = (await resourcesOf(request, query)).map(({ named, resource }) =>
+      resource ? { visible: true, ...resource } : { visible: false, id: named.id, displayName: named.displayName },
+    );
+    const [last, runs, requests, startedFrom, lens, hidden] = await Promise.all([
+      queries.lastRun(query.id),
+      queries.runCount(query.id),
+      requestsOf(request, query),
+      startedFromOf(query),
+      // The Lens it is used as: made from it, or opened as it in Query (DEC-LE-03, DEC-LE-18).
+      lenses.ofQuery(query.id).then((made) => made ?? (query.forLens ? lenses.get(query.forLens) : undefined)),
+      queries.hidden(query.id, viewer(request).id),
+    ]);
+    return {
+      ...shown(query),
+      mine: query.ownerId === viewer(request).id,
+      // Whether the User hid it from their panel (DEC-UX-138).
+      hidden,
+      resources,
+      lastRun: last ? runView(last) : null,
+      runs,
+      request: requestView(requests[0]),
+      startedFrom,
+      // The Lens it is used as, with a link to it (DEC-LE-03).
+      lens: lens
+        ? { id: lens.id, name: lens.name, collectionId: lens.collectionId, state: lens.state, createdAt: lens.createdAt, version: lens.version, range: lens.range, reads: lens.reads }
+        : null,
+    };
+  }
+
+  /** catalogue or BigQuery not answering is answered as 503, never guessed. */
+  function unavailable(error: unknown, reply: FastifyReply, request: FastifyRequest): FastifyReply | undefined {
+    if (error instanceof CatalogueUnavailable || error instanceof BigQueryUnavailable) {
+      request.log.error({ err: error }, 'A service query depends on did not answer');
+      return reply.code(503).send({ error: 'unavailable', message: 'Data Hub cannot check this query right now; try again in a moment.' });
+    }
+    throw error;
+  }
+
+  app.get<{ Querystring: { all?: string; from?: string; to?: string; show?: string; q?: string; limit?: string } }>('/queries', async (request, reply) => {
+    const who = viewer(request);
+    const all = request.query.all === 'true';
+    if (all && reach(permissionsOf(request), 'queries.seeOthers') !== 'every') return forbidden(reply, 'queries.seeOthers', ALL_QUERIES);
+    const options = listOptions(request.query);
+    if (typeof options === 'string') return reply.code(400).send({ error: 'invalid_request', message: options });
+    const list = await queries.list(who, all, options);
+    // The label of a query that went to the Data Team (DEC-UX-116); the list shows without it rather than not at all.
+    const latest = new Map<string, QueryRequest>();
+    try {
+      for (const sent of await catalogue.requests(null, authorization(request))) if (!latest.has(sent.subjectId)) latest.set(sent.subjectId, sent);
+    } catch (error) {
+      if (!(error instanceof CatalogueUnavailable)) throw error;
+      request.log.warn({ err: error }, 'catalogue did not tell the Requests; the queries are listed without them');
+    }
+    return { queries: list.map((item) => ({ ...item, request: requestView(latest.get(item.id)) })) };
+  });
+
+  // How many queries each day holds, in the time zone of the User, for the periods and chips of the panel (DEC-UX-137, DEC-UX-139).
+  app.get<{ Querystring: { all?: string; tz?: string } }>('/queries/days', async (request, reply) => {
+    const who = viewer(request);
+    const all = request.query.all === 'true';
+    if (all && reach(permissionsOf(request), 'queries.seeOthers') !== 'every') return forbidden(reply, 'queries.seeOthers', ALL_QUERIES);
+    const timeZone = request.query.tz ?? 'UTC';
+    if (!isTimeZone(timeZone)) return reply.code(400).send({ error: 'invalid_request', message: 'tz is a time zone, such as Europe/Brussels.' });
+    return { days: await queries.days(who, all, timeZone) };
+  });
+
+  // Hides a query from the panel of the User, or shows it again; for them alone (DEC-UX-138).
+  for (const [method, hidden] of [['PUT', true], ['DELETE', false]] as const) {
+    app.route<{ Params: { id: string } }>({
+      method,
+      url: '/queries/:id/hidden',
+      handler: async (request, reply) => {
+        const query = await seen(request, reply);
+        if (!query) return reply;
+        await queries.hide(query.id, viewer(request).id, hidden);
+        return { hidden };
+      },
+    });
+  }
+
+  app.post<{ Body: unknown }>('/queries', async (request, reply) => {
+    if (!can(permissionsOf(request), 'queries.make')) return forbidden(reply, 'queries.make', 'Only who may make queries makes one.');
+    const fields = parseQuery(request.body, true);
+    if (typeof fields === 'string') return reply.code(400).send({ error: 'invalid_request', message: fields });
+    const who = viewer(request);
+    try {
+      // Another set of Resources is a new query, started from one the User may read, after its last run (DEC-UX-73).
+      let startedFrom: { id: string; afterRun: number | null } | undefined;
+      if (fields.startedFrom) {
+        const from = await queries.get(fields.startedFrom);
+        if (!from || !(await readable(request, from))) return reply.code(400).send({ error: 'invalid_request', message: 'A query is started from one you may see.' });
+        startedFrom = { id: from.id, afterRun: (await queries.lastRun(from.id))?.number ?? null };
+      }
+      const found = await Promise.all((fields.resources ?? []).map((id) => catalogue.resource(id, authorization(request))));
+      const resources = found.filter((resource): resource is QueryResource => resource !== null);
+      if (resources.length !== found.length) return reply.code(400).send({ error: 'invalid_request', message: 'A query reads only Resources you may see.' });
+      const named: NamedResource[] = resources.map(({ id, key, displayName }) => ({ id, key, displayName }));
+      const query = await queries.create({
+        owner: who,
+        name: fields.name as string,
+        question: fields.question ?? '',
+        resources: named,
+        sql: fields.sql ?? template(resources),
+        parameters: fields.parameters ?? [],
+        startedFrom,
+        forCollection: fields.forCollection,
+      });
+      return reply.code(201).send({ query: await queryView(request, query) });
+    } catch (error) {
+      return unavailable(error, reply, request);
+    }
+  });
+
+  app.get<{ Params: { id: string } }>('/queries/:id', async (request, reply) => {
+    const query = await seen(request, reply);
+    if (!query) return reply;
+    try {
+      return { query: await queryView(request, query) };
+    } catch (error) {
+      return unavailable(error, reply, request);
+    }
+  });
+
+  // Its history: every run a variation of its SQL and values, newest first, a page at a time (DEC-UX-74).
+  app.get<{ Params: { id: string }; Querystring: { before?: string; limit?: string } }>('/queries/:id/runs', async (request, reply) => {
+    const before = request.query.before === undefined ? undefined : Number(request.query.before);
+    const limit = Number(request.query.limit ?? '20');
+    if ((before !== undefined && (!Number.isInteger(before) || before < 1)) || !Number.isInteger(limit) || limit < 1 || limit > HISTORY_LIMIT) {
+      return reply.code(400).send({ error: 'invalid_request', message: `before is a run number, and limit a number from 1 to ${HISTORY_LIMIT}.` });
+    }
+    const query = await seen(request, reply);
+    if (!query) return reply;
+    return { runs: (await queries.runs(query.id, { before, limit })).map(runView) };
+  });
+
+  app.patch<{ Params: { id: string }; Body: unknown }>('/queries/:id', async (request, reply) => {
+    const fields = parseQuery(request.body, false);
+    if (typeof fields === 'string') return reply.code(400).send({ error: 'invalid_request', message: fields });
+    if (!(await own(request, reply))) return reply;
+    const query = await queries.update(request.params.id, fields);
+    return { query: query && shown(query) };
+  });
+
+  /**
+   * What a Pre-flight or a run tells about a query of the User (FR-SR-52, FR-SR-53). SQL that can run is kept,
+   * as BigQuery reads it, for the checks without them, and makes a Broken query work again. A table or a
+   * column not found has Data Hub check what reads a Resource whose table is gone, and dry-run what the query
+   * itself read before: only if that misses something too is it Broken, as a typo is not.
+   */
+  async function kept(request: FastifyRequest, query: Query, run: { sql: string; parameters: Parameter[] }, resources: ResourceOfQuery[], checked: Preflight): Promise<Query> {
+    if (query.kind === 'lens') return query;
+    // SQL that reads more than one run of this User may is still SQL that runs: it is kept, and works (runs.ranges).
+    if (sound(checked)) {
+      if (query.kind !== 'query') return query;
+      await queries.keepCheck(query.id, ownCase(run.sql, resources), run.parameters);
+      return query.broken ? upkeep.query(query, null, request.log) : query;
+    }
+    const missing = missingIn(checked);
+    return missing ? lost(request, query, missing) : query;
+  }
+
+  /** A run, a Pre-flight or a Preview did not find a table or a column (FR-SR-52, the third moment). */
+  async function lost(request: FastifyRequest, query: Query, missing: Lost): Promise<Query> {
+    // A Preview reads one Resource, made afresh from its fields: what it misses is of that Resource.
+    const gone = query.resources.filter((resource) => query.kind === 'preview' || (missing.kind === 'table' && resource.key === missing.name.toLowerCase()));
+    await upkeep.lost(
+      gone.map((resource) => resource.id),
+      request.log,
+    );
+    if (query.kind !== 'query' || !query.checkSql) return (await queries.get(query.id)) ?? query;
+    const again = await upkeep.dryRun(query.checkSql, query.checkParameters);
+    if (!again.works && again.missing) return upkeep.query(query, again.missing, request.log);
+    return (await queries.get(query.id)) ?? query;
+  }
+
+  // The Pre-flight while the SQL is written (FR-SR-36); it keeps what is written, so nothing is lost.
+  app.post<{ Params: { id: string }; Body: unknown }>('/queries/:id/preflight', async (request, reply) => {
+    const body = parseRun(request.body);
+    if (typeof body === 'string') return reply.code(400).send({ error: 'invalid_request', message: body });
+    const query = await own(request, reply);
+    if (!query) return reply;
+    try {
+      const changed = body.sql !== query.sql || !same(body.parameters, query.parameters);
+      const current = changed ? ((await queries.update(query.id, { sql: body.sql, parameters: body.parameters })) ?? query) : query;
+      const resources = await resourcesOf(request, current);
+      const checked = await check(body.sql, body.parameters, resources, rangesFor(request, current.kind));
+      // Whether it is Broken now, for the callout on top of it and Run (FR-SR-53, DEC-UX-160).
+      const after = await kept(request, current, body, resources, checked);
+      return { preflight: checked, broken: after.broken };
+    } catch (error) {
+      return unavailable(error, reply, request);
+    }
+  });
+
+  // A run (FR-SR-41): the same checks again, then BigQuery with a byte limit and a label with the User (FR-SR-27).
+  app.post<{ Params: { id: string }; Body: unknown }>('/queries/:id/runs', async (request, reply) => {
+    const body = parseRun(request.body);
+    if (typeof body === 'string') return reply.code(400).send({ error: 'invalid_request', message: body });
+    const query = await own(request, reply);
+    if (!query) return reply;
+    return execute(request, reply, query, body);
+  });
+
+  /**
+   * Runs a query of the User: checked again, then a job of BigQuery, the run kept in the Query Log. For Excel,
+   * its first rows as CSV, at most `excel.rows` (DEC-CH-06), instead of the first page.
+   */
+  async function execute(request: FastifyRequest, reply: FastifyReply, query: Query, body: { sql: string; parameters: Parameter[]; approve: boolean }, excel?: { rows: number }) {
+    let checked: Preflight;
+    let resources: ResourceOfQuery[];
+    let accepted = false;
+    let now: Query;
+    const ranges = rangesFor(request, query.kind);
+    try {
+      resources = await resourcesOf(request, query);
+      checked = await check(body.sql, body.parameters, resources, ranges);
+      now = await kept(request, query, body, resources, checked);
+      // Above its ranges it runs once the Data Team accepted a Request of its author: every run after, also with other SQL (DEC-SR-36).
+      if (checked.runnable && checked.range === 'request') accepted = (await requestsOf(request, query)).some((sent) => sent.state === 'accepted');
+    } catch (error) {
+      return unavailable(error, reply, request);
+    }
+    if (!checked.runnable) return reply.code(409).send({ error: 'not_runnable', message: 'This query cannot run as it is.', preflight: checked, broken: now.broken });
+    if (checked.range === 'request' && !accepted) {
+      return reply.code(409).send({ error: 'request_needed', message: 'This query reads more than one run may without the Data Team: they accept it first.', preflight: checked });
+    }
+    if (checked.range !== 'free' && !body.approve) {
+      return reply.code(409).send({ error: 'approval_needed', message: 'This query reads enough to need your approval.', preflight: checked });
+    }
+
+    const who = viewer(request);
+    const bound = bind(body.sql, body.parameters);
+    const estimated = checked.bytes ?? 0;
+    const run = await queries.startRun({ query, user: who, sql: body.sql, parameters: body.parameters, estimatedBytes: estimated, approved: checked.range !== 'free' });
+    try {
+      const finished = await bigquery.run(ownCase(bound.sql, resources), {
+        // Never more than the second threshold without an accepted Request (DEC-SR-29); with one, a little above the Pre-flight.
+        maximumBytesBilled: accepted ? Math.max(ranges.request, Math.ceil(estimated * ACCEPTED_MARGIN)) : ranges.request,
+        labels: { 'datahub-user': label(who.id), 'datahub-query': run.queryRef },
+        requestId: randomUUID(),
+        pageSize: excel ? excel.rows : PAGE_SIZE,
+        parameters: bound.parameters,
+      });
+      const done = await queries.finishRun(run.id, {
+        jobId: finished.jobId,
+        jobLocation: finished.location,
+        processedBytes: finished.processedBytes,
+        billedBytes: finished.billedBytes,
+        partitions: finished.partitions,
+        rowCount: finished.totalRows,
+        columns: finished.columns,
+      });
+      if (excel) return sendCsv(reply, finished, excel.rows, done.queryRef);
+      return reply.code(201).send({ run: runView(done), page: pageView(finished, 1) });
+    } catch (error) {
+      const failed = await queries.failRun(run.id, error instanceof Error ? error.message : String(error));
+      if (error instanceof BigQueryRefused) {
+        // What the run did not find, as its Pre-flight might have (FR-SR-52, the third moment).
+        const missing = missingOf(error.message);
+        const after = missing ? await lost(request, now, missing) : now;
+        return reply.code(422).send({ error: 'failed', message: error.message, run: runView(failed), broken: after.broken });
+      }
+      return unavailable(error, reply, request);
+    }
+  }
+
+  /**
+   * The result for Excel as CSV with a header of its column names: its first rows, read on from the same job
+   * where BigQuery gave fewer, at most `limit` (DEC-CH-06). Its Query ID is in a header, so that the run can be
+   * traced back (FR-LN-06).
+   */
+  async function sendCsv(reply: FastifyReply, finished: Finished, limit: number, queryRef: string) {
+    const rows = finished.rows.slice(0, limit);
+    while (rows.length < Math.min(limit, finished.totalRows)) {
+      const page = await bigquery.page(finished, rows.length, limit - rows.length);
+      if (page.rows.length === 0) break;
+      rows.push(...page.rows.slice(0, limit - rows.length));
+    }
+    const cell = (value: string | null) => (value === null ? '' : /[",\r\n]/.test(value) ? `"${value.replaceAll('"', '""')}"` : value);
+    const lines = [finished.columns.map((column) => cell(column.name)).join(','), ...rows.map((row) => row.map(cell).join(','))];
+    return reply
+      .code(200)
+      .header('content-type', 'text/csv; charset=utf-8')
+      .header('cache-control', 'no-store')
+      .header('x-datahub-query-id', queryRef)
+      .header('x-datahub-rows', `${rows.length} of ${finished.totalRows}`)
+      .send(`\ufeff${lines.join('\r\n')}\r\n`);
+  }
+
+  // A Request to the Data Team to run it above its ranges (MSG-QRY-01, DEC-UX-116): sent for its author, with the
+  // Pre-flight of Data Hub rather than any number of the web app, and kept by catalogue until answered.
+  app.post<{ Params: { id: string }; Body: unknown }>('/queries/:id/requests', async (request, reply) => {
+    const body = parseRun(request.body);
+    if (typeof body === 'string') return reply.code(400).send({ error: 'invalid_request', message: body });
+    const query = await own(request, reply);
+    if (!query) return reply;
+    return sendRequest(request, reply, query, body);
+  });
+
+  /** Sends a query of the User to the Data Team, above their ranges only, unless their Permission group sends none (`runs.ranges`). */
+  async function sendRequest(request: FastifyRequest, reply: FastifyReply, query: Query, body: { sql: string; parameters: Parameter[]; text: string }) {
+    const ranges = rangesFor(request, query.kind);
+    if (ranges.above === 'refuse') return forbidden(reply, 'runs.ranges', 'Your Permission group sends no query to the Data Team: above its ranges, a query does not run.');
+    try {
+      const checked = await check(body.sql, body.parameters, await resourcesOf(request, query), ranges);
+      if (!checked.runnable) return reply.code(409).send({ error: 'not_runnable', message: 'This query cannot run as it is.', preflight: checked });
+      if (checked.range !== 'request') return reply.code(409).send({ error: 'not_needed', message: 'This query runs without the Data Team.', preflight: checked });
+      if (body.sql !== query.sql || !same(body.parameters, query.parameters)) await queries.update(query.id, { sql: body.sql, parameters: body.parameters });
+      const sent = await catalogue.sendRequest({ queryId: query.id, name: query.name, reads: checked.bytes ?? 0, threshold: ranges.request, text: body.text }, authorization(request));
+      return reply.code(201).send({ request: requestView(sent), preflight: checked, queryId: query.id });
+    } catch (error) {
+      return unavailable(error, reply, request);
+    }
+  }
+
+  /** The Resource, if the User may see it, as catalogue answers with their token. */
+  async function resourceOf(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply): Promise<QueryResource | undefined> {
+    try {
+      const resource = UUID.test(request.params.id) ? await catalogue.resource(request.params.id, authorization(request)) : null;
+      if (!resource) void reply.code(404).send(NO_RESOURCE);
+      return resource ?? undefined;
+    } catch (error) {
+      unavailable(error, reply, request);
+      return undefined;
+    }
+  }
+
+  // Its size and partitions, from BigQuery without reading it (FR-SR-39); for a view, of the table beneath.
+  app.get<{ Params: { id: string } }>('/resources/:id/storage', async (request, reply) => {
+    const resource = await resourceOf(request, reply);
+    if (!resource) return reply;
+    try {
+      const found = await storage.of(resource);
+      return {
+        storage: found && { key: found.key, bytes: found.bytes, rows: found.rows, partitions: found.partitions, modifiedAt: found.modifiedAt, beneath: found.key.toLowerCase() !== resource.key },
+      };
+    } catch (error) {
+      if (error instanceof BigQueryRefused) return { storage: null };
+      return unavailable(error, reply, request);
+    }
+  });
+
+  /** What a Preview of this Resource is, for its window and choices: its filter, its choices and its SQL (FR-SR-38). */
+  async function previewOf(resource: QueryResource, window: Window) {
+    const partition = resource.partition;
+    const from = partition ? await storage.newest(resource, window) : null;
+    const dataType = partition ? (resource.fields.find((field) => field.name === partition.field)?.dataType ?? null) : null;
+    const filter = partition ? windowFilter(partition.field, dataType, partition.unit, from, window) : null;
+    return { from, filter, choices: choicesOf(resource) };
+  }
+
+  const windowOf = (value: unknown): Window | null => (WINDOWS.includes(value as Window) ? (value as Window) : null);
+  const named = (resource: QueryResource): NamedResource => ({ id: resource.id, key: resource.key, displayName: resource.displayName });
+  const previewName = (resource: QueryResource) => `Preview · ${resource.displayName}`;
+
+  // The choices of a Preview, for its window: at most 100 values each, read in one small query that passes
+  // the Pre-flight and is kept in the Query Log, not in the history of the previews (DEC-SR-37, DEC-SR-40).
+  app.post<{ Params: { id: string }; Body: unknown }>('/resources/:id/preview/choices', async (request, reply) => {
+    if (!previews(request, reply)) return reply;
+    const window = windowOf((request.body as { window?: unknown } | undefined)?.window ?? 4);
+    if (!window) return reply.code(400).send({ error: 'invalid_request', message: `The window is ${WINDOWS.join(', ')} partitions.` });
+    const resource = await resourceOf(request, reply);
+    if (!resource) return reply;
+    try {
+      const { from, filter, choices } = await previewOf(resource, window);
+      const values = choices.length > 0 ? await valuesOf(request, resource, filter, choices) : new Map<string, string[]>();
+      return {
+        window: resource.partition ? { field: resource.partition.field, unit: resource.partition.unit, from, window } : null,
+        choices: choices.map(({ field, dataType, role, kind }) => ({ field, dataType, role, kind, values: values.get(field) ?? null })),
+      };
+    } catch (error) {
+      return unavailable(error, reply, request);
+    }
+  });
+
+  /** The values of the choices, when reading them passes the Pre-flight and costs nothing to approve. */
+  async function valuesOf(request: FastifyRequest, resource: QueryResource, filter: string | null, choices: Choice[]): Promise<Map<string, string[]>> {
+    const sql = valuesSql(resource, filter, choices);
+    const ranges = rangesFor(request, 'preview');
+    const checked = await check(sql, [], [{ named: named(resource), resource }], ranges);
+    if (!checked.runnable || checked.range !== 'free') return new Map();
+    const who = viewer(request);
+    const query = await queries.previewFor(who, named(resource), previewName(resource));
+    const run = await queries.startRun({ query, user: who, sql, parameters: [], estimatedBytes: checked.bytes ?? 0, approved: false, purpose: 'values' });
+    try {
+      const finished = await bigquery.run(sql, { maximumBytesBilled: ranges.approve, labels: { 'datahub-user': label(who.id), 'datahub-query': run.queryRef }, requestId: randomUUID(), pageSize: 1 });
+      await queries.finishRun(run.id, {
+        jobId: finished.jobId,
+        jobLocation: finished.location,
+        processedBytes: finished.processedBytes,
+        billedBytes: finished.billedBytes,
+        partitions: finished.partitions,
+        rowCount: finished.totalRows,
+        columns: finished.columns,
+      });
+      const row = finished.rows[0] ?? [];
+      return new Map(finished.columns.map((column, index) => [column.name, row[index] ? (JSON.parse(row[index] as string) as unknown[]).map(String) : []]));
+    } catch (error) {
+      await queries.failRun(run.id, error instanceof Error ? error.message : String(error));
+      if (error instanceof BigQueryRefused) return new Map();
+      throw error;
+    }
+  }
+
+  /** Whether the User may Preview a Resource (`resources.preview`); otherwise answered. */
+  function previews(request: FastifyRequest, reply: FastifyReply): boolean {
+    if (can(permissionsOf(request), 'resources.preview')) return true;
+    void forbidden(reply, 'resources.preview', 'Only who may Preview a Resource does.');
+    return false;
+  }
+
+  /** The SQL and Parameters of a Preview, from what the User chose, if they may Preview it; otherwise answered. */
+  async function previewRun(request: FastifyRequest<{ Params: { id: string }; Body: unknown }>, reply: FastifyReply) {
+    if (!previews(request, reply)) return undefined;
+    const body = (request.body ?? {}) as { window?: unknown; values?: unknown; approve?: unknown; text?: unknown };
+    const window = windowOf(body.window ?? 4);
+    if (!window) return void reply.code(400).send({ error: 'invalid_request', message: `The window is ${WINDOWS.join(', ')} partitions.` });
+    if (body.approve !== undefined && typeof body.approve !== 'boolean') return void reply.code(400).send({ error: 'invalid_request', message: 'approve is true or false.' });
+    if (body.text !== undefined && (typeof body.text !== 'string' || body.text.trim().length > 500)) {
+      return void reply.code(400).send({ error: 'invalid_request', message: 'A word for the Data Team has at most 500 characters.' });
+    }
+    const resource = await resourceOf(request, reply);
+    if (!resource) return undefined;
+    const { filter, choices } = await previewOf(resource, window);
+    const parameters = chosenParameters(choices, body.values);
+    if (typeof parameters === 'string') return void reply.code(400).send({ error: 'invalid_request', message: parameters });
+    const sql = previewSql(resource, filter, parameters.map((parameter) => parameter.name));
+    return { resource, sql, parameters, approve: body.approve === true, text: typeof body.text === 'string' ? body.text.trim() : '' };
+  }
+
+  // The Pre-flight of a Preview: what it scans and how many partitions, before it runs (FR-SR-36).
+  app.post<{ Params: { id: string }; Body: unknown }>('/resources/:id/preview/preflight', async (request, reply) => {
+    try {
+      const preview = await previewRun(request, reply);
+      if (!preview) return reply;
+      const known = await queries.previewOf(viewer(request), preview.resource.id);
+      const [checked, requests] = await Promise.all([
+        check(preview.sql, preview.parameters, [{ named: named(preview.resource), resource: preview.resource }], rangesFor(request, 'preview')),
+        known ? requestsOf(request, known) : Promise.resolve([]),
+      ]);
+      // A Preview that does not find its table or a column has Data Hub check what reads the Resource (FR-SR-52).
+      if (missingIn(checked)) await upkeep.lost([preview.resource.id], request.log);
+      // Above its ranges its bar says whether a Request of the User waits, or was accepted (DEC-UX-116).
+      return { preflight: checked, queryId: known?.id ?? null, request: requestView(requests[0]) };
+    } catch (error) {
+      return unavailable(error, reply, request);
+    }
+  });
+
+  // A Preview runs as a run of the previews of the Resource by the User, one item in the panel of Query (FR-SR-38).
+  app.post<{ Params: { id: string }; Body: unknown }>('/resources/:id/preview/runs', async (request, reply) => {
+    try {
+      const preview = await previewRun(request, reply);
+      if (!preview) return reply;
+      const query = await queries.previewFor(viewer(request), named(preview.resource), previewName(preview.resource));
+      return execute(request, reply, query, preview);
+    } catch (error) {
+      return unavailable(error, reply, request);
+    }
+  });
+
+  // Above its ranges a Preview goes to the Data Team too (DEC-SR-29, MSG-QRY-01).
+  app.post<{ Params: { id: string }; Body: unknown }>('/resources/:id/preview/requests', async (request, reply) => {
+    try {
+      const preview = await previewRun(request, reply);
+      if (!preview) return reply;
+      const query = await queries.previewFor(viewer(request), named(preview.resource), previewName(preview.resource));
+      return sendRequest(request, reply, query, preview);
+    } catch (error) {
+      return unavailable(error, reply, request);
+    }
+  });
+
+  // The queries on a Resource, for its tab History: for who sees every query, and on the Resources of their Owner Units
+  // for who sees those (DEC-SR-41, FR-SR-44, `queries.seeOthers`).
+  app.get<{ Params: { id: string } }>('/resources/:id/queries', async (request, reply) => {
+    const resource = await resourceOf(request, reply);
+    if (!resource) return reply;
+    const others = reach(permissionsOf(request), 'queries.seeOthers');
+    try {
+      if (others !== 'every' && !(others === 'theirs' && (await owns(request, resource)))) {
+        return forbidden(reply, 'queries.seeOthers', 'Only who sees the queries of others on this Resource sees the queries on it.');
+      }
+    } catch (error) {
+      return unavailable(error, reply, request);
+    }
+    const who = viewer(request);
+    const found = await queries.on(resource.id);
+    // The runs of a Lens by every User are one row, the Lens, made by its author (DEC-UX-90).
+    const rows: (Omit<QueryOnResource, 'lensOf'> & { lensOf: string | null })[] = [];
+    const byLens = new Map<string, (typeof rows)[number]>();
+    for (const query of found) {
+      if (query.kind !== 'lens' || !query.lensOf) {
+        rows.push(query);
+        continue;
+      }
+      const row = byLens.get(query.lensOf);
+      if (row) {
+        // The newest run comes first, so it stays the last run of the Lens.
+        row.runs += query.runs;
+        continue;
+      }
+      const lens = await lenses.get(query.lensOf);
+      if (!lens) continue;
+      // A Lens row carries the red dot of the Lens itself (DEC-UX-81).
+      const first = { ...query, id: lens.id, name: lens.name, ownerId: lens.authorId, ownerName: lens.authorName, broken: lens.broken };
+      byLens.set(query.lensOf, first);
+      rows.push(first);
+    }
+    const recent = rows.filter((query) => query.lastRunAt !== null && query.lastRunAt.getTime() > Date.now() - MONTH);
+    return {
+      summary: {
+        queries: recent.length,
+        lenses: recent.filter((query) => query.kind === 'lens').length,
+        colleagues: new Set(found.filter((query) => query.lastRunAt !== null && query.lastRunAt.getTime() > Date.now() - MONTH).map((query) => query.ownerId)).size,
+      },
+      queries: rows.map(({ ownerId, ...query }) => ({ ...query, mine: ownerId === who.id })),
+    };
+  });
+
+  // A page of a result, read from the same run (FR-SR-51, DEC-SR-30); only who ran it reads it.
+  app.get<{ Params: { ref: string }; Querystring: { page?: string } }>('/runs/:ref/rows', async (request, reply) => {
+    const run = await queries.run(request.params.ref);
+    if (!run || run.userId !== viewer(request).id) return reply.code(404).send({ error: 'not_found', message: 'There is no such run, or it is not yours.' });
+    const page = Number(request.query.page ?? '1');
+    const pages = Math.max(1, Math.ceil((run.rowCount ?? 0) / PAGE_SIZE));
+    if (!Number.isInteger(page) || page < 1 || page > pages) return reply.code(400).send({ error: 'invalid_request', message: `The page is a number from 1 to ${pages}.` });
+    if (run.state !== 'done' || !run.jobId || !run.jobLocation) return reply.code(409).send({ error: 'not_done', message: 'This run has no result.' });
+    try {
+      return { page: pageView(await bigquery.page({ jobId: run.jobId, location: run.jobLocation }, (page - 1) * PAGE_SIZE, PAGE_SIZE), page) };
+    } catch (error) {
+      if (error instanceof ResultExpired) return reply.code(410).send({ error: 'expired', message: 'BigQuery no longer keeps the result of this run.' });
+      return unavailable(error, reply, request);
+    }
+  });
+
+  // Lenses: made from a query, run on their own page (DEC-PF-30).
+  await lensRoutes(app, { lenses, queries, catalogue, thresholds, bigquery, checkers, upkeep, viewer, authorization, readable, resourcesOf, check, ownCase, unavailable, execute, excel });
+}
+
+function pageView(page: Page, number: number) {
+  return { number, size: PAGE_SIZE, totalRows: page.totalRows, columns: page.columns, rows: page.rows };
+}
+
+/** A value of a label in BigQuery: lowercase letters, digits, dashes and underscores, at most 63. */
+export function label(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9_-]/g, '_').slice(0, 63);
+}
+
+/** Whether the time zone is one Node and Postgres both know, such as Europe/Brussels. */
+export function isTimeZone(name: string): boolean {
+  if (!/^[A-Za-z_]+(?:\/[A-Za-z0-9_+-]+)*$/.test(name) && name !== 'UTC') return false;
+  try {
+    new Intl.DateTimeFormat('en', { timeZone: name });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Which queries the panel asks for: a period, the chips that are on, words to search, at most how many (DEC-UX-137, DEC-UX-139). */
+export function listOptions(query: { from?: string; to?: string; show?: string; q?: string; limit?: string }): ListOptions | string {
+  const when = (value: string | undefined) => (value === undefined ? undefined : new Date(value));
+  const from = when(query.from);
+  const to = when(query.to);
+  if ((from && Number.isNaN(from.getTime())) || (to && Number.isNaN(to.getTime()))) return 'from and to are moments, such as 2026-10-30T00:00:00Z.';
+  const show = query.show === undefined ? undefined : query.show.split(',').filter(Boolean);
+  if (show?.some((item) => !(SHOWN as readonly string[]).includes(item))) return `show lists what to add: ${SHOWN.join(', ')}.`;
+  const limit = query.limit === undefined ? undefined : Number(query.limit);
+  if (limit !== undefined && (!Number.isInteger(limit) || limit < 1 || limit > 200)) return 'limit is a number from 1 to 200.';
+  if (query.q !== undefined && query.q.length > 200) return 'q has at most 200 characters.';
+  return {
+    ...(from ? { from } : {}),
+    ...(to ? { to } : {}),
+    ...(show ? { show: show as Shown[] } : {}),
+    ...(query.q?.trim() ? { search: query.q } : {}),
+    ...(limit ? { limit } : {}),
+  };
+}

@@ -1,0 +1,22 @@
+{
+  "semgraph": "periodComparison",
+  "metric": "creditLeads",
+  "title": "Kredietleads per dag, per maand, tegenover het halfjaar ervoor (voorbeelddata)",
+  "measureType": "additive",
+  "statistic": "mean",
+  "unit": "month",
+  "locale": "nl-BE",
+  "context": {
+    "domain": "Leads",
+    "dataset": "creditLeads",
+    "reliability": "voorbeelddata"
+  },
+  "points": [
+    { "period": "2026-04", "mean": 43.7, "sd": 10.0898, "previous": { "mean": 42.4839 } },
+    { "period": "2026-05", "mean": 42.6129, "sd": 12.3253, "previous": { "mean": 39.9667 } },
+    { "period": "2026-06", "mean": 45.5, "sd": 11.178, "previous": { "mean": 34.8065 } },
+    { "period": "2026-07", "mean": 38.4839, "sd": 10.2563, "previous": { "mean": 42.1613 } },
+    { "period": "2026-08", "mean": 31.0968, "sd": 8.8557, "previous": { "mean": 42.25 } },
+    { "period": "2026-09", "mean": 45.0333, "sd": 11.9841, "previous": { "mean": 42.9355 } }
+  ]
+}

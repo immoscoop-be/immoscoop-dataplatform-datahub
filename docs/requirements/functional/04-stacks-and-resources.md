@@ -1,0 +1,753 @@
+# Resources
+
+| | |
+| --- | --- |
+| Domain | 4 of Data Hub · code `SR` |
+| Type | Working document |
+| Tags | context, decision, governance |
+| Area | Tooling, Technical |
+| Status | Specified; edge cases and open points remain |
+| Source of truth | This file |
+| Migrated from | [ptditt - Tooling - Data Hub - Stacks en resources](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1371078741) (Confluence, Dutch), last modified 2026-10-17, migrated 2026-10-17 |
+| Last decisions | 2026-10-19: a table becomes a Resource through an exposure with the tag `datahub` in its dbt project ([DEC-SR-22](#dec-sr-22) to [DEC-SR-27](#dec-sr-27)) |
+
+**In one sentence:** the Data Team makes a table a Resource with an exposure tagged `datahub` in its dbt project, and adds it to a Collection in Data Hub; from then on Data Hub knows it, assesses its Level and keeps its Log, until the Owner publishes it to everyone who sees the Collection, who can then find, read, query and discuss it.
+
+*Functional domain 4 of Data Hub. Overview of all domains: [Functional domains](README.md).*
+
+In library terms: a book is only in the library once the librarian registers it. It then stands on a shelf, has a title, belongs to a collection and gets a catalogue card. Only when the curator releases it is it in general circulation.
+
+## Decisions
+
+- <a id="dec-sr-01"></a>**DEC-SR-01** · There is one Stack: the dataset `dbt_prod_stacks`. Because a Resource is registered with its full name, more Stacks can be added later without changing the model. *Note of 2026-10-19: a Resource no longer has to be in a Stack ([DEC-SR-23](#dec-sr-23)).*
+- <a id="dec-sr-02"></a>**DEC-SR-02** · The Registration in Data Hub is the index. Being in a Stack is necessary, because the service account of Data Hub can only read there, but it is not enough: a view only exists for Data Hub once a Data Admin registers it. This replaces the earlier decision "the Stacks are the index". *Note of 2026-10-19: replaced by [DEC-SR-22](#dec-sr-22) and [DEC-SR-23](#dec-sr-23): the exposures in the dbt projects are the index.*
+- <a id="dec-sr-03"></a>**DEC-SR-03** · Only a Data Admin registers Resources: a member of the Role Group of the Data Team from [User management](02-user-management.md). At Registration, the Data Admin chooses the Collection straight away. *Note of 2026-10-19: replaced by [DEC-SR-22](#dec-sr-22) and [DEC-SR-27](#dec-sr-27): the Data Team registers through the dbt project, and chooses the Collection afterwards in Data Hub.*
+- <a id="dec-sr-04"></a>**DEC-SR-04** · A Resource has two identities: a Key, the full name `project.dataset.table`, and a Display Name, readable and unique, that the Data Admin chooses. *Note of 2026-10-19: the Display Name comes from the exposure ([DEC-SR-24](#dec-sr-24)).* *Note of 2026-10-30: the Key is in lower case; Data Hub also keeps the full name in its own case, for BigQuery ([DEC-SR-44](#dec-sr-44)).*
+- <a id="dec-sr-05"></a>**DEC-SR-05** · At Registration, the Level is derived, and it is at most 2. A new Resource is not yet published, and therefore only visible to the Data Team and to the Owner of its Collection.
+- <a id="dec-sr-06"></a>**DEC-SR-06** · Visibility depends on Publication, not on the Level. Publishing is a deliberate switch that the Owner flips. That way, a Resource does not disappear for those who use it every time the Level briefly drops. *Note of 2026-10-19: a published Resource is visible to everyone who sees its Collection, the whole company only when the Collection is public ([DEC-CO-12](03-collections.md#dec-co-12)).*
+- <a id="dec-sr-07"></a>**DEC-SR-07** · The first Publication is only possible from Described, and is at once the first Confirmation: with it, the Resource rises to Confirmed. *Note of 2026-10-26: or over Described, where Business Descriptions cover every description dbt lacks ([DEC-MR-09](06-maturity-and-release.md#dec-mr-09)).* *Note of 2026-10-28: no longer over Described; only from Described ([DEC-MR-10](06-maturity-and-release.md#dec-mr-10)).*
+- <a id="dec-sr-08"></a>**DEC-SR-08** · A published Resource stays published, even if its Level drops afterwards. The Owner then gets an alert, the lower Level is visible on the Resource Card and on every Lens and Report built on it, and the Owner confirms again without touching the Publication.
+- <a id="dec-sr-09"></a>**DEC-SR-09** · The Log works with fixed Log IDs from a catalogue. Every Log Entry refers to a Log ID, with the extra parameters in a JSON field. The text is only built at display time from the template and the parameters, so that the Log stays compact and filterable.
+- <a id="dec-sr-10"></a>**DEC-SR-10** · Search across names, descriptions and Log texts happens in Postgres itself: full-text search, complemented by trigrams for typos and half-remembered names. Semantic search with pgvector may follow later. A separate search engine is not needed.
+- <a id="dec-sr-11"></a>**DEC-SR-11** · At Registration, Data Hub stores a Fingerprint of the Resource, as the basis for later comparisons.
+- <a id="dec-sr-12"></a>**DEC-SR-12** · Every Registration sends a message to the Message Centre of the Data Admins.
+- <a id="dec-sr-22"></a>**DEC-SR-22** · A table becomes a Resource through its dbt project: every table that an exposure with the tag `datahub` depends on, in the Current Version of a dbt project Data Hub follows, is a Resource. Registering is merging such an exposure, so the review of the dbt project is the review of the Registration, and the project itself shows what Data Hub exposes. Data Hub keeps no list of its own to type into. This replaces [DEC-SR-02](#dec-sr-02) and the Registration by a Data Admin in Data Hub of [DEC-SR-03](#dec-sr-03).
+- <a id="dec-sr-23"></a>**DEC-SR-23** · The table does not have to be in a Stack: the exposure is enough. Every model, seed, snapshot or source the exposure depends on counts, as long as it is a table or view in BigQuery; an ephemeral model is not. This replaces the requirement of a Stack in [DEC-SR-01](#dec-sr-01) and [DEC-SR-02](#dec-sr-02). How Data Hub reads the data of these tables, for the Preview and for queries, is still open ([OP-SR-10](#op-sr-10)). *Note of 2026-10-26: how Data Hub reads these tables is decided ([DEC-SR-32](#dec-sr-32)).*
+- <a id="dec-sr-24"></a>**DEC-SR-24** · How the exposures are written is up to how dbt is used: one exposure per Resource is recommended, and one exposure for several tables works too. The Display Name of a Resource is the `label` of an exposure that depends on that table alone, and otherwise the name of its Node. This replaces the Display Name chosen by a Data Admin of [DEC-SR-04](#dec-sr-04); the Key stays the full name of the table.
+- <a id="dec-sr-25"></a>**DEC-SR-25** · Data Hub ignores the `owner` and the `maturity` of an exposure: the Owner comes from the Collection, the Level from the maturity ladder. Because dbt requires an `owner`, an exposure for Data Hub names the Data Team.
+- <a id="dec-sr-26"></a>**DEC-SR-26** · A Resource on which no exposure with the tag `datahub` depends any more is withdrawn, not deleted. Only the Data Team and the Owner Unit of its Collection still see it, marked as withdrawn; it keeps its Collection, its Confirmations and its Log, and comes back as it was when an exposure depends on it again. A refactoring or a typo in the dbt project thus costs nothing.
+- <a id="dec-sr-27"></a>**DEC-SR-27** · A new Resource has no Collection: only the Data Team sees it until it adds the Resource to a Collection in Data Hub ([FR-CO-14](03-collections.md#fr-co-14)). The Collection is chosen in Data Hub, never in the dbt project, because a Collection exists only in Data Hub ([DEC-CO-02](03-collections.md#dec-co-02)).
+- <a id="dec-sr-28"></a>**DEC-SR-28** · An Owner cannot unpublish a Resource: once published, it stays available to whoever builds on it. Instead, the Owner and the Data Team can mark it deprecated, which discourages its use without hiding or blocking anything. *Decided on 2026-10-26, by Max ([OP-SR-05](#op-sr-05)).*
+- <a id="dec-sr-29"></a>**DEC-SR-29** · What a query reads decides what happens, in three ranges, for every query, every preview and one run of a Lens that is made: up to 100 MB it runs freely; from 100 MB to 1 GB the User is warned and approves it; above 1 GB it goes to the Data Team, as a Request. These are start values, configurable, to be adjusted once there is experience with them. *Decided on 2026-10-26, by Max ([OP-SR-07](#op-sr-07)).*
+- <a id="dec-sr-30"></a>**DEC-SR-30** · A preview, and a result in Query, shows its rows a page of 100 at a time. The query runs once; the next pages are read from the result of that run, which BigQuery does not bill again. *Decided on 2026-10-26, by Max ([OP-SR-07](#op-sr-07)).*
+- <a id="dec-sr-31"></a>**DEC-SR-31** · Everyone who may see a Resource sees the queries on it: who, when, how and what it read. The SQL of a query is shown to whoever ran it, to the Owner Unit of the Resource for every query on what it owns, and to the Data Team, which sees all. *Decided on 2026-10-26, by Max ([OP-SR-13](#op-sr-13)).* *Note of 2026-10-29: only its Owner Unit and the Data Team see the queries on a Resource ([DEC-SR-41](#dec-sr-41)).*
+- <a id="dec-sr-32"></a>**DEC-SR-32** · The service account of Data Hub may read every table in the GCP projects of the dbt projects it follows, granted in Terraform. It needs no curated Stack: every table an exposure with the tag `datahub` depends on can be read, wherever dbt puts it. Who sees what stays decided in Data Hub, by the Publication. *Decided on 2026-10-26, by Max ([OP-SR-10](#op-sr-10)).*
+- <a id="dec-sr-33"></a>**DEC-SR-33** · A Resource holds plain fields only, never an array, a struct or JSON. When a model with such columns becomes a Resource, those columns are left out of it, and named as left out when it is added. Where a value inside one is needed, the Data Team adds it to the model in dbt as a field of its own, with the proper selector: the Data Team writes the query that outputs a field, and the Resource uses fields only. *Decided on 2026-10-28, by Max, in the review of [OP-AR-07](01-artifact-registry.md#op-ar-07).* *Note of 2026-10-28: bytes are left out too, and so are the fields inside a record; decided by Max while building part 2 of the [build order](../../design/build-order.md).*
+- <a id="dec-sr-34"></a>**DEC-SR-34** · Data Hub takes the partition and cluster columns of a Resource, and whether a partition filter is required, from `partition_by`, `cluster_by` and `require_partition_filter` in the dbt manifest: of its own model, or, for a view, of the model beneath it through the lineage. The size and the number of partitions come from BigQuery. When a view derives the partition column instead of passing it through unchanged, Data Hub says so instead of promising savings. The Data Admin confirms them when adding the Resource and sets what cannot be derived ([FR-CO-34](03-collections.md#fr-co-34)). *Decided on 2026-10-28, by Max ([OP-SR-12](#op-sr-12)).*
+- <a id="dec-sr-35"></a>**DEC-SR-35** · A query without a filter on the partition column of a Resource that requires one, in BigQuery or in Data Hub ([FR-CO-34](03-collections.md#fr-co-34)), cannot run. The Pre-flight says so in place of its numbers, names the partition column, and offers to add the filter. On a Resource that does not require one, the warning of [FR-SR-40](#fr-sr-40) stays. *Decided on 2026-10-28, by Max ([OP-SR-15](#op-sr-15)).*
+- <a id="dec-sr-36"></a>**DEC-SR-36** · Accepting a Request to run a query above 1 GB ([DEC-SR-29](#dec-sr-29)) lets that User run that query above the limit: every run, also after its SQL changes, without an end date. Nobody else, and no other query. The Pre-flight keeps showing what it reads. A Request waits until the Data Team answers, without a timeout ([DEC-LE-15](09-lenses.md#dec-le-15)). *Decided on 2026-10-28, by Max ([OP-SR-17](#op-sr-17)).*
+- <a id="dec-sr-37"></a>**DEC-SR-37** · A choice of a Parameter in a Preview lists at most 100 values of its column, read from the partitions the preview reads, in one small query that passes the Pre-flight and goes into the Query Log, as every query does. The partition column offers the last 1, 4 or 12 of its unit: days, weeks or months. *Decided on 2026-10-29, by Max ([OP-SR-22](#op-sr-22)).*
+- <a id="dec-sr-38"></a>**DEC-SR-38** · The Pre-flight shows the partitions the whole query reads, where BigQuery gives them, and through which column when one of its Resources is partitioned; not per Resource, nor out of how many. A dry run says what the whole query reads and does not say it per table. *Decided on 2026-10-29, by Max ([OP-SR-23](#op-sr-23)).*
+- <a id="dec-sr-39"></a>**DEC-SR-39** · In a Preview the partition column offers the newest 1, 4 or 12 partitions that hold rows, counted from the newest one, not back from today: for a weekly table partitioned by day, 1, 4 or 12 weeks. It refines [DEC-SR-37](#dec-sr-37). *Decided on 2026-10-29, by Max.*
+- <a id="dec-sr-40"></a>**DEC-SR-40** · The query that reads the values of the choices of a Preview is kept in the Query Log with its own Query ID, but is not listed in the history of the previews of the Resource: that history lists only the previews the User asked for ([DEC-SR-37](#dec-sr-37)). *Decided on 2026-10-29, by Max.*
+- <a id="dec-sr-41"></a>**DEC-SR-41** · Only the Owner Unit of a Resource and the Data Team see the queries on it, in its tab History, and they see their SQL; for everyone else the tab is not there. It replaces the first sentence of [DEC-SR-31](#dec-sr-31); who sees the SQL stays as DEC-SR-31 says, as the author of a query sees it in Query. *Decided on 2026-10-29, by Max ("hide the history for non-owners"; the Data Team sees every query already, [DEC-LN-01](07-log-and-notifications.md#dec-ln-01)).*
+- <a id="dec-sr-42"></a>**DEC-SR-42** · The words of the question of a new query are matched against the name of a Lens, the question it answers, what it shows and its tags, and the shared words are marked in all four. It extends [FR-SR-48](#fr-sr-48), which names the name, the description and the tags. *Decided on 2026-10-29, by Max.*
+- <a id="dec-sr-43"></a>**DEC-SR-43** · A new query offers only Lenses that run now: published, not stopped and not Broken. A Lens that waits for the Data Team, has stopped or is Broken is not offered to reuse ([FR-SR-47](#fr-sr-47)). *Decided on 2026-10-29, by Max.*
+- <a id="dec-sr-44"></a>**DEC-SR-44** · A Resource keeps the full name of its table twice: as its Key, in lower case, and in its own case, as dbt writes the database, schema and table name of its Node. The Key knows the table again, also in the SQL of a query, whatever the case it is written in. What asks BigQuery for the table, shows the name or copies it takes the name in its own case, since BigQuery names are case-sensitive: `mrt_leadSources` is not `mrt_leadsources`. Until the next run of its Source Job brings it, a Resource has its Key as both. It refines [DEC-SR-04](#dec-sr-04). *Decided on 2026-10-30, by Max (a Preview asked BigQuery for a table in lower case that exists only in camel case).*
+
+Further decisions on using a Resource are under [Using a Resource](#using-a-resource).
+
+## Terms
+
+| Term | Meaning |
+| --- | --- |
+| Resource | A table of a dbt project that an exposure with the tag `datahub` depends on: one book on the shelves |
+| Key | The full name of the table in BigQuery, `project.dataset.table` |
+| Display Name | The readable, unique name of the Resource, as business sees it, for example "Agency purity" |
+| Data Admin | A member of the Role Group of the Data Team, who registers and manages Resources |
+| Publication | The switch with which the Owner makes a Resource visible to everyone who sees its Collection: the whole company when the Collection is public |
+| Log ID | The fixed code of a kind of Log Entry, with a template and a list of parameters, for example `RES-001` |
+| Fingerprint | A set of hashes of the structure, the types and the descriptions of a Resource at a given moment |
+| Signal | A remark reporting that something seems odd about the data; it can grow into an Anomaly |
+
+## Flow: registering a Resource
+
+1. **Expose.** In the dbt project, the Data Team adds an exposure with the tag `datahub` that depends on the table, through a reviewed pull request ([DEC-SR-22](#dec-sr-22)).
+2. **Run.** The next run of the Source Job of that project makes the exposure part of its Current Version in the [Artifact registry](01-artifact-registry.md).
+3. **Register.** Data Hub finds the table under the exposure and registers it as a Resource, linked to its Node, with its Key and its Display Name.
+4. **Describe.** The description of the table and its columns comes from the Artifacts.
+5. **Assess.** The Level is derived: Available, or Described once dbt describes the table and at least one field ([DEC-MR-12](06-maturity-and-release.md#dec-mr-12)). Never higher.
+6. **Take a Fingerprint.** Data Hub stores the hashes of structure, types and descriptions.
+7. **Open the Log.** The first Log Entries are written: the Registration and the Level.
+8. **Notify.** A message goes to the Message Centre of the Data Admins.
+9. **Assign.** The Data Team adds the Resource to a Collection in Data Hub ([DEC-SR-27](#dec-sr-27)); the Owner of that Collection gets a Message ([DEC-CV-11](14-conversations.md#dec-cv-11)) and takes it from there.
+10. **Withdraw.** When no exposure with the tag `datahub` depends on the table any more, its Resource is withdrawn and held ([DEC-SR-26](#dec-sr-26)).
+
+## Flow: publishing a Resource
+
+1. **Ready.** The Resource is at Described and visible to the Owner of its Collection.
+2. **Publish.** The Owner checks the documentation and switches the Publication on. That is at once the first Confirmation: the Resource rises to Confirmed and is visible to the whole company.
+3. **Change.** If a field changes later, the Level and the Publication stay. A warning on the Resource says what changed, and the Owner is told ([DEC-MR-08](06-maturity-and-release.md#dec-mr-08)).
+4. **Seen.** The Owner or the Data Team marks the change as seen; no new Confirmation is needed.
+
+## Using a Resource
+
+Whoever may see a Resource can find it, read it, query it, help describe it and discuss it. What someone sees always follows the Publication: an unpublished Resource is only findable and readable for the Data Team and for the Owner.
+
+- <a id="dec-sr-13"></a>**DEC-SR-13** · Finding works in three ways: searching on title, description, Collection and Owner; browsing per Collection; and navigating via the Domain Model. A search result shows title, description, Collection and Owner.
+- <a id="dec-sr-14"></a>**DEC-SR-14** · The link with the Domain Model is derived from the manifest and the lineage, without manual work. Colleciónes gets no special treatment in this: it is part of the manifest like everything else. A Resource from dbt-prod thus finds its Entities via the models further along its lineage. A Resource without an Entity in its lineage stays findable via search and Collection.
+- <a id="dec-sr-15"></a>**DEC-SR-15** · Reading a Resource happens in tabs: Overview, Columns, Lineage, EDA, History, Conversations and Preview. Usage, who uses the Resource in Lenses, Reports and feeds, comes later. *Note of 2026-10-26: there is no tab Conversations any more; the Messages on a Resource open from "Messages" in its header, as on every object ([DEC-UX-67](../../design/principles.md#dec-ux-67)).* *Note of 2026-10-28: the tabs are Overview, Columns, Lineage, History and Preview; no EDA in v1, and History lists the queries that used the Resource ([DEC-UX-90](../../design/principles.md#dec-ux-90)).*
+- <a id="dec-sr-16"></a>**DEC-SR-16** · Querying comes in two flavours. Via Claude, it is free SQL, also across multiple Resources, with joins. In the interface there is only a preview of the first rows, no query builder: real questions need joins, and those belong with Claude and, later, with Lenses. *Note of 2026-10-28: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
+- <a id="dec-sr-17"></a>**DEC-SR-17** · When Claude queries on behalf of a User, Data Hub checks that every Resource in the query is visible to that User, and a limit on scanned bytes applies. Every query gets a label with the User. *Note of 2026-10-28: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
+- <a id="dec-sr-18"></a>**DEC-SR-18** · Executed queries are not stored in Data Hub in v1. BigQuery keeps its own job log for 180 days; query history may be added later. *Note of 2026-10-22: replaced by [DEC-LN-01](07-log-and-notifications.md#dec-ln-01): Data Hub keeps its own Query Log of every query.*
+- <a id="dec-sr-19"></a>**DEC-SR-19** · The Owner and the Data Team can supplement the description on top of the Artifacts: intended use, pitfalls, Anomalies, key fields and Parameter fields. Every addition goes into the Log, with who made it.
+- <a id="dec-sr-20"></a>**DEC-SR-20** · Everyone who may see a Resource can react to it. A Reaction has a type: a Question, a Remark or a Signal.
+- <a id="dec-sr-21"></a>**DEC-SR-21** · A Signal reports that something seems odd about the data. It goes to the Owner and to the Data Team, and they can turn it into an Anomaly on the Resource Card, with a period and the impact.
+
+### The tabs of a Resource
+
+| Tab | What you read | v1 |
+| --- | --- | --- |
+| Overview | Table description, Display Name and Key, Collection and Owner, Level and Publication, freshness, Known Behaviour: intended use and pitfalls | Yes |
+| Columns | Columns with description and type, relationships to other tables, and which fields serve as Parameters | Yes |
+| Lineage | Where the Resource comes from, also across the boundary between dbt-prod and Colleciónes | Yes |
+| EDA | The exploration by the Owner | Yes |
+| History | The Log, filterable by kind: Changes, Level, Publication, incidents and Anomalies | Yes |
+| Conversations | Questions, Remarks and Signals about the Resource | Yes |
+| Preview | The first rows of the data | Yes |
+| Usage | Which Lenses, Reports and feeds depend on the Resource | Later |
+
+*Note of 2026-10-22: the detail page does not show freshness ([DEC-UX-07](../../design/principles.md#dec-ux-07)).*
+
+### Kinds of Reaction
+
+| Type | For | Who gets a notification |
+| --- | --- | --- |
+| Question | A question about the Resource, for example how to read a field | The Owner, and whoever is already in the conversation |
+| Remark | A remark or tip for others | The Owner, and whoever is already in the conversation ([DEC-CV-09](14-conversations.md#dec-cv-09)) |
+| Signal | Something seems odd about the data; it can become an Anomaly | The Owner and the Data Team |
+
+## Requirements
+
+<a id="fr-sr-01"></a>
+### FR-SR-01 · Only Data Admins register, rename and deregister
+
+**Status:** Withdrawn · **Confluence:** SR-01
+
+Only Data Admins can register Resources, change their name and deregister them.
+
+*Withdrawn on 2026-10-19: registering, renaming and deregistering happen in the dbt project, through exposures ([FR-SR-32](#fr-sr-32), [DEC-SR-22](#dec-sr-22)).*
+
+<a id="fr-sr-02"></a>
+### FR-SR-02 · A Registration needs a full name, a Display Name and a Collection
+
+**Status:** Withdrawn · **Confluence:** SR-02
+
+A Registration requires three things: the full name, a Display Name and a Collection.
+
+*Withdrawn on 2026-10-19: the full name and the Display Name come from the dbt project ([FR-SR-32](#fr-sr-32), [FR-SR-33](#fr-sr-33)), and the Collection is chosen afterwards ([FR-SR-35](#fr-sr-35)).*
+
+<a id="fr-sr-03"></a>
+### FR-SR-03 · The view must be in a Stack and in the current Artifacts
+
+**Status:** Withdrawn · **Confluence:** SR-03
+
+The view must lie in a Stack on which the service account of Data Hub has read access, and must appear as a Node in the current Artifacts. Otherwise the Registration is refused, with the reason.
+
+*Withdrawn on 2026-10-19: a Resource no longer has to be in a Stack, and being in the Current Version follows from the exposure ([FR-SR-32](#fr-sr-32), [DEC-SR-23](#dec-sr-23)).*
+
+<a id="fr-sr-04"></a>
+### FR-SR-04 · The Key is unique
+
+**Status:** Implemented · **Confluence:** SR-04
+
+The Key is unique: a view can only be registered once.
+
+<a id="fr-sr-05"></a>
+### FR-SR-05 · The Display Name is required, unique and can be changed
+
+**Status:** Implemented · **Confluence:** SR-05
+
+The Display Name is required and unique. It can be changed later; every change goes into the Log.
+
+<a id="fr-sr-06"></a>
+### FR-SR-06 · The description comes from the Artifacts
+
+**Status:** Implemented · **Confluence:** SR-06 · **Screens:** [collection-add-resources](../../design/screens/collection-add-resources.html), [resource-columns-edit](../../design/screens/resource-columns-edit.html), [resource-detail](../../design/screens/resource-detail.html), [resource-edit](../../design/screens/resource-edit.html), [resource-unassigned](../../design/screens/resource-unassigned.html)
+
+The description comes from the Artifacts and is not retyped in Data Hub.
+
+*Note of 2026-10-26: next to it, the Owner and the Data Team can write a Business Description, of the Resource and of each field ([DEC-RC-01](05-resource-card.md#dec-rc-01)); the description from dbt itself is still never edited in Data Hub.*
+
+<a id="fr-sr-07"></a>
+### FR-SR-07 · The Level at Registration is at most Described
+
+**Status:** Implemented · **Confluence:** SR-07 · **Screens:** [resource-unassigned](../../design/screens/resource-unassigned.html)
+
+At Registration, the Level is derived and is at most 2, Described. The Resource is then not yet published, and only visible to the Data Team and to the Owner of its Collection.
+
+<a id="fr-sr-08"></a>
+### FR-SR-08 · Store a Fingerprint at Registration
+
+**Status:** Implemented · **Confluence:** SR-08
+
+At Registration, a Fingerprint is stored: a hash of the structure (the column names), a hash of the types, a hash of the descriptions, and the checksum of the code from the manifest.
+
+<a id="fr-sr-09"></a>
+### FR-SR-09 · Open the Log at Registration
+
+**Status:** Implemented · **Confluence:** SR-09 · **Screens:** [resource-unassigned](../../design/screens/resource-unassigned.html)
+
+At Registration, the Log of the Resource starts with the entries for Registration, Collection and Level.
+
+<a id="fr-sr-10"></a>
+### FR-SR-10 · Notify the Data Admins of every Registration
+
+**Status:** Implemented · **Confluence:** SR-10 · **Screens:** [messages](../../design/screens/messages.html)
+
+Every Registration sends a message to the Message Centre of the Data Admins.
+
+*Note of 2026-10-28: every Registration places the Message "A new Resource waits for a Collection" ([MSG-RES-01](message-catalogue.md#msg-res-01)) on the Resource ([TR-SR-09](../technical/04-stacks-and-resources.md#tr-sr-09)); the Message Centre that shows it to the Data Team comes with part 7 of the [build order](../../design/build-order.md).*
+
+*Note of 2026-10-31, on checking what was built: the Data Team finds [MSG-RES-01](message-catalogue.md#msg-res-01) under For you in the Message Centre, built with part 7.*
+
+<a id="fr-sr-11"></a>
+### FR-SR-11 · Structure of a Log Entry
+
+**Status:** Implemented · **Confluence:** SR-11 · **Screens:** [resource-detail](../../design/screens/resource-detail.html)
+
+A Log Entry consists of a Log ID, the Resource, the parameters as JSON, the actor (a person or Data Hub itself) and the timestamp. Free text is never stored.
+
+<a id="fr-sr-12"></a>
+### FR-SR-12 · Log IDs come from a fixed catalogue
+
+**Status:** Implemented · **Confluence:** SR-12 · **Screens:** [resource-detail](../../design/screens/resource-detail.html)
+
+The Log IDs are in a fixed catalogue (see the [Log catalogue](log-catalogue.md)). A new kind of Log Entry means a new Log ID, not free text.
+
+<a id="fr-sr-13"></a>
+### FR-SR-13 · Names, descriptions and Log texts are searchable
+
+**Status:** Specified · **Confluence:** SR-13
+
+The built texts of names, descriptions and Log Entries are searchable, by words and with tolerance for typos.
+
+<a id="fr-sr-14"></a>
+### FR-SR-14 · Deregistration keeps the Log and history
+
+**Status:** Implemented · **Confluence:** SR-14
+
+A deregistered Resource disappears from the index and from its Collection. Its Log and history are kept.
+
+<a id="fr-sr-15"></a>
+### FR-SR-15 · All texts in the app are in English
+
+**Status:** Withdrawn · **Confluence:** SR-15
+
+All texts in the app are in English: the interface, the names and the templates of the Log.
+
+*Note of 2026-10-25: the language principle proposes Dutch and English sentences, with English names ([NFR-LOC-01](../non-functional/localisation.md#nfr-loc-01), [NFR-LOC-06](../non-functional/localisation.md#nfr-loc-06)); open in [OP-DH-43](../../overview/open-themes.md#op-dh-43).*
+
+*Withdrawn on 2026-10-25: replaced by the language principle, decided by Max: names English, sentences Dutch by default with English available ([DEC-DH-65](../../overview/data-hub.md#dec-dh-65), [NFR-LOC-01](../non-functional/localisation.md#nfr-loc-01), [NFR-LOC-06](../non-functional/localisation.md#nfr-loc-06)).*
+
+<a id="fr-sr-16"></a>
+### FR-SR-16 · Only the Owner publishes
+
+**Status:** Implemented · **Confluence:** SR-16 · **Screens:** [resource-publish](../../design/screens/resource-publish.html)
+
+Only the Owner of the Collection can publish a Resource.
+
+*Note of 2026-10-28, on building it: the Owner is a member of the Owner Unit of the Collection; the Data Team does not publish as such ([TR-SR-12](../technical/04-stacks-and-resources.md#tr-sr-12)).*
+
+<a id="fr-sr-17"></a>
+### FR-SR-17 · The first Publication, from Described, is the first Confirmation
+
+**Status:** Implemented · **Confluence:** SR-17 · **Screens:** [resource-publish](../../design/screens/resource-publish.html)
+
+The first Publication is only possible when the Resource is at Described. It is at once the first Confirmation: the Resource rises to Confirmed.
+
+*Note of 2026-10-26: or over Described, where Business Descriptions cover every description dbt lacks ([DEC-MR-09](06-maturity-and-release.md#dec-mr-09)).* *Note of 2026-10-28: no longer over Described; only from Described ([DEC-MR-10](06-maturity-and-release.md#dec-mr-10)).*
+
+<a id="fr-sr-18"></a>
+### FR-SR-18 · Visibility depends only on Publication
+
+**Status:** Withdrawn · **Confluence:** SR-18
+
+Who sees the Resource depends only on the Publication: not published means visible to the Data Team and the Owner; published means visible to the whole company.
+
+*Withdrawn on 2026-10-19: replaced by [FR-SR-31](#fr-sr-31), where the Collection decides who "everyone" is ([DEC-CO-12](03-collections.md#dec-co-12)).*
+
+<a id="fr-sr-19"></a>
+### FR-SR-19 · A published Resource stays published when its Level drops
+
+**Status:** Implemented · **Confluence:** SR-19
+
+A published Resource stays published when its Level drops. The Owner gets an alert, and the current Level is visible on the Resource Card and on every Lens and Report that depends on it.
+
+*Note of 2026-10-28, on building it: the alert is the Message [MSG-RES-05](message-catalogue.md#msg-res-05), which the Message Centre shows with part 7 of the [build order](../../design/build-order.md); the Level shows on the Lenses and Reports when they are built ([TR-SR-13](../technical/04-stacks-and-resources.md#tr-sr-13)).*
+
+<a id="fr-sr-20"></a>
+### FR-SR-20 · Reconfirm after a drop
+
+**Status:** Withdrawn · **Confluence:** SR-20
+
+After a drop, the Owner confirms again. Reconfirming changes nothing about the Publication.
+
+*Note of 2026-10-26: withdrawn by Max. There is no reconfirmation; a change to the schema gives a warning ([DEC-MR-08](06-maturity-and-release.md#dec-mr-08)).*
+
+<a id="fr-sr-21"></a>
+### FR-SR-21 · Search on title, description, Collection and Owner
+
+**Status:** Specified · **Confluence:** SR-21
+
+Search covers title, description, Collection and Owner. A result shows those four, and only Resources the User may see.
+
+<a id="fr-sr-22"></a>
+### FR-SR-22 · Browse per Collection
+
+**Status:** Implemented · **Confluence:** SR-22 · **Screens:** [collections-start](../../design/screens/collections-start.html)
+
+Browsing per Collection shows the Resources of a Collection, with the colour and the icon of that Collection.
+
+*Note of 2026-10-22: in the web app, a Collection unfolds to its Resources in the panel of Collections ([FR-CO-18](03-collections.md#fr-co-18)).*
+
+*Note of 2026-10-31, on checking what was built: a Collection shows with its icon only, as it has no colour ([DEC-CO-23](03-collections.md#dec-co-23)).*
+
+<a id="fr-sr-23"></a>
+### FR-SR-23 · Derive the Entities from the manifest and the lineage
+
+**Status:** Specified · **Confluence:** SR-23 · **Screens:** [resource-detail](../../design/screens/resource-detail.html)
+
+The Entities of a Resource are derived from the manifest and the lineage, in the same way for every Resource. Via an Entity of the Domain Model, you find the Resources that are about it.
+
+<a id="fr-sr-24"></a>
+### FR-SR-24 · Read a Resource in tabs
+
+**Status:** Implemented · **Confluence:** SR-24 · **Screens:** [resource-detail](../../design/screens/resource-detail.html)
+
+A Resource is read in the tabs Overview, Columns, Lineage, EDA, History, Conversations and Preview. History is filterable by kind of Log Entry.
+
+*Note of 2026-10-26: there is no tab Conversations any more; the Messages on a Resource open from "Messages" in its header, as on every object ([DEC-UX-67](../../design/principles.md#dec-ux-67)).*
+
+*Note of 2026-10-23: a tab Queries is proposed ([FR-SR-44](#fr-sr-44)).*
+
+*Note of 2026-10-28: the tabs are Overview, Columns, Lineage, History and Preview; History lists the queries and Lenses that used the Resource, one row per query, and is not a list of Log Entries ([DEC-UX-90](../../design/principles.md#dec-ux-90), [OP-SR-18](#op-sr-18)).*
+
+*Note of 2026-10-28, on building part 4: the tabs Overview, Columns and Lineage are built; History and Preview are there and come with Query, in part 5 of the [build order](../../design/build-order.md).*
+
+<a id="fr-sr-25"></a>
+### FR-SR-25 · The preview shows a limited number of rows
+
+**Status:** Implemented · **Confluence:** SR-25 · **Screens:** [resource-preview](../../design/screens/resource-preview.html)
+
+The Preview shows a limited number of first rows. There is no query builder in the interface.
+
+*Note of 2026-10-23: SQL does come into the interface, in a section Query of its own ([FR-SR-41](#fr-sr-41)); the Preview itself stays without a query builder ([FR-SR-38](#fr-sr-38)).*
+
+<a id="fr-sr-26"></a>
+### FR-SR-26 · Free SQL via Claude, over visible Resources only
+
+**Status:** Specified · **Confluence:** SR-26
+
+Via Claude, a User can have free SQL executed over the Resources they may see. A query that touches a Resource they cannot see is refused.
+
+*Note of 2026-10-23: Query is the other way, in the interface ([FR-SR-41](#fr-sr-41)).*
+
+*Could, not in v1: set on 2026-10-28, by Max; Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
+
+<a id="fr-sr-27"></a>
+### FR-SR-27 · A byte limit and a User label on every query
+
+**Status:** Implemented · **Confluence:** SR-27
+
+Every query gets a limit on scanned bytes and a label with the User. Executed queries are not stored in Data Hub in v1.
+
+*Note of 2026-10-22: queries are stored after all, in the Query Log ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)).*
+
+*Note of 2026-10-29, on building it: the limit is the second threshold, 1 GB, as `maximumBytesBilled`; the labels are `datahub-user`, the Google ID of the User, and `datahub-query`, the Query ID ([TR-SR-16](../technical/04-stacks-and-resources.md#tr-sr-16)).*
+
+<a id="fr-sr-28"></a>
+### FR-SR-28 · The Owner and the Data Team supplement the description
+
+**Status:** Implemented · **Confluence:** SR-28 · **Screens:** [resource-detail](../../design/screens/resource-detail.html), [resource-edit](../../design/screens/resource-edit.html)
+
+The Owner and the Data Team can supplement intended use, pitfalls, Anomalies, key fields and Parameter fields. Every addition goes into the Log.
+
+*Note of 2026-10-28, on building it: Anomalies come with making a Signal an Anomaly, not in v1 ([FR-SR-30](#fr-sr-30)).*
+
+<a id="fr-sr-29"></a>
+### FR-SR-29 · React with a Question, a Remark or a Signal
+
+**Status:** Implemented · **Confluence:** SR-29 · **Screens:** [learning-message](../../design/screens/learning-message.html), [resource-detail](../../design/screens/resource-detail.html), [resource-messages](../../design/screens/resource-messages.html)
+
+Everyone who may see a Resource can react with a Question, a Remark or a Signal.
+
+<a id="fr-sr-30"></a>
+### FR-SR-30 · A Signal can become an Anomaly
+
+**Status:** Specified · **Confluence:** SR-30
+
+A Signal goes to the Owner and the Data Team, and they can turn it into an Anomaly on the Resource Card.
+
+*Could, not in v1: set on 2026-10-28, by Max; making a Signal an Anomaly is left out of version 1.*
+
+<a id="fr-sr-31"></a>
+### FR-SR-31 · Visibility follows the Publication and the Collection
+
+**Status:** Implemented · **Screens:** [collection-overview](../../design/screens/collection-overview.html), [resource-publish](../../design/screens/resource-publish.html), [resource-unassigned](../../design/screens/resource-unassigned.html)
+
+Who sees a Resource depends on its Publication and on its Collection. Not published: the Data Team and the members of the Owner Unit of its Collection. Published: everyone who sees its Collection ([FR-CO-17](03-collections.md#fr-co-17)), which for a public Collection is the whole company. A Resource without a Collection is visible only to the Data Team.
+
+<a id="fr-sr-32"></a>
+### FR-SR-32 · A table is registered through an exposure with the tag datahub
+
+**Status:** Implemented · **Screens:** [collection-add-resources](../../design/screens/collection-add-resources.html), [resource-unassigned](../../design/screens/resource-unassigned.html)
+
+Every table, view or seed that an exposure with the tag `datahub` depends on, in the Current Version of a dbt project Data Hub follows, is a Resource, once: several exposures on one table make one Resource. A Node that builds nothing in BigQuery, such as an ephemeral model, is not. Data Hub registers a new one when the run that brings its exposure becomes the Current Version, and writes the Registration in its Log.
+
+<a id="fr-sr-33"></a>
+### FR-SR-33 · The Display Name comes from the exposure
+
+**Status:** Implemented
+
+The Display Name is the `label` of an exposure that depends on that table alone, and otherwise the name of its Node. When another Resource already has that Display Name, the name of the dbt project is added in brackets. A change of the label in the dbt project renames the Resource, and the change goes into its Log.
+
+<a id="fr-sr-34"></a>
+### FR-SR-34 · A Resource without exposure is withdrawn and held
+
+**Status:** Implemented
+
+When the Current Version of its dbt project has no exposure with the tag `datahub` on the table any more, the Resource is withdrawn: only the Data Team and the Owner Unit of its Collection still see it, marked as withdrawn. It keeps its Collection and its Log, and comes back as it was when an exposure depends on it again. Both go into its Log.
+
+<a id="fr-sr-35"></a>
+### FR-SR-35 · A new Resource waits for a Collection
+
+**Status:** Implemented · **Screens:** [collection-add-resources](../../design/screens/collection-add-resources.html), [resource-unassigned](../../design/screens/resource-unassigned.html)
+
+A new Resource has no Collection. Until the Data Team adds it to one, only the Data Team sees it, in a list of Resources without a Collection.
+
+<a id="fr-sr-36"></a>
+### FR-SR-36 · A Pre-flight before every query
+
+**Status:** Implemented · **Source:** [REQ-DH-PREFLIGHT](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-preflight) · **Screens:** [lens](../../design/screens/lens.html), [query](../../design/screens/query.html), [resource-preview](../../design/screens/resource-preview.html)
+
+Before every query, Data Hub shows a Pre-flight with the volume it will process, in MB or GB.
+
+*Note of 2026-10-29, on building it: every query of Query passes it, from a dry run of BigQuery while typing pauses ([TR-SR-16](../technical/04-stacks-and-resources.md#tr-sr-16)); a preview and a Lens show theirs when they are built, in part 5 and part 6 of the [build order](../../design/build-order.md).*
+
+<a id="fr-sr-37"></a>
+### FR-SR-37 · Approval above one threshold, a block above another
+
+**Status:** Implemented · **Source:** [REQ-DH-PREFLIGHT](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-preflight) · **Screens:** [lens](../../design/screens/lens.html), [query](../../design/screens/query.html)
+
+Above X GB, the User has to approve a query explicitly; above Y GB, the query is blocked. X and Y are configurable.
+
+*Note of 2026-10-26: X is 100 MB and Y 1 GB, as start values; above Y a query is not blocked but goes to the Data Team, as a Request ([DEC-SR-29](#dec-sr-29)).*
+
+*Note of 2026-10-29, on building part 5: approving between the two thresholds is built ([TR-SR-16](../technical/04-stacks-and-resources.md#tr-sr-16)); the Request above 1 GB comes in the second piece of part 5, and the Data Team decides it with the Message Centre, in part 7 of the [build order](../../design/build-order.md).*
+
+*Note of 2026-10-29, on building the second piece of part 5: above 1 GB the query is sent to the Data Team from the bar of the Pre-flight and does not run until a Request of its author is accepted; then it runs above the limit, also after its SQL changes ([DEC-UX-116](../../design/principles.md#dec-ux-116), [DEC-SR-36](#dec-sr-36), [TR-SR-18](../technical/04-stacks-and-resources.md#tr-sr-18)). Until the Message Centre, in part 7, nobody can accept one, so nobody runs a query above 1 GB.*
+
+<a id="fr-sr-38"></a>
+### FR-SR-38 · The Parameters of a Resource choose the rows of its Preview
+
+**Status:** Implemented · **Source:** [the design of the Preview](../../design/principles.md#preview), 2026-10-23 · **Screens:** [resource-preview](../../design/screens/resource-preview.html)
+
+The Preview offers a choice per Parameter of the Resource, such as the weeks or the lead source, to choose which first rows it shows. Choosing is picking values, not typing SQL. The partition column of a partitioned Resource is always one of them, with a recent range chosen by default, so that a preview reads only the partitions it shows: in BigQuery, a `LIMIT` alone lowers nothing that is read. Every preview is a query: it passes the Pre-flight ([FR-SR-36](#fr-sr-36)) and its result carries its Query ID ([FR-LN-06](07-log-and-notifications.md#fr-ln-06)).
+
+*Note of 2026-10-29: a choice lists at most 100 values of its column, from the partitions the preview reads; the partition column offers the last 1, 4 or 12 of its unit ([DEC-SR-37](#dec-sr-37)).*
+
+*Note of 2026-10-29, later: the partition column offers its newest 1, 4 or 12 partitions that hold rows ([DEC-SR-39](#dec-sr-39)); the query that reads the values of the choices is in the Query Log, not in the history of the previews ([DEC-SR-40](#dec-sr-40)).*
+
+*Note of 2026-10-29, on building the third piece of part 5: the Preview offers its partition column, its first cluster column and the Parameters of its Card that are text, a number, a date or yes or no, up to six; a preview runs as a query of its own per User and Resource, by itself up to 100 MB, and goes to the Data Team above 1 GB ([TR-SR-19](../technical/04-stacks-and-resources.md#tr-sr-19)). It has no export ([DEC-UX-120](../../design/principles.md#dec-ux-120)).*
+
+<a id="fr-sr-39"></a>
+### FR-SR-39 · A Resource shows how it is partitioned and clustered
+
+**Status:** Implemented · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#detail-page-of-a-resource) · **Screens:** [resource-detail](../../design/screens/resource-detail.html), [resource-preview](../../design/screens/resource-preview.html)
+
+The page of a Resource shows its partition column and the unit of its partitions, the number of partitions, its cluster columns in their order, and its size, with a sentence on how to query it cheaply. Its columns are marked as the partition or a cluster column. Claude gets the same through the MCP, so that it filters on them too. For a Resource that is a view, these are of the table beneath it ([OP-SR-12](#op-sr-12)).
+
+*Note of 2026-10-28, on building part 4: the page shows the partition column and its unit, the cluster columns in their order, and how to query it cheaply; its size and number of partitions come from BigQuery with Query, in part 5 of the [build order](../../design/build-order.md).*
+
+*Note of 2026-10-29, on building the third piece of part 5: the size and number of partitions come from BigQuery, for a view from the table beneath it partitioned on the same column ([TR-SR-20](../technical/04-stacks-and-resources.md#tr-sr-20)). Claude gets them through the MCP with version 2.*
+
+<a id="fr-sr-40"></a>
+### FR-SR-40 · The Pre-flight counts the partitions and warns without a partition filter
+
+**Status:** Implemented · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#query) · **Screens:** [lens](../../design/screens/lens.html), [lens-new](../../design/screens/lens-new.html), [lens-new-context](../../design/screens/lens-new-context.html), [query](../../design/screens/query.html), [resource-preview](../../design/screens/resource-preview.html)
+
+The Pre-flight ([FR-SR-36](#fr-sr-36)) says, per Resource, how many of its partitions a query reads and through which column, and calls its volume "at most" where clustering can make the real read lower. A query on a partitioned Resource without a filter on its partition column gets a warning, with what it would read with one.
+
+*Note of 2026-10-28: where the Resource requires a partition filter, the query is blocked instead ([DEC-SR-35](#dec-sr-35)).*
+
+*Note of 2026-10-25: a Resource can require a partition filter, because BigQuery requires one or because the Data Admin set it ([FR-CO-34](03-collections.md#fr-co-34)). A query without one then does not run at all; how the Pre-flight treats it is [OP-SR-15](#op-sr-15).*
+
+*Note of 2026-10-29, on building part 5: built are the warning without a filter, with what the query reads with one on the recent partitions, the block where the Resource requires one, and "at most" in the volume ([TR-SR-16](../technical/04-stacks-and-resources.md#tr-sr-16)); how many partitions each Resource reads is [OP-SR-23](#op-sr-23).*
+
+*Note of 2026-10-29: the partitions are those of the whole query, not per Resource ([DEC-SR-38](#dec-sr-38)).*
+
+*Note of 2026-10-29, on building the third piece of part 5: the Pre-flight shows the partitions of the whole query, and the Preview how many of all of them it reads ([DEC-SR-38](#dec-sr-38)).*
+
+<a id="fr-sr-41"></a>
+### FR-SR-41 · Query, a section for SQL over everything the User may see
+
+**Status:** Implemented · **Source:** [DEC-UX-17](../../design/principles.md#dec-ux-17) · **Screens:** [query](../../design/screens/query.html), [resource-history](../../design/screens/resource-history.html), [resource-preview](../../design/screens/resource-preview.html)
+
+Data Hub has a section Query, next to Collections, in which a User writes SQL over every Resource they may see, and later Lenses. A query that touches a Resource they cannot see is refused, as through Claude ([FR-SR-26](#fr-sr-26)). Every query passes the Pre-flight, with its thresholds ([FR-SR-36](#fr-sr-36), [FR-SR-37](#fr-sr-37)), gets a byte limit and a label ([FR-SR-27](#fr-sr-27)), and its result carries its Query ID ([FR-LN-06](07-log-and-notifications.md#fr-ln-06)). From the page of a Resource, "Query this resource" opens Query with it.
+
+*Note of 2026-10-27: a query reads only its own Resources; a table outside them is an error, and another set of Resources is another query ([DEC-UX-73](../../design/principles.md#dec-ux-73)).*
+
+*Note of 2026-10-29, on building it: Query, its panel, a new query and the page of a query, reading only its own Resources ([TR-SR-15](../technical/04-stacks-and-resources.md#tr-sr-15) to [TR-SR-17](../technical/04-stacks-and-resources.md#tr-sr-17)); Lenses come with part 6 of the [build order](../../design/build-order.md), Claude in version 2.*
+
+<a id="fr-sr-42"></a>
+### FR-SR-42 · The editor formats and suggests
+
+**Status:** Implemented · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#query) · **Screens:** [query](../../design/screens/query.html)
+
+The SQL editor in Query formats the SQL on request, and suggests while typing: the Resources the User may see, their columns and the Parameters, the partition and cluster columns first and marked as such.
+
+*Note of 2026-10-29: the editor suggests only the columns of the Resources of the query, and the Parameters ([DEC-UX-73](../../design/principles.md#dec-ux-73)); the suggestion that is selected shows the type of its field and its descriptions ([DEC-UX-115](../../design/principles.md#dec-ux-115), [OP-SR-20](#op-sr-20)).*
+
+<a id="fr-sr-43"></a>
+### FR-SR-43 · The panel of Query lists the queries that ran
+
+**Status:** Implemented · **Source:** [DEC-UX-20](../../design/principles.md#dec-ux-20) · **Screens:** [query](../../design/screens/query.html), [query-new](../../design/screens/query-new.html)
+
+The panel of Query lists the queries a User ran, through Query, a preview or Claude, newest first and grouped by day. The Data Team can also list everyone's, with who ran them and their SQL; nobody else sees the queries of others ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)). Each query shows whether it ran on Resources or on a Lens, its name, what it ran on, what it read, and whether it was approved or blocked, and opens in Query with a click.
+
+*Note of 2026-10-27: one item per query, not per run; every run is a variation in the history of its query ([DEC-UX-74](../../design/principles.md#dec-ux-74)).*
+
+*Note of 2026-10-29, on building part 5: the panel lists the queries of the User, and everyone's for the Data Team, one item per query by the day of its last run, with what it ran on, how many runs and when; its last runs, and whether it was approved or went to the Data Team, come in the second piece of part 5 of the [build order](../../design/build-order.md).*
+
+*Note of 2026-10-29, on building the second piece of part 5: the query that is open unfolds to its last runs, and a query that went to the Data Team is labelled so, or "Accepted" once it is ([DEC-UX-74](../../design/principles.md#dec-ux-74), [DEC-UX-116](../../design/principles.md#dec-ux-116)). The previews of a Resource come with the third piece, and the queries of Claude with Claude.*
+
+*Note of 2026-10-29, on building the third piece of part 5: the previews of a Resource by a User are one query in the panel, marked "Preview" ([TR-SR-19](../technical/04-stacks-and-resources.md#tr-sr-19)).*
+
+*Note of 2026-10-30: the panel groups them per day in this week, per week back to the first of last month, then per month, and reads a period only when it is opened; previews, the queries of Lenses and hidden queries show only when they are ticked in the filter next to the search ([DEC-UX-150](../../design/principles.md#dec-ux-150)), and a User hides a query for themselves alone ([DEC-UX-137](../../design/principles.md#dec-ux-137), [DEC-UX-138](../../design/principles.md#dec-ux-138), [DEC-UX-139](../../design/principles.md#dec-ux-139)).*
+
+*Note of 2026-10-31, on checking what was built: built as the notes above say; the queries of Claude come with Claude, in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
+
+<a id="fr-sr-44"></a>
+### FR-SR-44 · The page of a Resource lists the queries on it
+
+**Status:** Implemented · **Source:** [DEC-UX-19](../../design/principles.md#dec-ux-19) · **Screens:** [resource-history](../../design/screens/resource-history.html)
+
+The page of a Resource has a tab Queries with every query that ran on it: when, who, through what, what it read and its Query ID, and a few numbers over the last 30 days. The SQL of a query is shown only to whoever ran it and to the Data Team ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)). Who sees the list is open ([OP-SR-13](#op-sr-13)).
+
+*Note of 2026-10-26: everyone who may see the Resource sees the list; the SQL also shows to the Owner Unit of the Resource ([DEC-SR-31](#dec-sr-31)).*
+
+*Note of 2026-10-28: in the tab History, one row per query or Lens, with its runs and last run ([DEC-UX-90](../../design/principles.md#dec-ux-90)).*
+
+*Note of 2026-10-28, later: a row has no Query ID; the numbers on top are the queries of the last 30 days, how many of them are Lenses, and how many colleagues ran them, as [resource-history](../../design/screens/resource-history.html) shows ([OP-SR-18](#op-sr-18)).*
+
+*Note of 2026-10-29: only the Owner Unit of the Resource and the Data Team see the tab History, and they see the SQL of its queries ([DEC-SR-41](#dec-sr-41)).*
+
+*Note of 2026-10-29, on building the third piece of part 5: the tab History lists every query with a run on the Resource, newest run first, with the numbers of the last 30 days; Lenses count from part 6 of the [build order](../../design/build-order.md) ([TR-SR-21](../technical/04-stacks-and-resources.md#tr-sr-21)).*
+
+*Note of 2026-10-29, on building part 6a: a Lens is one row, made by its author, with the runs of every User, and the numbers on top count the Lenses ([TR-LE-03](../technical/09-lenses.md#tr-le-03)).*
+
+<a id="fr-sr-45"></a>
+### FR-SR-45 · Every query has a name
+
+**Status:** Implemented · **Source:** [DEC-UX-21](../../design/principles.md#dec-ux-21) · **Screens:** [query](../../design/screens/query.html), [query-new](../../design/screens/query-new.html)
+
+A new query starts with its name, before its SQL. Data Hub suggests one from where the query starts: its Resources and the date, or for a Lens the name of the Lens. It suggests no other names. The name can be changed later; a query without a name cannot be run.
+
+*Note of 2026-10-29, on building part 5: a query has its name from the start, suggested from its Resources and the date; changing it later has no screen yet ([OP-UX-42](../../design/principles.md#op-ux-42)).*
+
+*Note of 2026-10-29, later: a click on the name or the question above the editor edits it in place ([DEC-UX-119](../../design/principles.md#dec-ux-119)).*
+
+*Note of 2026-10-29, on building the third piece of part 5: who made a query changes its name and question in place; a name stays required ([TR-SR-17](../technical/04-stacks-and-resources.md#tr-sr-17)).*
+
+<a id="fr-sr-46"></a>
+### FR-SR-46 · "Query" on the page of a Resource starts a new query on it
+
+**Status:** Implemented · **Source:** [DEC-UX-21](../../design/principles.md#dec-ux-21) · **Screens:** [query-new](../../design/screens/query-new.html), [resource-detail](../../design/screens/resource-detail.html)
+
+The page of a Resource has a button "Query". It opens Query with a new query: the Resource as its source, its name suggested ([FR-SR-45](#fr-sr-45)), and its SQL starting with a filter on the partition column ([FR-SR-39](#fr-sr-39)).
+
+<a id="fr-sr-47"></a>
+### FR-SR-47 · A new query first shows the Lenses on its Resources
+
+**Status:** Implemented · **Source:** [DEC-UX-22](../../design/principles.md#dec-ux-22) · **Screens:** [query](../../design/screens/query.html), [query-new](../../design/screens/query-new.html)
+
+While a User names a new query and chooses its Resources, Data Hub shows the Lenses they may see that already use those Resources: a Lens only when the User may use every Resource beneath it ([DEC-CO-16](03-collections.md#dec-co-16)). First the Lenses on exactly these Resources, then those on these Resources and more; within each, ranked by the words they share with the question of the query ([FR-SR-48](#fr-sr-48)). Each Lens shows what it shows, its Resources, its maker, its use and its Level, and can be used straight away. Starting an own query stays possible, as the alternative.
+
+*Note of 2026-10-29: a Lens shows no count of its use in v1 ([OP-SR-21](#op-sr-21)); when no Lens uses the Resources, the new query says so ([DEC-UX-114](../../design/principles.md#dec-ux-114)).*
+
+*Note of 2026-10-29, on building part 5: until Lenses are built, in part 6 of the [build order](../../design/build-order.md), a new query says that no Lens uses its Resources ([DEC-UX-114](../../design/principles.md#dec-ux-114)).*
+
+*Note of 2026-10-29: only Lenses that run now are offered ([DEC-SR-43](#dec-sr-43)).*
+
+*Note of 2026-10-29, on building part 6c: built as [TR-LE-07](../technical/09-lenses.md#tr-le-07); the query page shows the same Lenses in a sheet, and the sheet of a new set says how many use it.*
+
+<a id="fr-sr-48"></a>
+### FR-SR-48 · The question of a new query finds Lenses by their words
+
+**Status:** Implemented · **Source:** [DEC-UX-23](../../design/principles.md#dec-ux-23) · **Screens:** [query](../../design/screens/query.html), [query-new](../../design/screens/query-new.html)
+
+A new query has a question: what the User wants to know, in a sentence. Its words are matched against the name, the description and the tags of the Lenses ([FR-LE-06](09-lenses.md#fr-le-06)), deterministically, with the full-text search of Postgres in the English configuration ([Search](#search)): common words such as "the" and "a" are left out, and words count by their stem, so that "sessions" matches "session". The Lenses that share most words come first, and the shared words are marked in their name, description and tags.
+
+*Note of 2026-10-29: the question of a Lens counts too ([DEC-SR-42](#dec-sr-42)).*
+
+*Note of 2026-10-29, on building part 6c: built as [TR-LE-07](../technical/09-lenses.md#tr-le-07). The typos and half-remembered names of [Search](#search) are not needed for a question, and are left for the search of the start screen of Collections, in part 6d.*
+
+*Note of 2026-10-29, on building part 6d: the search of the start screen of Collections matches words the same way ([TR-CO-06](../technical/03-collections.md#tr-co-06)). Typos and half-remembered names, by trigrams ([Search](#search)), are not built yet, for a new query nor for the start screen.*
+
+<a id="fr-sr-49"></a>
+### FR-SR-49 · Publishing says who will see the Resource and asks for the Confirmation
+
+**Status:** Implemented · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#publishing-and-confirming) · **Screens:** [resource-publish](../../design/screens/resource-publish.html)
+
+The Owner publishes a Resource from its page. Before they do, Data Hub shows who will see it once published ([FR-SR-31](#fr-sr-31)), and what it checked: that they may publish it ([FR-SR-16](#fr-sr-16)) and that the Resource is Described ([FR-SR-17](#fr-sr-17)). When it is not Described, publishing is not possible, and Data Hub names the columns without a description. As the first Publication is the first Confirmation, the Owner confirms in the same step, with the declaration that the Resource is correct: what it is and what it stands for ([DEC-MR-07](06-maturity-and-release.md#dec-mr-07)). They tick the declaration right next to the button that publishes; until it is ticked, the button stays off.
+
+*Note of 2026-10-26: the control figures and since when the data is reliable are no longer asked here; a Confirmation makes no claim about the data ([DEC-MR-07](06-maturity-and-release.md#dec-mr-07)). Since when the data is reliable stays on the Resource Card ([FR-RC-13](05-resource-card.md#fr-rc-13)).*
+
+*Note of 2026-10-26: when the Resource is not Described, the sheet names what dbt lacks and whether a Business Description covers it; once every gap is covered, publishing is possible, and the Resource is Confirmed with a mark ([FR-MR-13](06-maturity-and-release.md#fr-mr-13)).*
+
+*Note of 2026-10-28: replaced by [DEC-MR-10](06-maturity-and-release.md#dec-mr-10): a Resource without its descriptions from dbt stays at 1 · Available and cannot be published; a Business Description covers no gap ([OP-SR-19](#op-sr-19)).*
+
+<a id="fr-sr-50"></a>
+### FR-SR-50 · A Resource can be marked deprecated
+
+**Status:** Implemented · **Source:** Max, 2026-10-26 ([OP-SR-05](#op-sr-05)) · **Screens:** [resource-overview](../../design/screens/resource-overview.html), [resource-deprecate](../../design/screens/resource-deprecate.html), [resource-detail](../../design/screens/resource-detail.html)
+
+The Owner and the Data Team can mark a published Resource deprecated: its use is discouraged. The mark shows wherever the Resource appears, on the Lenses and Reports built on it and for Claude. It hides nothing and blocks nothing, and it can be taken away again. Every mark and its removal go into the Log.
+
+*Note of 2026-10-28, on building it: the mark shows on the page of the Resource, in the panel and on the page of its Collection; the Lenses, Reports and Claude show it when they are built ([TR-SR-14](../technical/04-stacks-and-resources.md#tr-sr-14)).*
+
+*Note of 2026-11-04: the Owner Unit and the Data Team mark it, and take the mark away, in the Danger zone of its Overview, which explains what it does first ([DEC-UX-176](../../design/principles.md#dec-ux-176)).*
+
+<a id="fr-sr-51"></a>
+### FR-SR-51 · A result shows 100 rows a page
+
+**Status:** Implemented · **Source:** Max, 2026-10-26 ([OP-SR-07](#op-sr-07)) · **Screens:** [lens](../../design/screens/lens.html), [query](../../design/screens/query.html), [resource-preview](../../design/screens/resource-preview.html)
+
+A preview, and the result of a query in Query, shows its rows 100 at a time, with how many rows there are in all and a way to the next and the previous page. Turning a page reads the next rows of the same run; it runs no query again ([DEC-SR-30](#dec-sr-30)).
+
+*Note of 2026-10-29, on building part 5: built for a result in Query, from the job of its run ([TR-SR-16](../technical/04-stacks-and-resources.md#tr-sr-16)); the preview follows with its tab.*
+
+*Note of 2026-10-31, on checking what was built: the Preview pages its result 100 rows at a time too.*
+
+<a id="fr-sr-52"></a>
+### FR-SR-52 · Data Hub finds what is Broken, and what works again
+
+**Status:** Implemented · **Source:** [DEC-DH-67](../../overview/data-hub.md#dec-dh-67), [DEC-DH-68](../../overview/data-hub.md#dec-dh-68)
+
+Data Hub looks for Broken assets at three moments:
+
+1. **After every new Current Version** of a dbt project, for each Resource it withdraws or brings back ([FR-SR-34](#fr-sr-34)) and each Resource with a field removed, renamed or back ([FR-AR-12](01-artifact-registry.md#fr-ar-12)).
+2. **Once a day**, for each Resource whose table is not found in BigQuery, or is found again. This also catches a table dropped outside dbt.
+3. **When a run, a Pre-flight or a Preview fails** because a table or a column is not found.
+
+For each Resource found, Data Hub takes from its database what reads it ([DEC-DH-68](../../overview/data-hub.md#dec-dh-68)) and does a dry run of each Lens, feed and query: one that fails on a missing table or column becomes Broken, with what is missing; one that was Broken and now succeeds works again. A Report follows its Lenses. A dry run reads nothing and costs nothing. Every change of state goes into the Log of the asset (`BRK-001`, `BRK-002` in the [Log catalogue](log-catalogue.md)) and into its Message ([MSG-LEN-05](message-catalogue.md#msg-len-05), [MSG-QRY-02](message-catalogue.md#msg-qry-02), [MSG-RPT-01](message-catalogue.md#msg-rpt-01)).
+
+*Note of 2026-10-29: for Lenses, the first and third moment are built first, the second, right after a new Current Version, later ([DEC-LE-20](09-lenses.md#dec-le-20)).*
+
+*Note of 2026-10-31: the three moments are built for Lenses and queries ([TR-SR-23](../technical/04-stacks-and-resources.md#tr-sr-23)); feeds and Reports follow them when they are built. The second moment dry-runs every Lens and query rather than first looking for the tables that are gone, which finds a missing column too. What goes missing later does not join a Message yet ([OP-SR-25](#op-sr-25)).*
+
+<a id="fr-sr-53"></a>
+### FR-SR-53 · A query that reads what no longer exists is Broken
+
+**Status:** Implemented · **Source:** [DEC-DH-67](../../overview/data-hub.md#dec-dh-67) · **Screens:** [query](../../design/screens/query.html)
+
+A Broken query cannot run: Run is off, and a callout on top of it names what no longer exists. It carries a red dot in the panel of Query and in the Queries of a Resource ([FR-SR-43](#fr-sr-43), [FR-SR-44](#fr-sr-44)). Who made it gets a Message ([MSG-QRY-02](message-catalogue.md#msg-qry-02)). Its SQL can still be opened, copied and changed; a change that runs makes it work again, as does the return of what it reads.
+
+*Note of 2026-10-31: the callout names the day Data Hub found it, not the dbt run ([OP-SR-24](#op-sr-24)).*
+
+
+<a id="fr-sr-54"></a>
+### FR-SR-54 · The lineage of a Resource is walked one step at a time
+
+**Status:** Implemented · **Source:** Max, 2026-10-28 · [design](../../design/principles.md#detail-page-of-a-resource) · **Screens:** [resource-lineage](../../design/screens/resource-lineage.html)
+
+The tab Lineage shows the Resource in the middle, always, with its direct upstream and downstream models, across the dbt projects Data Hub follows ([FR-AR-08](01-artifact-registry.md#fr-ar-08)). A click on one adds its own next models beside it, a column further out. Data Hub never shows the whole lineage at once.
+## Log Catalogue
+
+The first draft of the Log Catalogue started on this page. Because it spans all domains, it now lives in its own file: [Log catalogue](log-catalogue.md).
+
+## Search
+
+| What | How | When |
+| --- | --- | --- |
+| Word search | Full-text search in Postgres, with the English configuration and `unaccent` | Now |
+| Typos and half-remembered names | Trigrams in Postgres (`pg_trgm`) | Now |
+| Search by meaning, also for Claude | Embeddings with pgvector | Later |
+
+## Edge cases
+
+<a id="ec-sr-01"></a>
+### EC-SR-01 · The view is not (yet) in the Artifacts
+
+**Status:** Withdrawn
+
+The Registration is refused. After the next prod run, the Data Admin can try again.
+
+*Withdrawn on 2026-10-19: a Registration starts from the Artifacts themselves, so this cannot happen any more ([FR-SR-32](#fr-sr-32)).*
+
+<a id="ec-sr-02"></a>
+### EC-SR-02 · A registered view disappears from the Artifacts
+
+**Status:** Withdrawn
+
+The Resource gets a Log Entry and is flagged as missing. It is not deregistered automatically; the Data Admin decides.
+
+*Withdrawn on 2026-10-19: replaced by [FR-SR-34](#fr-sr-34): the Resource is withdrawn and held, and comes back when its exposure does.*
+
+<a id="ec-sr-03"></a>
+### EC-SR-03 · A view is renamed in BigQuery
+
+**Status:** Specified · **Source:** Max, 2026-10-28 ([OP-SR-09](#op-sr-09))
+
+The Data Admin links the new full name to the existing Resource, so that it keeps its ID, Log and Confirmations.
+
+*Note of 2026-10-19: with Registration through exposures, the Resource of the old name is withdrawn and the new name becomes a new Resource without Collection ([FR-SR-34](#fr-sr-34), [FR-SR-35](#fr-sr-35)); linking the two is still to be built.*
+
+<a id="ec-sr-04"></a>
+### EC-SR-04 · A second Stack is added
+
+**Status:** Withdrawn
+
+The service account of Data Hub gets read access to it, via Terraform. After that, views from that Stack can be registered like any other.
+
+*Withdrawn on 2026-10-19: a Resource no longer has to be in a Stack ([DEC-SR-23](#dec-sr-23)); reading its data is [OP-SR-10](#op-sr-10).*
+
+## Out of scope
+
+How the Level evolves after Registration ([Maturity and release](06-maturity-and-release.md)), managing Collections ([Collections](03-collections.md)), the Message Centre and notifications ([Log and notifications](07-log-and-notifications.md)), fetching and comparing the Artifacts ([Artifact registry](01-artifact-registry.md)), and working out conversations and their notifications ([Conversations](14-conversations.md)).
+
+## Open points
+
+- [x] <a id="op-sr-01"></a>**OP-SR-01** · Agree a convention for the Display Names of Resources. *Note of 2026-10-19: the Display Name is the `label` of the exposure ([DEC-SR-24](#dec-sr-24)), so the convention applies to those labels.* *Decided on 2026-10-28, by Max: agreed; the convention for Display Names is the one for the `label` of an exposure ([DEC-SR-24](#dec-sr-24)).*
+- [ ] <a id="op-sr-02"></a>**OP-SR-02** · Complete the [Log catalogue](log-catalogue.md), with the Log IDs from the other domains.
+- [x] <a id="op-sr-03"></a>**OP-SR-03** · Work out what happens to Lenses and Reports when their Resource is deregistered. *Decided on 2026-10-28, by Max: they become Broken until it comes back ([DEC-DH-67](../../overview/data-hub.md#dec-dh-67), [FR-SR-52](#fr-sr-52)).*
+- [x] <a id="op-sr-04"></a>**OP-SR-04** · Work out the Message Centre of the Data Admins in the domain [Log and notifications](07-log-and-notifications.md). *Done on 2026-10-28, by Max: covered by the one Message Centre of every User ([DEC-UX-29](../../design/principles.md#dec-ux-29)) and the Message "A new Resource waits for a Collection" to the Data Team on every Registration ([FR-SR-10](#fr-sr-10)).*
+- [x] <a id="op-sr-05"></a>**OP-SR-05** · Later: work out whether an Owner can unpublish a Resource, and what then happens to the Lenses and Reports of colleagues that depend on it. *Decided on 2026-10-26, by Max: an Owner cannot unpublish; a Resource can be marked deprecated instead ([DEC-SR-28](#dec-sr-28), [FR-SR-50](#fr-sr-50)).*
+- [x] <a id="op-sr-06"></a>**OP-SR-06** · Work out how Resources are read, found, described and commented on.
+- [x] <a id="op-sr-07"></a>**OP-SR-07** · Decide the limit on scanned bytes and the number of rows in the Preview. *Note of 2026-10-22: decide together with the thresholds X and Y of the Pre-flight ([FR-SR-37](#fr-sr-37)).* *Note of 2026-10-23: and the two thresholds that check the making of a Lens ([FR-LE-08](09-lenses.md#fr-le-08)).* *Decided on 2026-10-26, by Max: 100 MB, 1 GB and pages of 100 rows ([DEC-SR-29](#dec-sr-29), [DEC-SR-30](#dec-sr-30)).*
+- [x] <a id="op-sr-08"></a>**OP-SR-08** · Later: query history in Data Hub, and the Usage tab. *Note of 2026-10-22: the Query Log keeps every query ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)); the Usage tab remains open.* *Note of 2026-10-23: a history per User ([FR-SR-43](#fr-sr-43)) and per Resource ([FR-SR-44](#fr-sr-44)) are proposed.* *Note of 2026-10-28: the Usage tab is usage reporting, which is not part of v1 ([DEC-DH-75](../../overview/data-hub.md#dec-dh-75)); the history of queries stays.* *Done on 2026-10-28, by Max: the history of queries is specified per User ([FR-SR-43](#fr-sr-43)) and per Resource ([FR-SR-44](#fr-sr-44)); the Usage tab is not in v1 ([DEC-DH-75](../../overview/data-hub.md#dec-dh-75)).*
+- [x] <a id="op-sr-09"></a>**OP-SR-09** · Confirm or adjust the edge cases above. *Decided on 2026-10-28, by Max: confirmed; [EC-SR-03](#ec-sr-03) is Specified, the others were already withdrawn.*
+- [x] <a id="op-sr-10"></a>**OP-SR-10** · Decide how Data Hub reads the data of Resources outside the Stacks, for the Preview and for queries: read access for its service account on those datasets, or the tables of Resources always in a Stack after all ([DEC-SR-23](#dec-sr-23)). *Raised on 2026-10-19.* *Decided on 2026-10-26, by Max: Data Hub reads every table in the projects it follows ([DEC-SR-32](#dec-sr-32)).*
+- [x] <a id="op-sr-11"></a>**OP-SR-11** · Decide whether the page of a Resource gets a Query tab with SQL. Max asked on 2026-10-23 for a preview and a query on the page of a Resource. [FR-SR-25](#fr-sr-25) keeps a query builder out of the interface, and [FR-SR-26](#fr-sr-26) sends free SQL through Claude. The [Preview](../../design/principles.md#preview) stays within that: Parameters, no SQL. A Query tab was designed first, as a proposal: SQL on this Resource, with the Pre-flight and its thresholds. Decide which of the two, and if the Query tab: for whom, and whether it replaces or joins free SQL through Claude. *Raised on 2026-10-23.* *Decided on 2026-10-23: SQL comes into the interface, in a section Query of its own rather than a tab of a Resource ([DEC-UX-17](../../design/principles.md#dec-ux-17), [FR-SR-41](#fr-sr-41)); Claude stays the other way.*
+- [x] <a id="op-sr-12"></a>**OP-SR-12** · Decide how Data Hub finds the partition and cluster columns of a Resource. A Resource is a view in the Stacks: it has no partitions of its own, and a filter on it reads fewer partitions of the table beneath only when the view passes the partition column through unchanged. Proposal: take `partition_by`, `cluster_by` and `require_partition_filter` from the dbt manifest of the model beneath the view, through the lineage, and the size and the number of partitions from BigQuery; when the view derives the column, say so instead of promising savings. *Raised on 2026-10-23.* *Note of 2026-10-25: the Data Admin confirms them when adding the Resource, and sets what cannot be derived ([FR-CO-34](03-collections.md#fr-co-34)).* *Decided on 2026-10-28, by Max: as proposed ([DEC-SR-34](#dec-sr-34)).*
+- [x] <a id="op-sr-13"></a>**OP-SR-13** · Decide who sees the queries of others: on a Resource ([FR-SR-44](#fr-sr-44)) and under "All" in the panel of Query ([FR-SR-43](#fr-sr-43)). *Note of 2026-10-23: "All" in the panel is for the Data Team only ([DEC-UX-20](../../design/principles.md#dec-ux-20)); what remains is the tab Queries of a Resource, where the same rule would show a colleague only their own queries and the numbers.* The Query Log is readable only by the Data Team and whoever ran a query ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)). Max asked on 2026-10-23 for an "All" in the panel of Query, next to your own. Proposal: every User sees the queries of others on what they may see, with who, when, how and what it read, but not their SQL. *Raised on 2026-10-23.* *Decided on 2026-10-26, by Max: everyone sees who, when, how and what it read; the SQL shows to its author, the Owner Unit of the Resource and the Data Team ([DEC-SR-31](#dec-sr-31)).*
+- [ ] <a id="op-sr-14"></a>**OP-SR-14** · Work out what follows "Make it an anomaly" on a Signal ([FR-SR-30](#fr-sr-30)): how the Anomaly shows on the Resource Card and in its History ([FR-RC-04](05-resource-card.md#fr-rc-04), [FR-RC-05](05-resource-card.md#fr-rc-05)), who resolves it, and when it is closed. The link is in the Messages on a Resource; what it leads to is not designed. *Raised on 2026-10-24, while checking the screens against the requirements.* *Could, not in v1: set on 2026-10-28, by Max; making a Signal an Anomaly is left out of version 1 ([FR-SR-30](#fr-sr-30)).*
+- [x] <a id="op-sr-15"></a>**OP-SR-15** · Decide how the Pre-flight treats a query without a partition filter on a Resource that requires one ([FR-CO-34](03-collections.md#fr-co-34)): BigQuery refuses such a query when the table beneath requires it, and the Data Admin can require it in Data Hub too. Proposal: the Pre-flight blocks it, names the partition column, and offers to add the filter, instead of the warning of [FR-SR-40](#fr-sr-40). *Raised on 2026-10-25, while designing how a Resource is stored.* *Decided on 2026-10-28, by Max: as proposed ([DEC-SR-35](#dec-sr-35)).*
+- [x] <a id="op-sr-16"></a>**OP-SR-16** · Work out what marking a Resource deprecated holds ([FR-SR-50](#fr-sr-50)): whether it asks for a reason and what to use instead, how it shows in search, on a Lens and for Claude, and whether a new Lens can still be built on it. Proposal: a reason is asked, what to use instead is optional; a label next to the Level, wherever the Level shows; a new Lens on it is possible, with a warning. *Raised on 2026-10-26, in the review of Max.* *Decided on 2026-10-28, by Max, with the design: a reason, what to use instead, the chip wherever the Level shows, and a new Lens with a warning ([DEC-UX-101](../../design/principles.md#dec-ux-101)).*
+- [x] <a id="op-sr-17"></a>**OP-SR-17** · Work out the Request to run a query above 1 GB ([DEC-SR-29](#dec-sr-29)): what accepting it allows, one run or the query as it is, and for how long; whether a change to its SQL needs a new Request; and its timeout, as for a Lens ([OP-LE-10](09-lenses.md#op-le-10)). The Message Catalogue has the Request ([MSG-QRY-01](message-catalogue.md#msg-qry-01)) and its decision ([MSG-CNV-05](message-catalogue.md#msg-cnv-05)). *Raised on 2026-10-28, while making the Message Catalogue.* *Decided on 2026-10-28, by Max: accepting lets that User run that query above the limit ([DEC-SR-36](#dec-sr-36)).*
+- [x] <a id="op-sr-18"></a>**OP-SR-18** · The tabs of a Resource: [FR-SR-24](#fr-sr-24) still names the tabs EDA and Conversations and a History filterable by kind of Log Entry, and [FR-SR-44](#fr-sr-44) a Query ID on every row, as does the subsection [Queries](../../design/principles.md#queries) of the design, with how many queries filter on the partition column and Claude as a way a query ran. The tabs are Overview, Columns, Lineage, History and Preview, and History is one row per query, without its Query ID ([DEC-UX-90](../../design/principles.md#dec-ux-90), [resource-history](../../design/screens/resource-history.html)). Proposal: FR-SR-24, FR-SR-44 and the subsection Queries follow DEC-UX-90 and the screen. *Raised on 2026-10-28, while mapping the screens to the requirements.* *Decided on 2026-10-28, by Max: as proposed.*
+- [x] <a id="op-sr-19"></a>**OP-SR-19** · The second note of [FR-SR-49](#fr-sr-49) says publishing is possible once a Business Description covers every column dbt does not describe, through [FR-MR-13](06-maturity-and-release.md#fr-mr-13), which is withdrawn: a Resource without its descriptions from dbt cannot be published ([DEC-MR-10](06-maturity-and-release.md#dec-mr-10)). Proposal: a note that DEC-MR-10 replaces it. *Raised on 2026-10-28, while mapping the screens to the requirements.* *Decided on 2026-10-28, by Max: as proposed.*
+- [x] <a id="op-sr-20"></a>**OP-SR-20** · [FR-SR-42](#fr-sr-42) has the editor suggest the Resources the User may see, while a query reads only its own Resources and the editor suggests only theirs ([DEC-UX-73](../../design/principles.md#dec-ux-73)). Proposal: FR-SR-42 follows DEC-UX-73. *Raised on 2026-10-28, while mapping the screens to the requirements.* *Decided on 2026-10-29, by Max: as proposed; the suggestion that is selected also shows the type of its field and its descriptions ([DEC-UX-115](../../design/principles.md#dec-ux-115)).*
+- [x] <a id="op-sr-21"></a>**OP-SR-21** · [FR-SR-47](#fr-sr-47) shows each Lens with its use, [query-new](../../design/screens/query-new.html) shows how often each was used this month, and the tab About of [lens](../../design/screens/lens.html) how many people ran it; usage reporting is not part of v1 ([DEC-DH-75](../../overview/data-hub.md#dec-dh-75)). Proposal: no count of use or of colleagues in v1. *Raised on 2026-10-28, while mapping the screens to the requirements.* *Decided on 2026-10-29, by Max: no count of use on the Lenses of a new query nor on the tab About of a Lens; the numbers on top of the tab History of a Resource stay, as they count its own list ([OP-SR-18](#op-sr-18)).*
+- [x] <a id="op-sr-22"></a>**OP-SR-22** · Where the values of a choice in a Preview come from ([FR-SR-38](#fr-sr-38)): reading them is a query of its own. Proposal: a choice lists at most 100 values of its column, read from the partitions the preview reads in one small query that passes the Pre-flight and goes into the Query Log; the partition column offers the last 1, 4 or 12 of its unit. *Raised on 2026-10-28, while proposing part 5 of the [build order](../../design/build-order.md).* *Decided on 2026-10-29, by Max: as proposed ([DEC-SR-37](#dec-sr-37)).*
+- [x] <a id="op-sr-23"></a>**OP-SR-23** · [FR-SR-40](#fr-sr-40) has the Pre-flight say per Resource how many of its partitions a query reads. A dry run of BigQuery says what the whole query reads, and at most how many partitions in all; it does not say it per table, and the filters of a query cannot be taken apart to ask it per Resource. Proposal: the Pre-flight shows the partitions of the whole query where BigQuery gives them, and through which column when one Resource is partitioned, as built; the number per Resource and of how many is left out. *Raised on 2026-10-29, while building part 5 of the [build order](../../design/build-order.md).* *Decided on 2026-10-29, by Max: as proposed, the total only ([DEC-SR-38](#dec-sr-38)).*
+- [ ] <a id="op-sr-24"></a>**OP-SR-24** · [DEC-UX-160](../../design/principles.md#dec-ux-160) has the callout of a Broken query name what no longer exists "since which dbt run". query knows the day it found it: after a new Current Version that is the day of the dbt run, but the daily check and a failed Pre-flight find it on their own day, and a table dropped outside dbt has no dbt run at all. Proposal: the callout and the Message name the day Data Hub found it, as the Broken Lens does ([FR-LE-17](09-lenses.md#fr-le-17)); this is built so. *Raised on 2026-10-31, while building [FR-SR-53](#fr-sr-53).*
+- [ ] <a id="op-sr-25"></a>**OP-SR-25** · The Messages on a Broken query and Lens ([MSG-QRY-02](message-catalogue.md#msg-qry-02), [MSG-LEN-05](message-catalogue.md#msg-len-05)) say "what goes missing later joins it", and their parameter `missing` is a list. A Broken query or Lens keeps only the first thing it found missing, as BigQuery names one per dry run, and its Message names that one; a column comes with every Resource the query reads, as BigQuery does not say of which. Proposal: keep one per Message as built, and drop "what goes missing later joins it" from both; or, to keep it, dry-run again after removing what was found, which BigQuery does not offer for a column. *Raised on 2026-10-31, while building [FR-SR-52](#fr-sr-52).*
+
+## Builds on
+
+- [Data Hub overview](../../overview/data-hub.md)
+- [Artifact registry](01-artifact-registry.md)
+- [Collections](03-collections.md)
+- [Maturity levels of data](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1361608858) (Confluence, Dutch)

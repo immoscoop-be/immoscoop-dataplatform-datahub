@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<!--
+  Screen: the Monitor of one Resource, in the section Monitoring (FR-CM-29), a proposal drawn on 2026-11-07 and redrawn
+  the same day for the chain Monitor, Breakdown, Metric, Rule, Action (DEC-CM-03).
+  The head says whether the Resource can be trusted now: its Operational Status (FR-CM-26), its Level, the Run Status of
+  the last run that built it (FR-CM-01), how many Breakdowns and Rules it has, and what they read a month (FR-CM-33).
+  "Watch something else" opens the seven steps at step 2 (monitor-build.html), with this Resource. Three tabs:
+  - Findings: every Finding, newest first, each in its Tone, with whom its Actions told; one opened shows its Metric with
+    the bands of the Rules on it, the value against what was expected, the Breakdown it came from, who heard, the Query
+    ID of its aggregation query, and the Log Entry it wrote (FR-CM-19); the Owner marks it useful or noise (FR-CM-17).
+  - What it watches: per way the Resource is watched, named by when it checks and what it is per, such as "every weekday,
+    per partner" (a Breakdown, never called so), with its time column, how far the data is complete, what a run reads
+    and its Aggregate Table, a Resource of its own (FR-CM-37, OP-CM-01); under that its picture, the same as in the seven
+    steps (DEC-UX-195): the strip, in days by calendar week or in weeks by month, a row per measure (Metric) with its
+    boundaries (Rules) on a gauge, each in its Tone with its reactions (Actions) and how often it fired in 30 days, and
+    the sentence that reads it back. Every part shows what it is on a hover and opens on a click in the floating window
+    of a Parameter, which shows the change at once and keeps it on Save (DEC-UX-196). The first way is in days, the
+    second in weeks, grouped by month. The last active boundary taken out drops the Resource to 4 · Explored
+    (DEC-CM-12), and the page says so.
+  - Health: the Health Overview, across its Breakdowns (FR-CM-18), with Claude's proposals to accept or change, and the
+    review with the Data Team.
+  The switches at the bottom: ?mtab=findings (the default), ?mtab=breakdowns (What it watches), ?mtab=health; ?run=failed shows the last run
+  that failed and the Monitor judging the data of the run before (FR-CM-21, EC-CM-04); ?stopped=on shows a Breakdown
+  stopped because a field it reads went, while the other goes on (EC-CM-01).
+  Requirements: FR-CM-01, FR-CM-03, FR-CM-05, FR-CM-17, FR-CM-18, FR-CM-19, FR-CM-26, FR-CM-33, FR-CM-37, EC-CM-01, EC-CM-04
+  Decisions: DEC-CM-03, DEC-CM-04, DEC-CM-06, DEC-CM-08, DEC-CM-09, DEC-CM-11, DEC-CM-12, DEC-CM-16, DEC-CM-21, DEC-CM-24, DEC-UX-195, DEC-UX-196, DEC-UX-197.
+  Open points: OP-UX-63, OP-UX-64, OP-UX-65, OP-UX-68, OP-CM-01.
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="owner">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Monitoring · Credit leads</title>
+</head>
+<body>
+<div class="app panel-open">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <a class="nav-btn" href="collections-start.html" data-label="Collections" aria-label="Collections"><i class="ph-fill ph-stack"></i></a>
+  <a class="nav-btn" href="query.html" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></a>
+  <a class="nav-btn" href="charts.html" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
+  <a class="nav-btn active" href="monitoring-start.html" data-label="Monitoring" aria-label="Monitoring, 2 Findings today" aria-current="page"><i class="ph-fill ph-pulse"></i><span class="nav-badge">2</span><span class="flare top"></span><span class="flare bottom"></span></a>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">MP</a>
+</nav>
+<aside class="panel" aria-label="Monitoring">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:4px">
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0"><a href="monitoring-start.html" style="color:inherit;text-decoration:none">Monitoring</a></h1>
+   <a class="icon-btn" href="monitor-build.html" aria-label="New monitor" title="New monitor"><i class="ph-fill ph-plus"></i></a>
+   <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
+  </div>
+  <label class="search" style="margin-top:12px"><i class="ph ph-magnifying-glass"></i><input type="search" placeholder="Search monitors" aria-label="Search monitors"></label>
+  <div class="mon-nav">
+   <div class="panel-label">Credits</div>
+   <a class="mc-filter on" href="monitor.html" aria-current="page"><span class="tone-dot" data-tone="attention" aria-label="Attention"></span><span>Credit leads</span><span class="count">1</span></a>
+   <a class="mc-filter" href="monitor.html"><span class="tone-dot" data-tone="healthy" aria-label="Healthy"></span><span>Lead sources</span></a>
+   <a class="mc-filter" href="monitor.html"><span class="tone-dot" data-tone="warmup" aria-label="In warm-up"></span><span>Credit lead creations (flat)</span><span class="count" title="In warm-up"><i class="ph ph-hourglass-medium"></i></span></a>
+   <div class="panel-label">Listings</div>
+   <a class="mc-filter" href="monitor.html"><span class="tone-dot" data-tone="opportunity" aria-label="Opportunity"></span><span>Listings per estate agent</span><span class="count">7</span></a>
+   <a class="mc-filter" href="monitor.html"><span class="tone-dot" data-tone="healthy" aria-label="Healthy"></span><span>Asking prices</span></a>
+   <div class="panel-label">Without a monitor</div>
+   <a class="mc-filter" href="monitor-build.html" style="color:var(--text-muted)"><i class="ph ph-plus-circle"></i><span>Views</span></a>
+   <a class="mc-filter" href="monitor-build.html" style="color:var(--text-muted)"><i class="ph ph-plus-circle"></i><span>CTAs</span></a>
+  </div>
+ </div>
+</aside>
+<main class="main">
+<div class="breadcrumb">Monitoring · Credits</div>
+<div style="display:flex;align-items:flex-end;gap:12px;margin-top:8px;flex-wrap:wrap">
+ <div style="flex:1;min-width:280px"><h1 class="page-title">Credit leads</h1>
+ <p class="meta" style="display:block;margin-top:4px;line-height:1.5">The monitor of <a class="text-link" href="resource-overview.html">Credit leads</a>, watched two ways: every weekday per partner, and every Monday in total. Set up with the Data Team on 12 October.</p></div>
+ <a class="btn-quiet outline" href="monitor-build.html?from=claude" style="text-decoration:none"><i class="ph ph-sparkle"></i>Change it with Claude</a>
+ <a class="btn-primary" href="monitor-build.html?step=often" style="text-decoration:none"><i class="ph ph-plus"></i>Watch something else</a>
+</div>
+<div class="mon-head-facts">
+ <span class="tone" data-tone="attention"><i class="ph-fill ph-warning-circle"></i>Attention · 1 open finding</span>
+ <span class="status"><span class="maturity" data-level="5" data-no-tooltip></span>5 · Monitored</span>
+ <span class="status" data-pane-group="run" data-pane="ok"><i class="ph-fill ph-check-circle"></i>Last run 06:12, succeeded</span>
+ <span class="status" data-pane-group="run" data-pane="failed" hidden style="color:var(--signal-warn)"><i class="ph-fill ph-x-circle"></i>Last run 06:12, failed</span>
+ <span class="status"><i class="ph-fill ph-squares-four"></i>watched 2 ways · 6 boundaries</span>
+ <span class="status"><i class="ph-fill ph-gauge"></i>about 0.2 GB a month</span>
+</div>
+
+<div class="alert" data-pane-group="run" data-pane="failed" hidden><i class="ph-fill ph-x-circle"></i><p><b style="font-weight:500">The run of 06:12 failed at <span class="mono">stg_oltp__credit_lead</span></b>, upstream of Credit leads: "column partner_code not found". Credit leads was skipped, so its data is that of yesterday's run. At 08:00, every weekday, per partner judged that data, up to Sunday 1 November, and says so on every finding. <a class="text-link" href="#">Run in dbt Cloud</a></p></div>
+<div class="alert" data-pane-group="stopped" data-pane="on" hidden><i class="ph-fill ph-pause-circle"></i><p><b style="font-weight:500">Every weekday, per partner has stopped.</b> The field <span class="mono">partner_code</span> it is per is no longer in Credit leads since run <span class="mono">59102231</span>. Its 4 boundaries judge nothing until you choose another field or take it out; every Monday, in total goes on. The Resource is not shown as healthy meanwhile.</p><a class="btn-quiet outline" href="monitor-build.html?step=often" style="text-decoration:none">Fix the breakdown</a></div>
+
+<div class="tabs" data-group="mtab" role="tablist">
+ <button class="tab on" data-target="findings" role="tab" aria-selected="true">Findings<span class="count" style="margin-left:6px">12</span></button>
+ <button class="tab" data-target="breakdowns" role="tab" aria-selected="false">What it watches<span class="count" style="margin-left:6px">2</span></button>
+ <button class="tab" data-target="health" role="tab" aria-selected="false">Health<span class="ov-dot warn" style="margin-left:6px" aria-label="Something to tune"></span></button>
+</div>
+<div class="card tab-content">
+
+<!-- Findings -->
+<div data-pane-group="mtab" data-pane="findings">
+ <div class="mc" style="margin-top:0">
+  <section class="mc-list" aria-label="Findings" style="background:var(--surface-sub)">
+   <div class="mc-chips" data-group="fchip" role="tablist"><button class="seg on" data-target="all">All<span class="count">12</span></button><button class="seg" data-target="open">Open<span class="count">1</span></button><button class="seg" data-target="useful">Useful<span class="count">4</span></button><button class="seg" data-target="noise">Noise<span class="count">7</span></button></div>
+   <a class="mc-item on" href="#"><span class="tone-dot" data-tone="attention" style="margin-top:5px"></span><span style="min-width:0"><span class="mc-row"><b style="font-weight:500">KBC dropped to 22</b><span class="meta" style="margin-left:auto">today 08:00</span></span><span class="mc-excerpt">Leads per partner drop sharply · 3.3 sd below · Owner, Consumers</span></span></a>
+   <a class="mc-item" href="#"><span class="tone-dot" data-tone="attention" style="margin-top:5px"></span><span style="min-width:0"><span class="mc-row"><b style="font-weight:500">KBC dropped to 21</b><span class="meta" style="margin-left:auto">yesterday</span></span><span class="mc-excerpt">Leads per partner drop sharply · 4.3 sd below · Owner, Consumers · useful</span></span></a>
+   <a class="mc-item" href="#"><span class="tone-dot" data-tone="informative" style="margin-top:5px"></span><span style="min-width:0"><span class="mc-row"><b style="font-weight:500">Null rate of email 6.1%</b><span class="meta" style="margin-left:auto">29 Oct</span></span><span class="mc-excerpt">Null rate of email rises · 2.1 sd above · Owner · noise</span></span></a>
+   <a class="mc-item" href="#"><span class="tone-dot" data-tone="informative" style="margin-top:5px"></span><span style="min-width:0"><span class="mc-row"><b style="font-weight:500">Null rate of email 5.8%</b><span class="meta" style="margin-left:auto">28 Oct</span></span><span class="mc-excerpt">Null rate of email rises · 2.0 sd above · Owner · noise</span></span></a>
+   <a class="mc-item" href="#"><span class="tone-dot" data-tone="attention" style="margin-top:5px"></span><span style="min-width:0"><span class="mc-row"><b style="font-weight:500">Belfius: no leads</b><span class="meta" style="margin-left:auto">24 Oct</span></span><span class="mc-excerpt">Partner without leads · absolute · Owner · useful</span></span></a>
+  </section>
+  <section class="mc-detail" aria-label="The finding opened" style="background:var(--surface-sub)">
+   <div class="mc-detail-head">
+    <i class="ph-fill ph-warning-circle" style="font-size:26px;color:var(--tone-attention)" aria-hidden="true"></i>
+    <div style="flex:1;min-width:0"><h2 class="wh-h2" style="margin:0;font-size:17px;font-weight:500">Credit leads per day for KBC dropped to 22</h2><div class="meta">today 08:00, for Monday 2 November · <span class="tone" data-tone="attention"><i class="ph-fill ph-warning-circle"></i>Attention</span></div></div>
+   </div>
+   <div style="margin-top:14px"><svg class="mon-chart" viewBox="0 0 720 230" role="img" aria-label="Credit leads per day for KBC over 12 weeks, with the band of the Rule; it dropped below it on 1 and 2 November"><line class="gridline" x1="40" x2="708" y1="204.0" y2="204.0"/><text x="34" y="207.0" text-anchor="end">0</text><line class="gridline" x1="40" x2="708" y1="149.1" y2="149.1"/><text x="34" y="152.1" text-anchor="end">20</text><line class="gridline" x1="40" x2="708" y1="94.3" y2="94.3"/><text x="34" y="97.3" text-anchor="end">40</text><line class="gridline" x1="40" x2="708" y1="39.4" y2="39.4"/><text x="34" y="42.4" text-anchor="end">60</text><text x="40.0" y="224">17 Aug</text><text x="161.5" y="224">31 Aug</text><text x="282.9" y="224">14 Sep</text><text x="404.4" y="224">28 Sep</text><text x="525.8" y="224">12 Oct</text><text x="647.3" y="224">26 Oct</text><line class="marker" x1="708.0" x2="708.0" y1="12" y2="204"/><path class="band-outer" d="M40.0,55.6 L48.7,53.3 L57.4,51.2 L66.0,50.7 L74.7,50.5 L83.4,50.5 L92.1,51.1 L100.7,51.1 L109.4,49.7 L118.1,50.1 L126.8,50.1 L135.4,50.1 L144.1,49.1 L152.8,51.3 L161.5,51.6 L170.1,50.1 L178.8,50.7 L187.5,49.4 L196.2,47.6 L204.8,47.6 L213.5,48.5 L222.2,48.9 L230.9,48.5 L239.5,47.2 L248.2,46.3 L256.9,46.5 L265.6,45.7 L274.2,47.3 L282.9,47.3 L291.6,44.3 L300.3,43.9 L308.9,42.9 L317.6,42.8 L326.3,42.1 L335.0,42.4 L343.6,42.4 L352.3,42.8 L361.0,42.6 L369.7,41.7 L378.3,39.7 L387.0,39.9 L395.7,36.7 L404.4,37.2 L413.0,34.0 L421.7,31.8 L430.4,32.1 L439.1,33.2 L447.7,33.0 L456.4,33.2 L465.1,32.9 L473.8,29.7 L482.4,28.0 L491.1,26.8 L499.8,25.8 L508.5,25.6 L517.1,25.7 L525.8,25.9 L534.5,25.4 L543.2,24.4 L551.8,24.5 L560.5,22.6 L569.2,22.0 L577.9,23.0 L586.5,22.2 L595.2,21.1 L603.9,18.8 L612.6,19.0 L621.2,19.2 L629.9,18.6 L638.6,23.1 L647.3,24.3 L655.9,24.3 L664.6,24.0 L673.3,22.7 L682.0,21.8 L690.6,21.5 L699.3,23.2 L708.0,13.0 L708.0,136.8 L699.3,124.1 L690.6,127.1 L682.0,127.4 L673.3,128.7 L664.6,129.0 L655.9,128.8 L647.3,128.8 L638.6,131.2 L629.9,137.5 L621.2,138.8 L612.6,138.8 L603.9,138.8 L595.2,138.0 L586.5,137.8 L577.9,136.6 L569.2,138.6 L560.5,138.5 L551.8,138.4 L543.2,138.4 L534.5,137.9 L525.8,137.6 L517.1,137.9 L508.5,139.1 L499.8,139.1 L491.1,139.6 L482.4,139.3 L473.8,138.3 L465.1,136.7 L456.4,136.2 L447.7,136.6 L439.1,137.9 L430.4,137.6 L421.7,137.6 L413.0,136.9 L404.4,134.9 L395.7,135.8 L387.0,131.4 L378.3,130.7 L369.7,130.2 L361.0,130.1 L352.3,130.1 L343.6,130.3 L335.0,130.3 L326.3,130.8 L317.6,131.1 L308.9,131.3 L300.3,131.2 L291.6,130.9 L282.9,129.0 L274.2,129.0 L265.6,131.8 L256.9,131.7 L248.2,131.5 L239.5,131.4 L230.9,130.6 L222.2,130.5 L213.5,131.0 L204.8,132.6 L196.2,132.6 L187.5,132.9 L178.8,133.2 L170.1,133.4 L161.5,132.5 L152.8,133.0 L144.1,136.2 L135.4,136.1 L126.8,136.1 L118.1,136.1 L109.4,136.3 L100.7,135.5 L92.1,135.5 L83.4,136.5 L74.7,137.4 L66.0,137.6 L57.4,137.6 L48.7,136.4 L40.0,135.1 Z"/><path class="band" d="M40.0,68.9 L48.7,67.2 L57.4,65.6 L66.0,65.2 L74.7,65.0 L83.4,64.9 L92.1,65.2 L100.7,65.2 L109.4,64.2 L118.1,64.5 L126.8,64.5 L135.4,64.5 L144.1,63.6 L152.8,64.9 L161.5,65.1 L170.1,64.0 L178.8,64.4 L187.5,63.3 L196.2,61.7 L204.8,61.7 L213.5,62.3 L222.2,62.5 L230.9,62.2 L239.5,61.2 L248.2,60.5 L256.9,60.7 L265.6,60.0 L274.2,60.9 L282.9,60.9 L291.6,58.8 L300.3,58.4 L308.9,57.7 L317.6,57.5 L326.3,56.9 L335.0,57.1 L343.6,57.1 L352.3,57.4 L361.0,57.2 L369.7,56.5 L378.3,54.8 L387.0,55.2 L395.7,53.2 L404.4,53.5 L413.0,51.2 L421.7,49.4 L430.4,49.7 L439.1,50.7 L447.7,50.2 L456.4,50.4 L465.1,50.2 L473.8,47.8 L482.4,46.5 L491.1,45.6 L499.8,44.7 L508.5,44.5 L517.1,44.4 L525.8,44.5 L534.5,44.2 L543.2,43.4 L551.8,43.5 L560.5,41.9 L569.2,41.4 L577.9,41.9 L586.5,41.4 L595.2,40.6 L603.9,38.8 L612.6,38.9 L621.2,39.2 L629.9,38.4 L638.6,41.1 L647.3,41.7 L655.9,41.7 L664.6,41.5 L673.3,40.3 L682.0,39.4 L690.6,39.1 L699.3,40.0 L708.0,33.6 L708.0,116.2 L699.3,107.3 L690.6,109.5 L682.0,109.8 L673.3,111.0 L664.6,111.5 L655.9,111.4 L647.3,111.4 L638.6,113.2 L629.9,117.7 L621.2,118.9 L612.6,118.9 L603.9,118.8 L595.2,118.6 L586.5,118.5 L577.9,117.7 L569.2,119.1 L560.5,119.2 L551.8,119.4 L543.2,119.4 L534.5,119.1 L525.8,119.0 L517.1,119.2 L508.5,120.2 L499.8,120.2 L491.1,120.8 L482.4,120.7 L473.8,120.2 L465.1,119.4 L456.4,119.0 L447.7,119.3 L439.1,120.5 L430.4,120.0 L421.7,119.9 L413.0,119.8 L404.4,118.6 L395.7,119.3 L387.0,116.1 L378.3,115.5 L369.7,115.5 L361.0,115.5 L352.3,115.5 L343.6,115.6 L335.0,115.6 L326.3,116.0 L317.6,116.3 L308.9,116.6 L300.3,116.6 L291.6,116.5 L282.9,115.3 L274.2,115.3 L265.6,117.4 L256.9,117.5 L248.2,117.3 L239.5,117.3 L230.9,116.9 L222.2,116.9 L213.5,117.3 L204.8,118.4 L196.2,118.4 L187.5,119.0 L178.8,119.5 L170.1,119.5 L161.5,119.0 L152.8,119.3 L144.1,121.7 L135.4,121.8 L126.8,121.8 L118.1,121.8 L109.4,121.9 L100.7,121.4 L92.1,121.4 L83.4,122.1 L74.7,123.0 L66.0,123.2 L57.4,123.2 L48.7,122.6 L40.0,121.9 Z"/><path class="mean" d="M40.0,95.4 L48.7,94.9 L57.4,94.4 L66.0,94.2 L74.7,94.0 L83.4,93.5 L92.1,93.3 L100.7,93.3 L109.4,93.0 L118.1,93.1 L126.8,93.1 L135.4,93.1 L144.1,92.6 L152.8,92.1 L161.5,92.0 L170.1,91.7 L178.8,91.9 L187.5,91.2 L196.2,90.1 L204.8,90.1 L213.5,89.8 L222.2,89.7 L230.9,89.6 L239.5,89.3 L248.2,88.9 L256.9,89.1 L265.6,88.7 L274.2,88.1 L282.9,88.1 L291.6,87.6 L300.3,87.5 L308.9,87.1 L317.6,86.9 L326.3,86.4 L335.0,86.4 L343.6,86.4 L352.3,86.4 L361.0,86.4 L369.7,86.0 L378.3,85.2 L387.0,85.7 L395.7,86.3 L404.4,86.1 L413.0,85.5 L421.7,84.7 L430.4,84.9 L439.1,85.6 L447.7,84.8 L456.4,84.7 L465.1,84.8 L473.8,84.0 L482.4,83.6 L491.1,83.2 L499.8,82.4 L508.5,82.3 L517.1,81.8 L525.8,81.7 L534.5,81.6 L543.2,81.4 L551.8,81.5 L560.5,80.6 L569.2,80.3 L577.9,79.8 L586.5,80.0 L595.2,79.6 L603.9,78.8 L612.6,78.9 L621.2,79.0 L629.9,78.0 L638.6,77.1 L647.3,76.6 L655.9,76.6 L664.6,76.5 L673.3,75.7 L682.0,74.6 L690.6,74.3 L699.3,73.6 L708.0,74.9"/><path class="line" d="M40.0,72.3 L48.7,72.3 L57.4,86.1 L66.0,91.5 L74.7,91.5 L83.4,108.0 L92.1,108.0 L100.7,72.3 L109.4,80.6 L118.1,86.1 L126.8,88.8 L135.4,80.6 L144.1,110.7 L152.8,108.0 L161.5,69.6 L170.1,86.1 L178.8,77.8 L187.5,72.3 L196.2,99.8 L204.8,105.3 L213.5,108.0 L222.2,77.8 L230.9,69.6 L239.5,77.8 L248.2,91.5 L256.9,77.8 L265.6,97.0 L274.2,99.8 L282.9,58.6 L291.6,69.6 L300.3,75.1 L308.9,86.1 L317.6,77.8 L326.3,105.3 L335.0,108.0 L343.6,75.1 L352.3,77.8 L361.0,75.1 L369.7,66.9 L378.3,94.3 L387.0,127.2 L395.7,102.5 L404.4,53.1 L413.0,64.1 L421.7,83.3 L430.4,91.5 L439.1,77.8 L447.7,102.5 L456.4,110.7 L465.1,55.9 L473.8,58.6 L482.4,66.9 L491.1,69.6 L499.8,75.1 L508.5,83.3 L517.1,97.0 L525.8,55.9 L534.5,61.4 L543.2,77.8 L551.8,61.4 L560.5,69.6 L569.2,91.5 L577.9,113.5 L586.5,64.1 L595.2,55.9 L603.9,77.8 L612.6,69.6 L621.2,66.9 L629.9,102.5 L638.6,86.1 L647.3,53.1 L655.9,61.4 L664.6,61.4 L673.3,61.4 L682.0,69.6 L690.6,83.3 L699.3,146.4 L708.0,143.7"/><circle class="hit" cx="387.0" cy="127.2" r="4.2"/><circle class="hit far" cx="699.3" cy="146.4" r="4.2"/><circle class="hit far" cx="708.0" cy="143.7" r="4.2"/></svg></div>
+   <div class="chart-legend"><span><i class="sw" style="background:color-mix(in srgb,var(--tone-attention) 16%,transparent)"></i>Leads per partner drop: 2 sd</span><span><i class="sw" style="background:color-mix(in srgb,var(--text-muted) 11%,transparent)"></i>Drop sharply: 3 sd</span><span><i class="sw" style="height:0;border-top:1px dashed var(--text-muted)"></i>28-day average</span></div>
+   <dl class="wh-facts">
+    <dt>Rule</dt><dd>Leads per partner drop sharply, beyond 3 sd; Leads per partner drop, beyond 2, fired with it · z-score over 28 days, below</dd>
+    <dt>Breakdown</dt><dd>Daily, by lead source and partner</dd>
+    <dt>Value</dt><dd><b style="font-weight:500">22</b> leads, expected 32 to 62 (average 47, 3.3 sd below)</dd>
+    <dt>The market</dt><dd>All partners: 352, within its band. Only KBC dropped.</dd>
+    <dt>Actions</dt><dd>Told the Owner and the Consumers: the Credit team, and the 14 Users of the 5 Lenses on Credit leads, by e-mail and in Data Hub, once each. Credit leads and its Lenses show the finding while it is open.</dd>
+    <dt>Query</dt><dd><span class="mono">q-7f3a91c2</span> · read 2 MB · <a class="text-link" href="resource-overview.html?ov=changes">Log entry</a></dd>
+   </dl>
+   <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:16px">
+    <span class="fb-pair" style="display:inline-flex;gap:4px"><button class="fb" aria-pressed="false"><i class="ph ph-thumbs-up"></i>Useful</button><button class="fb" aria-pressed="false"><i class="ph ph-waveform"></i>Noise</button></span>
+    <a class="btn-quiet" href="resource-overview.html?ov=gaps" style="text-decoration:none"><i class="ph ph-circle-dashed"></i>Record a Known Gap</a>
+    <a class="btn-quiet" href="mcp-query.html" style="text-decoration:none"><i class="ph ph-sparkle"></i>Ask Claude why</a>
+   </div>
+  </section>
+ </div>
+</div>
+
+<!-- What it watches: per way it is watched, its picture, changed by clicking its parts (DEC-UX-195, DEC-UX-196) -->
+<div data-pane-group="mtab" data-pane="breakdowns" hidden>
+ <p class="meta" style="display:block;line-height:1.5;margin:0 0 6px">Hover over a picture to see what each part is; click a part to change it. A change counts once you save it in its window.</p>
+ <section class="mp-block" data-bd="0" aria-labelledby="bd0-name">
+  <div class="bd-head"><h3 id="bd0-name" data-bd-name></h3><div class="bd-facts"><span><i class="ph ph-clock" aria-hidden="true"></i>created_at · complete up to yesterday</span><span><i class="ph ph-gauge" aria-hidden="true"></i>2 MB a run</span><a href="resource-overview.html" style="color:inherit;display:inline-flex;align-items:center;gap:4px"><i class="ph ph-table" aria-hidden="true"></i>its aggregate table</a></div></div>
+  <div data-pic></div>
+  <div class="mp-metrics" data-metrics></div>
+  <button class="mp-add" data-edit="addmetric"><i class="ph ph-plus" aria-hidden="true"></i>Another measure</button>
+  <p class="mp-sentence" data-sentence aria-live="polite"></p>
+ </section>
+ <section class="mp-block" data-bd="1" aria-labelledby="bd1-name">
+  <div class="bd-head"><h3 id="bd1-name" data-bd-name></h3><div class="bd-facts"><span><i class="ph ph-clock" aria-hidden="true"></i>created_at · complete up to yesterday</span><span><i class="ph ph-gauge" aria-hidden="true"></i>under 1 MB a run</span><a href="resource-overview.html" style="color:inherit;display:inline-flex;align-items:center;gap:4px"><i class="ph ph-table" aria-hidden="true"></i>its aggregate table</a></div></div>
+  <div data-pic></div>
+  <div class="mp-metrics" data-metrics></div>
+  <button class="mp-add" data-edit="addmetric"><i class="ph ph-plus" aria-hidden="true"></i>Another measure</button>
+  <p class="mp-sentence" data-sentence aria-live="polite"></p>
+ </section>
+ <p class="meta" style="display:block;margin-top:16px;line-height:1.5">With its last active boundary taken out, Credit leads goes back to 4 · Explored. <a class="text-link" href="monitor-build.html?step=often">Watch something else</a>, such as another time or other values.</p>
+</div>
+
+<!-- Health -->
+<div data-pane-group="mtab" data-pane="health" hidden>
+ <div class="mon-grid">
+  <section class="mon-tile" style="background:var(--surface-sub)" aria-label="What the monitor says about itself">
+   <div class="tile-head"><div class="label">Health overview</div><span class="meta">last 60 days</span></div>
+   <ul class="mon-list">
+    <li><i class="ph ph-waveform" style="color:var(--signal-warn)"></i><span class="grow">Null rate of email rises: 9 findings, 7 marked noise</span></li>
+    <li><i class="ph ph-moon-stars"></i><span class="grow">Weekday volume, same day last week: never fired</span></li>
+    <li><i class="ph ph-hourglass-medium"></i><span class="grow">Belfius, Argenta and Crelan in warm-up, until 23 November</span></li>
+    <li><i class="ph ph-chart-scatter"></i><span class="grow">Lead source <span class="mono">walk_in</span>: too little data, under 5 leads a day</span></li>
+    <li><i class="ph ph-gauge"></i><span class="grow">Both breakdowns read about 0.2 GB a month, well within the free range</span></li>
+   </ul>
+  </section>
+  <section class="mon-tile" style="background:var(--surface-sub)" aria-label="Claude's proposals">
+   <div class="tile-head"><div class="label">Proposals, from Claude</div><span class="meta">read from the same overview</span></div>
+   <div class="suggestion" style="background:var(--surface-solid)"><i class="ph-fill ph-sparkle" aria-hidden="true"></i><div>Widen <b style="font-weight:500">Null rate of email rises</b> from 2 to 2.5 standard deviations: 7 of its 9 findings were noise, and at 2.5 it would have kept the 2 you found useful.<div class="suggestion-acts"><button class="btn-quiet outline">Accept</button><a class="btn-quiet" href="monitor-build.html?step=bounds" style="text-decoration:none">Change it</a></div></div></div>
+   <div class="suggestion" style="background:var(--surface-solid)"><i class="ph-fill ph-sparkle" aria-hidden="true"></i><div>Give <b style="font-weight:500"><span class="mono">walk_in</span></b> an absolute threshold, 0 leads for 5 days, instead of the z-score: it has too few leads a day for a standard deviation to mean anything.<div class="suggestion-acts"><button class="btn-quiet outline">Accept</button><button class="btn-quiet">Leave it</button></div></div></div>
+  </section>
+ </div>
+ <div class="explain" style="margin-top:14px"><i class="ph-fill ph-chalkboard-teacher" aria-hidden="true"></i><div><b>Review with the Data Team:</b> the first was on 12 November, a month after you set it up. The next, on this overview, in February. <a href="messages.html">Ask the Data Team</a></div></div>
+</div>
+
+</div>
+</main>
+</div>
+<div class="proto-switch" data-group="run" role="tablist" aria-label="Prototype: the last run" style="bottom:72px">Last run
+ <button class="seg on" data-target="ok" role="tab" aria-selected="true">Succeeded</button>
+ <button class="seg" data-target="failed" role="tab" aria-selected="false">Failed</button>
+</div>
+<div class="proto-switch" data-group="stopped" role="tablist" aria-label="Prototype: a monitor that stopped">Stopped
+ <button class="seg on" data-target="off" role="tab" aria-selected="true">No</button>
+ <button class="seg" data-target="on" role="tab" aria-selected="false">Yes</button>
+</div>
+<!-- The floating window in which a part of a picture is changed: the one of a Parameter (DEC-UX-30, DEC-UX-196) -->
+<section class="float-win pm-win mp-win" id="mw" role="dialog" aria-modal="false" aria-labelledby="mw-title" hidden>
+ <div class="float-head" title="Drag to move">
+  <i class="ph ph-dots-six-vertical float-grip" aria-hidden="true"></i>
+  <i class="ph" id="mw-icon" style="font-size:17px;color:var(--text-secondary)" aria-hidden="true"></i>
+  <div style="flex:1;min-width:0"><div class="meta" id="mw-meta"></div><div class="float-title" id="mw-title"></div></div>
+  <button class="icon-btn float-fold" aria-label="Fold" aria-expanded="true"><i class="ph ph-minus"></i></button>
+  <button class="icon-btn" id="mw-close" aria-label="Close without saving"><i class="ph ph-x"></i></button>
+ </div>
+ <div class="float-body pm-body"><div class="pm-form" id="mw-body"></div></div>
+ <div class="float-foot" id="mw-foot"></div>
+</section>
+<script src="app.js"></script>
+<script src="monitor-picture.js"></script>
+<script>
+// Prototype only: What it watches, as pictures that change by clicking their parts. One window at a time, as a Parameter's:
+// it shows the change at once, keeps it on Save, and undoes it on × or Esc.
+(() => {
+  const P = window.MonitorPicture, T = P.T;
+  P.install();
+  const PARTNERS = ['KBC', 'Belfius', 'Argenta', 'Crelan', 'BNP Paribas Fortis', 'ING', 'AXA', 'Beobank', 'vdk', 'Triodos', 'Europabank', 'Fintro', 'Keytrade', 'CPH', 'Bpost bank', 'Record'];
+  const PERS = { partner: { one: 'partner', many: 'partners', n: 16, values: PARTNERS },
+    source: { one: 'lead source', many: 'lead sources', n: 7, values: ['website', 'app', 'partner_api', 'walk_in', 'partner_api_v2', 'call_centre', 'fair'] } };
+  const MEASURES = {
+    rows: { name: 'Every credit lead', hows: { count: ['#', 'the number of leads'] } },
+    amount: { name: 'Requested amount', hows: { typical: ['~', 'the typical requested amount'], average: ['Ø', 'the average requested amount'], total: ['Σ', 'the total requested amount'] } },
+    email: { name: 'Email', hows: { empty: ['%', 'the share of leads without email'] } },
+    contact: { name: 'Email and phone', hows: { both: ['%', 'the share of leads without email and phone'] } }
+  };
+  const B = (kind, x) => Object.assign({ kind, tone: 'attention', react: ['owner'], list: 'daily' }, x);
+  const all = vs => Object.fromEntries(vs.map(v => [v, true]));
+  const BD = [
+    { name: 'Credit leads', units: 'leads', stable: 1, check: 'weekdays', at: '08:00', day: 'Monday', window: 7, as: 'day', perKey: 'partner', only: 'all', picked: all(PARTNERS), guard: 10, sel: 0,
+      metrics: [
+        { field: 'rows', how: 'count', cmp: 'prev4', bounds: [ B('change', { dir: 'drops', amt: 30, fired: 2, useful: 1 }), B('change', { dir: 'drops', amt: 50, tone: 'problem', react: ['owner', 'consumers'], fired: 1, useful: 1 }) ] },
+        { field: 'contact', how: 'both', cmp: 'fixed', bounds: [ B('level', { dir: 'higher', amt: 2, unit: '%', fired: 4, useful: 1 }), B('level', { dir: 'higher', amt: 10, unit: '%', tone: 'problem', react: ['owner', 'consumers'], fired: 0 }) ] } ] },
+    { name: 'Credit leads', units: 'leads', stable: 1, check: 'week', at: '08:00', day: 'Monday', window: 1, as: 'one', perKey: null, only: 'all', picked: {}, guard: 0, sel: 0,
+      metrics: [
+        { field: 'amount', how: 'typical', cmp: 'prev4', bounds: [ B('change', { dir: 'rises or drops', amt: 10, tone: 'informative', react: ['list'], list: 'weekly', fired: 1 }) ] },
+        { field: 'rows', how: 'count', cmp: 'prev1', bounds: [ B('change', { dir: 'drops', amt: 20, fired: 0 }) ] } ] }
+  ];
+  const view = S => Object.assign({}, S, { per: S.perKey ? PERS[S.perKey] : null,
+    metrics: S.metrics.map(m => Object.assign({}, m, { sym: MEASURES[m.field].hows[m.how][0], says: MEASURES[m.field].hows[m.how][1] })) });
+  const weekly = S => S.check === 'week';
+  const cap = t => t[0].toUpperCase() + t.slice(1);
+  const nameOf = S => `${cap(S.check === 'week' ? `every ${S.day}` : S.check === 'weekdays' ? 'every weekday' : 'every day')}, ${S.perKey ? 'per ' + PERS[S.perKey].one : 'in total'}`;
+
+  function render() {
+    document.querySelectorAll('[data-bd]').forEach(sec => {
+      const k = +sec.dataset.bd, V = view(BD[k]);
+      sec.querySelector('[data-bd-name]').textContent = nameOf(BD[k]);
+      sec.querySelector('[data-pic]').innerHTML = P.picture(V);
+      sec.querySelector('[data-metrics]').innerHTML = P.measures(V, { edit: true });
+      sec.querySelector('[data-sentence]').innerHTML = P.sentence(V);
+    });
+  }
+
+  // ---- the windows ---------------------------------------------------------------------------------------------
+  const row = (label, body, hint) => `<div class="pe-row"><span class="pe-label">${label}</span><div>${body}${hint ? `<p class="pe-hint">${hint}</p>` : ''}</div></div>`;
+  const opts = (key, list, isOn, multi) => `<div class="kind-grid" role="${multi ? 'group' : 'radiogroup'}">${list.map(([v, l, icon, dis]) => {
+    const on = isOn(v); return `<button class="kind-opt${on ? ' on' : ''}" type="button" role="${multi ? 'checkbox' : 'radio'}" aria-checked="${on}" data-set="${key}=${v}"${dis ? ' disabled' : ''}>${icon ? `<i class="ph ${icon}"></i>` : ''}${l}</button>`; }).join('')}</div>`;
+  const one = (key, cur, list) => opts(key, list, v => String(v) === String(cur));
+  const asList = S => S.window === 1 ? [] : weekly(S) ? [['week', 'week by week', 'ph-dots-three'], ['one', 'as one', 'ph-minus']]
+    : [['day', 'day by day', 'ph-dots-three']].concat(S.window % 7 === 0 && S.window >= 14 ? [['week', 'week by week', 'ph-dots-three-outline']] : []).concat([['one', 'as one', 'ph-minus']]);
+  const whoTxt = b => {
+    const w = [];
+    if (b.react.includes('owner')) w.push('you and the Credit team, in Data Hub and by e-mail, as each of you set it');
+    if (b.react.includes('consumers')) w.push('the 14 Users of its 5 Lenses; Credit leads and what is built on it carry the mark while it lasts');
+    if (b.react.includes('list') && !b.react.includes('owner')) w.push(`only in your ${b.list} list`);
+    return (w.length ? cap(w.join('; ')) + '.' : 'Nobody is told; the finding is only kept in the Log.') + ' Every finding is kept in the Log as well.';
+  };
+  const theyGet = (V, me, b) => {
+    const [icon] = P.TONE[b.tone], seg = V.per ? `${V.per.values[0]} · ` : '';
+    const what = b.kind === 'level' ? `${me.says} is ${b.amt + 1}%, ${b.dir} than ${b.amt}%` : `${me.says} ${b.dir === 'rises' ? 'rose' : b.dir === 'drops' ? 'dropped' : 'moved'} ${b.amt + 4}% compared with ${T.cmp(V, me.cmp)}`;
+    return `<div class="mp-they-get"><i class="ph-fill ${icon}" style="color:var(--tone-${b.tone})"></i><div><b style="font-weight:500">${seg}${cap(what)}</b><div class="meta" style="margin-top:2px">Credit leads · Monday 9 November</div></div></div>`;
+  };
+  const ladder = (me, b) => me.bounds.some(x => x !== b && x.kind === b.kind && (x.dir === b.dir || x.dir === 'rises or drops' || b.dir === 'rises or drops'))
+    ? 'Beyond more than one line, you get one finding, in the tone of the outer line, with the reactions of all of them.' : '';
+  const WINDOWS = {
+    check: S => ({ icon: 'ph-calendar-dots', title: 'When it checks', body:
+      row('Check', one('check', S.check, [['day', 'every day', 'ph-calendar'], ['weekdays', 'weekdays only', 'ph-briefcase'], ['week', 'once a week', 'ph-calendar-check'], ['hour', 'every hour · later', 'ph-clock', true]]),
+        weekly(S) ? 'In calendar weeks, Monday to Sunday: the strip counts in weeks, grouped by month.' : 'The strip counts in days, grouped by calendar week, the weekend greyer.') +
+      row('At', one('at', S.at, ['07:00', '08:00', '09:00'].map(t => [t, t, 'ph-clock']))) +
+      (weekly(S) ? row('On', one('day', S.day, ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map(d => [d, d]))) : '') }),
+    period: S => ({ icon: 'ph-brackets-square', title: 'What each check looks at', body:
+      row('Over', one('window', S.window, (weekly(S) ? [1, 2, 3, 4] : [1, 7, 14, 21, 28]).map(n => [n, n === 1 ? (weekly(S) ? 'last week' : 'yesterday') : `the last ${n} ${T.unit(S)[1]}`])), `Back from the last complete ${T.unit(S)[0]}; it shows solid on the strip.`) +
+      (S.window > 1 ? row('As', one('as', S.as, asList(S)), S.as === 'one' ? 'One value over the whole stretch: a bar.' : 'A value each: dots on a line, or a bar per week.') : '') }),
+    per: S => ({ icon: 'ph-stack', title: 'All together, or per value', body:
+      row('Look at', one('per', S.perKey || 'all', [['all', 'all together', 'ph-circle'], ['partner', 'per partner', 'ph-rows'], ['source', 'per lead source', 'ph-rows']]), 'Per value, each one is judged against its own history.') +
+      (S.perKey ? row('Values', one('only', S.only, [['all', 'all, also new ones'], ['only', 'only …'], ['except', 'all except …']])) +
+        (S.only !== 'all' ? row(S.only === 'only' ? 'Only' : 'Except', opts('pick', PERS[S.perKey].values.map(v => [v, v]), v => S.only === 'only' ? S.picked[v] : !S.picked[v], true), 'Left out turns dotted in the picture.') : '') +
+        row('Judged', one('guard', S.guard, [[0, 'always'], [10, 'from 10 leads'], [20, 'from 20 leads'], [30, 'from 30 leads']]), `A ${PERS[S.perKey].one} with fewer leads in the period is not judged, so that 3 becoming 1 is no −66%.`) : '') }),
+    cmp: (S, i) => { const V = view(S), me = V.metrics[i]; return { icon: 'ph-arrows-left-right', meta: `Of ${me.says}`, title: 'Compared with', body:
+      row('With', one(`cmp:${i}`, me.cmp, [['prev1', T.cmp(V, 'prev1')], ['prev4', T.cmp(V, 'prev4')], ['weekday', 'the same weekday', null, weekly(S) || S.window !== 1], ['all', `all ${V.per ? V.per.many : 'values'} together`, null, !V.per], ['ever', 'everything before'], ['fixed', 'a fixed number']]),
+        'It shows hollow on the strip. Against a fixed number it is higher or lower than; against the past it rises or drops.') }; },
+    bound: (S, i, j) => { const V = view(S), me = V.metrics[i], b = S.metrics[i].bounds[j]; return { icon: 'ph-arrows-down-up', meta: `Of ${me.says}, compared with ${T.cmp(V, me.cmp)}`, title: `Boundary: ${T.bound(V, b)}`, remove: `del:${i}:${j}`, body:
+      (b.kind === 'level'
+        ? row('It is', one(`b:${i}:${j}:dir`, b.dir, [['higher', 'higher than', 'ph-arrow-up'], ['lower', 'lower than', 'ph-arrow-down']])) + row('Than', one(`b:${i}:${j}:amt`, b.amt, [1, 2, 5, 10, 20].map(v => [v, v + '%'])))
+        : row('When it', one(`b:${i}:${j}:dir`, b.dir, [['rises', 'rises', 'ph-arrow-up'], ['drops', 'drops', 'ph-arrow-down'], ['rises or drops', 'rises or drops', 'ph-arrows-down-up']])) +
+          row('By', one(`b:${i}:${j}:amt`, b.amt, [10, 20, 30, 50].map(v => [v, v + '%']))) +
+          row('At least', one(`b:${i}:${j}:atLeast`, b.atLeast || 0, [[0, 'any number'], [5, '5 leads'], [10, '10 leads'], [20, '20 leads']]), 'So that a small one moving a little is not a big percentage.')) +
+      (b.fired != null ? row('30 days', `<span style="font-size:var(--text-small)">${b.fired === 0 ? 'It never fired.' : `It fired ${b.fired === 1 ? 'once' : b.fired + ' times'}${b.useful ? `, ${b.useful} marked useful` : ''}.`}</span>`) : '') }; },
+    react: (S, i, j) => { const V = view(S), me = V.metrics[i], b = S.metrics[i].bounds[j]; return { icon: 'ph-bell', meta: `Of ${me.says}, when ${T.when(V, me, b)}`, title: 'What should happen', body:
+      row('Then', opts(`react:${i}:${j}`, Object.entries(P.REACT).map(([k, r]) => [k, k === 'block' ? 'Block it · later' : r.label, r.icon.replace('-text', ''), k === 'block']), v => b.react.includes(v), true), whoTxt(b)) +
+      (b.react.includes('list') ? row('List', one(`b:${i}:${j}:list`, b.list, [['daily', 'daily, at 08:00', 'ph-sun'], ['weekly', 'weekly, on Monday', 'ph-calendar']]), 'Together in one message, rather than one by one.') : '') +
+      row('Looks', one(`b:${i}:${j}:tone`, b.tone, Object.entries(P.TONE).map(([t, [icon, l]]) => [t, `<i class="ph-fill ${icon} tone-ic" style="color:var(--tone-${t})"></i>${l}`]))) +
+      row('They get', theyGet(V, me, b), ladder(me, b)) }; },
+    measure: (S, i) => { const me = S.metrics[i]; return { icon: 'ph-hash', title: 'What it measures', remove: S.metrics.length > 1 ? `delm:${i}` : null, body:
+      Object.entries(MEASURES).map(([f, d]) => row(d.name, one(`measure:${i}`, me.field + '/' + me.how, Object.entries(d.hows).map(([h, [, l]]) => [f + '/' + h, l])))).join('') +
+      '<p class="pe-hint" style="margin:0">Something these cannot say, such as "converted within 30 days"? <a href="messages.html">Ask the Data Team</a> for a SQL measure in this monitor.</p>' }; },
+    stability: S => ({ icon: 'ph-hourglass-medium', title: 'Still coming in', ro: true, meta: 'Credit leads', body:
+      row('Stable', '<span style="font-size:var(--text-small)">complete up to yesterday</span>', 'Today is dotted and empty: it is not judged yet. The Data Team sets this per Resource; you do not choose it.') })
+  };
+  const mw = document.getElementById('mw');
+  let open = null, bd = null, before = null;
+  function fill() {
+    const [k, ...args] = open.split(':');
+    const w = WINDOWS[k](BD[bd], ...args.map(Number));
+    document.getElementById('mw-icon').className = 'ph ' + w.icon;
+    document.getElementById('mw-meta').textContent = w.meta || `${cap(nameOf(BD[bd]))} · Credit leads`;
+    document.getElementById('mw-title').textContent = w.title;
+    document.getElementById('mw-body').innerHTML = w.body;
+    document.getElementById('mw-foot').innerHTML = (w.remove ? `<button class="text-link" type="button" data-set="${w.remove}=1"><i class="ph ph-trash"></i><span>Remove</span></button>` : '') +
+      `<span style="flex:1"></span><button class="btn-primary" type="button" data-save>${w.ro ? 'Close' : 'Save'}</button>`;
+  }
+  function show(edit, k) {
+    if (open) close(false);                     // one window at a time: what was not saved is undone
+    const S = BD[k], [key, ...args] = edit.split(':');
+    before = JSON.stringify(S); bd = k;
+    if (key === 'addb') { const me = S.metrics[+args[0]]; me.bounds.push(me.cmp === 'fixed' ? B('level', { dir: 'higher', amt: 20, unit: '%' }) : B('change', { dir: 'drops', amt: 50 })); edit = `bound:${args[0]}:${me.bounds.length - 1}`; }
+    if (key === 'addmetric') { S.metrics.push({ field: 'email', how: 'empty', cmp: 'prev4', bounds: [B('change', { dir: 'rises', amt: 30 })] }); edit = `measure:${S.metrics.length - 1}`; }
+    if (key === 'guard') edit = 'per';
+    const [k2, i2] = edit.split(':');
+    if (['cmp', 'bound', 'react', 'measure'].includes(k2)) S.sel = +i2;
+    open = edit; render(); fill();
+    mw.hidden = false; mw.classList.remove('folded');
+    mw.querySelector('.kind-opt.on, .kind-opt:not([disabled]), [data-save]')?.focus();
+  }
+  function close(keep) {
+    if (!open) return;
+    if (!keep && before) BD[bd] = JSON.parse(before);
+    open = null; before = null; mw.hidden = true; render();
+  }
+  const fit = S => {
+    if (S.window === 1) S.as = 'one'; else if (!asList(S).some(([k]) => k === S.as)) S.as = weekly(S) ? 'week' : 'day';
+    S.metrics.forEach(m => { if ((m.cmp === 'weekday' && (weekly(S) || S.window !== 1)) || (m.cmp === 'all' && !S.perKey)) m.cmp = 'prev4'; });
+  };
+  function apply(key, v) {
+    const S = BD[bd], [k, i, j, f] = key.split(':');
+    if (k === 'check') { const was = weekly(S); S.check = v; if (weekly(S) !== was) S.window = weekly(S) ? 1 : 7; fit(S); }
+    else if (k === 'at') S.at = v;
+    else if (k === 'day') S.day = v;
+    else if (k === 'window') { S.window = +v; fit(S); }
+    else if (k === 'as') S.as = v;
+    else if (k === 'per') { S.perKey = v === 'all' ? null : v; S.only = 'all'; S.picked = S.perKey ? all(PERS[S.perKey].values) : {}; fit(S); }
+    else if (k === 'only') { S.only = v; const vs = PERS[S.perKey].values; vs.forEach((x, n) => { S.picked[x] = v === 'all' ? true : v === 'only' ? n === 0 : n !== vs.length - 1; }); }
+    else if (k === 'pick') S.picked[v] = !S.picked[v];
+    else if (k === 'guard') S.guard = +v;
+    else if (k === 'cmp') { const me = S.metrics[+i], was = me.cmp; me.cmp = v; if ((v === 'fixed') !== (was === 'fixed')) me.bounds = [v === 'fixed' ? B('level', { dir: 'higher', amt: 10, unit: '%' }) : B('change', { dir: 'drops', amt: 30 })]; }
+    else if (k === 'b') { const b = S.metrics[+i].bounds[+j]; b[f] = ['amt', 'atLeast'].includes(f) ? +v : v; }
+    else if (k === 'del') { S.metrics[+i].bounds.splice(+j, 1); return close(true); }
+    else if (k === 'delm') { S.metrics.splice(+i, 1); S.sel = 0; return close(true); }
+    else if (k === 'react') { const b = S.metrics[+i].bounds[+j]; b.react = b.react.includes(v) ? b.react.filter(r => r !== v) : b.react.concat(v); }
+    else if (k === 'measure') { const me = S.metrics[+i]; [me.field, me.how] = v.split('/'); }
+    render(); fill();
+  }
+  document.getElementById('mw-close').addEventListener('click', () => close(false));
+  document.addEventListener('click', e => {
+    if (e.target.closest('[data-save]')) return close(true);
+    const set = e.target.closest('#mw [data-set]');
+    if (set) { const [key, v] = set.dataset.set.split('='); return apply(key, v); }
+    const sec = e.target.closest('[data-bd]'); if (!sec) return;
+    const ed = e.target.closest('[data-edit]');
+    if (ed && ed.dataset.edit === 'resource') { location.href = 'resource-overview.html'; return; }   // the Resource itself is not changed here
+    if (ed) return show(ed.dataset.edit, +sec.dataset.bd);
+    const r = e.target.closest('.mp-metric[data-sel]');
+    if (r) { BD[+sec.dataset.bd].sel = +r.dataset.sel; render(); }
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && open) close(false); });
+  render();
+})();
+</script>
+</body>
+</html>
+

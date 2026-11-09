@@ -1,0 +1,245 @@
+name: ci
+
+# One workflow, one gate. The branch rules in GitHub require only the check "ci" (TR-PF-20):
+# it passes when every job below has passed, so adding a service or a job never changes the
+# GitHub settings. See docs/architecture/build-and-deploy.md.
+
+on:
+  pull_request:
+  push:
+    branches: [uat, main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Type-check, test and check the docs
+    runs-on: ubuntu-latest
+    # The database tests run against a throwaway Postgres of the same major version as Cloud SQL.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATAHUB_TEST_DATABASE_URL: postgresql://postgres@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Type-check code, tests and scripts
+        run: pnpm typecheck
+      - name: Run tests
+        run: pnpm test
+      - name: Check requirement IDs, statuses and links
+        run: pnpm docs:check
+
+  # main (prod) only receives merges from uat (DEC-PF-14, TR-PF-19).
+  source-branch:
+    name: Verify source branch is uat
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if the pull request does not come from uat
+        if: github.head_ref != 'uat'
+        env:
+          SOURCE: ${{ github.head_ref }}
+        run: |
+          echo "Only the uat branch can be merged into main. This pull request comes from: $SOURCE"
+          exit 1
+
+  # Every folder under services/ and apps/ gets its own image; nothing to list by hand.
+  services:
+    name: Find the services
+    runs-on: ubuntu-latest
+    outputs:
+      list: ${{ steps.list.outputs.list }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: list
+        run: |
+          list=$(find services apps -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "Services: $list"
+          echo "list=$list" >> "$GITHUB_OUTPUT"
+
+  # One image per service (TR-PF-15).
+  # - Pull requests: build every image, to prove it builds; nothing is pushed.
+  # - Push to uat or main: push to Artifact Registry, once the GCP connection is configured as
+  #   repository variables (docs/architecture/gcp-setup.md).
+  # Images are tagged with the git tree hash of the code ("tree-<hash>") and with the commit SHA.
+  # main only receives merges from uat, so its code has the same tree hash as what ran on uat:
+  # the existing image gets the extra commit tag and is never rebuilt (TR-PF-17).
+  image:
+    name: image (${{ matrix.service }})
+    needs: services
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # Workload Identity Federation: GitHub proves its identity to GCP, no stored keys
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJSON(needs.services.outputs.list) }}
+    env:
+      PUSH: ${{ github.event_name == 'push' && vars.GCP_WORKLOAD_IDENTITY_PROVIDER != '' }}
+      REGISTRY: ${{ vars.GCP_REGION }}-docker.pkg.dev
+      REPOSITORY: ${{ vars.GCP_IMAGES_PROJECT_ID }}/${{ vars.GCP_ARTIFACT_REPOSITORY }}
+      SERVICE: ${{ matrix.service }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Name the image
+        id: image
+        run: |
+          tree=$(git rev-parse 'HEAD^{tree}')
+          if [ "$PUSH" = "true" ]; then
+            name="$REGISTRY/$REPOSITORY/$SERVICE"
+          else
+            name="datahub/$SERVICE"
+          fi
+          echo "tree_tag=$name:tree-$tree" >> "$GITHUB_OUTPUT"
+          echo "commit_tag=$name:$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Authenticate to Google Cloud
+        if: env.PUSH == 'true'
+        id: gcp
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_CI_SERVICE_ACCOUNT }}
+          token_format: access_token
+
+      - name: Log in to Artifact Registry
+        if: env.PUSH == 'true'
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: oauth2accesstoken
+          password: ${{ steps.gcp.outputs.access_token }}
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Look for an image of this exact code
+        if: env.PUSH == 'true'
+        id: existing
+        env:
+          TREE_TAG: ${{ steps.image.outputs.tree_tag }}
+        run: |
+          if docker buildx imagetools inspect "$TREE_TAG" > /dev/null 2>&1; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Reuse the existing image
+        if: steps.existing.outputs.found == 'true'
+        env:
+          TREE_TAG: ${{ steps.image.outputs.tree_tag }}
+          COMMIT_TAG: ${{ steps.image.outputs.commit_tag }}
+        run: docker buildx imagetools create --tag "$COMMIT_TAG" "$TREE_TAG"
+
+      - name: Build the image
+        if: steps.existing.outputs.found != 'true'
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          build-args: SERVICE=${{ matrix.service }}
+          tags: |
+            ${{ steps.image.outputs.tree_tag }}
+            ${{ steps.image.outputs.commit_tag }}
+          push: ${{ env.PUSH == 'true' }}
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+
+  # Format, validate and test the Terraform on every run; needs no GCP access (TR-PF-13).
+  terraform-check:
+    name: Terraform format, validate and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: 1.16.6
+          terraform_wrapper: false
+      - name: Check the formatting
+        run: terraform -chdir=infra fmt -check -recursive
+      - name: Initialise, without state
+        run: terraform -chdir=infra init -backend=false -input=false
+      - name: Validate
+        run: terraform -chdir=infra validate
+      - name: Test against a mocked provider
+        run: terraform -chdir=infra test
+
+  # Applies the infrastructure: a push to uat applies uat, a push to main applies prod
+  # (DEC-PF-16, TR-PF-21). The GitHub environment only allows its own branch, and Workload
+  # Identity Federation only lets that branch act as the Terraform identity of its project
+  # (NFR-SEC-04). It runs after the images, and deploys the images of exactly this code.
+  terraform:
+    name: Terraform apply (${{ github.ref_name == 'main' && 'prod' || 'uat' }})
+    if: github.event_name == 'push' && vars.GCP_WORKLOAD_IDENTITY_PROVIDER != ''
+    needs: [check, image, terraform-check]
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'prod' || 'uat' }}
+    concurrency:
+      group: terraform-${{ github.ref_name }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      ENVIRONMENT: ${{ github.ref_name == 'main' && 'prod' || 'uat' }}
+      TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: 1.16.6
+          terraform_wrapper: false
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_TERRAFORM_SERVICE_ACCOUNT }}
+      - name: Initialise, with the state of this environment
+        run: terraform -chdir=infra init -input=false -backend-config="bucket=$TF_STATE_BUCKET"
+      - name: Plan
+        run: |
+          tag="tree-$(git rev-parse 'HEAD^{tree}')"
+          terraform -chdir=infra plan -input=false -var-file="environments/$ENVIRONMENT.tfvars" -var="image_tag=$tag" -out=infra.tfplan
+      - name: Apply
+        run: terraform -chdir=infra apply -input=false infra.tfplan
+
+  # The one check the branch rules require. Green only when every job above passed;
+  # the source-branch job only runs on pull requests into main, and the Terraform apply only
+  # on pushes, so those two may be skipped.
+  ci:
+    name: ci
+    if: always()
+    needs: [check, source-branch, services, image, terraform-check, terraform]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every job to have passed
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          echo "$NEEDS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          echo "$NEEDS" | jq -e '
+            .check.result == "success" and
+            .services.result == "success" and
+            .image.result == "success" and
+            .["terraform-check"].result == "success" and
+            (.["source-branch"].result == "success" or .["source-branch"].result == "skipped") and
+            (.terraform.result == "success" or .terraform.result == "skipped")
+          ' > /dev/null

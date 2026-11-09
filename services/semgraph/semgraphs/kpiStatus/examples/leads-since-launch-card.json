@@ -1,0 +1,39 @@
+{
+  "semgraph": "kpiStatus",
+  "size": "card",
+  "metric": "leads",
+  "title": "Leads sinds de lancering, 2026 (voorbeelddata)",
+  "measureType": "additive",
+  "unit": "month",
+  "start": {
+    "day": "2026-01-01",
+    "value": 100000
+  },
+  "target": {
+    "day": "2026-12-31",
+    "value": 130000
+  },
+  "pathSet": "2026-04-30",
+  "asOf": "2026-09-25",
+  "locale": "nl-BE",
+  "context": {
+    "domain": "Leads",
+    "dataset": "Listing",
+    "owner": "DigiKom",
+    "reliability": "voorbeelddata"
+  },
+  "points": [
+    { "period": "2026-01", "actual": 102400 },
+    { "period": "2026-02", "actual": 104900 },
+    { "period": "2026-03", "actual": 107600 },
+    { "period": "2026-04", "actual": 108700, "path": 108700 },
+    { "period": "2026-05", "actual": 110900, "path": 111363 },
+    { "period": "2026-06", "actual": 112700, "path": 114025 },
+    { "period": "2026-07", "actual": 114200, "path": 116688 },
+    { "period": "2026-08", "actual": 115600, "path": 119350 },
+    { "period": "2026-09", "path": 122013 },
+    { "period": "2026-10", "path": 124675 },
+    { "period": "2026-11", "path": 127338 },
+    { "period": "2026-12", "path": 130000 }
+  ]
+}

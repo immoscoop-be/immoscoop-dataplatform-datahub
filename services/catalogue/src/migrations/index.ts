@@ -1,0 +1,49 @@
+import type { Migration } from 'kysely/migration';
+import * as collections from './0001-collections.js';
+import * as resources from './0002-resources.js';
+import * as collectionIcon from './0003-collection-icon.js';
+import * as resourcesAfresh from './0004-resources-afresh.js';
+import * as collectionsAfresh from './0005-collections-afresh.js';
+import * as grainAndMappings from './0006-grain-and-mappings.js';
+import * as resourceCard from './0007-resource-card.js';
+import * as publication from './0008-publication.js';
+import * as requests from './0009-requests.js';
+import * as searchWords from './0010-search-words.js';
+import * as conversations from './0011-conversations.js';
+import * as fullName from './0012-full-name.js';
+import * as notifications from './0013-notifications.js';
+import * as learningProgress from './0014-learning-progress.js';
+import * as folders from './0015-folders.js';
+import * as excelKeyMessages from './0016-excel-key-messages.js';
+import * as folderDescriptions from './0017-folder-descriptions.js';
+import * as knownGaps from './0018-known-gaps.js';
+import * as knownGapScope from './0019-known-gap-scope.js';
+import * as gapPeriodWithoutField from './0020-gap-period-without-field.js';
+import * as lensDeleted from './0021-lens-deleted.js';
+import * as userMessages from './0022-user-messages.js';
+
+/** The migrations of catalogue, by name; they run in the order of their names (TR-PF-09). */
+export const migrations: Record<string, Migration> = {
+  '0001-collections': collections,
+  '0002-resources': resources,
+  '0003-collection-icon': collectionIcon,
+  '0004-resources-afresh': resourcesAfresh,
+  '0005-collections-afresh': collectionsAfresh,
+  '0006-grain-and-mappings': grainAndMappings,
+  '0007-resource-card': resourceCard,
+  '0008-publication': publication,
+  '0009-requests': requests,
+  '0010-search-words': searchWords,
+  '0011-conversations': conversations,
+  '0012-full-name': fullName,
+  '0013-notifications': notifications,
+  '0014-learning-progress': learningProgress,
+  '0015-folders': folders,
+  '0016-excel-key-messages': excelKeyMessages,
+  '0017-folder-descriptions': folderDescriptions,
+  '0018-known-gaps': knownGaps,
+  '0019-known-gap-scope': knownGapScope,
+  '0020-gap-period-without-field': gapPeriodWithoutField,
+  '0021-lens-deleted': lensDeleted,
+  '0022-user-messages': userMessages,
+};

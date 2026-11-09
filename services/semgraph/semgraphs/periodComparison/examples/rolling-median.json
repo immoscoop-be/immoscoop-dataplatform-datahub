@@ -1,0 +1,24 @@
+{
+  "semgraph": "periodComparison",
+  "metric": "creditLeads",
+  "title": "Credit leads per day, against the 8 weeks before (example data)",
+  "measureType": "additive",
+  "statistic": "median",
+  "window": 7,
+  "locale": "en",
+  "context": {
+    "domain": "Leads",
+    "dataset": "creditLeads",
+    "reliability": "example data"
+  },
+  "points": [
+    { "end": "2026-08-12", "median": 35, "p25": 27.5, "p75": 37, "previous": { "median": 46 } },
+    { "end": "2026-08-19", "median": 36, "p25": 29.5, "p75": 36, "previous": { "median": 43 } },
+    { "end": "2026-08-26", "median": 36, "p25": 27.5, "p75": 40, "previous": { "median": 43 } },
+    { "end": "2026-09-02", "median": 35, "p25": 28.5, "p75": 43, "previous": { "median": 38 } },
+    { "end": "2026-09-09", "median": 44, "p25": 38, "p75": 49, "previous": { "median": null } },
+    { "end": "2026-09-16", "median": 48, "p25": 38, "p75": 52.5, "previous": { "median": null } },
+    { "end": "2026-09-23", "median": 45, "p25": 41, "p75": 52.5, "previous": { "median": 39 } },
+    { "end": "2026-09-30", "median": 49, "p25": 41, "p75": 50, "previous": { "median": 36 } }
+  ]
+}

@@ -1,0 +1,241 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "semgraph:movingWindowAverage/request",
+  "title": "movingWindowAverage request",
+  "description": "Rolling windows of days as blocks that do not overlap, one row per window named after its last day, on a relative time axis. Per block mean (a diamond) with sd, the sample standard deviation (a thin bar of ±1 sd), and n. The warehouse computes the blocks; the service checks them against the chart language and draws (REQ-058).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "semgraph",
+    "metric",
+    "measureType",
+    "window",
+    "points"
+  ],
+  "properties": {
+    "semgraph": {
+      "const": "movingWindowAverage"
+    },
+    "metric": {
+      "description": "Identifier of the metric, e.g. creditLeads. Used as title when no title is given.",
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_]{0,63}$"
+    },
+    "title": {
+      "description": "Title above the chart. States what is shown, not a conclusion.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "measureType": {
+      "description": "Kind of number: additive or unique for a count; perUnit for a mean or median per unit where the spread between the units is the question, such as an amount per lead (REQ-070, REQ-074); ratio for a numerator divided by a denominator, only in movingWindowRatio and calendarRatio (REQ-074, REQ-076). Required until Domain Hub or the dbt YAML supplies it.",
+      "enum": [
+        "additive",
+        "unique",
+        "perUnit",
+        "ratio"
+      ]
+    },
+    "uniqueAggregation": {
+      "description": "Required for unique counts: daily (the uniques per day; never summed) or overPeriod (the uniques over the whole block, counted in the warehouse; only as a total).",
+      "enum": [
+        "daily",
+        "overPeriod"
+      ]
+    },
+    "window": {
+      "description": "Length of the rolling window in days: 1 for the daily values, or a multiple of 7 (another length is a tolerated deviation).",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 364
+    },
+    "asOf": {
+      "description": "The last complete day of the data. A calendar period that ends after it is still running. Yesterday in Brussels when absent.",
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "values": {
+      "description": "Which values are written on the chart: off, last (the last value), lastAndPrevious (the last final value in bold, a running one next to it in grey) or all (only with few points; otherwise the default is used).",
+      "enum": [
+        "off",
+        "last",
+        "lastAndPrevious",
+        "all"
+      ],
+      "default": "last"
+    },
+    "valueAxis": {
+      "description": "zero: the value axis starts at zero. zoom: it may start at a round value just below the data, marked with a zigzag at the start of the baseline and a bold first value; allowed for positions such as averages and medians.",
+      "enum": [
+        "zero",
+        "zoom"
+      ],
+      "default": "zero"
+    },
+    "size": {
+      "description": "The size of the chart (REQ-085): card (360 px wide, next to a KPI tile), default (640 px), large (1280 px, a 16:9 slide) or xl (1920 px, a big screen or print). Only the width is chosen; the height follows from the content. The chart is built anew in every size, so everything written on it fits.",
+      "enum": [
+        "card",
+        "default",
+        "large",
+        "xl"
+      ],
+      "default": "default"
+    },
+    "theme": {
+      "description": "The colours of the chart (REQ-094): light, or dark for a dark page, slide or conversation. Both are the Figma variables of the chart language (collection Chart, modes Light and Dark); only the colours change.",
+      "enum": [
+        "light",
+        "dark"
+      ],
+      "default": "light"
+    },
+    "format": {
+      "description": "Output format. Only svg is available in v0.",
+      "enum": [
+        "svg",
+        "png",
+        "html",
+        "widget"
+      ],
+      "default": "svg"
+    },
+    "locale": {
+      "description": "Language of titles, labels and messages, e.g. en or nl-BE. Unknown locales fall back to English.",
+      "type": "string",
+      "pattern": "^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+    },
+    "context": {
+      "description": "Provenance and status for the footer. Missing values are shown as unknown.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "domain": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "dataset": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "owner": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "reliability": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "definitionUrl": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      }
+    },
+    "meta": {
+      "description": "Metadata of the chart (REQ-010): the question that started it, references, the query, who asked and who built it, and the day it was compiled. Only what is given is shown (REQ-020).",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "question": {
+          "description": "The question that started the chart.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "askedBy": {
+          "description": "Who asked the question.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "builtBy": {
+          "description": "Who built the chart.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "references": {
+          "description": "Links to Jira, Slack or anything else.",
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "url"
+            ],
+            "properties": {
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "url": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              }
+            }
+          }
+        },
+        "query": {
+          "description": "The query behind the data, shown as written.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 10000
+        },
+        "compiledOn": {
+          "description": "The day the chart was compiled. When absent, the day it is drawn, in Brussels.",
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        }
+      }
+    },
+    "points": {
+      "description": "One row per block, computed in the warehouse (REQ-058). A block without data is null or left out; it is drawn as empty, never as zero.",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "end",
+          "mean"
+        ],
+        "properties": {
+          "end": {
+            "description": "The last day of the window. Windows follow each other without overlap: their ends lie a whole number of windows apart.",
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+          },
+          "mean": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "description": "The mean of the block; null when the block has no data."
+          },
+          "sd": {
+            "description": "Sample standard deviation (n − 1, like STDDEV in BigQuery).",
+            "type": "number",
+            "minimum": 0
+          },
+          "n": {
+            "description": "Number of observations behind the value, as counted where the value is computed (REQ-043).",
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    }
+  }
+}

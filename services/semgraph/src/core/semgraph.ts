@@ -1,0 +1,109 @@
+import type { TopLevelSpec } from 'vega-lite';
+import type { Translator } from './i18n.ts';
+import type { IssueSpec } from './issues.ts';
+import type { HoverSpec, Readout } from './render/hover.ts';
+import type { Tokens } from './tokens.ts';
+
+/** One attribute of the closed vocabulary (vocabulary/attributes.yml). */
+export interface Attribute {
+  id: string;
+  question?: string;
+  values: string[];
+  source: string[];
+  askWhen?: Record<string, string>;
+}
+
+/** The values a semgraph fits for one attribute: a list, or an explicit "any". */
+export type AttributeValues = string[] | 'any';
+
+export interface SemgraphMetadata {
+  id: string;
+  title: string;
+  answers: string;
+  /** Text key of the name of the reading card for this kind of chart, for the learn link in the footer. */
+  readingCard: string;
+  attributes: Record<string, AttributeValues>;
+  exampleQuestions: string[];
+  doNotUseWhen: { intent: string; use: string }[];
+  data: { minimumPoints: number };
+  links: { figma: string; learning: string };
+  /**
+   * REQ-102, REQ-103: the lesson of this kind of chart, written once, as text keys. Without a lesson there is
+   * no Learn label, and the icon links to the reading card.
+   */
+  lesson?: { title: string; whatYouSee: string; watchOut: string };
+}
+
+/**
+ * REQ-102: a sign of the chart language that a chart can draw, for "Signs in this chart" in its lesson: the
+ * shape of the series, the patterns of the data states, the hatching of a loss and the zigzag of a zoomed axis.
+ */
+export type Sign = 'square' | 'circle' | 'diamond' | 'squareInSquare' | 'running' | 'few' | 'empty' | 'loss' | 'zigzag';
+
+/** A sign the chart really drew, with its sample: markup for a 16 × 16 box. */
+export interface SignSample {
+  sign: Sign;
+  markup: string;
+}
+
+/** Footer context that every semgraph request may carry. */
+export interface RequestContext {
+  domain?: string;
+  dataset?: string;
+  owner?: string;
+  reliability?: string;
+  definitionUrl?: string;
+}
+
+export interface DrawContext {
+  t: Translator;
+  tokens: Tokens;
+  metadata: SemgraphMetadata;
+}
+
+/** What a semgraph hands to the template: the Vega-Lite spec plus the texts around it. */
+export interface Drawing {
+  vegaLite: TopLevelSpec;
+  /** Size of the Vega output; autosize is off, so this is exact. */
+  width: number;
+  height: number;
+  /** Where the plot sits inside the Vega output, for overlays such as the hover layer. */
+  plotArea: { x: number; y: number; width: number; height: number };
+  /** What each column shows on hover, in data units; placed with Vega's own scales. */
+  hover: HoverSpec[];
+  /** Horizontal bars: every category is a row on the y scale instead of a column on the x scale. */
+  hoverRows?: boolean;
+  title: string;
+  readingCue: string;
+  description: string;
+  /** The reference day ("today") for the footer, as a day number. */
+  asOf: number;
+  /** SVG definitions the chart refers to, e.g. the hatch pattern; their ids are unique per chart (REQ-036). */
+  defs?: string;
+  /** REQ-102: the signs this chart really drew, in the order of the lesson. */
+  signs?: SignSample[];
+  /**
+   * REQ-105: a time axis reads its values in one fixed spot: the readout at rest (the latest value), and where the
+   * labels of the time axis start, in plot-area coordinates, for the date under the point.
+   */
+  readout?: { rest: Readout; dateTop: number };
+}
+
+/**
+ * The code of one semgraph. Everything smart happens here and in the core; Vega-Lite only draws
+ * what `draw` gives it. Requests reach these functions only after they passed the JSON Schema.
+ */
+export interface SemgraphImplementation<Request, Computed> {
+  readonly id: string;
+  /** The JSON Schema of the request: the contract, also written to semgraphs/<id>/schema.json. */
+  schema(): object;
+  /** Input checks the schema cannot express, e.g. existing days and duplicates. */
+  check(request: Request): IssueSpec[];
+  compute(request: Request, context: { now: Date }): Computed;
+  /** The chart-language rules: refusals, tolerated deviations and information. */
+  rules(request: Request, computed: Computed, context: { metadata: SemgraphMetadata }): IssueSpec[];
+  draw(request: Request, computed: Computed, context: DrawContext): Drawing;
+}
+
+/** The registry handles implementations without knowing their request types. */
+export type AnySemgraphImplementation = SemgraphImplementation<any, any>;

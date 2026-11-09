@@ -1,0 +1,157 @@
+import { describe, expect, it } from 'vitest';
+import { collecionesCatalog, collecionesManifest, sampleCatalog, sampleManifest } from './fixtures.js';
+import { normalise, relationOf } from './normalise.js';
+
+const P = 'immoscoop_dataplatform_sql';
+
+describe('normalise', () => {
+  const set = normalise(sampleManifest(), sampleCatalog());
+  const node = (id: string) => set.nodes.find((row) => row.uniqueId === id);
+
+  it('reads the version of dbt and when the manifest was made', () => {
+    expect(set).toMatchObject({ projectName: P, dbtVersion: '1.10.2', generatedAt: new Date('2026-10-18T07:27:00Z') });
+  });
+
+  it('keeps models, seeds, snapshots, sources and exposures as Nodes, and nothing else', () => {
+    expect(set.nodes.map((row) => row.uniqueId).sort()).toEqual([
+      `exposure.${P}.sales_dashboard`,
+      `model.${P}.customers`,
+      `model.${P}.order_lines`,
+      `model.${P}.orders`,
+      `seed.${P}.countries`,
+      `snapshot.${P}.orders_history`,
+      `source.${P}.shop.raw_orders`,
+    ]);
+    expect(node(`model.${P}.orders`)).toEqual({
+      uniqueId: `model.${P}.orders`,
+      resourceType: 'model',
+      name: 'orders',
+      packageName: P,
+      databaseName: 'immoscoop-dataplatform',
+      schemaName: 'dbt_marts',
+      tableName: 'orders',
+      relation: 'immoscoop-dataplatform.dbt_marts.orders',
+      description: 'One row per order.',
+      materialized: 'table',
+      tags: ['marts', 'daily'],
+      filePath: 'models/orders.sql',
+      checksum: 'sum-orders',
+      meta: {
+        model: { kind: 'history', grain: 'stateChange' },
+        domain: { entity: 'order', entityDescription: '', identifiers: [{ name: 'orderId', type: 'string' }], performedBy: ['user', 'visitor'] },
+      },
+      // Without the tags of Colleciónes, its Entity comes from meta.domain (FR-AR-16).
+      entity: 'order',
+      action: null,
+      strategy: null,
+      layer: null,
+      partitionField: 'ordered_at',
+      partitionUnit: 'month',
+      clusterBy: ['customer_id'],
+      requirePartitionFilter: true,
+    });
+  });
+
+  it('reads how a table is stored from its dbt config, for the step that adds a Resource (FR-CO-34)', () => {
+    // Partitioned by an integer range: a column without a unit; clustered by a list of columns.
+    expect(node(`model.${P}.customers`)).toMatchObject({ partitionField: 'customer_id', partitionUnit: null, clusterBy: ['country', 'customer_id'], requirePartitionFilter: false });
+    // A view is not partitioned.
+    expect(node(`seed.${P}.countries`)).toMatchObject({ partitionField: null, partitionUnit: null, clusterBy: [], requirePartitionFilter: false });
+  });
+
+  it('knows what a Node of Colleciónes is built from, by the tags of its generator (FR-AR-16)', () => {
+    const colleciones = normalise(collecionesManifest(), collecionesCatalog());
+    expect(colleciones.nodes.find((row) => row.name === 'agency_orders')).toMatchObject({
+      entity: 'agency',
+      action: 'order',
+      strategy: 'AtomicEvent',
+      layer: 'mrt',
+    });
+    // A source says nothing about the Domain Model.
+    expect(colleciones.nodes.find((row) => row.resourceType === 'source')).toMatchObject({ entity: null, action: null, strategy: null, layer: null });
+  });
+
+  it('keeps the meta of every column, where Colleciónes says what it maps to (DEC-AR-07)', () => {
+    const colleciones = normalise(collecionesManifest(), collecionesCatalog());
+    const column = colleciones.columns.find((row) => row.name === 'agency_id');
+    expect(column?.meta).toEqual({ domain: { maps: 'is', entity: 'agency', identifier: 'agencyId' } });
+    expect(set.columns.find((row) => row.name === 'ORDER_ID')?.meta).toEqual({});
+  });
+
+  it('keeps the meta of a Node as dbt has it, the meta in its config winning, and none as empty', () => {
+    // dbt writes meta both on the Node and in its config; a key in the config replaces it whole.
+    expect(node(`model.${P}.orders`)?.meta.model).toEqual({ kind: 'history', grain: 'stateChange' });
+    expect(node(`seed.${P}.countries`)?.meta).toEqual({});
+  });
+
+  it('names the table a Node builds or reads, the same way in both projects', () => {
+    expect(node(`model.${P}.customers`)?.relation).toBe('immoscoop-dataplatform.dbt_marts.dim_customers');
+    expect(node(`source.${P}.shop.raw_orders`)?.relation).toBe('immoscoop-dataplatform.raw_shop.orders_export');
+    expect(relationOf('`Immoscoop-Dataplatform`', '"dbt_marts"', 'Orders')).toBe('immoscoop-dataplatform.dbt_marts.orders');
+    // An ephemeral model and an exposure build no table.
+    expect(node(`model.${P}.order_lines`)).toMatchObject({ tableName: null, relation: null });
+    expect(node(`exposure.${P}.sales_dashboard`)?.relation).toBeNull();
+  });
+
+  it('takes the actual columns from the catalog, with the descriptions of the manifest', () => {
+    expect(set.columns.filter((column) => column.nodeId === `model.${P}.orders`)).toEqual([
+      { nodeId: `model.${P}.orders`, name: 'ORDER_ID', position: 1, dataType: 'INT64', description: 'The order.', meta: {} },
+      { nodeId: `model.${P}.orders`, name: 'CUSTOMER_ID', position: 2, dataType: 'INT64', description: 'Who ordered.', meta: {} },
+      { nodeId: `model.${P}.orders`, name: 'CREATED_AT', position: 3, dataType: 'TIMESTAMP', description: 'From the warehouse.', meta: {} },
+    ]);
+    // A Node the catalog does not know keeps the columns of the manifest, without an actual type.
+    expect(set.columns.filter((column) => column.nodeId === `model.${P}.order_lines`)).toEqual([
+      { nodeId: `model.${P}.order_lines`, name: 'line_id', position: 1, dataType: 'string', description: 'A line.', meta: {} },
+    ]);
+  });
+
+  it('links each Node to the Nodes it depends on, once, and only to Nodes', () => {
+    const parents = (id: string) =>
+      set.edges
+        .filter((edge) => edge.childId === id)
+        .map((edge) => edge.parentId)
+        .sort();
+    expect(parents(`model.${P}.orders`)).toEqual([`model.${P}.order_lines`, `seed.${P}.countries`, `source.${P}.shop.raw_orders`]);
+    // The exposure also depends on a metric, which is not a Node.
+    expect(parents(`exposure.${P}.sales_dashboard`)).toEqual([`model.${P}.customers`]);
+    expect(parents(`snapshot.${P}.orders_history`)).toEqual([`model.${P}.orders`]);
+  });
+
+  it('attaches tests to their Node and column, and splits out the target of a relationships test', () => {
+    expect(set.tests.sort((a, b) => a.uniqueId.localeCompare(b.uniqueId))).toEqual([
+      {
+        uniqueId: `test.${P}.not_null_orders_order_id.1a`,
+        name: 'not_null',
+        nodeId: `model.${P}.orders`,
+        columnName: 'order_id',
+        severity: 'error',
+        targetNodeId: null,
+        targetColumn: null,
+      },
+      {
+        uniqueId: `test.${P}.relationships_orders_customer_id.2b`,
+        name: 'relationships',
+        nodeId: `model.${P}.orders`,
+        columnName: 'customer_id',
+        severity: 'warn',
+        targetNodeId: `model.${P}.customers`,
+        targetColumn: 'customer_key',
+      },
+      // A test on a source has no attached node in the manifest; its only dependency is the source.
+      {
+        uniqueId: `test.${P}.source_unique_shop_raw_orders_id.3c`,
+        name: 'unique',
+        nodeId: `source.${P}.shop.raw_orders`,
+        columnName: 'id',
+        severity: 'error',
+        targetNodeId: null,
+        targetColumn: null,
+      },
+    ]);
+  });
+
+  it('refuses Artifacts that are not a manifest and a catalog', () => {
+    expect(() => normalise({}, sampleCatalog())).toThrow('The manifest has no nodes');
+    expect(() => normalise(sampleManifest(), null)).toThrow('The catalog has no nodes');
+  });
+});

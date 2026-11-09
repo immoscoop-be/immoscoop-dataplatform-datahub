@@ -1,0 +1,207 @@
+import { type BigQuery, BigQueryRefused } from './bigquery.js';
+import type { QueryResource } from './catalogue.js';
+import type { NamedResource } from './database.js';
+import { bind, kindFor, type Parameter, type ParameterKind } from './parameters.js';
+import { comparedWith, filtersOn, inOwnCase, names, recent, tablesOf, withFilter } from './sql.js';
+
+/**
+ * The two thresholds, in bytes: above the first the User approves, above the second the Data Team decides
+ * (DEC-SR-29); or, for a User whose Permission group says so, it cannot run at all (`runs.ranges`).
+ */
+export interface Thresholds {
+  approve: number;
+  request: number;
+  /** Above the second: a Request to the Data Team, or it cannot run; a Request when not said, as for a Lens. */
+  above?: 'request' | 'refuse';
+}
+
+/** Up to the first threshold a query runs; up to the second its author approves it; above, it goes to the Data Team (DEC-SR-29). */
+export type Range = 'free' | 'approve' | 'request';
+
+/** What keeps a query from running. */
+export type Problem =
+  | { kind: 'empty' }
+  /** One of its Resources the User may no longer see. */
+  | { kind: 'notVisible'; resource: Pick<NamedResource, 'id' | 'displayName'> }
+  /** A table that is not one of its Resources, where it stands in the SQL if it is named there (DEC-UX-73). */
+  | { kind: 'outside'; name: string; start: number | null; end: number | null }
+  /** An @name that is not a Parameter, where it stands, with the kind suggested from the column it is compared with (DEC-UX-71). */
+  | { kind: 'undefinedParameter'; name: string; start: number; end: number; suggestedKind: ParameterKind | null }
+  /** A change or a script: a query only reads. */
+  | { kind: 'notSelect'; statementType: string }
+  /** No filter on the partition column of a Resource that requires one (DEC-SR-35), with the SQL that adds one where Data Hub can tell where. */
+  | { kind: 'filterRequired'; resource: Pick<NamedResource, 'id' | 'displayName'>; column: string; fix: string | null }
+  /** BigQuery refused it, in its own words. */
+  | { kind: 'invalid'; message: string }
+  /** It reads more than one run of this User may, and their Permission group sends nothing to the Data Team (`runs.ranges`). */
+  | { kind: 'tooLarge'; bytes: number; limit: number };
+
+/** No filter on the partition column of a Resource that does not require one: it runs, warned (FR-SR-40). */
+export interface Warning {
+  kind: 'noPartitionFilter';
+  resource: Pick<NamedResource, 'id' | 'displayName'>;
+  column: string;
+  /** The SQL with a filter on its recent partitions, where Data Hub can tell where it goes. */
+  fix: string | null;
+  /** What that SQL reads at most, from a dry run of its own (FR-SR-40). */
+  bytesWithFilter: number | null;
+}
+
+export interface Preflight {
+  /** Whether it can run, in its range. */
+  runnable: boolean;
+  /** What it reads at most, from the dry run; null when there was none. */
+  bytes: number | null;
+  range: Range | null;
+  partitions: number | null;
+  problems: Problem[];
+  warnings: Warning[];
+  thresholds: Required<Thresholds>;
+  /** The Parameters that are not in the SQL: they are not sent (DEC-UX-71). */
+  unused: string[];
+}
+
+/** A Resource of a query: as catalogue gives it to this User, or null when they may not see it. */
+export interface ResourceOfQuery {
+  named: NamedResource;
+  resource: QueryResource | null;
+}
+
+export const rangeOf = (bytes: number, thresholds: Thresholds): Range => (bytes > thresholds.request ? 'request' : bytes > thresholds.approve ? 'approve' : 'free');
+
+/** Whether its SQL itself can run: nothing keeps it from running but, for this User, its size (FR-SR-52). */
+export const sound = (checked: Preflight): boolean => checked.range !== null && checked.problems.every((problem) => problem.kind === 'tooLarge');
+
+/** BigQuery's own words for a table that requires a filter on its partition column. */
+const REQUIRES_FILTER = /without a filter over column\(s\) '([^']+)'/i;
+
+/**
+ * The tables beneath each Resource, as BigQuery reads them for `select *` of it: itself for a table, the
+ * tables beneath for a view. A table that requires a filter on its partition column gets one that keeps
+ * only its partition of null values. A dry run costs nothing; the answer is kept a few minutes.
+ */
+export function createBeneath(bigquery: BigQuery, ttl = 10 * 60_000, now: () => number = Date.now) {
+  const cache = new Map<string, { tables: string[]; until: number }>();
+  return async (resource: Pick<QueryResource, 'key' | 'fullName' | 'partition'>): Promise<string[]> => {
+    const cached = cache.get(resource.key);
+    if (cached && cached.until > now()) return cached.tables;
+    const all = `select * from \`${resource.fullName}\``;
+    let referenced: string[];
+    try {
+      referenced = (await bigquery.dryRun(all)).referencedTables;
+    } catch (error) {
+      if (!(error instanceof BigQueryRefused) || !resource.partition) throw error;
+      referenced = (await bigquery.dryRun(`${all} where ${resource.partition.field} is null`)).referencedTables;
+    }
+    const tables = [resource.fullName, ...referenced];
+    cache.set(resource.key, { tables, until: now() + ttl });
+    return tables;
+  };
+}
+
+/** The SQL with a filter on the recent partitions of this Resource, where Data Hub can tell where it goes. */
+function fixFor(sql: string, resource: QueryResource, project: string): string | null {
+  if (!resource.partition) return null;
+  const { field, unit } = resource.partition;
+  const filter = recent(field, resource.fields.find((candidate) => candidate.name === field)?.dataType ?? null, unit);
+  return filter ? withFilter(sql, (name) => names(name, resource.key, project), filter) : null;
+}
+
+/**
+ * The Pre-flight of a query (FR-SR-36, FR-SR-37, FR-SR-40, DEC-SR-35, DEC-UX-73): whether it reads only its
+ * own Resources and only reads, by the names in its SQL and again by what BigQuery says it reads; what it
+ * reads at most, and in which range; and whether it filters on the partition column of each Resource it
+ * reads. It checks the SQL as BigQuery gets it, with the functions of its Parameters in it (DEC-UX-118).
+ * It runs again, the same, before every run.
+ */
+export async function preflight(
+  sql: string,
+  resources: ResourceOfQuery[],
+  context: { bigquery: BigQuery; beneath: (resource: QueryResource) => Promise<string[]>; project: string; thresholds: Thresholds },
+  parameters: readonly Parameter[] = [],
+): Promise<Preflight> {
+  const { bigquery, beneath, project, thresholds } = context;
+  const bound = bind(sql, parameters);
+  const done = (fields: Partial<Preflight>): Preflight => {
+    const problems = fields.problems ?? [];
+    return {
+      bytes: null,
+      range: null,
+      partitions: null,
+      warnings: [],
+      ...fields,
+      problems,
+      thresholds: { approve: thresholds.approve, request: thresholds.request, above: thresholds.above ?? 'request' },
+      unused: bound.unused,
+      runnable: problems.length === 0 && fields.range !== undefined && fields.range !== null,
+    };
+  };
+  if (sql.trim() === '') return done({ problems: [{ kind: 'empty' }] });
+
+  const problems: Problem[] = resources
+    .filter((entry) => entry.resource === null)
+    .map((entry) => ({ kind: 'notVisible', resource: { id: entry.named.id, displayName: entry.named.displayName } }));
+  const visible = resources.flatMap((entry) => (entry.resource ? [entry.resource] : []));
+
+  // Every @name is a Parameter, as BigQuery refuses one without a value.
+  for (const missing of bound.missing) {
+    const { column, list } = comparedWith(sql, missing.start);
+    const field = column ? visible.flatMap((resource) => resource.fields).find((candidate) => candidate.name.toLowerCase() === column.toLowerCase()) : undefined;
+    problems.push({ kind: 'undefinedParameter', ...missing, suggestedKind: field ? kindFor(field.dataType, list) : list ? 'several' : null });
+  }
+
+  // Every table named in the SQL is one of its Resources; a table function never is. A table in a function
+  // of a Parameter stands where its @name is.
+  const { tables, functions } = tablesOf(bound.sql);
+  const read = new Set<QueryResource>();
+  for (const table of [...tables, ...functions]) {
+    const resource = functions.includes(table) ? undefined : visible.find((candidate) => names(table.name, candidate.key, project));
+    if (resource) read.add(resource);
+    else problems.push({ kind: 'outside', name: table.name, start: bound.original(table.start, 'start'), end: bound.original(table.end, 'end') });
+  }
+  if (problems.length > 0) return done({ problems });
+
+  // BigQuery gets each Resource by its full name in its own case, however it is written (DEC-SR-44).
+  const resolved = [...read];
+  let dry: Awaited<ReturnType<BigQuery['dryRun']>>;
+  try {
+    dry = await bigquery.dryRun(inOwnCase(bound.sql, resolved, project), bound.parameters);
+  } catch (error) {
+    if (!(error instanceof BigQueryRefused)) throw error;
+    const required = REQUIRES_FILTER.exec(error.message);
+    const column = required?.[1]?.split(',')[0]?.trim();
+    const resource = column ? [...read].find((candidate) => candidate.partition?.field === column) : undefined;
+    return done({
+      problems: [
+        resource && column
+          ? { kind: 'filterRequired', resource: { id: resource.id, displayName: resource.displayName }, column, fix: fixFor(sql, resource, project) }
+          : { kind: 'invalid', message: error.message },
+      ],
+    });
+  }
+  if (dry.statementType !== 'SELECT') return done({ problems: [{ kind: 'notSelect', statementType: dry.statementType }] });
+
+  // And again by what BigQuery reads: only its Resources, or the tables beneath them.
+  const allowed = new Set((await Promise.all([...read].map((resource) => beneath(resource)))).flat().map((table) => table.toLowerCase()));
+  for (const table of dry.referencedTables) {
+    if (!allowed.has(table.toLowerCase())) problems.push({ kind: 'outside', name: table, start: null, end: null });
+  }
+
+  const warnings: Warning[] = [];
+  for (const resource of read) {
+    if (!resource.partition || filtersOn(sql, resource.partition.field)) continue;
+    const named = { id: resource.id, displayName: resource.displayName };
+    const fix = fixFor(sql, resource, project);
+    if (resource.partitionFilter === 'none') {
+      // What it would read with the filter: one more dry run, which costs nothing.
+      const filtered = fix ? bind(fix, parameters) : null;
+      const bytesWithFilter = filtered ? await bigquery.dryRun(inOwnCase(filtered.sql, resolved, project), filtered.parameters).then((dryRun) => dryRun.bytes, () => null) : null;
+      warnings.push({ kind: 'noPartitionFilter', resource: named, column: resource.partition.field, fix, bytesWithFilter });
+    }
+    else problems.push({ kind: 'filterRequired', resource: named, column: resource.partition.field, fix });
+  }
+  const range = rangeOf(dry.bytes, thresholds);
+  // Above its ranges it goes to the Data Team, unless the Permission group of the User says it cannot run (runs.ranges).
+  if (range === 'request' && thresholds.above === 'refuse') problems.push({ kind: 'tooLarge', bytes: dry.bytes, limit: thresholds.request });
+  return done({ bytes: dry.bytes, range, partitions: dry.partitions, problems, warnings });
+}

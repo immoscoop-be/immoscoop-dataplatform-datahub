@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<!--
+  Screen: Edit the lens, "Edit more" on the page of a Lens, for its Owner Unit and the Data Team (DEC-UX-162).
+  Left: what it tells, as when it was made: its name, the question it answers, what it shows, what it does step by
+  step, its tags and the names users see of its Parameters; it stays in its Collection. Right: what one run of its
+  version reads, that its SQL changes through its query (DEC-UX-27, DEC-LE-04), and Save.
+  Under Save, small: "Delete this lens…" (DEC-UX-185, DEC-LE-21), which opens a sheet: what deleting does, explained
+  first, with how many colleagues used it in the last 30 days, also from Excel; why, optional; and "Keep it" or
+  "Delete for good". A deleted Lens: lens-deleted.html.
+  Requirements: FR-LE-06, FR-LE-18
+  Decisions: DEC-UX-162, DEC-UX-174, DEC-UX-185, DEC-UX-27, DEC-LE-04, DEC-LE-16, DEC-LE-21.
+  Related screens: lens.html (Edit more), lens-new.html (Make it a lens), lens-deleted.html.
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="owner">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Edit the lens</title>
+</head>
+<body>
+<div class="app panel-open">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <button class="nav-btn active" data-label="Collections" aria-label="Collections" aria-current="page"><i class="ph-fill ph-stack"></i><span class="flare top"></span><span class="flare bottom"></span></button>
+  <a class="nav-btn" href="query.html" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></a>
+  <a class="nav-btn" href="#" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <a class="nav-btn nav-admin" href="admin-webhooks.html" data-label="Admin" aria-label="Admin, for the Data Team" data-for="datateam"><i class="ph-fill ph-toolbox"></i></a>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">MP</a>
+</nav>
+<aside class="panel" aria-label="Collections">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:4px">
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Collections</h1>
+   <button class="icon-btn" aria-label="New Collection"><i class="ph-fill ph-plus-circle"></i></button>
+   <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
+  </div>
+  <label class="search card" style="margin:16px 0 4px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search Resources and Lenses"></label>
+  <div class="tree-group card open">
+   <div class="tree-head"><a class="tree-link" href="collection-overview.html"><span class="item-icon"><i class="ph ph-coins"></i></span><span class="tree-name"><span class="item-title">Credit leads</span><span class="meta"><span data-for="owner datateam">6</span><span data-for="colleague">4</span> Resources · <i class="ph-fill ph-globe-simple"></i>Public</span></span></a><button class="tree-toggle" aria-expanded="true" aria-label="Show what Credit leads holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="resource-detail.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Weekly lead volume">Weekly lead volume</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Credit lead funnel">Credit lead funnel</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead sources">Lead sources</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead response time">Lead response time</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res unpublished" data-for="owner datateam" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Rejected leads · not published">Rejected leads<span class="hidden-label">, not published</span></span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res unpublished" data-for="owner datateam" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="KBC follow-up · not published">KBC follow-up<span class="hidden-label">, not published</span></span></span><span class="maturity" data-level="1"></span></a>
+     <a class="tree-res current" aria-current="page" href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span class="tree-res-name"><span class="clip" title="Leads per source name">Leads per source name</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span class="tree-res-name"><span class="clip" title="Leads per source, week by week">Leads per source, week by week</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span class="tree-res-name"><span class="clip" title="From request to KBC">From request to KBC</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="lens.html" title="Broken: the column first_reply_at of Lead response time no longer exists"><i class="ph ph-aperture kind-icon broken-mark" role="img" aria-label="Lens, broken"></i><span class="tree-res-name"><span class="clip" title="Response time and conversion · Broken: the column first_reply_at of Lead response time no longer exists">Response time and conversion</span></span><span class="maturity" data-level="3"></span></a>
+   </div>
+  </div>
+  <div class="tree-group card" data-pane-group="collfilter" data-pane="all">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-house-line"></i></span><span class="tree-name"><span class="item-title">Listing leads</span><span class="meta">15 Resources</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Listing leads holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Contact requests per listing and per broker">Contact requests per listing and per broker</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead quality score">Lead quality score</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Visit requests">Visit requests</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Leads per broker">Leads per broker</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Response by broker">Response by broker</span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead sources for listings">Lead sources for listings</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res unpublished" data-for="owner datateam" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Duplicate requests · not published">Duplicate requests<span class="hidden-label">, not published</span></span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead to visit">Lead to visit</span></span><span class="maturity" data-level="1"></span></a>
+     <a class="tree-more" href="#">Show all 15</a>
+   </div>
+  </div>
+  <div class="tree-group card" data-pane-group="collfilter" data-pane="all">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-buildings"></i></span><span class="tree-name"><span class="item-title">Listings</span><span class="meta">22 Resources</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Listings holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Active listings per day">Active listings per day</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Listing views per day">Listing views per day</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Price changes">Price changes</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Listings by region">Listings by region</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Time on market">Time on market</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="New listings per week">New listings per week</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Listing quality">Listing quality</span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res unpublished" data-for="owner datateam" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Withdrawn listings · not published">Withdrawn listings<span class="hidden-label">, not published</span></span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-more" href="#">Show all 22</a>
+   </div>
+  </div>
+  <div class="tree-group card">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-briefcase"></i></span><span class="tree-name"><span class="item-title">Brokers</span><span class="meta">11 Resources · <i class="ph-fill ph-lock-simple"></i>Private</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Brokers holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Active brokers">Active brokers</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Service packs per broker">Service packs per broker</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Broker churn">Broker churn</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Broker portal logins">Broker portal logins</span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Listings per broker">Listings per broker</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Broker regions">Broker regions</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Pack upgrades">Pack upgrades</span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res unpublished" data-for="owner datateam" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Broker contacts · not published">Broker contacts<span class="hidden-label">, not published</span></span></span><span class="maturity" data-level="1"></span></a>
+     <a class="tree-more" href="#">Show all 11</a>
+   </div>
+  </div>
+  <p id="no-results" class="meta" style="padding:8px 4px" hidden>Nothing matches your search.</p>
+ </div>
+</aside>
+<main class="main">
+<div class="breadcrumb">Collections · <a href="lens.html" style="color:inherit">Leads per source name</a></div>
+<div style="display:flex;align-items:center;gap:12px;margin-top:8px">
+ <h1 class="page-title" style="flex:1">Edit the lens</h1>
+ <a class="btn-quiet outline" href="lens.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph ph-x"></i>Cancel</a>
+</div>
+<div class="make-lens" style="margin-top:14px">
+ <section class="card nq-left" aria-labelledby="ml-lens">
+  <h2 id="ml-lens" class="nq-title">The Lens</h2>
+  <label class="field" style="margin-top:12px"><span>Name</span><input value="Leads per source name" required></label>
+  <label class="field"><span>The question it answers</span><input value="Which sources bring the most leads?"></label>
+  <p class="meta" style="display:block;line-height:1.5;margin:-6px 0 12px">Its words help colleagues find this Lens when they start a query.</p>
+  <label class="field"><span>What it shows</span><textarea rows="2">How many leads each lead source brings in, from a week you choose.</textarea></label>
+  <label class="field" style="margin-bottom:4px"><span>What it does, step by step</span><textarea rows="3">Takes the weekly lead volume between From and To.
+Adds the name of each lead source.
+Adds up the leads per source and puts the largest first.</textarea></label>
+  <p class="meta" style="display:block;line-height:1.5;margin:0 0 12px">A step a line, in plain language: colleagues never see the SQL of a Lens, so this is how they know what it does.</p>
+  <div class="field"><span>Tags</span>
+   <div class="tags" style="margin-top:0"><span class="tag">#leads</span><span class="tag">#source</span><span class="tag">#weekly</span><button class="add-chip" type="button">+ Tag</button></div>
+  </div>
+  <div class="field" style="margin-top:16px"><span>Parameters, the names users see</span>
+   <div class="param-row"><span class="mono">@dateFrom</span><input value="From" aria-label="Name users see"><span class="meta">Date</span><span class="param-fn" title="A function, worked out at every run"><i class="ph ph-function"></i>Start of this month<i class="ph ph-caret-down" style="margin-left:auto"></i></span></div>
+   <div class="param-row" style="margin-top:6px"><span class="mono">@dateTo</span><input value="To" aria-label="Name users see"><span class="meta">Date</span><span class="param-fn" title="A function, worked out at every run"><i class="ph ph-function"></i>Today − 3 days<i class="ph ph-caret-down" style="margin-left:auto"></i></span></div>
+   <div class="param-row" style="margin-top:6px"><span class="mono">@leadChannel</span><input value="Lead channel" aria-label="Name users see"><span class="meta">List</span><span class="meta" title="The default of this Parameter, from the query">Form</span></div>
+   <p class="meta" style="display:block;line-height:1.5;margin:8px 0 0">Their defaults come from its query. To add one or change a default, open it in Query and update the lens.</p>
+  </div>
+  <label class="field" style="margin-top:16px"><span>In the Collection</span>
+   <select disabled><option selected>Credit leads · the credit team</option></select>
+   <span class="meta" style="display:block;line-height:1.5;margin-top:6px">A Lens stays in the Collection it was made in.</span>
+  </label>
+  <div class="status-row" style="margin-top:4px"><span class="meta" style="margin-right:2px">Uses</span><span class="status"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Weekly lead volume<span class="muted">· Credit leads</span><span class="maturity" data-level="4"></span></span><span class="status"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Lead sources<span class="muted">· Credit leads</span><span class="maturity" data-level="4"></span></span></div>
+  <p class="meta" style="display:block;line-height:1.5;margin-top:10px">Level 4 · Explored, the lowest of its Resources. Everyone who may use both Resources finds it.</p>
+ </section>
+ <aside class="card nq-right" aria-labelledby="le-size">
+  <h2 id="le-size" class="nq-title">Size</h2>
+  <p class="meta" style="display:block;line-height:1.5;margin:4px 0 0">What one run of version 2 reads, as it was measured.</p>
+  <div style="font-size:24px;font-weight:500;letter-spacing:-.3px;margin-top:6px">80 MB <span style="font-size:var(--text-small);font-weight:400;color:var(--text-muted)">a run</span></div>
+  <div class="gauge" aria-hidden="true"><span class="gauge-fill" style="width:20%;background:var(--text-secondary)"></span><span class="gauge-mark" style="left:25%"></span><span class="gauge-mark" style="left:75%"></span></div>
+  <div class="size-state fine" style="margin-top:12px"><i class="ph-fill ph-info"></i><p>Its SQL is not changed here: open it in Query, change it there, and update the lens.</p></div>
+  <a class="btn-primary" href="lens.html" style="width:100%;justify-content:center;margin-top:12px;text-decoration:none;box-sizing:border-box">Save</a>
+  <!-- Under Save, small: Delete, which opens its sheet (DEC-UX-185) -->
+  <button class="btn-quiet" type="button" data-sheet-open="delete" style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-top:6px;color:var(--signal-urgent)"><i class="ph-fill ph-trash"></i>Delete this lens…</button>
+ </aside>
+</div>
+
+</main>
+</div>
+<!-- Delete this lens (DEC-UX-185, DEC-LE-21): what deleting does, explained first, then why, and "Delete for good". -->
+<div class="sheet-wrap" id="delete" hidden>
+<div class="sheet-backdrop" data-sheet-close></div>
+<section class="sheet" role="dialog" aria-modal="true" aria-labelledby="delete-title">
+ <div style="display:flex;align-items:flex-start;gap:10px">
+  <i class="ph-fill ph-trash" style="font-size:22px;color:var(--text-secondary);margin-top:2px" aria-hidden="true"></i>
+  <div style="flex:1;min-width:0"><div class="meta">Leads per source name</div><h2 id="delete-title">Delete this lens</h2></div>
+  <button class="icon-btn" data-sheet-close aria-label="Close"><i class="ph ph-x"></i></button>
+ </div>
+ <div class="sheet-list">
+  <p class="meta" style="display:block;line-height:1.5;margin-top:4px">When nobody needs it any more, or another Lens answers its question better. Deleting is for good: it cannot be undone.</p>
+  <div class="danger-what">
+   <p class="line"><i class="ph-fill ph-eye-slash" aria-hidden="true"></i><span><b>It is gone for everyone:</b> from the panel, its Collection and its folder, from search, from Claude, and from Excel, which gets no data from it any more. Its address says it was deleted, by whom, when and why.</span></p>
+   <p class="line"><i class="ph-fill ph-users" aria-hidden="true"></i><span><b>4 colleagues used it in the last 30 days,</b> on its page or from Excel. Data Hub tells them, with your reason.</span></p>
+   <p class="line"><i class="ph-fill ph-archive-box" aria-hidden="true"></i><span><b>Its record is kept:</b> its runs in the Query Log, its versions and its history, and the Messages on it, which still show, with the lens marked as deleted. The queries made from it stay; they are their owners' own. A request on it to the Data Team that still waits is withdrawn.</span></p>
+  </div>
+  <form class="danger-form" onsubmit="return false">
+   <label class="field"><span class="field-label">Why you delete it · optional</span><textarea rows="3" placeholder="Replaced by the lens Leads per source, week by week"></textarea></label>
+  </form>
+ </div>
+ <div class="sheet-foot">
+  <p class="meta">Goes into its history, with your name.</p>
+  <button class="btn-quiet" data-sheet-close>Keep it</button>
+  <a class="btn-primary danger" href="lens-deleted.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-trash"></i>Delete for good</a>
+ </div>
+</section>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

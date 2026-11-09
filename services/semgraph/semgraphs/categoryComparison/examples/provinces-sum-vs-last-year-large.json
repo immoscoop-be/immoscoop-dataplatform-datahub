@@ -1,0 +1,22 @@
+{
+  "semgraph": "categoryComparison",
+  "size": "large",
+  "metric": "leads",
+  "title": "Leads per provincie tegenover vorig jaar (voorbeelddata)",
+  "measureType": "additive",
+  "statistic": "sum",
+  "window": 28,
+  "locale": "nl-BE",
+  "context": {
+    "domain": "Leads",
+    "dataset": "Listing",
+    "reliability": "voorbeelddata"
+  },
+  "points": [
+    { "category": "Limburg", "sum": 610, "previous": { "sum": 690 } },
+    { "category": "Antwerpen", "sum": 1820, "previous": { "sum": 1620 } },
+    { "category": "West-Vlaanderen", "sum": 905, "previous": { "sum": 855 } },
+    { "category": "Oost-Vlaanderen", "sum": 1490, "previous": { "sum": 1410 } },
+    { "category": "Vlaams-Brabant", "sum": 1110, "previous": { "sum": 1190 } }
+  ]
+}

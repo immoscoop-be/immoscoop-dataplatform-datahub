@@ -1,0 +1,28 @@
+{
+  "semgraph": "periodComparison",
+  "metric": "creditLeads",
+  "title": "Kredietleads per week, tegenover de 12 weken ervoor (voorbeelddata)",
+  "measureType": "additive",
+  "statistic": "sum",
+  "unit": "week",
+  "locale": "nl-BE",
+  "context": {
+    "domain": "Leads",
+    "dataset": "creditLeads",
+    "reliability": "voorbeelddata"
+  },
+  "points": [
+    { "period": "2026-W29", "sum": 269, "previous": { "sum": 243 } },
+    { "period": "2026-W30", "sum": 276, "previous": { "sum": 255 } },
+    { "period": "2026-W31", "sum": 274, "previous": { "sum": 233 } },
+    { "period": "2026-W32", "sum": 236, "previous": { "sum": 260 } },
+    { "period": "2026-W33", "sum": 214, "previous": { "sum": 259 } },
+    { "period": "2026-W34", "sum": 208, "previous": { "sum": 273 } },
+    { "period": "2026-W35", "sum": 207, "previous": { "sum": 278 } },
+    { "period": "2026-W36", "sum": 310, "previous": { "sum": 269 } },
+    { "period": "2026-W37", "sum": 314, "previous": { "sum": 284 } },
+    { "period": "2026-W38", "sum": 310, "previous": { "sum": 293 } },
+    { "period": "2026-W39", "sum": 308, "previous": { "sum": 279 } },
+    { "period": "2026-W40", "sum": 161, "previous": { "sum": 135 } }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "semgraph": "calendarAverage",
+  "metric": "creditLeads",
+  "measureType": "additive",
+  "locale": "nl-BE",
+  "context": {
+    "domain": "Leads",
+    "dataset": "creditLeads",
+    "reliability": "voorbeelddata"
+  },
+  "title": "Kredietleads per dag, per jaar (voorbeelddata)",
+  "unit": "year",
+  "valueAxis": "zoom",
+  "points": [
+    { "period": "2024", "mean": 37.3989, "sd": 10.153 },
+    { "period": "2025", "mean": 39.6959, "sd": 10.9804 },
+    { "period": "2026", "mean": 41.8608, "sd": 11.191 }
+  ]
+}
