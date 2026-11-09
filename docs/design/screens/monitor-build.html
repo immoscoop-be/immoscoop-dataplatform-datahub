@@ -2,31 +2,38 @@
 <!--
   Screen: building a Monitor for a business User, in seven steps (FR-CM-20, DEC-CM-23), drawn on 2026-11-07 from the
   brainstorm with Max. It takes the main area of the section Monitoring, not a sheet (OP-UX-65).
-  Above the steps, the picture of the monitor (DEC-UX-195): a timeline, conceptual and not the data, that gains one layer
-  per step, and under it the sentence that reads the monitor back. Each part of the sentence opens its step.
-  1. Resource: those the User may manage, with the time Data Hub counts by, set by the Data Team (FR-CM-39).
-  2. How often: every hour, day, week or month, at what time (FR-CM-21). Layer: a strip of tiles in that unit, days in
-     whole weeks, M T W T F S S, with the weekend greyer, a dot per check, today hatched and the rest of the week to come.
-  3. Period: the last one, or the last N, and when N, one by one or as one period (FR-CM-11). Layer: the block that
-     looks back from the check, split when one by one.
-  4. Per: all together or for each value, and which values; a new value comes in by itself and warms up first
-     (FR-CM-07, FR-CM-08, FR-CM-10). Layer: colours in the block, three standing for many.
-  5. Measure: per field, how to measure it, in business words, by the type of the field; a condition on one or more
-     fields, built here; what a condition cannot say, a SQL measure of the Data Team in the monitor, in Data Hub, never a
-     change in the dbt project (FR-CM-05, DEC-CM-25, DEC-CM-26). Layer: the measure on top.
-  6. Boundaries: one or more, each compared with what the Owner chooses (DEC-CM-24); a fixed limit, a change, unusual,
-     something new, something silent or the top N (FR-CM-12, FR-CM-24, OP-CM-10); a minimum to be judged (EC-CM-02);
-     how often it would have warned in the past 12 weeks (FR-CM-16), explained (FR-CM-15); an exception for one value
-     (FR-CM-09). Layer: what it is compared with, faded or dashed, and the boundaries as text beside.
-  7. Reactions: per boundary, message me, in my list, tell the Consumers, block it (after the first version), and its
-     tone (FR-CM-13, FR-CM-14); what a check reads (FR-CM-33). Layer: an icon per reaction.
+  Above the steps, the picture of the monitor (DEC-UX-195), drawn by monitor-picture.js, the same as on the page of a Monitor:
+  a strip of tiles, conceptual and not the data, that ends with today and gains one layer per step; under it a row per
+  measure with its boundaries as a gauge, and the sentence that reads the monitor back. Each part of the picture shows
+  what it is on a hover and opens its step on a click; so does each part of the sentence.
+  1. Resource: those the User may manage, with the time Data Hub counts by and how far it is complete, both set by the
+     Data Team (FR-CM-39, FR-CM-11).
+  2. How often: every day, weekdays only, or once a week on a day, at what time; every hour is greyed as later (FR-CM-21,
+     DEC-CM-27, OP-CM-12). Layer: the strip, in days, M T W T F S S with the weekend greyer and the week numbers under
+     them, or in weeks, Monday to Sunday, with the months under them (OP-CM-13); today, or this week, dotted and empty.
+  3. Period: yesterday or the last 7, 14, 21 or 28 days, or last week or the last 2, 3 or 4 weeks; day by day, week by
+     week or as one (FR-CM-11). Layer: the window, solid: a dot, dots on a line, or a bar.
+  4. Per: all together or for each value, all, only some or all except some; a new value comes in by itself and warms up
+     first (FR-CM-07, FR-CM-08, FR-CM-10). Layer: three shades of olive standing for many values (DEC-UX-197); left out,
+     dotted.
+  5. Measure: one or more; per field, how to measure it, in business words, by the type of the field; a condition on one
+     or more fields, built here; what a condition cannot say, a SQL measure of the Data Team in the monitor, in Data
+     Hub, never a change in the dbt project (FR-CM-05, DEC-CM-25, DEC-CM-26). Layer: a row per measure under the strip.
+  6. Boundaries: per measure, what it is compared with (DEC-CM-24), and one or more boundaries: a fixed limit, a change,
+     unusual, something new, something silent or the top N (FR-CM-12, FR-CM-24, OP-CM-10); a minimum to be judged
+     (EC-CM-02); how often they would have warned in the past 12 weeks (FR-CM-16), explained (FR-CM-15); an exception
+     for one value (FR-CM-09). Layer: what it is compared with, hollow on the strip; the boundaries as lines on the
+     gauge of their measure.
+  7. Reactions: per boundary, message me, in my list, daily or weekly, tell the Consumers, block it (after the first
+     version), and its tone (FR-CM-13, FR-CM-14); what a check reads (FR-CM-33). Layer: the tone in the zone of the
+     boundary, and an icon per reaction beside it.
   It starts from a proposal of Data Hub (FR-CM-22) or a draft of Claude from one sentence (FR-CM-23).
   The switches at the bottom: ?case=volume (the default), value, list, newgone or complete walks one of the five cases
-  of the brainstorm through every step; ?step=resource (the default), often, period, per, measure, bounds or react;
-  ?from=claude opens a draft of Claude.
+  of the brainstorm through every step (value and list check once a week, so they show the strip in weeks and months);
+  ?step=resource (the default), often, period, per, measure, bounds or react; ?from=claude opens a draft of Claude.
   Requirements: FR-CM-03, FR-CM-05, FR-CM-07, FR-CM-08, FR-CM-09, FR-CM-10, FR-CM-11, FR-CM-12, FR-CM-13, FR-CM-14, FR-CM-15, FR-CM-16, FR-CM-20, FR-CM-21, FR-CM-22, FR-CM-23, FR-CM-24, FR-CM-33, FR-CM-39, EC-CM-02
-  Decisions: DEC-CM-03, DEC-CM-09, DEC-CM-12, DEC-CM-14, DEC-CM-15, DEC-CM-19, DEC-CM-20, DEC-CM-23, DEC-CM-24, DEC-CM-25, DEC-CM-26, DEC-UX-195.
-  Open points: OP-UX-64, OP-UX-65, OP-CM-03, OP-CM-10, OP-CM-11.
+  Decisions: DEC-CM-03, DEC-CM-09, DEC-CM-12, DEC-CM-14, DEC-CM-15, DEC-CM-19, DEC-CM-20, DEC-CM-23, DEC-CM-24, DEC-CM-25, DEC-CM-26, DEC-CM-27, DEC-UX-195, DEC-UX-197.
+  Open points: OP-UX-64, OP-UX-65, OP-CM-03, OP-CM-10, OP-CM-11, OP-CM-12, OP-CM-13.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="owner">
@@ -82,13 +89,11 @@
  <button class="seg" data-target="react" role="tab" aria-selected="false"><b>7</b>Reactions</button>
 </div>
 
-<!-- The picture of the monitor: conceptual, one layer per step (DEC-UX-195) -->
-<section class="card cv-card" aria-label="The picture of this monitor">
- <div class="cv-wrap">
-  <div class="cv-grid" id="cv" aria-hidden="true"></div>
-  <div class="cv-side" id="cv-side"></div>
- </div>
- <p class="cv-sentence" id="sentence" aria-live="polite"></p>
+<!-- The picture of the monitor: conceptual, one layer per step (DEC-UX-195), drawn by monitor-picture.js -->
+<section class="card mp-card" aria-label="The picture of this monitor">
+ <div id="pic"></div>
+ <div class="mp-metrics" id="metrics" hidden></div>
+ <p class="mp-sentence" id="sentence" aria-live="polite"></p>
 </section>
 
 <section class="card build-body" id="step-body" aria-live="polite"></section>
@@ -110,31 +115,37 @@
  <button class="seg" data-target="claude" role="tab" aria-selected="false">Claude</button>
 </div>
 <script src="app.js"></script>
+<script src="monitor-picture.js"></script>
 <script>
 // Prototype only: the build flow as a small state machine, so every choice redraws the picture and the sentence.
 (() => {
+  const P = window.MonitorPicture, T = P.T;
+  P.install();
+  const PARTNERS = ['KBC', 'Belfius', 'Argenta', 'Crelan', 'BNP Paribas Fortis', 'ING', 'AXA', 'Beobank', 'vdk', 'Triodos', 'Europabank', 'Fintro', 'Keytrade', 'CPH', 'Bpost bank', 'Record'];
   const RES = {
-    clc: { name: 'Credit lead creations', coll: 'Credits', level: '4 · Explored', status: 'no monitor yet', team: 'the Credit team', units: 'leads',
+    clc: { name: 'Credit lead creations', coll: 'Credits', level: '4 · Explored', status: 'no monitor yet', team: 'the Credit team', units: 'leads', stable: 1,
       time: 'created_at', timeText: 'the moment a lead is created', reads: '2 MB',
-      per: { source: { one: 'lead source', many: 'lead sources', n: 7, first: 'partner_api' }, partner: { one: 'partner', many: 'partners', n: 16, first: 'Belfius' } },
+      per: { source: { one: 'lead source', many: 'lead sources', n: 7, values: ['website', 'app', 'partner_api', 'walk_in', 'partner_api_v2', 'call_centre', 'fair'] },
+             partner: { one: 'partner', many: 'partners', n: 16, values: PARTNERS } },
       fields: [
         { k: 'rows', name: 'Every credit lead', type: 'a row', hows: ['count'] },
         { k: 'amount', name: 'Requested amount', type: 'a number, in euro', hows: ['typical', 'average', 'total', 'smallest', 'largest', 'empty'] },
         { k: 'email', name: 'Email', type: 'text', hows: ['empty', 'distinct'] },
         { k: 'cond', name: 'A condition', type: 'on one or more fields, built here', hows: ['share'] } ],
       condFields: ['Email', 'Phone', 'Requested amount', 'Lead source', 'Partner'] },
-    listings: { name: 'New listings', coll: 'Listings', level: '3 · Confirmed', status: 'no monitor yet', team: 'the Listings team', units: 'listings',
+    listings: { name: 'New listings', coll: 'Listings', level: '3 · Confirmed', status: 'no monitor yet', team: 'the Listings team', units: 'listings', stable: 1,
       time: 'published_at', timeText: 'the moment a listing goes online', reads: '6 MB',
-      per: { agent: { one: 'estate agent', many: 'estate agents', n: 'about 2,000', first: 'Dewaele Gent' }, province: { one: 'province', many: 'provinces', n: 11, first: 'Antwerp' } },
+      per: { agent: { one: 'estate agent', many: 'estate agents', n: 'about 2,000', values: ['Dewaele Gent', 'Era Wonen', 'Century 21 Antwerp', 'Heylen', 'Hillewaere'], more: true },
+             province: { one: 'province', many: 'provinces', n: 11, values: ['Antwerp', 'East Flanders', 'West Flanders', 'Limburg', 'Flemish Brabant', 'Brussels', 'Walloon Brabant', 'Hainaut', 'Liège', 'Luxembourg', 'Namur'] } },
       fields: [
         { k: 'rows', name: 'Every listing', type: 'a row', hows: ['count'] },
         { k: 'price', name: 'Asking price', type: 'a number, in euro', hows: ['typical', 'average', 'smallest', 'largest', 'empty'] },
         { k: 'epc', name: 'EPC label', type: 'a category', hows: ['empty', 'distinct'] },
         { k: 'cond', name: 'A condition', type: 'on one or more fields, built here', hows: ['share'] } ],
       condFields: ['Asking price', 'EPC label', 'Estate agent', 'Postcode'] },
-    views: { name: 'Views', coll: 'Product', level: '3 · Confirmed', status: 'has a monitor: 2 boundaries', team: 'the Product team', units: 'views',
+    views: { name: 'Views', coll: 'Product', level: '3 · Confirmed', status: 'has a monitor: 2 boundaries', team: 'the Product team', units: 'views', stable: 3,
       time: 'viewed_at', timeText: 'the moment a page is viewed', reads: '40 MB',
-      per: { device: { one: 'device', many: 'devices', n: 3, first: 'mobile' } },
+      per: { device: { one: 'device', many: 'devices', n: 3, values: ['mobile', 'desktop', 'tablet'] } },
       fields: [ { k: 'rows', name: 'Every view', type: 'a row', hows: ['count'] }, { k: 'cond', name: 'A condition', type: 'on one or more fields, built here', hows: ['share'] } ],
       condFields: ['Device', 'Page'] }
   };
@@ -147,47 +158,48 @@
     largest: { label: 'largest', sym: '↑', says: f => `the largest ${f.name.toLowerCase()}` },
     empty: { label: 'how often empty', sym: '%', says: (f, r) => `the share of ${r.units} without ${f.name.toLowerCase()}` },
     distinct: { label: 'how many different', sym: '≠', says: f => `the number of different ${f.name.toLowerCase()} values` },
-    share: { label: 'the share that meets it', sym: '%', says: (f, r) => `the share of ${r.units} where ${condTxt()}` }
+    share: { label: 'the share that meets it', sym: '%', says: (f, r, m) => `the share of ${r.units} where ${condTxt(m)}` }
   };
+  const B = (kind, x) => Object.assign({ kind, tone: 'attention', react: ['owner'], list: 'daily' }, x);
   const CASES = {
-    volume: { q: 'I want to be informed about fluctuations in the volume per lead source, per day.', res: 'clc', often: 'day', on: 'all', period: 7, split: true, per: 'source', field: 'rows', how: 'count', guard: 10,
-      hist: 'In the past 12 weeks it would have messaged you <b>3 times for partner_api</b>, and 9 times across all lead sources; the Consumers would have heard once, on 2 November.',
-      bounds: [ { kind: 'change', dir: 'drops', amt: 30, ref: 'prev', refLen: 28, tone: 'attention', react: ['owner'] },
-                { kind: 'change', dir: 'drops', amt: 50, ref: 'prev', refLen: 28, tone: 'attention', react: ['owner', 'consumers'] },
-                { kind: 'change', dir: 'rises', amt: 50, ref: 'prev', refLen: 28, tone: 'informative', react: ['owner'] } ] },
-    value: { q: 'I want to know when the requested amount per lead source shifts.', res: 'clc', often: 'week', on: 'Monday', period: 1, split: false, per: 'source', field: 'amount', how: 'typical', guard: 30,
-      hist: 'In the past 12 weeks it would have put <b>partner_api twice</b> in your list, and 5 lead sources in all.',
-      bounds: [ { kind: 'change', dir: 'rises or drops', amt: 10, ref: 'prev', refLen: 8, tone: 'informative', react: ['list'] } ] },
-    list: { q: 'Which estate agents are growing strongly?', res: 'listings', often: 'week', on: 'Monday', period: 4, split: true, per: 'agent', field: 'rows', how: 'count', guard: 10,
-      hist: 'In the past 12 weeks your list would have held <b>14 estate agents a week</b> on average, from 9 to 22.',
-      bounds: [ { kind: 'change', dir: 'rises', amt: 20, atLeast: 10, ref: 'prev', refLen: 4, tone: 'opportunity', react: ['list'] } ] },
-    newgone: { q: 'Tell me when a new lead source appears, or one goes silent.', res: 'clc', often: 'day', on: 'all', period: 1, split: false, per: 'source', field: 'rows', how: 'count', guard: 0,
-      hist: 'In the past 12 weeks: <b>2 new lead sources</b>, partner_api_v2 and walk_in, and one that went silent, app, from 1 to 4 October.',
-      bounds: [ { kind: 'appears', ref: 'ever', tone: 'informative', react: ['owner'] },
-                { kind: 'silent', weeks: 12, ref: 'past', tone: 'attention', react: ['owner'] } ] },
-    complete: { q: 'Tell me when leads come in that we cannot contact: no email and no phone.', res: 'clc', often: 'day', on: 'all', period: 1, split: false, per: 'partner', field: 'cond', how: 'share', guard: 20, cond: { join: 'all', parts: [{ f: 'Email', op: 'is empty' }, { f: 'Phone', op: 'is empty' }] },
-      hist: 'In the past 12 weeks it would have messaged you <b>4 times for Belfius</b>, and 6 times across all partners; above 10% only once.',
-      bounds: [ { kind: 'level', dir: 'higher', amt: 2, unit: '%', ref: 'fixed', tone: 'attention', react: ['owner'] },
-                { kind: 'level', dir: 'higher', amt: 10, unit: '%', ref: 'fixed', tone: 'problem', react: ['owner', 'consumers'] } ] }
+    volume: { q: 'I want to be informed about fluctuations in the volume per lead source, per day.', res: 'clc', check: 'day', window: 7, as: 'day', per: 'source', guard: 10,
+      metrics: [ { field: 'rows', how: 'count', cmp: 'prev4', bounds: [ B('change', { dir: 'drops', amt: 30 }), B('change', { dir: 'drops', amt: 50, tone: 'problem', react: ['owner', 'consumers'] }),
+        B('change', { dir: 'rises', amt: 50, tone: 'informative' }) ] } ],
+      hist: 'In the past 12 weeks it would have messaged you <b>3 times for partner_api</b>, and 9 times across all lead sources; the Consumers would have heard once, on 2 November.' },
+    value: { q: 'I want to know when the requested amount per lead source shifts.', res: 'clc', check: 'week', window: 1, as: 'one', per: 'source', guard: 30,
+      metrics: [ { field: 'amount', how: 'typical', cmp: 'prev4', bounds: [ B('change', { dir: 'rises or drops', amt: 10, tone: 'informative', react: ['list'], list: 'weekly' }) ] } ],
+      hist: 'In the past 12 weeks it would have put <b>partner_api twice</b> in your list, and 5 lead sources in all.' },
+    list: { q: 'Which estate agents are growing strongly?', res: 'listings', check: 'week', window: 4, as: 'week', per: 'agent', guard: 10,
+      metrics: [ { field: 'rows', how: 'count', cmp: 'prev1', bounds: [ B('change', { dir: 'rises', amt: 20, atLeast: 10, tone: 'opportunity', react: ['list'], list: 'weekly' }) ] } ],
+      hist: 'In the past 12 weeks your list would have held <b>14 estate agents a week</b> on average, from 9 to 22.' },
+    newgone: { q: 'Tell me when a new lead source appears, or one goes silent.', res: 'clc', check: 'day', window: 1, as: 'one', per: 'source', guard: 0,
+      metrics: [ { field: 'rows', how: 'count', cmp: 'ever', bounds: [ B('appears', { tone: 'informative' }), B('silent', { weeks: 12 }) ] } ],
+      hist: 'In the past 12 weeks: <b>2 new lead sources</b>, partner_api_v2 and walk_in, and one that went silent, app, from 1 to 4 October.' },
+    complete: { q: 'Tell me when leads come in that we cannot contact: no email and no phone.', res: 'clc', check: 'day', window: 1, as: 'one', per: 'partner', guard: 20,
+      metrics: [ { field: 'cond', how: 'share', cmp: 'fixed', cond: { join: 'all', parts: [{ f: 'Email', op: 'is empty' }, { f: 'Phone', op: 'is empty' }] },
+        bounds: [ B('level', { dir: 'higher', amt: 2, unit: '%' }), B('level', { dir: 'higher', amt: 10, unit: '%', tone: 'problem', react: ['owner', 'consumers'] }) ] } ],
+      hist: 'In the past 12 weeks it would have messaged you <b>4 times for Belfius</b>, and 6 times across all partners; above 10% only once.' }
   };
   const STEPS = ['resource', 'often', 'period', 'per', 'measure', 'bounds', 'react'];
   const NAMES = ['Resource', 'How often', 'Period', 'Per', 'Measure', 'Boundaries', 'Reactions'];
-  const U = { hour: ['hour', 'hours', 'the last hour', 'now'], day: ['day', 'days', 'yesterday', 'today'], week: ['week', 'weeks', 'last week', 'this week'], month: ['month', 'months', 'last month', 'this month'] };
-  const PERIODS = { hour: [1, 3, 6, 24], day: [1, 7, 14, 28], week: [1, 4, 8, 13], month: [1, 3, 6, 12] };
+  const STEP_OF = { resource: 1, check: 2, period: 3, per: 4, measure: 5, addmetric: 5, cmp: 6, bound: 6, addb: 6, guard: 6, react: 7 };
   const REACT = {
-    owner: { icon: 'ph-chat-circle-text', label: 'Message me', says: () => 'message me', desc: r => `${r.team[0].toUpperCase() + r.team.slice(1)}, in Data Hub and by e-mail` },
-    list: { icon: 'ph-list-bullets', label: 'In my list', says: () => `put it in my ${s.often === 'week' || s.often === 'month' ? 'weekly' : 'daily'} list`, desc: () => 'Together, rather than one by one: a list to read' },
-    consumers: { icon: 'ph-megaphone', label: 'Tell the Consumers', says: () => 'tell the Consumers', desc: r => `The Users of its Lenses; ${r.name} shows it while it lasts` },
-    block: { icon: 'ph-lock', label: 'Block it', says: r => `block ${r.name}`, desc: () => 'No longer served until you lift it · after the first version' }
+    owner: { desc: r => `${cap(r.team)}, in Data Hub and by e-mail` },
+    list: { desc: () => 'Together, rather than one by one: a list to read' },
+    consumers: { desc: r => `The Users of its Lenses; ${r.name} shows it while it lasts` },
+    block: { desc: () => 'No longer served until you lift it · after the first version' }
   };
-  const TONES = { opportunity: ['ph-sparkle', 'Opportunity'], informative: ['ph-info', 'Informative'], attention: ['ph-warning-circle', 'Attention'], problem: ['ph-warning-octagon', 'Problem'] };
 
   const q = new URLSearchParams(location.search);
   const copy = o => JSON.parse(JSON.stringify(o));
+  const cap = t => t[0].toUpperCase() + t.slice(1);
   let caseKey = CASES[q.get('case')] ? q.get('case') : 'volume';
   const OPS = ['is empty', 'is not empty', 'is', 'is not', 'is higher than', 'is lower than'];
   const needsValue = op => !op.includes('empty');
-  const load = k => { const c = copy(CASES[k]); if (!c.cond) c.cond = { join: 'all', parts: [{ f: RES[c.res].condFields[0], op: 'is empty' }] }; return c; };
+  const fresh = (r, f) => ({ join: 'all', parts: [{ f: RES[r].condFields[0], op: 'is empty' }] });
+  const pickAll = (r, p) => Object.fromEntries((RES[r].per[p]?.values || []).map(v => [v, true]));
+  const load = k => { const c = copy(CASES[k]); c.at = '08:00'; c.day = 'Monday'; c.on = 'all'; c.only = 'all'; c.picked = pickAll(c.res, c.per); c.sel = 0;
+    c.metrics.forEach(m => { if (!m.cond) m.cond = fresh(c.res); }); return c; };
   let s = load(caseKey);
   let at = Math.max(1, STEPS.indexOf(q.get('step')) + 1);
   let reached = at;
@@ -195,222 +207,116 @@
 
   const res = () => RES[s.res];
   const per = () => (s.per !== 'none' && res().per[s.per]) || null;
-  const field = () => res().fields.find(f => f.k === s.field) || res().fields[0];
-  const how = () => HOW[s.how] || HOW.count;
-  const u = () => U[s.often];
+  const cur = () => s.metrics[s.sel];
+  const field = m => res().fields.find(f => f.k === m.field) || res().fields[0];
+  const how = m => HOW[m.how] || HOW.count;
+  const weekly = () => s.check === 'week';
+  const u = () => weekly() ? ['week', 'weeks', 'last week', 'this week'] : ['day', 'days', 'yesterday', 'today'];
   const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;');
-  const condTxt = () => s.cond.parts.map(c => `${c.f.toLowerCase()} ${c.op}${needsValue(c.op) ? ' ' + (c.v || '…') : ''}`).join(s.cond.join === 'all' ? ' and ' : ' or ');
-  const later = l => l > at ? ' cv-later' : '';
+  const condTxt = m => m.cond.parts.map(c => `${c.f.toLowerCase()} ${c.op}${needsValue(c.op) ? ' ' + (c.v || '…') : ''}`).join(m.cond.join === 'all' ? ' and ' : ' or ');
   const a = w => (/^[aeiou]/i.test(w) ? 'an ' : 'a ') + w;
-
-  // ---- words ------------------------------------------------------------------------------------------------
-  const lenTxt = n => s.often === 'day' && n % 7 === 0 ? `${n / 7} week${n > 7 ? 's' : ''}` : `${n} ${n === 1 ? u()[0] : u()[1]}`;
-  const refTxt = b => b.ref === 'prev' ? `the ${lenTxt(b.refLen)} before` : b.ref === 'weekday' ? 'a usual Monday, over the 4 weeks before' : b.ref === 'others' ? `all ${per() ? per().many : 'of them'} together` : '';
-  const oftenTxt = () => s.often === 'hour' ? 'Every hour' : s.often === 'day' ? (s.on === 'weekdays' ? 'Every weekday at 08:00' : 'Every day at 08:00') : s.often === 'week' ? `Every ${s.on || 'Monday'} at 08:00` : 'On the 1st of every month at 08:00';
-  const periodTxt = () => s.period === 1 ? u()[2] : `the last ${s.period} ${u()[1]}` + (s.split ? `, ${u()[0]} by ${u()[0]}` : '');
-  const perTxt = () => per() ? `per ${per().one}` : 'all together';
-  const avgTxt = () => s.period > 1 && s.split && how().add ? `, on average per ${u()[0]}` : '';
-  const amtTxt = b => b.unit === '%' ? `${b.amt}%` : `${b.amt} ${res().units}`;
-  const bTxt = b => {
-    const p = per();
-    if (b.kind === 'change') return `it ${b.dir} ${b.amt}%` + (b.atLeast ? ` and by at least ${b.atLeast} ${res().units}` : '') + ` compared with ${refTxt(b)}`;
-    if (b.kind === 'level') return `it is ${b.dir} than ${amtTxt(b)}`;
-    if (b.kind === 'unusual') return `it is the ${b.dir} in ${b.weeks} weeks`;
-    if (b.kind === 'appears') return `${a(p ? p.one : 'value')} appears for the first time`;
-    if (b.kind === 'silent') return `${a(p ? p.one : 'value')} stays silent for longer than ever in ${b.weeks} weeks`;
-    return `${a(p ? p.one : 'value')} is among the ${b.n} that rose most compared with ${refTxt(b)}`;
-  };
-  const bShort = b => {
-    const p = per();
-    if (b.kind === 'change') return `${b.dir} ${b.amt}%` + (b.atLeast ? `, +${b.atLeast}` : '');
-    if (b.kind === 'level') return `${b.dir} than ${amtTxt(b)}`;
-    if (b.kind === 'unusual') return `${b.dir} in ${b.weeks} weeks`;
-    if (b.kind === 'appears') return a('new ' + (p ? p.one : 'value'));
-    if (b.kind === 'silent') return a('silent ' + (p ? p.one : 'value'));
-    return `the top ${b.n} risers`;
-  };
-  const reactTxt = b => {
-    const parts = b.react.map(k => REACT[k].says(res()));
-    return parts.length ? parts.length > 1 ? parts.slice(0, -1).join(', ') + ' and ' + parts.slice(-1) : parts[0] : 'only keep it in the Log';
-  };
-
-  // ---- the picture: a calendar strip of tiles, conceptual, not the data (DEC-UX-195) ---------------------------
-  // Days come in whole weeks, Monday to Sunday, with a gap between weeks; today is the Tuesday of the last week.
-  function layout() {
-    const P = s.period;
-    if (s.often === 'day') { const weeks = Math.min(9, Math.max(4, Math.ceil((2 * P + 2) / 7) + 1)); return { P, day: true, weeks, N: weeks * 7, now: (weeks - 1) * 7 + 1 }; }
-    const N = Math.min(60, Math.max({ hour: 24, week: 14, month: 13 }[s.often], 2 * P + 2));
-    return { P, day: false, N, now: N - 1 };
-  }
-  const colOf = (L, j) => L.day ? j + Math.floor(j / 7) + 1 : j + 1;
-  const span = (L, a, b) => `${colOf(L, a)} / ${colOf(L, b) + 1}`;
-  const template = L => L.day ? Array.from({ length: L.weeks }, () => 'repeat(7, minmax(0, 1fr))').join(' 10px ') : `repeat(${L.N}, minmax(0, 1fr))`;
-  const label = (L, j) => {
-    if (L.day) { const w = j % 7; return { t: 'MTWTFSS'[w], off: w >= 5 }; }
-    const back = L.now - j;
-    if (s.often === 'week') return { t: 'w' + (45 - back) };
-    if (s.often === 'hour') { const h = ((9 - back) % 24 + 24) % 24; return { t: String(h).padStart(2, '0'), off: h < 7 || h >= 20 }; }
-    return { t: 'JFMAMJJASOND'[((10 - back) % 12 + 12) % 12] };
-  };
-  function picture() {
-    const L = layout(), P = L.P, c1 = L.now - 1, c0 = c1 - P + 1, split = s.split && P > 1;
-    if (reached < 2) return `<div class="cv-empty" style="grid-column:1 / -1">The picture of your monitor builds up here, one layer per step.</div>`;
-    const stripes = () => reached >= 4 && per() ? `<i class="cv-stripes${later(4)}">${[3, 2, 1].map(k => `<span style="background:var(--seg-${k})"></span>`).join('')}</i>` : '';
-    // a period drawn as tiles, one by one, or as one merged pill, with its frame
-    const period = (a, b, cls, frame) => {
-      let t = '';
-      if (split || a === b) for (let j = a; j <= b; j++) { if (j < 0) continue; t += `<div class="cv-tile ${cls}${label(L, j).off ? ' off' : ''}" style="grid-column:${colOf(L, j)}">${stripes()}</div>`; }
-      else t += `<div class="cv-tile ${cls}" style="grid-column:${span(L, Math.max(0, a), b)}">${stripes()}</div>`;
-      return t + `<div class="cv-frame ${frame}" style="grid-column:${span(L, Math.max(0, a), b)}"></div>`;
-    };
-    let h = '';
-    // 1 · the strip: weekends and nights greyer, a dot per check, today hatched, the rest of this week still to come
-    if (L.day) for (let w = 0; w < L.weeks; w++) h += `<div class="cv-off${later(2)}" style="grid-column:${span(L, w * 7 + 5, w * 7 + 6)}"></div>`;
-    for (let j = 0; j < L.N; j++) {
-      const lb = label(L, j), when = j === L.now ? ' now' : j > L.now ? ' future' : '';
-      const check = !(s.often === 'day' && s.on === 'weekdays' && lb.off);
-      h += `<div class="cv-tile${lb.off ? ' off' : ''}${when}${later(2)}" style="grid-column:${colOf(L, j)}"></div>`;
-      h += `<div class="cv-tick${lb.off ? ' off' : ''}${later(2)}" style="grid-column:${colOf(L, j)}">${lb.t}${check ? `<span class="dot${j >= L.now ? ' next' : ''}"></span>` : ''}</div>`;
-    }
-    h += `<div class="cv-now-label${later(2)}" style="grid-column:${colOf(L, L.now)}">${u()[3]}</div>`;
-    // 6 · what it is compared with: the periods before, dashed and faded; a longer past as a pale frame
-    if (reached >= 6) {
-      const seen = new Set(), bands = [];
-      s.bounds.forEach(b => {
-        const key = b.ref + (b.refLen || '') + (b.weeks || '');
-        if (seen.has(key)) return; seen.add(key);
-        if (b.ref === 'prev') {
-          const n = Math.max(1, Math.round(b.refLen / P)); let a = c0 - P, k = 0;
-          while (k < n && a >= 0) { h += period(a, a + P - 1, 'ref' + later(6), 'ref' + later(6)); a -= P; k++; }
-          h += `<div class="cv-cap${later(6)}" style="grid-column:${span(L, Math.max(0, a + P), c0 - 1)}">compared with ${refTxt(b)}${k < n ? ' …' : ''}</div>`;
-        } else if (b.ref === 'weekday') {
-          for (let a = c0 - 7; a >= 0; a -= 7) h += period(a, a, 'ref' + later(6), 'ref' + later(6));
-          h += `<div class="cv-cap${later(6)}" style="grid-column:${span(L, 0, c0 - 1)}">compared with ${refTxt(b)}</div>`;
-        } else if (b.ref === 'ever' || b.ref === 'past') bands.push(b.ref === 'ever' ? 'everything before' : `the ${b.weeks} weeks before`);
-      });
-      if (bands.length && c0 > 0) h += `<div class="cv-frame band${later(6)}" style="grid-column:${span(L, 0, c0 - 1)}"></div><div class="cv-cap${later(6)}" style="grid-column:${span(L, 0, c0 - 1)}">compared with ${bands.join(' · ')}</div>`;
-    }
-    // 2, 3, 4 · the period looked back over, framed, one by one or merged, in colours per value
-    if (reached >= 3) h += period(c0, c1, 'in' + later(3), later(3));
-    // 6 · a fixed limit: a dashed line across the strip
-    if (reached >= 6) s.bounds.filter(b => b.ref === 'fixed').sort((x, y) => y.amt - x.amt).slice(0, 3).forEach((b, k) => {
-      h += `<div class="cv-fixed${later(6)}" style="grid-column:${span(L, 0, c1)};margin-top:${10 + k * 18}px"><span>${amtTxt(b)}</span></div>`;
-    });
-    // 5 · the measure on top
-    if (reached >= 5) {
-      const sym = how().sym;
-      if (split) for (let j = c0; j <= c1; j++) h += `<div class="cv-m${later(5)}" style="grid-column:${colOf(L, j)}">${sym}</div>`;
-      else h += `<div class="cv-m${later(5)}" style="grid-column:${span(L, c0, c1)}" title="${esc(how().label)}">${c1 - c0 + 1 < 3 ? sym : sym + ' ' + esc(how().label.split(',')[0])}</div>`;
-    }
-    return h;
-  }
-  function side() {
-    if (reached < 6) return `<div class="label cv-later">Boundaries</div><div class="meta cv-later" style="display:block;line-height:1.5">They show here, with their reactions, from step 6.</div>`;
-    return `<div class="label${later(6)}">Boundaries</div>` + s.bounds.map(b =>
-      `<div class="cv-b${later(6)}">${reached >= 7 ? `<span class="tone-dot${later(7)}" data-tone="${b.tone}"></span>` : ''}<span class="grow">${esc(bShort(b))}</span>` +
-      (reached >= 7 ? `<span class="cv-r${later(7)}">${b.react.map(k => `<i class="ph ${REACT[k].icon}" title="${REACT[k].label}"></i>`).join('')}</span>` : '') + '</div>').join('');
-  }
-  function sentence() {
-    const part = (l, html, step) => `<button class="cv-part${later(l)}" data-act="jump:${step}">${html}</button>`;
-    let t = reached >= 2 ? part(2, oftenTxt(), 'often') + ', look at ' : 'Look at ';
-    if (reached >= 5) t += part(5, esc(how().says(field(), res())), 'measure') + ' in ';
-    t += part(1, res().name, 'resource');
-    if (reached >= 4) t += ', ' + part(4, perTxt(), 'per');
-    if (reached >= 3) t += ', over ' + part(3, periodTxt(), 'period');
-    if (reached >= 5 && avgTxt()) t += part(5, avgTxt(), 'measure');
-    t += '.';
-    if (reached >= 6) {
-      s.bounds.forEach(b => { t += ' When ' + part(6, esc(bTxt(b)), 'bounds') + (reached >= 7 ? ': ' + part(7, reactTxt(b), 'react') : '') + '.'; });
-      if (per() && s.guard) t += ' ' + part(6, `${a(per().one)[0].toUpperCase() + a(per().one).slice(1)} with fewer than ${s.guard} ${res().units} in the period is not judged.`, 'bounds');
-    }
-    return t;
-  }
+  const says = m => how(m).says(field(m), res(), m);
+  // what the picture draws: the same state, in the words of the picture
+  const pic = () => ({ name: res().name, units: res().units, stable: res().stable, check: s.check, at: s.at, day: s.day, window: s.window, as: s.as,
+    per: per(), only: s.only, picked: s.picked, guard: s.guard, sel: s.sel,
+    metrics: s.metrics.map(m => ({ sym: how(m).sym, says: says(m), cmp: m.cmp, bounds: m.bounds })) });
 
   // ---- the steps --------------------------------------------------------------------------------------------
-  const chip = (on, act, html) => `<button class="seg${on ? ' on' : ''}" data-act="${act}">${html}</button>`;
+  const chip = (on, act, html, dis) => `<button class="seg${on ? ' on' : ''}" data-act="${act}"${dis ? ' disabled' : ''}>${html}</button>`;
   const sel = (key, val, opts) => `<select class="cv-sel" data-set="${key}">${opts.map(([v, l]) => `<option value="${v}"${String(v) === String(val) ? ' selected' : ''}>${l}</option>`).join('')}</select>`;
   const head = (h2, lead) => `<h2>${h2}</h2><p class="meta" style="display:block;line-height:1.5;margin:0 0 14px">${lead}</p>`;
   const foot = text => `<div class="build-foot"><p class="meta">${text}</p>` +
     (at > 1 ? '<button class="btn-quiet" data-act="go:-1">Back</button>' : '') +
-    (at < 7 ? `<button class="btn-primary" data-act="go:1">Next: ${NAMES[at].toLowerCase()}<i class="ph ph-arrow-right" style="font-size:15px"></i></button>` : '<a class="btn-primary" href="monitor.html" style="text-decoration:none">Save monitor</a>') + '</div>';
+    (at < 7 ? `<button class="btn-primary" data-act="go:1">Next: ${NAMES[at].toLowerCase()}<i class="ph ph-arrow-right" style="font-size:15px"></i></button>` : '<a class="btn-primary" href="monitor.html?mtab=breakdowns" style="text-decoration:none">Save monitor</a>') + '</div>';
+  const tabs = act => s.metrics.length < 2 ? '' : `<div class="mc-chips" style="margin:0 0 12px">${s.metrics.map((m, i) => chip(i === s.sel, `${act}:${i}`, `<span class="mp-sign" style="width:22px;height:18px;font-size:11px">${esc(how(m).sym)}</span>${esc(says(m))}`)).join('')}</div>`;
+  const windows = () => weekly() ? [1, 2, 3, 4] : [1, 7, 14, 21, 28];
+  const asOpts = () => s.window === 1 ? [] : weekly() ? [['week', 'week by week'], ['one', 'as one period']]
+    : [['day', 'day by day']].concat(s.window % 7 === 0 && s.window >= 14 ? [['week', 'week by week']] : []).concat([['one', 'as one period']]);
+  const cmpOpts = () => [['prev1', T.cmp(pic(), 'prev1')], ['prev4', T.cmp(pic(), 'prev4')]]
+    .concat(!weekly() && s.window === 1 ? [['weekday', 'the same weekday']] : []).concat(per() ? [['all', `all ${per().many} together`]] : [])
+    .concat([['ever', 'everything before'], ['fixed', 'a fixed number']]);
 
   const steps = {
     resource: () => head('Which Resource?', 'The Resources of your Owner Units. A Resource has one monitor: to one that has it already, you add what to watch.') +
       Object.entries(RES).map(([k, r]) => `<button class="pick cv-pick${s.res === k ? ' on' : ''}" data-act="res:${k}"><span style="flex:1"><span class="item-title">${r.name}</span><span class="meta" style="display:block;margin-top:2px">${r.coll} · ${r.level} · ${r.status}</span></span></button>`).join('') +
-      `<ul class="wh-steps" style="margin-top:12px"><li><i class="ph-fill ph-clock"></i><span>Data Hub counts ${res().name} by <span class="mono">${res().time}</span>, ${res().timeText}. The Data Team set this for it; you do not choose it.</span></li></ul>` +
+      `<ul class="wh-steps" style="margin-top:12px"><li><i class="ph-fill ph-clock"></i><span>Data Hub counts ${res().name} by <span class="mono">${res().time}</span>, ${res().timeText}, and it is complete up to ${res().stable > 1 ? `${res().stable} days ago` : 'yesterday'}. The Data Team set both; you do not choose them.</span></li></ul>` +
       foot(`${res().name} · next, how often you want to hear of it`),
-    often: () => head('How often do you want to hear of it?', `Each check looks at what came in since the one before. The picture now counts in ${u()[1]}.`) +
-      `<div class="rule-form"><div class="field"><span>Check it</span><div class="mc-chips" style="margin:2px 0 0">${['hour', 'day', 'week', 'month'].map(k => chip(s.often === k, 'often:' + k, 'every ' + k)).join('')}</div></div>` +
-      (s.often !== 'hour' ? `<label class="field"><span>At</span>${sel('at', '08:00', [['08:00', '08:00'], ['07:00', '07:00'], ['09:00', '09:00']])}</label>` : '') +
-      (s.often === 'day' ? `<div class="field"><span>On</span><div class="mc-chips" style="margin:2px 0 0">${chip(s.on !== 'weekdays', 'on:all', 'every day')}${chip(s.on === 'weekdays', 'on:weekdays', 'weekdays only')}</div></div>` : '') +
-      (s.often === 'week' ? `<label class="field"><span>On</span>${sel('on', s.on || 'Monday', [['Monday', 'Monday'], ['Tuesday', 'Tuesday'], ['Friday', 'Friday']])}</label>` : '') + '</div>' +
-      `<div class="explain"><i class="ph-fill ph-bell" aria-hidden="true"></i><div>Whether you hear of it at once or in a list, you choose per boundary, in the last step. The dots on the timeline are the checks.</div></div>` +
-      foot(`${oftenTxt()} · next, which period each check looks at`),
-    period: () => head('Which period does each check look at?', 'From the moment of the check, back in time.') +
-      `<div class="field"><span>Look back over</span><div class="mc-chips" style="margin:2px 0 0">${PERIODS[s.often].map(n => chip(s.period === n, 'period:' + n, n === 1 ? u()[2][0].toUpperCase() + u()[2].slice(1) : `the last ${n} ${u()[1]}`)).join('')}</div></div>` +
-      (s.period > 1 ? `<div class="field" style="margin-top:12px"><span>Look at it</span><div class="mc-chips" style="margin:2px 0 0">${chip(s.split, 'split:on', `${u()[0]} by ${u()[0]}`)}${chip(!s.split, 'split:off', 'as one period')}</div></div>` : '') +
-      `<ul class="wh-steps" style="margin-top:14px"><li><i class="ph-fill ph-clock-countdown"></i><span>${s.period === 1 ? u()[2][0].toUpperCase() + u()[2].slice(1) + ' means' : 'The last one is'} the last complete ${u()[0]}: ${res().name} is complete up to yesterday, so the check at 08:00 on Tuesday looks at Monday. The hatched ${u()[3]} is still coming in.</span></li></ul>` +
-      foot(`Over ${periodTxt()} · next, all together or for each`),
+    often: () => head('How often do you want to hear of it?', `Each check looks at what is complete by then. The picture now counts in ${u()[1]}, ${weekly() ? 'grouped by month' : 'grouped by calendar week'}.`) +
+      `<div class="rule-form"><div class="field"><span>Check it</span><div class="mc-chips" style="margin:2px 0 0">${chip(s.check === 'day', 'check:day', 'every day')}${chip(s.check === 'weekdays', 'check:weekdays', 'weekdays only')}${chip(s.check === 'week', 'check:week', 'once a week')}${chip(false, 'none', 'every hour · later', true)}</div></div>` +
+      `<label class="field"><span>At</span>${sel('at', s.at, [['07:00', '07:00'], ['08:00', '08:00'], ['09:00', '09:00']])}</label>` +
+      (weekly() ? `<label class="field"><span>On</span>${sel('day', s.day, ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map(d => [d, d]))}</label>` : '') + '</div>' +
+      `<div class="explain"><i class="ph-fill ph-calendar-dots" aria-hidden="true"></i><div>${weekly() ? `Once a week counts calendar weeks, Monday to Sunday: on ${s.day} it looks at the week before. The strip shows a tile per week, its number under it, and the months under those.` : 'A tile per day, M T W T F S S, Saturday and Sunday greyer; the week numbers under them. Whether you hear of it at once or in a list, you choose per boundary, in the last step.'}</div></div>` +
+      foot(`${cap(T.check(pic()))} · next, which period each check looks at`),
+    period: () => head('Which period does each check look at?', `From the last complete ${u()[0]}, back in time. It shows solid on the strip.`) +
+      `<div class="field"><span>Look back over</span><div class="mc-chips" style="margin:2px 0 0">${windows().map(n => chip(s.window === n, 'window:' + n, n === 1 ? u()[2] : `the last ${n} ${u()[1]}`)).join('')}</div></div>` +
+      (s.window > 1 ? `<div class="field" style="margin-top:12px"><span>Look at it</span><div class="mc-chips" style="margin:2px 0 0">${asOpts().map(([k, l]) => chip(s.as === k, 'as:' + k, l)).join('')}</div></div>` : '') +
+      `<ul class="wh-steps" style="margin-top:14px"><li><i class="ph-fill ph-hourglass-medium"></i><span>${s.window === 1 ? cap(u()[2]) + ' means' : 'The last one is'} the last complete ${u()[0]}: ${res().name} is complete up to ${res().stable > 1 ? `${res().stable} days ago` : 'yesterday'}, so ${weekly() ? `on ${s.day} it looks at the week up to Sunday` : `the check at ${s.at} on Tuesday looks at Monday`}. ${cap(u()[3])} is dotted and empty: it is still coming in.</span></li>` +
+      (s.window > 1 ? `<li><i class="ph-fill ph-dots-three-outline"></i><span>${s.as === 'one' ? 'As one period: one value over the whole stretch, drawn as one bar.' : s.as === 'week' && !weekly() ? 'Week by week: a value per calendar week, drawn as a bar per week.' : `${cap(u()[0])} by ${u()[0]}: a value per ${u()[0]}, drawn as dots on a line.`}</span></li>` : '') + '</ul>' +
+      foot(`Over ${T.window(pic())} · next, all together or for each`),
     per: () => {
-      const p = res().per;
-      return head('All together, or for each?', 'For each, every boundary judges a value against its own history: a small lead source is not judged against a large one.') +
-        `<div class="field"><span>Look at it</span><div class="mc-chips" style="margin:2px 0 0">${chip(!per(), 'per:none', 'all together')}${Object.entries(p).map(([k, v]) => chip(s.per === k, 'per:' + k, `for each ${v.one} <span class="count">${v.n}</span>`)).join('')}</div></div>` +
-        (per() ? `<label class="field" style="max-width:360px;margin-top:12px"><span>Which ${per().many}</span>${sel('only', 'all', [['all', `All ${per().many}, also new ones`], ['some', 'Only some…']])}</label>` : '') +
-        `<div class="explain" style="margin-top:14px"><i class="ph-fill ph-stack-simple" aria-hidden="true"></i><div>${per() ? `Each ${per().one}, and all together as well: so a boundary can say "${per().first} dropped while the total did not". A new ${per().one} comes in by itself, and is judged once it has 4 weeks of history. The picture shows three colours; they stand for ${per().n}.` : 'All together: one number per period. Choose for each to judge every value on its own.'}</div></div>` +
-        foot(`${per() ? `For each ${per().one}` : 'All together'} · next, what to measure`);
-    },
-    measure: () => head('What do you want to measure?', 'Per field, how to measure it, in the words that fit its type. Pick one; you can watch more later, in the same monitor.') +
-      res().fields.map(f => `<div class="cv-field${s.field === f.k ? ' on' : ''}"><div class="cv-field-head"><b style="font-weight:500">${f.name}</b><span class="meta">${f.type}</span></div><div class="mc-chips" style="margin:0">${f.hows.map(k => chip(s.field === f.k && s.how === k, `measure:${f.k}:${k}`, HOW[k].label)).join('')}</div>` +
-        (f.k === 'cond' && s.field === 'cond' ? `<div class="cv-cond">Count the ${res().units} where ${sel('cj', s.cond.join, [['all', 'all'], ['any', 'any']])} of these hold:</div>` +
-          s.cond.parts.map((c, i) => `<div class="cv-cond-row">${sel(`c:${i}:f`, c.f, res().condFields.map(x => [x, x]))}${sel(`c:${i}:op`, c.op, OPS.map(o => [o, o]))}${needsValue(c.op) ? `<input class="cv-sel" data-set="c:${i}:v" value="${esc(c.v || '')}" placeholder="a value" style="width:130px">` : ''}${s.cond.parts.length > 1 ? `<button class="icon-btn" data-act="cdel:${i}" aria-label="Take it out"><i class="ph ph-x"></i></button>` : ''}</div>`).join('') +
-          `<div class="cv-cond-row"><button class="btn-quiet" data-act="cadd"><i class="ph ph-plus"></i>Another field</button></div>` : '') + '</div>').join('') +
-      (s.period > 1 && s.split ? `<ul class="wh-steps" style="margin-top:12px"><li><i class="ph-fill ph-calendar-dots"></i><span>${how().add ? `${u()[0][0].toUpperCase() + u()[0].slice(1)} by ${u()[0]}: it takes the average per ${u()[0]}, so the last ${s.period} ${u()[1]} compare with any other ${s.period}.` : `A ${how().label.split(',')[0]} is taken over the whole period at once; ${u()[0]} by ${u()[0]} only shows in the picture.`}</span></li></ul>` : '') +
-      (s.how === 'typical' ? `<div class="explain" style="margin-top:12px"><i class="ph-fill ph-scales" aria-hidden="true"></i><div><b>Typical, the middle value,</b> is proposed for amounts: half of them are lower, half higher. One very large one does not move it, as it moves the average.</div></div>` : '') +
-      `<div class="explain" style="margin-top:12px"><i class="ph-fill ph-code" aria-hidden="true"></i><div><b>Something a condition cannot say,</b> such as "converted within 30 days"? <a href="messages.html">Ask the Data Team</a>: they write it as a SQL measure in this monitor, here in Data Hub, and you use it like any other. Nothing changes in the dbt project of ${res().name}.</div></div>` +
-      foot(`${how().says(field(), res())[0].toUpperCase() + how().says(field(), res()).slice(1)} · next, when to hear of it`),
-    bounds: () => {
       const p = per();
-      const refOpts = b => [[`prev:${s.period * 4}`, `the ${lenTxt(s.period * 4)} before`], [`prev:${s.period * 8}`, `the ${lenTxt(s.period * 8)} before`]]
-        .concat(s.often === 'day' && s.period === 1 ? [['weekday', 'a usual Monday']] : []).concat(p ? [['others', `all ${p.many} together`]] : []);
-      const refVal = b => b.ref === 'prev' ? `prev:${b.refLen}` : b.ref;
+      return head('All together, or for each?', 'For each, every boundary judges a value against its own history: a small lead source is not judged against a large one.') +
+        `<div class="field"><span>Look at it</span><div class="mc-chips" style="margin:2px 0 0">${chip(!p, 'per:none', 'all together')}${Object.entries(res().per).map(([k, v]) => chip(s.per === k, 'per:' + k, `for each ${v.one} <span class="count">${v.n}</span>`)).join('')}</div></div>` +
+        (p ? `<div class="field" style="margin-top:12px"><span>Which ${p.many}</span><div class="mc-chips" style="margin:2px 0 0">${chip(s.only === 'all', 'only:all', `all, also new ones`)}${chip(s.only === 'only', 'only:only', 'only …')}${chip(s.only === 'except', 'only:except', 'all except …')}</div></div>` +
+          (s.only !== 'all' ? `<div class="field" style="margin-top:8px"><span>${s.only === 'only' ? 'Only' : 'Except'}</span><div class="mc-chips" style="margin:2px 0 0">${p.values.map(v => chip(s.only === 'only' ? s.picked[v] : !s.picked[v], 'pick:' + v, esc(v))).join('')}${p.more ? `<label class="search" style="margin:0;max-width:200px"><i class="ph ph-magnifying-glass"></i><input type="search" placeholder="Find another" aria-label="Find another ${p.one}"></label>` : ''}</div></div>` : '') : '') +
+        `<div class="explain" style="margin-top:14px"><i class="ph-fill ph-stack-simple" aria-hidden="true"></i><div>${p ? `Each ${p.one}, and all together as well: so a boundary can say "${p.values[0]} dropped while the total did not". A new ${p.one} comes in by itself, and is judged once it has 4 weeks of history. The picture shows three shades of olive; they stand for ${p.n}. Left out, they turn dotted.` : 'All together: one value per period. Choose for each to judge every value on its own.'}</div></div>` +
+        foot(`${cap(T.per(pic()))} · next, what to measure`);
+    },
+    measure: () => { const m = cur(); return head('What do you want to measure?', 'Per field, how to measure it, in the words that fit its type. A monitor can watch more than one: each gets a row of its own under the picture, with its own boundaries.') +
+      tabs('msel') +
+      res().fields.map(f => `<div class="cv-field${m.field === f.k ? ' on' : ''}"><div class="cv-field-head"><b style="font-weight:500">${f.name}</b><span class="meta">${f.type}</span></div><div class="mc-chips" style="margin:0">${f.hows.map(k => chip(m.field === f.k && m.how === k, `measure:${f.k}:${k}`, HOW[k].label)).join('')}</div>` +
+        (f.k === 'cond' && m.field === 'cond' ? `<div class="cv-cond">Count the ${res().units} where ${sel('cj', m.cond.join, [['all', 'all'], ['any', 'any']])} of these hold:</div>` +
+          m.cond.parts.map((c, i) => `<div class="cv-cond-row">${sel(`c:${i}:f`, c.f, res().condFields.map(x => [x, x]))}${sel(`c:${i}:op`, c.op, OPS.map(o => [o, o]))}${needsValue(c.op) ? `<input class="cv-sel" data-set="c:${i}:v" value="${esc(c.v || '')}" placeholder="a value" style="width:130px">` : ''}${m.cond.parts.length > 1 ? `<button class="icon-btn" data-act="cdel:${i}" aria-label="Take it out"><i class="ph ph-x"></i></button>` : ''}</div>`).join('') +
+          `<div class="cv-cond-row"><button class="btn-quiet" data-act="cadd"><i class="ph ph-plus"></i>Another field</button></div>` : '') + '</div>').join('') +
+      `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="mp-add" data-act="madd"><i class="ph ph-plus"></i>Another measure</button>${s.metrics.length > 1 ? `<button class="btn-quiet" data-act="mdel"><i class="ph ph-trash"></i>Take this measure out</button>` : ''}</div>` +
+      (s.window > 1 && s.as !== 'one' ? `<ul class="wh-steps" style="margin-top:12px"><li><i class="ph-fill ph-calendar-dots"></i><span>${how(m).add ? `${s.as === 'week' && !weekly() ? 'Week by week: it takes the average per week' : `${cap(u()[0])} by ${u()[0]}: it takes the average per ${u()[0]}`}, so the last ${s.window} ${u()[1]} compare with any other ${s.window}.` : `A ${how(m).label.split(',')[0]} is taken over each ${s.as === 'week' && !weekly() ? 'week' : u()[0]} on its own.`}</span></li></ul>` : '') +
+      (m.how === 'typical' ? `<div class="explain" style="margin-top:12px"><i class="ph-fill ph-scales" aria-hidden="true"></i><div><b>Typical, the middle value,</b> is proposed for amounts: half of them are lower, half higher. One very large one does not move it, as it moves the average.</div></div>` : '') +
+      `<div class="explain" style="margin-top:12px"><i class="ph-fill ph-code" aria-hidden="true"></i><div><b>Something a condition cannot say,</b> such as "converted within 30 days"? <a href="messages.html">Ask the Data Team</a>: they write it as a SQL measure in this monitor, here in Data Hub, and you use it like any other. Nothing changes in the dbt project of ${res().name}.</div></div>` +
+      foot(`${cap(says(m))}${s.metrics.length > 1 ? ` and ${s.metrics.length - 1} more` : ''} · next, when to hear of it`); },
+    bounds: () => {
+      const p = per(), m = cur(), fixed = m.cmp === 'fixed', S = pic();
       const row = (b, i) => {
         let mid = '';
-        if (b.kind === 'change') mid = `it ${sel(`b:${i}:dir`, b.dir, [['rises', 'rises'], ['drops', 'drops'], ['rises or drops', 'rises or drops']])} ${sel(`b:${i}:amt`, b.amt, [10, 20, 30, 50].map(v => [v, v + '%']))} compared with ${sel(`b:${i}:ref`, refVal(b), refOpts(b).some(o => o[0] === refVal(b)) ? refOpts(b) : [[refVal(b), refTxt(b)]].concat(refOpts(b)))}, and by at least ${sel(`b:${i}:atLeast`, b.atLeast || 0, [[0, '–'], [5, 5], [10, 10], [20, 20]])} ${res().units}`;
-        else if (b.kind === 'level') mid = `it is ${sel(`b:${i}:dir`, b.dir, [['higher', 'higher'], ['lower', 'lower']])} than ${sel(`b:${i}:amt`, b.amt, (b.unit === '%' ? [1, 2, 5, 10, 20] : [1, 5, 10, 50, 100]).map(v => [v, b.unit === '%' ? v + '%' : v]))} ${b.unit === '%' ? '' : res().units}, a fixed number`;
+        if (b.kind === 'change') mid = `it ${sel(`b:${i}:dir`, b.dir, [['rises', 'rises'], ['drops', 'drops'], ['rises or drops', 'rises or drops']])} ${sel(`b:${i}:amt`, b.amt, [10, 20, 30, 50].map(v => [v, v + '%']))}, and by at least ${sel(`b:${i}:atLeast`, b.atLeast || 0, [[0, '–'], [5, 5], [10, 10], [20, 20]])} ${res().units}`;
+        else if (b.kind === 'level') mid = `it is ${sel(`b:${i}:dir`, b.dir, [['higher', 'higher'], ['lower', 'lower']])} than ${sel(`b:${i}:amt`, b.amt, (b.unit === '%' ? [1, 2, 5, 10, 20] : [1, 5, 10, 50, 100]).map(v => [v, b.unit === '%' ? v + '%' : v]))} ${b.unit === '%' ? '' : res().units}`;
         else if (b.kind === 'unusual') mid = `it is the ${sel(`b:${i}:dir`, b.dir, [['lowest', 'lowest'], ['highest', 'highest']])} in ${sel(`b:${i}:weeks`, b.weeks, [[8, 8], [12, 12], [26, 26]])} weeks`;
-        else if (b.kind === 'appears') mid = `${a(p ? p.one : 'value')} appears for the first time, compared with everything before`;
-        else if (b.kind === 'silent') mid = `${a(p ? p.one : 'value')} stays silent for longer than ever in ${sel(`b:${i}:weeks`, b.weeks, [[8, 8], [12, 12], [26, 26]])} weeks`;
-        else mid = `${a(p ? p.one : 'value')} is among the ${sel(`b:${i}:n`, b.n, [[5, 5], [10, 10], [20, 20]])} that rose most, compared with ${sel(`b:${i}:ref`, refVal(b), refOpts(b))}`;
+        else if (b.kind === 'appears') mid = `${a(p ? p.one : 'value')} appears for the first time`;
+        else if (b.kind === 'silent') mid = `${a(p ? p.one : 'value')} stays silent longer than it ever did in ${sel(`b:${i}:weeks`, b.weeks, [[8, 8], [12, 12], [26, 26]])} weeks`;
+        else mid = `${a(p ? p.one : 'value')} is among the ${sel(`b:${i}:n`, b.n, [[5, 5], [10, 10], [20, 20]])} that rose most`;
         return `<div class="cv-brow"><span class="cv-n">${i + 1}</span><span>When</span> ${mid}<button class="icon-btn" data-act="del:${i}" aria-label="Take it out"><i class="ph ph-x"></i></button></div>`;
       };
-      const fresh = s.bounds.some(b => b.kind === 'appears' || b.kind === 'silent');
-      return head('When do you want to hear of it?', 'One or more boundaries, each compared with what you choose. The words follow the comparison: against a fixed number it is higher or lower than; against the past it rises or drops.') +
-        (p ? `<div class="cv-guard">Judge ${a(p.one)} only when it had at least ${sel('guard', s.guard, [[0, 0], [10, 10], [20, 20], [30, 30], [50, 50]])} ${res().units} in the period <span class="meta">· proposed from its history, so that 3 becoming 1 is no −66%</span></div>` : '') +
-        s.bounds.map(row).join('') +
-        `<div class="field" style="margin-top:12px"><span>Add a boundary</span><div class="mc-chips" style="margin:2px 0 0">${[['change', 'a change'], ['level', 'a fixed limit'], ['unusual', 'unusual'], ['appears', 'something new'], ['silent', 'something silent'], ['top', 'the top N']].map(([k, l]) => chip(false, 'add:' + k, '<i class="ph ph-plus" style="font-size:12px"></i> ' + l)).join('')}</div></div>` +
-        (fresh ? `<ul class="wh-steps" style="margin-top:12px"><li><i class="ph-fill ph-hourglass-medium"></i><span>Something new and something silent judge ${a(p ? p.one : 'value')} at once, without the 4 weeks of warm-up the other boundaries wait for.</span></li></ul>` : '') +
+      const kinds = fixed ? [['level', 'a fixed limit']] : [['change', 'a change'], ['unusual', 'unusual'], ['appears', 'something new'], ['silent', 'something silent'], ['top', 'the top N']];
+      const newOrGone = m.bounds.some(b => b.kind === 'appears' || b.kind === 'silent');
+      return head('When do you want to hear of it?', 'Per measure, what it is compared with, then one or more boundaries. Against a fixed number it is higher or lower than; against the past it rises or drops. In the picture, what it is compared with is hollow, and each boundary is a line on the gauge of its measure.') +
+        tabs('bsel') +
+        `<div class="field"><span>Compared with</span><div class="mc-chips" style="margin:2px 0 0">${cmpOpts().map(([k, l]) => chip(m.cmp === k, 'cmp:' + k, l)).join('')}</div></div>` +
+        (p ? `<div class="cv-guard" style="margin-top:12px">Judge ${a(p.one)} only when it had at least ${sel('guard', s.guard, [[0, 0], [10, 10], [20, 20], [30, 30], [50, 50]])} ${res().units} in the period <span class="meta">· proposed from its history, so that 3 becoming 1 is no −66%</span></div>` : '') +
+        `<div style="margin-top:12px">${m.bounds.map(row).join('')}</div>` +
+        `<div class="field" style="margin-top:12px"><span>Add a boundary</span><div class="mc-chips" style="margin:2px 0 0">${kinds.map(([k, l]) => chip(false, 'add:' + k, '<i class="ph ph-plus" style="font-size:12px"></i> ' + l)).join('')}</div></div>` +
+        (newOrGone ? `<ul class="wh-steps" style="margin-top:12px"><li><i class="ph-fill ph-hourglass-medium"></i><span>Something new and something silent judge ${a(p ? p.one : 'value')} at once, without the 4 weeks of warm-up the other boundaries wait for.</span></li></ul>` : '') +
         `<div class="label" style="margin-top:18px">How often it would have warned you</div><p style="font-size:var(--text-small);line-height:1.55;margin:4px 0 8px">${CASES[caseKey].hist}</p>` +
         `<div class="hist">${document.getElementById('hist-chart').innerHTML}</div>` +
         `<div class="chart-legend"><span><i class="sw" style="background:color-mix(in srgb,var(--tone-attention) 16%,transparent)"></i>within the first boundary</span><span><i class="sw" style="height:0;border-top:1px dashed var(--text-muted)"></i>what it is compared with</span><span><i class="sw" style="width:9px;height:9px;border-radius:50%;background:var(--tone-attention)"></i>would have warned you</span></div>` +
         `<div class="explain" style="margin-top:12px"><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><div><b>Unusual</b> asks no number: "the lowest in 12 weeks" fires when a value drops below everything it did in those weeks. <a href="learning-card.html">Reading your own figures</a></div></div>` +
         (p ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn-quiet"><i class="ph ph-plus"></i>An exception for one ${p.one}</button></div>` : '') +
-        foot(`${s.bounds.length} boundar${s.bounds.length === 1 ? 'y' : 'ies'} · next, what should happen`);
+        foot(`${s.metrics.reduce((n, x) => n + x.bounds.length, 0)} boundar${s.metrics.reduce((n, x) => n + x.bounds.length, 0) === 1 ? 'y' : 'ies'} · next, what should happen`);
     },
-    react: () => head('What should happen?', `Per boundary, one or more reactions, and the tone in which you see it. Every finding is also kept in the Log of ${res().name}, whatever you choose.`) +
-      s.bounds.map((b, i) => `<div class="cv-react"><div class="cv-react-head"><span class="cv-n">${i + 1}</span><span>When ${esc(bTxt(b))}</span></div>` +
-        `<div class="cv-togs">${Object.entries(REACT).map(([k, r]) => `<button class="cv-tog${b.react.includes(k) ? ' on' : ''}" data-act="react:${i}:${k}"${k === 'block' ? ' disabled' : ''}><i class="ph ${r.icon}" aria-hidden="true"></i><b style="font-weight:500">${r.label}</b><span class="meta">${r.desc(res())}</span></button>`).join('')}</div>` +
-        `<div class="cv-tones">${Object.entries(TONES).map(([t, [ic, l]]) => `<button class="tone" data-tone="${t}" data-act="tone:${i}:${t}" style="border:0;cursor:pointer;${b.tone === t ? `outline:1.5px solid var(--tone-${t})` : 'opacity:.55'}"><i class="ph-fill ${ic}"></i>${l}</button>`).join('')}</div></div>`).join('') +
+    react: () => head('What should happen?', `Per boundary, one or more reactions, and the tone in which you see it: the tone colours its zone on the gauge. Every finding is also kept in the Log of ${res().name}, whatever you choose.`) +
+      s.metrics.map((m, i) => m.bounds.map((b, j) => `<div class="cv-react"><div class="cv-react-head"><span class="cv-n">${j + 1}</span><span>${s.metrics.length > 1 ? `<span class="mp-sign" style="width:22px;height:18px;font-size:11px;margin-right:6px">${esc(how(m).sym)}</span>` : ''}When ${esc(T.when(pic(), pic().metrics[i], b))}</span></div>` +
+        `<div class="cv-togs">${Object.entries(P.REACT).map(([k, r]) => `<button class="cv-tog${b.react.includes(k) ? ' on' : ''}" data-act="react:${i}:${j}:${k}"${k === 'block' ? ' disabled' : ''}><i class="ph ${r.icon}" aria-hidden="true"></i><b style="font-weight:500">${r.label}</b><span class="meta">${REACT[k].desc(res())}</span></button>`).join('')}</div>` +
+        (b.react.includes('list') ? `<div class="field" style="margin-top:10px"><span>The list</span><div class="mc-chips" style="margin:2px 0 0">${chip(b.list === 'daily', `list:${i}:${j}:daily`, 'daily, at 08:00')}${chip(b.list === 'weekly', `list:${i}:${j}:weekly`, 'weekly, on Monday')}</div></div>` : '') +
+        `<div class="cv-tones">${Object.entries(P.TONE).map(([t, [ic, l]]) => `<button class="tone" data-tone="${t}" data-act="tone:${i}:${j}:${t}" style="border:0;cursor:pointer;${b.tone === t ? `outline:1.5px solid var(--tone-${t})` : 'opacity:.55'}"><i class="ph-fill ${ic}"></i>${cap(l)}</button>`).join('')}</div></div>`).join('')).join('') +
       `<ul class="wh-steps" style="margin-top:14px"><li><i class="ph-fill ph-gauge"></i><span>Each check reads about <b style="font-weight:500">${res().reads}</b>, within the free range of 100 MB. Its first one reads the past 12 weeks once, for the history it compares with.</span></li></ul>` +
       foot(`Saved, the first active boundary makes ${res().name} 5 · Monitored`)
   };
 
   // ---- render and events ------------------------------------------------------------------------------------
   function render() {
-    const cv = document.getElementById('cv');
-    cv.style.gridTemplateColumns = template(layout());
-    cv.innerHTML = picture();
-    document.getElementById('cv-side').innerHTML = side();
-    document.getElementById('sentence').innerHTML = sentence();
+    const S = pic(), o = { reached, at, sel: s.sel };
+    document.getElementById('pic').innerHTML = P.picture(S, o);
+    document.getElementById('metrics').innerHTML = P.measures(S, o);
+    document.getElementById('metrics').hidden = reached < 5;
+    document.getElementById('sentence').innerHTML = P.sentence(S, o);
     document.getElementById('step-body').innerHTML = steps[STEPS[at - 1]]();
     document.getElementById('title').textContent = `Monitor of ${res().name}`;
     document.getElementById('drafted').innerHTML = from === 'claude'
@@ -419,42 +325,61 @@
     document.querySelectorAll('[data-group="step"] [data-target]').forEach((b, i) => { b.classList.toggle('on', i === at - 1); b.classList.toggle('done', i < reached && i !== at - 1); b.setAttribute('aria-selected', i === at - 1); });
   }
   const goStep = n => { at = Math.min(7, Math.max(1, n)); reached = Math.max(reached, at); render(); document.querySelector('.build-steps').scrollIntoView({ block: 'nearest' }); };
+  const fitAs = () => { if (s.window === 1) s.as = 'one'; else if (!asOpts().some(([k]) => k === s.as)) s.as = weekly() ? 'week' : 'day'; };
+  const fitCmp = () => s.metrics.forEach(m => { if (!cmpOpts().some(([k]) => k === m.cmp)) m.cmp = 'prev4'; });
   document.querySelectorAll('[data-group="step"] [data-target]').forEach((b, i) => b.addEventListener('click', () => goStep(i + 1)));
   document.querySelectorAll('[data-group="case"] [data-target]').forEach(b => b.addEventListener('click', () => { caseKey = b.dataset.target; s = load(caseKey); render(); }));
   document.querySelectorAll('[data-group="from"] [data-target]').forEach(b => b.addEventListener('click', () => { from = b.dataset.target; render(); }));
   document.addEventListener('click', e => {
-    const a = e.target.closest('[data-act]'); if (!a) return;
-    const [k, x, y] = a.dataset.act.split(':');
+    // a part of the picture or of the sentence opens its step
+    const ed = e.target.closest('[data-edit]');
+    if (ed && !e.target.closest('#step-body')) {
+      const [k, i] = ed.dataset.edit.split(':');
+      if (!STEP_OF[k]) return;
+      if (i != null && s.metrics[+i]) s.sel = +i;
+      if (k === 'addmetric') { s.metrics.push({ field: 'email', how: 'empty', cmp: 'prev4', cond: fresh(s.res), bounds: [B('change', { dir: 'rises', amt: 30 })] }); s.sel = s.metrics.length - 1; }
+      return goStep(STEP_OF[k]);
+    }
+    const row = e.target.closest('.mp-metric[data-sel]');
+    if (row) { s.sel = +row.dataset.sel; return render(); }
+    const act = e.target.closest('[data-act]'); if (!act) return;
+    const [k, x, y, z] = act.dataset.act.split(':');
+    const m = cur();
     if (k === 'go') return goStep(at + Number(x));
     if (k === 'jump') return goStep(STEPS.indexOf(x) + 1);
-    if (k === 'res') { if (s.res !== x) s.cond = { join: 'all', parts: [{ f: RES[x].condFields[0], op: 'is empty' }] }; s.res = x; const p = Object.keys(RES[x].per); if (!RES[x].per[s.per]) s.per = p[0]; if (!RES[x].fields.some(f => f.k === s.field)) { s.field = 'rows'; s.how = 'count'; } }
-    if (k === 'often') { s.often = x; s.period = 1; s.split = false; s.on = x === 'week' ? 'Monday' : 'all'; s.bounds.forEach(b => { if (b.ref === 'prev') b.refLen = 4; if (b.ref === 'weekday') { b.ref = 'prev'; b.refLen = 4; } }); }
-    if (k === 'on') s.on = x;
-    if (k === 'period') { s.period = Number(x); if (s.period === 1) s.split = false; s.bounds.forEach(b => { if (b.ref === 'prev') b.refLen = s.period * 4; if (b.ref === 'weekday' && s.period > 1) { b.ref = 'prev'; b.refLen = s.period * 4; } }); }
-    if (k === 'split') s.split = x === 'on';
-    if (k === 'per') s.per = x;
-    if (k === 'measure') { s.field = x; s.how = y; }
-    if (k === 'del') s.bounds.splice(Number(x), 1);
-    if (k === 'cadd') s.cond.parts.push({ f: res().condFields[Math.min(s.cond.parts.length, res().condFields.length - 1)], op: 'is empty' });
-    if (k === 'cdel') s.cond.parts.splice(Number(x), 1);
-    if (k === 'add') s.bounds.push({ change: { kind: 'change', dir: 'drops', amt: 30, ref: 'prev', refLen: s.period * 4 }, level: { kind: 'level', dir: 'higher', amt: 10, unit: s.how === 'count' ? '' : '%', ref: 'fixed' }, unusual: { kind: 'unusual', dir: 'lowest', weeks: 12, ref: 'past' }, appears: { kind: 'appears', ref: 'ever' }, silent: { kind: 'silent', weeks: 12, ref: 'past' }, top: { kind: 'top', n: 10, ref: 'prev', refLen: s.period * 4 } }[x]);
-    if (k === 'add') Object.assign(s.bounds[s.bounds.length - 1], { tone: 'attention', react: ['owner'] });
-    if (k === 'react') { const b = s.bounds[Number(x)]; b.react = b.react.includes(y) ? b.react.filter(r => r !== y) : b.react.concat(y); }
-    if (k === 'tone') s.bounds[Number(x)].tone = y;
+    if (k === 'res') { s.res = x; if (!RES[x].per[s.per]) s.per = Object.keys(RES[x].per)[0]; s.picked = pickAll(x, s.per); s.only = 'all';
+      s.metrics.forEach(mm => { mm.cond = fresh(x); if (!RES[x].fields.some(f => f.k === mm.field)) { mm.field = 'rows'; mm.how = 'count'; } }); }
+    if (k === 'check') { const was = weekly(); s.check = x; if (weekly() !== was) { s.window = weekly() ? 1 : 7; } fitAs(); fitCmp(); }
+    if (k === 'window') { s.window = Number(x); fitAs(); fitCmp(); }
+    if (k === 'as') s.as = x;
+    if (k === 'per') { s.per = x; s.only = 'all'; s.picked = pickAll(s.res, x); fitCmp(); }
+    if (k === 'only') { s.only = x; const vs = per().values; vs.forEach((v, n) => { s.picked[v] = x === 'all' ? true : x === 'only' ? n === 0 : n !== vs.length - 1; }); }
+    if (k === 'pick') s.picked[x] = !s.picked[x];
+    if (k === 'msel' || k === 'bsel') s.sel = Number(x);
+    if (k === 'madd') { s.metrics.push({ field: 'email', how: 'empty', cmp: 'prev4', cond: fresh(s.res), bounds: [B('change', { dir: 'rises', amt: 30 })] }); s.sel = s.metrics.length - 1; if (!res().fields.some(f => f.k === 'email')) { cur().field = 'rows'; cur().how = 'count'; } }
+    if (k === 'mdel') { s.metrics.splice(s.sel, 1); s.sel = 0; }
+    if (k === 'measure') { m.field = x; m.how = y; }
+    if (k === 'cmp') { const was = m.cmp; m.cmp = x; if ((x === 'fixed') !== (was === 'fixed')) m.bounds = [x === 'fixed' ? B('level', { dir: 'higher', amt: 10, unit: m.how === 'count' ? '' : '%' }) : B('change', { dir: 'drops', amt: 30 })]; }
+    if (k === 'del') m.bounds.splice(Number(x), 1);
+    if (k === 'cadd') m.cond.parts.push({ f: res().condFields[Math.min(m.cond.parts.length, res().condFields.length - 1)], op: 'is empty' });
+    if (k === 'cdel') m.cond.parts.splice(Number(x), 1);
+    if (k === 'add') m.bounds.push({ change: B('change', { dir: 'drops', amt: 30 }), level: B('level', { dir: 'higher', amt: 10, unit: m.how === 'count' ? '' : '%' }), unusual: B('unusual', { dir: 'lowest', weeks: 12 }),
+      appears: B('appears', { tone: 'informative' }), silent: B('silent', { weeks: 12 }), top: B('top', { n: 10, tone: 'opportunity', react: ['list'] }) }[x]);
+    if (k === 'react') { const b = s.metrics[+x].bounds[+y]; b.react = b.react.includes(z) ? b.react.filter(r => r !== z) : b.react.concat(z); }
+    if (k === 'list') s.metrics[+x].bounds[+y].list = z;
+    if (k === 'tone') s.metrics[+x].bounds[+y].tone = z;
     render();
   });
   document.addEventListener('change', e => {
     const el = e.target.closest('[data-set]'); if (!el) return;
-    const [k, i, f] = el.dataset.set.split(':'), v = el.value, num = Number(v);
+    const [k, i, f] = el.dataset.set.split(':'), v = el.value, num = Number(v), m = cur();
     if (k === 'guard') s.guard = num;
-    else if (k === 'on') s.on = v;
-    else if (k === 'cj') s.cond.join = v;
-    else if (k === 'c') s.cond.parts[Number(i)][f] = v;
-    else if (k === 'b') {
-      const b = s.bounds[Number(i)];
-      if (f === 'ref') { const [r, n] = v.split(':'); b.ref = r; if (n) b.refLen = Number(n); }
-      else b[f] = isNaN(num) ? v : num;
-    } else return;
+    else if (k === 'at') s.at = v;
+    else if (k === 'day') s.day = v;
+    else if (k === 'cj') m.cond.join = v;
+    else if (k === 'c') m.cond.parts[Number(i)][f] = v;
+    else if (k === 'b') { const b = m.bounds[Number(i)]; b[f] = isNaN(num) ? v : num; }
+    else return;
     render();
   });
   document.querySelector(`[data-group="case"] [data-target="${caseKey}"]`)?.classList.add('on');

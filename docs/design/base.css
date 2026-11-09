@@ -1916,45 +1916,64 @@ html:not([data-theme="dark"]) .chart-figure .for-dark, html[data-theme="dark"] .
 .metric-table tr.has-rules td { border-bottom: 0; }
 .rule-item .meta { display: flex; flex-wrap: wrap; align-items: center; row-gap: 4px; }
 .rule-item .meta > span { white-space: nowrap; }
-/* Monitoring: the picture of a monitor, built up one layer per step (DEC-UX-195). Conceptual, not the data. */
-:root { --seg-0: var(--tint-active); --seg-1: color-mix(in srgb, var(--col-magenta) 45%, var(--surface-solid)); --seg-2: color-mix(in srgb, var(--col-olive) 50%, var(--surface-solid)); --seg-3: color-mix(in srgb, var(--col-bordeaux) 70%, var(--surface-solid)); }
-.cv-card { border-radius: var(--radius-xl); padding: 16px 20px 14px; margin-bottom: 12px; }
-.cv-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 240px; gap: 8px 22px; align-items: start; }
-.cv-grid > * { min-width: 0; }
-.cv-grid { display: grid; grid-template-rows: 22px 52px 30px; column-gap: 3px; }
-.cv-off { grid-row: 1 / 4; margin: 0 -2px; border-radius: 8px; background: color-mix(in srgb, var(--text-muted) 9%, transparent); }
-.cv-tile { grid-row: 2; position: relative; overflow: hidden; border-radius: 7px; background: var(--surface-sub); }
-.cv-tile.off { background: color-mix(in srgb, var(--text-muted) 22%, var(--surface-solid)); }
-.cv-tile.now { background: repeating-linear-gradient(135deg, var(--tint-active) 0 4px, transparent 4px 8px); }
-.cv-tile.future { background: none; outline: 1.5px dashed var(--tint-active); outline-offset: -1.5px; }
-.cv-tile.in { background: color-mix(in srgb, var(--text-primary) 16%, var(--surface-solid)); }
-.cv-tile.in.off { background: color-mix(in srgb, var(--text-muted) 40%, var(--surface-solid)); }
-.cv-tile.ref { background: color-mix(in srgb, var(--text-primary) 7%, var(--surface-solid)); }
-.cv-stripes { position: absolute; inset: 0; display: flex; flex-direction: column; }
-.cv-stripes span { flex: 1; }
-.cv-tile.off .cv-stripes { filter: saturate(.35); }
-.cv-tile.ref .cv-stripes { opacity: .45; }
-.cv-frame { grid-row: 2; margin: -5px -2px; border: 2px solid var(--text-primary); border-radius: 11px; pointer-events: none; z-index: 1; }
-.cv-frame.ref { margin: -3px 0; border: 1.5px dashed var(--text-muted); border-radius: 9px; }
-.cv-frame.band { margin: -5px -2px; border: 1.5px dashed var(--tint-active); z-index: 0; }
-.cv-fixed { grid-row: 2; align-self: start; position: relative; z-index: 2; border-top: 1.5px dashed var(--text-primary); }
-.cv-fixed span { position: absolute; left: 0; top: -15px; font-size: 10px; color: var(--text-secondary); background: var(--surface-solid); padding: 0 3px; border-radius: 4px; }
-.cv-tick { grid-row: 3; display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 7px; font-size: 10px; line-height: 1; color: var(--text-secondary); font-variant-numeric: tabular-nums; overflow: hidden; }
-.cv-tick.off { color: var(--text-muted); }
-.cv-tick .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--text-muted); }
-.cv-tick .dot.next { background: none; outline: 1px solid var(--text-muted); }
-.cv-empty { grid-column: 1 / -1; grid-row: 1 / -1; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 16px; font-size: var(--text-small); color: var(--text-muted); border: 1.5px dashed var(--tint-active); border-radius: var(--radius-md); }
-.cv-now-label { grid-row: 1; align-self: end; display: flex; align-items: center; justify-content: center; gap: 2px; font-size: 10px; color: var(--text-muted); white-space: nowrap; overflow: visible; }
-.cv-cap { grid-row: 1; align-self: end; font-size: 10px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-bottom: 2px; }
-.cv-m { grid-row: 1; align-self: end; justify-self: center; max-width: 100%; overflow: hidden; text-overflow: ellipsis; font: var(--weight-medium) 10px var(--font-family); color: var(--text-secondary); background: var(--surface-sub); border-radius: var(--radius-pill); padding: 1px 6px; white-space: nowrap; margin-bottom: 2px; }
-.cv-side { display: grid; gap: 6px; align-content: start; padding-top: 14px; }
-.cv-b { display: flex; align-items: center; gap: 8px; font-size: var(--text-small); padding: 6px 10px; border-radius: var(--radius-md); background: var(--surface-sub); }
-.cv-b .grow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cv-r { display: inline-flex; gap: 5px; color: var(--text-secondary); font-size: 15px; }
-.cv-sentence { margin: 12px 0 0; padding-top: 12px; border-top: 1px solid var(--tint-hover); font-size: var(--text-body); line-height: 1.75; color: var(--text-secondary); }
-.cv-part { font: inherit; color: var(--text-primary); background: none; border: 0; padding: 0; border-bottom: 1.5px solid var(--tint-active); cursor: pointer; }
-.cv-part:hover { border-bottom-color: var(--text-primary); }
-.cv-later { opacity: .3; }
+/* Monitoring: the picture of a monitor (DEC-UX-195), drawn by screens/monitor-picture.js. Conceptual, not the data: a strip of
+   tiles in days or weeks, grouped by calendar week or by month, ending with today; marks in three shades of olive for
+   several values (DEC-UX-197); what it is compared with hollow; what is left out or still coming in dotted. */
+.mp-card { border-radius: var(--radius-xl); padding: 16px 20px 14px; margin-bottom: 12px; }
+.mp-block { padding: 2px 0 6px; }
+.mp-block + .mp-block { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--tint-hover); }
+.mp-block .bd-head { margin-bottom: 10px; }
+svg.mp, svg.mp-g { display: block; width: 100%; height: auto; overflow: visible; font-family: var(--font-family); }
+.mp-tile { fill: var(--tint-hover); }
+.mp-tile.off { fill: color-mix(in srgb, var(--text-muted) 42%, var(--surface-solid)); }
+.mp-coming { fill: var(--surface-solid); stroke: color-mix(in srgb, var(--text-muted) 62%, var(--surface-solid)); stroke-width: 1.5; stroke-dasharray: 0.1 3.4; stroke-linecap: round; }
+.mp-t { font-size: 9.5px; fill: var(--text-muted); }
+.mp-t.off { fill: color-mix(in srgb, var(--text-muted) 70%, var(--surface-solid)); }
+.mp-t.grp { font-size: 10.5px; fill: var(--text-secondary); }
+.mp-bracket { fill: none; stroke: var(--tint-active); stroke-width: 1.2; }
+.mp-hollow { fill: var(--surface-solid); stroke-width: 2; }
+.mp-hollow.all { stroke: var(--text-muted); }
+.mp-fixed { stroke: var(--text-primary); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.mp-gauge { fill: var(--tint-hover); }
+.mp-gauge-edge { fill: none; stroke: var(--tint-hover); stroke-width: 2; }
+.mp-gline { stroke: var(--text-primary); stroke-width: 1.6; }
+.mp-gline.fixed { stroke-dasharray: 5 4; }
+.mp-gt { font-size: 12px; fill: var(--text-primary); }
+.mp-icon { fill: none; stroke: var(--text-secondary); stroke-width: 1.4; stroke-linejoin: round; }
+.mp-hot { cursor: pointer; outline: none; }
+.mp-hit { fill: transparent; stroke: transparent; stroke-width: 1.5; stroke-dasharray: 4 3; }
+.mp-hot:hover .mp-hit, .mp-hot:focus-visible .mp-hit { stroke: var(--text-primary); fill: color-mix(in srgb, var(--text-primary) 4%, transparent); }
+.mp-later { opacity: .3; }
+.mp-empty { display: flex; align-items: center; justify-content: center; min-height: 118px; text-align: center; padding: 0 16px; font-size: var(--text-small); color: var(--text-muted); border: 1.5px dashed var(--tint-active); border-radius: var(--radius-md); }
+.mp-metrics { margin-top: 10px; padding-top: 6px; border-top: 1px solid var(--tint-hover); }
+.mp-metric { display: grid; grid-template-columns: minmax(200px, 300px) minmax(0, 1fr); align-items: center; gap: 6px 18px; padding: 10px 12px; border-radius: var(--radius-md); outline: 1.5px solid transparent; outline-offset: -1.5px; }
+.mp-metric[data-sel] { cursor: pointer; }
+.mp-metric:hover { background: var(--surface-sub); }
+.mp-metric.on { outline-color: var(--text-muted); }
+.mp-m-head { display: flex; gap: 12px; align-items: center; min-width: 0; }
+.mp-sign { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 22px; border-radius: var(--radius-pill); background: var(--tint-hover); font-size: var(--text-small); font-weight: var(--weight-medium); }
+.mp-m-name { font-size: var(--text-body); }
+.mp-m-cmp { font-size: var(--text-small); color: var(--text-muted); }
+.mp-wait { margin: 0; }
+.mp-part { color: var(--text-primary); border-bottom: 1.5px solid var(--tint-active); cursor: pointer; border-radius: 3px; outline: none; }
+.mp-part:hover, .mp-part:focus-visible { border-bottom-color: var(--text-primary); background: var(--tint-hover); }
+.mp-m-cmp .mp-part { color: inherit; }
+.mp-sentence { margin: 12px 0 0; padding-top: 12px; border-top: 1px solid var(--tint-hover); font-size: var(--text-body); line-height: 1.8; color: var(--text-secondary); }
+.mp-add { font: var(--text-small) var(--font-family); color: var(--text-secondary); background: none; border: 1.5px dashed var(--tint-active); border-radius: var(--radius-sm); padding: 6px 12px; cursor: pointer; margin-top: 8px; display: inline-flex; align-items: center; gap: 6px; }
+.mp-add:hover { border-color: var(--text-primary); color: var(--text-primary); }
+/* The hover of a part of the picture: what it is, and that a click changes it */
+.mp-tip { position: fixed; z-index: 30; pointer-events: none; max-width: 300px; background: var(--surface-solid); color: var(--text-primary); outline: 1px solid var(--tint-active); box-shadow: 0 8px 24px rgba(0,0,0,.12);
+  font-size: var(--text-small); line-height: 1.45; padding: 7px 11px; border-radius: var(--radius-sm); opacity: 0; transition: opacity var(--motion-tooltip); }
+.mp-tip.on { opacity: 1; transition-delay: var(--delay-tooltip); }
+.mp-tip b { font-weight: var(--weight-medium); }
+.mp-tip span { display: block; color: var(--text-muted); margin-top: 2px; }
+/* The floating window in which a part of the picture is changed: the one of a Parameter (DEC-UX-196) */
+.mp-win .kind-opt[disabled] { opacity: .45; cursor: default; }
+.mp-win .kind-opt[disabled]:hover { background: none; }
+.mp-win .kind-opt .tone-ic { font-size: 15px; }
+.mp-they-get { display: flex; gap: 9px; align-items: flex-start; background: var(--surface-sub); border-radius: var(--radius-sm); padding: 9px 11px; font-size: var(--text-small); line-height: 1.45; }
+.mp-they-get i { font-size: 17px; margin-top: 1px; }
+@media (max-width: 760px) { .mp-metric { grid-template-columns: minmax(0, 1fr); } }
 .cv-pick { width: 100%; border: 0; background: none; font: inherit; color: inherit; text-align: left; }
 .cv-field { padding: 10px 12px; border-radius: var(--radius-md); }
 .cv-field.on { background: var(--surface-sub); outline: 1.5px solid var(--text-muted); outline-offset: -1.5px; }
@@ -1976,7 +1995,6 @@ html:not([data-theme="dark"]) .chart-figure .for-dark, html[data-theme="dark"] .
 .cv-tog.on i { color: var(--text-primary); }
 .cv-tog:disabled { opacity: .5; cursor: default; outline-style: dashed; }
 .cv-tones { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-@media (max-width: 900px) { .cv-wrap { grid-template-columns: minmax(0, 1fr); } }
 .cv-cond { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: var(--text-small); margin-top: 10px; }
 .cv-cond-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; padding-left: 14px; font-size: var(--text-small); }
 .cv-cond-row .icon-btn { width: 28px; height: 28px; }

@@ -74,6 +74,11 @@
   --col-ochre: #B07A28;
   --col-slate: #4A7698;
   --col-olive: #6E7C34;
+  /* The values of a monitor's picture (DEC-UX-197): three shades of olive that stand for several values, never one each;
+     the strongest is the one judged first. Not a Tone: a Tone colours a judgement, these only tell values apart. */
+  --seg-1: #C2CB8E;
+  --seg-2: #8E9C4C;
+  --seg-3: #55611F;
 
   /* Light theme: warm greys */
   --bg-1: #EFE5DA;               /* sand */
@@ -131,6 +136,9 @@
 }
 
 [data-theme="dark"] {
+  --seg-1: #66722F;
+  --seg-2: #9AA858;
+  --seg-3: #C9D38F;
   --bg-1: #2B2520;
   --bg-2: #36292D;
   --bg-3: #232A28;
