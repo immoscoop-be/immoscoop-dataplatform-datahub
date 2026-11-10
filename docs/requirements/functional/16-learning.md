@@ -4,7 +4,7 @@
 | --- | --- |
 | Domain | 16 of Data Hub · code `LR` |
 | Status | Parts 8a and 8b implemented: the Learning Centre in the web app, with its cards, the progress of every User and the Messages on a card; the markers on the page of a Resource, their pop-out and the floating window; and the card under what Data Hub writes ([technical](../technical/16-learning.md)). A card in a Message waits for its drawing to be approved |
-| Source of truth | This file, for screens, flows and implementation. The philosophy and guiding principles are on [Learning-centre: filosofie en guiding principles](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494) (Confluence, Dutch), which this file follows ([DEC-LR-09](#dec-lr-09)). The topics are in the [master learning plan](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1351975139) (Confluence, Dutch) |
+| Source of truth | This file, for screens, flows and implementation. The philosophy and guiding principles are on [Learning-centre: filosofie en guiding principles](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494) (Confluence, Dutch), which this file follows ([DEC-LR-09](#dec-lr-09)). The topics came from the [master learning plan](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1351975139) (Confluence, Dutch); since [DEC-LR-12](#dec-lr-12) the plan and the cards live in this repository, as [Where it is kept](#where-it-is-kept) lists |
 
 **In one sentence:** the Learning Centre offers knowledge when you need it, in small Learning Cards you go through freely, so that you notice yourself that you can do something you could not do before.
 
@@ -57,6 +57,7 @@
 - <a id="dec-lr-28"></a>**DEC-LR-28** · A pop-out lists only the Learning Cards that are written, so that it promises nothing that cannot be opened; a place gets its marker once one of its cards is written. Part 8b also drafts the cards the markers of the Resource page name: K5.2 The Level of a Resource ([DEC-LR-30](#dec-lr-30)), 3.3.3 Reliable for which purpose, 1.2.1 What a figure counts exactly and 4.3.1 Changing a definition, keeping trust, as drafts to review, as [DEC-LR-25](#dec-lr-25) does. *Decided on 2026-10-29, by Max ([OP-LR-33](#op-lr-33)).*
 - <a id="dec-lr-29"></a>**DEC-LR-29** · The Learning Cards the [Message Catalogue](message-catalogue.md) proposed for what Data Hub writes are confirmed, with K5.2 The Level of a Resource in the place of 4.4.1 ([DEC-LR-30](#dec-lr-30)): K5.2 for "The Level dropped" ([MSG-RES-05](message-catalogue.md#msg-res-05)), K5.1 What a resource is for "A Resource was withdrawn" ([MSG-RES-06](message-catalogue.md#msg-res-06)), and 4.7.1 Owner and steward for "A Resource arrived in your Collection" ([MSG-RES-08](message-catalogue.md#msg-res-08)). "Understand what is happening here" shows the card of a Message once it is written ([FR-LR-38](#fr-lr-38)). *Decided on 2026-10-29, by Max ([OP-LR-34](#op-lr-34)).*
 - <a id="dec-lr-30"></a>**DEC-LR-30** · The Level of a Resource is explained by a card of its own in the Compass, K5.2 The Level of a Resource, in section K5 Data Hub, written from [Maturity levels of data](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1361608858): what each Level promises, who lifts a Resource to it, and why it drops. It stands on the marker of the Level, with 3.3.3, and under "The Level dropped" ([MSG-RES-05](message-catalogue.md#msg-res-05)). 4.4.1 The maturity ladder keeps the topic the master learning plan gives it, with whom data is shared and when, and is not drafted in part 8b. *Decided on 2026-10-29, by Max ([OP-LR-35](#op-lr-35)).*
+- <a id="dec-lr-31"></a>**DEC-LR-31** · A Learning Card keeps the input it was written from in an interview record, `interview.md`, beside its two languages: the seven questions of the learning-card skill with the answers of its author and where each went in the card, the ladder from story to Data Hub, who brought what, and what is still to do. It takes the place of the topic of the master learning plan as what feeds the steps ([FR-LR-27](#fr-lr-27)), and it is what the fact check reads the card against. Data Hub does not show it. The skill lives in this repository, in `.claude/skills/learning-card`, so that it changes with the format it writes. The cards written before have no record until they are reworked. *Decided on 2026-11-10, by Max.*
 
 ## Terms
 
@@ -74,6 +75,7 @@
 | quick path, full path | The two depths a User chooses between for a card: Why now, Core idea and You can now; or all five steps. Ordinary words |
 | decision rule | The core idea of a card, put as a rule without "can", "sometimes" or "usually". Ordinary words |
 | try-it question | A question that asks the User to do something in Data Hub, such as opening a Lens, and to say what they saw. Ordinary words |
+| interview record | The input of a Learning Card as the interview of the learning-card skill gave it, kept beside the card ([DEC-LR-31](#dec-lr-31)). Ordinary words |
 
 ## Flow
 
@@ -84,6 +86,26 @@
 5. **Colleagues refer to it in Messages,** for example when answering a Question about a Resource, and the Data Team tells about new cards.
 6. **A marker stands on system text where the topic comes up:** a button, a label, the footer of a chart; never on what Users write. Holding the pointer on it opens a pop-out with the cards that explain it, what each brings, and whether the User saw it. A card opens in a floating window over the page, See it on its own. In Claude, the same steps show in the conversation.
 7. **The offer grows with the User:** after a card, the next relevant cards are offered. The panel keeps a silent count of the cards they have seen; nothing is scored.
+
+*Note of 2026-11-10: steps 1 and 2 describe the master learning plan as the source. Since [DEC-LR-12](#dec-lr-12) a card is written in this repository; since [DEC-LR-31](#dec-lr-31) a data colleague is interviewed with the learning-card skill, and the interview record, not the topic on Confluence, feeds the steps.*
+
+## Where it is kept
+
+What the Learning Centre is made of, where each part lives, and which place is its source of truth. Content is code, reviewed in a pull request; what Users do is data in the database of catalogue; nothing is kept in a bucket.
+
+| What | Where | Source of truth | Kept as |
+| --- | --- | --- | --- |
+| The philosophy and guiding principles | [Learning-centre: filosofie en guiding principles](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494), Confluence | Confluence ([DEC-LR-09](#dec-lr-09)) | A page |
+| The recipe for writing a card | *ptditt - Competenties - Recept voor een Learning Card*, Confluence; its working version is the learning-card skill, `.claude/skills/learning-card` | Confluence for the reasoning, the skill for the steps ([DEC-LR-31](#dec-lr-31)) | A page, and files in this repository |
+| The plan: every topic with its number, title, section, priority and thinking level | `packages/learning/cards/plan.json`, its shape in `plan.schema.json` | This repository ([DEC-LR-12](#dec-lr-12), [DEC-LR-25](#dec-lr-25)); taken from the [master learning plan](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1351975139) on 2026-10-29 | Code |
+| A card, in English and Dutch | `packages/learning/cards/<number>/en.md` and `nl.md` | This repository ([DEC-LR-24](#dec-lr-24)) | Code, shipped in the images of web and mcp |
+| The input of a card | `packages/learning/cards/<number>/interview.md` | This repository ([DEC-LR-31](#dec-lr-31)) | Code |
+| Which system text carries a marker, and its cards | `packages/learning/src/markers.ts`; for what Data Hub writes, the [Message Catalogue](message-catalogue.md) | This repository ([DEC-LR-22](#dec-lr-22), [DEC-LR-29](#dec-lr-29)) | Code |
+| Which words are names | The code of Data Hub and the Domain Model | This repository and the Domain Model ([DEC-DH-83](../../overview/data-hub.md#dec-dh-83)) | Code |
+| The explanation of a name, for a minimal card | The [Glossary](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1352106063) (Woordenlijst), Confluence | Confluence ([NFR-LOC-05](../non-functional/localisation.md#nfr-loc-05)); whether it moves is [OP-LR-36](#op-lr-36) | A page |
+| What a User did with a card: seen, the step, understood | Table `learning_progress` in catalogue | The database ([DEC-LR-13](#dec-lr-13)) | Rows |
+| The Messages on a card | The conversations of catalogue | The database ([FR-LR-06](#fr-lr-06)) | Rows |
+| The pictures of the ladder, story and structure | Nowhere yet | Not decided | None |
 
 ## Requirements
 
@@ -384,6 +406,8 @@ The User chooses the depth: the quick path (Why now, Core idea, You can now) or 
 
 *Note of 2026-10-29: built in part 8a. The term of the glossary is linked once names carry their marker ([OP-UX-49](../../design/principles.md#op-ux-49)); See it shows the charts of the Chart Server as they are, without highlighting ([DEC-LR-26](#dec-lr-26)).*
 
+*Note of 2026-11-10: the interview record of a card feeds the steps now, in the place of the topic of the master learning plan: the reader's question becomes Why now, the aha the core idea, the anchor its metaphor, what went wrong the example, See it and the wrong answers, and the question to ask first You can now ([DEC-LR-31](#dec-lr-31)).*
+
 <a id="fr-lr-28"></a>
 ### FR-LR-28 · "I understand it" is always there, and closes the card
 
@@ -514,7 +538,7 @@ One Learning Card explains the five model types together, so that a User can tel
 
 ## Out of scope
 
-- **Writing the lessons:** the topics, their learning goals and the learning material are made in the master learning plan ([OP-LR-01](#op-lr-01)).
+- **Writing the lessons:** the topics, their learning goals and the learning material are made in the master learning plan ([OP-LR-01](#op-lr-01)). *Note of 2026-11-10: no longer out of scope: since [DEC-LR-12](#dec-lr-12) the cards are written in this repository, with the learning-card skill ([DEC-LR-31](#dec-lr-31)).*
 - **The chart language** itself: [semgraph](../../architecture/services/semgraph.md), whose requirements are still in its own repository ([OP-PF-16](../technical/00-platform.md#op-pf-16)).
 - **Messages** in general: [Conversations](14-conversations.md).
 
@@ -556,6 +580,7 @@ One Learning Card explains the five model types together, so that a User can tel
 - [x] <a id="op-lr-33"></a>**OP-LR-33** · Decide what a pop-out shows for a Learning Card that is not written yet. The markers the prototypes place on the page of a Resource name seven cards, four of them not written: the Level 4.4.1 and 3.3.3, the grain 1.2.1, and "Mark as seen" 4.3.1 ([FR-LR-36](#fr-lr-36)). *Raised on 2026-10-29, while proposing part 8b.* *Decided on 2026-10-29, by Max: a pop-out lists the written cards only, and the four are drafted ([DEC-LR-28](#dec-lr-28)).*
 - [x] <a id="op-lr-34"></a>**OP-LR-34** · Decide whether the cards the Message Catalogue only proposes for what Data Hub writes count for "Understand what is happening here" ([FR-LR-38](#fr-lr-38)): 4.4.1 for MSG-RES-05, K5.1 for MSG-RES-06 and 4.7.1 for MSG-RES-08. *Raised on 2026-10-29, while proposing part 8b.* *Decided on 2026-10-29, by Max: confirmed ([DEC-LR-29](#dec-lr-29)).*
 - [x] <a id="op-lr-35"></a>**OP-LR-35** · The designs name 4.4.1 The maturity ladder for the Level of a Resource, on its marker and under "The Level dropped" ([DEC-LR-28](#dec-lr-28), [DEC-LR-29](#dec-lr-29)), as did the Message Catalogue. In the master learning plan, 4.4.1 is about with whom data is shared, from private to external, in section 4.4 Access judgement; the Levels 0 Beta to 5 Monitored are on [Maturity levels of data](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1361608858), and no topic of the plan explains them. Decide which card explains the Level. *Raised on 2026-10-29, while drafting the cards of part 8b.* *Decided on 2026-10-29, by Max: a new card in the Compass, K5.2 The Level of a Resource ([DEC-LR-30](#dec-lr-30)).*
+- [ ] <a id="op-lr-36"></a>**OP-LR-36** · Decide where the explanation of a name lives once minimal cards are written ([FR-LR-37](#fr-lr-37), [DEC-LR-23](#dec-lr-23)). The Core idea of a minimal card is the explanation of its name in the Glossary on Confluence ([NFR-LOC-05](../non-functional/localisation.md#nfr-loc-05)), while the card itself lives in this repository ([DEC-LR-12](#dec-lr-12)), so the same sentence would stand in two places. Either the card copies the sentence and the Glossary stays its source, or the explanations move into this repository, beside the list of names in the code ([DEC-DH-83](../../overview/data-hub.md#dec-dh-83)), and the Glossary points to Data Hub. Proposal: the second, so that a name and its explanation change in one pull request. *Raised on 2026-11-10, while listing where the Learning Centre keeps what.*
 
 ## Builds on
 

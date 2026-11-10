@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "The plan of the Learning Cards",
+  "description": "The index of the Learning Centre (DEC-LR-02, DEC-LR-25, TR-LR-01): the Learning Levels, their sections and every topic, written or still to write. A topic is written when it has a folder cards/<number>/ next to this file.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["levels", "sections", "topics"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "levels": {
+      "description": "The Compass, the four Learning Levels from easy to advanced, and the Reading Cards, in the order the Learning Centre shows them.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "step", "about", "icon"],
+        "properties": {
+          "id": { "$ref": "#/$defs/level" },
+          "name": { "description": "A name in the sense of the language principle: the same in both languages (NFR-LOC-01).", "type": "string", "minLength": 1 },
+          "step": { "description": "How far along the way it is, from easy to advanced.", "$ref": "#/$defs/text" },
+          "about": { "description": "For whom it is.", "$ref": "#/$defs/text" },
+          "icon": { "description": "The icon of its audience, a name from Phosphor (DEC-UX-62).", "type": "string", "pattern": "^[a-z][a-z-]*$" }
+        }
+      }
+    },
+    "sections": {
+      "description": "The sections of each Learning Level, in their order.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["level", "number", "title"],
+        "properties": {
+          "level": { "$ref": "#/$defs/level" },
+          "number": { "type": "string", "pattern": "^(K\\d+|[1-4]\\.\\d+|R)$" },
+          "title": { "$ref": "#/$defs/text" }
+        }
+      }
+    },
+    "topics": {
+      "description": "Every topic, in the order of its section. Its Learning Level is the one of its section.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["number", "section", "title"],
+        "properties": {
+          "number": { "type": "string", "pattern": "^(K\\d+\\.\\d+|R\\d+|[1-4]\\.\\d+\\.\\d+)$" },
+          "section": { "type": "string" },
+          "title": { "description": "In English, as the card is written, and the Dutch of the master learning plan.", "$ref": "#/$defs/text" },
+          "priority": { "description": "How much the card matters, shown only as Suggested (DEC-LR-18). Every topic of a Learning Level has one; the Compass and the Reading Cards have none.", "enum": ["required", "recommended", "inDepth"] },
+          "thinking": { "description": "What the reader can do afterwards. Every topic of a Learning Level has one.", "enum": ["recognise", "apply", "judge"] },
+          "buildsOn": { "description": "The topics it builds on, from the prior knowledge of the master learning plan.", "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+          "note": { "description": "Why the topic is there, when Data Hub added it to the master learning plan.", "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "level": { "enum": ["compass", "1", "2", "3", "4", "reading"] },
+    "text": {
+      "description": "A text in both languages: English, as written, and Dutch (DEC-LR-24).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["en", "nl"],
+      "properties": {
+        "en": { "type": "string", "minLength": 1 },
+        "nl": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}
