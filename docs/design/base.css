@@ -2019,3 +2019,16 @@ svg.mp, svg.mp-g { display: block; width: 100%; height: auto; overflow: visible;
   transform: rotate(45deg); background: var(--env-ribbon); box-shadow: var(--env-ribbon-shadow); color: var(--text-on-env);
   font: var(--weight-semibold) var(--text-small)/1 var(--font-family); letter-spacing: .16em; text-transform: uppercase; }
 @media print { .env-ribbon { display: none; } }
+
+/* The tab Monitor of a Resource (DEC-UX-205): a row per monitor, read back as a sentence, with Edit and Open in Monitoring. */
+.mt-list { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.mt-row { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: var(--radius-md); background: var(--surface-sub); }
+/* Step 1 of a new monitor (DEC-UX-204): a search over the Resources, with a row per Resource under it. */
+.mb-find { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+.mb-find .search { flex: 1; min-width: 260px; max-width: none; }
+.mb-res { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) 110px minmax(0, 1.2fr); gap: 4px 14px; align-items: center; width: 100%;
+  padding: 10px 12px; border: 0; border-radius: var(--radius-sm); background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.mb-res:hover { background: var(--tint-hover); }
+.mb-res.on { background: var(--tint-active); }
+.mb-res.head { cursor: default; font-size: var(--text-meta); color: var(--text-muted); padding-top: 4px; padding-bottom: 4px; }
+.mb-res.head:hover { background: none; }
