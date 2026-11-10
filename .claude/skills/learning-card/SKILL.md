@@ -1,6 +1,6 @@
 ---
 name: learning-card
-description: Guides a data colleague of Immoscoop through making a Learning Card for the Learning Centre of Data Hub, with an interview of seven questions in which Claude keeps asking until a concrete example with figures, one aha and one everyday anchor are on the table, and then writes the card as the files Data Hub reads (en.md and nl.md in packages/learning/cards, with See it, questions and Where to next) plus interview.md with the answers. Use this skill whenever someone wants to make, fill in, rewrite, translate or review a learning card, leerkaart, uitlegkaart or "card for the Learning Centre", add or check a card in packages/learning/cards or a topic in cards/plan.json, explain a data concept (grain, unique counts, state/event, leading/lagging, Signal, Level, Lens, ...) to colleagues outside data, or asks "how do I explain X to business", even when the word card does not come up.
+description: Guides a data colleague of Immoscoop through making a Learning Card for the Learning Centre of Data Hub, with an interview of seven questions in which Claude keeps asking until a concrete example with figures, one aha and one everyday anchor are on the table, and then writes the card as the files Data Hub reads (en.md and nl.md in packages/learning/cards, with See it, questions and Where to next) plus interview.md with the answers. Use this skill whenever someone wants to make, fill in, rewrite, translate or review a learning card, leerkaart, uitlegkaart or "card for the Learning Centre", asks which cards are still open or in draft, add or check a card in packages/learning/cards or a topic in cards/plan.json, explain a data concept (grain, unique counts, state/event, leading/lagging, Signal, Level, Lens, ...) to colleagues outside data, or asks "how do I explain X to business", even when the word card does not come up.
 ---
 
 # Making a Learning Card
@@ -32,9 +32,10 @@ Interview in the language of the author, usually Dutch. The files follow the lan
 
 Every card is a topic of the plan of the Learning Centre, `packages/learning/cards/plan.json`, with a number (`2.1.3`, `K4.4`) and a title. **The title is in the plan, not in the card**: the reader's question becomes the quote of Why now, not the title.
 
-1. If the Data Hub MCP is available, call `explain` with the concept and with two or three related terms. It returns only cards that are written. If a card exists, say so and ask whether the author wants to rework it or make a neighbouring card.
-2. Find the topic in `plan.json`; a topic is written when `cards/<number>/` exists. Name its number, title, Learning Level (the level of its section) and whether it is written. The Learning Level says whom you write for: Level 1 for everyone who opens a dashboard, Level 4 for whoever is responsible for data.
-3. If no topic fits, propose a number and a title in the right section. The topic goes into `plan.json` in the same pull request as the card, with a `note` on why Data Hub added it; the Data Team approves it there.
+1. When the author asks what is open, or comes without a subject, run `node scripts/learning-card.ts list open`, narrowed to a section such as `2.1` when they name a field, and suggest a `required` topic close to their own work. `list draft` shows the cards waiting for their review; prod shows only the reviewed ones.
+2. If the Data Hub MCP is available, call `explain` with the concept and with two or three related terms. It returns only cards that are written. If a card exists, say so and ask whether the author wants to rework it or make a neighbouring card.
+3. Find the topic in `plan.json`; a topic is written when `cards/<number>/` exists. Name its number, title, Learning Level (the level of its section) and whether it is written. The Learning Level says whom you write for: Level 1 for everyone who opens a dashboard, Level 4 for whoever is responsible for data.
+4. If no topic fits, propose a number and a title in the right section. The topic goes into `plan.json` in the same pull request as the card, with a `note` on why Data Hub added it; the Data Team approves it there.
 
 ## Steps 1 to 7: the interview
 
@@ -68,7 +69,7 @@ Read `references/card-format.md`, and to calibrate tone and length one or two ca
 
 Show the author the card as plain text (not the raw file) and ask whether it sounds the way they would explain it to the colleague of question 1.
 
-**Where the files go.** On a feature branch, with a pull request into `uat`, never directly onto `uat` or `main`. A new topic goes into `plan.json` in the same pull request.
+The files go to Data Hub in a pull request: step 10.
 
 ## The visual ladder per kind of concept
 
@@ -89,6 +90,18 @@ Close with three concrete questions to the author:
 - Which **colleague outside data** reads the card in five minutes and tells in their own words what they learned? If that fails, the anchor is wrong, not the reader.
 
 Write the names into the table on top of the record. The card stays `status: draft` until the Data Team has reviewed it (DEC-LR-25); after the gate it becomes `reviewed`, in both languages (that needs no new translation).
+
+## Step 10: delivering the pull request
+
+The card reaches Data Hub only through a pull request into `uat`, never directly onto `uat` or `main`.
+
+1. **A branch of its own**, from the latest `uat`: `git fetch origin uat && git switch -c learning/<number>-<a-few-words> origin/uat`.
+2. **The files:** `packages/learning/cards/<number>/en.md`, `nl.md` and `interview.md`, and `packages/learning/cards/plan.json` when the topic is new.
+3. **The checks**, both clean: `node scripts/learning-card.ts stamp <number>` and `pnpm vitest run packages/learning services/semgraph/test/learning-cards.test.ts`.
+4. **One commit**, `Learning Card <number>: <title from the plan>`, ending with the trailer `Refs: DEC-LR-31`.
+5. **The pull request into `uat`**, with the same title. Its description holds the reader's question, the core idea, who was interviewed, what Claude brought, who does the fact check and who the test reader is, and the to-do of the record. Ask a member of the Data Team to review it.
+6. **Do not merge it yourself.** The Data Team merges after the fact check; the card then shows in uat as a draft.
+7. **Reviewed:** once the fact check and the test reader have passed, a small pull request sets `status: reviewed` in both languages. Only then does the card show in prod.
 
 ## Tone
 

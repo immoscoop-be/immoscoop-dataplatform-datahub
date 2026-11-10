@@ -1,9 +1,13 @@
 /**
- * Check a Learning Card before it goes into a pull request, and stamp its translation.
+ * List the Learning Cards that are open, check a card before it goes into a pull request, and stamp its translation.
  *
  * Usage:
+ *   node scripts/learning-card.ts list [open | draft | reviewed] [section]   # the plan, with where each card stands
  *   node scripts/learning-card.ts check <number | folder>   # the card in both languages, its plan, its chart, its interview record
  *   node scripts/learning-card.ts stamp <number | folder>   # write into nl.md the translatedFrom the English asks for, then check
+ *
+ * A card is open while it has no folder, a draft until the Data Team reviewed it, and reviewed after (DEC-LR-25);
+ * prod shows only reviewed cards. A section such as 2.1 or K5 narrows the list.
  *
  * A number is a folder of packages/learning/cards; a folder may be anywhere, such as the examples of the
  * learning-card skill. It reads the card with the parser of Data Hub, so that what passes here is what the web app
@@ -23,7 +27,9 @@ const CARDS = path.join(ROOT, 'packages', 'learning', 'cards');
 const SEMGRAPHS = path.join(ROOT, 'services', 'semgraph', 'semgraphs');
 
 interface PlanFile {
-  readonly topics: readonly { readonly number: string; readonly title: { readonly en: string } }[];
+  readonly levels: readonly { readonly id: string; readonly name: string }[];
+  readonly sections: readonly { readonly level: string; readonly number: string; readonly title: { readonly en: string } }[];
+  readonly topics: readonly { readonly number: string; readonly section: string; readonly title: { readonly en: string }; readonly priority?: string }[];
 }
 
 interface ChartSchema {
@@ -32,9 +38,48 @@ interface ChartSchema {
   readonly additionalProperties?: boolean;
 }
 
-const [command, target] = process.argv.slice(2);
+const plan = JSON.parse(readFileSync(path.join(CARDS, 'plan.json'), 'utf8')) as PlanFile;
+const [command, target, narrow] = process.argv.slice(2);
+
+// The plan, with where each card stands: open, draft or reviewed.
+if (command === 'list') {
+  const states = ['open', 'draft', 'reviewed'];
+  const only = target && states.includes(target) ? target : undefined;
+  const within = only ? narrow : target;
+  const stateOf = (number: string): string => {
+    const card = path.join(CARDS, number, 'en.md');
+    if (!existsSync(card)) return 'open';
+    try {
+      return parseCard(readFileSync(card, 'utf8')).status;
+    } catch {
+      return 'broken';
+    }
+  };
+  const count: Record<string, number> = {};
+  for (const level of plan.levels) {
+    const lines: string[] = [];
+    for (const section of plan.sections.filter((one) => one.level === level.id && (!within || one.number === within))) {
+      const rows = plan.topics
+        .filter((topic) => topic.section === section.number)
+        .map((topic) => ({ topic, state: stateOf(topic.number) }))
+        .filter((row) => !only || row.state === only);
+      if (rows.length === 0) continue;
+      lines.push(`  ${section.number} ${section.title.en}`);
+      for (const { topic, state } of rows) {
+        count[state] = (count[state] ?? 0) + 1;
+        const record = existsSync(path.join(CARDS, topic.number, 'interview.md')) ? ' · interview record' : '';
+        lines.push(`    ${topic.number.padEnd(7)} ${state.padEnd(9)} ${(topic.priority ?? '').padEnd(12)} ${topic.title.en}${record}`);
+      }
+    }
+    if (lines.length) console.log(`${level.name}\n${lines.join('\n')}\n`);
+  }
+  const total = Object.values(count).reduce((sum, value) => sum + value, 0);
+  console.log(`${total} topic(s): ${states.concat('broken').filter((state) => count[state]).map((state) => `${count[state]} ${state}`).join(', ') || 'none'}. Prod shows only the reviewed ones.`);
+  process.exit(0);
+}
+
 if ((command !== 'check' && command !== 'stamp') || !target) {
-  console.error('Usage: node scripts/learning-card.ts check|stamp <number | folder>');
+  console.error('Usage: node scripts/learning-card.ts list [open | draft | reviewed] [section] | check <number | folder> | stamp <number | folder>');
   process.exit(2);
 }
 
@@ -104,7 +149,6 @@ if (en && nl) {
 }
 
 // The plan: the number is a topic, and the choices go to written cards.
-const plan = JSON.parse(readFileSync(path.join(CARDS, 'plan.json'), 'utf8')) as PlanFile;
 const written = new Set(readdirSync(CARDS, { withFileTypes: true }).filter((entry) => entry.isDirectory() && existsSync(path.join(CARDS, entry.name, 'en.md'))).map((entry) => entry.name));
 if (en) {
   const topic = plan.topics.find((one) => one.number === en.number);
