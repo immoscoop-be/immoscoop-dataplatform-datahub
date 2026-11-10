@@ -131,7 +131,7 @@ The request and response schemas of every service are defined with zod in `packa
 
 | Service | Permissions |
 | --- | --- |
-| identity | Groups Reader and Data Hub user reader admin roles in Workspace ([OP-UM-03](../functional/02-user-management.md#op-um-03), [TR-PF-26](#tr-pf-26)); Cloud SQL client; signing with its key in Cloud KMS ([TR-PF-24](#tr-pf-24)) |
+| identity | The Data Hub user reader admin role in Workspace, and Groups Reader until the Owner Units moved ([OP-UM-03](../functional/02-user-management.md#op-um-03), [TR-PF-26](#tr-pf-26), [TR-UM-04](02-user-management.md#tr-um-04)); Cloud SQL client; signing with its key in Cloud KMS ([TR-PF-24](#tr-pf-24)) |
 | catalogue | Cloud SQL client |
 | registry | Cloud SQL client; write access to the artifact bucket; the dbt Cloud token and the webhook secret from Secret Manager; starting its ingest job ([TR-AR-01](01-artifact-registry.md#tr-ar-01)), which runs as the same service account |
 | query | BigQuery Data Viewer on the project of Data Hub, where the tables of its dbt projects are ([DEC-SR-32](../functional/04-stacks-and-resources.md#dec-sr-32)), and BigQuery Job User; Cloud SQL client, for its queries and the Query Log ([DEC-PF-29](#dec-pf-29)) |
@@ -260,6 +260,8 @@ Logging out ends the session at once. The Data Team can end all sessions of a Us
 **Status:** Implemented · **Realises:** [DEC-PF-18](#dec-pf-18), [FR-UM-06](../functional/02-user-management.md#fr-um-06), [FR-UM-10](../functional/02-user-management.md#fr-um-10), [NFR-SEC-03](../non-functional/security.md#nfr-sec-03)
 
 At every renewal, identity reads the Groups of the User again, as at login, and checks the account through the Admin SDK Directory API. For that, its service account has the custom Workspace admin role "Data Hub user reader", which may only read users. A suspended or removed account, or one outside `thenextimmoscoop.be` ([DEC-UM-06](../functional/02-user-management.md#dec-um-06)), gets no new Access Token, and all its sessions end. A change in Workspace thus reaches Data Hub within the lifetime of one Access Token.
+
+*Note of 2026-11-10: the Groups are read from the database of identity since they are kept in Data Hub ([TR-UM-03](02-user-management.md#tr-um-03)); the check of the account stays ([DEC-UM-12](../functional/02-user-management.md#dec-um-12)).*
 
 <a id="tr-pf-27"></a>
 ### TR-PF-27 · The server of the web app

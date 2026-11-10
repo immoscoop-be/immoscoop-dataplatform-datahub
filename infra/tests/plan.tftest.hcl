@@ -308,6 +308,32 @@ run "identity_signs_in_only_the_own_domains_and_known_mcp_clients" {
   }
 }
 
+run "the_way_back_into_admin_is_a_list_of_addresses_in_terraform" {
+  command = plan
+
+  variables {
+    break_glass_admins = ["dirk@immoscoop.be", "an@thenextimmoscoop.be"]
+  }
+
+  assert {
+    condition = contains(
+      [for env in google_cloud_run_v2_service.service["identity"].template[0].containers[0].env : env.value if env.name == "DATAHUB_BREAK_GLASS_ADMINS"],
+      "dirk@immoscoop.be,an@thenextimmoscoop.be"
+    )
+    error_message = "identity reads the way back into Admin from Terraform (EC-PL-03, TR-UM-06)."
+  }
+}
+
+run "the_way_back_into_admin_takes_only_addresses_of_the_own_domains" {
+  command = plan
+
+  variables {
+    break_glass_admins = ["someone@gmail.com"]
+  }
+
+  expect_failures = [var.break_glass_admins]
+}
+
 run "claude_finds_mcp_and_signs_in_at_identity" {
   command = plan
 

@@ -57,7 +57,7 @@ describe.skipIf(!url)('Users and Permission groups in Admin (FR-PL-06 to FR-PL-1
       signIn: {
         store,
         google: async () => Promise.reject(new Error('Not used')),
-        workspace: { isActive: async () => true, groups: async () => [], domainGroups: async () => [] },
+        workspace: { isActive: async () => true },
         tokens,
         issuer: 'https://identity.test',
         domains: ['immoscoop.be'],

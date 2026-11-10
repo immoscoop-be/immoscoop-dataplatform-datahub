@@ -8,18 +8,20 @@
   import SubTile from '@datahub/ui/containers/SubTile.svelte';
   import Tabs from '@datahub/ui/containers/Tabs.svelte';
   import Avatar from '@datahub/ui/primitives/Avatar.svelte';
+  import Button from '@datahub/ui/primitives/Button.svelte';
   import Loading from '@datahub/ui/primitives/Loading.svelte';
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
-  import type { Group, Identity, Me } from '../lib/identity.js';
-  import { myPagePath, type MyPageTab } from '../lib/routes.js';
+  import { listOf, tileLineOf } from '../lib/groups.js';
+  import type { GroupSummary, Identity, Me } from '../lib/identity.js';
+  import { GROUPS, groupPath, myPagePath, NEW_GROUP, type MyPageTab } from '../lib/routes.js';
   import { can } from '../lib/permissions.js';
   import ExcelKeys from './ExcelKeys.svelte';
 
   /**
    * My page, behind the initials at the foot of the rail (DEC-UX-84): who the User is in Data Hub,
-   * and their settings. Profile: the language of Data Hub (DEC-UX-85) and the groups they own through
-   * (DEC-DH-78); Excel keys, with which Excel gets the result of a Lens (FR-PL-01, FR-PL-02); Background: one
-   * choice for day and one for night (DEC-UX-108).
+   * and their settings. Profile: the language of Data Hub (DEC-UX-85), what they own (DEC-DH-78), and the tile Your
+   * groups: the Groups they are in, with the way to Groups and New group (DEC-UX-200); Excel keys, with which Excel
+   * gets the result of a Lens (FR-PL-01, FR-PL-02); Background: one choice for day and one for night (DEC-UX-108).
    */
   let {
     me,
@@ -37,8 +39,8 @@
     initials: string;
     tab: MyPageTab;
     language: Language;
-    /** The groups of the User, read from Workspace when the page opens; undefined while they come, null when they did not. */
-    groups: readonly Group[] | null | undefined;
+    /** The Groups the User is in or manages, read when the page opens; undefined while they come, null when they did not. */
+    groups: readonly GroupSummary[] | null | undefined;
     theme: Theme;
     backgroundChoice: string;
     onlanguage: (language: Language) => void;
@@ -53,6 +55,19 @@
     { value: 'en', label: 'English' },
   ] as const;
 
+  /** The Groups the User is in, for the tile Your groups (FR-UM-18). */
+  const mine = $derived(groups?.filter((group) => group.isMember));
+  /** How a Group of the User stands: it manages itself, what it manages, or who manages it (my-page). */
+  function lineOf(group: GroupSummary): string {
+    const line = tileLineOf(group, groups ?? []);
+    const what =
+      line.kind === 'itself'
+        ? t('me.groups.itself')
+        : line.kind === 'manages'
+          ? t('me.groups.manages', { names: listOf(line.names, language) })
+          : t('me.groups.managedBy', { group: line.name });
+    return `${t('group.members', { count: group.memberCount })} · ${what}`;
+  }
 </script>
 
 <div class="head">
@@ -83,24 +98,30 @@
       </SubTile>
       <SubTile round label={t('me.own.label')}>
         <p class="meta text own">{t('me.own.text')}</p>
+      </SubTile>
+      <SubTile round label={t('me.groups.label')}>
+        <p class="meta text own">{t('me.groups.text')}</p>
         {#if groups === null}
-          <p class="meta">{t('me.own.failed')}</p>
-        {:else if groups && groups.length === 0}
-          <p class="meta">{t('me.own.none')}</p>
-        {:else if groups}
+          <p class="meta">{t('me.groups.failed')}</p>
+        {:else if mine && mine.length === 0}
+          <p class="meta">{t('me.groups.none')}</p>
+        {:else if mine}
           <!-- About six rows, then the list scrolls within itself (DEC-UX-135). -->
           <div class="list">
-            {#each groups as group (group.id)}
-              <div class="row">
+            {#each mine as group (group.id)}
+              <a class="row" href={groupPath(group.id)}>
                 <span class="item-icon"><Icon name="users-three" /></span>
-                <span class="row-text"><span class="item-title">{group.name}</span><span class="meta">{group.email}</span></span>
-              </div>
+                <span class="row-text"><span class="item-title">{group.name}</span><span class="meta">{lineOf(group)}</span></span>
+              </a>
             {/each}
           </div>
         {:else}
           <Loading />
         {/if}
-        <p class="meta groups">{t('me.own.groups')}</p>
+        <div class="ways">
+          <Button variant="outline" href={GROUPS}><Icon name="users-three" />Groups</Button>
+          {#if can(me.permissions, 'groups.manage')}<Button variant="outline" href={NEW_GROUP}><Icon name="plus" />{t('group.new')}</Button>{/if}
+        </div>
       </SubTile>
     </Grid>
   {:else if tab === 'keys'}
@@ -119,10 +140,12 @@
   .text { line-height: 1.5; margin: 4px 0 12px; }
   .own { margin-bottom: 10px; }
   .follows { margin: 12px 0 0; }
-  .groups { margin: 10px 0 0; }
+  .ways { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
   .line { max-width: 720px; margin: 4px 0 14px; }
   .list { max-height: 300px; overflow-y: auto; }
-  .row { display: flex; align-items: center; gap: 10px; padding: 8px 6px; border-radius: var(--radius-md); }
+  .row { display: flex; align-items: center; gap: 10px; padding: 8px 6px; border-radius: var(--radius-md); color: inherit; text-decoration: none; }
+  .row:hover { background: var(--tint-hover); }
+  .row:focus-visible { outline: 2px solid var(--text-secondary); }
   .item-icon { width: 26px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; color: var(--text-secondary); }
   .row-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 </style>

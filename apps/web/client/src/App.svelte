@@ -13,7 +13,7 @@
   import { type ChartsOverview, createCharts } from './lib/charts.js';
   import { dragging, type Mover } from './lib/dragging.svelte.js';
   import type { Config } from './lib/config.js';
-  import { createIdentity, SignedOut, type Group, type Me } from './lib/identity.js';
+  import { createIdentity, type GroupSummary, SignedOut, type Me } from './lib/identity.js';
   import { type Conversation, type Counts, createMessages, type Filter, type Message, SUBJECT_TITLES, type WrittenOn } from './lib/messages.js';
   import { initialsOf } from './lib/initials.js';
   import { type OpenedFrom, provideLearning } from './lib/learning-context.js';
@@ -38,6 +38,7 @@
   import CollectionsPanel from './screens/CollectionsPanel.svelte';
   import CollectionsStart from './screens/CollectionsStart.svelte';
   import FolderPage from './screens/FolderPage.svelte';
+  import GroupsPage from './screens/GroupsPage.svelte';
   import LearningCardPage from './screens/LearningCardPage.svelte';
   import LearningPanel from './screens/LearningPanel.svelte';
   import LearningSee from './screens/LearningSee.svelte';
@@ -79,8 +80,8 @@
     | { readonly kind: 'signedOut'; readonly problem?: string; readonly account?: string }
     | { readonly kind: 'signedIn'; readonly me: Me; readonly settings: Settings; readonly backgrounds: Backgrounds };
   let status = $state<Status>({ kind: 'starting' });
-  /** The groups of the User for My page, read when it opens: undefined while they come, null when they did not. */
-  let groups: readonly Group[] | null | undefined = $state();
+  /** The Groups the User is in or manages, for My page, read when it opens: undefined while they come, null when they did not. */
+  let groups: readonly GroupSummary[] | null | undefined = $state();
   /** For the Data Team, the Resources that wait for a Collection, read when Data Hub starts (FR-SR-35). */
   let waiting: readonly Resource[] | undefined = $state();
   /** Every Collection the User sees, read when Data Hub starts and after a change (FR-CO-18). */
@@ -247,6 +248,23 @@
       );
     }
   });
+  /** The Groups the User is in, by name, to own a new Collection made with a Lens (DEC-CO-24, DEC-UX-200). */
+  const groupsOfUser = async () => (await identity.groups()).filter((group) => group.isMember).map(({ id, name }) => ({ id, name }));
+  /**
+   * The Groups the User is in changed, on Groups: the next Access Token carries them, at once (FR-UM-19), and what
+   * the page shows from them is read again: who they are, My page and the Collections they own.
+   */
+  async function membershipChanged(): Promise<void> {
+    session.renew();
+    groups = undefined;
+    try {
+      const me = await identity.me();
+      if (status.kind === 'signedIn') status = { ...status, me };
+    } catch (error) {
+      console.error('Who the User is could not be read again', error);
+    }
+    refresh();
+  }
   /** Who sees all of the catalogue sees the Resources without a Collection too (DEC-PL-02, FR-SR-35). */
   const seesAll = $derived(sees(permissions) === 'all');
 
@@ -568,6 +586,8 @@
           ? ADMIN_TOOLS.find((tool) => tool.id === page.tool)?.name
         : page.kind === 'me' && status.kind === 'signedIn'
           ? status.me.name
+        : page.kind === 'groups'
+          ? 'Groups'
           : page.kind === 'resource'
             ? opened?.resource?.displayName
             : page.kind === 'collection'
@@ -654,8 +674,6 @@
         })
       : suggestedLevels({ dataAdmin: false, owner: false }),
   );
-  /** The Owner Units the User sees, by the id of their group, to name the Owner Units of a User on Users. */
-  const ownerUnits = $derived(new Map((collections ?? []).map((collection) => [collection.ownerUnit.id, collection.ownerUnit.name])));
   /** A page of Query, which a User who may neither make queries nor Preview does not have (FR-PL-14). */
   const queryPage = $derived(page.kind === 'newQuery' || page.kind === 'query' || page.kind === 'newLens' || (page.kind === 'start' && page.section.id === 'query'));
   /** The kinds of Message the User may write (`messages.write`, DEC-PL-04). */
@@ -698,7 +716,7 @@
     panelTitle={section ? sectionLabel(section) : ''}
     {panelOpen}
     initials={initialsOf(signedIn.me.name)}
-    myPageActive={page.kind === 'me'}
+    myPageActive={page.kind === 'me' || page.kind === 'groups'}
     onselect={select}
     ontheme={() => themeOnScreen.switch()}
     oncollapse={() => signedIn.settings.set('panel.open', false)}
@@ -840,7 +858,7 @@
           me={{ name: signedIn.me.name, groups: signedIn.me.groups }}
           everyLens={reach(permissions, 'lenses.manage') === 'every'}
           canMake={can(permissions, 'lenses.make')}
-          loadGroups={() => identity.groups()}
+          loadGroups={groupsOfUser}
           onmade={made}
         />
       {/key}
@@ -855,7 +873,7 @@
           me={{ name: signedIn.me.name, groups: signedIn.me.groups }}
           everyLens={reach(permissions, 'lenses.manage') === 'every'}
           canMake={can(permissions, 'lenses.make')}
-          loadGroups={() => identity.groups()}
+          loadGroups={groupsOfUser}
           onmade={made}
         />
       {:else if openedLens?.lens}
@@ -896,7 +914,7 @@
             me={{ name: signedIn.me.name, groups: signedIn.me.groups }}
             everyLens={reach(permissions, 'lenses.manage') === 'every'}
             canMake={can(permissions, 'lenses.make')}
-            loadGroups={() => identity.groups()}
+            loadGroups={groupsOfUser}
             onmade={made}
             ondeleted={deleted}
           />
@@ -946,6 +964,21 @@
         onbackground={(choice) => signedIn.backgrounds.choose(theme, choice)}
         {identity}
       />
+    {:else if page.kind === 'groups'}
+      <!-- Groups, from My page, with no place in the rail (DEC-UX-200, FR-UM-18). -->
+      <GroupsPage
+        {identity}
+        {catalogue}
+        environment={config.environment ?? 'local'}
+        me={{ sub: signedIn.me.sub, email: signedIn.me.email, name: signedIn.me.name }}
+        id={page.id}
+        making={page.making ?? false}
+        makes={can(permissions, 'groups.manage')}
+        every={can(permissions, 'groups.all.manage')}
+        {collections}
+        go={(path) => router.go(path)}
+        onmembership={() => void membershipChanged()}
+      />
     {:else if page.kind === 'resource'}
       {#if opened?.resource}
         {@const resource = opened.resource}
@@ -986,7 +1019,6 @@
           {identity}
           environment={config.environment ?? 'local'}
           me={signedIn.me.sub}
-          {ownerUnits}
           filter={usersOf}
           user={page.user}
           groupsHref={adminTools.includes('permissionGroups') ? ADMIN_TOOLS.find((tool) => tool.id === 'permissionGroups')?.path : undefined}

@@ -28,6 +28,8 @@ Who a Message notifies follows the recipients of its type in the Message Catalog
 
 An Owner Unit and the Data Team get one e-mail at the address of their Google group, in Dutch, which reaches every member, also who never signed in: the address of the Owner Unit as the Collection keeps it, `datahub-datateam@` for the Data Team. In Slack each of their members Data Hub knows gets a direct message, in their own language. identity keeps the Groups and roles of a User as it last read them, at a sign-in or a renewal, and none once the account is no longer active; catalogue asks `POST /internal/people` with its Google ID token for identity's address which Users of the Groups, the roles and the IDs it names Data Hub knows, with their address, name and language ([DEC-UX-96](../../design/principles.md#dec-ux-96)). A person gets an e-mail of their own unless a group they are known to be in gets it; whoever wrote the Message gets no direct message, though the e-mail to their group still reaches them.
 
+*Note of 2026-11-10: a Group of Data Hub has no address, so each member of an Owner Unit gets an e-mail of their own ([TR-UM-07](02-user-management.md#tr-um-07)); the Data Team keeps its address.*
+
 <a id="tr-ln-03"></a>
 ### TR-LN-03 · E-mail goes through the SMTP relay of Workspace, from one fixed address
 

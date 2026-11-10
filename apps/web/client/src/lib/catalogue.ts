@@ -155,11 +155,20 @@ export interface LogEntry {
   at: string;
 }
 
-/** A group of Workspace, as the Owner Unit of a Collection (TR-CO-03). */
+/** A Group of Data Hub, as the Owner Unit of a Collection (TR-CO-03): named, without an address (FR-UM-12). */
 export interface OwnerUnit {
   id: string;
-  email: string;
   name: string;
+  /** Left over from the groups of Google: null now, and never shown. */
+  email?: string | null;
+}
+
+/** A Collection as the Group that is its Owner Unit shows it (FR-UM-18). */
+export interface OwnedCollection {
+  id: string;
+  name: string;
+  icon: string | null;
+  visibility: 'private' | 'public';
 }
 
 /** A Resource as its Collection lists it, in the panel. */
@@ -323,6 +332,10 @@ export function createCatalogue(config: Config, session: Pick<Session, 'accessTo
     /** Every Collection the User sees, by name (FR-CO-17, FR-CO-18). */
     async collections(): Promise<Collection[]> {
       return ((await (await call('/collections')).json()) as { collections: Collection[] }).collections;
+    },
+    /** The Collections of an Owner Unit the User may see, for the Group opened on Groups (FR-UM-18). */
+    async ownerUnitCollections(groupId: string): Promise<OwnedCollection[]> {
+      return ((await (await call(`/owner-units/${encodeURIComponent(groupId)}/collections`)).json()) as { collections: OwnedCollection[] }).collections;
     },
     async collection(id: string): Promise<Collection> {
       return (await call(collection(id))).json() as Promise<Collection>;

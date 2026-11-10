@@ -50,8 +50,6 @@ describe.skipIf(!url)('the settings of a User (DEC-UX-96)', () => {
         },
         workspace: {
           isActive: async () => true,
-          groups: async () => [],
-          domainGroups: async () => [],
         },
         tokens,
         issuer: 'https://identity.test',

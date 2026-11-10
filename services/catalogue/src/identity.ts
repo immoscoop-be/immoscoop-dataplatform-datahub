@@ -1,18 +1,19 @@
 import type { IdTokenSource } from '@datahub/google';
 import type { People, Person } from './notifications.js';
 
-/** A group of the User, as identity reads it from Workspace (TR-CO-03). */
+/** A Group kept in Data Hub (DEC-UM-10), as identity tells it (TR-CO-03); it has no address. */
 export interface Group {
   id: string;
-  email: string;
+  /** The address of a Google group an older Collection kept as its Owner Unit; null for a Group of Data Hub. */
+  email?: string | null;
   name: string;
 }
 
 /** What catalogue asks identity, always with the Access Token of the User. */
 export interface Identity {
-  /** The groups the User is in right now, from `GET /me/groups`. */
+  /** The Groups the User is in right now, from `GET /me/groups`, without those they only manage. */
   groups(authorization: string): Promise<Group[]>;
-  /** Every group of the Workspace domain, from `GET /groups`, for who makes Collections for any group (FR-CO-35). */
+  /** Every Group, from `GET /groups`, for who makes Collections for any Group (FR-CO-35). */
   domainGroups(authorization: string): Promise<Group[]>;
 }
 
@@ -20,7 +21,7 @@ export interface Identity {
 export class IdentityUnavailable extends Error {}
 
 export function createIdentity(baseUrl: string, request: typeof fetch = fetch): Identity {
-  async function groups(path: string, authorization: string): Promise<Group[]> {
+  async function groups(path: string, authorization: string): Promise<(Group & { isMember?: boolean })[]> {
     let response: Response;
     try {
       response = await request(new URL(path, baseUrl), { headers: { authorization }, signal: AbortSignal.timeout(10_000) });
@@ -30,13 +31,31 @@ export function createIdentity(baseUrl: string, request: typeof fetch = fetch): 
     if (!response.ok) {
       throw new IdentityUnavailable(`identity answered ${response.status} for ${path}`);
     }
-    const body = (await response.json()) as { groups?: Group[] };
+    const body = (await response.json()) as { groups?: (Group & { isMember?: boolean })[] };
     return body.groups ?? [];
   }
 
   return {
-    groups: (authorization) => groups('/me/groups', authorization),
-    domainGroups: (authorization) => groups('/groups', authorization),
+    groups: async (authorization) =>
+      (await groups('/me/groups', authorization)).filter((group) => group.isMember !== false).map((group) => ({ id: group.id, name: group.name, email: null })),
+    domainGroups: async (authorization) => (await groups('/groups', authorization)).map((group) => ({ id: group.id, name: group.name, email: null })),
+  };
+}
+
+/**
+ * Sends identity the Owner Units of the Collections, so that each Google group among them becomes a Group of Data
+ * Hub once (FR-UM-20, TR-UM-04), as catalogue, with a Google ID token for identity's address. It repeats at every start.
+ */
+export function createGroupMoves(baseUrl: string, idToken: IdTokenSource, request: typeof fetch = fetch) {
+  return async (owners: { id: string; name: string }[]): Promise<string[]> => {
+    const response = await request(new URL('/internal/groups/move', baseUrl), {
+      method: 'POST',
+      headers: { authorization: `Bearer ${await idToken(baseUrl)}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ groups: owners }),
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (!response.ok) throw new IdentityUnavailable(`identity answered ${response.status} for /internal/groups/move`);
+    return ((await response.json()) as { moved: string[] }).moved;
   };
 }
 

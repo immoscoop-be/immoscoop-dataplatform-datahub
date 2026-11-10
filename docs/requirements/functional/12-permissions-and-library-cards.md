@@ -146,7 +146,7 @@ At the start, Data Hub makes the three Permission groups of [DEC-PL-07](#dec-pl-
 
 *Proposed on 2026-11-06 and reviewed with Max the same day ([OP-PL-02](#op-pl-02)); agreed as [DEC-PL-01](#dec-pl-01) to [DEC-PL-07](#dec-pl-07). The requirements above say how Permission groups hold them; this list says what each Permission allows.*
 
-A Permission group holds every Permission below. A Permission is yes or no; while it is yes, its values say how far it goes, of the kinds a Parameter has ([DEC-UX-71](../../design/principles.md#dec-ux-71)): a whole number with its unit, a choice, several choices, yes or no, a text ([DEC-UX-186](../../design/principles.md#dec-ux-186)). A Permission marked always on has no yes or no, only its values. Where a Permission reaches "their Owner Units", or "the assets in their control", the Owner Units of the User, still Workspace groups, say which Collections, and so which Resources and Lenses, are theirs ([DEC-UX-187](../../design/principles.md#dec-ux-187)).
+A Permission group holds every Permission below. A Permission is yes or no; while it is yes, its values say how far it goes, of the kinds a Parameter has ([DEC-UX-71](../../design/principles.md#dec-ux-71)): a whole number with its unit, a choice, several choices, yes or no, a text ([DEC-UX-186](../../design/principles.md#dec-ux-186)). A Permission marked always on has no yes or no, only its values. Where a Permission reaches "their Owner Units", or "the assets in their control", the Owner Units of the User, Groups kept in Data Hub since [DEC-UM-10](02-user-management.md#dec-um-10), say which Collections, and so which Resources and Lenses, are theirs ([DEC-UX-187](../../design/principles.md#dec-ux-187)).
 
 Each Permission has a key, the name the services use. The column Today says who can do it now; the next three say what each group to start with gets:
 
@@ -165,6 +165,15 @@ Each Permission has a key, the name the services use. The column Today says who 
 | `resources.describe` | Describe a Resource, attribute by attribute | Which (choice): those of their Owner Units, or every Resource. What (several choices): **description and columns**, the Business Description of the Resource and of its fields, and marking their changes in dbt seen; **Known Behaviour**, its intended use and its Anomalies; **pitfalls**; **available since**, the day since when it is reliable; **Known Gaps**; **key fields and important Parameters**; **Entity mapping**, which Entity of the Domain Model each field refers to | Every attribute but the Entity mapping for the Owner Unit of its Collection and the Data Team; the Entity mapping only the Data Team ([DEC-UX-107](../../design/principles.md#dec-ux-107)) | every, all seven | their Owner Units, all but the Entity mapping | no |
 | `resources.publish` | Publish a Resource, its first Confirmation: in their own name, as its Owner, so only a Resource of their Owner Units | – | The Owner Unit of its Collection | yes | yes | no |
 | `resources.deprecate` | Deprecate a Resource, and undo it | Which (choice): those of their Owner Units, or every Resource | The Owner Unit of its Collection and the Data Team | every | their Owner Units | no |
+
+### Groups
+
+*Added on 2026-11-10, with the Groups kept in Data Hub ([DEC-UM-10](02-user-management.md#dec-um-10), [DEC-UX-201](../../design/principles.md#dec-ux-201)).*
+
+| Key | Permission: what it allows | Values | Today | Admin | Business analyst | Lens user |
+| --- | --- | --- | --- | --- | --- | --- |
+| `groups.manage` | Make a Group, and choose which of the Groups they are in manages it ([FR-UM-13](02-user-management.md#fr-um-13)). A Group they manage, they change anyway | – | Nobody: groups are made in Workspace | yes | yes | no |
+| `groups.all.manage` | Change every Group, also those they are not in and do not manage, and choose any Group to manage it ([FR-UM-14](02-user-management.md#fr-um-14)): the work of a Data Admin | – | Nobody | yes | no | no |
 
 ### Query
 
@@ -252,6 +261,8 @@ When `catalogue.see` of a User narrows, what they no longer see answers as anyth
 **Status:** Implemented · **Source:** Max, 2026-11-06, as proposed with [FR-PL-08](#fr-pl-08)
 
 When every User of Admin can no longer sign in, for example after leaving, nobody can manage Data Hub. Then, and only then, a member of `datahub-datateam@` who signs in gets Admin, so that the Role Group stays a way back in, and the Data Team gets a Message that it happened.
+
+*Note of 2026-11-10, by Max: since Data Hub reads no Google groups ([DEC-UM-10](02-user-management.md#dec-um-10)), the way back in is a list of addresses kept in Terraform, per environment: a User on it who signs in gets Admin, then and only then ([TR-UM-06](../technical/02-user-management.md#tr-um-06)). Max chose it over an address in a setting of the app, which only who can sign in could change.*
 
 <a id="ec-pl-04"></a>
 ### EC-PL-04 · A User has more Excel keys than their Permission group now allows

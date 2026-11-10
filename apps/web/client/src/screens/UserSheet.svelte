@@ -11,13 +11,14 @@
   import type { GroupMove, Identity, PermissionGroup, UserOfAdmin } from '../lib/identity.js';
   import { initialsOf } from '../lib/initials.js';
   import { changesBetween } from '../lib/permissions.js';
+  import { groupPath } from '../lib/routes.js';
   import ChangeList from './ChangeList.svelte';
 
   /**
    * One User opened on Users, in a sheet over the list (User sheet, FR-PL-07): who they are, since when, how they
-   * use Data Hub and their Owner Units, read-only, as they come from Google Workspace. Under it their Permission group
+   * use Data Hub and their Groups, read-only here, each the way to it on Groups, where they change (DEC-UX-200). Under it their Permission group
    * as a choice of every group, the current one marked "now" and the default "default"; choosing another shows,
-   * before it is saved, what the User gains and loses, and that their Owner Units stay. Then the history of their
+   * before it is saved, what the User gains and loses, and that their Groups stay. Then the history of their
    * Permission group. Nobody changes their own (FR-PL-08): for yourself the choice is greyed, with why. identity
    * refuses that too, and moving the last User out of Admin; the sheet says so.
    */
@@ -25,7 +26,6 @@
     user,
     groups,
     self,
-    ownerUnits,
     counts,
     identity,
     onsaved,
@@ -35,8 +35,6 @@
     groups: readonly PermissionGroup[];
     /** The User opened is the one signed in. */
     self: boolean;
-    /** The names of their Owner Units. */
-    ownerUnits: readonly string[];
     /** How many Users each Permission group has, by its id. */
     counts: Readonly<Record<string, number>>;
     identity: Pick<Identity, 'user' | 'moveUser'>;
@@ -108,8 +106,11 @@
       <dd>{user.lastLoginAt ? ago(user.lastLoginAt, language) : t('users.never')}</dd>
       <dt>{t('users.fact.uses')}</dt>
       <dd>{uses.length > 0 ? list(uses) : t('users.uses.nothing')}</dd>
-      <dt>Owner Units</dt>
-      <dd>{ownerUnits.length > 0 ? ownerUnits.join(', ') : t('users.none')} <span class="meta">· {t('users.fromWorkspace')}</span></dd>
+      <dt>Groups</dt>
+      <dd>
+        {#each user.groups as group, index (group.id)}{#if index > 0}{', '}{/if}<a class="text-link" href={groupPath(group.id)}>{group.name}</a>{:else}{t('users.none')}{/each}
+        <span class="meta">· {t('users.onGroups')}</span>
+      </dd>
     </FactsList>
 
     <div class="label">Permission group</div>
@@ -162,6 +163,7 @@
 
 <style>
   .initials { display: inline-flex; }
+  .text-link { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
   .body { flex: 1; min-height: 0; overflow-y: auto; padding: 10px 6px 12px; }
   .label { margin: 20px 0 6px; font-size: var(--text-meta); color: var(--text-muted); }
   .groups { display: grid; gap: 4px; margin-top: 8px; }

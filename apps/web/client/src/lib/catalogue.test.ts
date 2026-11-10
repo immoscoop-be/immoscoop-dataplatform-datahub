@@ -32,6 +32,12 @@ describe('the calls of the page to catalogue', () => {
     ]);
   });
 
+  it('reads the Collections an Owner Unit holds that the User sees, for its Group on Groups (FR-UM-18)', async () => {
+    const { catalogue, asked } = answering(() => Response.json({ collections: [{ id: 'c1', name: 'Brokers', icon: 'briefcase', visibility: 'private' }] }));
+    expect(await catalogue.ownerUnitCollections('g 1')).toEqual([{ id: 'c1', name: 'Brokers', icon: 'briefcase', visibility: 'private' }]);
+    expect(asked).toEqual([{ url: 'https://catalogue.test/owner-units/g%201/collections', authorization: 'Bearer a-1' }]);
+  });
+
   it('tells apart what does not exist, an ended session and a failure', async () => {
     await expect(answering(() => Response.json({}, { status: 404 })).catalogue.resource('gone')).rejects.toBeInstanceOf(NotFound);
     await expect(answering(() => Response.json({}, { status: 401 })).catalogue.waiting()).rejects.toBeInstanceOf(SignedOut);

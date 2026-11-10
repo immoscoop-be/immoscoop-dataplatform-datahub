@@ -2,7 +2,6 @@ import { createLocalJWKSet, exportJWK, generateKeyPair, SignJWT, type JWTPayload
 import { describe, expect, it } from 'vitest';
 import { parseGoogleClient, readGoogleClient } from './google-client.js';
 import { createGoogleSignIn, SignInError } from './google-sign-in.js';
-import { applyNamingConvention, ownDomainGroups } from './naming-convention.js';
 import { createWorkspace } from './workspace.js';
 
 const DOMAIN = 'thenextimmoscoop.be';
@@ -122,113 +121,6 @@ describe('createWorkspace', () => {
       Response.json({ error: { message: 'Admin SDK API has not been used in project 1 before or it is disabled.' } }, { status: 403 }),
     );
     await expect(disabled.isActive('someone')).rejects.toThrow(/403 Admin SDK API has not been used/);
-  });
-
-  it('collects the groups of a User over every page, and the groups those groups are in', async () => {
-    // The direct groups of each member, one list per page: Jan is in a and, on the second page, in
-    // b; a is a member of c, and c of a again, which must not loop.
-    const parents: Record<string, string[][]> = {
-      [`jan@${DOMAIN}`]: [['a'], ['b']],
-      [`a@${DOMAIN}`]: [['c']],
-      [`c@${DOMAIN}`]: [['a']],
-    };
-    const asked: string[] = [];
-    const workspace = createWorkspace(token, async (url) => {
-      const { pathname, searchParams } = new URL(url as string);
-      expect(pathname).toBe('/v1/groups/-/memberships:searchDirectGroups');
-      const query = searchParams.get('query') ?? '';
-      asked.push(query);
-      const pages = parents[/member_key_id == '([^']+)'/.exec(query)?.[1] ?? ''] ?? [[]];
-      const page = Number(searchParams.get('pageToken') ?? 0);
-      return Response.json({
-        memberships: (pages[page] ?? []).map((id) => ({
-          group: `groups/${id}`,
-          groupKey: { id: `${id}@${DOMAIN}` },
-          ...(id === 'a' ? { displayName: ' Team A ' } : {}),
-        })),
-        nextPageToken: page + 1 < pages.length ? String(page + 1) : undefined,
-      });
-    });
-    await expect(workspace.groups(`jan@${DOMAIN}`)).resolves.toEqual([
-      // The name Workspace shows, or else the address.
-      { id: 'a', email: `a@${DOMAIN}`, name: 'Team A' },
-      { id: 'b', email: `b@${DOMAIN}`, name: `b@${DOMAIN}` },
-      { id: 'c', email: `c@${DOMAIN}`, name: `c@${DOMAIN}` },
-    ]);
-    expect(asked[0]).toBe(`member_key_id == 'jan@${DOMAIN}'`);
-    expect(asked).toHaveLength(5);
-  });
-
-  it('fails with the reason Google gives when the groups cannot be read, and the argument it refused', async () => {
-    const workspace = createWorkspace(token, async () =>
-      Response.json({ error: { message: 'The caller does not have permission' } }, { status: 403 }),
-    );
-    await expect(workspace.groups(`jan@${DOMAIN}`)).rejects.toThrow(/403 The caller does not have permission/);
-    const refused = createWorkspace(token, async () =>
-      Response.json(
-        {
-          error: {
-            message: 'Request contains an invalid argument.',
-            details: [{ '@type': 'type.googleapis.com/google.rpc.BadRequest', fieldViolations: [{ field: 'query', description: 'Unsupported filter' }] }],
-          },
-        },
-        { status: 400 },
-      ),
-    );
-    await expect(refused.groups(`jan@${DOMAIN}`)).rejects.toThrow('400 Request contains an invalid argument. · query: Unsupported filter');
-  });
-
-  it('lists every group of the Workspace of the User over every page, and keeps the list a few minutes (FR-CO-35)', async () => {
-    const asked: string[] = [];
-    const workspace = createWorkspace(token, async (url) => {
-      const { pathname, searchParams } = new URL(url as string);
-      asked.push(pathname);
-      if (pathname === '/admin/directory/v1/users/108234567890') {
-        return Response.json({ customerId: 'C03az79cb' });
-      }
-      expect(pathname).toBe('/v1/groups');
-      expect(searchParams.get('parent')).toBe('customers/C03az79cb');
-      const second = searchParams.get('pageToken') === '1';
-      return Response.json({
-        groups: second
-          ? [{ name: 'groups/s', groupKey: { id: `sales@${DOMAIN}` } }]
-          : [{ name: 'groups/c', groupKey: { id: `credit@${DOMAIN}` }, displayName: ' Credit team ' }, { name: 'groups/x' }],
-        nextPageToken: second ? undefined : '1',
-      });
-    });
-    const groups = [
-      { id: 'c', email: `credit@${DOMAIN}`, name: 'Credit team' },
-      { id: 's', email: `sales@${DOMAIN}`, name: `sales@${DOMAIN}` },
-    ];
-    await expect(workspace.domainGroups('108234567890')).resolves.toEqual(groups);
-    await expect(workspace.domainGroups('108234567890')).resolves.toEqual(groups);
-    expect(asked).toEqual(['/admin/directory/v1/users/108234567890', '/v1/groups', '/v1/groups']);
-  });
-});
-
-describe('the groups of a User', () => {
-  const groups = [
-    { id: '1', email: `datahub-datateam@${DOMAIN}`, name: 'Data Team' },
-    { id: '2', email: `datahub-owner-digikom@${DOMAIN}`, name: 'DigiKom' },
-    { id: '3', email: `sales@${DOMAIN}`, name: 'Sales' },
-    { id: '4', email: 'datahub-datateam@other.be', name: 'Data Team elsewhere' },
-    { id: '5', email: `DataHub-Admins@${DOMAIN.toUpperCase()}`, name: 'admins' },
-  ];
-
-  it('keeps every group of the own domain, and turns only Role Groups into roles (FR-UM-11)', () => {
-    expect(applyNamingConvention(groups, [DOMAIN])).toEqual({ groups: ['1', '2', '3', '5'], roles: ['admins', 'datateam'] });
-  });
-
-  it('keeps the groups of both own domains, and their Role Groups (DEC-UM-09)', () => {
-    const second = { id: '6', email: 'datahub-viewers@immoscoop.be', name: 'Viewers' };
-    expect(applyNamingConvention([...groups, second], [DOMAIN, 'immoscoop.be'])).toEqual({
-      groups: ['1', '2', '3', '5', '6'],
-      roles: ['admins', 'datateam', 'viewers'],
-    });
-  });
-
-  it('offers the groups of the own domain by name, each once, to choose an Owner Unit from', () => {
-    expect(ownDomainGroups([...groups, groups[2]!], [DOMAIN]).map((group) => group.id)).toEqual(['5', '1', '2', '3']);
   });
 });
 
