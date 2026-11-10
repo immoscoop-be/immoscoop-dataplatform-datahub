@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 196 | 68 (16 open, 52 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 198 | 68 (16 open, 52 done) |
 | [Backlog](../overview/backlog.md) | – | – | – | 7 (5 open, 2 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
@@ -277,8 +277,8 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-CM-17](functional/08-checks-and-monitoring.md#fr-cm-17) | Useful or noise, for every Finding | Specified | – | [monitoring-start](../design/screens/monitoring-start.html), [monitor](../design/screens/monitor.html) | – | – |
 | [FR-CM-18](functional/08-checks-and-monitoring.md#fr-cm-18) | The Health Overview of a Monitor | Specified | – | [monitor](../design/screens/monitor.html) | – | – |
 | [FR-CM-19](functional/08-checks-and-monitoring.md#fr-cm-19) | Every Finding in the Log | Specified | – | [monitor](../design/screens/monitor.html) | – | – |
-| [FR-CM-20](functional/08-checks-and-monitoring.md#fr-cm-20) | Seven steps to build a Monitor, over its picture | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | [bb1a790](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/bb1a790f6107eb13987832cc97090843a9394ee6) refs, 2026-11-07<br>[22dd06d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/22dd06dc543750c227c0dddedbf9c426c697e76a) refs, 2026-11-07 |
-| [FR-CM-21](functional/08-checks-and-monitoring.md#fr-cm-21) | The Owner chooses when it evaluates | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | – |
+| [FR-CM-20](functional/08-checks-and-monitoring.md#fr-cm-20) | Seven steps to build a Monitor, over its picture | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | [5448601](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/54486019e9cbc813114c154e7305c5591f8f2e10) refs, 2026-11-09<br>[bb1a790](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/bb1a790f6107eb13987832cc97090843a9394ee6) refs, 2026-11-07<br>[22dd06d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/22dd06dc543750c227c0dddedbf9c426c697e76a) refs, 2026-11-07 |
+| [FR-CM-21](functional/08-checks-and-monitoring.md#fr-cm-21) | The Owner chooses when it evaluates | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | [5448601](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/54486019e9cbc813114c154e7305c5591f8f2e10) refs, 2026-11-09 |
 | [FR-CM-22](functional/08-checks-and-monitoring.md#fr-cm-22) | Starting from a proposal, not from an empty screen | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | – |
 | [FR-CM-23](functional/08-checks-and-monitoring.md#fr-cm-23) | Claude drafts a Monitor from one sentence | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | – |
 | [FR-CM-24](functional/08-checks-and-monitoring.md#fr-cm-24) | Several Rules on one Metric, drawn as a ladder | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | – |

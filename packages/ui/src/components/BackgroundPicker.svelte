@@ -14,10 +14,16 @@
   const title = (background: Background) =>
     background.name ?? (background.kind === 'flow' ? t('background.flow') : t('background.gradient'));
   const meta = (background: Background) =>
-    background.kind === 'flow' ? t('background.flowMeta') : background.kind === 'lights' ? t('background.lightsMeta') : undefined;
+    background.kind === 'flow'
+      ? t('background.flowMeta')
+      : background.kind === 'lights'
+        ? t('background.lightsMeta')
+        : background.kind === 'painted'
+          ? t('background.paintedMeta')
+          : undefined;
   /** The still picture of a flowing background, as tokens.css draws it. */
   const preview = (background: Background) =>
-    background.kind === 'flow' || background.kind === 'lights' ? `var(--bg-prev-${background.id})` : undefined;
+    background.kind === 'flow' || background.kind === 'lights' || background.kind === 'painted' ? `var(--bg-prev-${background.id})` : undefined;
 
   const set = $derived(backgroundsOf(theme));
   /** Random is on when the choice is not one of the set (any more), as the background then is one at random. */
@@ -79,6 +85,6 @@
     background: center / cover no-repeat var(--bg-1); color: var(--text-secondary); font-size: 26px; }
   .random { background: var(--surface-solid); }
   .gradient { background: var(--app-bg); background-size: 130% 130%; }
-  .flow, .lights { background: var(--preview); }
+  .flow, .lights, .painted { background: var(--preview); }
   .picture { background-image: var(--picture); background-position: var(--position, center); }
 </style>

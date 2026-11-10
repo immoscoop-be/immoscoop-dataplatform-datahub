@@ -12,6 +12,7 @@ export default {
   'background.flow': 'Vloeiend verloop',
   'background.flowMeta': 'Beweegt traag',
   'background.lightsMeta': 'Vloeiende lichten',
+  'background.paintedMeta': 'Geschilderde vormen',
   'background.label': 'Achtergrond',
   'tree.toggle': 'Toon wat {name} bevat',
   'breadcrumb.label': 'Waar je bent',

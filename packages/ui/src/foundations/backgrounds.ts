@@ -9,8 +9,9 @@ export type Theme = 'light' | 'dark';
  * - `picture`: a painted picture, or a photo shown as it is (DEC-UX-34, DEC-UX-110)
  * - `flow`: the flowing gradient, drawn with WebGL (DEC-UX-80)
  * - `lights`: the flowing lights, drawn with WebGL (DEC-UX-109)
+ * - `painted`: painted shapes, many kinds of shapes and colours, drawn with WebGL (DEC-UX-198)
  */
-export type BackgroundKind = 'gradient' | 'picture' | 'flow' | 'lights';
+export type BackgroundKind = 'gradient' | 'picture' | 'flow' | 'lights' | 'painted';
 
 export interface Background {
   /** What the settings of the User keep (DEC-UX-108). */
@@ -39,10 +40,20 @@ export const BACKGROUNDS: readonly Background[] = [
   { id: 'apricot', kind: 'lights', themes: ['light'], name: 'Apricot' },
   { id: 'blush', kind: 'lights', themes: ['light'], name: 'Blush' },
   { id: 'sky', kind: 'lights', themes: ['light'], name: 'Sky' },
-  { id: 'aurora', kind: 'lights', themes: ['dark'], name: 'Aurora' },
+  { id: 'prism', kind: 'painted', themes: ['light'], name: 'Prism' },
+  { id: 'cinnamon', kind: 'painted', themes: ['light'], name: 'Cinnamon' },
+  { id: 'evening', kind: 'painted', themes: ['light'], name: 'Evening' },
+  { id: 'citrus', kind: 'painted', themes: ['light'], name: 'Citrus' },
+  { id: 'orchid', kind: 'painted', themes: ['light'], name: 'Orchid' },
+  { id: 'tide', kind: 'painted', themes: ['light'], name: 'Tide' },
+  { id: 'borealis', kind: 'lights', themes: ['dark'], name: 'Borealis' },
   { id: 'ember', kind: 'lights', themes: ['dark'], name: 'Embers' },
   { id: 'dusk', kind: 'lights', themes: ['dark'], name: 'Dusk' },
   { id: 'horizon', kind: 'lights', themes: ['dark'], name: 'Horizon' },
+  { id: 'afterglow', kind: 'painted', themes: ['dark'], name: 'Afterglow' },
+  { id: 'lumen', kind: 'painted', themes: ['dark'], name: 'Lumen' },
+  { id: 'cobalt', kind: 'painted', themes: ['dark'], name: 'Cobalt' },
+  { id: 'midnight', kind: 'painted', themes: ['dark'], name: 'Midnight' },
   { id: 'concrete', kind: 'picture', themes: ['light'], name: 'Concrete', picture: CONCRETE, cover: true },
 ];
 
