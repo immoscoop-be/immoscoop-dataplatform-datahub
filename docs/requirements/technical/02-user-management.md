@@ -44,7 +44,7 @@ Whoever changes a Group is in the Group that manages it, or has `groups.all.mana
 
 **Status:** Specified · **Realises:** [FR-UM-19](../functional/02-user-management.md#fr-um-19)
 
-At sign-in, at every renewal and at the exchange of an Excel key, identity puts in the claim `groups` of the Access Token the identifiers of the Groups whose members hold the address of the User, read from its own database. It no longer reads groups from the Cloud Identity Groups API. The services keep checking ownership against the claim, as before, and identity keeps the list on the User for the people catalogue asks for ([TR-LN-02](07-log-and-notifications.md#tr-ln-02)), updated at once when the members of a Group change. The web app renews its Access Token after a change to the Groups of its User.
+At sign-in, at every renewal and at the exchange of an Excel key, identity puts in the claim `groups` of the Access Token the identifiers of the Groups whose members hold the address of the User, read from its own database. It no longer reads groups from the Cloud Identity Groups API. The services keep checking ownership against the claim, as before; identity keeps the list on the User as it went into their last Access Token, and answers catalogue who is in a Group from the members themselves ([TR-UM-07](#tr-um-07)). The web app renews its Access Token after a change to the Groups of its User.
 
 <a id="tr-um-04"></a>
 ### TR-UM-04 · The Owner Units move from Google once
