@@ -1466,6 +1466,7 @@ button.lin-node:hover { box-shadow: 0 0 0 1.5px var(--tint-active); }
 .us-table tbody tr:hover { background: var(--tint-hover); }
 .us-table tbody tr.on { background: var(--surface-sub); }
 .us-table tr.us-gone td { color: var(--text-muted); }
+.me-row.us-gone, .me-row.us-gone .item-title { color: var(--text-muted); }
 .us-uses { display: inline-flex; gap: 8px; font-size: 15px; color: var(--text-secondary); }
 .us-uses .off { color: var(--tint-active); }
 .us-head { display: flex; align-items: center; gap: 12px; }

@@ -2,8 +2,8 @@
 <!--
   Screen: Users, a tool of Admin, the section of the Data Team. Designed on 2026-11-06, with Max.
   Every User of this environment of Data Hub: everyone who signed in once. Each has one Permission group, which says
-  what they may do; a new User gets the default Permission group at their first sign-in. Their Owner Units still come
-  from Google Workspace and say which Collections they own; they are shown here, but not changed here (DEC-UX-187).
+  what they may do; a new User gets the default Permission group at their first sign-in. Their groups are kept in Data
+  Hub and say which Collections they own; they are shown here and changed on Groups (DEC-UX-187, DEC-UX-200).
   A row opens the User in a sheet over the page: who they are, how they use Data Hub, their Permission group to change,
   what that changes for them before it is saved, and the history of their Permission group. A change takes effect
   within 15 minutes, in the web app, in Claude and in Excel (DEC-UX-189). Nobody changes their own Permission group
@@ -73,7 +73,7 @@
 </div>
 <div class="table-card">
  <table class="us-table">
- <thead><tr><th>User</th><th>Permission group</th><th>Owner Units</th><th>Uses</th><th>Last signed in</th></tr></thead>
+ <thead><tr><th>User</th><th>Permission group</th><th>Groups</th><th>Uses</th><th>Last signed in</th></tr></thead>
  <tbody>
   <tr data-go="us:self"><td><span class="name-cell"><span class="avatar small" aria-hidden="true">MP</span><span>Max Passenier <span class="pill">you</span><span class="meta" style="display:block">max@thenextimmoscoop.be</span></span></span></td><td><span class="wh-tag"><i class="ph ph-shield-check"></i>Admin</span></td><td class="muted">Data Team</td><td><span class="us-uses"><i class="ph ph-browser" title="The web app"></i><i class="ph ph-plugs-connected" title="Claude"></i><i class="ph ph-key off" title="No Excel key"></i></span></td><td class="nowrap">today, 09:02</td></tr>
   <tr data-go="us:open" data-pane-group="us" data-pane="list open changed self"><td><span class="name-cell"><span class="avatar small" aria-hidden="true">AC</span><span>An Claes<span class="meta" style="display:block">an.claes@immoscoop.be</span></span></span></td><td><span class="wh-tag"><i class="ph ph-shield-check"></i>Business</span></td><td class="muted">Sales, Marketing</td><td><span class="us-uses"><i class="ph ph-browser" title="The web app"></i><i class="ph ph-plugs-connected" title="Claude"></i><i class="ph ph-key" title="1 Excel key"></i></span></td><td class="nowrap">today, 08:12</td></tr>
@@ -86,7 +86,7 @@
   <tr class="us-gone"><td><span class="name-cell"><span class="avatar small" aria-hidden="true">BS</span><span>Bram De Smet <span class="pill">cannot sign in</span><span class="meta" style="display:block">bram.desmet@immoscoop.be</span></span></span></td><td><span class="wh-tag"><i class="ph ph-shield-check"></i>Analysts</span></td><td>none</td><td><span class="us-uses"><i class="ph ph-browser off"></i><i class="ph ph-plugs-connected off"></i><i class="ph ph-key off"></i></span></td><td class="nowrap">14 Sep 2026</td></tr>
  </tbody>
  </table>
- <p class="meta" style="display:block;padding:8px 10px 2px;line-height:1.5">Owner Units come from Google Workspace and say which Collections a User owns; the Permission group says what they may do. A User who can no longer sign in with Google stays listed, greyed, with their Permission group.</p>
+ <p class="meta" style="display:block;padding:8px 10px 2px;line-height:1.5">Groups are kept in Data Hub, on <a class="text-link" href="groups.html?gr=all">Groups</a>, and say which Collections a User owns; the Permission group says what they may do. A User who can no longer sign in with Google stays listed, greyed, with their Permission group.</p>
 </div>
 <div style="height:60px"></div>
 </main>
@@ -106,7 +106,7 @@
    <dt>In Data Hub since</dt><dd>2 Sep 2026, their first sign-in</dd>
    <dt>Last signed in</dt><dd>today, 08:12</dd>
    <dt>Uses</dt><dd>the web app, Claude, and Excel with 1 key</dd>
-   <dt>Owner Units</dt><dd>Sales, Marketing <span class="meta">· from Google Workspace</span></dd>
+   <dt>Groups</dt><dd><a class="text-link" href="groups.html?gr=all">Sales</a>, <a class="text-link" href="groups.html?gr=all">Marketing</a> <span class="meta">· changed on Groups</span></dd>
   </dl>
   <div class="label" style="margin-top:20px">Permission group</div>
   <div class="us-groups" role="radiogroup" aria-label="Permission group">
@@ -121,7 +121,7 @@
     <li class="gain"><i class="ph-fill ph-plus-circle"></i><span><b>Makes and runs queries,</b> freely up to 100 MB, and up to 1 GB once they approve it</span></li>
     <li class="gain"><i class="ph-fill ph-plus-circle"></i><span><b>Claude reads the rows</b> of their results and Previews <del>the shape only</del></span></li>
     <li class="gain"><i class="ph-fill ph-plus-circle"></i><span><b>Excel keys:</b> up to 5 <del>3</del></span></li>
-    <li><i class="ph-fill ph-equals"></i><span>All else stays the same. Their Owner Units, and so the Collections they own, do not change.</span></li>
+    <li><i class="ph-fill ph-equals"></i><span>All else stays the same. Their groups, and so the Collections they own, do not change.</span></li>
    </ul>
   </div>
   <div class="label" style="margin-top:20px">History of their Permission group</div>
@@ -153,7 +153,7 @@
    <dt>In Data Hub since</dt><dd>17 Oct 2026, their first sign-in</dd>
    <dt>Last signed in</dt><dd>today, 09:02</dd>
    <dt>Uses</dt><dd>the web app and Claude</dd>
-   <dt>Owner Units</dt><dd>Data Team <span class="meta">· from Google Workspace</span></dd>
+   <dt>Groups</dt><dd><a class="text-link" href="groups.html?gr=all">Data Team</a> <span class="meta">· changed on Groups</span></dd>
   </dl>
   <div class="label" style="margin-top:20px">Permission group</div>
   <div class="notice" style="margin:6px 0 10px"><i class="ph-fill ph-lock-simple"></i><p>You cannot change your own Permission group, so that nobody takes Admin away from themselves by mistake. Another User of the Data Team can.</p></div>

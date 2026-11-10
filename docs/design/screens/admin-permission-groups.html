@@ -10,7 +10,8 @@
   Admin can do everything and keeps it: its Permissions cannot be changed, it cannot be deleted, and it keeps at
   least one User (DEC-UX-188). Deleting another group asks where its Users go; when it is the default, the group they go
   to becomes the default.
-  The Permissions shown are a part of those of FR-PL-05, to show each kind of value; the groups are examples.
+  The Permissions shown are a part of those of FR-PL-05, to show each kind of value; the groups are examples. Groups holds
+  the two Permissions of the groups kept in Data Hub: Make groups and Manage every group (DEC-UX-201).
   The switch at the bottom shows Business, Business with two changes, deleting Business, Admin, and a new group:
   ?pg=business, ?pg=changed, ?pg=delete, ?pg=datateam, ?pg=new. ?kinds=on shows the kind of each value.
   Requirements: FR-PL-05, FR-PL-08, FR-PL-09, FR-PL-10, FR-PL-11
@@ -133,6 +134,18 @@
   </div>
 
   <div class="pg-section">
+   <div class="pg-section-head"><i class="ph-fill ph-users-three"></i>Groups</div>
+   <div class="pg-perm">
+    <div><div class="pg-name">Make groups <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>yes or no</span></div><p class="pg-desc">Make a group on Groups, and choose which of the groups they are in manages it. A group they manage, they change anyway: its members, its name and who manages it.</p></div>
+    <div class="pg-yn"><button class="seg on">Yes</button><button class="seg">No</button></div>
+   </div>
+   <div class="pg-perm">
+    <div><div class="pg-name">Manage every group <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>yes or no</span></div><p class="pg-desc">Change every group, also those they are not in and do not manage: the work of a Data Admin.</p></div>
+    <div class="pg-yn"><button class="seg">Yes</button><button class="seg on">No</button></div>
+   </div>
+  </div>
+
+  <div class="pg-section">
    <div class="pg-section-head"><i class="ph-fill ph-terminal-window"></i>Query</div>
    <div class="pg-perm">
     <div><div class="pg-name">Preview a Resource <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>yes or no</span></div><p class="pg-desc">See the first rows of a Resource, on its page and in Claude.</p></div>
@@ -230,7 +243,7 @@
   <dl class="wh-facts">
    <dt>Users</dt><dd>4 · <a class="text-link" href="admin-users.html?usfilter=datateam">see them on Users</a></dd>
    <dt>Default for new Users</dt><dd>No</dd>
-   <dt>Since</dt><dd>6 Nov 2026, with the Users of the Role Group datahub-datateam@</dd>
+   <dt>Since</dt><dd>6 Nov 2026, with the Users of the Role Group datahub-datateam@, the last that came from Google</dd>
   </dl>
   <div class="notice"><i class="ph-fill ph-lock-simple"></i><p>Admin can do everything, and keeps it: its Permissions cannot be changed, it cannot be deleted, and it keeps at least one User, so that someone can always manage Data Hub. Duplicate it to start a group that does almost everything.</p></div>
   <div class="pg-section">
@@ -239,6 +252,11 @@
    <div class="pg-perm"><div><div class="pg-name">Manage Collections</div></div><span class="pg-lock"><i class="ph-fill ph-lock-simple"></i>Yes</span></div>
    <div class="pg-perm"><div><div class="pg-name">Manage Resources</div></div><span class="pg-lock"><i class="ph-fill ph-lock-simple"></i>Yes</span></div>
    <div class="pg-perm"><div><div class="pg-name">Describe and publish Resources</div><p class="pg-desc">Every Resource</p></div><span class="pg-lock"><i class="ph-fill ph-lock-simple"></i>Yes</span></div>
+  </div>
+  <div class="pg-section">
+   <div class="pg-section-head"><i class="ph-fill ph-users-three"></i>Groups</div>
+   <div class="pg-perm"><div><div class="pg-name">Make groups</div></div><span class="pg-lock"><i class="ph-fill ph-lock-simple"></i>Yes</span></div>
+   <div class="pg-perm"><div><div class="pg-name">Manage every group</div></div><span class="pg-lock"><i class="ph-fill ph-lock-simple"></i>Yes</span></div>
   </div>
   <div class="pg-section">
    <div class="pg-section-head"><i class="ph-fill ph-terminal-window"></i>Query</div>
