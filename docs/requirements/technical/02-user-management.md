@@ -3,7 +3,7 @@
 | | |
 | --- | --- |
 | Realises | [User management](../functional/02-user-management.md) |
-| Status | Specified |
+| Status | Implemented |
 | Source of truth | This file |
 
 Sign-in, the Access Token and the check of the account at every renewal are platform requirements: [TR-PF-24](00-platform.md#tr-pf-24) to [TR-PF-26](00-platform.md#tr-pf-26). This file holds how the Groups kept in Data Hub are built ([DEC-UM-10](../functional/02-user-management.md#dec-um-10)).
@@ -13,7 +13,7 @@ Sign-in, the Access Token and the check of the account at every renewal are plat
 <a id="tr-um-01"></a>
 ### TR-UM-01 · Groups, their members and their history in the database of identity
 
-**Status:** Specified · **Realises:** [FR-UM-12](../functional/02-user-management.md#fr-um-12), [FR-UM-15](../functional/02-user-management.md#fr-um-15), [FR-UM-17](../functional/02-user-management.md#fr-um-17)
+**Status:** Implemented · **Realises:** [FR-UM-12](../functional/02-user-management.md#fr-um-12), [FR-UM-15](../functional/02-user-management.md#fr-um-15), [FR-UM-17](../functional/02-user-management.md#fr-um-17)
 
 identity keeps three tables, in migration `0008-groups`:
 
@@ -26,7 +26,7 @@ A User also gets the column `active`, true from a sign-in and false once the dir
 <a id="tr-um-02"></a>
 ### TR-UM-02 · The routes of Groups
 
-**Status:** Specified · **Realises:** [FR-UM-13](../functional/02-user-management.md#fr-um-13), [FR-UM-14](../functional/02-user-management.md#fr-um-14), [FR-UM-15](../functional/02-user-management.md#fr-um-15), [FR-UM-16](../functional/02-user-management.md#fr-um-16), [FR-UM-18](../functional/02-user-management.md#fr-um-18)
+**Status:** Implemented · **Realises:** [FR-UM-13](../functional/02-user-management.md#fr-um-13), [FR-UM-14](../functional/02-user-management.md#fr-um-14), [FR-UM-15](../functional/02-user-management.md#fr-um-15), [FR-UM-16](../functional/02-user-management.md#fr-um-16), [FR-UM-18](../functional/02-user-management.md#fr-um-18)
 
 identity serves the Groups behind the Access Token:
 
@@ -42,35 +42,35 @@ Whoever changes a Group is in the Group that manages it, or has `groups.all.mana
 <a id="tr-um-03"></a>
 ### TR-UM-03 · The claim `groups` holds the Groups of Data Hub
 
-**Status:** Specified · **Realises:** [FR-UM-19](../functional/02-user-management.md#fr-um-19)
+**Status:** Implemented · **Realises:** [FR-UM-19](../functional/02-user-management.md#fr-um-19)
 
 At sign-in, at every renewal and at the exchange of an Excel key, identity puts in the claim `groups` of the Access Token the identifiers of the Groups whose members hold the address of the User, read from its own database. It no longer reads groups from the Cloud Identity Groups API. The services keep checking ownership against the claim, as before; identity keeps the list on the User as it went into their last Access Token, and answers catalogue who is in a Group from the members themselves ([TR-UM-07](#tr-um-07)). The web app renews its Access Token after a change to the Groups of its User.
 
 <a id="tr-um-04"></a>
 ### TR-UM-04 · The Owner Units move from Google once
 
-**Status:** Specified · **Realises:** [FR-UM-20](../functional/02-user-management.md#fr-um-20)
+**Status:** Implemented · **Realises:** [FR-UM-20](../functional/02-user-management.md#fr-um-20)
 
 identity keeps, on every User, the Google groups it last read for them (`workspace_groups`, copied in migration `0008-groups`). At its start, catalogue sends identity the Owner Units of its Collections, at `POST /internal/groups/move` with its Google ID token for identity's address. For each that is not a Group yet, identity makes one with the Google ID as identifier, its name, managing itself, and as members the Users whose `workspace_groups` hold it, noted as `moved` in its history. It changes nothing for a Group that already exists, so that the call can repeat at every start.
 
 <a id="tr-um-05"></a>
 ### TR-UM-05 · What a Group owns, from catalogue
 
-**Status:** Specified · **Realises:** [FR-UM-16](../functional/02-user-management.md#fr-um-16), [FR-UM-18](../functional/02-user-management.md#fr-um-18)
+**Status:** Implemented · **Realises:** [FR-UM-16](../functional/02-user-management.md#fr-um-16), [FR-UM-18](../functional/02-user-management.md#fr-um-18)
 
 catalogue answers identity, at `GET /internal/owner-units/:id` with identity's Google ID token for catalogue's address, how many Collections a Group is the Owner Unit of, and their names, before identity deletes it. For the page of a Group, catalogue serves `GET /owner-units/:id/collections` behind the Access Token: the Collections of that Owner Unit the User may see.
 
 <a id="tr-um-06"></a>
 ### TR-UM-06 · The way back into Admin is a list in Terraform
 
-**Status:** Specified · **Realises:** [EC-PL-03](../functional/12-permissions-and-library-cards.md#ec-pl-03), [FR-PL-08](../functional/12-permissions-and-library-cards.md#fr-pl-08)
+**Status:** Implemented · **Realises:** [EC-PL-03](../functional/12-permissions-and-library-cards.md#ec-pl-03), [FR-PL-08](../functional/12-permissions-and-library-cards.md#fr-pl-08)
 
 The Terraform variable `break_glass_admins`, per environment, lists the addresses that get Admin when no User of Admin can still sign in. identity reads it from `DATAHUB_BREAK_GLASS_ADMINS`, a list separated by commas. It replaces the membership of `datahub-datateam@`.
 
 <a id="tr-um-07"></a>
 ### TR-UM-07 · Notifications to an Owner Unit go to each member
 
-**Status:** Specified · **Realises:** [FR-UM-21](../functional/02-user-management.md#fr-um-21)
+**Status:** Implemented · **Realises:** [FR-UM-21](../functional/02-user-management.md#fr-um-21)
 
 catalogue asks identity at `POST /internal/people` for the members of the Owner Units it notifies, also who has not signed in yet, who come with their address only. Each member gets an e-mail of their own, in their language, Dutch for who has not signed in, and a Slack direct message once Data Hub knows them; who wrote the Message gets neither. The e-mail to the Data Team still goes to the address of `datahub-datateam@`.
 

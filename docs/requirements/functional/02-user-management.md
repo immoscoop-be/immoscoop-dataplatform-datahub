@@ -6,7 +6,7 @@
 | Type | Working document |
 | Tags | context, decision, governance |
 | Area | Tooling, Technical |
-| Status | Specified; groups kept in Data Hub under way ([DEC-UM-10](#dec-um-10)) |
+| Status | Implemented; groups kept in Data Hub since 2026-11-10 ([DEC-UM-10](#dec-um-10)) |
 | Source of truth | This file |
 | Migrated from | [ptditt - Tooling - Data Hub - Gebruikersbeheer](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1371078690) (Confluence, Dutch), last modified 2026-10-15, migrated 2026-10-17 |
 
@@ -162,70 +162,70 @@ Every group of the own Workspace domain that the User is in, nested groups inclu
 <a id="fr-um-12"></a>
 ### FR-UM-12 · A Group is a set of Users kept in Data Hub
 
-**Status:** Specified · [design](../../design/principles.md#groups) · **Screens:** [groups](../../design/screens/groups.html), [collection-edit](../../design/screens/collection-edit.html)
+**Status:** Implemented · [design](../../design/principles.md#groups) · **Screens:** [groups](../../design/screens/groups.html), [collection-edit](../../design/screens/collection-edit.html)
 
 A Group has a name, a sentence on who is in it, and the Group that manages it: another Group, or itself. It holds Users only, never other Groups, so that who is in it stays plain to see ([OP-UX-71](../../design/principles.md#op-ux-71)). Data Hub knows it by an identifier of its own, so that a renamed Group keeps its Collections and its history; it has no address. A Group is who you work with; what you may do comes from your Permission group ([OP-UX-72](../../design/principles.md#op-ux-72)).
 
 <a id="fr-um-13"></a>
 ### FR-UM-13 · Making a Group
 
-**Status:** Specified · [design](../../design/principles.md#groups) · **Screens:** [groups](../../design/screens/groups.html)
+**Status:** Implemented · [design](../../design/principles.md#groups) · **Screens:** [groups](../../design/screens/groups.html)
 
 A User whose Permission group has Make groups (`groups.manage`) makes a Group with a name, a sentence and the Group that manages it: one of the Groups they are in, or the new Group itself, so that a User in no Group can still make their first ([DEC-UX-201](../../design/principles.md#dec-ux-201)). They are its first member, and add colleagues once it is made.
 
 <a id="fr-um-14"></a>
 ### FR-UM-14 · Who changes a Group
 
-**Status:** Specified · [design](../../design/principles.md#groups) · **Screens:** [groups](../../design/screens/groups.html)
+**Status:** Implemented · [design](../../design/principles.md#groups) · **Screens:** [groups](../../design/screens/groups.html)
 
 The members of the Group that manages a Group add and take out its members, rename it, change its sentence, choose which Group manages it, and delete it. The choice lists the Groups the User is in, and the Group itself; choosing a Group they are not in tells them they will no longer manage it. A User whose Permission group has Manage every group (`groups.all.manage`) changes every Group, also one they are not in, and chooses any Group to manage it ([DEC-UX-201](../../design/principles.md#dec-ux-201)).
 
 <a id="fr-um-15"></a>
 ### FR-UM-15 · Adding a colleague, also before they signed in
 
-**Status:** Specified · [design](../../design/principles.md#groups) · **Screens:** [groups](../../design/screens/groups.html)
+**Status:** Implemented · [design](../../design/principles.md#groups) · **Screens:** [groups](../../design/screens/groups.html)
 
 A colleague is added by name, suggested while typing, or by an address of an own Workspace domain ([DEC-UM-09](#dec-um-09)), and is in the Group at once. A colleague who has not signed in yet is listed with "has not signed in yet", and is in the Group from their first sign-in ([OP-UX-70](../../design/principles.md#op-ux-70)). A colleague who left stays listed, greyed, with "cannot sign in", until someone takes them out.
 
 <a id="fr-um-16"></a>
 ### FR-UM-16 · Deleting a Group
 
-**Status:** Specified · [design](../../design/principles.md#groups) · **Screens:** [groups](../../design/screens/groups.html)
+**Status:** Implemented · [design](../../design/principles.md#groups) · **Screens:** [groups](../../design/screens/groups.html)
 
 A Group that is the Owner Unit of a Collection, or manages another Group, cannot be deleted until those move to another Group: the page says which. Otherwise it is deleted once confirmed; its members are taken out, and what it did stays in the history.
 
 <a id="fr-um-17"></a>
 ### FR-UM-17 · The history of a Group
 
-**Status:** Specified · [design](../../design/principles.md#groups) · **Screens:** [groups](../../design/screens/groups.html)
+**Status:** Implemented · [design](../../design/principles.md#groups) · **Screens:** [groups](../../design/screens/groups.html)
 
 Every change to a Group is kept with who made it and when: made, renamed, its sentence changed, another Group chosen to manage it, a member added or taken out, moved from Google ([FR-UM-20](#fr-um-20)), deleted. The opened Group shows it, newest first.
 
 <a id="fr-um-18"></a>
 ### FR-UM-18 · The page Groups
 
-**Status:** Specified · [design](../../design/principles.md#groups) · **Screens:** [groups](../../design/screens/groups.html), [my-page](../../design/screens/my-page.html)
+**Status:** Implemented · [design](../../design/principles.md#groups) · **Screens:** [groups](../../design/screens/groups.html), [my-page](../../design/screens/my-page.html)
 
 Every User reaches Groups from My page, and sees the Groups they are in or manage; with Manage every group, also every other Group. An opened Group shows its members, the Group that manages it, the Collections it is the Owner Unit of as far as the User may see them, the Groups it manages, and its history. Whoever does not manage it sees it read-only, with the Group that manages it and two of its members to ask. Any signed-in User opens a Group they are sent to, such as the Owner Unit of a Collection.
 
 <a id="fr-um-19"></a>
 ### FR-UM-19 · The Groups of a User travel in their Access Token
 
-**Status:** Specified
+**Status:** Implemented
 
 At sign-in and at every renewal, Data Hub reads the Groups the User is in from its own database, and puts them in their Access Token, as it did with the groups of Google. A change of members thus reaches every service within the lifetime of one Access Token; the web app renews its own at once after a change to the Groups of its User.
 
 <a id="fr-um-20"></a>
 ### FR-UM-20 · The Owner Units of Google move once
 
-**Status:** Specified · **Source:** [OP-UX-69](../../design/principles.md#op-ux-69)
+**Status:** Implemented · **Source:** [OP-UX-69](../../design/principles.md#op-ux-69)
 
 Each Google group that is the Owner Unit of a Collection becomes a Group of Data Hub once, with its name, keeping its Google ID as identifier so that its Collections stay with it, with the Users Data Hub last knew to be in it as members, and managing itself. From then on, Data Hub reads no groups from Google, and identity no longer needs the admin role Groups Reader in Workspace.
 
 <a id="fr-um-21"></a>
 ### FR-UM-21 · What notifies an Owner Unit reaches each of its members
 
-**Status:** Specified
+**Status:** Implemented
 
 A Group has no address. A Message that notifies an Owner Unit reaches each of its members who can still sign in, or has not signed in yet: by e-mail in their own language, Dutch until they choose, and in Slack ([FR-LN-01](07-log-and-notifications.md#fr-ln-01)).
 
@@ -271,7 +271,7 @@ Data Hub learns the Groups of a User only when they sign in ([DEC-UM-08](#dec-um
 <a id="ec-um-05"></a>
 ### EC-UM-05 · Nobody who manages a Group can still sign in
 
-**Status:** Specified · **Source:** proposed on 2026-11-10, with [DEC-UM-10](#dec-um-10)
+**Status:** Implemented · **Source:** proposed on 2026-11-10, with [DEC-UM-10](#dec-um-10)
 
 When every member of the Group that manages a Group has left, a User with Manage every group changes it, and chooses which Group manages it from then on ([FR-UM-14](#fr-um-14)). The Level of the Resources of its Collections does not drop.
 ## Out of scope
