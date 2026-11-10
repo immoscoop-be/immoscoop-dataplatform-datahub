@@ -46,11 +46,9 @@ describe.skipIf(!url)('Excel keys (FR-PL-01 to FR-PL-03, TR-PF-07)', () => {
     await store.saveUser({ sub: 'dirk', email: 'dirk@immoscoop.be', name: 'Dirk Vos' });
     issuer = await createTestIssuer();
     const tokens = createTokenIssuer({ keys: createLocalKeyService(['v1']), signingKey: 'v1', publicKeys: ['v1'], issuer: 'https://identity.test', audience: 'datahub' });
-    const workspace = {
-      isActive: async (googleId: string) => active.has(googleId),
-      groups: async (email: string) => (email.startsWith('an') ? [{ id: 'g-credit', email: 'credit@immoscoop.be', name: 'Credit' }] : []),
-      domainGroups: async () => [],
-    };
+    const workspace = { isActive: async (googleId: string) => active.has(googleId) };
+    await sql`insert into groups (id, name, managed_by) values ('g-credit', 'Credit', 'g-credit')`.execute(database.db);
+    await sql`insert into group_members (group_id, email) values ('g-credit', 'an@immoscoop.be')`.execute(database.db);
     app = await buildApp({
       verifier: issuer.verifier,
       tokens,

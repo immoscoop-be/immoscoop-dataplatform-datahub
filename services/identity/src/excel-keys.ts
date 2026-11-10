@@ -4,7 +4,6 @@ import { can, canWith, permissionValue } from '@datahub/contracts';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { Kysely, Selectable } from 'kysely';
 import type { IdentityDatabase } from './database.js';
-import { applyNamingConvention } from './naming-convention.js';
 import type { PermissionGroups } from './permission-groups.js';
 import { hash } from './store.js';
 import type { TokenIssuer } from './tokens.js';
@@ -172,7 +171,8 @@ export interface ExcelKeyOptions {
   keys: ExcelKeys;
   workspace: Workspace;
   tokens: TokenIssuer;
-  domains: string[];
+  /** The Groups of Data Hub a User is in, for the claim `groups` (TR-UM-03). */
+  memberships: { groupsOf(email: string): Promise<string[]> };
   /** query, which exchanges a key for an Access Token (TR-PF-07). */
   exchangers: ServiceCallerVerifier;
   /** Cloud Scheduler, which asks once a day which keys expire within a month. */
@@ -186,11 +186,11 @@ export interface ExcelKeyOptions {
 /**
  * The Excel keys (FR-PL-01 to FR-PL-03, TR-PF-07): a User makes, lists and revokes their own on My page;
  * the Data Team lists and revokes anyone's in Admin, and its User is told. query exchanges a key Excel sends
- * for an Access Token of its User, read again from Workspace as at a renewal, so that a key stops at once
+ * for an Access Token of its User, its account checked again in Workspace as at a renewal, so that a key stops at once
  * when its User can no longer sign in.
  */
 export async function excelKeyRoutes(app: FastifyInstance, options: ExcelKeyOptions): Promise<void> {
-  const { keys, workspace, tokens, domains, exchangers, schedulers, notices, groups } = options;
+  const { keys, workspace, tokens, memberships, exchangers, schedulers, notices, groups } = options;
   // Every Excel key in Admin, with the tool Excel keys (admin.open, FR-PL-03).
   const admin = (request: FastifyRequest) => (request.user ? canWith(request.user.permissions, 'admin.open', 'tools', 'excelKeys') : false);
 
@@ -269,7 +269,7 @@ export async function excelKeyRoutes(app: FastifyInstance, options: ExcelKeyOpti
       if (!(await workspace.isActive(found.user.googleId))) {
         return reply.code(401).send({ error: 'invalid_key', message: 'The User of this Excel key can no longer sign in.' });
       }
-      const { groups: own } = applyNamingConvention(await workspace.groups(found.user.email), domains);
+      const own = await memberships.groupsOf(found.user.email);
       const granted = await groups.claimsOf(found.user.googleId);
       // Without excel.keys, Excel gets nothing with the keys of its User until they have it again (EC-PL-04).
       if (!can(granted.permissions, 'excel.keys')) {

@@ -30,7 +30,7 @@ describe.skipIf(!url)('identity migrations', () => {
     const columns = await sql<{ columnName: string }>`
       select column_name from information_schema.columns
       where table_schema = ${schema} and table_name = 'users' order by ordinal_position`.execute(admin.db);
-    expect(columns.rows.map((row) => row.columnName)).toEqual(['google_id', 'email', 'name', 'created_at', 'last_login_at', 'groups', 'roles', 'permission_group_id']);
+    expect(columns.rows.map((row) => row.columnName)).toEqual(['google_id', 'email', 'name', 'created_at', 'last_login_at', 'groups', 'roles', 'permission_group_id', 'active', 'workspace_groups']);
   });
 });
 
@@ -69,7 +69,7 @@ describe.skipIf(!url)('identity migration 0007-permission-groups', () => {
     await sql`insert into ${sql.id(schema, 'users')} (google_id, email, name, roles) values
       ('dirk', 'dirk@immoscoop.be', 'Dirk', '{datateam}'), ('an', 'an@immoscoop.be', 'An', '{}')`.execute(admin.db);
 
-    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    const results = await migrate({ db: admin.db, schema, migrations: before('0008'), serviceUser: 'postgres' });
     expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0007-permission-groups', 'Success']]);
     const groups = await sql<{ name: string; isDefault: boolean; locked: boolean; starting: string }>`
       select name, is_default, locked, starting from ${sql.id(schema, 'permission_groups')} order by name`.execute(admin.db);
@@ -87,5 +87,41 @@ describe.skipIf(!url)('identity migration 0007-permission-groups', () => {
     ]);
     const log = await sql<{ kind: string }>`select kind from ${sql.id(schema, 'permission_group_log')}`.execute(admin.db);
     expect(log.rows.map((row) => row.kind)).toEqual(['switch', 'switch']);
+  });
+});
+
+describe.skipIf(!url)('identity migration 0008-groups', () => {
+  const schema = `identity_test_${randomBytes(4).toString('hex')}`;
+  const admin = createDatabase<unknown>({ connectionString: url }, schema);
+
+  afterAll(async () => {
+    await sql`drop schema if exists ${sql.id(schema)} cascade`.execute(admin.db);
+    await admin.close();
+  });
+
+  it('keeps the Google groups last read, empties the claim, marks who left, and gives the Permissions of Groups (TR-UM-01, TR-UM-04)', async () => {
+    await migrate({ db: admin.db, schema, migrations: before('0008'), serviceUser: 'postgres' });
+    await sql`insert into ${sql.id(schema, 'users')} (google_id, email, name, groups, permission_group_id) values
+      ('an', 'An@immoscoop.be', 'An', '{g-sales}', (select id from ${sql.id(schema, 'permission_groups')} where starting = 'businessAnalyst')),
+      ('jan', 'jan@immoscoop.be', 'Jan', '{}', (select id from ${sql.id(schema, 'permission_groups')} where starting = 'lensUser'))`.execute(admin.db);
+    await sql`insert into ${sql.id(schema, 'sessions')} (google_id, client_id, expires_at, ended_at, end_reason)
+      values ('jan', 'web', now(), now() + interval '1 minute', 'account-inactive')`.execute(admin.db);
+
+    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0008-groups', 'Success']]);
+    const users = await sql<{ googleId: string; groups: string[]; workspaceGroups: string[]; active: boolean }>`
+      select google_id, groups, workspace_groups, active from ${sql.id(schema, 'users')} order by google_id`.execute(admin.db);
+    expect(users.rows).toEqual([
+      { googleId: 'an', groups: [], workspaceGroups: ['g-sales'], active: true },
+      { googleId: 'jan', groups: [], workspaceGroups: [], active: false },
+    ]);
+    const held = await sql<{ starting: string; manage: string; all: string }>`
+      select starting, permissions -> 'groups.manage' ->> 'on' as manage, permissions -> 'groups.all.manage' ->> 'on' as all
+      from ${sql.id(schema, 'permission_groups')} order by starting`.execute(admin.db);
+    expect(held.rows).toEqual([
+      { starting: 'admin', manage: 'true', all: 'true' },
+      { starting: 'businessAnalyst', manage: 'true', all: 'false' },
+      { starting: 'lensUser', manage: 'false', all: 'false' },
+    ]);
   });
 });
