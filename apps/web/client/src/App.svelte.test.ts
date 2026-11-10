@@ -145,8 +145,14 @@ const SEMGRAPH_DESCRIBED: Record<string, Record<string, unknown>> = {
   },
 };
 
-const DATA = { id: 'g1', email: 'data@thenextimmoscoop.be', name: 'Data' };
-const SALES = { id: 'g2', email: 'sales@thenextimmoscoop.be', name: 'Sales' };
+/** Groups of Data Hub, as the Owner Unit of a Collection: named, without an address (FR-UM-12). */
+const DATA = { id: 'g1', name: 'Data', email: null };
+const SALES = { id: 'g2', name: 'Sales', email: null };
+
+/** A Group as identity lists it: by default one the User is in, managing itself (FR-UM-18). */
+function summaryOf(group: { id: string; name: string }, more: Record<string, unknown> = {}) {
+  return { id: group.id, name: group.name, sentence: '', managedBy: { id: group.id, name: group.name, isMember: true }, memberCount: 1, isMember: true, mayChange: true, ...more };
+}
 
 /** A Collection of the group Data, with one Resource in it that is not published yet. */
 const CREDIT = {
@@ -383,7 +389,7 @@ const MAX_USER = {
   email: 'max@thenextimmoscoop.be',
   name: 'Max Verstraete',
   permissionGroup: { id: 'pg-admin', name: 'Admin' },
-  groups: ['g1'],
+  groups: [{ id: 'g1', name: 'Data' }],
   createdAt: '2026-10-17T08:00:00Z',
   lastLoginAt: new Date(Date.now() - HOUR).toISOString(),
   uses: { web: true, claude: true, excel: false },
@@ -394,7 +400,10 @@ const AN_USER = {
   email: 'an.claes@immoscoop.be',
   name: 'An Claes',
   permissionGroup: { id: 'pg-lensUser', name: 'Lens user' },
-  groups: ['g2', 'g9'],
+  groups: [
+    { id: 'g2', name: 'Sales' },
+    { id: 'g9', name: 'Marketing' },
+  ],
   createdAt: '2026-09-02T08:00:00Z',
   lastLoginAt: new Date(Date.now() - 2 * HOUR).toISOString(),
   uses: { web: true, claude: true, excel: true },
@@ -439,6 +448,111 @@ function startingGroups() {
   }));
 }
 
+/** A colleague who signed in, as identity knows them. */
+const PEOPLE = [
+  { email: 'an.claes@immoscoop.be', name: 'An Claes' },
+  { email: 'elif.yilmaz@immoscoop.be', name: 'Elif Yilmaz' },
+  { email: 'jonas.peeters@immoscoop.be', name: 'Jonas Peeters' },
+  { email: 'karel.leys@immoscoop.be', name: 'Karel Leys' },
+];
+
+/**
+ * The Groups of Data Hub as identity keeps them, as Max sees them, changed by what the page asks (FR-UM-12 to
+ * FR-UM-18): Max is in Sales management, which manages Broker team; he is only in Marketing, which Marketing leads
+ * manages; with Manage every group he changes every Group.
+ */
+function groupWorld({ every = false } = {}) {
+  const me = ME.email;
+  const at = '2026-11-10T09:00:00Z';
+  const MAX = { id: '1', name: 'Max Verstraete' };
+  const member = (email: string, name: string | null, more: Record<string, unknown> = {}) => ({ email, name, signedIn: name !== null, active: true, addedAt: at, addedBy: MAX, ...more });
+  type Kept = { id: string; name: string; sentence: string; managedBy: string; members: ReturnType<typeof member>[]; log: Record<string, unknown>[] };
+  let kept: Kept[] = [
+    {
+      id: 'g-br',
+      name: 'Broker team',
+      sentence: 'The advisors who look after our brokers',
+      managedBy: 'g-sm',
+      members: [member('bram.desmet@immoscoop.be', 'Bram De Smet', { active: false }), member('elif.yilmaz@immoscoop.be', 'Elif Yilmaz'), member('karel.leys@immoscoop.be', 'Karel Leys')],
+      log: [
+        { at, kind: 'added', by: MAX, detail: { email: 'karel.leys@immoscoop.be' } },
+        { at, kind: 'added', by: MAX, detail: { email: 'elif.yilmaz@immoscoop.be' } },
+        { at, kind: 'made', by: MAX, detail: { name: 'Broker team', managedBy: 'g-sm' } },
+      ],
+    },
+    { id: 'g-mk', name: 'Marketing', sentence: 'Campaigns, the website and its visitors', managedBy: 'g-ml', members: [member('an.claes@immoscoop.be', 'An Claes'), member('jonas.peeters@immoscoop.be', 'Jonas Peeters'), member(me, 'Max Verstraete')], log: [] },
+    { id: 'g-ml', name: 'Marketing leads', sentence: '', managedBy: 'g-ml', members: [member('an.claes@immoscoop.be', 'An Claes'), member('jonas.peeters@immoscoop.be', 'Jonas Peeters')], log: [] },
+    { id: 'g-sm', name: 'Sales management', sentence: 'Who leads sales', managedBy: 'g-sm', members: [member(me, 'Max Verstraete'), member('an.claes@immoscoop.be', 'An Claes')], log: [] },
+  ];
+  const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+  const isIn = (group: Kept) => group.members.some((one) => one.email === me);
+  const summary = (group: Kept) => {
+    const manager = kept.find((one) => one.id === group.managedBy) ?? group;
+    return { id: group.id, name: group.name, sentence: group.sentence, managedBy: { id: manager.id, name: manager.name, isMember: isIn(manager) }, memberCount: group.members.length, isMember: isIn(group), mayChange: every || isIn(manager) };
+  };
+  const detail = (group: Kept) => ({
+    ...summary(group),
+    members: group.members,
+    manages: kept.filter((one) => one.managedBy === group.id && one.id !== group.id).map(({ id, name }) => ({ id, name })),
+    createdAt: at,
+    createdBy: MAX,
+    log: group.log,
+  });
+  const logged = (group: Kept, kind: string, detail: Record<string, unknown>) => group.log.unshift({ at: new Date().toISOString(), kind, by: MAX, detail });
+  return (method: string, path: string, body: Record<string, string> | undefined, owns: (id: string) => { id: string; name: string }[]): Response | undefined => {
+    if (path === '/me/groups') return json({ groups: kept.filter((one) => isIn(one) || summary(one).managedBy.isMember).map(summary) });
+    if (path === '/groups' && method === 'GET') return every ? json({ groups: kept.map(summary) }) : json({ error: 'forbidden', permission: 'groups.all.manage' }, 403);
+    if (path === '/groups' && method === 'POST' && body) {
+      if (kept.some((one) => one.name.toLowerCase() === body.name!.toLowerCase())) return json({ error: 'name_taken' }, 409);
+      const made: Kept = { id: 'g-new', name: body.name!, sentence: body.sentence ?? '', managedBy: body.managedBy === 'itself' ? 'g-new' : body.managedBy!, members: [member(me, 'Max Verstraete')], log: [] };
+      kept = [...kept, made];
+      logged(made, 'made', { name: made.name, managedBy: made.managedBy });
+      logged(made, 'added', { email: me });
+      return json({ group: detail(made) }, 201);
+    }
+    if (path.startsWith('/people?')) {
+      const q = (new URLSearchParams(path.split('?')[1]).get('q') ?? '').toLowerCase();
+      return json({ people: PEOPLE.filter((one) => one.name.toLowerCase().includes(q) || one.email.includes(q)) });
+    }
+    const [, id, members, email] = /^\/groups\/([^/]+)(\/members(?:\/([^/]+))?)?$/.exec(path) ?? [];
+    const group = kept.find((one) => one.id === id);
+    if (!id) return undefined;
+    if (!group) return json({ error: 'not_found' }, 404);
+    if (method !== 'GET' && !summary(group).mayChange) return json({ error: 'forbidden', managedBy: summary(group).managedBy }, 403);
+    if (!members && method === 'GET') return json({ group: detail(group) });
+    if (!members && method === 'PATCH' && body) {
+      if (body.name) [group.name, group.log] = [body.name, [{ at, kind: 'renamed', by: MAX, detail: { from: group.name, to: body.name } }, ...group.log]];
+      if (body.managedBy) {
+        const to = body.managedBy === 'itself' ? group.id : body.managedBy;
+        logged(group, 'managedBy', { from: summary(group).managedBy.name, to: kept.find((one) => one.id === to)?.name, toId: to });
+        group.managedBy = to;
+      }
+      return json({ group: detail(group) });
+    }
+    if (!members && method === 'DELETE') {
+      const manages = detail(group).manages.map((one) => one.name);
+      const collections = owns(group.id).map((one) => one.name);
+      if (manages.length || collections.length) return json({ error: 'still_owns', manages, collections: { count: collections.length, names: collections } }, 409);
+      kept = kept.filter((one) => one !== group);
+      return new Response(null, { status: 204 });
+    }
+    if (members && method === 'PUT' && body) {
+      if (!/@(thenext)?immoscoop\.be$/.test(body.email!)) return json({ error: 'invalid_email' }, 400);
+      if (!group.members.some((one) => one.email === body.email)) {
+        group.members = [...group.members, member(body.email!, PEOPLE.find((one) => one.email === body.email)?.name ?? null, { addedAt: new Date().toISOString() })];
+        logged(group, 'added', { email: body.email });
+      }
+      return json({ group: detail(group) }, 201);
+    }
+    if (members && email && method === 'DELETE') {
+      group.members = group.members.filter((one) => one.email !== decodeURIComponent(email));
+      logged(group, 'removed', { email: decodeURIComponent(email) });
+      return json({ group: detail(group) });
+    }
+    return undefined;
+  };
+}
+
 function serve({
   signedIn = true,
   settings = {} as Record<string, unknown>,
@@ -458,6 +572,8 @@ function serve({
   writable = undefined as string[] | undefined,
   /** The path at which the session ends while the User works: it answers 401, and so does every renewal after it. */
   sessionEndsAt = undefined as string | undefined,
+  /** The Groups of Data Hub, for the page Groups; without it, Data is the one Group of the User. */
+  world = undefined as ReturnType<typeof groupWorld> | undefined,
 } = {}): Saved[] {
   const calls: Saved[] = [];
   // The Users and Permission groups as identity keeps them, changed by what the page asks (TR-PL-07).
@@ -494,6 +610,12 @@ function serve({
     }
     // What the services allowed the Data Team, they allow Admin now (FR-PL-15).
     const dataTeam = as === 'admin';
+    // catalogue, as it tells what an Owner Unit holds that the User sees (FR-UM-18).
+    const ownedBy = (id: string) => [credit, LISTINGS].filter((collection) => collection.ownerUnit.id === id).map(({ id, name, icon, visibility }) => ({ id, name, icon, visibility }));
+    const [, ownerUnit] = /^\/owner-units\/([^/]+)\/collections$/.exec(path) ?? [];
+    if (ownerUnit) return json({ collections: ownedBy(decodeURIComponent(ownerUnit)) });
+    const answered = world?.(method, path, init.body ? (JSON.parse(init.body as string) as Record<string, string>) : undefined, ownedBy);
+    if (answered) return answered;
     if (path === '/collections' && method === 'GET') {
       return json({ collections: [credit, LISTINGS] });
     }
@@ -610,7 +732,7 @@ function serve({
       });
     }
     if (path === '/groups') {
-      return dataTeam ? json({ groups: [DATA, SALES] }) : json({ error: 'forbidden' }, 403);
+      return dataTeam ? json({ groups: [summaryOf(DATA), summaryOf(SALES, { isMember: false, managedBy: { id: 'g2', name: 'Sales', isMember: false } })] }) : json({ error: 'forbidden' }, 403);
     }
     if (path === '/resources?collection=none') {
       return dataTeam ? json({ resources: waiting }) : json({ error: 'forbidden' }, 403);
@@ -1009,7 +1131,7 @@ function serve({
       return new Response(null, { status: 204 });
     }
     if (path === '/me/groups') {
-      return json({ groups: [{ id: 'g1', email: 'data@thenextimmoscoop.be', name: 'Data' }] });
+      return json({ groups: [summaryOf(DATA)] });
     }
     if (path.startsWith('/me/settings/') && (method === 'PUT' || method === 'DELETE')) {
       return new Response(null, { status: 204 });
@@ -1215,7 +1337,12 @@ describe('the web app, signed in', () => {
     await fireEvent.click(await screen.findByRole('link', { name: 'Mijn pagina' }));
     expect(location.pathname).toBe('/me');
     expect(screen.getByRole('heading', { level: 1, name: 'Max Verstraete' })).toBeTruthy();
-    expect(await screen.findByText('data@thenextimmoscoop.be')).toBeTruthy();
+    // The tile Your groups: the Groups the User is in, each the way to it on Groups (DEC-UX-200).
+    const data = await screen.findByRole('link', { name: /^Data/ });
+    expect(data.getAttribute('href')).toBe('/groups/g1');
+    expect(data.textContent).toContain('1 lid · beheert zichzelf, dus jij beheert hem');
+    expect(screen.getByRole('link', { name: 'Groups' }).getAttribute('href')).toBe('/groups');
+    expect(screen.getByRole('link', { name: 'Nieuwe Group' }).getAttribute('href')).toBe('/groups/new');
     expect(screen.queryByRole('complementary', { hidden: true })).toBeNull();
     await fireEvent.click(screen.getByRole('radio', { name: 'English' }));
     expect(screen.getByRole('tab', { name: 'Profile' })).toBeTruthy();
@@ -1684,7 +1811,7 @@ describe('Users, in Admin', () => {
   const rowsOf = () => [...screen.getByRole('table', { name: 'Users' }).querySelectorAll('tbody tr')] as HTMLElement[];
   const row = (name: string) => screen.getByRole('table', { name: 'Users' }).querySelector(`tr[aria-label="${name}"]`) as HTMLElement;
 
-  it('lists every User with their Permission group, Owner Units and use, found by a search and a filter (FR-PL-06)', async () => {
+  it('lists every User with their Permission group, Groups and use, found by a search and a filter (FR-PL-06)', async () => {
     serve({ as: 'admin' });
     open('/admin/users');
     render(App, { config: UAT });
@@ -1694,8 +1821,9 @@ describe('Users, in Admin', () => {
     expect(rowsOf().map((one) => one.getAttribute('aria-label'))).toEqual(['Max Verstraete', 'An Claes', 'Elif Yilmaz', 'Bram De Smet']);
     expect(row('Max Verstraete').textContent).toContain('jij');
     expect(row('Max Verstraete').textContent).toContain('Admin');
-    // The Owner Units, named by the Collections the Admin sees.
-    await vi.waitFor(() => expect(row('An Claes').textContent).toContain('Sales'));
+    // Their Groups, by name, each the way to it on Groups (DEC-UX-200).
+    expect(row('An Claes').textContent).toContain('Sales, Marketing');
+    expect(within(row('An Claes')).getByRole('link', { name: 'Marketing' }).getAttribute('href')).toBe('/groups/g9');
     expect(row('Elif Yilmaz').textContent).toContain('nieuw');
     expect(row('Elif Yilmaz').textContent).toContain('de standaard');
     expect(row('Bram De Smet').classList.contains('gone')).toBe(true);
@@ -1719,7 +1847,8 @@ describe('Users, in Admin', () => {
     await fireEvent.click(row('An Claes'));
     let sheet = within(await screen.findByRole('dialog', { name: 'An Claes' }));
     expect(sheet.getByText('an.claes@immoscoop.be')).toBeTruthy();
-    expect(sheet.getByText(/uit Google Workspace/).closest('dd')?.textContent).toContain('Sales');
+    expect(sheet.getByText(/gewijzigd op Groups/).closest('dd')?.textContent).toContain('Sales, Marketing');
+    expect(sheet.getByRole('link', { name: 'Sales' }).getAttribute('href')).toBe('/groups/g2');
     expect(await sheet.findByText('Van Business analyst naar Lens user, door Ruth Aerts')).toBeTruthy();
     expect(sheet.getByText('Business analyst, de standaard, bij hun eerste aanmelding')).toBeTruthy();
     expect(sheet.getByText('A change takes effect within 15 minutes, in the web app, in Claude and in Excel.'.length ? 'Een wijziging werkt binnen 15 minuten, in de webapp, in Claude en in Excel.' : '')).toBeTruthy();
@@ -1733,7 +1862,7 @@ describe('Users, in Admin', () => {
     expect(gains.some((line) => line.includes('Queries maken en uitvoeren'))).toBe(true);
     expect(gains.find((line) => line.includes('Hoe een resultaat Claude bereikt'))).toContain('In Claude: Claude leest de rijen en werkt ermee');
     expect(document.querySelectorAll('.changes li.loss')).toHaveLength(0);
-    expect(document.querySelector('.changes li.stays')?.textContent).toContain('Hun Owner Units, en dus de Collections die ze bezitten, veranderen niet.');
+    expect(document.querySelector('.changes li.stays')?.textContent).toContain('Hun Groups, en dus de Collections die ze bezitten, veranderen niet.');
 
     await fireEvent.click(sheet.getByRole('button', { name: 'Bewaren' }));
     expect(calls).toContainEqual({ method: 'PUT', path: '/users/2/permission-group', body: { groupId: 'pg-businessAnalyst' } });
@@ -1793,7 +1922,7 @@ describe('Permission groups, in Admin', () => {
     expect(list.getByRole('button', { name: /^Lens user/ }).textContent).toContain('Standaard voor nieuwe Users');
     await fireEvent.click(list.getByRole('button', { name: /^Lens user/ }));
     expect(opened().getByRole('heading', { level: 2, name: 'Lens user' })).toBeTruthy();
-    expect(opened().getAllByRole('region').map((part) => part.getAttribute('aria-label'))).toEqual(['Collections en Resources', 'Query', 'Lenses', 'Berichten', 'Claude, via de MCP', 'Excel', 'Admin']);
+    expect(opened().getAllByRole('region').map((part) => part.getAttribute('aria-label'))).toEqual(['Collections en Resources', 'Groups', 'Query', 'Lenses', 'Berichten', 'Claude, via de MCP', 'Excel', 'Admin']);
     expect(screen.queryByText(/nog niet bewaard/)).toBeNull();
 
     // Yes shows its values; the change is marked and counted.
@@ -2025,7 +2154,11 @@ describe('the web app, with Collections', () => {
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
     await fireEvent.click(await main.findByRole('button', { name: /Alles bewerken/ }));
-    expect(main.getByText('Enkel groepen waar je zelf in zit. De Owner Unit staat in voor de Resources van de Collection.')).toBeTruthy();
+    // Only Groups the User is in, by name, with the way to Groups where they are kept (DEC-UX-200).
+    const groupsLink = main.getByRole('link', { name: 'Groups' });
+    expect(groupsLink.getAttribute('href')).toBe('/groups');
+    expect(groupsLink.parentElement?.textContent).toBe('Enkel Groups waar je zelf in zit, bijgehouden in Data Hub op Groups. De Owner Unit staat in voor de Resources van de Collection.');
+    expect([...(main.getByRole('combobox', { name: /Owner Unit/ }) as HTMLSelectElement).options].map((option) => option.textContent)).toEqual(['Data']);
     // It still holds a Resource, so it cannot be dissolved (FR-CO-10).
     expect((main.getByRole('button', { name: 'Opheffen' }) as HTMLButtonElement).disabled).toBe(true);
     await fireEvent.input(main.getByRole('textbox', { name: /Beschrijving/ }), { target: { value: 'Every credit lead.' } });
@@ -2448,8 +2581,170 @@ describe('the page of a Resource', () => {
   });
 });
 
+describe('Groups, kept in Data Hub (FR-UM-12 to FR-UM-19)', () => {
+  const opened = () => within(screen.getByRole('region', { name: 'De geopende Group' }));
+  /** The Group opened, once it is read. */
+  const ready = () => screen.findByRole('region', { name: 'De geopende Group' });
+  const list = () => within(screen.getByRole('region', { name: 'Groups' }));
+  const fact = (label: string) => [...opened().getAllByRole('definition')].find((dd) => dd.previousElementSibling?.textContent === label)?.textContent?.replace(/\s+/g, ' ').trim();
+
+  it('lists the Groups the User is in or manages, each with a tag, and opens the first, which they manage (FR-UM-18)', async () => {
+    const calls = serve({ world: groupWorld() });
+    open('/groups');
+    render(App, { config: CONFIG });
+    await screen.findByRole('heading', { level: 1, name: 'Groups' });
+    expect(within(screen.getByRole('navigation', { name: 'Waar je bent' })).getByRole('link', { name: 'Mijn pagina' }).getAttribute('href')).toBe('/me');
+    await vi.waitFor(() => expect(list().getAllByRole('link').map((link) => link.querySelector('b')?.textContent)).toEqual(['Broker team', 'Marketing', 'Sales management']));
+    expect(list().getByRole('link', { name: /^Broker team/ }).textContent).toContain('Bezit nog niets · 3 leden');
+    expect(list().getByRole('link', { name: /^Broker team/ }).textContent).toContain('Je beheert hem, via Sales management');
+    expect(list().getByRole('link', { name: /^Marketing/ }).textContent).toContain('Je zit erin');
+    expect(list().getByRole('link', { name: /^Sales management/ }).textContent).toContain('Beheert Broker team · 2 leden');
+    expect(list().getByRole('link', { name: /^Sales management/ }).textContent).toContain('Hij beheert zichzelf');
+    // Every Group is no choice without Manage every group.
+    expect(screen.queryByRole('radiogroup', { name: 'Welke Groups' })).toBeNull();
+
+    await ready();
+    expect(await opened().findByRole('button', { name: 'Broker team' })).toBeTruthy();
+    expect(fact('Beheerd door')).toBe('Sales management · je zit erin, dus jij beheert Broker team');
+    expect(fact('Owner Unit van')).toBe('geen Collection');
+    expect(fact('Beheert')).toBe('geen andere Group');
+    expect(opened().getByText('Bram De Smet').closest('.member')?.classList.contains('gone')).toBe(true);
+    expect(opened().getByText('Elif Yilmaz en Karel Leys toegevoegd, door jou')).toBeTruthy();
+    expect(opened().getByText('Gemaakt door jou, beheerd door Sales management')).toBeTruthy();
+    // The search finds a Group by a colleague in it.
+    await fireEvent.input(screen.getByRole('searchbox', { name: 'Zoek een Group, of een collega in een Group' }), { target: { value: 'elif' } });
+    await vi.waitFor(() => expect(list().getAllByRole('link').map((link) => link.querySelector('b')?.textContent)).toEqual(['Broker team']));
+    expect(calls).toContainEqual({ method: 'GET', path: '/owner-units/g-br/collections' });
+  });
+
+  it('adds a colleague suggested while typing, takes one out, and refuses an address of another domain (FR-UM-15)', async () => {
+    const calls = serve({ world: groupWorld() });
+    open('/groups/g-br');
+    render(App, { config: CONFIG });
+    await ready();
+    const field = await opened().findByRole('textbox', { name: 'Voeg een collega toe, op naam of adres' });
+    await fireEvent.focus(field);
+    await fireEvent.input(field, { target: { value: 'jo' } });
+    await fireEvent.click(await opened().findByRole('button', { name: /Jonas Peeters/ }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/groups/g-br/members', body: { email: 'jonas.peeters@immoscoop.be' } }));
+    expect((await opened().findByText('toegevoegd door jou')).closest('.member')?.textContent).toContain('Jonas Peeters');
+    expect(opened().getByText('Jonas Peeters toegevoegd, door jou')).toBeTruthy();
+
+    await fireEvent.click(opened().getByRole('button', { name: 'Haal Karel Leys uit Broker team' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/groups/g-br/members/karel.leys%40immoscoop.be' }));
+    await vi.waitFor(() => expect(opened().queryByRole('button', { name: 'Haal Karel Leys uit Broker team' })).toBeNull());
+
+    await fireEvent.input(field, { target: { value: 'someone@gmail.com' } });
+    await fireEvent.keyDown(field, { key: 'Enter' });
+    expect((await opened().findByRole('alert')).textContent).toBe('Enkel een adres van de domeinen van Immoscoop kan toegevoegd worden.');
+  });
+
+  it('shows a Group the User is only in read-only, with two members of the Group that manages it to ask (FR-UM-18)', async () => {
+    serve({ world: groupWorld() });
+    open('/groups/g-mk');
+    render(App, { config: CONFIG });
+    await ready();
+    expect(await opened().findByText('Marketing leads beheert deze Group: vraag een van zijn leden, An Claes of Jonas Peeters, om een collega toe te voegen of eruit te halen.')).toBeTruthy();
+    expect(opened().getByRole('heading', { level: 2, name: 'Marketing' })).toBeTruthy();
+    expect(fact('Leden')).toBe('3, jij erbij');
+    expect(fact('Beheerd door')).toBe('Marketing leads · je zit er niet in');
+    expect(opened().getByRole('link', { name: 'Marketing leads' }).getAttribute('href')).toBe('/groups/g-ml');
+    expect(opened().queryByRole('textbox')).toBeNull();
+    expect(opened().queryByRole('button', { name: /Haal/ })).toBeNull();
+    expect(opened().queryByText('Geschiedenis')).toBeNull();
+    expect(opened().queryByRole('button', { name: /verwijderen/ })).toBeNull();
+  });
+
+  it('hands a Group over to itself only after saying the User will no longer manage it (FR-UM-14)', async () => {
+    const calls = serve({ world: groupWorld() });
+    open('/groups/g-br');
+    render(App, { config: CONFIG });
+    await ready();
+    const choice = within(await opened().findByRole('radiogroup', { name: 'Beheerd door' }));
+    expect(choice.getByRole('radio', { name: /Sales management/ }).closest('label')?.textContent).toContain('nu');
+    expect(opened().getByText(/Kies je Broker team zelf, dan beheer je hem niet meer, want je zit er niet in./)).toBeTruthy();
+    await fireEvent.click(choice.getByRole('radio', { name: /Broker team zelf/ }));
+    expect(opened().getByRole('alert').textContent).toContain('Zodra Broker team zichzelf beheert, beheer jij hem niet meer, want je zit er niet in.');
+    expect(calls.some((call) => call.method === 'PATCH')).toBe(false);
+    await fireEvent.click(opened().getByRole('button', { name: 'Draag hem over' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/groups/g-br', body: { managedBy: 'itself' } }));
+    expect(await opened().findByText(/Broker team beheert zichzelf: vraag een van zijn leden, Elif Yilmaz of Karel Leys/)).toBeTruthy();
+    expect(opened().queryByRole('radiogroup', { name: 'Beheerd door' })).toBeNull();
+  });
+
+  it('deletes a Group that owns and manages nothing once confirmed, and says why another cannot be (FR-UM-16)', async () => {
+    const calls = serve({ world: groupWorld() });
+    open('/groups/g-sm');
+    render(App, { config: CONFIG });
+    await ready();
+    expect(await opened().findByText('Sales management beheert Broker team. Kies eerst een andere Group om Broker team te beheren, dan kan hij verwijderd worden.')).toBeTruthy();
+    expect((opened().getByRole('button', { name: 'Sales management verwijderen…' }) as HTMLButtonElement).disabled).toBe(true);
+
+    await fireEvent.click(list().getByRole('link', { name: /^Broker team/ }));
+    await vi.waitFor(() => expect(opened().getByRole('button', { name: 'Broker team' })).toBeTruthy());
+    expect(await opened().findByText('Broker team bezit en beheert niets, dus hij kan verwijderd worden: zijn 3 leden gaan eruit, en zijn geschiedenis blijft.')).toBeTruthy();
+    await fireEvent.click(opened().getByRole('button', { name: 'Broker team verwijderen…' }));
+    expect(opened().getByText('Broker team verwijderen?')).toBeTruthy();
+    await fireEvent.click(opened().getByRole('button', { name: 'Verwijder hem' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/groups/g-br' }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/groups'));
+    await vi.waitFor(() => expect(list().queryByRole('link', { name: /^Broker team/ })).toBeNull());
+  });
+
+  it('makes a Group in a sheet, managed by a Group the User is in, and renews the Access Token (FR-UM-13, FR-UM-19)', async () => {
+    const calls = serve({ world: groupWorld() });
+    open('/groups');
+    render(App, { config: CONFIG });
+    await fireEvent.click(await screen.findByRole('link', { name: 'Nieuwe Group' }));
+    expect(location.pathname).toBe('/groups/new');
+    const sheet = within(await screen.findByRole('dialog', { name: 'Nieuwe Group' }));
+    expect(sheet.getAllByRole('radio').map((radio) => radio.closest('label')?.querySelector('.title')?.textContent)).toEqual(['Marketing', 'Sales management', 'De nieuwe Group zelf']);
+    expect((sheet.getByRole('radio', { name: /^Marketing/ }) as HTMLInputElement).checked).toBe(true);
+    await fireEvent.input(sheet.getByRole('textbox', { name: 'Naam' }), { target: { value: 'Marketing' } });
+    await fireEvent.click(screen.getByRole('button', { name: 'Maak hem' }));
+    expect(await sheet.findByText('Een andere Group heeft deze naam.')).toBeTruthy();
+
+    await fireEvent.input(sheet.getByRole('textbox', { name: 'Naam' }), { target: { value: 'Mortgage advisors' } });
+    expect(sheet.getByRole('radio', { name: /Mortgage advisors zelf/ })).toBeTruthy();
+    await fireEvent.click(sheet.getByRole('radio', { name: /^Sales management/ }));
+    const before = calls.filter((call) => call.path === '/me').length;
+    await fireEvent.click(screen.getByRole('button', { name: 'Maak hem' }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/groups/g-new'));
+    await ready();
+    expect(calls).toContainEqual({ method: 'POST', path: '/groups', body: { name: 'Mortgage advisors', sentence: '', managedBy: 'g-sm' } });
+    // Its maker is in it now: their next Access Token carries it, and who they are is read again.
+    await vi.waitFor(() => expect(calls.filter((call) => call.path === '/me').length).toBe(before + 1));
+    expect(await opened().findByRole('button', { name: 'Mortgage advisors' })).toBeTruthy();
+    expect(screen.queryByRole('dialog', { name: 'Nieuwe Group' })).toBeNull();
+  });
+
+  it('shows every Group with Manage every group, the others apart, and says how the User changes one they are not in (DEC-UX-201)', async () => {
+    serve({ as: 'admin', world: groupWorld({ every: true }) });
+    open('/groups');
+    render(App, { config: CONFIG });
+    const which = within(await screen.findByRole('radiogroup', { name: 'Welke Groups' }));
+    expect(which.getByRole('radio', { name: 'Van jou 3' }).getAttribute('aria-checked')).toBe('true');
+    await fireEvent.click(which.getByRole('radio', { name: 'Alle 4' }));
+    expect(list().getByText('Andere Groups')).toBeTruthy();
+    await fireEvent.click(list().getByRole('link', { name: /^Marketing leads/ }));
+    await vi.waitFor(() => expect(opened().getByRole('heading', { level: 2, name: 'Marketing leads' })).toBeTruthy());
+    expect(await opened().findByText(/Je zit niet in Marketing leads, en ook niet in de Group die hem beheert. Je kan hem wijzigen omdat je Permission group/)).toBeTruthy();
+    const choice = within(opened().getByRole('radiogroup', { name: 'Beheerd door' }));
+    expect(choice.getAllByRole('radio').map((radio) => radio.closest('label')?.querySelector('.title')?.firstChild?.textContent?.trim())).toEqual(['Marketing leads zelf', 'Marketing', 'Sales management', 'Broker team']);
+    expect(opened().getByText(/Met Elke Group beheren kan je elke Group kiezen/)).toBeTruthy();
+  });
+
+  it('leads from the Owner Unit of a Collection to its Group', async () => {
+    serve({ groups: ['g1'] });
+    open('/collections/c1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect((await main.findByRole('link', { name: 'Owner: Data' })).getAttribute('href')).toBe('/groups/g1');
+  });
+});
+
 describe('the web app, for the Data Team, with Collections', () => {
-  it('hands a Collection to any group of the domain (FR-CO-35)', async () => {
+  it('hands a Collection to any Group (FR-CO-35)', async () => {
     serve({ as: 'admin' });
     open('/collections/c1');
     render(App, { config: CONFIG });
@@ -2457,7 +2752,8 @@ describe('the web app, for the Data Team, with Collections', () => {
     await fireEvent.click(await main.findByRole('button', { name: /Alles bewerken/ }));
     const owner = main.getByRole('combobox', { name: /Owner Unit/ }) as HTMLSelectElement;
     await vi.waitFor(() => expect([...owner.options].map((option) => option.value)).toEqual(['g1', 'g2']));
-    expect(main.getByText(/Elke groep van het domein/)).toBeTruthy();
+    expect(main.getByText(/Elke Group van Data Hub/)).toBeTruthy();
+    expect(owner.options[0]?.textContent).toBe('Data');
   });
 
   it('adds a Resource without a Collection from the page of a Collection, one at a time, in a sheet of two steps (FR-CO-31, FR-CO-33, FR-CO-34, DEC-UX-132)', async () => {

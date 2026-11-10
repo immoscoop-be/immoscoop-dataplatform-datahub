@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { chartPath, contextPath, editLensPath, learningPath, messagePath, messagesOnPath, newLensForPath, objectPath, queryRunsPath, route, seePath, usersPath } from './routes.js';
+import { chartPath, contextPath, editLensPath, GROUPS, groupPath, learningPath, messagePath, messagesOnPath, NEW_GROUP, newLensForPath, objectPath, queryRunsPath, route, seePath, usersPath } from './routes.js';
 
 describe('the addresses of the web app', () => {
   it('opens on the start screen of Collections', () => {
@@ -88,6 +88,19 @@ describe('the addresses of the web app', () => {
     expect(route('/me')).toEqual({ kind: 'me', tab: 'profile' });
     expect(route('/me/background')).toEqual({ kind: 'me', tab: 'background' });
     expect(route('/me/keys')).toEqual({ kind: 'me', tab: 'keys' });
+  });
+
+  it('has Groups, outside the sections of the rail: the list, one Group opened, and a new one (FR-UM-13, FR-UM-18, DEC-UX-200)', () => {
+    expect(route('/groups')).toEqual({ kind: 'groups', id: null });
+    expect(route('/groups/')).toEqual({ kind: 'groups', id: null });
+    expect(route(GROUPS)).toEqual({ kind: 'groups', id: null });
+    expect(route('/groups/new')).toEqual({ kind: 'groups', id: null, making: true });
+    expect(route(NEW_GROUP)).toEqual({ kind: 'groups', id: null, making: true });
+    expect(route('/groups/7b0c6f2e-41d2')).toEqual({ kind: 'groups', id: '7b0c6f2e-41d2' });
+    expect(groupPath('03ep 43')).toBe('/groups/03ep%2043');
+    expect(route(groupPath('03ep 43'))).toEqual({ kind: 'groups', id: '03ep 43' });
+    expect(route('/groups/%E0%A4%A')).toEqual({ kind: 'notFound' });
+    expect(route('/groups/g-1/members')).toEqual({ kind: 'notFound' });
   });
 
   it('has Admin, which opens on its first tool, Webhooks (DEC-UX-130, OP-UX-52)', () => {

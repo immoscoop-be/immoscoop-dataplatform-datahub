@@ -27,8 +27,8 @@ export interface UserOfAdmin {
   email: string;
   name: string;
   permissionGroup: GroupRef;
-  /** Their Google groups, by fixed id: their Owner Units among them. */
-  groups: string[];
+  /** The Groups they are in, by id and name: their Owner Units among them (FR-UM-12). */
+  groups: { id: string; name: string }[];
   /** Their first sign-in. */
   createdAt: string;
   lastLoginAt: string | null;
@@ -65,11 +65,66 @@ export interface PermissionGroup {
 /** A group as identity sends it, with its Permissions completed. */
 const groupOf = (group: PermissionGroup): PermissionGroup => ({ ...group, permissions: completePermissions(group.permissions) });
 
-/** A group of the User, read from Workspace (FR-UM-11). */
-export interface Group {
+/** Who did something to a Group: by Google ID and name, both null for what Data Hub did itself, such as a move from Google. */
+export interface GroupActor {
+  id: string | null;
+  name: string | null;
+}
+
+/**
+ * A Group kept in Data Hub, as a list shows it (FR-UM-12, FR-UM-18): how the User stands to it, for its tag. A Group
+ * manages itself when `managedBy.id` is its own id; `mayChange` is whether the User is in the Group that manages it,
+ * or may change every Group (`groups.all.manage`).
+ */
+export interface GroupSummary {
   id: string;
+  name: string;
+  sentence: string;
+  managedBy: { id: string; name: string; isMember: boolean };
+  memberCount: number;
+  isMember: boolean;
+  mayChange: boolean;
+}
+
+/** A member of a Group, kept by address: without a name until they signed in (OP-UX-70), not active once they left (FR-UM-15). */
+export interface GroupMember {
+  email: string;
+  name: string | null;
+  signedIn: boolean;
+  active: boolean;
+  addedAt: string;
+  addedBy: GroupActor;
+}
+
+/** What happened to a Group, as its history shows it (FR-UM-17). */
+export interface GroupLogEntry {
+  at: string;
+  kind: 'made' | 'renamed' | 'sentence' | 'managedBy' | 'added' | 'removed' | 'moved' | 'deleted';
+  by: GroupActor;
+  /** Such as `{ from, to }` for a rename, `{ email }` for a member added or taken out, `{ from: 'Google', members }` for a move. */
+  detail: Record<string, unknown>;
+}
+
+/** A Group opened: its members, the Groups it manages, who made it and when, and its history, newest first (FR-UM-18). */
+export interface GroupDetail extends GroupSummary {
+  members: GroupMember[];
+  manages: { id: string; name: string }[];
+  createdAt: string;
+  createdBy: GroupActor;
+  log: GroupLogEntry[];
+}
+
+/** A colleague to suggest while adding a member (FR-UM-15). */
+export interface Person {
   email: string;
   name: string;
+}
+
+/** What a change of a Group sends: `itself` lets it manage itself (FR-UM-13, FR-UM-14). */
+export interface GroupFields {
+  name: string;
+  sentence: string;
+  managedBy: string | 'itself';
 }
 
 export { SignedOut } from './api.js';
@@ -96,18 +151,50 @@ export interface KeyOfUser extends ExcelKey {
 export function createIdentity(config: Config, session: Pick<Session, 'accessToken'>, request?: typeof fetch) {
   const call = createCall('identity', config.identityUrl, session, request);
   const setting = (key: SettingKey) => `/me/settings/${encodeURIComponent(key)}`;
+  const group = (id: string) => `/groups/${encodeURIComponent(id)}`;
 
   return {
     async me(): Promise<Me> {
       const me = (await (await call('/me')).json()) as Me;
       return { ...me, permissionGroup: me.permissionGroup ?? { id: '', name: '' }, permissions: completePermissions(me.permissions) };
     },
-    async groups(): Promise<Group[]> {
-      return ((await (await call('/me/groups')).json()) as { groups: Group[] }).groups;
+    /** The Groups the User is in or manages (FR-UM-18). */
+    async groups(): Promise<GroupSummary[]> {
+      return ((await (await call('/me/groups')).json()) as { groups: GroupSummary[] }).groups;
     },
-    /** Every group of the domain: only the Data Team may ask, to hand a Collection to any of them (FR-CO-35). */
-    async domainGroups(): Promise<Group[]> {
-      return ((await (await call('/groups')).json()) as { groups: Group[] }).groups;
+    /**
+     * Every Group: only with `groups.all.manage`, or to hand a Collection to any Group (`collections.make`, any,
+     * FR-CO-35).
+     */
+    async allGroups(): Promise<GroupSummary[]> {
+      return ((await (await call('/groups')).json()) as { groups: GroupSummary[] }).groups;
+    },
+    /** One Group, for any signed-in User (FR-UM-18). */
+    async group(id: string): Promise<GroupDetail> {
+      return ((await (await call(group(id))).json()) as { group: GroupDetail }).group;
+    },
+    /** A new Group, with the User as its first member (FR-UM-13). */
+    async makeGroup(fields: GroupFields): Promise<GroupDetail> {
+      return ((await (await call('/groups', { method: 'POST', body: fields })).json()) as { group: GroupDetail }).group;
+    },
+    /** Renames a Group, changes its sentence, or the Group that manages it (FR-UM-14). */
+    async changeGroup(id: string, changes: Partial<GroupFields>): Promise<GroupDetail> {
+      return ((await (await call(group(id), { method: 'PATCH', body: changes })).json()) as { group: GroupDetail }).group;
+    },
+    /** Adds a colleague by address, also one who has not signed in yet: refused for another domain (invalid_email, FR-UM-15). */
+    async addMember(id: string, email: string): Promise<GroupDetail> {
+      return ((await (await call(`${group(id)}/members`, { method: 'PUT', body: { email } })).json()) as { group: GroupDetail }).group;
+    },
+    async removeMember(id: string, email: string): Promise<GroupDetail> {
+      return ((await (await call(`${group(id)}/members/${encodeURIComponent(email)}`, { method: 'DELETE' })).json()) as { group: GroupDetail }).group;
+    },
+    /** Deletes a Group that owns and manages nothing: refused otherwise with still_owns, and what it still has (FR-UM-16). */
+    async deleteGroup(id: string): Promise<void> {
+      await call(group(id), { method: 'DELETE' });
+    },
+    /** Colleagues whose name or address holds what was typed, from two characters on (FR-UM-15). */
+    async people(q: string): Promise<Person[]> {
+      return ((await (await call(`/people?${new URLSearchParams({ q })}`)).json()) as { people: Person[] }).people;
     },
     /** The Excel keys of the User (FR-PL-02). */
     async excelKeys(): Promise<ExcelKey[]> {

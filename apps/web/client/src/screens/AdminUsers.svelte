@@ -12,11 +12,12 @@
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import type { Identity, PermissionGroup, UserOfAdmin } from '../lib/identity.js';
   import { initialsOf } from '../lib/initials.js';
+  import { GROUPS, groupPath } from '../lib/routes.js';
   import UserSheet from './UserSheet.svelte';
 
   /**
    * Users, a tool of Admin (FR-PL-06, DEC-UX-190): everyone who signed in to this environment, with their Permission
-   * group, their Owner Units, what they use (the web app, Claude, Excel) and when they last signed in. A search finds
+   * group, their Groups by name, each the way to it on Groups (DEC-UX-200), what they use (the web app, Claude, Excel) and when they last signed in. A search finds
    * a User by name or address; a filter shows one Permission group, each with its count. A User who can no longer
    * sign in stays listed, greyed; a new one is marked new, with "the default" next to their group. A row opens the
    * User in a sheet over the page, where their Permission group changes (FR-PL-07); saved, the row says so and a
@@ -26,7 +27,6 @@
     identity,
     environment,
     me,
-    ownerUnits,
     filter = null,
     user = undefined,
     groupsHref,
@@ -37,8 +37,6 @@
     environment: string;
     /** The Google ID of the User signed in, who cannot change their own Permission group (FR-PL-08). */
     me: string;
-    /** The names of the Owner Units by the id of their group, from the Collections the User sees. */
-    ownerUnits: ReadonlyMap<string, string>;
     /** The Permission group to show, as a group opened on Permission groups asks. */
     filter?: string | null;
     /** The User to open, as the address names them, such as from a Message (FR-PL-12). */
@@ -95,7 +93,6 @@
       .toSorted((one, other) => latest(other) - latest(one)),
   );
   const isNew = (user: UserOfAdmin) => Date.now() - new Date(user.createdAt).getTime() < NEW_FOR;
-  const unitsOf = (user: UserOfAdmin) => user.groups.flatMap((group) => ownerUnits.get(group) ?? []);
   const openedUser = $derived(users?.find((user) => user.googleId === opened));
 
   function open(user: UserOfAdmin) {
@@ -141,13 +138,12 @@
       <tr>
         <th>User</th>
         <th>Permission group</th>
-        <th>Owner Units</th>
+        <th>Groups</th>
         <th>{t('admin.users.column.uses')}</th>
         <th>{t('admin.users.column.last')}</th>
       </tr>
     {/snippet}
     {#each listed as user (user.googleId)}
-      {@const units = unitsOf(user)}
       <tr
         class="row"
         class:gone={!user.active}
@@ -172,7 +168,9 @@
           <span class="tag"><Icon name="shield-check" />{user.permissionGroup.name}</span>
           {#if changedHere.includes(user.googleId)}<span class="chg">{t('admin.users.changedByYou')}</span>{:else if isNew(user) && user.permissionGroup.id === defaultGroup?.id}<span class="meta"> {t('admin.users.theDefault')}</span>{/if}
         </td>
-        <td class:muted={units.length === 0}>{units.length > 0 ? units.join(', ') : t('users.none')}</td>
+        <td class:muted={user.groups.length === 0}>
+          {#each user.groups as group, index (group.id)}{#if index > 0}{', '}{/if}<a class="text-link" href={groupPath(group.id)}>{group.name}</a>{:else}{t('users.none')}{/each}
+        </td>
         <td>
           <span class="uses">
             <span class:off={!user.uses.web}><Icon name="browser" label={t(user.uses.web ? 'admin.users.uses.web' : 'admin.users.uses.noWeb')} /></span>
@@ -185,7 +183,9 @@
     {:else}
       <tr><td colspan="5" class="muted none">{t(words ? 'admin.users.noMatch' : 'admin.users.none')}</td></tr>
     {/each}
-    {#snippet after()}<p class="meta foot">{t('admin.users.foot')}</p>{/snippet}
+    {#snippet after()}
+      <p class="meta foot">{#each tParts('admin.users.foot', {}, { groups: 'Groups' }) as part, index (index)}{#if 'name' in part}<a class="text-link" href={GROUPS}>{part.name}</a>{:else}{part.text}{/if}{/each}</p>
+    {/snippet}
   </Table>
 {:else}
   <Loading />
@@ -197,7 +197,6 @@
       user={openedUser}
       {groups}
       self={openedUser.googleId === me}
-      ownerUnits={unitsOf(openedUser)}
       {counts}
       {identity}
       onsaved={moved}
