@@ -159,7 +159,7 @@ describe.skipIf(!url)('notifications by e-mail and in Slack (DEC-LN-02, DEC-LN-0
           const { users, groups, permissions } = question;
           asked.push(question);
           return known
-            .filter((person) => users.includes(person.id) || person.groups.some((group) => groups.includes(group)) || person.permissions.some((key) => permissions.includes(key)))
+            .filter((person) => (person.id !== null && users.includes(person.id)) || person.groups.some((group) => groups.includes(group)) || person.permissions.some((key) => permissions.includes(key)))
             .map((person) => ({
               ...person,
               groups: person.groups.filter((group) => groups.includes(group)),
