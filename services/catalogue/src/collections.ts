@@ -152,6 +152,10 @@ export interface Collections {
   change(id: string, changes: CollectionChanges, viewer: Viewer): Promise<Collection | undefined>;
   /** Dissolves an empty Collection (else NotEmpty); false when it was already gone. */
   dissolve(id: string, viewer: Viewer): Promise<boolean>;
+  /** The Owner Units of the Collections that are not dissolved, each once, to move from Google (TR-UM-04). */
+  ownerUnits(): Promise<{ id: string; name: string }[]>;
+  /** The Collections, not dissolved, a Group is the Owner Unit of: how many and their names (TR-UM-05). */
+  ownedBy(groupId: string): Promise<{ count: number; names: string[] }>;
   /** Makes a folder at the top of a Collection, or in the folder `parentId` of it (FR-CO-39). */
   makeFolder(collectionId: string, name: string, parentId: string | null, viewer: Viewer, description?: string): Promise<FolderOutcome<Folder>>;
   /** Its name, its description or both, each change in the Log of the Collection (FR-CO-39, FR-CO-42). */
@@ -436,7 +440,7 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
               intro: collection.intro ?? '',
               icon: collection.icon,
               ownerUnitId: collection.ownerUnit.id,
-              ownerUnitEmail: collection.ownerUnit.email,
+              ownerUnitEmail: collection.ownerUnit.email ?? null,
               ownerUnitName: collection.ownerUnit.name,
               visibility: collection.visibility,
               createdBy: viewer.id,
@@ -471,7 +475,7 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
           }
           const unit = changes.ownerUnit;
           if (unit && unit.id !== before.ownerUnitId) {
-            Object.assign(update, { ownerUnitId: unit.id, ownerUnitEmail: unit.email, ownerUnitName: unit.name });
+            Object.assign(update, { ownerUnitId: unit.id, ownerUnitEmail: unit.email ?? null, ownerUnitName: unit.name });
             entries.push(['COL-003', { old: before.ownerUnitName, new: unit.name }]);
           }
           if (changes.visibility && changes.visibility !== before.visibility) {
@@ -493,6 +497,21 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
           return presentOne(after, viewer, trx);
         }),
       );
+    },
+
+    async ownerUnits() {
+      return db
+        .selectFrom('collections')
+        .select(['ownerUnitId as id', sql<string>`min(owner_unit_name)`.as('name')])
+        .where('dissolvedAt', 'is', null)
+        .groupBy('ownerUnitId')
+        .orderBy('ownerUnitId')
+        .execute();
+    },
+
+    async ownedBy(groupId) {
+      const rows = await db.selectFrom('collections').select('name').where('ownerUnitId', '=', groupId).where('dissolvedAt', 'is', null).orderBy(sql`lower(name)`).execute();
+      return { count: rows.length, names: rows.map((row) => row.name) };
     },
 
     async dissolve(id, viewer) {

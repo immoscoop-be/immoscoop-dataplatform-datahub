@@ -43,7 +43,8 @@ export interface CatalogueDatabase {
     icon: CollectionIcon;
     /** The Owner Unit by its fixed Google ID, with its address and name when it was chosen (TR-CO-03). */
     ownerUnitId: string;
-    ownerUnitEmail: string;
+    /** The address of the Google group it once was; null since Groups are kept in Data Hub (DEC-UM-10). */
+    ownerUnitEmail: ColumnType<string | null, string | null | undefined, string | null>;
     ownerUnitName: string;
     visibility: CollectionVisibility;
     /** The fixed Google ID of whoever created it, and their name at that moment. */

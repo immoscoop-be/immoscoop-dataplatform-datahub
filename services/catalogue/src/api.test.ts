@@ -279,6 +279,19 @@ describe.skipIf(!url)('the routes of Collections', () => {
     expect((await app.inject({ method: 'POST', url: '/collections', payload: {} })).statusCode).toBe(401);
   });
 
+
+  it('tells what a Group owns: to identity how many Collections, to a User the ones they see (TR-UM-05)', async () => {
+    const an = await user('An', [DIGIKOM]);
+    const asIdentity = (token: string) => app.inject({ method: 'GET', url: `/internal/owner-units/${DIGIKOM.id}`, headers: { authorization: `Bearer ${token}` } });
+    const owned = (await asIdentity('identity-token')).json();
+    expect(owned.count).toBeGreaterThan(0);
+    expect(owned.names).toContain('Leads');
+    expect((await asIdentity('someone')).statusCode).toBe(401);
+    // A private Collection shows only to its Owner Unit (FR-CO-17).
+    expect((await an('GET', `/owner-units/${DIGIKOM.id}/collections`)).json().collections.map((collection: { name: string }) => collection.name)).toContain('Leads');
+    const karel = await user('Karel', [SALES]);
+    expect((await karel('GET', `/owner-units/${DIGIKOM.id}/collections`)).json().collections).toEqual([]);
+  });
   it('hides a private Collection from everyone but its Owner Unit and the Data Team (FR-CO-17, DEC-CO-11)', async () => {
     const an = await user('An', [DIGIKOM]);
     const bert = await user('Bert', [SALES]);

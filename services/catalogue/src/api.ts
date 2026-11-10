@@ -188,6 +188,33 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
 
   app.get('/collections', async (request) => ({ collections: await collections.list(viewer(request)) }));
 
+  // The Collections of an Owner Unit the User sees, for the page of a Group (FR-UM-18, TR-UM-05).
+  app.get<{ Params: { id: string } }>('/owner-units/:id/collections', async (request) => ({
+    collections: (await collections.list(viewer(request)))
+      .filter((collection) => collection.ownerUnit.id === request.params.id)
+      .map((collection) => ({ id: collection.id, name: collection.name, icon: collection.icon, visibility: collection.visibility })),
+  }));
+
+  // identity asks what a Group owns before it deletes it, with its Google ID token for catalogue's address (TR-UM-05).
+  if (keyCallers) {
+    app.get<{ Params: { id: string } }>(
+      '/internal/owner-units/:id',
+      {
+        config: { public: true },
+        onRequest: async (request, reply) => {
+          const token = /^Bearer (\S+)$/.exec(request.headers.authorization ?? '')?.[1] ?? '';
+          try {
+            await keyCallers.verify(token);
+          } catch (error) {
+            request.log.warn({ err: error }, 'a call for what a group owns was refused');
+            return reply.code(401).send({ error: 'unauthorized', message: 'Only identity asks what a group owns.' });
+          }
+        },
+      },
+      async (request) => collections.ownedBy(request.params.id),
+    );
+  }
+
   // The search of the start screen of Collections (FR-CO-37, DEC-UX-127): the Collections and Resources the
   // User sees that share words with a question; query finds the Lenses.
   app.get<{ Querystring: { question?: string } }>('/search', async (request, reply) => {

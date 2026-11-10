@@ -102,6 +102,17 @@ variable "dbt_account_id" {
   default     = "576"
 }
 
+variable "break_glass_admins" {
+  description = "The addresses that get Admin when no User of Admin can still sign in: the way back into Admin, kept here so that nobody has to sign in to change it (EC-PL-03, TR-UM-06)."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition     = alltrue([for address in var.break_glass_admins : can(regex("^[a-z0-9._-]+@[a-z0-9.-]+$", address)) && contains(var.workspace_domains, element(split("@", address), 1))])
+    error_message = "Addresses in lower case, each of a Workspace domain."
+  }
+}
+
 variable "mail_from" {
   description = "Who the e-mail of Data Hub comes from: an address of a Workspace domain whose replies are not read (DEC-PF-31)."
   type        = string

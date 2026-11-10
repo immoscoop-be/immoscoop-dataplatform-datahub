@@ -39,7 +39,7 @@ export function createMcpServer(user: AccessTokenClaims, options: ServerOptions)
     {
       title: 'Who am I',
       description:
-        'Who you are in Data Hub: your name and email, your Groups by their Google ID, your Permission group and what it lets you do. Useful to check that signing in worked and what you may see and do.',
+        'Who you are in Data Hub: your name and email, the Groups of Data Hub you are in, by their identifier, your Permission group and what it lets you do. Useful to check that signing in worked and what you may see and do.',
       outputSchema: {
         name: z.string(),
         email: z.string(),
