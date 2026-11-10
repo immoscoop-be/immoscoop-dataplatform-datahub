@@ -2009,3 +2009,13 @@ svg.mp, svg.mp-g { display: block; width: 100%; height: auto; overflow: visible;
 .cv-cond { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: var(--text-small); margin-top: 10px; }
 .cv-cond-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; padding-left: 14px; font-size: var(--text-small); }
 .cv-cond-row .icon-btn { width: 28px; height: 28px; }
+
+/* The environment (DEC-UX-203): every environment but prod wears a ribbon with its name across the upper right corner
+   of the window, on every screen, the sign-in included, clear of the actions in the head of a page. It floats over
+   everything and never takes a click, so that nothing under it is ever out of reach. */
+.env-ribbon { position: fixed; top: 0; right: 0; z-index: 90; width: 124px; height: 124px; overflow: hidden;
+  pointer-events: none; user-select: none; }
+.env-ribbon span { position: absolute; top: 28px; right: -44px; width: 180px; padding: 7px 0; text-align: center;
+  transform: rotate(45deg); background: var(--env-ribbon); box-shadow: var(--env-ribbon-shadow); color: var(--text-on-env);
+  font: var(--weight-semibold) var(--text-small)/1 var(--font-family); letter-spacing: .16em; text-transform: uppercase; }
+@media print { .env-ribbon { display: none; } }

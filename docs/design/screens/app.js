@@ -1401,3 +1401,17 @@ document.querySelectorAll('.finding-acts, .fb-pair').forEach(pair => {
 });
 // Building a Monitor: a template of a Metric or a window is ticked on or off (FR-CM-05)
 document.querySelectorAll('.metric-table .agg').forEach(a => { a.setAttribute('role', 'button'); a.tabIndex = 0; a.addEventListener('click', () => a.classList.toggle('on')); });
+
+// The environment (DEC-UX-203): ?env=uat dresses any prototype as uat, with the ribbon and the name at the start of the
+// title of the tab; environment.html shows it with prod beside it. Prod wears nothing.
+(() => {
+  const env = new URLSearchParams(location.search).get('env');
+  if (!env || env === 'prod' || document.querySelector('.env-ribbon')) return;
+  const ribbon = document.createElement('div');
+  ribbon.className = 'env-ribbon';
+  ribbon.setAttribute('role', 'note');
+  ribbon.setAttribute('aria-label', `This is Data Hub ${env}, to test in: not prod`);
+  ribbon.innerHTML = `<span>${env.replace(/[^a-z0-9-]/gi, '')}</span>`;
+  document.body.prepend(ribbon);
+  document.title = `${env} · ${document.title}`;
+})();

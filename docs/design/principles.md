@@ -50,6 +50,7 @@ There are three layers:
 - **Collections have no colour:** no stripe, no line at the head of their page, no colour on their chip. Their grey icon sets them apart ([DEC-UX-105](#dec-ux-105)).
 - **Signal colour** (ochre) only for a state that calls for action, such as a Level that has dropped.
 - **The values in the picture of a monitor** are three shades of olive (`--seg-1` to `--seg-3`): they stand for several values, never one each, and judge nothing; a judgement has the colour of its Tone ([DEC-UX-197](#dec-ux-197)).
+- **The ribbon of an environment** is teal (`--env-ribbon`), on every screen of an environment that is not prod; teal means nothing else in Data Hub, so it never reads as a state of the data ([DEC-UX-203](#dec-ux-203)).
 - **Urgent colour** (red, `--signal-urgent`) only for "Without a collection": Resources that wait for the Data Team ([DEC-UX-16](#dec-ux-16)); and for the button of a run that reads above the approval threshold ([DEC-UX-28](#dec-ux-28)); and for what is Broken: its red dot, chip and callout ([DEC-UX-81](#dec-ux-81)).
 
 ## Themes
@@ -472,6 +473,16 @@ Screens: [groups](screens/groups.html), with the tile Your groups on [my-page](s
 - **The Owner Unit of a Collection** is chosen, when it is made or edited, from the groups the User is in, as before ([DEC-CO-09](../requirements/functional/03-collections.md#dec-co-09)); they are now groups of Data Hub, named without an address.
 - The prototype shows each state with the switch at the bottom: `groups.html?gr=manager` (Broker team, managed by a group the User is in), `?gr=adding`, `?gr=member` (Marketing, only in it), `?gr=new` and `?gr=all` (every group, Finance opened by a Data Admin).
 
+## The environment
+
+Screen: [environment](screens/environment.html). Designed on 2026-11-10, at the request of Max, and approved the same day ([DEC-UX-203](#dec-ux-203)).
+
+- **uat wears a ribbon, prod none.** uat looks like prod, with real colleagues and real data, so it is easy to forget where you are. Every environment but prod wears a ribbon with its name across the upper right corner of the window: uat, and local on a laptop.
+- **On every screen,** the sign-in and the page for what does not exist included, above every frame, sheet and floating window. It never takes a click: what lies under it works as ever, and it stays clear of the actions in the head of a page.
+- **Teal, with its name in capitals** (`--env-ribbon`, `--text-on-env`): light teal with dark letters by night, dark teal with white letters by day, both legible at the size of a meta text. Not printed.
+- **The title of the tab begins with the name,** "uat · Data Hub — Collections", so that a tab among many says it, and so does a screen reader; the ribbon itself is a note with "This is Data Hub uat, to test in: not prod".
+- Admin and Groups keep naming the environment in their head, "Data Hub uat", as before ([DEC-UX-130](#dec-ux-130)). Claude does not get the ribbon: there the name of the connector says it.
+
 ## A link to something you may not see
 
 Screen: [not-found](screens/not-found.html). Designed on 2026-10-24, to review ([DEC-UX-32](#dec-ux-32)).
@@ -751,6 +762,7 @@ Decided on 2026-10-23, with the preview and the query of a Resource:
 - <a id="dec-ux-199"></a>**DEC-UX-199** · Nine more painted scenes join the backgrounds, after pictures Max shared: by day Cinnamon, Evening, Citrus, Orchid and Tide, by night Afterglow, Lumen, Cobalt and Midnight. *Decided on 2026-11-09, by Max, after drafts of each: "build them all". What he liked in them: of the brown one, "the two opposite sides, the dark also being on top"; of Afterglow, "the red line separating the two", with "the green peeping in between"; of Lumen, "a proper mix of all these different colours", light yellow in the middle; of Cobalt, "all these different tints of light blue that mix up"; of Midnight, "very subtle colours, but still present", matched together strongly. Renamed the same day, at the request of Max, so that no background carries a first name: the one with light yellow in the middle is Lumen.*
 - <a id="dec-ux-200"></a>**DEC-UX-200** · Groups are kept in Data Hub, on a page of their own, Groups, reached from My page, no longer in Google Workspace: they no longer depend on the directory, which moves from Google to Entra after Data Hub goes live. The Owner Unit of a Collection is one of these groups ([DEC-UM-10](../requirements/functional/02-user-management.md#dec-um-10)). *Decided on 2026-11-10, by Max: "we are moving from google to entra, seen this shift and the fact that nobody is in production I think it is best to move."*
 - <a id="dec-ux-201"></a>**DEC-UX-201** · Who changes a group: a User whose Permission group allows Make groups (`groups.manage`) makes one, and chooses which of their groups manages it; the members of that managing group change it. Whoever makes a Collection chooses which of their groups is its Owner Unit. A Data Admin, with Manage every group (`groups.all.manage`), changes every group. *Decided on 2026-11-10, by Max: "groups can be created by anyone with group.manage permission. when a group gets created the user chooses which of his groups applies as admin group for the group. when a collection gets created the user chooses which of his groups applies as admin group for the collection. data-admins have the permission groups.all.manage and can edit all groups."*
+- <a id="dec-ux-203"></a>**DEC-UX-203** · Every environment but prod wears a ribbon with its name, teal, across the upper right corner of the window, on every screen of the web app, the sign-in included, and the title of the tab begins with it; prod wears none ([The environment](#the-environment)). A band along the top edge and a tag under the mark in the rail were drawn too. *Decided on 2026-11-10, by Max: "ribbon looks great, you may implement".*
 - <a id="dec-ux-202"></a>**DEC-UX-202** · The page Groups lists the groups a User is in or manages, and one opened shows its members, who manages it, what it owns and manages, and its history, with adding a colleague by name or address, taking one out, choosing who manages it, and deleting it once it owns and manages nothing ([Groups](#groups)). *Designed on 2026-11-10, at the request of Max, to review.*
 
 ## Open points

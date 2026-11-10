@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import DragGhost from '@datahub/ui/components/DragGhost.svelte';
+  import EnvRibbon from '@datahub/ui/marks/EnvRibbon.svelte';
   import type { RailItem } from '@datahub/ui/components/Rail.svelte';
   import Toast from '@datahub/ui/components/Toast.svelte';
   import { addTexts, setLanguage, currentLanguage, type Language } from '@datahub/ui/foundations/texts.svelte.js';
@@ -611,7 +612,10 @@
                             : page.kind === 'chart'
                               ? (chartsShown?.charts.find((chart) => chart.id === page.id)?.title ?? sectionLabel(page.section))
                               : undefined;
-    document.title = title ? `Data Hub — ${title}` : 'Data Hub';
+    // The title of the tab begins with the environment, as its ribbon does; prod wears nothing (DEC-UX-203).
+    const environment = config.environment ?? 'local';
+    const named = title ? `Data Hub — ${title}` : 'Data Hub';
+    document.title = environment === 'prod' ? named : `${environment} · ${named}`;
   });
 
   const items: readonly RailItem[] = $derived(
@@ -703,6 +707,9 @@
 </script>
 
 <svelte:document onclick={(event) => router.follow(event)} />
+
+<!-- Every environment but prod wears a ribbon with its name, on every screen, the sign-in included (DEC-UX-203). -->
+<EnvRibbon environment={config.environment ?? 'local'} />
 
 {#if status.kind === 'signedOut'}
   <SignIn {theme} next={router.path} problem={status.problem} account={status.account} />
