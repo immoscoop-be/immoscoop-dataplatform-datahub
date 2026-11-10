@@ -1227,6 +1227,21 @@ describe('the web app, signed out', () => {
     expect(screen.queryByRole('navigation')).toBeNull();
   });
 
+  it('wears the ribbon of uat on the sign-in, and its name at the start of the title of the tab; prod wears none (DEC-UX-203)', async () => {
+    serve({ signedIn: false });
+    open('/collections');
+    const uat = render(App, { config: { ...CONFIG, environment: 'uat' } });
+    expect((await screen.findByRole('note', { name: 'Dit is Data Hub uat, om in te testen: niet prod' })).textContent).toBe('uat');
+    expect(document.title.startsWith('uat · Data Hub')).toBe(true);
+    uat.unmount();
+
+    serve({ signedIn: false });
+    render(App, { config: { ...CONFIG, environment: 'prod' } });
+    await screen.findByRole('link', { name: /Aanmelden met Google/ });
+    expect(screen.queryByRole('note', { name: /Data Hub/ })).toBeNull();
+    expect(document.title.startsWith('Data Hub')).toBe(true);
+  });
+
   it('shows the sign-in on a background of the set, picked at random, without a photo or its story (DEC-UX-173)', async () => {
     serve({ signedIn: false });
     // The last of the set by day: Concrete, a picture.
@@ -1276,7 +1291,7 @@ describe('the web app, signed in', () => {
     expect(location.pathname).toBe('/collections');
     expect(screen.getByRole('complementary', { name: 'Collections' }).inert).toBe(false);
     expect(screen.getByRole('link', { name: 'Mijn pagina' }).textContent).toBe('MV');
-    expect(document.title).toBe('Data Hub — Collections');
+    expect(document.title).toBe('local · Data Hub — Collections');
   });
 
   it('slides the panel in and out with the item of its section, and remembers it (navigation rule 5)', async () => {
@@ -1462,7 +1477,7 @@ describe('the web app, for the Data Team', () => {
     // Every Level explained: where it stands, and what the next one takes (FR-MR-16).
     expect(main.getByText(/Geregistreerd op 21 okt 2026, via de exposure datahub_savedSearches/)).toBeTruthy();
     expect(main.getByText(/Vraagt een beschrijving in dbt van de tabel en van minstens één veld.*Nu heeft de tabel er een, en 0 van zijn 2 velden/)).toBeTruthy();
-    expect(document.title).toBe('Data Hub — Saved searches');
+    expect(document.title).toBe('local · Data Hub — Saved searches');
     expect(screen.getByRole('link', { name: /Saved searches/ }).getAttribute('aria-current')).toBe('page');
   });
 
@@ -1530,7 +1545,7 @@ describe('Admin, for the Data Team', () => {
     // The deliveries to look at: one refused, one failed.
     await vi.waitFor(() => expect(tool.textContent).toContain('2'));
     expect(screen.getByRole('heading', { level: 1, name: 'Webhooks' })).toBeTruthy();
-    expect(document.title).toBe('Data Hub — Webhooks');
+    expect(document.title).toBe('uat · Data Hub — Webhooks');
   });
 
   it('shows the Source Job of each dbt project, and changes it to a job of this environment in a sheet (FR-AR-18)', async () => {
@@ -2102,7 +2117,7 @@ describe('the web app, with Collections', () => {
     expect(row.textContent).toContain('2 · Described');
     expect(row.textContent).toContain('Toegevoegd aan de Collection Credit leads door Dirk Vos');
     expect(main.getByText('Collection aangemaakt door An Claes')).toBeTruthy();
-    expect(document.title).toBe('Data Hub — Credit leads');
+    expect(document.title).toBe('local · Data Hub — Credit leads');
     // It unfolds in the panel, with an outline.
     expect(panel.getByRole('button', { name: 'Toon wat Credit leads bevat' }).getAttribute('aria-expanded')).toBe('true');
     expect(panel.getByRole('link', { name: /Credit leads/ }).getAttribute('aria-current')).toBe('page');
@@ -3891,7 +3906,7 @@ describe('Charts, the gallery of semgraph', () => {
     const main = await screen.findByRole('main');
     expect(await within(main).findByRole('heading', { level: 1, name: 'Voortschrijdend gemiddelde' })).toBeTruthy();
     expect(location.pathname).toBe('/charts/movingWindowAverage');
-    expect(document.title).toBe('Data Hub — Voortschrijdend gemiddelde');
+    expect(document.title).toBe('local · Data Hub — Voortschrijdend gemiddelde');
     // The panel: one line on the charts, then the groups of the design with what semgraph offers in each, in their order.
     const panel = screen.getByRole('complementary', { name: 'Grafieken' });
     expect(within(panel).getByText('De grafieken die semgraph tekent, elk voor één soort vraag, en niets wat zou misleiden.')).toBeTruthy();
@@ -3986,7 +4001,7 @@ describe('the Learning Centre', () => {
     expect(main.getAllByText('1 van 34 gezien').length).toBeGreaterThan(0);
     const panel = within(screen.getByRole('complementary', { name: 'Learning Centre' }));
     expect(panel.getByText(/Je zag 1 van \d+ kaarten/)).toBeTruthy();
-    expect(document.title).toBe('Data Hub — Learning Centre');
+    expect(document.title).toBe('local · Data Hub — Learning Centre');
   });
 
   it('lists every card in the panel, the ones to be written without a page (FR-LR-03)', async () => {
@@ -4005,7 +4020,7 @@ describe('the Learning Centre', () => {
     render(App, { config: CONFIG });
     expect(await screen.findByRole('heading', { level: 1, name: /Waar definities leven/ })).toBeTruthy();
     expect(screen.getAllByRole('tab').map((tab) => tab.textContent?.trim())).toEqual(['1 Waarom nu', '2 Kernidee', '3 Zie het', '4 Check je begrip', '5 Je kan nu']);
-    expect(document.title).toBe('Data Hub — K3.4 Waar definities leven');
+    expect(document.title).toBe('local · Data Hub — K3.4 Waar definities leven');
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/learning/progress/K3.4', body: { step: 'why' } }));
     await fireEvent.click(screen.getByRole('button', { name: /^Volgende/ }));
     expect(screen.getByRole('tab', { name: /Kernidee/ }).getAttribute('aria-selected')).toBe('true');

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<!--
+  Screen: the ribbon of an environment that is not prod (designed on 2026-11-10, at the request of Max).
+  uat looks the same as prod, with real colleagues and real data, so it is easy to forget where you are. Every
+  environment but prod wears a ribbon with its name, on every screen, the sign-in included: uat, and local on a
+  laptop. Prod wears nothing (DEC-UX-203). The ribbon floats over everything and never takes a click; the title of the
+  tab begins with the name too, "uat · Data Hub — Collections", so that a tab among many says it, and a screen reader.
+  The ribbon crosses the upper right corner of the window, in teal, clear of the actions in the head of a page. A band
+  along the top edge and a tag under the mark in the rail were drawn too; Max chose the corner. The switch at the
+  bottom shows uat (?rb=corner) and prod, without (?rb=prod). Any other prototype wears it with ?env=uat, such as
+  sign-in.html?env=uat.
+  Requirements: none yet; they follow once the design is approved.
+  Decisions: DEC-UX-203, DEC-UX-130, DEC-UX-172.
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="owner">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>uat · Data Hub — Collections</title>
+</head>
+<body>
+<div class="env-ribbon" data-pane-group="rb" data-pane="corner" role="note" aria-label="This is Data Hub uat, to test in: not prod"><span>uat</span></div>
+<div class="app">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <a class="nav-btn active" href="collections-start.html" data-label="Collections" aria-label="Collections" aria-current="page"><i class="ph-fill ph-stack"></i></a>
+  <a class="nav-btn" href="query.html" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></a>
+  <a class="nav-btn" href="charts.html" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <a class="nav-btn nav-admin" href="admin-webhooks.html" data-label="Admin" aria-label="Admin, for the Data Team" data-for="datateam"><i class="ph-fill ph-toolbox"></i></a>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">MP</a>
+</nav>
+<main class="main">
+ <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:6px">
+  <h1 class="page-title">Collections</h1>
+  <button class="btn-primary"><i class="ph-fill ph-plus-circle" style="font-size:15px"></i>New Collection</button>
+ </div>
+ <div class="section-head"><h2>Yours</h2><span class="meta">Your Collections, and Lenses made by you or the credit team</span></div>
+ <div class="grid">
+  <a class="tile card" style="text-decoration:none;color:inherit" href="collection-overview.html"><div style="display:flex;gap:10px;align-items:center"><span class="item-icon"><i class="ph ph-coins"></i></span><span class="item-title" style="font-size:14px">Credit leads</span></div><p style="font-size:12px;color:var(--text-secondary);margin:8px 0 0">12 Resources · 4 Lenses</p></a>
+  <a class="tile card" style="text-decoration:none;color:inherit" href="#"><div style="display:flex;gap:10px;align-items:center"><span class="item-icon"><i class="ph ph-buildings"></i></span><span class="item-title" style="font-size:14px">Listings</span></div><p style="font-size:12px;color:var(--text-secondary);margin:8px 0 0">8 Resources · 2 Lenses</p></a>
+  <a class="tile card" style="text-decoration:none;color:inherit" href="#"><div style="display:flex;gap:10px;align-items:center"><span class="item-icon"><i class="ph ph-briefcase"></i></span><span class="item-title" style="font-size:14px">Brokers</span></div><p style="font-size:12px;color:var(--text-secondary);margin:8px 0 0">11 Resources · 1 Lens</p></a>
+ </div>
+</main>
+</div>
+
+<div class="proto-switch" data-group="rb" role="tablist" aria-label="Prototype: the ribbon of the environment">Ribbon
+ <button class="seg on" data-target="corner" role="tab" aria-selected="true">uat</button>
+ <button class="seg" data-target="prod" role="tab" aria-selected="false">prod: none</button>
+</div>
+<script src="app.js"></script>
+<script>
+// Prototype only: the title of the tab names the environment, as the ribbon does, and not in prod
+const titled = target => (document.title = target === 'prod' ? 'Data Hub — Collections' : 'uat · Data Hub — Collections');
+document.querySelectorAll('[data-group="rb"] [data-target]').forEach(b => b.addEventListener('click', () => titled(b.dataset.target)));
+titled(new URLSearchParams(location.search).get('rb') ?? 'corner');
+</script>
+</body>
+</html>
