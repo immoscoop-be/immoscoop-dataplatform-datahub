@@ -2,7 +2,7 @@
  * List the Learning Cards that are open, check a card before it goes into a pull request, and stamp its translation.
  *
  * Usage:
- *   node scripts/learning-card.ts list [open | draft | reviewed] [section]   # the plan, with where each card stands
+ *   node scripts/learning-card.ts list [open | draft | reviewed | wanted] [section]   # the plan, where each card stands, who wants it
  *   node scripts/learning-card.ts check <number | folder>   # the card in both languages, its plan, its chart, its interview record
  *   node scripts/learning-card.ts stamp <number | folder>   # write into nl.md the translatedFrom the English asks for, then check
  *   node scripts/learning-card.ts links <number | folder> ["words a reader uses" …]   # where Data Hub links the card, and what Claude finds
@@ -13,7 +13,8 @@
  * time, as the places change with every release.
  *
  * A card is open while it has no folder, a draft until the Data Team reviewed it, and reviewed after (DEC-LR-25);
- * prod shows only reviewed cards. A section such as 2.1 or K5 narrows the list.
+ * prod shows only reviewed cards. `wanted` lists the open topics that a Message or a marker of Data Hub already wants,
+ * and the cards the Message Catalogue asks for that are no topic yet. A section such as 2.1 or K5 narrows the list.
  *
  * A number is a folder of packages/learning/cards; a folder may be anywhere, such as the examples of the
  * learning-card skill. It reads the card with the parser of Data Hub, so that what passes here is what the web app
@@ -52,7 +53,7 @@ const [command, target, narrow] = process.argv.slice(2);
 
 // The plan, with where each card stands: open, draft or reviewed.
 if (command === 'list') {
-  const states = ['open', 'draft', 'reviewed'];
+  const states = ['open', 'draft', 'reviewed', 'wanted'];
   const only = target && states.includes(target) ? target : undefined;
   const within = only ? narrow : target;
   const stateOf = (number: string): string => {
@@ -64,6 +65,17 @@ if (command === 'list') {
       return 'broken';
     }
   };
+  // The places in the web app that already want a card: the Messages that name or propose it, the markers that list it.
+  const wantedBy = new Map<string, string[]>();
+  const want = (number: string, place: string): void => void wantedBy.set(number, [...(wantedBy.get(number) ?? []), place]);
+  const notInPlan = new Map<string, string[]>();
+  for (const type of MESSAGE_CATALOGUE) {
+    const fit = type.learningCard;
+    if (fit.fit === 'named') want(fit.card.number, type.id);
+    if (fit.fit === 'proposed') want(fit.card.number, `${type.id} (proposed)`);
+    if (fit.fit === 'toWrite') notInPlan.set(fit.topic, [...(notInPlan.get(fit.topic) ?? []), type.id]);
+  }
+  for (const [place, numbers] of Object.entries(MARKERS)) for (const number of numbers) want(number, `marker ${place}`);
   const count: Record<string, number> = {};
   for (const level of plan.levels) {
     const lines: string[] = [];
@@ -71,19 +83,26 @@ if (command === 'list') {
       const rows = plan.topics
         .filter((topic) => topic.section === section.number)
         .map((topic) => ({ topic, state: stateOf(topic.number) }))
-        .filter((row) => !only || row.state === only);
+        .filter((row) => !only || (only === 'wanted' ? row.state === 'open' && wantedBy.has(row.topic.number) : row.state === only));
       if (rows.length === 0) continue;
       lines.push(`  ${section.number} ${section.title.en}`);
       for (const { topic, state } of rows) {
         count[state] = (count[state] ?? 0) + 1;
         const record = existsSync(path.join(CARDS, topic.number, 'interview.md')) ? ' · interview record' : '';
-        lines.push(`    ${topic.number.padEnd(7)} ${state.padEnd(9)} ${(topic.priority ?? '').padEnd(12)} ${topic.title.en}${record}`);
+        const places = state === 'open' && wantedBy.has(topic.number) ? `  ← ${wantedBy.get(topic.number)?.join(', ')}` : '';
+        lines.push(`    ${topic.number.padEnd(7)} ${state.padEnd(9)} ${(topic.priority ?? '').padEnd(12)} ${topic.title.en}${record}${places}`);
       }
     }
     if (lines.length) console.log(`${level.name}\n${lines.join('\n')}\n`);
   }
   const total = Object.values(count).reduce((sum, value) => sum + value, 0);
+  const wantedOpen = plan.topics.filter((topic) => stateOf(topic.number) === 'open' && wantedBy.has(topic.number)).length;
   console.log(`${total} topic(s): ${states.concat('broken').filter((state) => count[state]).map((state) => `${count[state]} ${state}`).join(', ') || 'none'}. Prod shows only the reviewed ones.`);
+  console.log(`${wantedOpen} open topic(s) are wanted by a place in Data Hub (← the Message or marker that wants it): write those first; \`list wanted\` lists only them.`);
+  if (notInPlan.size) {
+    console.log('\nWanted by Data Hub, not yet a topic of the plan (the Message Catalogue asks for them):');
+    for (const [topic, ids] of notInPlan) console.log(`  ${topic}  ← ${ids.join(', ')}`);
+  }
   process.exit(0);
 }
 
@@ -166,7 +185,7 @@ if (command === 'links' && target) {
 }
 
 if ((command !== 'check' && command !== 'stamp') || !target) {
-  console.error('Usage: node scripts/learning-card.ts list [open | draft | reviewed] [section] | check <number | folder> | stamp <number | folder> | links <number | folder> ["words a reader uses" …]');
+  console.error('Usage: node scripts/learning-card.ts list [open | draft | reviewed | wanted] [section] | check <number | folder> | stamp <number | folder> | links <number | folder> ["words a reader uses" …]');
   process.exit(2);
 }
 
