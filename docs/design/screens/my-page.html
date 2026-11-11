@@ -8,8 +8,14 @@
   confirm, and the list keeps it, marked revoked. The switch at the bottom shows the states: ?metab=keys&keys=new,
   ?metab=keys&keys=made, ?metab=keys&keys=revoking. Background: one line on day and night, then a tile per
   background of the current theme, Random first, the chosen one with a ring (?metab=background).
-  Requirements: FR-UM-18, FR-PL-01, FR-PL-02, FR-PL-03, NFR-LOC-01, NFR-LOC-06, NFR-LOC-12
-  Decisions: DEC-DH-78, DEC-DH-79, DEC-UX-84, DEC-UX-85, DEC-UX-96, DEC-UX-108, DEC-UX-109.
+  Slack, on Profile, where the Slack app of Data Hub is set up (DEC-UX-209, FR-LN-07): the account Data Hub finds in Slack
+  by the Google address, or "Data Hub does not find you" with a field for another address; Look it up names the Slack
+  account of that address; Send the code sends six digits to it as a direct message, which the User types within
+  10 minutes; then that account gets the direct messages, until Back to your Google address. The switch shows ?slack=found,
+  absent, look, nomatch, code, wrong, other and off, the last without the tile, as where Slack is not set up.
+  Requirements: FR-UM-18, FR-PL-01, FR-PL-02, FR-PL-03, FR-LN-07, NFR-LOC-01, NFR-LOC-06, NFR-LOC-12
+  Decisions: DEC-DH-78, DEC-DH-79, DEC-UX-84, DEC-UX-85, DEC-UX-96, DEC-UX-108, DEC-UX-109, DEC-UX-209, DEC-LN-08.
+  Open points: OP-LN-08, OP-UX-78.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="owner">
@@ -62,6 +68,42 @@
    <button class="seg" data-target="en" role="radio" aria-checked="false">English</button>
   </div>
   <p class="meta" style="display:block;margin-top:12px">The Learning Cards follow it too.</p>
+ </section>
+ <section class="sub-tile me-tile" data-pane-group="slack" data-pane="found absent look nomatch code wrong other">
+  <div class="label">Slack</div>
+  <p class="meta" style="display:block;line-height:1.5;margin:4px 0 12px">Your notifications also come as a direct message from Data Hub in Slack, to the account Data Hub finds by your address.</p>
+  <div data-pane-group="slack" data-pane="found">
+   <div class="me-row" style="cursor:default"><span class="item-icon"><i class="ph ph-slack-logo"></i></span><span style="flex:1;min-width:0"><span class="item-title">Maxime Passenier</span><span class="meta" style="display:block">in Slack, by maxime.passenier@immoscoop.be, your Google account</span></span><span class="status"><i class="ph-fill ph-check-circle"></i>Found</span></div>
+   <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn-quiet outline" data-go="slack:look">Another address</button></div>
+  </div>
+  <div data-pane-group="slack" data-pane="absent" hidden>
+   <div class="alert" style="margin-top:0"><i class="ph-fill ph-warning-circle"></i><p>Data Hub does not find you in Slack by maxime.passenier@immoscoop.be, so your notifications come by e-mail alone. Is your Slack account on another address? Slack shows it in your profile.</p></div>
+   <label class="field" style="margin-top:12px"><span>Your address in Slack</span><input type="email" placeholder="you@immoscoop.be" autocomplete="off"></label>
+   <button class="btn-primary" data-go="slack:look">Look it up</button>
+  </div>
+  <div data-pane-group="slack" data-pane="look nomatch" hidden>
+   <label class="field"><span>Your address in Slack</span><input type="email" value="maxime@thenextimmoscoop.be" autocomplete="off"></label>
+  </div>
+  <div data-pane-group="slack" data-pane="look" hidden>
+   <div class="me-row" style="cursor:default"><span class="item-icon"><i class="ph ph-slack-logo"></i></span><span style="flex:1;min-width:0"><span class="item-title">Maxime Passenier</span><span class="meta" style="display:block">has this address in Slack</span></span></div>
+   <p class="meta" style="display:block;line-height:1.5;margin:10px 0 12px">To be sure it is you, Data Hub sends a code to this account in Slack. Until you type it, nothing changes.</p>
+   <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn-quiet outline" data-go="slack:found">Cancel</button><button class="btn-primary" data-go="slack:code"><i class="ph ph-paper-plane-tilt" style="font-size:15px"></i>Send the code</button></div>
+  </div>
+  <div data-pane-group="slack" data-pane="nomatch" hidden>
+   <div class="alert" style="margin-top:0"><i class="ph-fill ph-warning-circle"></i><p>No one in Slack has this address. Check it in your profile in Slack.</p></div>
+   <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btn-quiet outline" data-go="slack:found">Cancel</button><button class="btn-primary" data-go="slack:look">Look it up</button></div>
+  </div>
+  <div data-pane-group="slack" data-pane="code wrong" hidden>
+   <p class="meta" style="display:block;line-height:1.5;margin:0 0 10px">Data Hub sent a code to <b style="font-weight:500">Maxime Passenier</b> in Slack. Type it here: it holds for 10 minutes.</p>
+   <blockquote class="meta" style="display:block;margin:0 0 12px;padding:8px 12px;border-left:3px solid var(--text-muted);line-height:1.5">In Slack, from Data Hub: "Your code for Data Hub is <span class="mono">482 913</span>. Someone asked Data Hub to send their notifications to this Slack account. If that was not you, ignore this message."</blockquote>
+   <label class="field" style="max-width:200px"><span>Code</span><input class="mono" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6 digits"></label>
+   <div class="alert" data-pane-group="slack" data-pane="wrong" hidden style="margin:0 0 12px"><i class="ph-fill ph-warning-circle"></i><p>That code is not right. Four tries left.</p></div>
+   <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn-quiet outline" data-go="slack:code">Send another code</button><button class="btn-primary" data-go="slack:other">Confirm</button></div>
+  </div>
+  <div data-pane-group="slack" data-pane="other" hidden>
+   <div class="me-row" style="cursor:default"><span class="item-icon"><i class="ph ph-slack-logo"></i></span><span style="flex:1;min-width:0"><span class="item-title">Maxime Passenier</span><span class="meta" style="display:block">in Slack, by maxime@thenextimmoscoop.be, which you confirmed on 11 November</span></span><span class="status"><i class="ph-fill ph-check-circle"></i>Confirmed</span></div>
+   <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn-quiet outline" data-go="slack:look">Another address</button><button class="btn-quiet outline" data-go="slack:found">Back to your Google address</button></div>
+  </div>
  </section>
  <section class="sub-tile me-tile">
   <div class="label">You own</div>
@@ -173,6 +215,16 @@
 </section>
 </div>
 
+<div class="proto-switch" data-group="slack" role="tablist" aria-label="Prototype: Slack" style="bottom:64px">Slack
+ <button class="seg on" data-target="found" role="tab" aria-selected="true">Found</button>
+ <button class="seg" data-target="absent" role="tab" aria-selected="false">Not found</button>
+ <button class="seg" data-target="look" role="tab" aria-selected="false">Another address</button>
+ <button class="seg" data-target="nomatch" role="tab" aria-selected="false">No one has it</button>
+ <button class="seg" data-target="code" role="tab" aria-selected="false">Code sent</button>
+ <button class="seg" data-target="wrong" role="tab" aria-selected="false">Wrong code</button>
+ <button class="seg" data-target="other" role="tab" aria-selected="false">Confirmed</button>
+ <button class="seg" data-target="off" role="tab" aria-selected="false">No Slack here</button>
+</div>
 <div class="proto-switch" data-group="keys" role="tablist" aria-label="Prototype: Excel keys">Excel keys
  <button class="seg on" data-target="list" role="tab" aria-selected="true">The list</button>
  <button class="seg" data-target="new" role="tab" aria-selected="false">Making one</button>

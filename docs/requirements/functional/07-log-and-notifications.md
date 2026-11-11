@@ -32,6 +32,7 @@ Pointers to material this domain will build on, collected during the migration. 
 - <a id="dec-ln-05"></a>**DEC-LN-05** · Data Hub sends notifications in Slack in version 1, through one Slack app of Immoscoop, as direct messages only, never in channels. The app has a bot token with the scopes `chat:write`, `im:write` and `users:read.email`, kept in Secret Manager. Data Hub finds a User in Slack by the e-mail address of their Google account; a User who is not in Slack gets e-mail alone. *Decided on 2026-10-28, by Max ([OP-LN-04](#op-ln-04)).*
 - <a id="dec-ln-06"></a>**DEC-LN-06** · The Data Team owns the Slack app of Data Hub; a Slack admin installs it in the workspace once. *Decided on 2026-10-28, by Max ([OP-LN-06](#op-ln-06)).*
 - <a id="dec-ln-07"></a>**DEC-LN-07** · A notification to an Owner Unit also goes as a Slack direct message to each of its members Data Hub knows, the same members it reaches in Data Hub ([DEC-LN-03](#dec-ln-03)); the e-mail to the address of its Google group still reaches every member. To know them, identity keeps the Groups of a User from their last sign-in ([DEC-UM-08](02-user-management.md#dec-um-08)). *Decided on 2026-10-29, by Max ([OP-LN-07](#op-ln-07)).*
+- <a id="dec-ln-08"></a>**DEC-LN-08** · A User can give the address by which Data Hub finds them in Slack, when their Slack account is on another address than their Google account; Data Hub then sends their direct messages to that account, and to the account of their Google address otherwise ([DEC-LN-05](#dec-ln-05)). How a User proves that the account is theirs is [OP-LN-08](#op-ln-08). *Decided on 2026-11-11, by Max: "the ability to update your slack address", after asking how Data Hub links a User to their Slack account.*
 
 ## Requirements
 
@@ -89,6 +90,24 @@ Every output, a chart, a Report, a PDF or an export, visibly carries the Query I
 
 *Note of 2026-10-31, on checking what was built: the result of a query, of a Preview and of a Lens carry their Query ID; a chart, a Report and an export carry theirs when they come.*
 
+<a id="fr-ln-07"></a>
+### FR-LN-07 · A User gives the address Data Hub finds them by in Slack
+
+**Status:** Proposed · **Screens:** [my-page](../../design/screens/my-page.html)
+
+Where the Slack app of Data Hub is set up, Profile on My page shows the Slack account Data Hub finds by the address of the User's Google account, or that it finds none. The User can give another address: Data Hub looks it up and names the Slack account that has it, sends a code of six digits to that account as a direct message, and takes the address once the User types the code within 10 minutes. From then on their direct messages go to that account, until they go back to their Google address ([DEC-LN-08](#dec-ln-08)).
+
+**Makes easy:** getting the notifications in Slack for a colleague whose Slack account is on another Immoscoop address than their Google account. **Makes hard:** sending someone's notifications to a Slack account that is not theirs.
+
+## Edge cases
+
+<a id="ec-ln-01"></a>
+### EC-LN-01 · The Slack account of a confirmed address is gone
+
+**Status:** Proposed
+
+When Data Hub no longer finds a Slack account by the address a User confirmed, because the account was deactivated or its address changed, the User gets e-mail alone, as one who is not in Slack, and Profile says that Data Hub no longer finds them by that address, with the way to give another one ([FR-LN-07](#fr-ln-07)).
+
 ## Open points
 
 - [x] <a id="op-ln-01"></a>**OP-LN-01** · The Query Log ([FR-LN-05](#fr-ln-05)) differs from [DEC-SR-18](04-stacks-and-resources.md#dec-sr-18) and [FR-SR-27](04-stacks-and-resources.md#fr-sr-27): executed queries are not stored in Data Hub in v1. Decide whether the Query Log replaces that, and how long it is kept; see also [OP-SR-08](04-stacks-and-resources.md#op-sr-08) (query history later) and [OP-DH-04](../../overview/open-themes.md#op-dh-04) (usage per Resource). *Raised while taking in the workshop of 2026-10-22.* *Decided on 2026-10-22: Data Hub keeps its own Query Log ([DEC-LN-01](#dec-ln-01)).*
@@ -98,6 +117,8 @@ Every output, a chart, a Report, a PDF or an export, visibly carries the Query I
 - [x] <a id="op-ln-05"></a>**OP-LN-05** · Decide how a notification to an Owner Unit reaches members who never signed in, now that Data Hub knows the members of a Group only from their sign-in ([DEC-UM-08](02-user-management.md#dec-um-08), [FR-LN-01](#fr-ln-01)). Proposal: the e-mail goes to the address of the Google group itself. *Raised on 2026-10-28, in the review of Max.* *Decided on 2026-10-28, by Max: the e-mail goes to the address of the Google group ([DEC-LN-03](#dec-ln-03)).*
 - [x] <a id="op-ln-02"></a>**OP-LN-02** · Work out what making a Lens public means, on which [FR-LN-04](#fr-ln-04) depends: Lenses have no visibility of their own yet ([OP-CO-07](03-collections.md#op-co-07)). *Raised while taking in the workshop of 2026-10-22.* *Decided on 2026-10-28, by Max: the same as for a Resource, available to the entire company ([DEC-LE-09](09-lenses.md#dec-le-09)).*
 - [x] <a id="op-ln-07"></a>**OP-LN-07** · Decide whether a notification to an Owner Unit also goes in Slack: [DEC-LN-03](#dec-ln-03) sends its e-mail to the address of its Google group, while a Slack direct message ([DEC-LN-05](#dec-ln-05)) goes to one person. Proposal: a direct message to each member Data Hub knows, as in Data Hub, with identity keeping the Groups of a User from their last sign-in. *Raised on 2026-10-29, when building the notifications.* *Decided on 2026-10-29, by Max: as proposed ([DEC-LN-07](#dec-ln-07)).*
+
+- [ ] <a id="op-ln-08"></a>**OP-LN-08** · Decide how a User proves that a Slack account is theirs ([DEC-LN-08](#dec-ln-08)). Proposal, as [drawn](../../design/screens/my-page.html): Data Hub sends a code of six digits to the Slack account of the address as a direct message, in the User's language, with a line that whoever did not ask can ignore it; the code holds for 10 minutes and five tries, and only the newest code counts. Without it, a User could send their notifications to someone else's account, and read nothing back, but fill it with Messages that are not theirs. *Raised on 2026-11-11, while designing [FR-LN-07](#fr-ln-07).*
 
 ## Builds on
 
