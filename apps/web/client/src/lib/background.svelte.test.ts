@@ -20,24 +20,24 @@ describe('the background on screen (DEC-UX-108)', () => {
     const backgrounds = new Backgrounds(new Settings({}, async () => {}), sequence(0, 0.99, 0.99));
     expect(backgrounds.of('light').id).toBe('gradient');
     expect(backgrounds.of('dark').id).toBe('midnight');
-    expect(backgrounds.of('light').id).toBe('concrete');
+    expect(backgrounds.of('light').id).toBe('tide');
   });
 
   it('is the one the User chose for the theme, kept per theme', () => {
     const save = vi.fn(async () => {});
     const backgrounds = new Backgrounds(new Settings({ 'background.dark': 'borealis' }, save));
     expect(backgrounds.of('dark').id).toBe('borealis');
-    backgrounds.choose('light', 'concrete');
-    expect(save).toHaveBeenCalledWith('background.light', 'concrete');
-    expect(backgrounds.of('light').id).toBe('concrete');
+    backgrounds.choose('light', 'tide');
+    expect(save).toHaveBeenCalledWith('background.light', 'tide');
+    expect(backgrounds.of('light').id).toBe('tide');
     expect(backgrounds.of('dark').id).toBe('borealis');
   });
 
   it('picks again when the User chooses Random', () => {
-    const backgrounds = new Backgrounds(new Settings({ 'background.light': 'concrete' }, async () => {}), sequence(0, 0.99));
+    const backgrounds = new Backgrounds(new Settings({ 'background.light': 'tide' }, async () => {}), sequence(0, 0.99));
     backgrounds.choose('light', 'random');
     expect(backgrounds.of('light').id).toBe('gradient');
     backgrounds.choose('light', 'random');
-    expect(backgrounds.of('light').id).toBe('concrete');
+    expect(backgrounds.of('light').id).toBe('tide');
   });
 });
