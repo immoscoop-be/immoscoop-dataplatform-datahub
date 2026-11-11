@@ -32,7 +32,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Claude](functional/17-claude.md) | 29 (1 proposed, 28 implemented) | 5 (5 implemented) | 16 | 11 (7 open, 4 done) |
 | [Localisation](non-functional/localisation.md) | 12 (8 specified, 3 implemented, 1 withdrawn) | – | – | – |
 | [Security](non-functional/security.md) | 4 (4 implemented) | – | – | – |
-| [Platform: technical requirements](technical/00-platform.md) | 34 (3 specified, 30 implemented, 1 withdrawn) | – | 32 | 20 (6 open, 14 done) |
+| [Platform: technical requirements](technical/00-platform.md) | 34 (3 specified, 30 implemented, 1 withdrawn) | – | 33 | 20 (6 open, 14 done) |
 | [Artifact registry: technical requirements](technical/01-artifact-registry.md) | 14 (14 implemented) | – | – | – |
 | [User management: technical requirements](technical/02-user-management.md) | 7 (7 implemented) | – | – | 1 (1 open) |
 | [Collections: technical requirements](technical/03-collections.md) | 8 (8 implemented) | – | – | 2 (2 done) |
