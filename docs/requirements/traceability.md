@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 208 | 78 (22 open, 56 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 208 | 78 (21 open, 57 done) |
 | [Backlog](../overview/backlog.md) | – | – | – | 7 (5 open, 2 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
@@ -19,7 +19,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Resources](functional/04-stacks-and-resources.md) | 54 (5 specified, 43 implemented, 6 withdrawn) | 4 (1 specified, 3 withdrawn) | 44 | 25 (4 open, 21 done) |
 | [Resource card](functional/05-resource-card.md) | 27 (4 proposed, 2 specified, 20 implemented, 1 withdrawn) | 1 (1 implemented) | 20 | 27 (2 open, 25 done) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 16 (4 specified, 7 implemented, 5 withdrawn) | – | 14 | 8 (2 open, 6 done) |
-| [Log and notifications](functional/07-log-and-notifications.md) | 7 (4 proposed, 3 implemented) | 1 (1 proposed) | 8 | 8 (1 open, 7 done) |
+| [Log and notifications](functional/07-log-and-notifications.md) | 7 (3 proposed, 1 specified, 3 implemented) | 1 (1 specified) | 8 | 8 (8 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | 39 (39 specified) | 4 (4 proposed) | 30 | 15 (15 open) |
 | [Lenses](functional/09-lenses.md) | 18 (15 implemented, 3 withdrawn) | – | 21 | 10 (10 done) |
 | [Reports](functional/10-reports.md) | – | – | – | – |
@@ -264,7 +264,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-LN-04](functional/07-log-and-notifications.md#fr-ln-04) | The Owner hears when a Lens on their Resource becomes public | Proposed | – | – | – | [59971b7](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/59971b72949b124df6db5d0e9fa69c02bda0664c) refs, 2026-10-28 |
 | [FR-LN-05](functional/07-log-and-notifications.md#fr-ln-05) | Every query gets a Query ID in the Query Log | Implemented | – | [query](../design/screens/query.html), [resource-preview](../design/screens/resource-preview.html) | [TR-SR-17](technical/04-stacks-and-resources.md#tr-sr-17) | [8723a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8723a4b3dcd0566348203fc7d7a2bcc2e487c93e) implements, 2026-10-29<br>[f3da34c](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f3da34cc541af1b4bf17a5ca7e8a3184dac870f8) refs, 2026-10-29 |
 | [FR-LN-06](functional/07-log-and-notifications.md#fr-ln-06) | Every output carries its Query ID | Implemented | – | [lens](../design/screens/lens.html), [query](../design/screens/query.html), [resource-preview](../design/screens/resource-preview.html) | – | [6c15dc9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/6c15dc9a86c0bc1f81eee09927c6836bd9658b5e) implements, 2026-10-31<br>[8723a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8723a4b3dcd0566348203fc7d7a2bcc2e487c93e) refs, 2026-10-29<br>[acd861a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/acd861a9383253af6e5a2f1017866aaae95037f0) refs, 2026-10-23 |
-| [FR-LN-07](functional/07-log-and-notifications.md#fr-ln-07) | A User gives the address Data Hub finds them by in Slack | Proposed | – | [my-page](../design/screens/my-page.html) | – | – |
+| [FR-LN-07](functional/07-log-and-notifications.md#fr-ln-07) | A User gives the address Data Hub finds them by in Slack | Specified | – | [my-page](../design/screens/my-page.html) | – | [af685b1](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/af685b169e924cbfdcd8a34f75ae79e446472237) refs, 2026-11-11 |
 
 ### [Checks and monitoring](functional/08-checks-and-monitoring.md)
 
@@ -515,7 +515,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | ID | Title | Status | Screens | Realised by | Commits |
 | --- | --- | --- | --- | --- | --- |
-| [EC-LN-01](functional/07-log-and-notifications.md#ec-ln-01) | The Slack account of a confirmed address is gone | Proposed | – | – | – |
+| [EC-LN-01](functional/07-log-and-notifications.md#ec-ln-01) | The Slack account of a confirmed address is gone | Specified | – | – | [af685b1](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/af685b169e924cbfdcd8a34f75ae79e446472237) refs, 2026-11-11 |
 
 ### [Checks and monitoring](functional/08-checks-and-monitoring.md)
 
