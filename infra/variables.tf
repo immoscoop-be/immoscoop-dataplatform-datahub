@@ -113,13 +113,13 @@ variable "break_glass_admins" {
   }
 }
 
-variable "warm_services" {
-  description = "The services that keep one instance running, so that the first visitor never waits for a cold start; the others start when called (DEC-PF-33). Idle, one instance of 1 vCPU and 512 MiB costs about 10 dollars a month."
+variable "warm_in_office_hours" {
+  description = "The services the scheduler calls every five minutes on weekdays from 07:00 to 19:00, Belgian time, so that Cloud Run keeps an instance of each and nobody waits for a cold start in office hours (DEC-PF-33). An instance kept by calls costs nothing while idle."
   type        = list(string)
   default     = []
 
   validation {
-    condition     = alltrue([for name in var.warm_services : contains(["identity", "catalogue", "registry", "query", "semgraph", "mcp", "web"], name)])
+    condition     = alltrue([for name in var.warm_in_office_hours : contains(["identity", "catalogue", "registry", "query", "semgraph", "mcp", "web"], name)])
     error_message = "Only services of Data Hub can be kept warm."
   }
 }

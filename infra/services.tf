@@ -28,10 +28,10 @@ resource "google_cloud_run_v2_service" "service" {
       }
     }
 
-    # One instance stays running for the services the environment keeps warm; the others start when called
-    # and stop when idle (DEC-PF-33).
+    # No instance runs unless called: in office hours the scheduler keeps some warm by calling them
+    # (keep-warm.tf, DEC-PF-33), which costs nothing while they are idle, unlike a minimum instance.
     scaling {
-      min_instance_count = contains(var.warm_services, each.key) ? 1 : 0
+      min_instance_count = 0
       max_instance_count = 2
     }
 

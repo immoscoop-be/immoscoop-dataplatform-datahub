@@ -22,5 +22,6 @@ break_glass_admins = [
   "marc.vangoolen@immoscoop.be",
 ]
 
-# Kept running, so that signing in and the Collections never wait for a cold start: about 10 dollars a month each (DEC-PF-33)
-warm_services = ["web", "identity", "catalogue"]
+# Called every five minutes on weekdays from 07:00 to 19:00, so that signing in does not wait for a cold start in office
+# hours; catalogue is called every five minutes anyway, to send the notifications (DEC-PF-33)
+warm_in_office_hours = ["web", "identity"]
