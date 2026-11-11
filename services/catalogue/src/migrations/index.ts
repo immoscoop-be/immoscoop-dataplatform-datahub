@@ -22,6 +22,7 @@ import * as gapPeriodWithoutField from './0020-gap-period-without-field.js';
 import * as lensDeleted from './0021-lens-deleted.js';
 import * as userMessages from './0022-user-messages.js';
 import * as ownerUnitsInDataHub from './0023-owner-units-in-data-hub.js';
+import * as slackAddresses from './0024-slack-addresses.js';
 
 /** The migrations of catalogue, by name; they run in the order of their names (TR-PF-09). */
 export const migrations: Record<string, Migration> = {
@@ -48,4 +49,5 @@ export const migrations: Record<string, Migration> = {
   '0021-lens-deleted': lensDeleted,
   '0022-user-messages': userMessages,
   '0023-owner-units-in-data-hub': ownerUnitsInDataHub,
+  '0024-slack-addresses': slackAddresses,
 };

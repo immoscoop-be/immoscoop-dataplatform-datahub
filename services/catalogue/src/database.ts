@@ -307,4 +307,21 @@ export interface CatalogueDatabase {
     authorName: string;
     updatedAt: Timestamp;
   };
+  /** The address by which Data Hub finds a User in Slack, when it is not their Google address (FR-LN-07). */
+  slackAddresses: {
+    /** The fixed Google ID of the User. */
+    userId: string;
+    email: string;
+    confirmedAt: Timestamp;
+  };
+  /** The newest code sent to a Slack account, to confirm it is the User's own; kept as a hash (OP-LN-08). */
+  slackCodes: {
+    userId: string;
+    email: string;
+    /** The name of the Slack account the code went to, to show while the User types it. */
+    slackName: string;
+    codeHash: string;
+    expiresAt: Date;
+    triesLeft: Generated<number>;
+  };
 }

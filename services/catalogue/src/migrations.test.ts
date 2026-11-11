@@ -155,10 +155,23 @@ describe.skipIf(!url)('catalogue migrations', () => {
   });
 
   it('keeps an Owner Unit without an address, a Group of Data Hub (DEC-UM-10)', async () => {
-    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    const results = await migrate({ db: admin.db, schema, migrations: before('0024'), serviceUser: 'postgres' });
     expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0023-owner-units-in-data-hub', 'Success']]);
     const columns = await sql<{ isNullable: string }>`select is_nullable from information_schema.columns
       where table_schema = ${schema} and table_name = 'collections' and column_name = 'owner_unit_email'`.execute(admin.db);
     expect(columns.rows).toEqual([{ isNullable: 'YES' }]);
+  });
+
+  it('keeps one confirmed address for Slack per User, in lower case, and one code per User (FR-LN-07, OP-LN-08)', async () => {
+    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0024-slack-addresses', 'Success']]);
+    await sql`insert into slack_addresses (user_id, email) values ('u-an', 'an@immoscoop.be')`.execute(admin.db);
+    await expect(sql`insert into slack_addresses (user_id, email) values ('u-an', 'an.claes@immoscoop.be')`.execute(admin.db)).rejects.toThrow(/slack_addresses_pkey/);
+    await expect(sql`insert into slack_addresses (user_id, email) values ('u-bo', 'Bo@immoscoop.be')`.execute(admin.db)).rejects.toThrow(/check/);
+    const code = (tries: number) => sql`insert into slack_codes (user_id, email, slack_name, code_hash, expires_at, tries_left)
+      values ('u-an', 'an@immoscoop.be', 'An', 'hash', now(), ${tries})`;
+    await expect(code(-1).execute(admin.db)).rejects.toThrow(/check/);
+    await code(5).execute(admin.db);
+    await expect(code(5).execute(admin.db)).rejects.toThrow(/slack_codes_pkey/);
   });
 });

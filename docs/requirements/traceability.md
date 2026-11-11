@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 207 | 77 (21 open, 56 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 208 | 78 (21 open, 57 done) |
 | [Backlog](../overview/backlog.md) | – | – | – | 7 (5 open, 2 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
@@ -19,7 +19,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Resources](functional/04-stacks-and-resources.md) | 54 (5 specified, 43 implemented, 6 withdrawn) | 4 (1 specified, 3 withdrawn) | 44 | 25 (4 open, 21 done) |
 | [Resource card](functional/05-resource-card.md) | 27 (4 proposed, 2 specified, 20 implemented, 1 withdrawn) | 1 (1 implemented) | 20 | 27 (2 open, 25 done) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 16 (4 specified, 7 implemented, 5 withdrawn) | – | 14 | 8 (2 open, 6 done) |
-| [Log and notifications](functional/07-log-and-notifications.md) | 6 (3 proposed, 3 implemented) | – | 7 | 7 (7 done) |
+| [Log and notifications](functional/07-log-and-notifications.md) | 7 (3 proposed, 4 implemented) | 1 (1 implemented) | 8 | 8 (8 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | 39 (39 specified) | 4 (4 proposed) | 30 | 15 (15 open) |
 | [Lenses](functional/09-lenses.md) | 18 (15 implemented, 3 withdrawn) | – | 21 | 10 (10 done) |
 | [Reports](functional/10-reports.md) | – | – | – | – |
@@ -37,7 +37,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [User management: technical requirements](technical/02-user-management.md) | 7 (7 implemented) | – | – | 1 (1 open) |
 | [Collections: technical requirements](technical/03-collections.md) | 8 (8 implemented) | – | – | 2 (2 done) |
 | [Resources: technical requirements](technical/04-stacks-and-resources.md) | 26 (26 implemented) | – | – | – |
-| [Log and notifications: technical requirements](technical/07-log-and-notifications.md) | 4 (4 implemented) | – | – | – |
+| [Log and notifications: technical requirements](technical/07-log-and-notifications.md) | 5 (5 implemented) | – | – | – |
 | [Lenses: technical requirements](technical/09-lenses.md) | 9 (9 implemented) | – | – | – |
 | [Permissions and Excel keys: technical requirements](technical/12-permissions-and-library-cards.md) | 9 (9 implemented) | – | – | – |
 | [Conversations: technical requirements](technical/14-conversations.md) | 3 (3 implemented) | – | – | – |
@@ -264,6 +264,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-LN-04](functional/07-log-and-notifications.md#fr-ln-04) | The Owner hears when a Lens on their Resource becomes public | Proposed | – | – | – | [59971b7](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/59971b72949b124df6db5d0e9fa69c02bda0664c) refs, 2026-10-28 |
 | [FR-LN-05](functional/07-log-and-notifications.md#fr-ln-05) | Every query gets a Query ID in the Query Log | Implemented | – | [query](../design/screens/query.html), [resource-preview](../design/screens/resource-preview.html) | [TR-SR-17](technical/04-stacks-and-resources.md#tr-sr-17) | [8723a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8723a4b3dcd0566348203fc7d7a2bcc2e487c93e) implements, 2026-10-29<br>[f3da34c](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f3da34cc541af1b4bf17a5ca7e8a3184dac870f8) refs, 2026-10-29 |
 | [FR-LN-06](functional/07-log-and-notifications.md#fr-ln-06) | Every output carries its Query ID | Implemented | – | [lens](../design/screens/lens.html), [query](../design/screens/query.html), [resource-preview](../design/screens/resource-preview.html) | – | [6c15dc9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/6c15dc9a86c0bc1f81eee09927c6836bd9658b5e) implements, 2026-10-31<br>[8723a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8723a4b3dcd0566348203fc7d7a2bcc2e487c93e) refs, 2026-10-29<br>[acd861a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/acd861a9383253af6e5a2f1017866aaae95037f0) refs, 2026-10-23 |
+| [FR-LN-07](functional/07-log-and-notifications.md#fr-ln-07) | A User gives the address Data Hub finds them by in Slack | Implemented | – | [my-page](../design/screens/my-page.html) | [TR-LN-05](technical/07-log-and-notifications.md#tr-ln-05) | [c633adb](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c633adb76d61ffb84cbb6832a30927eddab6022f) implements, 2026-11-11<br>[7a7077b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7a7077bbf9b98e287159005eb0d35687340d72e3) refs, 2026-11-11<br>[af685b1](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/af685b169e924cbfdcd8a34f75ae79e446472237) refs, 2026-11-11 |
 
 ### [Checks and monitoring](functional/08-checks-and-monitoring.md)
 
@@ -510,6 +511,12 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | --- | --- | --- | --- | --- | --- |
 | [EC-RC-01](functional/05-resource-card.md#ec-rc-01) | A field that a Known Gap names leaves the Resource | Implemented | – | [TR-SR-25](technical/04-stacks-and-resources.md#tr-sr-25) | [a408c18](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a408c1806eb795e89115e270d393ee53a06440f0) refs, 2026-11-04<br>[8f64169](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8f641695801f9a945eee53cb3731294ae970315f) implements, 2026-11-04<br>[30a611d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/30a611db91a340e5cb014586e5d331bfd1c444d5) implements, 2026-11-04<br>[c699596](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c69959667107795a3ba02551632baab7866b8654) refs, 2026-11-04 |
 
+### [Log and notifications](functional/07-log-and-notifications.md)
+
+| ID | Title | Status | Screens | Realised by | Commits |
+| --- | --- | --- | --- | --- | --- |
+| [EC-LN-01](functional/07-log-and-notifications.md#ec-ln-01) | The Slack account of a confirmed address is gone | Implemented | – | [TR-LN-05](technical/07-log-and-notifications.md#tr-ln-05) | [c633adb](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c633adb76d61ffb84cbb6832a30927eddab6022f) implements, 2026-11-11<br>[7a7077b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7a7077bbf9b98e287159005eb0d35687340d72e3) refs, 2026-11-11<br>[af685b1](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/af685b169e924cbfdcd8a34f75ae79e446472237) refs, 2026-11-11 |
+
 ### [Checks and monitoring](functional/08-checks-and-monitoring.md)
 
 | ID | Title | Status | Screens | Realised by | Commits |
@@ -669,6 +676,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [TR-LN-02](technical/07-log-and-notifications.md#tr-ln-02) | A notification reaches the recipients of its type, each once, never its writer | Implemented | [FR-LN-01](functional/07-log-and-notifications.md#fr-ln-01), [FR-CV-03](functional/14-conversations.md#fr-cv-03), [DEC-LN-03](functional/07-log-and-notifications.md#dec-ln-03), [DEC-LN-07](functional/07-log-and-notifications.md#dec-ln-07) | [7ac425d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7ac425df72259094edf4e3a4ffb0d8cd629ca936) implements, 2026-10-29 |
 | [TR-LN-03](technical/07-log-and-notifications.md#tr-ln-03) | E-mail goes through the SMTP relay of Workspace, from one fixed address | Implemented | [DEC-LN-02](functional/07-log-and-notifications.md#dec-ln-02), [FR-CV-15](functional/14-conversations.md#fr-cv-15), [DEC-PF-31](technical/00-platform.md#dec-pf-31), [DEC-UX-129](../design/principles.md#dec-ux-129) | [7ac425d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7ac425df72259094edf4e3a4ffb0d8cd629ca936) implements, 2026-10-29 |
 | [TR-LN-04](technical/07-log-and-notifications.md#tr-ln-04) | Slack gets a direct message from the app of Data Hub | Implemented | [DEC-LN-05](functional/07-log-and-notifications.md#dec-ln-05), [DEC-LN-06](functional/07-log-and-notifications.md#dec-ln-06), [FR-CV-15](functional/14-conversations.md#fr-cv-15), [DEC-UX-129](../design/principles.md#dec-ux-129) | [7ac425d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7ac425df72259094edf4e3a4ffb0d8cd629ca936) implements, 2026-10-29 |
+| [TR-LN-05](technical/07-log-and-notifications.md#tr-ln-05) | catalogue keeps the address a User confirmed for Slack, and the code only as a hash | Implemented | [FR-LN-07](functional/07-log-and-notifications.md#fr-ln-07), [EC-LN-01](functional/07-log-and-notifications.md#ec-ln-01), [DEC-LN-08](functional/07-log-and-notifications.md#dec-ln-08), [OP-LN-08](functional/07-log-and-notifications.md#op-ln-08), [DEC-UX-209](../design/principles.md#dec-ux-209) | [c633adb](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c633adb76d61ffb84cbb6832a30927eddab6022f) implements, 2026-11-11 |
 
 ### [Lenses: technical requirements](technical/09-lenses.md)
 

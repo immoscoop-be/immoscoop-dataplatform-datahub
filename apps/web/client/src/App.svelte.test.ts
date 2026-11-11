@@ -574,6 +574,11 @@ function serve({
   sessionEndsAt = undefined as string | undefined,
   /** The Groups of Data Hub, for the page Groups; without it, Data is the one Group of the User. */
   world = undefined as ReturnType<typeof groupWorld> | undefined,
+  /**
+   * Slack, by address: the name of the account that has it, the Google address of the User among them (FR-LN-07);
+   * without it, the Slack app of Data Hub is not set up here (OP-UX-78). The code it sends is always 123456.
+   */
+  slack = undefined as Record<string, string> | undefined,
 } = {}): Saved[] {
   const calls: Saved[] = [];
   // The Users and Permission groups as identity keeps them, changed by what the page asks (TR-PL-07).
@@ -592,6 +597,15 @@ function serve({
   let sourceJob = { ...SOURCE_JOB_TILE };
   // Weekly lead volume as catalogue keeps it, changed by what the page asks.
   let resource: Record<string, unknown> = { ...WEEKLY_DETAIL, ...weekly };
+  // The address by which catalogue finds the User in Slack, and the code it sent, changed by what the page asks.
+  let slackKept: { email: string; confirmedAt: string } | null = null;
+  let slackCode: { email: string; triesLeft: number } | null = null;
+  const slackState = () => {
+    const address = slackKept?.email ?? ME.email;
+    return slack
+      ? { on: true, google: ME.email, address, confirmedAt: slackKept?.confirmedAt ?? null, name: slack[address] ?? null }
+      : { on: false, google: ME.email, address: ME.email, confirmedAt: null, name: null };
+  };
   const PUBLICATION = { publishedAt: '2026-10-28T09:00:00Z', publishedBy: 'Max Verstraete', confirmedAt: '2026-10-28T09:00:00Z', confirmedBy: 'Max Verstraete' };
   vi.stubGlobal('fetch', async (input: string, init: RequestInit = {}) => {
     const method = init.method ?? 'GET';
@@ -1136,6 +1150,30 @@ function serve({
     if (path.startsWith('/me/settings/') && (method === 'PUT' || method === 'DELETE')) {
       return new Response(null, { status: 204 });
     }
+    if (path === '/me/slack' && method === 'GET') return json(slackState());
+    if (path === '/me/slack' && method === 'DELETE') {
+      slackKept = null;
+      return json(slackState());
+    }
+    if (path === '/me/slack/lookup' || path === '/me/slack/code') {
+      const { email } = JSON.parse(init.body as string) as { email: string };
+      const name = slack?.[email];
+      if (!name) return json({ error: 'not_found' }, 404);
+      if (path === '/me/slack/lookup') return json({ name });
+      slackCode = { email, triesLeft: 5 };
+      return json({ name, expiresAt: '2026-11-11T20:10:00Z' }, 202);
+    }
+    if (path === '/me/slack/confirm') {
+      const { code } = JSON.parse(init.body as string) as { code: string };
+      if (!slackCode) return json({ error: 'no_code' }, 409);
+      if (code !== '123456') {
+        slackCode.triesLeft -= 1;
+        return json({ error: 'wrong_code', triesLeft: slackCode.triesLeft }, 400);
+      }
+      slackKept = slackCode.email === ME.email ? null : { email: slackCode.email, confirmedAt: '2026-11-11T20:05:00Z' };
+      slackCode = null;
+      return json(slackState());
+    }
     if (path === '/messages/unread') {
       return json({ unread: talk.filter((message) => message.unread).length });
     }
@@ -1363,6 +1401,69 @@ describe('the web app, signed in', () => {
     expect(screen.getByRole('tab', { name: 'Profile' })).toBeTruthy();
     expect(document.documentElement.lang).toBe('en');
     expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/language', body: { value: 'en' } });
+  });
+
+  it('shows the Slack account Data Hub finds by the Google address, and takes another one only with a code sent there (FR-LN-07, OP-LN-08)', async () => {
+    const calls = serve({ settings: { language: 'en' }, slack: { 'max@thenextimmoscoop.be': 'Max Verstraete', 'max@immoscoop.be': 'Max V.' } });
+    open('/me');
+    render(App, { config: CONFIG });
+    const tile = within((await screen.findByText('Slack', { selector: '.label' })).closest('section')!);
+    expect(await tile.findByText('in Slack, by max@thenextimmoscoop.be, your Google account')).toBeTruthy();
+    expect(tile.getByText('Found')).toBeTruthy();
+
+    // An address no one in Slack has is said in the tile.
+    await fireEvent.click(tile.getByRole('button', { name: 'Another address' }));
+    const field = tile.getByRole('textbox', { name: 'Your address in Slack' });
+    await fireEvent.input(field, { target: { value: 'nobody@immoscoop.be' } });
+    await fireEvent.click(tile.getByRole('button', { name: 'Look it up' }));
+    expect(await tile.findByText('No one in Slack has this address. Check it in your profile in Slack.')).toBeTruthy();
+
+    // One someone has is named, and nothing changes until the code sent there is typed.
+    await fireEvent.input(field, { target: { value: 'max@immoscoop.be' } });
+    await fireEvent.click(tile.getByRole('button', { name: 'Look it up' }));
+    expect(await tile.findByText('has this address in Slack')).toBeTruthy();
+    expect(tile.getByText('Max V.')).toBeTruthy();
+    expect(calls.some((call) => call.path === '/me/slack/code')).toBe(false);
+    await fireEvent.click(tile.getByRole('button', { name: 'Send the code' }));
+    expect(await tile.findByText('Data Hub sent a code to Max V. in Slack. Type it here: it holds for 10 minutes.')).toBeTruthy();
+    expect(calls).toContainEqual({ method: 'POST', path: '/me/slack/code', body: { email: 'max@immoscoop.be', language: 'en' } });
+
+    const code = tile.getByRole('textbox', { name: 'Code' });
+    await fireEvent.input(code, { target: { value: '000000' } });
+    await fireEvent.click(tile.getByRole('button', { name: 'Confirm' }));
+    expect(await tile.findByText('That code is not right. 4 tries left.')).toBeTruthy();
+    await fireEvent.input(code, { target: { value: '123456' } });
+    await fireEvent.click(tile.getByRole('button', { name: 'Confirm' }));
+    expect(await tile.findByText('in Slack, by max@immoscoop.be, which you confirmed on 11 November')).toBeTruthy();
+    expect(tile.getByText('Confirmed')).toBeTruthy();
+
+    await fireEvent.click(tile.getByRole('button', { name: 'Back to your Google address' }));
+    expect(await tile.findByText('in Slack, by max@thenextimmoscoop.be, your Google account')).toBeTruthy();
+    expect(calls).toContainEqual({ method: 'DELETE', path: '/me/slack' });
+  });
+
+  it('says so when Slack has no one by the Google address (EC-LN-01)', async () => {
+    serve({ settings: { language: 'en' }, slack: {} });
+    open('/me');
+    render(App, { config: CONFIG });
+    const tile = within((await screen.findByText('Slack', { selector: '.label' })).closest('section')!);
+    expect(
+      tile.getByText(
+        'Data Hub does not find you in Slack by max@thenextimmoscoop.be, so your notifications come by e-mail alone. Is your Slack account on another address? Slack shows it in your profile.',
+      ),
+    ).toBeTruthy();
+    expect(tile.getByRole('textbox', { name: 'Your address in Slack' })).toBeTruthy();
+    expect(tile.queryByRole('button', { name: 'Cancel' })).toBeNull();
+  });
+
+  it('shows no tile Slack where the Slack app of Data Hub is not set up (OP-UX-78)', async () => {
+    const calls = serve({ settings: { language: 'en' } });
+    open('/me');
+    render(App, { config: CONFIG });
+    expect(await screen.findByText('Language', { selector: '.label' })).toBeTruthy();
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'GET', path: '/me/slack' }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(screen.queryByText('Slack', { selector: '.label' })).toBeNull();
   });
 
   it('keeps a background per theme (DEC-UX-108)', async () => {

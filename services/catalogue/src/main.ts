@@ -14,6 +14,7 @@ import { createQueryService } from './query.js';
 import { createRegistry } from './registry.js';
 import { createRequests } from './requests.js';
 import { createResources } from './resources.js';
+import { createSlackAddresses } from './slack-addresses.js';
 import { createSlack, slackTokenFrom } from './slack.js';
 
 const database = await connectCloudSql<CatalogueDatabase>(cloudSqlOptionsFromEnv('catalogue'));
@@ -27,15 +28,16 @@ const catalogueUrl = required('DATAHUB_CATALOGUE_URL');
 // traffic leaves from (DEC-PF-31), and in Slack with the bot token from Secret Manager (DEC-LN-05).
 const slackToken = required('DATAHUB_SLACK_BOT_TOKEN');
 const accessToken = metadataAccessToken();
+const slack = createSlack(
+  slackTokenFrom(
+    () => readSecret(slackToken, accessToken),
+    (error) => app.log.warn({ err: error }, 'the Slack bot token has no value yet: notifications go by e-mail alone'),
+  ),
+);
 const notifications = createNotifications(database.db, {
   people: createPeople(identityUrl, idToken),
   mail: createMail({ host: required('DATAHUB_SMTP_HOST'), port: Number(process.env.DATAHUB_SMTP_PORT ?? 587), from: required('DATAHUB_MAIL_FROM') }),
-  slack: createSlack(
-    slackTokenFrom(
-      () => readSecret(slackToken, accessToken),
-      (error) => app.log.warn({ err: error }, 'the Slack bot token has no value yet: notifications go by e-mail alone'),
-    ),
-  ),
+  slack,
   webUrl: required('DATAHUB_WEB_URL'),
   // The Data Team by its address, and in Slack the Users who get the Messages for the Data Team (TR-PL-08).
   dataTeam: { email: required('DATAHUB_DATA_TEAM_EMAIL'), permission: 'messages.dataTeam' },
@@ -44,6 +46,8 @@ const notifications = createNotifications(database.db, {
 const collections = createCollections(database.db);
 const app = await buildApp({
   verifier: verifierFromEnv(),
+  // The address by which Data Hub finds a User in Slack, confirmed with a code sent there (FR-LN-07).
+  slack: { addresses: createSlackAddresses(database.db, slack) },
   notifications: {
     notifications,
     // Cloud Scheduler starts a delivery round with a Google ID token for catalogue's own address.

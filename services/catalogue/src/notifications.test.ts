@@ -75,7 +75,7 @@ describe('Slack, through the app of Data Hub (DEC-LN-05)', () => {
       const json = (value: unknown) => new Response(JSON.stringify(value), { status: 200, headers: { 'content-type': 'application/json' } });
       if (method === 'users.lookupByEmail') {
         const email = new URLSearchParams(body).get('email') ?? '';
-        return json(users[email] ? { ok: true, user: { id: users[email] } } : { ok: false, error: 'users_not_found' });
+        return json(users[email] ? { ok: true, user: { id: users[email], name: 'an', profile: { real_name: 'An Claes', display_name: 'an' } } } : { ok: false, error: 'users_not_found' });
       }
       if (method === 'conversations.open') return json({ ok: true, channel: { id: `D-${(JSON.parse(body) as { users: string }).users}` } });
       return json({ ok: true });
@@ -93,6 +93,15 @@ describe('Slack, through the app of Data Hub (DEC-LN-05)', () => {
     // Someone not in Slack gets e-mail alone; without a token, Slack is off.
     expect(await slack.send('jan@immoscoop.be', message)).toBe('absent');
     expect(await createSlack(async () => null, request).send('an@immoscoop.be', message)).toBe('off');
+  });
+
+  it('names the account that has an address, before anything is sent (FR-LN-07)', async () => {
+    const { calls, request } = answers({ 'an@immoscoop.be': 'U1' });
+    const slack = createSlack(async () => 'xoxb-token', request);
+    expect(await slack.find('an@immoscoop.be')).toEqual({ name: 'An Claes' });
+    expect(await slack.find('jan@immoscoop.be')).toBeNull();
+    expect(calls.map((call) => call.method)).toEqual(['users.lookupByEmail', 'users.lookupByEmail']);
+    expect(await createSlack(async () => null, request).find('an@immoscoop.be')).toBe('off');
   });
 
   it('reads the token again later, and is off only while the secret has no value', async () => {
@@ -179,6 +188,9 @@ describe.skipIf(!url)('notifications by e-mail and in Slack (DEC-LN-02, DEC-LN-0
           slacked.push({ email, message });
           return 'sent';
         },
+        async find(email) {
+          return email === 'jan@immoscoop.be' ? null : { name: email };
+        },
       },
       webUrl: 'https://web.test',
       dataTeam: { email: 'datahub-datateam@immoscoop.be', permission: 'messages.dataTeam' },
@@ -235,6 +247,20 @@ describe.skipIf(!url)('notifications by e-mail and in Slack (DEC-LN-02, DEC-LN-0
     expect(mails.slice(2).map((sent) => [sent.to, sent.subject])).toEqual([['karel@immoscoop.be', 'An Claes antwoordde over de lens Leads per source name: “Since March, newsletter leads count only through their link.”']]);
     expect(mails[2]?.html).toContain('Je krijgt dit omdat je dit gesprek begon.');
     expect(slacked.slice(1).map((sent) => sent.email)).toEqual(['karel@immoscoop.be']);
+  });
+
+  it('sends the direct message of a User who confirmed another address for Slack there, and the e-mail as before (FR-LN-07)', async () => {
+    await database.db.insertInto('slackAddresses').values({ userId: 'u-an', email: 'an.claes@thenextimmoscoop.be' }).execute();
+    try {
+      const lens = '1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f';
+      await messages.keepLens(lens, { name: 'Leads per partner', collectionId: credit.id, resourceIds: [], state: 'published', authorId: 'u-an', authorName: 'An Claes' });
+      await messages.write(await sightOf(karel), { kind: 'lens', id: lens }, 'question', 'Why so few from Belfius?');
+      await notifications.deliver();
+      expect(slacked.map((sent) => sent.email)).toEqual(['an.claes@thenextimmoscoop.be']);
+      expect(mails.map((mail) => mail.to)).toEqual(['an@immoscoop.be', 'jan@immoscoop.be']);
+    } finally {
+      await database.db.deleteFrom('slackAddresses').execute();
+    }
   });
 
   it('notifies the Owner Unit and the Data Team of a Signal, and nobody twice', async () => {
