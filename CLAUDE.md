@@ -13,6 +13,7 @@ Everything in this repository is in English: code, comments, documentation and c
 - Never renumber or reuse an ID. A requirement that is no longer wanted gets status `Withdrawn`.
 - Link every ID you mention to its anchor, for example `[FR-AR-05](functional/01-artifact-registry.md#fr-ar-05)`.
 - New files start from `docs/requirements/_templates/`.
+- Writing a requirement starts from the question "what is good and bad behaviour here?": a functional requirement ends with `**Makes easy:** …` and `**Makes hard:** …`. Good software is like good governance: it makes the right thing easy and the wrong thing hard.
 - `docs/requirements/traceability.md` is generated. Never edit it by hand: run `pnpm docs:build`.
 - Run `pnpm docs:check` before every commit that touches `docs/`; CI runs it on every pull request.
 - Content migrated from Confluence is translated faithfully. Inconsistencies are not silently fixed: record them as an open point, marked as raised during the migration or later review.

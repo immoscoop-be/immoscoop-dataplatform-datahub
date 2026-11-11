@@ -41,6 +41,8 @@ This folder is skipped by the checker.
 
 <The rule, testable, in one to three sentences.>
 
+**Makes easy:** <the good behaviour it makes the obvious step> **Makes hard:** <the bad behaviour it stands in the way of>
+
 ## Edge cases
 
 <a id="ec-xx-01"></a>

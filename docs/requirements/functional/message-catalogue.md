@@ -27,7 +27,7 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 
 | From ↓ to → | User | Owner | Data Team |
 | --- | --- | --- | --- |
-| User | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-04](#msg-cnv-04), [MSG-CNV-07](#msg-cnv-07) | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-03](#msg-cnv-03) | [MSG-CNV-03](#msg-cnv-03), [MSG-LEN-01](#msg-len-01), [MSG-QRY-01](#msg-qry-01) |
+| User | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-04](#msg-cnv-04), [MSG-CNV-07](#msg-cnv-07) | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-03](#msg-cnv-03), [MSG-LRN-01](#msg-lrn-01) | [MSG-CNV-03](#msg-cnv-03), [MSG-LEN-01](#msg-len-01), [MSG-QRY-01](#msg-qry-01) |
 | Owner | [MSG-RES-07](#msg-res-07) | – | – |
 | Data Team | [MSG-CNV-05](#msg-cnv-05) | – | – |
 | Data Hub | [MSG-CNV-06](#msg-cnv-06), [MSG-LEN-02](#msg-len-02), [MSG-LEN-06](#msg-len-06), [MSG-KEY-01](#msg-key-01), [MSG-KEY-02](#msg-key-02), [MSG-USR-01](#msg-usr-01) | [MSG-RES-02](#msg-res-02), [MSG-RES-03](#msg-res-03), [MSG-RES-04](#msg-res-04), [MSG-RES-05](#msg-res-05), [MSG-RES-06](#msg-res-06), [MSG-RES-08](#msg-res-08), [MSG-LEN-03](#msg-len-03), [MSG-LEN-04](#msg-len-04), [MSG-LEN-05](#msg-len-05), [MSG-QRY-02](#msg-qry-02), [MSG-RPT-01](#msg-rpt-01) | [MSG-COL-01](#msg-col-01), [MSG-RES-01](#msg-res-01), [MSG-LEN-03](#msg-len-03), [MSG-USR-02](#msg-usr-02) |
@@ -65,6 +65,7 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | [MSG-QRY-01](#msg-qry-01) | Request to run a very large query | query | User → Data Team | A decision | By the writer | Implemented |
 | [MSG-QRY-02](#msg-qry-02) | A query is Broken | query | Data Hub → Owner | Something to do | To write | Implemented |
 | [MSG-RPT-01](#msg-rpt-01) | A Report is Broken | Report | Data Hub → Owner | Something to do | To write | Proposed |
+| [MSG-LRN-01](#msg-lrn-01) | A colleague wants a card | Learning Card | User → Owner | An answer | By the writer | Proposed |
 
 ## Messages a person writes
 
@@ -929,6 +930,99 @@ Template, English, laid out:
 > {text}
 
 - It reads **{reads}**: very large, above {threshold}
+```
+
+</details>
+
+<a id="msg-lrn-01"></a>
+
+### MSG-LRN-01 · A colleague wants a card
+
+| | |
+| --- | --- |
+| Kind | Request |
+| About | Learning Card |
+| From → to | User → Owner |
+| When | A User presses "I want this card" on a Learning Card coming soon: in the Learning Centre, in a pop-out, or in the family of a card ([FR-LR-41](16-learning.md#fr-lr-41)). |
+| How many | One per card while it is coming soon; a colleague who wants it too joins it, and pressing again changes nothing. |
+| Status | Proposed |
+| Comes from | [FR-LR-41](16-learning.md#fr-lr-41), [DEC-LR-33](16-learning.md#dec-lr-33) |
+
+**What it asks:** An answer, of the Owner. The Data Team plans the card, or says when it comes; a data colleague can take it up with the learning-card skill.
+
+**How it ends:** A reply makes it answered and notifies everyone who wants the card. When the card is written, Data Hub closes the request itself with a line that the card is there, which notifies them too. It starts `open` and ends `answered` or `closed`.
+
+| Button | Opens | For |
+| --- | --- | --- |
+| Open the card · *Kaart openen* | The card in the Learning Centre, coming soon, with how many colleagues want it | every recipient |
+
+**Learning Card:** By the writer. The Message is about a card still to write: the Data Team answers with when it comes, and the card itself is the answer.
+
+**Dutch, laid out**, with the example:
+
+> **Lotte Peeters wil de learning card K3.2 Ownership at Immoscoop**
+>
+> Ze komt binnenkort; 3 collega’s willen ze tot nu toe.
+>
+> > Every new colleague in our team asks who owns which data.
+
+**Dutch, plain:**
+
+```text
+Lotte Peeters wil de learning card K3.2 Ownership at Immoscoop, die binnenkort komt (3 collega’s tot nu toe).
+```
+
+**English, laid out**, with the example:
+
+> **Lotte Peeters wants the learning card K3.2 Ownership at Immoscoop**
+>
+> It is coming soon; 3 colleagues want it so far.
+>
+> > Every new colleague in our team asks who owns which data.
+
+**English, plain:**
+
+```text
+Lotte Peeters wants the learning card K3.2 Ownership at Immoscoop, coming soon (3 colleagues so far).
+```
+
+<details>
+<summary>Parameters and templates</summary>
+
+| Parameter | Type | Holds |
+| --- | --- | --- |
+| `askers` | count | How many Users want the card so far |
+
+Template, Dutch, plain:
+
+```text
+{writer} wil de learning card {subject}, die binnenkort komt ({askers, plural, one {# collega} other {# collega’s}} tot nu toe).
+```
+
+Template, Dutch, laid out:
+
+```markdown
+**{writer} wil de learning card {subject}**
+
+Ze komt binnenkort; {askers, plural, one {# collega wil} other {# collega’s willen}} ze tot nu toe.
+
+> {text}
+```
+
+Template, English, plain:
+
+```text
+{writer} wants the learning card {subject}, coming soon ({askers, plural, one {# colleague} other {# colleagues}} so far).
+```
+
+Template, English, laid out:
+
+```markdown
+**{writer} wants the learning card {subject}**
+
+It is coming soon; {askers, plural, one {# colleague wants} other {# colleagues want}} it so far.
+
+> {text}
 ```
 
 </details>
