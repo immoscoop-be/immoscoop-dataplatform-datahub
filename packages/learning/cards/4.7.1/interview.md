@@ -7,8 +7,8 @@ The input of the card as the interview gave it: what the author said, what Claud
 | Card | 4.7.1 Owning a Resource (4 · Data owner and expert, section 4.7 Roles) |
 | Author | Enrico, a data colleague (evaluation round of the skill, played by Max) |
 | Interviewed | 2026-11-11, with the learning-card skill |
-| Fact check | To name |
-| Test reader | To name |
+| Fact check | Enrico, the author |
+| Test reader | Saskia Bellefroid |
 
 ## 1. The reader's question
 
@@ -76,12 +76,12 @@ The card has no See it: the third rung is a screen of Data Hub, not a chart. App
 
 ## Who brought what
 
-The author brought the reader's question, the misconceptions, the aha, the recipe and its answer to the fear, the line on accounting, HR and management, the ban and the first question, and the shape of a teaser. Claude brought the compression of the aha and of the first question into one sentence each, the four questions of Check your understanding (the fourth, "nobody needs it", is Claude's own trap), the facts of Data Hub behind the example (only the Owner Unit and the Data Team see an unpublished Resource; publishing is the first Confirmation and vouches for what it is, not for every figure; the Business Description stands next to the description of dbt), and the title Owning a Resource.
+The author brought the reader's question, the misconceptions, the aha, the recipe and its answer to the fear, the line on accounting, HR and management, the ban and the first question, and the shape of a teaser. Claude brought the compression of the aha and of the first question into one sentence each, the four questions of Check your understanding (the fourth, "nobody needs it", is Claude's own trap), the facts of Data Hub behind the example (only the Owner Unit and the Data Team see an unpublished Resource; publishing is the first Confirmation and vouches for what it is, not for every figure; the Business Description stands next to the description of dbt), and the title Owning a Resource. At the quality gate the author confirmed that the card sounds the way the author would explain it, the title, and the fourth question.
 
 ## To do
 
 - [ ] Fact check: "most Resources stay unpublished for weeks", once Data Hub has been in use for a month
-- [ ] Fact check: whether "Publish it anyway" (the fourth question) holds for every Collection, or whether an Owner may keep a Resource unpublished on purpose
+- [ ] Test reader: Saskia Bellefroid reads the card and says in their own words what they learned
 - [ ] Data Team: approve the new title Owning a Resource; the master learning plan on Confluence still says Owner and steward
 - [ ] Follow-up cards of the family, new topics in 4.7 or K5: describing a Resource and its fields for a stranger; key fields; Known Gaps; intended use; answering the Questions on your Resource
 - [ ] K3.2 Ownership at Immoscoop, which "A Collection has no Owner any more" proposes (MSG-COL-01): a sibling of this card, not written
