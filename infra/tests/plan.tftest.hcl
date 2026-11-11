@@ -665,6 +665,51 @@ run "query_runs_jobs_reads_the_tables_and_asks_catalogue" {
   }
 }
 
+run "no_service_keeps_an_instance_running_unless_the_environment_says_so" {
+  command = plan
+
+  assert {
+    condition     = alltrue([for service in google_cloud_run_v2_service.service : service.template[0].scaling[0].min_instance_count == 0])
+    error_message = "Without warm_services, every service starts when called and stops when idle (DEC-PF-33)."
+  }
+}
+
+run "the_warm_services_keep_one_instance_running_and_every_service_starts_with_a_boost" {
+  command = plan
+
+  variables {
+    warm_services = ["web", "identity", "catalogue"]
+  }
+
+  assert {
+    condition = alltrue([
+      for name, service in google_cloud_run_v2_service.service :
+      service.template[0].scaling[0].min_instance_count == (contains(["web", "identity", "catalogue"], name) ? 1 : 0)
+    ])
+    error_message = "Exactly the warm services keep one instance running (DEC-PF-33)."
+  }
+
+  assert {
+    condition     = alltrue([for service in google_cloud_run_v2_service.service : service.template[0].scaling[0].max_instance_count == 2])
+    error_message = "A warm service keeps the same maximum number of instances."
+  }
+
+  assert {
+    condition     = alltrue([for service in google_cloud_run_v2_service.service : service.template[0].containers[0].resources[0].startup_cpu_boost])
+    error_message = "Every service starts with more CPU, so that a cold start is shorter (DEC-PF-33)."
+  }
+}
+
+run "only_services_of_data_hub_can_be_kept_warm" {
+  command = plan
+
+  variables {
+    warm_services = ["datahub-web"]
+  }
+
+  expect_failures = [var.warm_services]
+}
+
 run "uat_can_be_torn_down" {
   command = plan
 

@@ -113,6 +113,17 @@ variable "break_glass_admins" {
   }
 }
 
+variable "warm_services" {
+  description = "The services that keep one instance running, so that the first visitor never waits for a cold start; the others start when called (DEC-PF-33). Idle, one instance of 1 vCPU and 512 MiB costs about 10 dollars a month."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition     = alltrue([for name in var.warm_services : contains(["identity", "catalogue", "registry", "query", "semgraph", "mcp", "web"], name)])
+    error_message = "Only services of Data Hub can be kept warm."
+  }
+}
+
 variable "mail_from" {
   description = "Who the e-mail of Data Hub comes from: an address of a Workspace domain whose replies are not read (DEC-PF-31)."
   type        = string

@@ -21,3 +21,6 @@ break_glass_admins = [
   "marc.vangoolen@thenextimmoscoop.be",
   "marc.vangoolen@immoscoop.be",
 ]
+
+# Kept running, so that signing in and the Collections never wait for a cold start: about 10 dollars a month each (DEC-PF-33)
+warm_services = ["web", "identity", "catalogue"]

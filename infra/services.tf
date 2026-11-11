@@ -28,8 +28,10 @@ resource "google_cloud_run_v2_service" "service" {
       }
     }
 
+    # One instance stays running for the services the environment keeps warm; the others start when called
+    # and stop when idle (DEC-PF-33).
     scaling {
-      min_instance_count = 0
+      min_instance_count = contains(var.warm_services, each.key) ? 1 : 0
       max_instance_count = 2
     }
 
@@ -50,6 +52,8 @@ resource "google_cloud_run_v2_service" "service" {
 
       resources {
         cpu_idle = true
+        # More CPU while an instance starts, so that a cold start that still happens is shorter (DEC-PF-33).
+        startup_cpu_boost = true
         limits = {
           cpu    = "1"
           memory = "512Mi"
