@@ -1775,7 +1775,7 @@ If that was not intended, ask the data team.
 | Open the resource · *Resource openen* | The page of the Resource | every recipient |
 | Publish · *Publiceren* | Publish on the page of the Resource, from Described | Owner |
 
-**Learning Card:** Named: **4.7.1 Owner and steward**. What the Owner takes on with a Resource: vouching for it, describing it and publishing it; confirmed on 2026-10-29 ([DEC-LR-29](16-learning.md#dec-lr-29)).
+**Learning Card:** Named: **4.7.1 Owning a Resource**. What the Owner takes on with a Resource: vouching for it, describing it and publishing it; confirmed on 2026-10-29 ([DEC-LR-29](16-learning.md#dec-lr-29)).
 
 **Dutch, laid out**, with the example:
 

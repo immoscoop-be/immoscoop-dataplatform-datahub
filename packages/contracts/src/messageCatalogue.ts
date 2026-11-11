@@ -945,7 +945,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     },
     learningCard: {
       fit: 'named',
-      card: { number: '4.7.1', title: 'Owner and steward' },
+      card: { number: '4.7.1', title: 'Owning a Resource' },
       why: 'What the Owner takes on with a Resource: vouching for it, describing it and publishing it; confirmed on 2026-10-29 (DEC-LR-29).',
     },
     action: {
