@@ -4,6 +4,8 @@ import { day } from '@datahub/ui/foundations/when.js';
 
 const LOCALES: Record<Language, string> = { nl: 'nl-BE', en: 'en-GB' };
 
+/** A date as "11 November", for what happened once, such as a confirmed address (FR-LN-07). */
+export const dayOfMonth = (at: Date | string, language: Language): string => new Intl.DateTimeFormat(LOCALES[language], { day: 'numeric', month: 'long' }).format(new Date(at));
 /** The time of a moment, such as "08:12". */
 export const clock = (at: Date | string, language: Language): string => new Intl.DateTimeFormat(LOCALES[language], { hour: '2-digit', minute: '2-digit' }).format(new Date(at));
 

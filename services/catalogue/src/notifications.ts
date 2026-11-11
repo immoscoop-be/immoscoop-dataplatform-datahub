@@ -68,6 +68,8 @@ export interface SlackMessage {
 /** Slack, through the app of Data Hub (DEC-LN-05): `absent` when the User is not in Slack, `off` without a token yet. */
 export interface Slack {
   send(email: string, message: SlackMessage): Promise<'sent' | 'absent' | 'off'>;
+  /** The name of the Slack account that has this address; null when none has it, `off` without a token (FR-LN-07). */
+  find(email: string): Promise<{ name: string } | null | 'off'>;
 }
 
 export interface NotificationOptions {
@@ -447,7 +449,13 @@ export function createNotifications(db: Kysely<CatalogueDatabase>, options: Noti
     const subject = await subjectOf(row);
     const done = new Set((await db.selectFrom('notificationDeliveries').select(['channel', 'address']).where('messageId', '=', messageId).execute()).map((sent) => `${sent.channel} ${sent.address}`));
     let failure: string | null = null;
-    for (const delivery of await deliveriesOf(row, subject)) {
+    const deliveries = await deliveriesOf(row, subject);
+    // A User who confirmed another address for Slack gets their direct messages there (FR-LN-07).
+    const users = deliveries.filter((delivery) => delivery.channel === 'slack').map((delivery) => delivery.address);
+    const slackAddress = new Map(
+      users.length === 0 ? [] : (await db.selectFrom('slackAddresses').select(['userId', 'email']).where('userId', 'in', users).execute()).map((kept) => [kept.userId, kept.email]),
+    );
+    for (const delivery of deliveries) {
       if (done.has(`${delivery.channel} ${delivery.address}`)) continue;
       try {
         if (delivery.channel === 'email') {
@@ -458,7 +466,7 @@ export function createNotifications(db: Kysely<CatalogueDatabase>, options: Noti
           const message = slackMessageOf(row, subject, delivery);
           if (!message) continue;
           // Without a token yet, Data Hub notifies by e-mail alone (DEC-LN-05); nothing is kept, so that a token added later is used.
-          if ((await slack.send(delivery.email, message)) === 'off') continue;
+          if ((await slack.send(slackAddress.get(delivery.address) ?? delivery.email, message)) === 'off') continue;
         }
         await db.insertInto('notificationDeliveries').values({ messageId, channel: delivery.channel, address: delivery.address }).onConflict((conflict) => conflict.doNothing()).execute();
       } catch (error) {

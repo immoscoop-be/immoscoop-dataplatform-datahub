@@ -665,6 +665,71 @@ run "query_runs_jobs_reads_the_tables_and_asks_catalogue" {
   }
 }
 
+run "no_service_keeps_an_instance_running_and_none_is_kept_warm_unless_the_environment_says_so" {
+  command = plan
+
+  assert {
+    condition     = alltrue([for service in google_cloud_run_v2_service.service : service.template[0].scaling[0].min_instance_count == 0])
+    error_message = "No service keeps a minimum instance: one kept warm by calls costs nothing while idle (DEC-PF-33)."
+  }
+
+  assert {
+    condition     = length(google_cloud_scheduler_job.keep_warm) == 0
+    error_message = "Without warm_in_office_hours, nothing is called to keep it warm (DEC-PF-33)."
+  }
+
+  assert {
+    condition     = alltrue([for service in google_cloud_run_v2_service.service : service.template[0].containers[0].resources[0].startup_cpu_boost])
+    error_message = "Every service starts with more CPU, so that a cold start is shorter (DEC-PF-33)."
+  }
+}
+
+run "the_services_kept_warm_are_called_on_their_health_check_in_office_hours" {
+  command = plan
+
+  variables {
+    warm_in_office_hours = ["web", "identity"]
+  }
+
+  assert {
+    condition     = toset(keys(google_cloud_scheduler_job.keep_warm)) == toset(["web", "identity"])
+    error_message = "Exactly the services kept warm are called (DEC-PF-33)."
+  }
+
+  assert {
+    condition = alltrue([
+      for job in google_cloud_scheduler_job.keep_warm :
+      job.schedule == "*/5 7-18 * * 1-5" && job.time_zone == "Europe/Brussels"
+    ])
+    error_message = "A service kept warm is called every five minutes on weekdays from 07:00 to 19:00, Belgian time."
+  }
+
+  assert {
+    condition     = google_cloud_scheduler_job.keep_warm["web"].http_target[0].uri == "https://datahub-web-123456789.europe-west1.run.app/health"
+    error_message = "The call goes to the public health check of the service."
+  }
+
+  assert {
+    condition     = alltrue([for job in google_cloud_scheduler_job.keep_warm : job.http_target[0].http_method == "GET" && length(job.http_target[0].oidc_token) == 0])
+    error_message = "The health check reads nothing, so the call carries no token."
+  }
+
+  assert {
+    condition     = alltrue([for service in google_cloud_run_v2_service.service : service.template[0].scaling[0].min_instance_count == 0])
+    error_message = "Keeping a service warm by calls sets no minimum instance."
+  }
+}
+
+run "only_services_of_data_hub_can_be_kept_warm" {
+  command = plan
+
+  variables {
+    warm_in_office_hours = ["datahub-web"]
+  }
+
+  expect_failures = [var.warm_in_office_hours]
+}
+
 run "uat_can_be_torn_down" {
   command = plan
 

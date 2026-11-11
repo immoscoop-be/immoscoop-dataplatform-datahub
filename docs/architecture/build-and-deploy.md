@@ -83,11 +83,11 @@ The check `ci` blocks a pull request with failing tests, a broken image, or, int
 
 | Ruleset | Target branch | Rules |
 | --- | --- | --- |
-| `main` | `main` | Restrict deletions; block force pushes; require a pull request before merging, with allowed merge method **Merge** only; require status check `ci` to pass |
-| `uat` | `uat` | Restrict deletions; block force pushes; require a pull request before merging; require status check `ci` to pass |
+| `main` | `main` | Restrict deletions; block force pushes; require a pull request before merging, with 0 required approvals and allowed merge method **Merge** only; require status check `ci` to pass |
+| `uat` | `uat` | Restrict deletions; block force pushes; require a pull request before merging, with 0 required approvals; require status check `ci` to pass |
 
 - **Merge, not squash, into `main`.** A squash would give `main` commits that `uat` does not have, and the next pull request from `uat` would show old changes again. Into `uat`, squash or merge are both fine.
-- **Required approvals** are your choice; once there is more than one person working on Data Hub, one approval on each ruleset is a sensible start.
+- **No approvals, on both** ([DEC-PF-32](../requirements/technical/00-platform.md#dec-pf-32)). Claude opens every pull request with the GitHub account of the person it works for, and GitHub never lets the author of a pull request approve it, so a required approval could only come from someone else. Under **Require a pull request before merging → Additional settings**: Required approvals **0**, and **Require approval of the most recent reviewable push off**. That second rule asks an approval from someone other than whoever pushed last, even with 0 approvals, and the last push to `uat` is always the merge of a pull request, so a release into `main` would wait for a second person. Require conversation resolution before merging may stay on.
 - **Default branch.** Set `uat` as the default branch (**Settings → General → Default branch**), so that new pull requests target `uat` by default.
 - **Up to date before merging: on for `uat`, off for `main`.** On `uat`, a pull request must first take in what was merged before it, so that `ci` runs on the combination. On `main` it must stay off: every merge from `uat` leaves a merge commit on `main` that `uat` does not have, so `uat` always looks behind, and updating it would mean pushing to `uat` without a pull request, which its ruleset forbids.
 - **Do not require status checks on creation: off for both.** It only matters when the branch is created; `main` and `uat` exist and may not be deleted.

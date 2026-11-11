@@ -17,7 +17,7 @@ showThemeBtn();
 // The background (DEC-UX-94, DEC-UX-108): a set per theme. The User chooses two on My page, one for day and one for
 // night, each from the set of its theme, or Random, the default: one picked at random when Data Hub starts, kept for the
 // session, and picked again when the theme switches. ?bg= in the address still sets one, for the prototype
-const BACKGROUNDS = { light: ['', 'concrete', 'flow', 'periwinkle', 'sunrise', 'apricot', 'blush', 'sky', 'prism', 'cinnamon', 'evening', 'citrus', 'orchid', 'tide'],
+const BACKGROUNDS = { light: ['', 'flow', 'periwinkle', 'sunrise', 'apricot', 'blush', 'sky', 'prism', 'cinnamon', 'evening', 'citrus', 'orchid', 'tide'],
   dark: ['', 'flow', 'borealis', 'ember', 'dusk', 'horizon', 'afterglow', 'lumen', 'cobalt', 'midnight'] };
 // The sign-in does not know the User yet: it always picks one of the set at random (DEC-UX-173)
 const signingIn = document.body.classList.contains('signin');
@@ -295,7 +295,7 @@ document.querySelectorAll('.maturity').forEach(m => {
 });
 
 // Prototype only: the address picks what a switch shows, so a link opens a screen as the right role or outcome:
-// ?role=owner, ?size=large; ?bg=concrete shows the picture as the background (DEC-UX-34), ?bg=flow a flowing gradient
+// ?role=owner, ?size=large; ?bg=flow shows a flowing gradient as the background
 new URLSearchParams(location.search).forEach((value, key) => {
   if (key === 'role') document.documentElement.dataset.role = value;
   if (key === 'bg') document.documentElement.dataset.bg = value;

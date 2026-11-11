@@ -1,6 +1,6 @@
 // The backgrounds of Data Hub, a set per theme, which the sign-in picks from too (DEC-UX-109,
-// DEC-UX-173). The pictures are those of the design, in docs/design/backgrounds: the build takes them
-// from there, so each lives once.
+// DEC-UX-173). A picture would be one of the design, in docs/design/backgrounds, which the build takes
+// along, so that it lives once; the sets hold none since Concrete left them (DEC-UX-208).
 
 export type Theme = 'light' | 'dark';
 
@@ -28,9 +28,6 @@ export interface Background {
   readonly previewPosition?: string;
 }
 
-// Each address is written out, so that the build finds the picture and takes it along.
-const CONCRETE = new URL('../../../../docs/design/backgrounds/painted/light/concrete.jpg', import.meta.url).href;
-
 /** Every background, in the order My page offers them: the gradient, the flowing ones, then the pictures. */
 export const BACKGROUNDS: readonly Background[] = [
   { id: 'gradient', kind: 'gradient', themes: ['light', 'dark'] },
@@ -54,7 +51,6 @@ export const BACKGROUNDS: readonly Background[] = [
   { id: 'lumen', kind: 'painted', themes: ['dark'], name: 'Lumen' },
   { id: 'cobalt', kind: 'painted', themes: ['dark'], name: 'Cobalt' },
   { id: 'midnight', kind: 'painted', themes: ['dark'], name: 'Midnight' },
-  { id: 'concrete', kind: 'picture', themes: ['light'], name: 'Concrete', picture: CONCRETE, cover: true },
 ];
 
 /** The choice that picks a background at random: the default (DEC-UX-108). */

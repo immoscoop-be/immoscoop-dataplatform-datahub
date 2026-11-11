@@ -970,6 +970,7 @@
         onlanguage={(language: Language) => signedIn.settings.set('language', language)}
         onbackground={(choice) => signedIn.backgrounds.choose(theme, choice)}
         {identity}
+        slack={catalogue}
       />
     {:else if page.kind === 'groups'}
       <!-- Groups, from My page, with no place in the rail (DEC-UX-200, FR-UM-18). -->

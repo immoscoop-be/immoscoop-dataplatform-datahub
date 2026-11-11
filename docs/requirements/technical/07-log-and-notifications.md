@@ -3,7 +3,7 @@
 | | |
 | --- | --- |
 | Realises | [Log and notifications](../functional/07-log-and-notifications.md) |
-| Status | Notifications by e-mail and in Slack implemented |
+| Status | Notifications by e-mail and in Slack implemented, with the address a User confirmed for Slack |
 | Source of truth | This file |
 
 How a Message reaches the people it notifies outside Data Hub, by e-mail and as a direct message in Slack. The service [catalogue](../../architecture/services/catalogue.md) keeps every Message ([TR-CV-01](14-conversations.md#tr-cv-01)) and sends its notifications; [identity](../../architecture/services/identity.md) knows who they reach. In Data Hub itself a Message reaches the User in the Message Centre ([TR-CV-03](14-conversations.md#tr-cv-03)).
@@ -45,3 +45,16 @@ Its subject is the first line of the plain text of the Message, at most 140 char
 **Status:** Implemented · **Realises:** [DEC-LN-05](../functional/07-log-and-notifications.md#dec-ln-05), [DEC-LN-06](../functional/07-log-and-notifications.md#dec-ln-06), [FR-CV-15](../functional/14-conversations.md#fr-cv-15), [DEC-UX-129](../../design/principles.md#dec-ux-129)
 
 catalogue reads the bot token from the secret `datahub-slack-bot-token`, when it first needs it and again every ten minutes; while the secret has no value, Slack is off and a notification goes by e-mail alone. It finds a User with `users.lookupByEmail` by the address of their Google account, opens the direct message with `conversations.open` and posts with `chat.postMessage`, never in a channel. The message holds the laid-out text in the mark-up of Slack (`*strong*`, `~struck~`, `` `code` ``, `>` for a quote, a bullet per item), "Open in context" as a button, and the object and why it came as context; its `text` is the plain text, which Slack shows where it cannot lay it out. A User who is not in Slack gets e-mail alone, and is not looked up again for that Message.
+
+*Note of 2026-11-11: a User who confirmed another address for Slack is looked up by that address instead ([TR-LN-05](#tr-ln-05)).*
+
+<a id="tr-ln-05"></a>
+### TR-LN-05 · catalogue keeps the address a User confirmed for Slack, and the code only as a hash
+
+**Status:** Implemented · **Realises:** [FR-LN-07](../functional/07-log-and-notifications.md#fr-ln-07), [EC-LN-01](../functional/07-log-and-notifications.md#ec-ln-01), [DEC-LN-08](../functional/07-log-and-notifications.md#dec-ln-08), [OP-LN-08](../functional/07-log-and-notifications.md#op-ln-08), [DEC-UX-209](../../design/principles.md#dec-ux-209)
+
+`slack_addresses` keeps, per User, the address they confirmed for Slack, in lower case, and when; a User without a row is found by the address of their Google account. `GET /me/slack` answers the address in use and the name of the Slack account that has it, looked up with `users.lookupByEmail` (the real name of its profile first), or no name when none has it; and `on: false` while the bot token has no value, so that the web app shows no tile ([OP-UX-78](../../design/principles.md#op-ux-78)). `POST /me/slack/lookup` names the account of an address, or answers 404.
+
+`POST /me/slack/code` draws a code of six digits with `randomInt` and keeps in `slack_codes` only its SHA-256 hash with the ID of the User, the address, the name of the account, an end 10 minutes later and five tries; one row per User, so that a new code replaces the one before. It sends the code to that account as a direct message in the language the web app passes, with the line that whoever did not ask can ignore it; when sending fails, the code is removed. `POST /me/slack/confirm` reads the code of the User `for update`, in one transaction: an ended one, or one without tries, is removed and answers 410; a wrong one costs a try and answers 400 with the tries left, the last try removing it; a right one, compared in constant time, is removed and the address kept, and confirming the Google address itself removes the row instead. `DELETE /me/slack` removes both rows: back to the Google address.
+
+When it sends a direct message, catalogue reads the confirmed addresses of the Users it notifies and looks each up by theirs, or else by their Google address ([TR-LN-04](#tr-ln-04)). An account no longer found by a confirmed address is a User not in Slack: e-mail alone, and the tile says so ([EC-LN-01](../functional/07-log-and-notifications.md#ec-ln-01)).

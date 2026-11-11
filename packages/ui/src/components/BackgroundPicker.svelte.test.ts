@@ -12,8 +12,8 @@ describe('the background picker (DEC-UX-108)', () => {
   });
 
   it('rings the chosen one, and shows Random when the choice is not of this set', () => {
-    const { rerender } = render(BackgroundPicker, { theme: 'light', choice: 'concrete', onchoose: () => {} });
-    expect(screen.getByRole('radio', { checked: true }).textContent).toContain('Concrete');
+    const { rerender } = render(BackgroundPicker, { theme: 'light', choice: 'tide', onchoose: () => {} });
+    expect(screen.getByRole('radio', { checked: true }).textContent).toContain('Tide');
     rerender({ theme: 'light', choice: 'borealis', onchoose: () => {} });
     expect(screen.getByRole('radio', { checked: true }).textContent).toContain('Willekeurig');
   });
@@ -21,13 +21,13 @@ describe('the background picker (DEC-UX-108)', () => {
   it('chooses with a click or with the arrows', async () => {
     const onchoose = vi.fn();
     render(BackgroundPicker, { theme: 'light', choice: 'random', onchoose });
-    await fireEvent.click(screen.getByRole('radio', { name: /Concrete/ }));
-    expect(onchoose).toHaveBeenLastCalledWith('concrete');
+    await fireEvent.click(screen.getByRole('radio', { name: /Tide/ }));
+    expect(onchoose).toHaveBeenLastCalledWith('tide');
     const random = screen.getByRole('radio', { name: /Willekeurig/ });
     random.focus();
     await fireEvent.keyDown(random, { key: 'ArrowRight' });
     expect(onchoose).toHaveBeenLastCalledWith('gradient');
     await fireEvent.keyDown(random, { key: 'ArrowLeft' });
-    expect(onchoose).toHaveBeenLastCalledWith('concrete');
+    expect(onchoose).toHaveBeenLastCalledWith('tide');
   });
 });
