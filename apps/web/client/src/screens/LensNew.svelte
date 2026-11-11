@@ -12,7 +12,6 @@
   import Gauge from '@datahub/ui/primitives/Gauge.svelte';
   import Loading from '@datahub/ui/primitives/Loading.svelte';
   import type { Catalogue, Collection } from '../lib/catalogue.js';
-  import type { Group } from '../lib/identity.js';
   import { clock, when } from '../lib/moment.js';
   import { describe, isFunction, kindOf, suggestedOf } from '../lib/parameters.js';
   import type { Lens, LensParameter, Parameter, Preflight, Query, QueryClient, QueryRequest, Storage } from '../lib/query.js';
@@ -59,8 +58,8 @@
     everyLens: boolean;
     /** The User may make a query a Lens, and send its Request again (`lenses.make`). */
     canMake?: boolean;
-    /** The groups of the User, to own a new Collection (DEC-CO-24). */
-    loadGroups: () => Promise<Group[]>;
+    /** The Groups the User is in, by name, to own a new Collection (DEC-CO-24, DEC-UX-200). */
+    loadGroups: () => Promise<readonly { id: string; name: string }[]>;
     onmade: (lens: Lens) => void;
     /** After its Owner Unit or the Data Team deleted the Lens being edited (FR-LE-18). */
     ondeleted?: (lens: { id: string; name: string; collectionId: string }) => void;
@@ -96,7 +95,7 @@
   let newName = $state('');
   let newOwner = $state('');
   let newIcon = $state<string | null>('lightbulb');
-  let groups = $state<Group[] | null | undefined>();
+  let groups = $state<readonly { id: string; name: string }[] | null | undefined>();
   let text = $state('');
   let busy = $state(false);
   let failed = $state<string | null>(null);
@@ -366,7 +365,7 @@
               <Field label={t('collection.field.name')}><input type="text" bind:value={newName} maxlength="80" /></Field>
               <Field label={t('lens.newCollection.owner')}>
                 <select bind:value={newOwner} disabled={!groups}>
-                  {#each groups ?? [] as group (group.id)}<option value={group.id}>{group.name} · {group.email}</option>{/each}
+                  {#each groups ?? [] as group (group.id)}<option value={group.id}>{group.name}</option>{/each}
                 </select>
               </Field>
               <Field label={t('lens.newCollection.icon')} group><IconPicker bind:value={newIcon} /></Field>

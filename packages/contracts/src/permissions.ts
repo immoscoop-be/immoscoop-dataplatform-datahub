@@ -7,7 +7,7 @@ import { z } from 'zod';
  */
 
 /** The part of Data Hub a Permission belongs to, in the order of the rail (DEC-UX-186). */
-export type PermissionPart = 'collections' | 'query' | 'lenses' | 'messages' | 'claude' | 'excel' | 'admin';
+export type PermissionPart = 'collections' | 'groups' | 'query' | 'lenses' | 'messages' | 'claude' | 'excel' | 'admin';
 
 /** The kind of one value of a Permission: those of a Parameter (DEC-UX-71). */
 export type ValueSpec =
@@ -43,6 +43,9 @@ export const PERMISSIONS = {
   },
   'resources.publish': { name: 'Publish Resources', part: 'collections', values: {} },
   'resources.deprecate': { name: 'Deprecate Resources', part: 'collections', values: { reach: REACH } },
+  // Groups kept in Data Hub (DEC-UX-201): a Group they manage, a User changes anyway.
+  'groups.manage': { name: 'Make groups', part: 'groups', values: {} },
+  'groups.all.manage': { name: 'Manage every group', part: 'groups', values: {} },
   'resources.preview': { name: 'Preview a Resource', part: 'query', values: {} },
   'queries.make': { name: 'Make and run queries', part: 'query', values: {} },
   'runs.ranges': {
@@ -117,6 +120,8 @@ const ADMIN: Permissions = {
   'resources.describe': on({ reach: 'every', attributes: ALL_ATTRIBUTES }),
   'resources.publish': on(),
   'resources.deprecate': on({ reach: 'every' }),
+  'groups.manage': on(),
+  'groups.all.manage': on(),
   'resources.preview': on(),
   'queries.make': on(),
   'runs.ranges': on(RANGES),
@@ -143,6 +148,8 @@ const BUSINESS_ANALYST: Permissions = {
   'resources.describe': on({ reach: 'theirs', attributes: ALL_ATTRIBUTES.filter((attribute) => attribute !== 'entityMapping') }),
   'resources.publish': on(),
   'resources.deprecate': on({ reach: 'theirs' }),
+  'groups.manage': on(),
+  'groups.all.manage': off(),
   'resources.preview': on(),
   'queries.make': on(),
   'runs.ranges': on(RANGES),
@@ -169,6 +176,8 @@ const LENS_USER: Permissions = {
   'resources.describe': off({ reach: 'theirs', attributes: [] }),
   'resources.publish': off(),
   'resources.deprecate': off({ reach: 'theirs' }),
+  'groups.manage': off(),
+  'groups.all.manage': off(),
   'resources.preview': off(),
   'queries.make': off(),
   'runs.ranges': on(RANGES),

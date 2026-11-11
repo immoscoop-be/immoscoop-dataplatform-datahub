@@ -2,7 +2,6 @@ import { createHash } from 'node:crypto';
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { SignInError, type GoogleIdentity, type GoogleSignIn } from './google-sign-in.js';
 import { canWith } from '@datahub/contracts';
-import { applyNamingConvention } from './naming-convention.js';
 import type { PermissionGroups, UserNotices } from './permission-groups.js';
 import { randomToken, type Store } from './store.js';
 import type { TokenIssuer, TokenSubject } from './tokens.js';
@@ -30,8 +29,10 @@ export interface SignInOptions {
   mcpRedirectUris: string[];
   /** The Permission groups, whose Permissions go into every Access Token (TR-PL-05). */
   groups: PermissionGroups;
-  /** catalogue, told when a member of datahub-datateam@ gets Admin back (EC-PL-03). */
+  /** catalogue, told when a User of the way back in gets Admin back (EC-PL-03). */
   userNotices?: UserNotices;
+  /** The addresses that get Admin when no User of Admin can still sign in, from Terraform (EC-PL-03, TR-UM-06). */
+  breakGlass?: string[];
 }
 
 interface Client {
@@ -66,15 +67,15 @@ export async function signInRoutes(app: FastifyInstance, options: SignInOptions)
   }
 
   /**
-   * Reads the Groups of a User again from Workspace, as at every login and renewal (FR-UM-04, TR-PF-26),
-   * and their Permissions from their Permission group (TR-PL-05). The Role Groups give no role any more;
-   * only `datahub-datateam@` still counts, as the way back into Admin when no User of Admin can still
-   * sign in (EC-PL-03). Keeps the Groups and Role Groups read, for catalogue to notify by (DEC-LN-07).
+   * What goes into the Access Token of a User: the Groups of Data Hub they are in (TR-UM-03), and their
+   * Permissions from their Permission group (TR-PL-05). A User on the list of the way back in gets Admin
+   * when no User of Admin can still sign in (EC-PL-03, TR-UM-06).
    */
   async function subject(user: { googleId: string; email: string; name: string }): Promise<TokenSubject> {
-    const { groups, roles } = applyNamingConvention(await workspace.groups(user.email), options.domains);
-    await store.saveGroups(user.googleId, groups, roles);
-    if (roles.includes('datateam') && (await options.groups.restoreAdminIfNoneLeft(user.googleId, workspace))) {
+    const groups = await store.groupsOf(user.email);
+    await store.saveGroups(user.googleId, groups);
+    const breakGlass = (options.breakGlass ?? []).map((address) => address.toLowerCase());
+    if (breakGlass.includes(user.email.toLowerCase()) && (await options.groups.restoreAdminIfNoneLeft(user.googleId, workspace))) {
       try {
         await options.userNotices?.tellUser({ type: 'MSG-USR-02', userId: user.googleId, name: user.name || user.email });
       } catch (error) {
@@ -296,7 +297,7 @@ export async function signInRoutes(app: FastifyInstance, options: SignInOptions)
       }
       if (!user || !active || !claims) {
         await store.endSessionsOf(session.googleId, 'account-inactive');
-        await store.saveGroups(session.googleId, [], []);
+        await store.markInactive(session.googleId);
         return refuse(reply, 'invalid_grant', 'The account is no longer active');
       }
       if (!(await store.consumeRefreshToken(refreshToken))) {

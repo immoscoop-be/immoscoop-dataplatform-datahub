@@ -159,7 +159,7 @@ describe.skipIf(!url)('notifications by e-mail and in Slack (DEC-LN-02, DEC-LN-0
           const { users, groups, permissions } = question;
           asked.push(question);
           return known
-            .filter((person) => users.includes(person.id) || person.groups.some((group) => groups.includes(group)) || person.permissions.some((key) => permissions.includes(key)))
+            .filter((person) => (person.id !== null && users.includes(person.id)) || person.groups.some((group) => groups.includes(group)) || person.permissions.some((key) => permissions.includes(key)))
             .map((person) => ({
               ...person,
               groups: person.groups.filter((group) => groups.includes(group)),
@@ -202,14 +202,16 @@ describe.skipIf(!url)('notifications by e-mail and in Slack (DEC-LN-02, DEC-LN-0
 
   const sightOf = async (viewer: Viewer) => messages.sight(viewer, await createCollections(database.db).list(viewer));
 
-  it('notifies an Owner Unit of a Question by its group address, in Dutch, and its known members in Slack', async () => {
+  it('notifies each member of an Owner Unit of a Question by e-mail in their language, and in Slack (FR-UM-21)', async () => {
     const lens = '0b9c1d2e-3f40-4a5b-8c6d-7e8f9a0b1c2d';
     await messages.keepLens(lens, { name: 'Leads per source name', collectionId: credit.id, resourceIds: [], state: 'published', authorId: 'u-an', authorName: 'An Claes' });
     const question = await messages.write(await sightOf(karel), { kind: 'lens', id: lens }, 'question', 'Mailing brings only 3.8% of the leads <this> year?');
 
     expect(await notifications.deliver()).toMatchObject({ sent: 1, failed: 0, abandoned: 0 });
-    expect(mails.map((mail) => mail.to)).toEqual(['credit-team@immoscoop.be']);
-    const [mail] = mails;
+    // A Group of Data Hub has no address: An and Jan each get one, in their own language.
+    expect(mails.map((mail) => mail.to)).toEqual(['an@immoscoop.be', 'jan@immoscoop.be']);
+    expect(mails[0]?.subject).toBe('Karel Leys asked a question about the lens Leads per source name: “Mailing brings only 3.8% of the leads <this> year?”');
+    const mail = mails[1];
     expect(mail?.subject).toBe('Karel Leys stelde een vraag over de lens Leads per source name: “Mailing brings only 3.8% of the leads <this> year?”');
     expect(mail?.html).toContain('Lens · Credit leads');
     expect(mail?.html).toContain('&#60;this&#62;');
@@ -218,7 +220,7 @@ describe.skipIf(!url)('notifications by e-mail and in Slack (DEC-LN-02, DEC-LN-0
     expect(mail?.html).toContain('<a href="https://web.test/messages" style="color:#1d1d1b;">Message Centre</a>');
     expect(mail?.text).toContain(`Openen in context: https://web.test/lenses/${lens}/messages/${question.id}`);
 
-    // An reads Slack in English; Jan is not in Slack, and gets the e-mail of the group alone.
+    // An reads Slack in English; Jan is not in Slack, and gets the e-mail alone.
     expect(slacked.map((sent) => sent.email)).toEqual(['an@immoscoop.be']);
     expect(slacked[0]?.message.text).toBe('Karel Leys asked a question about the lens Leads per source name: “Mailing brings only 3.8% of the leads <this> year?”');
     expect(slacked[0]?.message.blocks).toEqual([
@@ -230,8 +232,8 @@ describe.skipIf(!url)('notifications by e-mail and in Slack (DEC-LN-02, DEC-LN-0
     // A reply of An reaches Karel, who started the conversation, by his own address; never An herself.
     await messages.reply(question.id, await sightOf(an), 'Since March, newsletter leads count only through their link.');
     await notifications.deliver();
-    expect(mails.slice(1).map((sent) => [sent.to, sent.subject])).toEqual([['karel@immoscoop.be', 'An Claes antwoordde over de lens Leads per source name: “Since March, newsletter leads count only through their link.”']]);
-    expect(mails[1]?.html).toContain('Je krijgt dit omdat je dit gesprek begon.');
+    expect(mails.slice(2).map((sent) => [sent.to, sent.subject])).toEqual([['karel@immoscoop.be', 'An Claes antwoordde over de lens Leads per source name: “Since March, newsletter leads count only through their link.”']]);
+    expect(mails[2]?.html).toContain('Je krijgt dit omdat je dit gesprek begon.');
     expect(slacked.slice(1).map((sent) => sent.email)).toEqual(['karel@immoscoop.be']);
   });
 
@@ -240,8 +242,8 @@ describe.skipIf(!url)('notifications by e-mail and in Slack (DEC-LN-02, DEC-LN-0
     await messages.keepLens(lens, { name: 'Weekly leads', collectionId: credit.id, resourceIds: [], state: 'published', authorId: 'u-an', authorName: 'An Claes' });
     await messages.write(await sightOf(an), { kind: 'lens', id: lens }, 'signal', 'The last week is empty.');
     await notifications.deliver();
-    // An wrote it: the group still gets its e-mail, but An no direct message.
-    expect(mails.map((mail) => mail.to)).toEqual(['credit-team@immoscoop.be', 'datahub-datateam@immoscoop.be']);
+    // An wrote it: Jan of the Owner Unit gets it, An neither an e-mail nor a direct message (TR-UM-07).
+    expect(mails.map((mail) => mail.to)).toEqual(['jan@immoscoop.be', 'datahub-datateam@immoscoop.be']);
     expect(slacked.map((sent) => sent.email)).toEqual(['dirk@immoscoop.be']);
     // The Data Team in Slack: the Users who get the Messages for the Data Team, asked of identity by that Permission (TR-PL-08).
     expect(asked).toEqual([{ users: [], groups: ['g-credit'], permissions: ['messages.dataTeam'] }]);
@@ -338,7 +340,7 @@ describe.skipIf(!url)('notifications by e-mail and in Slack (DEC-LN-02, DEC-LN-0
     mailDown = false;
     clock = new Date(clock.getTime() + 2 * 60_000);
     expect(await notifications.deliver()).toMatchObject({ sent: 1 });
-    expect(mails.map((mail) => mail.to)).toEqual(['credit-team@immoscoop.be']);
+    expect(mails.map((mail) => mail.to)).toEqual(['an@immoscoop.be', 'jan@immoscoop.be']);
     expect(slacked).toHaveLength(1);
 
     const second = await messages.write(await sightOf(karel), { kind: 'lens', id: lens }, 'remark', 'And agency 15 closed.');
@@ -363,12 +365,13 @@ describe.skipIf(!url)('notifications by e-mail and in Slack (DEC-LN-02, DEC-LN-0
     await messages.keepLens(lens, { name: 'Leads per week', collectionId: credit.id, resourceIds: [], state: 'published', authorId: 'u-karel', authorName: 'Karel Leys' });
     await messages.grewLarge(lens, { reads: 240_000_000, threshold: 100_000_000 });
     await notifications.deliver();
-    expect(mails.map((mail) => [mail.to, mail.subject])).toEqual([
-      ['credit-team@immoscoop.be', 'Agency reviews werd ingetrokken: geen enkele exposure met de tag datahub steunt er nog op. Alleen het datateam en de owner zien hem nog.'],
-      ['karel@immoscoop.be', 'De lens Leads per week is groot geworden: één run leest nu 240 MB, boven 100 MB. Hij blijft draaien.'],
+    expect(mails.map((mail) => mail.to)).toEqual(['an@immoscoop.be', 'jan@immoscoop.be', 'karel@immoscoop.be']);
+    expect(mails.slice(1).map((mail) => mail.subject)).toEqual([
+      'Agency reviews werd ingetrokken: geen enkele exposure met de tag datahub steunt er nog op. Alleen het datateam en de owner zien hem nog.',
+      'De lens Leads per week is groot geworden: één run leest nu 240 MB, boven 100 MB. Hij blijft draaien.',
     ]);
-    expect(mails[0]?.html).toContain('<code style="font-family:Menlo,Consolas,monospace;font-size:13px;">datahub</code>');
-    expect(mails[1]?.html).toContain('Je krijgt dit als auteur van deze Lens.');
+    expect(mails[1]?.html).toContain('<code style="font-family:Menlo,Consolas,monospace;font-size:13px;">datahub</code>');
+    expect(mails[2]?.html).toContain('Je krijgt dit als auteur van deze Lens.');
   });
 
   it('tells who ran a deleted Lens lately, each by their own address, never who deleted it (MSG-LEN-06, FR-LE-18)', async () => {

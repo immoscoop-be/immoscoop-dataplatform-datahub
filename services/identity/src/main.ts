@@ -3,7 +3,7 @@ import { cloudSqlOptionsFromEnv, connectCloudSql } from '@datahub/db';
 import { metadataAccessToken, metadataIdToken } from '@datahub/google';
 import { start } from '@datahub/server';
 import { buildApp } from './app.js';
-import { createCatalogueNotices, createCatalogueUserNotices } from './catalogue.js';
+import { createCatalogueNotices, createCatalogueOwnerUnits, createCatalogueUserNotices } from './catalogue.js';
 import { createExcelKeys } from './excel-keys.js';
 import type { IdentityDatabase } from './database.js';
 import { signInSettingsFromEnv, tokenIssuerFromEnv } from './env.js';
@@ -48,11 +48,15 @@ const app = await buildApp({
     webClient: settings.webClient,
     mcpRedirectUris: settings.mcpRedirectUris,
     // What each User may do: their Permission group, in every Access Token (TR-PL-05); catalogue is told
-    // when one changes for a User, or when Admin is given back through datahub-datateam@ (FR-PL-12, EC-PL-03).
+    // when one changes for a User, or when Admin is given back to the way back in (FR-PL-12, EC-PL-03).
     groups: createPermissionGroups(database.db),
     userNotices: createCatalogueUserNotices(required('DATAHUB_CATALOGUE_URL'), fetch, metadataIdToken()),
+    // The addresses that get Admin when no User of Admin can still sign in, from Terraform (TR-UM-06).
+    breakGlass: (process.env.DATAHUB_BREAK_GLASS_ADMINS ?? '').split(',').map((address) => address.trim()).filter(Boolean),
   },
-  // catalogue asks who to notify with a Google ID token for identity's own address (DEC-LN-07).
+  // catalogue says what a Group owns before it is deleted (TR-UM-05).
+  owners: createCatalogueOwnerUnits(required('DATAHUB_CATALOGUE_URL'), fetch, metadataIdToken()),
+  // catalogue asks who to notify, and moves its Owner Units, with a Google ID token for identity's own address (DEC-LN-07, TR-UM-04).
   peopleCallers: createServiceCallerVerifier({ audience: settings.issuer, serviceAccounts: [required('DATAHUB_CATALOGUE_SERVICE_ACCOUNT')] }),
   // query exchanges the Excel key Excel sends for an Access Token (TR-PF-07); Cloud Scheduler asks once a day
   // which keys expire within a month, and catalogue puts the Message (FR-PL-03).

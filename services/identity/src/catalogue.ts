@@ -1,5 +1,6 @@
 import type { IdTokenSource } from '@datahub/google';
 import type { KeyNotice, Notices } from './excel-keys.js';
+import type { OwnerUnits } from './groups.js';
 import type { UserNotice, UserNotices } from './permission-groups.js';
 
 /**
@@ -37,6 +38,25 @@ export function createCatalogueUserNotices(baseUrl: string, request: typeof fetc
       if (!response.ok) {
         throw new Error(`catalogue answered ${response.status} to a notice about a Permission group`);
       }
+    },
+  };
+}
+
+/**
+ * catalogue, as identity asks it what a Group owns as the Owner Unit of Collections before it deletes the Group
+ * (TR-UM-05), with the Google ID token of identity for catalogue's own address.
+ */
+export function createCatalogueOwnerUnits(baseUrl: string, request: typeof fetch, idToken: IdTokenSource): OwnerUnits {
+  return {
+    async collectionsOf(groupId: string) {
+      const response = await request(`${baseUrl}/internal/owner-units/${encodeURIComponent(groupId)}`, {
+        headers: { authorization: `Bearer ${await idToken(baseUrl)}` },
+      });
+      if (!response.ok) {
+        throw new Error(`catalogue answered ${response.status} when asked what a group owns`);
+      }
+      const body = (await response.json()) as { count?: unknown; names?: unknown };
+      return { count: Number(body.count ?? 0), names: Array.isArray(body.names) ? body.names.map(String) : [] };
     },
   };
 }

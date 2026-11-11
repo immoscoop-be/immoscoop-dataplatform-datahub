@@ -16,6 +16,11 @@ export type Route =
   /** The Message Centre, with one Message opened on the right (FR-CV-06). */
   | { readonly kind: 'messages'; readonly id: string | null; readonly section: Section }
   | { readonly kind: 'me'; readonly tab: MyPageTab }
+  /**
+   * Groups, reached from My page, with no place in the rail (DEC-UX-200): the list, one Group opened on the right, or
+   * the sheet of a new Group over the list (FR-UM-13, FR-UM-18).
+   */
+  | { readonly kind: 'groups'; readonly id: string | null; readonly making?: true }
   /** The page of a Resource, in the section Collections. */
   | ({ readonly kind: 'resource'; readonly id: string; readonly section: Section } & Talk)
   /** The page of a Collection (FR-CO-25). */
@@ -48,6 +53,11 @@ export type Route =
 export const HOME = '/collections';
 export const myPagePath = (tab: MyPageTab): string => (tab === 'profile' ? '/me' : `/me/${tab}`);
 export const resourcePath = (id: string): string => `/resources/${encodeURIComponent(id)}`;
+/** Groups, and one Group opened in it (FR-UM-18). */
+export const GROUPS = '/groups';
+export const groupPath = (id: string): string => `${GROUPS}/${encodeURIComponent(id)}`;
+/** The sheet of a new Group, over the list (FR-UM-13). */
+export const NEW_GROUP = `${GROUPS}/new`;
 export const collectionPath = (id: string): string => `/collections/${encodeURIComponent(id)}`;
 export const NEW_COLLECTION = '/collections/new';
 /** A folder of a Collection, at an address under it (FR-CO-38). */
@@ -173,6 +183,21 @@ export function route(path: string, adminTools: readonly AdminTool[] = ADMIN_TOO
   const tab = MY_PAGE_TABS.find((candidate) => clean === `/me/${candidate}` && candidate !== 'profile');
   if (tab) {
     return { kind: 'me', tab };
+  }
+  // Groups, from My page: the list, a new Group, or one Group opened (FR-UM-18).
+  if (clean === GROUPS) {
+    return { kind: 'groups', id: null };
+  }
+  if (clean === NEW_GROUP) {
+    return { kind: 'groups', id: null, making: true };
+  }
+  const [, groupId] = /^\/groups\/([^/]+)$/.exec(clean) ?? [];
+  if (groupId) {
+    try {
+      return { kind: 'groups', id: decodeURIComponent(groupId) };
+    } catch {
+      return { kind: 'notFound' };
+    }
   }
   const learning = SECTIONS.find((candidate) => candidate.id === 'learning');
   const [, card, see] = /^\/learning\/([^/]+)(\/see)?$/.exec(clean) ?? [];

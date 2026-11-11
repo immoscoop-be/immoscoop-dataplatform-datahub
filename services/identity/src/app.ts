@@ -2,8 +2,7 @@ import type { ServiceCallerVerifier, TokenVerifier } from '@datahub/auth';
 import { createServer, type ServerOptions } from '@datahub/server';
 import type { FastifyInstance } from 'fastify';
 import { type ExcelKeys, excelKeyRoutes, type Notices } from './excel-keys.js';
-import { can, permissionValue } from '@datahub/contracts';
-import { ownDomainGroups } from './naming-convention.js';
+import { groupRoutes, type OwnerUnits } from './groups.js';
 import { permissionGroupRoutes } from './permission-groups.js';
 import { peopleRoutes } from './people.js';
 import { settingsRoutes } from './settings.js';
@@ -15,14 +14,16 @@ export interface AppOptions {
   tokens: TokenIssuer;
   /** Signing in through Google, for the web app and MCP clients; needs the database. */
   signIn?: SignInOptions;
-  /** catalogue, which asks who to notify with its Google ID token (DEC-LN-07); needs the database. */
+  /** catalogue, which asks who to notify and moves its Owner Units, with its Google ID token (DEC-LN-07, TR-UM-04); needs the database. */
   peopleCallers?: ServiceCallerVerifier;
+  /** catalogue, asked what a Group owns before it is deleted (TR-UM-05). */
+  owners?: OwnerUnits;
   /** The Excel keys (FR-PL-01 to FR-PL-03): query exchanges them, Cloud Scheduler asks which expire; needs the database. */
   excelKeys?: { keys: ExcelKeys; exchangers: ServiceCallerVerifier; schedulers?: ServiceCallerVerifier; notices: Notices };
   logger?: ServerOptions['logger'];
 }
 
-/** The identity service: sign in with Google, groups from Workspace, Excel keys and access tokens. See docs/architecture/services/identity.md. */
+/** The identity service: sign in with Google, the Groups kept in Data Hub, Excel keys and access tokens. See docs/architecture/services/identity.md. */
 export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
   const app = await createServer({ name: 'identity', verifier: options.verifier, logger: options.logger });
 
@@ -40,33 +41,13 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
   });
 
   if (options.signIn) {
-    const { workspace, domains } = options.signIn;
-    // The groups of the User to choose an Owner Unit from, read from Workspace again as at a
-    // login, so that a group joined a minute ago is there too (TR-CO-03). catalogue asks it too.
-    app.get('/me/groups', async (request, reply) => {
-      try {
-        return { groups: ownDomainGroups(await workspace.groups(request.user?.email ?? ''), domains) };
-      } catch (error) {
-        request.log.error({ err: error }, 'Workspace did not return the groups');
-        reply.code(503).header('retry-after', '30');
-        return { error: 'temporarily_unavailable', message: 'Workspace did not answer; try again later.' };
-      }
-    });
-    // Every group of the own domains, for who may give a Collection to any of them (FR-CO-35,
-    // `collections.make` with any group). catalogue asks it to check the group chosen.
-    app.get('/groups', async (request, reply) => {
-      const permissions = request.user?.permissions;
-      if (!permissions || !can(permissions, 'collections.make') || permissionValue(permissions, 'collections.make', 'ownerUnit') !== 'any') {
-        reply.code(403);
-        return { error: 'forbidden', message: 'Only who may give a Collection to any group sees every group of the domain.', permission: 'collections.make' };
-      }
-      try {
-        return { groups: ownDomainGroups(await workspace.domainGroups(request.user!.sub), domains) };
-      } catch (error) {
-        request.log.error({ err: error }, 'Workspace did not list the groups of the domain');
-        reply.code(503).header('retry-after', '30');
-        return { error: 'temporarily_unavailable', message: 'Workspace did not answer; try again later.' };
-      }
+    const { workspace, domains, store } = options.signIn;
+    // The Groups kept in Data Hub (DEC-UM-10, TR-UM-02); catalogue asks /me/groups and /groups to check an Owner Unit.
+    await app.register(groupRoutes, {
+      groups: store.dataHubGroups,
+      domains,
+      owners: options.owners ?? { collectionsOf: async () => ({ count: 0, names: [] }) },
+      ...(options.peopleCallers ? { movers: options.peopleCallers } : {}),
     });
     await app.register(signInRoutes, options.signIn);
     await app.register(permissionGroupRoutes, {
@@ -76,7 +57,7 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
     });
     await app.register(settingsRoutes, { store: options.signIn.store });
     if (options.peopleCallers) await app.register(peopleRoutes, { store: options.signIn.store, callers: options.peopleCallers });
-    if (options.excelKeys) await app.register(excelKeyRoutes, { ...options.excelKeys, workspace, tokens: options.tokens, domains, groups: options.signIn.groups });
+    if (options.excelKeys) await app.register(excelKeyRoutes, { ...options.excelKeys, workspace, tokens: options.tokens, memberships: store, groups: options.signIn.groups });
   }
 
   return app;

@@ -2,8 +2,8 @@
 <!--
   Screen: the page of a Collection, editing its details
   The Owner Unit or the Data Team clicked "Edit": the head of the page turns into fields, in place.
-  Requirements: FR-UM-11, FR-CO-02, FR-CO-03, FR-CO-09, FR-CO-10, FR-CO-11, FR-CO-13, FR-CO-15, FR-CO-16, FR-CO-17, FR-CO-30, FR-CO-41
-  Decisions: DEC-CO-09, DEC-CO-18, DEC-CO-19, DEC-CO-23, DEC-CO-25, DEC-UX-105. Log: COL-002 to COL-004.
+  Requirements: FR-UM-12, FR-CO-02, FR-CO-03, FR-CO-09, FR-CO-10, FR-CO-11, FR-CO-13, FR-CO-15, FR-CO-16, FR-CO-17, FR-CO-30, FR-CO-41
+  Decisions: DEC-CO-09, DEC-CO-18, DEC-CO-19, DEC-CO-23, DEC-CO-25, DEC-UX-105, DEC-UX-200 (the Owner Unit is a group of Data Hub). Log: COL-002 to COL-004.
   Related screens: collection-overview.html (Cancel and Save go back there).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -141,8 +141,8 @@ Questions? Ask the credit team in the `#credit-data` channel, or with Messages a
     </div>
     <span class="meta" style="margin-top:6px;display:block">Markdown: <span class="mono">### heading</span>, <span class="mono">**bold**</span>, <span class="mono">_italic_</span>, <span class="mono">- list</span>, <span class="mono">[link](address)</span>. Shown on the page of the Collection, under its head.</span>
    </div>
-   <label class="field"><span>Owner Unit</span><select><option>Credit team · credit-team@immoscoop.be</option><option>Data Team · datahub-datateam@immoscoop.be</option><option>Sales · sales@immoscoop.be</option></select></label>
-   <div class="meta" style="margin:-6px 0 12px">Only groups you are in. The Owner Unit answers for the Resources of the Collection.</div>
+   <label class="field"><span>Owner Unit</span><select><option>Credit team</option><option>Data Team</option><option>Sales</option></select></label>
+   <div class="meta" style="margin:-6px 0 12px">Only groups you are in, kept in Data Hub on <a class="text-link" href="groups.html">Groups</a>. The Owner Unit answers for the Resources of the Collection.</div>
    <div class="field"><span>Who sees it</span>
     <div data-group="vis" role="tablist" style="display:flex;gap:4px"><button type="button" class="seg" data-target="private" role="tab" aria-selected="false"><i class="ph-fill ph-lock-simple"></i> Private</button><button type="button" class="seg on" data-target="public" role="tab" aria-selected="true"><i class="ph-fill ph-globe-simple"></i> Public</button></div>
     <p class="meta" data-pane-group="vis" data-pane="public" style="margin-top:6px">Every colleague sees the Collection, and the Resources in it once they are published.</p>

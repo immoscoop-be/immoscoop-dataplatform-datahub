@@ -1,7 +1,7 @@
 // The picture of a monitor (DEC-UX-195), shared by the seven steps (monitor-build.html) and the page of a Monitor
 // (monitor.html). Prototype only: conceptual, not the data. A strip of tiles in days or in weeks ends with today; a label
-// row under it groups the days by calendar week and the weeks by month. On the strip: a dot is one value of one tile, a
-// bar one value over a stretch of tiles, dots on a line a value per tile. Three shades of olive stand for several values,
+// row under it groups the days by calendar week and the weeks by month. On the strip: a dot is one day or week; a stretch
+// is the dot with a tail back over it, lower than the dot, still one value (DEC-UX-206). Three shades of olive stand for several values,
 // never for one each. What it is compared with is hollow; what is left out by a filter, and what is still coming in, is
 // dotted. Under the strip, a row per measure with its boundaries as a gauge, each boundary in its tone, with its
 // reactions. Every part a User may change carries data-edit and a hover (data-tip): the page decides what a click opens.
@@ -36,12 +36,17 @@ window.MonitorPicture = (() => {
 
   // ---- words ---------------------------------------------------------------------------------------------------
   const weekly = s => s.check === 'week';
+  // How far back a comparison is shifted, in days or in weeks: 'back7' is 7 days earlier, or 7 weeks for a weekly check.
+  const back = c => (/^back(\d+)$/.exec(c || '') || [])[1] * 1 || 0;
   const unit = s => weekly(s) ? ['week', 'weeks'] : ['day', 'days'];
   const T = {
     unit,
+    // The shifts a comparison may take: yesterday against 1, 7, 14, 21 or 28 days earlier; a stretch only against shifts
+    // at least as long as itself, so that the two never overlap; a week against 1 to 4 weeks earlier (DEC-CM-30).
+    backs: s => (weekly(s) ? [1, 2, 3, 4] : [1, 7, 14, 21, 28]).filter(n => n >= s.window).map(n => 'back' + n),
     check: s => s.check === 'week' ? `every ${s.day || 'Monday'} at ${s.at}` : s.check === 'weekdays' ? `every weekday at ${s.at}` : `every day at ${s.at}`,
     window: s => s.window === 1 ? (weekly(s) ? 'last week' : 'yesterday')
-      : `the last ${s.window} ${unit(s)[1]}` + (s.as === 'one' ? ', as one' : s.as === 'week' && !weekly(s) ? ', week by week' : `, ${unit(s)[0]} by ${unit(s)[0]}`),
+      : `the last ${s.window} ${unit(s)[1]}`,
     per: s => {
       if (!s.per) return 'all together';
       const kept = s.per.values.filter(v => s.picked[v]), out = s.per.values.filter(v => !s.picked[v]);
@@ -50,8 +55,13 @@ window.MonitorPicture = (() => {
       return `per ${s.per.one}`;
     },
     len: (s, n) => weekly(s) ? (n === 1 ? 'week' : `${n} weeks`) : n % 7 === 0 ? (n === 7 ? 'week' : `${n / 7} weeks`) : n === 1 ? 'day' : `${n} days`,
-    cmp: (s, c) => ({ fixed: 'a fixed number', prev1: `the ${T.len(s, s.window)} before`, prev4: `the ${T.len(s, 4 * s.window)} before`,
-      weekday: 'the same weekday, in the 4 weeks before', all: `all ${s.per ? s.per.many : 'values'} together`, ever: 'everything before' })[c],
+    // What it is compared with (DEC-CM-30): the same day or stretch, shifted back by 1, 7, 14, 21 or 28 days, or by 1 to
+    // 4 weeks; a fixed number; all values together; or everything before.
+    cmp: (s, c) => {
+      const n = back(c);
+      if (n) return weekly(s) ? (n === 1 ? 'the week before' : `${n} weeks earlier`) : n === 1 ? 'the day before' : `${n} days earlier`;
+      return ({ fixed: 'a fixed number', all: `all ${s.per ? s.per.many : 'values'} together`, ever: 'everything before' })[c];
+    },
     amount: (s, b) => b.unit === '%' ? `${b.amt}%` : `${b.amt} ${s.units}`,
     bound: (s, b) => {
       const one = s.per ? s.per.one : 'value';
@@ -80,7 +90,8 @@ window.MonitorPicture = (() => {
     const wk = weekly(s), gap = wk ? 4 : 3, extra = 8;
     let N, date, grp = [], label, off, glabel;
     if (!wk) {
-      const weeks = Math.min(8, Math.max(5, Math.ceil((2 * s.window + 1) / 7)));
+      const shifted = Math.max(0, ...(s.metrics || []).map(m => back(m.cmp)));
+      const weeks = Math.min(8, Math.max(5, Math.ceil((s.window + Math.max(shifted, s.window) + 1) / 7)));
       N = weeks * 7 + 1;
       const start = addDays(TODAY, -weeks * 7);
       date = j => addDays(start, j);
@@ -141,15 +152,14 @@ window.MonitorPicture = (() => {
         ? `<path d="M${tx(0).toFixed(1)},${y - 4.5} H${cx(q).toFixed(1)} a4.5,4.5 0 0 1 0,9 H${tx(0).toFixed(1)}" fill="url(#mp-fade)" stroke="url(#mp-fade-${k})" stroke-width="2"/>`
         : `<rect x="${(cx(p) - 4.5).toFixed(1)}" y="${y - 4.5}" width="${(cx(q) - cx(p) + 9).toFixed(1)}" height="9" rx="4.5" class="mp-hollow" style="stroke:${sl[k].c}"/>`;
       const hd = (j, y, c) => `<circle cx="${cx(j).toFixed(1)}" cy="${y}" r="4.5" class="mp-hollow" style="stroke:${c}"/>`;
-      const hl = (p, q, y, c) => `<line x1="${cx(Math.max(0, p)).toFixed(1)}" y1="${y}" x2="${cx(q).toFixed(1)}" y2="${y}" style="stroke:${c}" stroke-width="1.5"/>` + Array.from({ length: q - Math.max(0, p) + 1 }, (_, k) => hd(Math.max(0, p) + k, y, c)).join('');
-      const same = (p, q, y, c, k) => Wn === 1 ? hd(q, y, c) : s.as === 'one' ? hb(p, q, y, c, k)
-        : s.as === 'week' && !L.wk ? Array.from({ length: Wn / 7 }, (_, n) => hb(p + 7 * n, p + 7 * n + 6, y, c, k)).join('') : hl(p, q, y, c);
+      // the same shape as what is judged, shifted back: a hollow dot, or a hollow dot with its tail (DEC-UX-206)
+      const shape = (q, y, c, k) => Wn === 1 ? hd(q, y, c) : (q - Wn + 1 < 0
+        ? `<path d="M${tx(0).toFixed(1)},${y - 3} H${cx(q).toFixed(1)} v6 H${tx(0).toFixed(1)}" fill="url(#mp-fade)" stroke="url(#mp-fade-${k})" stroke-width="1.5"/>`
+        : `<rect x="${(cx(q - Wn + 1) - 3).toFixed(1)}" y="${y - 3}" width="${(cx(q) - cx(q - Wn + 1) + 3).toFixed(1)}" height="6" rx="3" class="mp-hollow" style="stroke:${c}"/>`) + hd(q, y, c);
       sl.forEach((sv, k) => {
         if (!sv.on) return;
-        const y = ys[k];
-        if (me.cmp === 'prev1') { r = [a - Wn, a - 1]; cmp += same(a - Wn, a - 1, y, sv.c, k); }
-        if (me.cmp === 'prev4') { r = [a - 4 * Wn, a - 1]; cmp += hb(a - 4 * Wn, a - 1, y, sv.c, k); }
-        if (me.cmp === 'weekday') { const js = [1, 2, 3, 4].map(n => jd - 7 * n).filter(j => j >= 0); r = [js.at(-1), js[0]]; cmp += js.map(j => hd(j, y, sv.c)).join(''); }
+        const y = ys[k], n = back(me.cmp);
+        if (n) { r = [jd - n - Wn + 1, jd - n]; cmp += shape(jd - n, y, sv.c, k); }
         if (me.cmp === 'ever') { r = [0, a - 1]; cmp += hb(-1, a - 1, y, sv.c, k); }
       });
       if (me.cmp === 'all') { r = [jd, jd]; cmp = `<rect class="mp-hollow all" x="${(cx(jd) - 9).toFixed(1)}" y="${ys[0] - 10}" width="18" height="${ys.at(-1) - ys[0] + 20}" rx="9"/>`; }
@@ -163,10 +173,9 @@ window.MonitorPicture = (() => {
       sl.forEach((sv, k) => {
         const y = ys[k], c = sv.c;
         if (!sv.on) { mk += Wn === 1 ? `<circle cx="${cx(jd).toFixed(1)}" cy="${y}" r="5" fill="none" style="stroke:${c}" ${dotted}/>` : `<line x1="${cx(a).toFixed(1)}" y1="${y}" x2="${cx(jd).toFixed(1)}" y2="${y}" style="stroke:${c}" ${dotted}/>`; return; }
-        if (Wn === 1) mk += `<circle cx="${cx(jd).toFixed(1)}" cy="${y}" r="5.5" style="fill:${c}"/>`;
-        else if (s.as === 'one') mk += `<line x1="${cx(a).toFixed(1)}" y1="${y}" x2="${cx(jd).toFixed(1)}" y2="${y}" style="stroke:${c}" stroke-width="9" stroke-linecap="round"/>`;
-        else if (s.as === 'week' && !L.wk) for (let n = 0; n < Wn / 7; n++) mk += `<line x1="${cx(a + 7 * n).toFixed(1)}" y1="${y}" x2="${cx(a + 7 * n + 6).toFixed(1)}" y2="${y}" style="stroke:${c}" stroke-width="9" stroke-linecap="round"/>`;
-        else mk += `<line x1="${cx(a).toFixed(1)}" y1="${y}" x2="${cx(jd).toFixed(1)}" y2="${y}" style="stroke:${c}" stroke-width="2.5"/>` + Array.from({ length: Wn }, (_, n) => `<circle cx="${cx(a + n).toFixed(1)}" cy="${y}" r="${tw < 12 ? 4 : 5}" style="fill:${c}"/>`).join('');
+        // a dot for one day or week; for a stretch, the dot with a tail back over it, lower than the dot (DEC-UX-206)
+        if (Wn > 1) mk += `<line x1="${cx(a).toFixed(1)}" y1="${y}" x2="${cx(jd).toFixed(1)}" y2="${y}" style="stroke:${c}" stroke-width="6" stroke-linecap="round"/>`;
+        mk += `<circle cx="${cx(jd).toFixed(1)}" cy="${y}" r="5.5" style="fill:${c}"/>`;
       });
       g += layer(o, 3, hot('period', `<b>It looks at ${T.window(s)}</b><span>the last complete ${unit(s)[0]} and back · click to change</span>`, mk, hitRect(tx(a) - 5, TOP - 5, tx(jd) + tw - tx(a) + 10, TH + 10, 11)));
     }

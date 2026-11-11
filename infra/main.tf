@@ -62,6 +62,8 @@ locals {
     DATAHUB_WORKSPACE_DOMAIN    = join(",", var.workspace_domains)
     DATAHUB_GOOGLE_OAUTH_CLIENT = "${google_secret_manager_secret.secret["datahub-google-oauth-client"].id}/versions/latest"
     DATAHUB_MCP_REDIRECT_URIS   = join(",", var.mcp_redirect_uris)
+    # The way back into Admin when no User of Admin can still sign in (EC-PL-03, TR-UM-06).
+    DATAHUB_BREAK_GLASS_ADMINS = join(",", var.break_glass_admins)
     # The server of the web app, a client of identity known in advance (TR-PF-27).
     DATAHUB_WEB_REDIRECT_URI = "${local.urls["web"]}/auth/callback"
   }

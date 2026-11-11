@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<!--
+  Screen: Resource detail, the tab Monitor (a proposal of 2026-11-10, at the request of Max): on the Resource itself, in
+  its Collection, every monitor that watches it, active or stopped, each read back as a sentence with its Operational
+  Status, its last run, its boundaries and what they found in 30 days, with Edit, which opens the seven steps on it, and
+  Open in Monitoring. New monitor opens the seven steps with this Resource chosen already, on the second step.
+  Each row is what the model calls a way the Resource is watched, a Breakdown of its one Monitor; Max calls it a monitor,
+  and so does this screen (OP-UX-73). Who sees the tab, and who may change what is in it, is OP-UX-74: proposed, everyone
+  who sees the Resource sees the tab, and only who may manage its monitors sees New monitor and Edit.
+  The Overview keeps its part Monitoring, its status in short, and its button now opens this tab.
+  The switches at the bottom: ?mon=two (the default) shows two monitors, ?mon=none none yet, with what Data Hub
+  proposes; ?role=colleague shows the tab read-only.
+  Requirements: none yet; they follow once the design is approved.
+  Decisions: DEC-UX-205, DEC-UX-195, DEC-UX-196, DEC-CM-03, DEC-CM-23.
+  Open points: OP-UX-73, OP-UX-74.
+  Related screens: monitor-build.html (New monitor and Edit), monitor.html (Open in Monitoring), resource-overview.html.
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="owner">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Weekly lead volume, monitor</title>
+</head>
+<body>
+<div class="app panel-open">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <button class="nav-btn active" data-label="Collections" aria-label="Collections" aria-current="page"><i class="ph-fill ph-stack"></i><span class="flare top"></span><span class="flare bottom"></span></button>
+  <a class="nav-btn" href="query.html" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></a>
+  <a class="nav-btn" href="#" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <a class="nav-btn nav-admin" href="admin-webhooks.html" data-label="Admin" aria-label="Admin, for the Data Team" data-for="datateam"><i class="ph-fill ph-toolbox"></i></a>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">MP</a>
+</nav>
+<aside class="panel" aria-label="Collections">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:4px">
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Collections</h1>
+   <button class="icon-btn" aria-label="New Collection"><i class="ph-fill ph-plus-circle"></i></button>
+   <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
+  </div>
+  <label class="search card" style="margin:16px 0 4px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search Resources and Lenses"></label>
+  <div class="tree-group card open">
+   <div class="tree-head"><a class="tree-link" href="collection-overview.html"><span class="item-icon"><i class="ph ph-coins"></i></span><span class="tree-name"><span class="item-title">Credit leads</span><span class="meta"><span data-for="owner datateam">6</span><span data-for="colleague">4</span> Resources · <i class="ph-fill ph-globe-simple"></i>Public</span></span></a><button class="tree-toggle" aria-expanded="true" aria-label="Show what Credit leads holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res current" aria-current="page" href="resource-detail.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Weekly lead volume">Weekly lead volume</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Credit lead funnel">Credit lead funnel</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead sources">Lead sources</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead response time">Lead response time</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res unpublished" data-for="owner datateam" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Rejected leads · not published">Rejected leads<span class="hidden-label">, not published</span></span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res unpublished" data-for="owner datateam" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="KBC follow-up · not published">KBC follow-up<span class="hidden-label">, not published</span></span></span><span class="maturity" data-level="1"></span></a>
+     <a class="tree-res" href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span class="tree-res-name"><span class="clip" title="Leads per source name">Leads per source name</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span class="tree-res-name"><span class="clip" title="Leads per source, week by week">Leads per source, week by week</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span class="tree-res-name"><span class="clip" title="From request to KBC">From request to KBC</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span class="tree-res-name"><span class="clip" title="Response time and conversion">Response time and conversion</span></span><span class="maturity" data-level="3"></span></a>
+   </div>
+  </div>
+  <div class="tree-group card" data-pane-group="collfilter" data-pane="all">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-house-line"></i></span><span class="tree-name"><span class="item-title">Listing leads</span><span class="meta">15 Resources</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Listing leads holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Contact requests per listing and per broker">Contact requests per listing and per broker</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead quality score">Lead quality score</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Visit requests">Visit requests</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Leads per broker">Leads per broker</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Response by broker">Response by broker</span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead sources for listings">Lead sources for listings</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res unpublished" data-for="owner datateam" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Duplicate requests · not published">Duplicate requests<span class="hidden-label">, not published</span></span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead to visit">Lead to visit</span></span><span class="maturity" data-level="1"></span></a>
+     <a class="tree-more" href="#">Show all 15</a>
+   </div>
+  </div>
+  <div class="tree-group card" data-pane-group="collfilter" data-pane="all">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-buildings"></i></span><span class="tree-name"><span class="item-title">Listings</span><span class="meta">22 Resources</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Listings holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Active listings per day">Active listings per day</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Listing views per day">Listing views per day</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Price changes">Price changes</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Listings by region">Listings by region</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Time on market">Time on market</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="New listings per week">New listings per week</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Listing quality">Listing quality</span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res unpublished" data-for="owner datateam" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Withdrawn listings · not published">Withdrawn listings<span class="hidden-label">, not published</span></span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-more" href="#">Show all 22</a>
+   </div>
+  </div>
+  <div class="tree-group card">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-briefcase"></i></span><span class="tree-name"><span class="item-title">Brokers</span><span class="meta">11 Resources · <i class="ph-fill ph-lock-simple"></i>Private</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Brokers holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Active brokers">Active brokers</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Service packs per broker">Service packs per broker</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Broker churn">Broker churn</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Broker portal logins">Broker portal logins</span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Listings per broker">Listings per broker</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Broker regions">Broker regions</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Pack upgrades">Pack upgrades</span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res unpublished" data-for="owner datateam" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Broker contacts · not published">Broker contacts<span class="hidden-label">, not published</span></span></span><span class="maturity" data-level="1"></span></a>
+     <a class="tree-more" href="#">Show all 11</a>
+   </div>
+  </div>
+  <p id="no-results" class="meta" style="padding:8px 4px" hidden>Nothing matches your search.</p>
+ </div>
+</aside>
+<main class="main">
+ <div class="breadcrumb">Collections / Credit leads</div>
+ <div style="display:flex;align-items:flex-start;gap:14px;margin-top:8px">
+  <div style="flex:1;min-width:0"><h1 class="page-title">Weekly lead volume</h1><div class="meta mono" style="margin-top:4px">immoscoop-dataplatform-398214.dbt_prod_stacks.weekly_lead_volume <button class="icon-btn" aria-label="Copy key" style="width:22px;height:22px;font-size:13px"><i class="ph-fill ph-copy"></i></button></div></div>
+  <a class="btn-quiet outline" href="query-new.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-terminal-window"></i>Query</a>
+  <a class="btn-quiet outline" href="resource-messages.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" title="Messages on this, and start one"><i class="ph-fill ph-chat-circle-text"></i>Messages<span class="count">3</span></a>
+  <a class="btn-primary" href="resource-messages.html" style="text-decoration:none"><i class="ph-fill ph-chat-circle-dots" style="font-size:15px"></i>Ask a question</a>
+ </div>
+ <div class="status-row">
+  <span class="status"><span class="maturity" data-level="4" data-no-tooltip></span>4 · Explored</span>
+  <span class="status"><i class="ph-fill ph-globe-simple"></i>Published</span>
+  <span class="status"><i class="ph-fill ph-users-three"></i>Owner: Credit team</span>
+  <span class="status"><i class="ph-fill ph-warning-circle"></i>1 open signal</span>
+ </div>
+ <div class="tabs" role="tablist">
+  <a class="tab" href="resource-overview.html" role="tab" aria-selected="false" style="text-decoration:none">Overview</a>
+  <a class="tab" href="resource-detail.html?tabs=columns" role="tab" aria-selected="false" style="text-decoration:none">Columns</a>
+  <a class="tab" href="resource-lineage.html" role="tab" aria-selected="false" style="text-decoration:none">Lineage</a>
+  <a class="tab" data-for="owner datateam" href="resource-history.html" role="tab" aria-selected="false" style="text-decoration:none">History <span class="count">12</span></a>
+  <a class="tab" href="resource-preview.html" role="tab" aria-selected="false" style="text-decoration:none">Preview</a>
+  <button class="tab on" role="tab" aria-selected="true">Monitor</button>
+ </div>
+ <div class="tab-content card">
+  <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">
+   <div style="flex:1;min-width:260px">
+    <h2 style="font-size:var(--text-section);font-weight:var(--weight-medium);margin:0">Monitors</h2>
+    <p class="meta" style="display:block;line-height:1.5;margin-top:4px" data-pane-group="mon" data-pane="two">Two monitors watch Weekly lead volume and tell the Credit team when something is off. Each checks at its own time; together they can be trusted now: <b style="font-weight:500">5 · Monitored</b>.</p>
+    <p class="meta" style="display:block;line-height:1.5;margin-top:4px" data-pane-group="mon" data-pane="none" hidden>Nothing watches Weekly lead volume yet. A monitor checks it at a time you choose and tells you when something is off, before a colleague finds it in a report.</p>
+   </div>
+   <a class="btn-primary" data-for="owner datateam" href="monitor-build.html?from=resource" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-plus-circle" style="font-size:15px"></i>New monitor</a>
+  </div>
+
+  <div class="mt-list" data-pane-group="mon" data-pane="two">
+  <div class="mt-row">
+   <span class="tone-dot" data-tone="attention" role="img" aria-label="Attention" style="margin-top:6px"></span>
+   <div style="flex:1;min-width:0">
+    <div class="item-title" style="font-size:14px">Every weekday, per lead source</div>
+    <p style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin:4px 0 6px">At 08:00 on weekdays, the leads of yesterday per lead source, compared with 7 days earlier, the same weekday. It tells the Credit team when one drops 30%, and puts a list of new lead sources in your list.</p>
+    <div class="meta" style="display:flex;flex-wrap:wrap;gap:4px 14px"><span><i class="ph ph-clock"></i> last run today 08:00 · ok</span><span><i class="ph ph-sliders-horizontal"></i> 2 boundaries</span><span><i class="ph ph-bell"></i> 3 Findings in 30 days, 1 today</span><span><i class="ph ph-gauge"></i> 2 MB a run</span></div>
+   </div>
+   <div style="display:flex;gap:6px;align-items:flex-start;flex:none">
+    <a class="btn-quiet outline" data-for="owner datateam" href="monitor-build.html?from=resource&amp;edit=source" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph ph-pencil-simple"></i>Edit</a>
+    <a class="btn-quiet" href="monitor.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px">Open in Monitoring<i class="ph ph-arrow-right"></i></a>
+   </div>
+  </div>
+  <div class="mt-row">
+   <span class="tone-dot" role="img" aria-label="Healthy" style="margin-top:6px;background:none;border:1.5px solid var(--text-muted)"></span>
+   <div style="flex:1;min-width:0">
+    <div class="item-title" style="font-size:14px">Every Monday, in total</div>
+    <p style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin:4px 0 6px">On Mondays at 08:00, the leads of last week. It tells the Credit team and the Consumers of Weekly lead volume when they fall below 2,000.</p>
+    <div class="meta" style="display:flex;flex-wrap:wrap;gap:4px 14px"><span><i class="ph ph-clock"></i> last run Monday 08:00 · ok</span><span><i class="ph ph-sliders-horizontal"></i> 1 boundary</span><span><i class="ph ph-bell"></i> nothing in 30 days</span><span><i class="ph ph-gauge"></i> 1 MB a run</span></div>
+   </div>
+   <div style="display:flex;gap:6px;align-items:flex-start;flex:none">
+    <a class="btn-quiet outline" data-for="owner datateam" href="monitor-build.html?from=resource&amp;edit=total" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph ph-pencil-simple"></i>Edit</a>
+    <a class="btn-quiet" href="monitor.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px">Open in Monitoring<i class="ph ph-arrow-right"></i></a>
+   </div>
+  </div>
+  </div>
+  <p class="meta" data-pane-group="mon" data-pane="two" style="display:block;margin-top:14px"><i class="ph ph-info"></i> A monitor that stopped, because a field it is per left the Resource, stays listed here, greyed, with why; Edit sets it going again.</p>
+
+  <div data-pane-group="mon" data-pane="none" hidden>
+   <div class="explain" style="margin-top:16px" data-for="owner datateam"><i class="ph-fill ph-lightbulb" aria-hidden="true"></i><div><b style="font-weight:500">Data Hub proposes a first monitor</b> from what it knows of Weekly lead volume: the leads of yesterday, compared with 7 days earlier, the same weekday. New monitor starts from it; you look through each step and change what does not fit.</div></div>
+   <p class="meta" style="display:block;margin-top:14px" data-for="colleague">Its Owner, the Credit team, decides what watches it.</p>
+  </div>
+ </div>
+</main>
+</div>
+
+<div class="proto-switch" data-group="mon" role="tablist" aria-label="Prototype: the monitors of the Resource">Monitors
+ <button class="seg on" data-target="two" role="tab" aria-selected="true">Two</button>
+ <button class="seg" data-target="none" role="tab" aria-selected="false">None yet</button>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

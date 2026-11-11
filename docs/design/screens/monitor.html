@@ -23,7 +23,7 @@
   that failed and the Monitor judging the data of the run before (FR-CM-21, EC-CM-04); ?stopped=on shows a Breakdown
   stopped because a field it reads went, while the other goes on (EC-CM-01).
   Requirements: FR-CM-01, FR-CM-03, FR-CM-05, FR-CM-17, FR-CM-18, FR-CM-19, FR-CM-26, FR-CM-33, FR-CM-37, EC-CM-01, EC-CM-04
-  Decisions: DEC-CM-03, DEC-CM-04, DEC-CM-06, DEC-CM-08, DEC-CM-09, DEC-CM-11, DEC-CM-12, DEC-CM-16, DEC-CM-21, DEC-CM-24, DEC-UX-195, DEC-UX-196, DEC-UX-197.
+  Decisions: DEC-CM-03, DEC-CM-04, DEC-CM-06, DEC-CM-08, DEC-CM-09, DEC-CM-11, DEC-CM-12, DEC-CM-16, DEC-CM-21, DEC-CM-24, DEC-CM-28, DEC-CM-29, DEC-CM-30, DEC-UX-195, DEC-UX-196, DEC-UX-197, DEC-UX-206.
   Open points: OP-UX-63, OP-UX-64, OP-UX-65, OP-UX-68, OP-CM-01.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -221,14 +221,14 @@
   const B = (kind, x) => Object.assign({ kind, tone: 'attention', react: ['owner'], list: 'daily' }, x);
   const all = vs => Object.fromEntries(vs.map(v => [v, true]));
   const BD = [
-    { name: 'Credit leads', units: 'leads', stable: 1, check: 'weekdays', at: '08:00', day: 'Monday', window: 7, as: 'day', perKey: 'partner', only: 'all', picked: all(PARTNERS), guard: 10, sel: 0,
+    { name: 'Credit leads', units: 'leads', stable: 1, check: 'weekdays', at: '08:00', day: 'Monday', window: 7, perKey: 'partner', only: 'all', picked: all(PARTNERS), guard: 10, sel: 0,
       metrics: [
-        { field: 'rows', how: 'count', cmp: 'prev4', bounds: [ B('change', { dir: 'drops', amt: 30, fired: 2, useful: 1 }), B('change', { dir: 'drops', amt: 50, tone: 'problem', react: ['owner', 'consumers'], fired: 1, useful: 1 }) ] },
+        { field: 'rows', how: 'count', cmp: 'back7', bounds: [ B('change', { dir: 'drops', amt: 30, fired: 2, useful: 1 }), B('change', { dir: 'drops', amt: 50, tone: 'problem', react: ['owner', 'consumers'], fired: 1, useful: 1 }) ] },
         { field: 'contact', how: 'both', cmp: 'fixed', bounds: [ B('level', { dir: 'higher', amt: 2, unit: '%', fired: 4, useful: 1 }), B('level', { dir: 'higher', amt: 10, unit: '%', tone: 'problem', react: ['owner', 'consumers'], fired: 0 }) ] } ] },
-    { name: 'Credit leads', units: 'leads', stable: 1, check: 'week', at: '08:00', day: 'Monday', window: 1, as: 'one', perKey: null, only: 'all', picked: {}, guard: 0, sel: 0,
+    { name: 'Credit leads', units: 'leads', stable: 1, check: 'week', at: '08:00', day: 'Monday', window: 1, perKey: null, only: 'all', picked: {}, guard: 0, sel: 0,
       metrics: [
-        { field: 'amount', how: 'typical', cmp: 'prev4', bounds: [ B('change', { dir: 'rises or drops', amt: 10, tone: 'informative', react: ['list'], list: 'weekly', fired: 1 }) ] },
-        { field: 'rows', how: 'count', cmp: 'prev1', bounds: [ B('change', { dir: 'drops', amt: 20, fired: 0 }) ] } ] }
+        { field: 'amount', how: 'typical', cmp: 'back4', bounds: [ B('change', { dir: 'rises or drops', amt: 10, tone: 'informative', react: ['list'], list: 'weekly', fired: 1 }) ] },
+        { field: 'rows', how: 'count', cmp: 'back1', bounds: [ B('change', { dir: 'drops', amt: 20, fired: 0 }) ] } ] }
   ];
   const view = S => Object.assign({}, S, { per: S.perKey ? PERS[S.perKey] : null,
     metrics: S.metrics.map(m => Object.assign({}, m, { sym: MEASURES[m.field].hows[m.how][0], says: MEASURES[m.field].hows[m.how][1] })) });
@@ -251,8 +251,9 @@
   const opts = (key, list, isOn, multi) => `<div class="kind-grid" role="${multi ? 'group' : 'radiogroup'}">${list.map(([v, l, icon, dis]) => {
     const on = isOn(v); return `<button class="kind-opt${on ? ' on' : ''}" type="button" role="${multi ? 'checkbox' : 'radio'}" aria-checked="${on}" data-set="${key}=${v}"${dis ? ' disabled' : ''}>${icon ? `<i class="ph ${icon}"></i>` : ''}${l}</button>`; }).join('')}</div>`;
   const one = (key, cur, list) => opts(key, list, v => String(v) === String(cur));
-  const asList = S => S.window === 1 ? [] : weekly(S) ? [['week', 'week by week', 'ph-dots-three'], ['one', 'as one', 'ph-minus']]
-    : [['day', 'day by day', 'ph-dots-three']].concat(S.window % 7 === 0 && S.window >= 14 ? [['week', 'week by week', 'ph-dots-three-outline']] : []).concat([['one', 'as one', 'ph-minus']]);
+  // The times of the list in Terraform (DEC-CM-28); the shifts it may be compared with (DEC-CM-30).
+  const TIMES = ['06:00', '08:00', '12:00', '17:00'];
+  const firstBack = S => T.backs(S).at(weekly(S) || S.window > 1 ? 0 : 1);
   const whoTxt = b => {
     const w = [];
     if (b.react.includes('owner')) w.push('you and the Credit team, in Data Hub and by e-mail, as each of you set it');
@@ -271,19 +272,18 @@
     check: S => ({ icon: 'ph-calendar-dots', title: 'When it checks', body:
       row('Check', one('check', S.check, [['day', 'every day', 'ph-calendar'], ['weekdays', 'weekdays only', 'ph-briefcase'], ['week', 'once a week', 'ph-calendar-check'], ['hour', 'every hour · later', 'ph-clock', true]]),
         weekly(S) ? 'In calendar weeks, Monday to Sunday: the strip counts in weeks, grouped by month.' : 'The strip counts in days, grouped by calendar week, the weekend greyer.') +
-      row('At', one('at', S.at, ['07:00', '08:00', '09:00'].map(t => [t, t, 'ph-clock']))) +
+      row('At', one('at', S.at, TIMES.map(t => [t, t, 'ph-clock'])), 'One of the times kept for every monitor.') +
       (weekly(S) ? row('On', one('day', S.day, ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map(d => [d, d]))) : '') }),
     period: S => ({ icon: 'ph-brackets-square', title: 'What each check looks at', body:
-      row('Over', one('window', S.window, (weekly(S) ? [1, 2, 3, 4] : [1, 7, 14, 21, 28]).map(n => [n, n === 1 ? (weekly(S) ? 'last week' : 'yesterday') : `the last ${n} ${T.unit(S)[1]}`])), `Back from the last complete ${T.unit(S)[0]}; it shows solid on the strip.`) +
-      (S.window > 1 ? row('As', one('as', S.as, asList(S)), S.as === 'one' ? 'One value over the whole stretch: a bar.' : 'A value each: dots on a line, or a bar per week.') : '') }),
+      row('Over', one('window', S.window, (weekly(S) ? [1, 2, 3, 4] : [1, 7, 14, 21, 28]).map(n => [n, n === 1 ? (weekly(S) ? 'last week' : 'yesterday') : `the last ${n} ${T.unit(S)[1]}`])), `Back from the last complete ${T.unit(S)[0]}, always one value: ${S.window === 1 ? 'a dot' : `the dot of the last ${T.unit(S)[0]}, with a tail back over the stretch`} on the strip.`) }),
     per: S => ({ icon: 'ph-stack', title: 'All together, or per value', body:
       row('Look at', one('per', S.perKey || 'all', [['all', 'all together', 'ph-circle'], ['partner', 'per partner', 'ph-rows'], ['source', 'per lead source', 'ph-rows']]), 'Per value, each one is judged against its own history.') +
       (S.perKey ? row('Values', one('only', S.only, [['all', 'all, also new ones'], ['only', 'only …'], ['except', 'all except …']])) +
         (S.only !== 'all' ? row(S.only === 'only' ? 'Only' : 'Except', opts('pick', PERS[S.perKey].values.map(v => [v, v]), v => S.only === 'only' ? S.picked[v] : !S.picked[v], true), 'Left out turns dotted in the picture.') : '') +
         row('Judged', one('guard', S.guard, [[0, 'always'], [10, 'from 10 leads'], [20, 'from 20 leads'], [30, 'from 30 leads']]), `A ${PERS[S.perKey].one} with fewer leads in the period is not judged, so that 3 becoming 1 is no −66%.`) : '') }),
     cmp: (S, i) => { const V = view(S), me = V.metrics[i]; return { icon: 'ph-arrows-left-right', meta: `Of ${me.says}`, title: 'Compared with', body:
-      row('With', one(`cmp:${i}`, me.cmp, [['prev1', T.cmp(V, 'prev1')], ['prev4', T.cmp(V, 'prev4')], ['weekday', 'the same weekday', null, weekly(S) || S.window !== 1], ['all', `all ${V.per ? V.per.many : 'values'} together`, null, !V.per], ['ever', 'everything before'], ['fixed', 'a fixed number']]),
-        'It shows hollow on the strip. Against a fixed number it is higher or lower than; against the past it rises or drops.') }; },
+      row('With', one(`cmp:${i}`, me.cmp, T.backs(S).map(k => [k, T.cmp(V, k)]).concat([['all', `all ${V.per ? V.per.many : 'values'} together`, null, !V.per], ['ever', 'everything before'], ['fixed', 'a fixed number']])),
+        'The same day or stretch, shifted back; it shows hollow on the strip. Against a fixed number it is higher or lower than; against the past it rises or drops.') }; },
     bound: (S, i, j) => { const V = view(S), me = V.metrics[i], b = S.metrics[i].bounds[j]; return { icon: 'ph-arrows-down-up', meta: `Of ${me.says}, compared with ${T.cmp(V, me.cmp)}`, title: `Boundary: ${T.bound(V, b)}`, remove: `del:${i}:${j}`, body:
       (b.kind === 'level'
         ? row('It is', one(`b:${i}:${j}:dir`, b.dir, [['higher', 'higher than', 'ph-arrow-up'], ['lower', 'lower than', 'ph-arrow-down']])) + row('Than', one(`b:${i}:${j}:amt`, b.amt, [1, 2, 5, 10, 20].map(v => [v, v + '%'])))
@@ -319,7 +319,7 @@
     const S = BD[k], [key, ...args] = edit.split(':');
     before = JSON.stringify(S); bd = k;
     if (key === 'addb') { const me = S.metrics[+args[0]]; me.bounds.push(me.cmp === 'fixed' ? B('level', { dir: 'higher', amt: 20, unit: '%' }) : B('change', { dir: 'drops', amt: 50 })); edit = `bound:${args[0]}:${me.bounds.length - 1}`; }
-    if (key === 'addmetric') { S.metrics.push({ field: 'email', how: 'empty', cmp: 'prev4', bounds: [B('change', { dir: 'rises', amt: 30 })] }); edit = `measure:${S.metrics.length - 1}`; }
+    if (key === 'addmetric') { S.metrics.push({ field: 'email', how: 'empty', cmp: firstBack(S), bounds: [B('change', { dir: 'rises', amt: 30 })] }); edit = `measure:${S.metrics.length - 1}`; }
     if (key === 'guard') edit = 'per';
     const [k2, i2] = edit.split(':');
     if (['cmp', 'bound', 'react', 'measure'].includes(k2)) S.sel = +i2;
@@ -333,8 +333,7 @@
     open = null; before = null; mw.hidden = true; render();
   }
   const fit = S => {
-    if (S.window === 1) S.as = 'one'; else if (!asList(S).some(([k]) => k === S.as)) S.as = weekly(S) ? 'week' : 'day';
-    S.metrics.forEach(m => { if ((m.cmp === 'weekday' && (weekly(S) || S.window !== 1)) || (m.cmp === 'all' && !S.perKey)) m.cmp = 'prev4'; });
+    S.metrics.forEach(m => { if ((/^back/.test(m.cmp) && !T.backs(S).includes(m.cmp)) || (m.cmp === 'all' && !S.perKey)) m.cmp = firstBack(S); });
   };
   function apply(key, v) {
     const S = BD[bd], [k, i, j, f] = key.split(':');
@@ -342,7 +341,6 @@
     else if (k === 'at') S.at = v;
     else if (k === 'day') S.day = v;
     else if (k === 'window') { S.window = +v; fit(S); }
-    else if (k === 'as') S.as = v;
     else if (k === 'per') { S.perKey = v === 'all' ? null : v; S.only = 'all'; S.picked = S.perKey ? all(PERS[S.perKey].values) : {}; fit(S); }
     else if (k === 'only') { S.only = v; const vs = PERS[S.perKey].values; vs.forEach((x, n) => { S.picked[x] = v === 'all' ? true : v === 'only' ? n === 0 : n !== vs.length - 1; }); }
     else if (k === 'pick') S.picked[v] = !S.picked[v];

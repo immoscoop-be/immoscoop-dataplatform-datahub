@@ -41,9 +41,10 @@ describe.skipIf(!url)('who catalogue notifies (DEC-LN-07)', () => {
     await store.saveUser({ sub: 'jan', email: 'jan@thenextimmoscoop.be', name: 'Jan Peeters' });
     await store.saveUser({ sub: 'an', email: 'an@immoscoop.be', name: 'An Claes' });
     await store.saveUser({ sub: 'dirk', email: 'dirk@immoscoop.be', name: 'Dirk Vos' });
-    await store.saveGroups('jan', ['g-credit', 'g-sales'], []);
-    await store.saveGroups('an', ['g-credit'], []);
-    await store.saveGroups('dirk', ['g-datateam'], ['datateam']);
+    // Credit has Jan, An and Mia, who has not signed in yet; Sales has Jan.
+    await sql`insert into groups (id, name, managed_by) values ('g-credit', 'Credit', 'g-credit'), ('g-sales', 'Sales', 'g-sales')`.execute(database.db);
+    await sql`insert into group_members (group_id, email) values ('g-credit', 'jan@thenextimmoscoop.be'), ('g-credit', 'an@immoscoop.be'),
+      ('g-credit', 'mia@immoscoop.be'), ('g-sales', 'jan@thenextimmoscoop.be')`.execute(database.db);
     // Dirk is of Admin, the others of the default; only Admin has the Messages for the Data Team.
     await sql`update users set permission_group_id = (select id from permission_groups where starting = 'admin') where google_id = 'dirk'`.execute(database.db);
     await store.saveSetting('an', 'language', 'en');
@@ -59,7 +60,7 @@ describe.skipIf(!url)('who catalogue notifies (DEC-LN-07)', () => {
         google: async () => {
           throw new Error('Not used');
         },
-        workspace: { isActive: async () => true, groups: async () => [], domainGroups: async () => [] },
+        workspace: { isActive: async () => true },
         tokens,
         issuer: 'https://identity.test',
         domains: ['thenextimmoscoop.be', 'immoscoop.be'],
@@ -84,15 +85,18 @@ describe.skipIf(!url)('who catalogue notifies (DEC-LN-07)', () => {
       { id: 'an', email: 'an@immoscoop.be', name: 'An Claes', language: 'en', groups: ['g-credit'], permissions: [] },
       { id: 'dirk', email: 'dirk@immoscoop.be', name: 'Dirk Vos', language: 'nl', groups: [], permissions: ['messages.dataTeam'] },
       { id: 'jan', email: 'jan@thenextimmoscoop.be', name: 'Jan Peeters', language: 'nl', groups: ['g-credit'], permissions: [] },
+      { id: null, email: 'mia@immoscoop.be', name: '', language: 'nl', groups: ['g-credit'], permissions: [] },
     ]);
     expect((await ask({})).json()).toEqual({ people: [] });
     expect((await ask({ permissions: ['datateam'] })).statusCode).toBe(400);
   });
 
-  it('does not reach a User whose account is no longer active by a Permission', async () => {
-    await store.saveGroups('dirk', [], []);
+  it('does not reach a User whose account is no longer active by a Permission or a Group (FR-UM-10)', async () => {
+    await store.markInactive('dirk');
+    await store.markInactive('an');
     expect((await ask({ permissions: ['messages.dataTeam'] })).json()).toEqual({ people: [] });
-    await store.saveGroups('dirk', ['g-datateam'], ['datateam']);
+    expect((await ask({ groups: ['g-credit'] })).json().people.map((person: { email: string }) => person.email)).toEqual(['jan@thenextimmoscoop.be', 'mia@immoscoop.be']);
+    await sql`update users set active = true`.execute(database.db);
   });
 
   it('answers catalogue only, never an Access Token, and refuses what is no list of IDs', async () => {

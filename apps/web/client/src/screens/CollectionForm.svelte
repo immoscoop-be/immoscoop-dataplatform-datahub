@@ -8,18 +8,19 @@
   import MarkdownEditor from '@datahub/ui/components/MarkdownEditor.svelte';
   import EditBar from '@datahub/ui/containers/EditBar.svelte';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
-  import { t } from '@datahub/ui/foundations/texts.svelte.js';
+  import { t, tParts } from '@datahub/ui/foundations/texts.svelte.js';
   import Button from '@datahub/ui/primitives/Button.svelte';
   import Field from '@datahub/ui/primitives/Field.svelte';
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
-  import type { Collection, CollectionFields, OwnerUnit } from '../lib/catalogue.js';
+  import type { Collection, CollectionFields } from '../lib/catalogue.js';
+  import { GROUPS } from '../lib/routes.js';
 
   /**
    * The head of the page of a Collection turned into fields, in place, with the edit bar on top
    * (FR-CO-30): its name, description, intro in Markdown (FR-CO-41), Owner Unit, who sees it and its icon. Empty, it makes a new
-   * Collection (FR-CO-12). The Owner Unit is one of the groups of whoever edits; a User who may make a Collection
-   * for any group chooses from every group of the domain (FR-CO-15, FR-CO-35, `collections.make`). Dissolving is at the bottom, only for an
-   * empty Collection (FR-CO-10).
+   * Collection (FR-CO-12). The Owner Unit is one of the Groups whoever edits is in, by name only, with the way to Groups;
+   * a User who may make a Collection for any Group chooses from every Group (FR-CO-15, FR-CO-35, `collections.make`,
+   * DEC-UX-200). Dissolving is at the bottom, only for an empty Collection (FR-CO-10).
    */
   let {
     collection,
@@ -32,9 +33,9 @@
     ondissolve,
   }: {
     collection?: Collection;
-    /** The groups to choose the Owner Unit from: undefined while they come, null when they did not. */
-    groups: readonly OwnerUnit[] | null | undefined;
-    /** The groups are those of the whole domain (`collections.make`, any group). */
+    /** The Groups to choose the Owner Unit from: undefined while they come, null when they did not. */
+    groups: readonly { id: string; name: string }[] | null | undefined;
+    /** The Groups are every Group of Data Hub (`collections.make`, any group). */
     anyOwnerUnit: boolean;
     /** The fixed IDs of the groups of the User: a new Collection takes the first of them by default. */
     own?: readonly string[];
@@ -59,11 +60,17 @@
   let taken: string | undefined = $state();
   let failed = $state(false);
 
-  /** The groups to choose from, with the current Owner Unit in them even when the User is not in it. */
+  /** The Groups to choose from, by name, with the current Owner Unit in them even when the User is not in it. */
   const options = $derived.by(() => {
     const list = groups ?? [];
-    return start && !list.some((group) => group.id === start.ownerUnit.id) ? [start.ownerUnit, ...list] : list;
+    return start && !list.some((group) => group.id === start.ownerUnit.id) ? [{ id: start.ownerUnit.id, name: start.ownerUnit.name }, ...list] : list;
   });
+  /** What stands under the Owner Unit: which Groups it lists, with the way to Groups, or why there are none. */
+  const ownerHint = $derived(
+    groups === null
+      ? undefined
+      : tParts(groups && options.length === 0 ? 'collection.field.owner.none' : anyOwnerUnit ? 'collection.field.owner.hintDataTeam' : 'collection.field.owner.hint', {}, { groups: 'Groups' }),
+  );
   // A new Collection takes a group of the User until they choose another, also from every group of the domain.
   $effect(() => {
     if (!ownerUnit && options[0]) {
@@ -78,6 +85,8 @@
     icon: icon ? undefined : t('collection.problem.icon'),
     owner: ownerUnit ? undefined : t('collection.problem.owner'),
   });
+
+  const ownerProblem = $derived(tried && groups && options.length > 0 ? problems.owner : undefined);
 
   async function save(event: SubmitEvent) {
     event.preventDefault();
@@ -117,20 +126,16 @@
       <Field label={t('collection.field.intro')} group>
         <MarkdownEditor id="intro" bind:value={intro} label={t('collection.field.intro')} note={t('collection.field.intro.note')} maxlength={10000} />
       </Field>
-      <Field
-        label={t('collection.field.owner')}
-        hint={groups === null
-          ? t('collection.field.owner.failed')
-          : groups && options.length === 0
-            ? t('collection.field.owner.none')
-            : t(anyOwnerUnit ? 'collection.field.owner.hintDataTeam' : 'collection.field.owner.hint')}
-        problem={tried && groups && options.length > 0 ? problems.owner : undefined}
-      >
+      <Field label={t('collection.field.owner')} hint={groups === null ? t('collection.field.owner.failed') : undefined} problem={ownerProblem}>
         <select bind:value={ownerUnit} disabled={!groups || options.length === 0}>
           {#each options as group (group.id)}
-            <option value={group.id}>{group.name} · {group.email}</option>
+            <option value={group.id}>{group.name}</option>
           {/each}
         </select>
+        <!-- The Groups are kept in Data Hub, on Groups, where the hint leads (collection-edit). -->
+        {#if ownerHint && !ownerProblem}
+          <span class="explain">{#each ownerHint as part, index (index)}{#if 'name' in part}<a class="text-link" href={GROUPS}>{part.name}</a>{:else}{part.text}{/if}{/each}</span>
+        {/if}
       </Field>
       <Field label={t('collection.field.visibility')} group>
         <Segmented
@@ -167,6 +172,7 @@
   .tiles { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 10px; }
   .sub { border-radius: var(--radius-md); padding: 16px 18px; background: var(--surface-sub); min-width: 0; }
   .explain { display: block; margin-top: 6px; font-size: var(--text-meta); color: var(--text-muted); line-height: 1.5; }
+  .text-link { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
   .failed { margin: 0 0 10px; font-size: var(--text-small); color: var(--signal-urgent); }
   .dissolve { display: flex; align-items: center; gap: 12px; margin-top: 12px; padding: 12px 16px; border-radius: var(--radius-callout); background: var(--surface-sub); }
   .trash { display: inline-flex; font-size: 22px; color: var(--text-secondary); }

@@ -19,7 +19,7 @@
   import IconButton from '@datahub/ui/primitives/IconButton.svelte';
   import Loading from '@datahub/ui/primitives/Loading.svelte';
   import { NotFound as Missing, Refused } from '../lib/api.js';
-  import type { Catalogue, Collection, CollectionFields, CollectionResource, LogEntry, OwnerUnit, Resource } from '../lib/catalogue.js';
+  import type { Catalogue, Collection, CollectionFields, CollectionResource, LogEntry, Resource } from '../lib/catalogue.js';
   import type { requestOf } from '../lib/grain.js';
   import type { Identity } from '../lib/identity.js';
   import type { Registry } from '../lib/registry.js';
@@ -27,7 +27,7 @@
   import { brokenText } from '../lib/broken.js';
   import { dragging, dragOf, dropOf, isOver, type Mover } from '../lib/dragging.svelte.js';
   import { contents, counted, holdsText } from '../lib/folders.js';
-  import { collectionPath, folderPath, lensPath, newLensForPath, resourcePath } from '../lib/routes.js';
+  import { collectionPath, folderPath, groupPath, lensPath, newLensForPath, resourcePath } from '../lib/routes.js';
   import { rowOf } from '../lib/rows.js';
   import AddResources from './AddResources.svelte';
   import CollectionForm, { type Saved } from './CollectionForm.svelte';
@@ -66,7 +66,7 @@
     registry: Registry;
     /** The User may add Resources to it and remove them (`resources.assign`). */
     assigns: boolean;
-    /** The User may give it to any group of the domain (`collections.make`, any group, FR-CO-35). */
+    /** The User may give it to any Group (`collections.make`, any group, FR-CO-35). */
     anyOwnerUnit: boolean;
     /** The fixed IDs of the groups of the User. */
     own: readonly string[];
@@ -89,7 +89,8 @@
   let editing = $state(false);
   let adding = $state(false);
   let making = $state(false);
-  let groups: readonly OwnerUnit[] | null | undefined = $state();
+  /** The Groups to choose its Owner Unit from, by name (DEC-UX-200). */
+  let groups: readonly { id: string; name: string }[] | null | undefined = $state();
 
   async function load(wanted: string) {
     try {
@@ -116,11 +117,12 @@
       load(wanted);
     }
   });
-  // The groups to choose an Owner Unit from, read when editing starts (TR-CO-03, FR-CO-35).
+  // The Groups to choose an Owner Unit from, read when editing starts: those the User is in, or every Group
+  // (TR-CO-03, FR-CO-35).
   $effect(() => {
     if (editing && groups === undefined) {
-      (anyOwnerUnit ? identity.domainGroups() : identity.groups()).then(
-        (found) => (groups = found),
+      (anyOwnerUnit ? identity.allGroups() : identity.groups()).then(
+        (found) => (groups = found.filter((group) => anyOwnerUnit || group.isMember).map(({ id, name }) => ({ id, name }))),
         () => (groups = null),
       );
     }
@@ -290,7 +292,8 @@
       </div>
     </div>
     <div class="status-row">
-      <Chip><Icon name="users-three-fill" />{t('collection.owner', { owner: shown.ownerUnit.name })}</Chip>
+      <!-- Its Owner Unit is a Group, which opens on Groups (FR-UM-18). -->
+      <a class="owner" href={groupPath(shown.ownerUnit.id)}><Chip><Icon name="users-three-fill" />{t('collection.owner', { owner: shown.ownerUnit.name })}</Chip></a>
       <Chip>
         <Icon name={shown.visibility === 'public' ? 'globe-simple-fill' : 'lock-simple-fill'} />{t(shown.visibility === 'public' ? 'collections.public' : 'collections.private')}
       </Chip>
@@ -475,6 +478,9 @@
   .prose { margin: 6px 0 0; max-width: 68ch; line-height: 1.65; color: var(--text-secondary); }
   .actions { display: flex; gap: 8px; align-items: center; flex: none; }
   .status-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .owner { display: inline-flex; color: inherit; text-decoration: none; border-radius: var(--radius-pill); }
+  .owner:hover :global(.chip) { color: var(--text-primary); }
+  .owner:focus-visible { outline: 2px solid var(--text-secondary); outline-offset: 1px; }
   .attention { margin-top: 16px; border-radius: var(--radius-lg); padding: 14px 18px; }
   .label { font-size: var(--text-meta); color: var(--text-muted); margin-bottom: 8px; }
   .line { display: flex; align-items: center; gap: 10px; padding: 7px 0; font-size: var(--text-small); }

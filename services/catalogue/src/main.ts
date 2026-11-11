@@ -5,7 +5,7 @@ import { start } from '@datahub/server';
 import { buildApp } from './app.js';
 import { createCollections } from './collections.js';
 import type { CatalogueDatabase } from './database.js';
-import { createIdentity, createPeople } from './identity.js';
+import { createGroupMoves, createIdentity, createPeople } from './identity.js';
 import { createLearning } from './learning.js';
 import { createMail } from './mail.js';
 import { createMessages } from './messages.js';
@@ -41,6 +41,7 @@ const notifications = createNotifications(database.db, {
   dataTeam: { email: required('DATAHUB_DATA_TEAM_EMAIL'), permission: 'messages.dataTeam' },
 });
 
+const collections = createCollections(database.db);
 const app = await buildApp({
   verifier: verifierFromEnv(),
   notifications: {
@@ -49,7 +50,7 @@ const app = await buildApp({
     schedulerCallers: createServiceCallerVerifier({ audience: catalogueUrl, serviceAccounts: [required('DATAHUB_SCHEDULER_SERVICE_ACCOUNT')] }),
   },
   api: {
-    collections: createCollections(database.db),
+    collections,
     identity: createIdentity(identityUrl),
     resources: createResources(database.db),
     // registry tells the exposed tables with a Google ID token for catalogue's own address (TR-SR-01).
@@ -78,6 +79,22 @@ const app = await buildApp({
 });
 app.addHook('onClose', () => database.close());
 await start(app);
+
+// The Owner Units of Google become Groups of Data Hub once (FR-UM-20, TR-UM-04): told to identity at every start,
+// tried again a few times while identity is not up yet. identity changes nothing for a Group that exists.
+void (async () => {
+  const move = createGroupMoves(identityUrl, idToken);
+  for (const wait of [0, 10_000, 60_000, 300_000, 1_800_000]) {
+    await new Promise((resolve) => setTimeout(resolve, wait).unref());
+    try {
+      const moved = await move(await collections.ownerUnits());
+      if (moved.length) app.log.info({ moved }, 'Owner Units moved from Google to Groups of Data Hub');
+      return;
+    } catch (error) {
+      app.log.warn({ err: error }, 'identity did not take the Owner Units yet; trying again');
+    }
+  }
+})();
 
 function required(name: string): string {
   const value = process.env[name];

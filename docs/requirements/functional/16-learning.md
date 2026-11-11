@@ -4,7 +4,7 @@
 | --- | --- |
 | Domain | 16 of Data Hub · code `LR` |
 | Status | Parts 8a and 8b implemented: the Learning Centre in the web app, with its cards, the progress of every User and the Messages on a card; the markers on the page of a Resource, their pop-out and the floating window; and the card under what Data Hub writes ([technical](../technical/16-learning.md)). A card in a Message waits for its drawing to be approved |
-| Source of truth | This file, for screens, flows and implementation. The philosophy and guiding principles are on [Learning-centre: filosofie en guiding principles](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494) (Confluence, Dutch), which this file follows ([DEC-LR-09](#dec-lr-09)). The topics are in the [master learning plan](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1351975139) (Confluence, Dutch) |
+| Source of truth | This file, for screens, flows and implementation. The philosophy and guiding principles are on [Learning-centre: filosofie en guiding principles](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494) (Confluence, Dutch), which this file follows ([DEC-LR-09](#dec-lr-09)). The topics came from the [master learning plan](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1351975139) (Confluence, Dutch); since [DEC-LR-12](#dec-lr-12) the plan and the cards live in this repository, as [Where it is kept](#where-it-is-kept) lists |
 
 **In one sentence:** the Learning Centre offers knowledge when you need it, in small Learning Cards you go through freely, so that you notice yourself that you can do something you could not do before.
 
@@ -54,9 +54,13 @@
 - <a id="dec-lr-25"></a>**DEC-LR-25** · Part 8 brings every topic of the master learning plan into Data Hub as a Learning Card to be written: its number, title, Learning Level, section and priority, in English with the Dutch it came from, listed in the panel without a page yet. In full, it brings the cards Data Hub itself points to: K3.4 Where definitions live, K5.1 What a resource is, 4.3.2 Versions and agreements with users, 2.3.5 The grain question, 1.2.2 Unique counts don't add up, and the card on the model types ([FR-LR-39](#fr-lr-39)). Claude drafts them from their topics, in English with a Dutch translation; each stays marked as a draft in its file until the Data Team reviewed it, and a draft shows in uat only, not in prod. The Data Team writes the other cards. *Decided on 2026-10-29, by Max ([OP-LR-29](#op-lr-29)).*
 - <a id="dec-lr-26"></a>**DEC-LR-26** · See it draws its example with the charts of the Chart Server as they are, from the figures of the card ([DEC-LR-21](#dec-lr-21)); "Look at …" and "You see …" beside it point at the part that matters. Whether the chart language marks a part of a chart and fades the rest is [OP-LR-31](#op-lr-31). *Decided on 2026-10-29, by Max ([OP-LR-30](#op-lr-30)).*
 - <a id="dec-lr-27"></a>**DEC-LR-27** · Data Hub suggests to everyone the Compass and Learning Level 1; to a member of an Owner Unit that owns a Collection also Learning Level 4; to the Data Team also Learning Levels 3 and 4 ([DEC-LR-14](#dec-lr-14)). A User adds or removes Learning Levels on the start screen, kept as their setting ([DEC-UX-96](../../design/principles.md#dec-ux-96)). *Decided on 2026-10-29, by Max ([OP-LR-32](#op-lr-32)).*
-- <a id="dec-lr-28"></a>**DEC-LR-28** · A pop-out lists only the Learning Cards that are written, so that it promises nothing that cannot be opened; a place gets its marker once one of its cards is written. Part 8b also drafts the cards the markers of the Resource page name: K5.2 The Level of a Resource ([DEC-LR-30](#dec-lr-30)), 3.3.3 Reliable for which purpose, 1.2.1 What a figure counts exactly and 4.3.1 Changing a definition, keeping trust, as drafts to review, as [DEC-LR-25](#dec-lr-25) does. *Decided on 2026-10-29, by Max ([OP-LR-33](#op-lr-33)).*
+- <a id="dec-lr-28"></a>**DEC-LR-28** · A pop-out lists only the Learning Cards that are written, so that it promises nothing that cannot be opened; a place gets its marker once one of its cards is written. Part 8b also drafts the cards the markers of the Resource page name: K5.2 The Level of a Resource ([DEC-LR-30](#dec-lr-30)), 3.3.3 Reliable for which purpose, 1.2.1 What a figure counts exactly and 4.3.1 Changing a definition, keeping trust, as drafts to review, as [DEC-LR-25](#dec-lr-25) does. *Decided on 2026-10-29, by Max ([OP-LR-33](#op-lr-33)).* *Note of 2026-11-11: a pop-out may list a card coming soon, with "I want this card" ([DEC-LR-33](#dec-lr-33)); whether a place carries its marker while all its cards are coming soon is [OP-LR-37](#op-lr-37).*
 - <a id="dec-lr-29"></a>**DEC-LR-29** · The Learning Cards the [Message Catalogue](message-catalogue.md) proposed for what Data Hub writes are confirmed, with K5.2 The Level of a Resource in the place of 4.4.1 ([DEC-LR-30](#dec-lr-30)): K5.2 for "The Level dropped" ([MSG-RES-05](message-catalogue.md#msg-res-05)), K5.1 What a resource is for "A Resource was withdrawn" ([MSG-RES-06](message-catalogue.md#msg-res-06)), and 4.7.1 Owner and steward for "A Resource arrived in your Collection" ([MSG-RES-08](message-catalogue.md#msg-res-08)). "Understand what is happening here" shows the card of a Message once it is written ([FR-LR-38](#fr-lr-38)). *Decided on 2026-10-29, by Max ([OP-LR-34](#op-lr-34)).*
 - <a id="dec-lr-30"></a>**DEC-LR-30** · The Level of a Resource is explained by a card of its own in the Compass, K5.2 The Level of a Resource, in section K5 Data Hub, written from [Maturity levels of data](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1361608858): what each Level promises, who lifts a Resource to it, and why it drops. It stands on the marker of the Level, with 3.3.3, and under "The Level dropped" ([MSG-RES-05](message-catalogue.md#msg-res-05)). 4.4.1 The maturity ladder keeps the topic the master learning plan gives it, with whom data is shared and when, and is not drafted in part 8b. *Decided on 2026-10-29, by Max ([OP-LR-35](#op-lr-35)).*
+- <a id="dec-lr-31"></a>**DEC-LR-31** · A Learning Card keeps the input it was written from in an interview record, `interview.md`, beside its two languages: the seven questions of the learning-card skill with the answers of its author and where each went in the card, the ladder from story to Data Hub, who brought what, and what is still to do. It takes the place of the topic of the master learning plan as what feeds the steps ([FR-LR-27](#fr-lr-27)), and it is what the fact check reads the card against. Data Hub does not show it. The skill lives in this repository, in `.claude/skills/learning-card`, so that it changes with the format it writes. The cards written before have no record until they are reworked. *Decided on 2026-11-10, by Max.*
+- <a id="dec-lr-32"></a>**DEC-LR-32** · Data Hub brings knowledge to the User where they act, rather than waiting to be asked: one list of situations, each with its Learning Card, who it is for and its strength, read by the web app, by Claude through the MCP server and by the checks of a card ([FR-LR-42](#fr-lr-42)). There are three strengths: a marker explains system text ([FR-LR-35](#fr-lr-35)); the card under a Message says what is happening ([DEC-LR-11](#dec-lr-11)); an attention box asks whoever can act to act ([FR-LR-43](#fr-lr-43)). *Decided on 2026-11-11, by Max, after trying the learning-card skill: the card for a Resource that arrived in a Collection belongs on every Resource that is not published yet, not only under its Message ([DEC-UX-207](../../design/principles.md#dec-ux-207)).*
+- <a id="dec-lr-33"></a>**DEC-LR-33** · A Learning Card still to write shows as coming soon, with "I want this card", which sends a request to the Data Team ([FR-LR-41](#fr-lr-41)): what is on the plan is visible, and what colleagues ask for tells the Data Team what to write first. A pop-out may list a card coming soon: this replaces the first half of [DEC-LR-28](#dec-lr-28). *Decided on 2026-11-11, by Max.*
+- <a id="dec-lr-34"></a>**DEC-LR-34** · Learning Cards form families: an opening card that introduces a subject and the cards that work it out, kept in the plan. A card lists the cards of its family under Where to next, written and coming soon, for the curious ([FR-LR-40](#fr-lr-40)). *Decided on 2026-11-11, by Max, while making 4.7.1 Owning a Resource as the opening card of a family on what an Owner takes on.*
 
 ## Terms
 
@@ -74,6 +78,7 @@
 | quick path, full path | The two depths a User chooses between for a card: Why now, Core idea and You can now; or all five steps. Ordinary words |
 | decision rule | The core idea of a card, put as a rule without "can", "sometimes" or "usually". Ordinary words |
 | try-it question | A question that asks the User to do something in Data Hub, such as opening a Lens, and to say what they saw. Ordinary words |
+| interview record | The input of a Learning Card as the interview of the learning-card skill gave it, kept beside the card ([DEC-LR-31](#dec-lr-31)). Ordinary words |
 
 ## Flow
 
@@ -84,6 +89,27 @@
 5. **Colleagues refer to it in Messages,** for example when answering a Question about a Resource, and the Data Team tells about new cards.
 6. **A marker stands on system text where the topic comes up:** a button, a label, the footer of a chart; never on what Users write. Holding the pointer on it opens a pop-out with the cards that explain it, what each brings, and whether the User saw it. A card opens in a floating window over the page, See it on its own. In Claude, the same steps show in the conversation.
 7. **The offer grows with the User:** after a card, the next relevant cards are offered. The panel keeps a silent count of the cards they have seen; nothing is scored.
+
+*Note of 2026-11-10: steps 1 and 2 describe the master learning plan as the source. Since [DEC-LR-12](#dec-lr-12) a card is written in this repository; since [DEC-LR-31](#dec-lr-31) a data colleague is interviewed with the learning-card skill, and the interview record, not the topic on Confluence, feeds the steps.*
+
+## Where it is kept
+
+What the Learning Centre is made of, where each part lives, and which place is its source of truth. Content is code, reviewed in a pull request; what Users do is data in the database of catalogue; nothing is kept in a bucket.
+
+| What | Where | Source of truth | Kept as |
+| --- | --- | --- | --- |
+| The philosophy and guiding principles | [Learning-centre: filosofie en guiding principles](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494), Confluence | Confluence ([DEC-LR-09](#dec-lr-09)) | A page |
+| The recipe for writing a card | *ptditt - Competenties - Recept voor een Learning Card*, Confluence; its working version is the learning-card skill, `.claude/skills/learning-card` | Confluence for the reasoning, the skill for the steps ([DEC-LR-31](#dec-lr-31)) | A page, and files in this repository |
+| The plan: every topic with its number, title, section, priority and thinking level | `packages/learning/cards/plan.json`, its shape in `plan.schema.json` | This repository ([DEC-LR-12](#dec-lr-12), [DEC-LR-25](#dec-lr-25)); taken from the [master learning plan](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1351975139) on 2026-10-29 | Code |
+| A card, in English and Dutch | `packages/learning/cards/<number>/en.md` and `nl.md` | This repository ([DEC-LR-24](#dec-lr-24)) | Code, shipped in the images of web and mcp |
+| The input of a card | `packages/learning/cards/<number>/interview.md` | This repository ([DEC-LR-31](#dec-lr-31)) | Code |
+| Which system text carries a marker, and its cards | `packages/learning/src/markers.ts`; for what Data Hub writes, the [Message Catalogue](message-catalogue.md) | This repository ([DEC-LR-22](#dec-lr-22), [DEC-LR-29](#dec-lr-29)) | Code |
+| Where a reader meets a card: Messages, markers, other cards and Claude | Worked out afresh by `node scripts/learning-card.ts links <number>` from the rows above, never kept per card; what should link to a card and does not yet goes on the to-do of its interview record | This repository | Computed |
+| Which words are names | The code of Data Hub and the Domain Model | This repository and the Domain Model ([DEC-DH-83](../../overview/data-hub.md#dec-dh-83)) | Code |
+| The explanation of a name, for a minimal card | The [Glossary](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1352106063) (Woordenlijst), Confluence | Confluence ([NFR-LOC-05](../non-functional/localisation.md#nfr-loc-05)); whether it moves is [OP-LR-36](#op-lr-36) | A page |
+| What a User did with a card: seen, the step, understood | Table `learning_progress` in catalogue | The database ([DEC-LR-13](#dec-lr-13)) | Rows |
+| The Messages on a card | The conversations of catalogue | The database ([FR-LR-06](#fr-lr-06)) | Rows |
+| The pictures of the ladder, story and structure | Nowhere yet | Not decided | None |
 
 ## Requirements
 
@@ -384,6 +410,8 @@ The User chooses the depth: the quick path (Why now, Core idea, You can now) or 
 
 *Note of 2026-10-29: built in part 8a. The term of the glossary is linked once names carry their marker ([OP-UX-49](../../design/principles.md#op-ux-49)); See it shows the charts of the Chart Server as they are, without highlighting ([DEC-LR-26](#dec-lr-26)).*
 
+*Note of 2026-11-10: the interview record of a card feeds the steps now, in the place of the topic of the master learning plan: the reader's question becomes Why now, the aha the core idea, the anchor its metaphor, what went wrong the example, See it and the wrong answers, and the question to ask first You can now ([DEC-LR-31](#dec-lr-31)).*
+
 <a id="fr-lr-28"></a>
 ### FR-LR-28 · "I understand it" is always there, and closes the card
 
@@ -512,9 +540,46 @@ One Learning Card explains the five model types together, so that a User can tel
 
 *Note of 2026-10-29: the card is 2.3.6, drafted in part 8a, and 2.3.5 points to it ([TR-LR-01](../technical/16-learning.md#tr-lr-01)); since part 8b the model type of a Resource carries its marker ([TR-LR-06](../technical/16-learning.md#tr-lr-06)).*
 
+
+<a id="fr-lr-40"></a>
+### FR-LR-40 · A card lists its family under Where to next
+
+**Status:** Proposed · **Source:** Max, 2026-11-11 ([DEC-LR-34](#dec-lr-34)) · **Screens:** [learning-family](../../design/screens/learning-family.html)
+
+The plan records which cards belong to a family: a topic names the opening card of its family, and the opening card is the one the others name. Under Where to next, after its two or three choices ([FR-LR-31](#fr-lr-31)), a card of a family lists "In the same family": every card of the family in the order of the plan, itself marked, a written card as a link with whether the User saw it, a card still to write as coming soon ([FR-LR-41](#fr-lr-41)). The list is no choice and does not count towards the two or three.
+
+**Makes easy:** the curious reader going on through a subject, and seeing that there is more to it than one card. **Makes hard:** a teaser card whose follow-ups nobody can find, and a family the Data Team forgets to finish.
+
+<a id="fr-lr-41"></a>
+### FR-LR-41 · A card still to write shows as coming soon, and can be asked for
+
+**Status:** Proposed · **Source:** Max, 2026-11-11 ([DEC-LR-33](#dec-lr-33)) · **Screens:** [learning-family](../../design/screens/learning-family.html)
+
+A Learning Card that is not written yet shows as coming soon in the Learning Centre, in the family of a card ([FR-LR-40](#fr-lr-40)) and in a pop-out ([FR-LR-36](#fr-lr-36)): its number, its title and "Coming soon", without a page. "I want this card" sends a request to the Data Team ([MSG-LRN-01](message-catalogue.md#msg-lrn-01)): one per card, which every colleague who wants it joins, so the Data Team sees how many want each card. The Data Team answers it with when the card comes; when the card is written, Data Hub closes the request, and everyone who wanted it hears that it is there.
+
+**Makes easy:** asking for the explanation you miss, and the Data Team writing first what is wanted most. **Makes hard:** a promise that silently stays a promise: the request stays open in the Messages of the Data Team until it is answered.
+
+<a id="fr-lr-42"></a>
+### FR-LR-42 · The situations that push a card are one list
+
+**Status:** Proposed · **Source:** Max, 2026-11-11 ([DEC-LR-32](#dec-lr-32))
+
+The situations in which Data Hub pushes a Learning Card are kept in one list in `packages/learning`: per situation, what it is (such as a Resource not published yet), for whom (such as its Owner), where it shows, its card and its strength: a marker, the card under a Message, or an attention box. The markers of [FR-LR-35](#fr-lr-35) and the cards the [Message Catalogue](message-catalogue.md) names take their place in it. The web app, the MCP server ([FR-CL-29](17-claude.md#fr-cl-29)) and `node scripts/learning-card.ts links` read it, so that a card is pushed the same way everywhere and the check of a card sees every place that pushes it. A situation is added with the release that makes it possible, as a marker is ([DEC-LR-22](#dec-lr-22)).
+
+**Makes easy:** pushing a card in a new place once, for the web app and Claude alike, and seeing per card where it is pushed. **Makes hard:** a card pushed in the web app and forgotten in Claude, or a place that points to a card that no check knows of.
+
+<a id="fr-lr-43"></a>
+### FR-LR-43 · An attention box asks whoever can act, with the card that says why
+
+**Status:** Proposed · **Source:** Max, 2026-11-11 ([DEC-LR-32](#dec-lr-32)) · **Screens:** [learning-attention](../../design/screens/learning-attention.html), [learning-attention-resource](../../design/screens/learning-attention-resource.html)
+
+A situation that asks someone to act shows an attention box, a strong message, not a marker: only to whoever can act, on the page where they act. It says what to do in one sentence, why in the gain of its Learning Card, what it is about with the button that does it, and offers the card, which opens over the page ([FR-LR-12](#fr-lr-12)). It stays while the situation lasts. The first situation is a Resource not published yet, for its Owner ([FR-SR-16](04-stacks-and-resources.md#fr-sr-16)), with 4.7.1 Owning a Resource: on the page of the Resource, and on the page of its Collection, where it names every Resource of the Collection not published yet. Whoever cannot act, such as the Data Team, keeps the quiet line of Needs attention.
+
+**Makes easy:** publishing a Resource that arrived, and knowing why it matters. **Makes hard:** leaving a Resource unpublished for weeks without anyone noticing, and an Owner who does not know what is expected of them.
+
 ## Out of scope
 
-- **Writing the lessons:** the topics, their learning goals and the learning material are made in the master learning plan ([OP-LR-01](#op-lr-01)).
+- **Writing the lessons:** the topics, their learning goals and the learning material are made in the master learning plan ([OP-LR-01](#op-lr-01)). *Note of 2026-11-10: no longer out of scope: since [DEC-LR-12](#dec-lr-12) the cards are written in this repository, with the learning-card skill ([DEC-LR-31](#dec-lr-31)).*
 - **The chart language** itself: [semgraph](../../architecture/services/semgraph.md), whose requirements are still in its own repository ([OP-PF-16](../technical/00-platform.md#op-pf-16)).
 - **Messages** in general: [Conversations](14-conversations.md).
 
@@ -556,6 +621,9 @@ One Learning Card explains the five model types together, so that a User can tel
 - [x] <a id="op-lr-33"></a>**OP-LR-33** · Decide what a pop-out shows for a Learning Card that is not written yet. The markers the prototypes place on the page of a Resource name seven cards, four of them not written: the Level 4.4.1 and 3.3.3, the grain 1.2.1, and "Mark as seen" 4.3.1 ([FR-LR-36](#fr-lr-36)). *Raised on 2026-10-29, while proposing part 8b.* *Decided on 2026-10-29, by Max: a pop-out lists the written cards only, and the four are drafted ([DEC-LR-28](#dec-lr-28)).*
 - [x] <a id="op-lr-34"></a>**OP-LR-34** · Decide whether the cards the Message Catalogue only proposes for what Data Hub writes count for "Understand what is happening here" ([FR-LR-38](#fr-lr-38)): 4.4.1 for MSG-RES-05, K5.1 for MSG-RES-06 and 4.7.1 for MSG-RES-08. *Raised on 2026-10-29, while proposing part 8b.* *Decided on 2026-10-29, by Max: confirmed ([DEC-LR-29](#dec-lr-29)).*
 - [x] <a id="op-lr-35"></a>**OP-LR-35** · The designs name 4.4.1 The maturity ladder for the Level of a Resource, on its marker and under "The Level dropped" ([DEC-LR-28](#dec-lr-28), [DEC-LR-29](#dec-lr-29)), as did the Message Catalogue. In the master learning plan, 4.4.1 is about with whom data is shared, from private to external, in section 4.4 Access judgement; the Levels 0 Beta to 5 Monitored are on [Maturity levels of data](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1361608858), and no topic of the plan explains them. Decide which card explains the Level. *Raised on 2026-10-29, while drafting the cards of part 8b.* *Decided on 2026-10-29, by Max: a new card in the Compass, K5.2 The Level of a Resource ([DEC-LR-30](#dec-lr-30)).*
+- [ ] <a id="op-lr-36"></a>**OP-LR-36** · Decide where the explanation of a name lives once minimal cards are written ([FR-LR-37](#fr-lr-37), [DEC-LR-23](#dec-lr-23)). The Core idea of a minimal card is the explanation of its name in the Glossary on Confluence ([NFR-LOC-05](../non-functional/localisation.md#nfr-loc-05)), while the card itself lives in this repository ([DEC-LR-12](#dec-lr-12)), so the same sentence would stand in two places. Either the card copies the sentence and the Glossary stays its source, or the explanations move into this repository, beside the list of names in the code ([DEC-DH-83](../../overview/data-hub.md#dec-dh-83)), and the Glossary points to Data Hub. Proposal: the second, so that a name and its explanation change in one pull request. *Raised on 2026-11-10, while listing where the Learning Centre keeps what.*
+- [ ] <a id="op-lr-37"></a>**OP-LR-37** · Decide whether a place carries its marker while every card that explains it is coming soon ([DEC-LR-33](#dec-lr-33), [DEC-LR-28](#dec-lr-28)). Proposal: no; a place gets its marker once one of its cards is written, and its pop-out then lists the cards coming soon under the written ones, so that the marker always opens something to read. *Raised on 2026-11-11, while recording DEC-LR-33.*
+- [ ] <a id="op-lr-38"></a>**OP-LR-38** · Decide whether a Message Data Hub writes shows a card coming soon under "Understand what is happening here" ([FR-LR-38](#fr-lr-38), [FR-LR-41](#fr-lr-41)). Proposal: yes, its number and title with "Coming soon" and "I want this card", as the reader of the Message is the one who misses it most. *Raised on 2026-11-11, while recording DEC-LR-33: Max decided it for pop-outs.*
 
 ## Builds on
 

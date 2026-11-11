@@ -16,3 +16,11 @@ export const MARKERS = {
 } as const satisfies Readonly<Record<string, readonly string[]>>;
 
 export type MarkerPlace = keyof typeof MARKERS;
+
+/** Where each marker stands on a screen, in words, for whoever checks where a card is met (`scripts/learning-card.ts links`). */
+export const MARKER_PLACES = {
+  level: 'the Level of a Resource, in the status row of its page',
+  grain: 'the grain of a Resource, on its overview',
+  modelType: 'the model type of a Resource, on its overview',
+  changesSeen: '"Mark as seen" on a change since the last Confirmation, on the page of a Resource',
+} as const satisfies Readonly<Record<MarkerPlace, string>>;

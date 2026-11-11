@@ -21,8 +21,9 @@ describe('the Permissions in the web app (FR-PL-05, FR-PL-14)', () => {
     }
   });
 
-  it('put every Permission in a part, in the order of the rail', () => {
-    expect(PARTS.map((part) => part.id)).toEqual(['collections', 'query', 'lenses', 'messages', 'claude', 'excel', 'admin']);
+  it('put every Permission in a part, in the order of the rail, with Groups after Collections (DEC-UX-201)', () => {
+    expect(PARTS.map((part) => part.id)).toEqual(['collections', 'groups', 'query', 'lenses', 'messages', 'claude', 'excel', 'admin']);
+    expect(keysOf('groups')).toEqual(['groups.manage', 'groups.all.manage']);
     expect(PARTS.flatMap((part) => keysOf(part.id))).toHaveLength(PERMISSION_KEYS.length);
   });
 

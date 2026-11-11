@@ -34,7 +34,8 @@ export interface UserView {
   email: string;
   name: string;
   permissionGroup: { id: string; name: string };
-  groups: string[];
+  /** The Groups of Data Hub they are in, by name (FR-UM-18). */
+  groups: { id: string; name: string }[];
   createdAt: string;
   lastLoginAt: string;
   uses: { web: boolean; claude: boolean; excel: boolean };
@@ -302,7 +303,9 @@ export function createPermissionGroups(db: Kysely<IdentityDatabase>, now: () => 
           'users.googleId',
           'users.email',
           'users.name',
-          'users.groups',
+          sql<{ id: string; name: string }[]>`coalesce((select json_agg(json_build_object('id', groups.id, 'name', groups.name) order by lower(groups.name))
+            from group_members join groups on groups.id = group_members.group_id and groups.deleted_at is null
+            where group_members.email = lower(users.email)), '[]'::json)`.as('groups'),
           'users.createdAt',
           'users.lastLoginAt',
           'permissionGroups.id as groupId',

@@ -7,7 +7,7 @@ import type { LearningCardFit, MessageButton, MessageItem, MessageParameter, Mes
  *
  * A Message ID is fixed: never renumbered or reused. `MSG-CNV` is a Message on any object, the other
  * prefixes name the kind of its object: `COL` a Collection, `RES` a Resource, `LEN` a Lens, `QRY` a
- * query, `RPT` a Report, `KEY` an Excel key, `USR` a User. Templates use `{name}` for a value and the ICU forms `{name, select, …}` and
+ * query, `RPT` a Report, `KEY` an Excel key, `USR` a User, `LRN` a Learning Card. Templates use `{name}` for a value and the ICU forms `{name, select, …}` and
  * `{name, plural, …}`; a choice stays on one line.
  */
 
@@ -945,7 +945,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     },
     learningCard: {
       fit: 'named',
-      card: { number: '4.7.1', title: 'Owner and steward' },
+      card: { number: '4.7.1', title: 'Owning a Resource' },
       why: 'What the Owner takes on with a Resource: vouching for it, describing it and publishing it; confirmed on 2026-10-29 (DEC-LR-29).',
     },
     action: {
@@ -1622,5 +1622,57 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
       done: 'When all its Lenses work again, Data Hub closes the Message itself: it shows since when the Report works, and that notifies its Owner Unit.',
     },
     example: { subject: 'Credit leads, monthly', since: '2026-10-28', count: 1, lenses: [{ lens: 'Leads per source name' }] },
+  },
+  // Learning Cards: a card coming soon can be asked for (FR-LR-41).
+  {
+    id: 'MSG-LRN-01',
+    title: 'A colleague wants a card',
+    kind: 'request',
+    subjects: ['learningCard'],
+    from: 'user',
+    to: ['owner'],
+    when: 'A User presses "I want this card" on a Learning Card coming soon: in the Learning Centre, in a pop-out, or in the family of a card (FR-LR-41).',
+    per: 'One per card while it is coming soon; a colleague who wants it too joins it, and pressing again changes nothing.',
+    status: 'Proposed',
+    sources: ['FR-LR-41', 'DEC-LR-33'],
+    parameters: [{ name: 'askers', type: 'count', about: 'How many Users want the card so far' }],
+    text: {
+      nl: {
+        plain: '{writer} wil de learning card {subject}, die binnenkort komt ({askers, plural, one {# collega} other {# collega’s}} tot nu toe).',
+        rich: lines(
+          '**{writer} wil de learning card {subject}**',
+          '',
+          'Ze komt binnenkort; {askers, plural, one {# collega wil} other {# collega’s willen}} ze tot nu toe.',
+          '',
+          '> {text}',
+        ),
+      },
+      en: {
+        plain: '{writer} wants the learning card {subject}, coming soon ({askers, plural, one {# colleague} other {# colleagues}} so far).',
+        rich: lines(
+          '**{writer} wants the learning card {subject}**',
+          '',
+          'It is coming soon; {askers, plural, one {# colleague wants} other {# colleagues want}} it so far.',
+          '',
+          '> {text}',
+        ),
+      },
+    },
+    learningCard: { fit: 'byWriter', why: 'The Message is about a card still to write: the Data Team answers with when it comes, and the card itself is the answer.' },
+    action: {
+      asks: 'answer',
+      of: ['owner'],
+      what: 'The Data Team plans the card, or says when it comes; a data colleague can take it up with the learning-card skill.',
+      buttons: [{ label: { nl: 'Kaart openen', en: 'Open the card' }, opens: 'The card in the Learning Centre, coming soon, with how many colleagues want it' }],
+      states: ['open', 'answered', 'closed'],
+      done: 'A reply makes it answered and notifies everyone who wants the card. When the card is written, Data Hub closes the request itself with a line that the card is there, which notifies them too.',
+    },
+    example: {
+      writer: 'Lotte Peeters',
+      subjectKind: 'learning card',
+      subject: 'K3.2 Ownership at Immoscoop',
+      askers: 3,
+      text: 'Every new colleague in our team asks who owns which data.',
+    },
   },
 ];

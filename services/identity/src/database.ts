@@ -13,11 +13,47 @@ export interface IdentityDatabase {
     name: string;
     createdAt: Timestamp;
     lastLoginAt: Timestamp;
-    /** The fixed IDs of their Groups of the own domains, and their roles, as last read (DEC-LN-07). */
+    /** The Groups of Data Hub they are in (TR-UM-03), and their roles from Google, as last read (DEC-LN-07). */
     groups: ColumnType<string[], string[] | undefined, string[]>;
     roles: ColumnType<string[], string[] | undefined, string[]>;
     /** Their Permission group (FR-PL-04): the default at their first sign-in. */
     permissionGroupId: string;
+    /** False once the directory said the account is no longer active, true again at a sign-in (DEC-UM-12). */
+    active: ColumnType<boolean, boolean | undefined, boolean>;
+    /** The Google groups identity last read for them, so that the Owner Units move once (TR-UM-04). */
+    workspaceGroups: ColumnType<string[], string[] | undefined, string[]>;
+  };
+  /** The Groups kept in Data Hub (TR-UM-01): managed by another Group or by themselves. */
+  groups: {
+    id: ColumnType<string, string | undefined, never>;
+    name: string;
+    sentence: ColumnType<string, string | undefined, string>;
+    managedBy: string;
+    createdAt: Timestamp;
+    createdById: string | null;
+    createdByName: string | null;
+    updatedAt: Timestamp;
+    deletedAt: Date | null;
+    deletedById: ColumnType<string | null, string | null | undefined, string | null>;
+    deletedByName: ColumnType<string | null, string | null | undefined, string | null>;
+  };
+  /** The members of a Group, by address in lowercase, also who has not signed in yet (FR-UM-15). */
+  groupMembers: {
+    groupId: string;
+    email: string;
+    addedAt: Timestamp;
+    addedById: string | null;
+    addedByName: string | null;
+  };
+  /** What happened to a Group, with who and when (FR-UM-17). */
+  groupLog: {
+    id: Generated<string>;
+    groupId: string;
+    at: Timestamp;
+    kind: string;
+    byId: string | null;
+    byName: string | null;
+    detail: ColumnType<Record<string, unknown>, string | undefined, string>;
   };
   /** The Permission groups (TR-PL-04): one is the default, Admin is locked. */
   permissionGroups: {

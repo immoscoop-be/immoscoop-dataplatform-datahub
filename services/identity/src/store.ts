@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { type Kysely, sql, type SqlBool } from 'kysely';
 import type { IdentityDatabase } from './database.js';
+import { createGroups } from './groups.js';
 import type { GoogleIdentity } from './google-sign-in.js';
 import type { TokenSubject } from './tokens.js';
 
@@ -33,7 +34,8 @@ export interface Session {
 
 /** A User as catalogue asks for them, to notify them (DEC-LN-07). */
 export interface Person {
-  id: string;
+  /** Their fixed Google ID; null for a member of a Group who has not signed in yet (FR-UM-15). */
+  id: string | null;
   email: string;
   name: string;
   language: 'nl' | 'en';
@@ -47,6 +49,7 @@ export type RefreshRefusal = 'unknown' | 'other-client' | 'ended' | 'expired' | 
 
 /** Everything identity keeps about signing in, in its own schema (TR-PF-08). */
 export function createStore(db: Kysely<IdentityDatabase>, now: () => Date = () => new Date()) {
+  const groups = createGroups(db, now);
   const inSeconds = (seconds: number) => new Date(now().getTime() + seconds * 1000);
 
   return {
@@ -94,56 +97,81 @@ export function createStore(db: Kysely<IdentityDatabase>, now: () => Date = () =
           permissionGroupId: sql<string>`(select id from permission_groups where is_default)`,
         })
         .onConflict((conflict) =>
-          conflict.column('googleId').doUpdateSet({ email: identity.email, name: identity.name, lastLoginAt: now() }),
+          conflict.column('googleId').doUpdateSet({ email: identity.email, name: identity.name, lastLoginAt: now(), active: true }),
         )
         .execute();
       return { created: !known };
     },
 
-    /**
-     * Keeps the Groups and roles of a User as identity just read them from Workspace, at a sign-in or a
-     * renewal (DEC-LN-07); none once the account is no longer active, so that nobody notifies them.
-     */
-    async saveGroups(googleId: string, groups: string[], roles: string[]): Promise<void> {
-      await db.updateTable('users').set({ groups, roles }).where('googleId', '=', googleId).execute();
+    /** The Groups kept in Data Hub (TR-UM-01), on the same database. */
+    dataHubGroups: groups,
+
+    /** The Groups of Data Hub an address is in, for the claim `groups` (TR-UM-03). */
+    groupsOf: groups.groupsOf,
+
+    /** Keeps the Groups of a User as they went into their Access Token, at a sign-in or a renewal. */
+    async saveGroups(googleId: string, list: string[]): Promise<void> {
+      await db.updateTable('users').set({ groups: list }).where('googleId', '=', googleId).execute();
+    },
+
+    /** The directory said the account is no longer active (DEC-UM-12): nobody reaches them through a Group any more. */
+    async markInactive(googleId: string): Promise<void> {
+      await db.updateTable('users').set({ active: false, groups: [] }).where('googleId', '=', googleId).execute();
     },
 
     /**
-     * The Users Data Hub knows among those asked: by their fixed Google ID, as members of a Group, or by a
-     * Permission their Permission group has on, such as `messages.dataTeam` (TR-PL-08); each with their
-     * address, their name, the language they read Data Hub in, Dutch unless they chose another (DEC-UX-96),
-     * and which of the Groups and Permissions asked they hold. A User whose account is no longer active
-     * has no Groups kept, and is found only by their ID.
+     * The people among those asked: Users by their fixed Google ID; the members of the Groups asked, also who
+     * has not signed in yet (TR-UM-07); and the Users whose Permission group has a Permission on, such as
+     * `messages.dataTeam` (TR-PL-08). Each with their address, their name, the language they read Data Hub in,
+     * Dutch unless they chose another (DEC-UX-96), and which of the Groups and Permissions asked they hold.
+     * A User whose account is no longer active is found only by their ID.
      */
     async people(asked: { users: string[]; groups: string[]; permissions: string[] }): Promise<Person[]> {
       if (asked.users.length + asked.groups.length + asked.permissions.length === 0) return [];
       const held = (key: string) => sql<SqlBool>`(permission_groups.permissions -> ${key} ->> 'on') = 'true'`;
+      const memberOf = sql<string[]>`coalesce((select array_agg(group_members.group_id order by group_members.group_id)
+        from group_members join groups on groups.id = group_members.group_id and groups.deleted_at is null
+        where group_members.email = lower(users.email) and group_members.group_id = any(${asked.groups}::text[])), '{}')`;
       const rows = await db
         .selectFrom('users')
         .innerJoin('permissionGroups', 'permissionGroups.id', 'users.permissionGroupId')
         .leftJoin('settings', (join) => join.onRef('settings.googleId', '=', 'users.googleId').on('settings.key', '=', 'language'))
-        .select(['users.googleId', 'users.email', 'users.name', 'users.groups', 'permissionGroups.permissions', 'settings.value as language'])
+        .select(['users.googleId', 'users.email', 'users.name', 'users.active', 'permissionGroups.permissions', 'settings.value as language', memberOf.as('inGroups')])
         .where((where) =>
           where.or([
             ...(asked.users.length ? [where('users.googleId', 'in', asked.users)] : []),
-            ...(asked.groups.length ? [sql<SqlBool>`users.groups && ${asked.groups}::text[]`] : []),
-            // Only Users who still sign in hold a Permission for others to reach them by: their Groups say so.
-            ...asked.permissions.map((key) => sql<SqlBool>`(${held(key)} and cardinality(users.groups) > 0)`),
+            ...(asked.groups.length ? [sql<SqlBool>`(users.active and cardinality(${memberOf}) > 0)`] : []),
+            ...asked.permissions.map((key) => sql<SqlBool>`(${held(key)} and users.active)`),
           ]),
         )
         .orderBy('users.googleId')
         .execute();
-      return rows.map((row) => {
+      const people: Person[] = rows.map((row) => {
         const permissions = row.permissions as unknown as Record<string, { on?: unknown } | undefined>;
         return {
           id: row.googleId,
           email: row.email,
           name: row.name,
           language: row.language === 'en' ? 'en' : 'nl',
-          groups: row.groups.filter((group) => asked.groups.includes(group)),
-          permissions: row.groups.length > 0 ? asked.permissions.filter((key) => permissions[key]?.on === true) : [],
+          groups: row.active ? row.inGroups : [],
+          permissions: row.active ? asked.permissions.filter((key) => permissions[key]?.on === true) : [],
         };
       });
+      if (asked.groups.length) {
+        // Members who have not signed in yet: only their address, read in Dutch.
+        const pending = await db
+          .selectFrom('groupMembers')
+          .innerJoin('groups', 'groups.id', 'groupMembers.groupId')
+          .select(['groupMembers.email', sql<string[]>`array_agg(group_members.group_id order by group_members.group_id)`.as('inGroups')])
+          .where('groupMembers.groupId', 'in', asked.groups)
+          .where('groups.deletedAt', 'is', null)
+          .where(sql<SqlBool>`not exists (select 1 from users where lower(users.email) = group_members.email)`)
+          .groupBy('groupMembers.email')
+          .orderBy('groupMembers.email')
+          .execute();
+        for (const member of pending) people.push({ id: null, email: member.email, name: '', language: 'nl', groups: member.inGroups, permissions: [] });
+      }
+      return people;
     },
 
     async user(googleId: string): Promise<{ googleId: string; email: string; name: string } | undefined> {

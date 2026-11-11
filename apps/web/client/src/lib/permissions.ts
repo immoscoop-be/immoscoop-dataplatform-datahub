@@ -38,9 +38,11 @@ export function mayQuery(permissions: Permissions): boolean {
   return can(permissions, 'queries.make') || can(permissions, 'resources.preview');
 }
 
-/** The parts of Data Hub, in the order of the rail, each with its icon (DEC-UX-186). */
+/** The parts of Data Hub, in the order of the rail, Groups after Collections, each with its icon (DEC-UX-186, DEC-UX-201). */
 export const PARTS: readonly { id: PermissionPart; icon: IconName; title: string }[] = [
   { id: 'collections', icon: 'stack-fill', title: 'permission.part.collections' },
+  // Groups, after Collections and Resources, though it has no place in the rail (DEC-UX-201).
+  { id: 'groups', icon: 'users-three-fill', title: 'permission.part.groups' },
   { id: 'query', icon: 'terminal-window-fill', title: 'permission.part.query' },
   { id: 'lenses', icon: 'aperture-fill', title: 'permission.part.lenses' },
   { id: 'messages', icon: 'chat-circle-text-fill', title: 'permission.part.messages' },
@@ -121,6 +123,8 @@ export const PERMISSION_TEXTS: { readonly [K in PermissionKey]: { name: string; 
     },
   },
   'resources.preview': { name: 'permission.resources.preview', about: 'permission.resources.preview.about', values: {} },
+  'groups.manage': { name: 'permission.groups.manage', about: 'permission.groups.manage.about', values: {} },
+  'groups.all.manage': { name: 'permission.groups.all.manage', about: 'permission.groups.all.manage.about', values: {} },
   'queries.make': { name: 'permission.queries.make', about: 'permission.queries.make.about', values: {} },
   'runs.ranges': {
     name: 'permission.runs.ranges',

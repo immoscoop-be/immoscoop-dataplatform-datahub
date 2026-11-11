@@ -31,7 +31,8 @@ const TYPES = new Map<string, MessageType>(MESSAGE_CATALOGUE.map((type) => [type
 
 /** A User as identity knows them from their last sign-in (DEC-LN-07). */
 export interface Person {
-  id: string;
+  /** Their fixed Google ID; null for a member of a Group who has not signed in yet (FR-UM-15). */
+  id: string | null;
   email: string;
   name: string;
   language: Language;
@@ -130,7 +131,7 @@ interface Subject {
   collection: string | null;
   exists: boolean;
   /** The Owner Unit that answers for it, if any: a Collection's, also for its Resources and Lenses. */
-  owner: { id: string; email: string; name: string } | null;
+  owner: { id: string; email: string | null; name: string } | null;
   /** Who made it, for a Lens. */
   authorId: string | null;
 }
@@ -312,7 +313,7 @@ export function createNotifications(db: Kysely<CatalogueDatabase>, options: Noti
       groups: groups.map((group) => group.id),
       permissions: team ? [dataTeam.permission] : [],
     });
-    const byId = new Map(known.map((person) => [person.id, person]));
+    const byId = new Map(known.filter((person) => person.id !== null).map((person) => [person.id!, person]));
     const writer = row.writerId;
     const out: Delivery[] = [];
     const mailed = new Set<string>();
@@ -324,28 +325,32 @@ export function createNotifications(db: Kysely<CatalogueDatabase>, options: Noti
       out.push({ channel: 'email', address, email: address, language, reason });
     };
     const direct = (person: Person, reason: NotificationReason) => {
-      if (person.id === writer || messaged.has(person.id)) return;
+      if (person.id === null || person.id === writer || messaged.has(person.id)) return;
       messaged.add(person.id);
       out.push({ channel: 'slack', address: person.id, email: person.email, language: person.language, reason });
     };
 
-    // An Owner Unit and the Data Team by the address of their group, in Dutch, which reaches every member,
-    // also who never signed in (DEC-LN-03); in Slack each member Data Hub knows (DEC-LN-07), for the Data Team
-    // each User whose Permission group gets its Messages (TR-PL-08).
+    // An Owner Unit has no address since Groups are kept in Data Hub: each of its members gets an e-mail of their
+    // own, in their language, Dutch for who has not signed in yet, and a direct message in Slack; who wrote the
+    // Message gets neither (FR-UM-21, TR-UM-07). The Data Team by the address of its group, in Dutch (DEC-LN-03),
+    // and in Slack each User whose Permission group gets its Messages (TR-PL-08).
     for (const group of groups) {
-      email(group.email, 'nl', 'owner');
-      for (const person of known) if (person.groups.includes(group.id)) direct(person, 'owner');
+      for (const person of known) {
+        if (!person.groups.includes(group.id) || (person.id !== null && person.id === writer)) continue;
+        email(person.email, person.language, 'owner');
+        direct(person, 'owner');
+      }
     }
     if (team) {
       email(dataTeam.email, 'nl', 'dataTeam');
       for (const person of known) if (person.permissions.includes(dataTeam.permission)) direct(person, 'dataTeam');
     }
-    // A person by their own address, unless a group they are known to be in has it already.
+    // A person by their own address, unless they got it already as a member of an Owner Unit, or the address of the
+    // Data Team reaches them.
     for (const user of users) {
       const person = byId.get(user.id);
       if (!person || person.id === writer) continue;
-      const inGroup = person.groups.some((group) => groups.some((owner) => owner.id === group)) || (team && person.permissions.includes(dataTeam.permission));
-      if (!inGroup) email(person.email, person.language, user.reason);
+      if (!(team && person.permissions.includes(dataTeam.permission))) email(person.email, person.language, user.reason);
       direct(person, user.reason);
     }
     return out;

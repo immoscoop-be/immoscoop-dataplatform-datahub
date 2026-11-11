@@ -79,6 +79,11 @@
   --seg-1: #C2CB8E;
   --seg-2: #8E9C4C;
   --seg-3: #55611F;
+  /* The ribbon of an environment that is not prod (DEC-UX-203): teal, a colour that means nothing else in Data Hub,
+     so that it never reads as a state of the data. Not navigation, so not bound by "never colour on navigation". */
+  --env-ribbon: #1F7A75;
+  --text-on-env: #FFFFFF;        /* 5.1 : 1 on the ribbon */
+  --env-ribbon-shadow: 0 3px 10px rgba(0,0,0,.14);
 
   /* Light theme: warm greys */
   --bg-1: #EFE5DA;               /* sand */
@@ -148,6 +153,8 @@
 }
 
 [data-theme="dark"] {
+  --env-ribbon: #3CB8B1;
+  --text-on-env: #14201F;        /* 6.9 : 1 on the ribbon */
   --seg-1: #66722F;
   --seg-2: #9AA858;
   --seg-3: #C9D38F;
