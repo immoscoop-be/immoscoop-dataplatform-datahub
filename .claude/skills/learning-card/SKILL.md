@@ -1,6 +1,6 @@
 ---
 name: learning-card
-description: Guides a data colleague of Immoscoop through making a Learning Card for the Learning Centre of Data Hub, with an interview of seven questions in which Claude keeps asking until a concrete example with figures, one aha and one everyday anchor are on the table, and then writes the card as the files Data Hub reads (en.md and nl.md in packages/learning/cards, with See it, questions and Where to next) plus interview.md with the answers. Use this skill whenever someone wants to make, fill in, rewrite, translate or review a learning card, leerkaart, uitlegkaart or "card for the Learning Centre", asks which cards are still open or in draft, add or check a card in packages/learning/cards or a topic in cards/plan.json, explain a data concept (grain, unique counts, state/event, leading/lagging, Signal, Level, Lens, ...) to colleagues outside data, or asks "how do I explain X to business", even when the word card does not come up.
+description: Guides a data colleague of Immoscoop through making a Learning Card for the Learning Centre of Data Hub, with an interview of seven questions in which Claude keeps asking until a concrete example with figures, one aha and one everyday anchor are on the table, and then writes the card as the files Data Hub reads (en.md and nl.md in packages/learning/cards, with See it, questions and Where to next) plus interview.md with the answers. Use this skill whenever someone wants to make, fill in, rewrite, translate or review a learning card, leerkaart, uitlegkaart or "card for the Learning Centre", asks which cards are still open or in draft, asks where a card is linked in Data Hub or whether Claude finds it, add or check a card in packages/learning/cards or a topic in cards/plan.json, explain a data concept (grain, unique counts, state/event, leading/lagging, Signal, Level, Lens, ...) to colleagues outside data, or asks "how do I explain X to business", even when the word card does not come up.
 ---
 
 # Making a Learning Card
@@ -16,6 +16,8 @@ What comes out is not free text but three files in the folder of the card, `pack
 The shape is strict because Data Hub reads the card from the file: one heading too many, a second term in bold or a neighbouring card that is not written yet, and the card does not get in. What the reader need not see but is worth keeping (the ladder, who brought what, follow-up cards) goes into the interview record, not into the card.
 
 The recipe and its reasoning are on Confluence: *ptditt - Competenties - Recept voor een Learning Card*. The rules of Data Hub are in `docs/requirements/functional/16-learning.md` and `docs/requirements/technical/16-learning.md`. The working version of both is `references/card-format.md`: read it before you write the card.
+
+Learning Cards are work of the Data Team, and the Data Team works on `uat`: start the session on `uat` (or a branch of it), where this skill, the cards and the checks are. Until a release brings them to `main`, a session on `main` does not have them.
 
 Interview in the language of the author, usually Dutch. The files follow the language rules of the repository: `en.md` and `interview.md` in English, `nl.md` in Dutch.
 
@@ -34,8 +36,9 @@ Every card is a topic of the plan of the Learning Centre, `packages/learning/car
 
 1. When the author asks what is open, or comes without a subject, run `node scripts/learning-card.ts list open`, narrowed to a section such as `2.1` when they name a field, and suggest a `required` topic close to their own work. `list draft` shows the cards waiting for their review; prod shows only the reviewed ones.
 2. If the Data Hub MCP is available, call `explain` with the concept and with two or three related terms. It returns only cards that are written. If a card exists, say so and ask whether the author wants to rework it or make a neighbouring card.
-3. Find the topic in `plan.json`; a topic is written when `cards/<number>/` exists. Name its number, title, Learning Level (the level of its section) and whether it is written. The Learning Level says whom you write for: Level 1 for everyone who opens a dashboard, Level 4 for whoever is responsible for data.
-4. If no topic fits, propose a number and a title in the right section. The topic goes into `plan.json` in the same pull request as the card, with a `note` on why Data Hub added it; the Data Team approves it there.
+3. Find the topic in `plan.json`; a topic is written when `cards/<number>/` exists. Name its number, title, Learning Level (the level of its section) and whether it is written. The Learning Level says whom you write for: Level 1 for everyone who opens a dashboard, Level 4 for whoever is responsible for data. When the author comes with a place in Data Hub instead of a concept ("the Message that a Resource arrived"), the place names its card: a Message in `packages/contracts/src/messageCatalogue.ts`, a marker in `packages/learning/src/markers.ts`.
+4. Run `node scripts/learning-card.ts links <number>`: who already links to the topic, or wants to, and what each place expects of it. A Message says it under "what it expects": the card answers the reader who arrives from there, and its `gain` is the one sentence they see in every place. Tell the author.
+5. If no topic fits, propose a number and a title in the right section. The topic goes into `plan.json` in the same pull request as the card, with a `note` on why Data Hub added it; the Data Team approves it there.
 
 ## Steps 1 to 7: the interview
 
@@ -67,7 +70,11 @@ Read `references/card-format.md`, and to calibrate tone and length one or two ca
 3. **`interview.md`.** The record, in English, in the shape of the card format: per question the author's answer (including the theory you had to push back, if there was any) and where it went in the card, the three rungs of the ladder, who brought what, the to-do.
 4. **Check.** Run `node scripts/learning-card.ts stamp <number>`: it reads both files with the parser of Data Hub, compares the languages, holds the number and the neighbours to the plan, the chart to the schema of its kind and the record to its shape, and writes `translatedFrom` into `nl.md`. Fix every PROBLEM; read the notes. Then run `pnpm vitest run packages/learning services/semgraph/test/learning-cards.test.ts`, which also draws See it with the Chart Server.
 
-Show the author the card as plain text (not the raw file) and ask whether it sounds the way they would explain it to the colleague of question 1.
+5. **Where it is met.** Run `node scripts/learning-card.ts links <number> "<the words of question 1>" "<other words the author used>"`. It says where a reader meets the card in the web app (under a Message, on a marker, under Where to next of another card) and where `explain` ranks it when Claude looks for the title, the term in bold, the quote of Why now and the words you add. It is worked out afresh each time and never kept in the card. Act on it:
+   - Claude misses the card on the reader's own words: check whether the title, the rule and the gain say it the way the reader would. Change only what reads better for the reader too; never add words for the search.
+   - Nobody meets the card where its topic comes up, or a place that should link to it does not: propose it on the to-do of the record. A Message that only *proposes* the card does not show it: naming it is a change of the Message Catalogue. A marker is placed at a release (DEC-LR-22), and a new place is designed first. Where to next of a written neighbour holds two or three choices: say which one the card would replace.
+
+Show the author the card as plain text (not the raw file), with where colleagues will meet it, and ask whether it sounds the way they would explain it to the colleague of question 1.
 
 The files go to Data Hub in a pull request: step 10.
 
@@ -97,9 +104,9 @@ The card reaches Data Hub only through a pull request into `uat`, never directly
 
 1. **A branch of its own**, from the latest `uat`: `git fetch origin uat && git switch -c learning/<number>-<a-few-words> origin/uat`.
 2. **The files:** `packages/learning/cards/<number>/en.md`, `nl.md` and `interview.md`, and `packages/learning/cards/plan.json` when the topic is new.
-3. **The checks**, both clean: `node scripts/learning-card.ts stamp <number>` and `pnpm vitest run packages/learning services/semgraph/test/learning-cards.test.ts`.
+3. **The checks**, both clean: `node scripts/learning-card.ts stamp <number>` and `pnpm vitest run packages/learning services/semgraph/test/learning-cards.test.ts`; then `node scripts/learning-card.ts links <number>` for the description.
 4. **One commit**, `Learning Card <number>: <title from the plan>`, ending with the trailer `Refs: DEC-LR-31`.
-5. **The pull request into `uat`**, with the same title. Its description holds the reader's question, the core idea, who was interviewed, what Claude brought, who does the fact check and who the test reader is, and the to-do of the record. Ask a member of the Data Team to review it.
+5. **The pull request into `uat`**, with the same title. Its description holds the reader's question, the core idea, who was interviewed, what Claude brought, who does the fact check and who the test reader is, the output of `links`, and the to-do of the record. Ask a member of the Data Team to review it.
 6. **Do not merge it yourself.** The Data Team merges after the fact check; the card then shows in uat as a draft.
 7. **Reviewed:** once the fact check and the test reader have passed, a small pull request sets `status: reviewed` in both languages. Only then does the card show in prod.
 

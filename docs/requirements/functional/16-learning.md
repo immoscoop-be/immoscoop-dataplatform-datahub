@@ -101,6 +101,7 @@ What the Learning Centre is made of, where each part lives, and which place is i
 | A card, in English and Dutch | `packages/learning/cards/<number>/en.md` and `nl.md` | This repository ([DEC-LR-24](#dec-lr-24)) | Code, shipped in the images of web and mcp |
 | The input of a card | `packages/learning/cards/<number>/interview.md` | This repository ([DEC-LR-31](#dec-lr-31)) | Code |
 | Which system text carries a marker, and its cards | `packages/learning/src/markers.ts`; for what Data Hub writes, the [Message Catalogue](message-catalogue.md) | This repository ([DEC-LR-22](#dec-lr-22), [DEC-LR-29](#dec-lr-29)) | Code |
+| Where a reader meets a card: Messages, markers, other cards and Claude | Worked out afresh by `node scripts/learning-card.ts links <number>` from the rows above, never kept per card; what should link to a card and does not yet goes on the to-do of its interview record | This repository | Computed |
 | Which words are names | The code of Data Hub and the Domain Model | This repository and the Domain Model ([DEC-DH-83](../../overview/data-hub.md#dec-dh-83)) | Code |
 | The explanation of a name, for a minimal card | The [Glossary](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1352106063) (Woordenlijst), Confluence | Confluence ([NFR-LOC-05](../non-functional/localisation.md#nfr-loc-05)); whether it moves is [OP-LR-36](#op-lr-36) | A page |
 | What a User did with a card: seen, the step, understood | Table `learning_progress` in catalogue | The database ([DEC-LR-13](#dec-lr-13)) | Rows |
