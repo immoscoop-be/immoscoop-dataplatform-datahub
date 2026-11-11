@@ -1244,12 +1244,12 @@ describe('the web app, signed out', () => {
 
   it('shows the sign-in on a background of the set, picked at random, without a photo or its story (DEC-UX-173)', async () => {
     serve({ signedIn: false });
-    // The last of the set by day: Concrete, a picture.
+    // The last of the set by day: Tide, a painted scene; no photo is left in the set (DEC-UX-208).
     const random = vi.spyOn(Math, 'random').mockReturnValue(0.99);
     render(App, { config: CONFIG });
     await screen.findByRole('link', { name: /Aanmelden met Google/ });
     random.mockRestore();
-    expect(document.querySelector('.picture')?.getAttribute('style')).toContain('concrete');
+    expect(document.querySelector('.picture')).toBeNull();
     expect(screen.queryByRole('figure')).toBeNull();
   });
 
@@ -1369,9 +1369,9 @@ describe('the web app, signed in', () => {
     const calls = serve({ settings: { language: 'en' } });
     open('/me/background');
     render(App, { config: CONFIG });
-    await fireEvent.click(await screen.findByRole('radio', { name: /Concrete/ }));
-    expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/background.light', body: { value: 'concrete' } });
-    expect(screen.getByRole('radio', { checked: true }).textContent).toContain('Concrete');
+    await fireEvent.click(await screen.findByRole('radio', { name: /Tide/ }));
+    expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/background.light', body: { value: 'tide' } });
+    expect(screen.getByRole('radio', { checked: true }).textContent).toContain('Tide');
   });
 
   it('lists the Excel keys of the User on My page, makes one shown only once, and revokes one after asking (FR-PL-01, FR-PL-02)', async () => {
