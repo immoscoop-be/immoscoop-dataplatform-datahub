@@ -93,7 +93,7 @@ Every output, a chart, a Report, a PDF or an export, visibly carries the Query I
 <a id="fr-ln-07"></a>
 ### FR-LN-07 · A User gives the address Data Hub finds them by in Slack
 
-**Status:** Specified · **Screens:** [my-page](../../design/screens/my-page.html)
+**Status:** Implemented · **Screens:** [my-page](../../design/screens/my-page.html)
 
 Where the Slack app of Data Hub is set up, Profile on My page shows the Slack account Data Hub finds by the address of the User's Google account, or that it finds none. The User can give another address: Data Hub looks it up and names the Slack account that has it, sends a code of six digits to that account as a direct message, and takes the address once the User types the code within 10 minutes. From then on their direct messages go to that account, until they go back to their Google address ([DEC-LN-08](#dec-ln-08)).
 
@@ -104,7 +104,7 @@ Where the Slack app of Data Hub is set up, Profile on My page shows the Slack ac
 <a id="ec-ln-01"></a>
 ### EC-LN-01 · The Slack account of a confirmed address is gone
 
-**Status:** Specified
+**Status:** Implemented
 
 When Data Hub no longer finds a Slack account by the address a User confirmed, because the account was deactivated or its address changed, the User gets e-mail alone, as one who is not in Slack, and Profile says that Data Hub no longer finds them by that address, with the way to give another one ([FR-LN-07](#fr-ln-07)).
 

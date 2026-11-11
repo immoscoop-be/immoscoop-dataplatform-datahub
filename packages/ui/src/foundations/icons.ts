@@ -120,6 +120,7 @@ import minus from '@phosphor-icons/core/assets/regular/minus.svg?raw';
 import minusCircle from '@phosphor-icons/core/assets/regular/minus-circle.svg?raw';
 import monitor from '@phosphor-icons/core/assets/regular/monitor.svg?raw';
 import paperPlaneTilt from '@phosphor-icons/core/assets/regular/paper-plane-tilt.svg?raw';
+import slackLogo from '@phosphor-icons/core/assets/regular/slack-logo.svg?raw';
 import pencilSimpleLine from '@phosphor-icons/core/assets/regular/pencil-simple-line.svg?raw';
 import percent from '@phosphor-icons/core/assets/regular/percent.svg?raw';
 import plant from '@phosphor-icons/core/assets/regular/plant.svg?raw';
@@ -280,6 +281,7 @@ export const ICONS = {
   'minus-circle': minusCircle,
   monitor,
   'paper-plane-tilt': paperPlaneTilt,
+  'slack-logo': slackLogo,
   'pencil-simple-line': pencilSimpleLine,
   percent,
   plant,

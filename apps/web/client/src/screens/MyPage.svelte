@@ -15,11 +15,14 @@
   import type { GroupSummary, Identity, Me } from '../lib/identity.js';
   import { GROUPS, groupPath, myPagePath, NEW_GROUP, type MyPageTab } from '../lib/routes.js';
   import { can } from '../lib/permissions.js';
+  import type { Catalogue } from '../lib/catalogue.js';
   import ExcelKeys from './ExcelKeys.svelte';
+  import SlackTile from './SlackTile.svelte';
 
   /**
    * My page, behind the initials at the foot of the rail (DEC-UX-84): who the User is in Data Hub,
-   * and their settings. Profile: the language of Data Hub (DEC-UX-85), what they own (DEC-DH-78), and the tile Your
+   * and their settings. Profile: the language of Data Hub (DEC-UX-85), the Slack account Data Hub finds them by, where
+   * Slack is set up (DEC-UX-209), what they own (DEC-DH-78), and the tile Your
    * groups: the Groups they are in, with the way to Groups and New group (DEC-UX-200); Excel keys, with which Excel
    * gets the result of a Lens (FR-PL-01, FR-PL-02); Background: one choice for day and one for night (DEC-UX-108).
    */
@@ -34,6 +37,7 @@
     onlanguage,
     onbackground,
     identity,
+    slack,
   }: {
     me: Me;
     initials: string;
@@ -47,6 +51,8 @@
     onbackground: (choice: string) => void;
     /** identity, for the Excel keys of the User. */
     identity: Pick<Identity, 'excelKeys' | 'makeExcelKey' | 'revokeExcelKey'>;
+    /** catalogue, for the address Data Hub finds the User by in Slack (FR-LN-07). */
+    slack: Pick<Catalogue, 'slack' | 'slackLookup' | 'slackCode' | 'slackConfirm' | 'slackReset'>;
   } = $props();
 
   // The names of the languages, each written in its own language, whatever the language of Data Hub.
@@ -96,6 +102,7 @@
         <Segmented options={LANGUAGES} value={language} label={t('me.language.label')} onchange={onlanguage} />
         <p class="meta follows">{t('me.language.cards')}</p>
       </SubTile>
+      <SlackTile {slack} {language} />
       <SubTile round label={t('me.own.label')}>
         <p class="meta text own">{t('me.own.text')}</p>
       </SubTile>
