@@ -2,7 +2,7 @@
 
 A Learning Card in Data Hub is a Markdown file in a fixed shape, one per language: `packages/learning/cards/<number>/en.md` and `nl.md`, with the interview record `interview.md` beside them. Data Hub reads the five steps from the file (Why now, Core idea, See it, Check your understanding, You can now). The parser is `packages/learning/src/card.ts`; the rules are in `docs/requirements/functional/16-learning.md` (FR-LR-27, FR-LR-30, FR-LR-31, DEC-LR-19, DEC-LR-23, DEC-LR-24, DEC-LR-26, DEC-LR-31) and `docs/requirements/technical/16-learning.md` (TR-LR-01). Whatever does not fit this shape, Data Hub does not read: it goes into the interview record, not into the card.
 
-Contents: 1. The skeleton · 2. Rules per part · 3. From interview to card · 4. The Dutch version · 5. The interview record · 6. Kinds of chart
+Contents: 1. The skeleton · 2. Rules per part · 3. From interview to card · 4. The Dutch version · 5. The interview record · 6. Kinds of chart · 7. Where a card is met
 
 ## 1. The skeleton
 
@@ -183,3 +183,17 @@ The Chart Server draws these kinds. Each has its schema in `services/semgraph/se
 | `kpiStatus` | Are we on track for the target? |
 
 Start from one of its examples, leave out `theme` and `size`, and put in the figures of the card. `scripts/learning-card.ts` holds the fields and their values to the schema of the kind; `services/semgraph/test/learning-cards.test.ts` draws every card and fails on a request the Chart Server refuses or deviates from. The examples of this skill use `calendarRatio` (2.1.3) and `calendarAverage` with `"measureType": "unique", "uniqueAggregation": "daily"` for a state (1.2.7); the written cards mostly use `categoryComparison`.
+
+## 7. Where a card is met
+
+A reader meets a card in the Learning Centre, and where its topic comes up. `node scripts/learning-card.ts links <number> ["words a reader uses" …]` lists those places for a card, worked out afresh each time; for a topic not written yet, it lists the places that want it.
+
+| Where | How it links | Kept in |
+| --- | --- | --- |
+| Under a Message Data Hub writes | "Understand what is happening here", the card inline in the Message (FR-LR-38). Only a card the Message *names* shows; one it *proposes*, or names as the nearest to a card still to write, does not. Each says what it expects of the card. | `packages/contracts/src/messageCatalogue.ts`, the field `learningCard` |
+| On a marker ⓘ of system text | A pop-out with the cards that explain the text, each with its gain; a click opens the card over the page (FR-LR-35, FR-LR-36). Markers are placed at a release (DEC-LR-22); a new place is designed first. | `packages/learning/src/markers.ts`, with the place on the screen in `MARKER_PLACES` |
+| Under Where to next of another card | `Deeper:` or `Next to it:`, written cards only, two or three choices per card (FR-LR-31) | The `en.md` and `nl.md` of that card |
+| The Learning Centre | Every topic of the plan, a card to be written without a page | `plan.json` |
+| In Claude | Only when Claude calls `explain` of the MCP server: a search on the words of the title (counted three times), the rule of Core idea, the gain and the anchor; it returns the five best written cards (FR-CL-15) | `packages/learning/src/explain.ts` |
+
+Three rules follow. The `gain` is the sentence of the card in every one of these places, so it is never written for one of them. A pop-out, a Message and `explain` offer only written cards, so a card nobody links to is found only by whoever browses the Learning Centre: propose a place on the to-do of the record. And whatever helps `explain` find the card must read well for the reader too: never add words for the search.

@@ -155,5 +155,6 @@ pnpm docs:build   # regenerate docs/requirements/traceability.md (node scripts/r
 1. Open the file of the domain, or start one from [`_templates/`](_templates/).
 2. Take the next free number for its type and code.
 3. Write the block in the format above, with status `Proposed` or `Specified`.
-4. Link the requirements it depends on or realises.
-5. Run `check` and `build`, and commit the result.
+4. Ask what is good and bad behaviour here, and end a functional requirement with it: `**Makes easy:** …` the behaviour it makes the obvious step, and `**Makes hard:** …` the behaviour it stands in the way of. Good software is like good governance: it makes the right thing easy and the wrong thing hard ([DEC-UX-207](../design/principles.md#dec-ux-207)).
+5. Link the requirements it depends on or realises.
+6. Run `check` and `build`, and commit the result.

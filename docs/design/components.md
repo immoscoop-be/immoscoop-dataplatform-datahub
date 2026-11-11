@@ -215,6 +215,9 @@ Grouped by the object or task they serve. Each is built from the layers above; i
 | Check your understanding | One question at a time: predict, then the answer and why | – | button | the same | [FR-LR-30](../requirements/functional/16-learning.md#fr-lr-30) |
 | Attached card | A card in a Message, with whether the reader understood it | Opens the card | kind icon | Messages | [DEC-UX-41](principles.md#dec-ux-41) |
 | Pop-out of cards | The cards that explain a marked text, with what each brings | **Explain on rest** | pop-out, list | marked text | [DEC-UX-57](principles.md#dec-ux-57) |
+| Attention box | A situation that asks whoever can act to act: what to do, why in the gain of its card, what it is about with its button, and the card; folds to one line (proposal) | Opens the card over the page | callout, button, attached card | page of a Collection, page of a Resource | [FR-LR-43](../requirements/functional/16-learning.md#fr-lr-43), [OP-UX-75](principles.md#op-ux-75) |
+| Coming soon | A card still to write: number and title, muted, "Coming soon" and "I want this card" (proposal) | Sends a request to the Data Team | button | panel, family, pop-out | [FR-LR-41](../requirements/functional/16-learning.md#fr-lr-41), [OP-UX-76](principles.md#op-ux-76) |
+| Family of cards | "In the same family" under Where to next: every card of the family, this one marked (proposal) | Opens a card | list, coming soon | card page, floating window | [FR-LR-40](../requirements/functional/16-learning.md#fr-lr-40), [OP-UX-77](principles.md#op-ux-77) |
 
 ## 6 · Templates
 

@@ -421,6 +421,16 @@ Every MCP App of Data Hub reads well at the width of a phone, 360 px or less: it
 
 The result of a query, a Preview or a Lens reaches Claude as `claude.results` of the Permission group of the User says. **In Claude:** Claude reads the rows and works on them, as [DEC-CL-06](#dec-cl-06) says. **In a card only:** the User sees the rows in the MCP App; Claude reads the shape of the result, its columns and their types, the number of rows, what it read, the Levels and the link, without any value, the values of the choices of a Preview included; the MCP App says that Claude does not read the rows. **Not in Claude:** Claude offers "Open in Data Hub". In a card only, the rows stay out of the conversation as long as Claude hides the tools only the MCP App calls; the User can still paste them in, and they still pass through Anthropic on their way to the MCP App. The MCP App says it in one line under the grid ([DEC-UX-193](../../design/principles.md#dec-ux-193)).
 
+
+<a id="fr-cl-29"></a>
+### FR-CL-29 · An answer of Claude carries the card of its situation
+
+**Status:** Proposed · **Source:** Max, 2026-11-11 ([DEC-LR-32](16-learning.md#dec-lr-32))
+
+A tool of the MCP server that answers about something in a situation that pushes a Learning Card ([FR-LR-42](16-learning.md#fr-lr-42)) carries that card in its answer: its number and title, its gain and its address in the Learning Centre, for the User the situation is for. A Resource not published yet carries 4.7.1 Owning a Resource for its Owner; a Message Data Hub wrote carries the card it names ([FR-LR-38](16-learning.md#fr-lr-38)); the Level, the grain and the model type of a Resource carry the cards of their markers. The server instructions tell Claude to offer the card in one line, once per card in a conversation, and, when the situation asks the User to act, to say what to do and where in Data Hub, as Claude does not publish or approve for them. `explain` stays for a concept the User asks about ([FR-CL-15](#fr-cl-15)).
+
+**Makes easy:** learning while working with Claude, without knowing which card to ask for. **Makes hard:** Claude answering around a situation that asks the User to act, and a User who only learns what they think of asking.
+
 ## Edge cases
 
 <a id="ec-cl-01"></a>

@@ -148,7 +148,7 @@
     {"number":"4.5.1","section":"4.5","title":{"en":"Who consumes outside your domain","nl":"Weten wie buiten je domein consumeert"},"priority":"required","thinking":"judge","buildsOn":["4.3.2"]},
     {"number":"4.6.1","section":"4.6","title":{"en":"Translating across the gap with the user","nl":"Vertalen naar de kloof met de gebruiker"},"priority":"required","thinking":"apply","buildsOn":["1.2.6"]},
     {"number":"4.6.2","section":"4.6","title":{"en":"Communicating uncertainty","nl":"Onzekerheid communiceren"},"priority":"required","thinking":"apply","buildsOn":["3.4.1"]},
-    {"number":"4.7.1","section":"4.7","title":{"en":"Owner and steward","nl":"Owner en steward"},"priority":"recommended","thinking":"recognise","buildsOn":["4.4.1"]},
+    {"number":"4.7.1","section":"4.7","title":{"en":"Owning a Resource","nl":"Owner zijn van een Resource"},"priority":"recommended","thinking":"recognise","buildsOn":["4.4.1"],"note":"Renamed by Data Hub from Owner and steward, as Data Hub knows no steward: the card explains what the Owner of a Resource takes on, which the Message A Resource arrived in your Collection points to (MSG-RES-08). The master learning plan on Confluence still says Owner and steward."},
     {"number":"R1","section":"R","title":{"en":"Time series","nl":"Time series"}},
     {"number":"R2","section":"R","title":{"en":"Cumulative","nl":"Cumulative"}},
     {"number":"R3","section":"R","title":{"en":"KPI status","nl":"KPI status"}},

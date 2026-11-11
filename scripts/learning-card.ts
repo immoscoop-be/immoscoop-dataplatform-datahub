@@ -5,6 +5,12 @@
  *   node scripts/learning-card.ts list [open | draft | reviewed] [section]   # the plan, with where each card stands
  *   node scripts/learning-card.ts check <number | folder>   # the card in both languages, its plan, its chart, its interview record
  *   node scripts/learning-card.ts stamp <number | folder>   # write into nl.md the translatedFrom the English asks for, then check
+ *   node scripts/learning-card.ts links <number | folder> ["words a reader uses" …]   # where Data Hub links the card, and what Claude finds
+ *
+ * `links` says where a reader meets the card: under a Message Data Hub writes (the Message Catalogue), on a marker of a
+ * screen (markers.ts), under Where to next of another card, and in Claude, where it runs the search of `explain` of the
+ * MCP server for the title, the term in bold, the quote of Why now and the words given. It is worked out afresh each
+ * time, as the places change with every release.
  *
  * A card is open while it has no folder, a draft until the Data Team reviewed it, and reviewed after (DEC-LR-25);
  * prod shows only reviewed cards. A section such as 2.1 or K5 narrows the list.
@@ -19,8 +25,11 @@
 
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { MESSAGE_CATALOGUE } from '../packages/contracts/src/messageCatalogue.ts';
 import { type Card, parseCard, versionOf } from '../packages/learning/src/card.ts';
+import { explainWith } from '../packages/learning/src/explain.ts';
 import { interviewMisfits } from '../packages/learning/src/interview.ts';
+import { MARKER_PLACES, MARKERS, type MarkerPlace } from '../packages/learning/src/markers.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const CARDS = path.join(ROOT, 'packages', 'learning', 'cards');
@@ -78,8 +87,86 @@ if (command === 'list') {
   process.exit(0);
 }
 
+// Where Data Hub links the card: its screens and Messages in the web app, other cards, and what Claude finds.
+if (command === 'links' && target) {
+  const own = existsSync(path.join(CARDS, target)) ? path.join(CARDS, target) : path.resolve(target);
+  const card = existsSync(path.join(own, 'en.md')) ? parseCard(readFileSync(path.join(own, 'en.md'), 'utf8')) : null;
+  const number = card?.number ?? target;
+  const topic = plan.topics.find((one) => one.number === number);
+  if (!card && !topic) {
+    console.error(`${target} is no topic of packages/learning/cards/plan.json, and ${own} holds no en.md.`);
+    process.exit(1);
+  }
+  const writtenCards = readdirSync(CARDS, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && entry.name !== number && existsSync(path.join(CARDS, entry.name, 'en.md')))
+    .map((entry) => parseCard(readFileSync(path.join(CARDS, entry.name, 'en.md'), 'utf8')));
+  const titleOf = (one: string): string => plan.topics.find((topic) => topic.number === one)?.title.en ?? one;
+  const pad = (label: string): string => label.padEnd(9);
+  let places = 0;
+
+  const state = card ? `${card.status}${card.status === 'draft' ? ': shows in uat only, not in prod (DEC-LR-25)' : ''}` : 'open: not written yet, so no place shows it (DEC-LR-28)';
+  console.log(`${number} ${titleOf(number)} · ${state}\n`);
+  console.log(card ? 'In the web app' : 'In the web app, once it is written');
+  const messages = MESSAGE_CATALOGUE.flatMap((type): { type: (typeof MESSAGE_CATALOGUE)[number]; fit: 'named' | 'proposed' | 'nearest'; why: string }[] => {
+    const fit = type.learningCard;
+    if ((fit.fit === 'named' || fit.fit === 'proposed') && fit.card.number === number) return [{ type, fit: fit.fit, why: fit.why }];
+    if (fit.fit === 'toWrite' && fit.nearest?.number === number) return [{ type, fit: 'nearest', why: `${fit.why} The card it asks for: ${fit.topic}.` }];
+    return [];
+  });
+  for (const { type, fit, why } of messages) {
+    if (fit === 'named') places += 1;
+    const shows = fit === 'named' ? 'named: shows under the Message, "Understand what is happening here"' : fit === 'proposed' ? 'proposed: does not show; only a card the Message Catalogue names shows (FR-LR-38)' : 'the nearest card to one still to write: does not show';
+    console.log(`  ${pad('Message')}${type.id} ${type.title} · ${shows}`);
+    console.log(`  ${pad('')}what it expects: ${why}`);
+  }
+  if (messages.length === 0) console.log(`  ${pad('Message')}none: no Message Data Hub writes names it (packages/contracts/src/messageCatalogue.ts)`);
+  const markers = (Object.entries(MARKERS) as [MarkerPlace, readonly string[]][]).filter(([, numbers]) => numbers.includes(number));
+  for (const [place, numbers] of markers) {
+    places += 1;
+    const beside = numbers.filter((one) => one !== number);
+    console.log(`  ${pad('Marker')}${place}: ${MARKER_PLACES[place]}${beside.length ? ` · with ${beside.join(', ')}` : ''}`);
+  }
+  if (markers.length === 0) console.log(`  ${pad('Marker')}none: no ⓘ lists it (packages/learning/src/markers.ts)`);
+  const pointing = writtenCards.filter((one) => one.can.choices.some((choice) => choice.kind !== 'apply' && choice.card === number));
+  places += pointing.length;
+  const outgoing = card ? ` · it points to ${card.can.choices.map((choice) => (choice.kind === 'apply' ? `Apply ${choice.href}` : `${choice.kind === 'deeper' ? 'Deeper' : 'Next to it'} ${choice.card}`)).join(', ')}` : '';
+  console.log(`  ${pad('Cards')}${pointing.length ? `pointed to by ${pointing.map((one) => `${one.number} ${titleOf(one.number)}`).join(', ')}` : 'no written card points to it'}${outgoing}`);
+  const section = plan.sections.find((one) => one.number === topic?.section);
+  console.log(`  ${pad('Centre')}the Learning Centre lists it under ${section ? `${section.number} ${section.title.en}` : 'no section: it is no topic of the plan'}${card ? '' : ', as a card to be written'}`);
+
+  if (!card) {
+    console.log('\nIn Claude: explain offers written cards only, so Claude finds it once it is written.');
+    const wanted = messages.length + markers.length;
+    console.log(`\nWanted by ${wanted} place(s) in the web app.${wanted ? ' Read what each expects: the card answers the reader who arrives from there.' : ''}`);
+    process.exit(0);
+  }
+
+  console.log('\nIn Claude, through the MCP server: only when Claude calls explain');
+  const phrases: { text: string; what: string }[] = [
+    { text: titleOf(number), what: 'the title' },
+    ...[...card.core.rule.matchAll(/\*\*([^*]+)\*\*/g)].map((match) => ({ text: match[1] ?? '', what: 'the term in bold' })),
+    { text: card.why.quote, what: 'the quote of Why now' },
+    ...process.argv.slice(4).map((text) => ({ text, what: 'your words' })),
+  ];
+  const all = [...writtenCards, card];
+  let found = 0;
+  for (const phrase of phrases) {
+    const results = explainWith(phrase.text, all, titleOf);
+    const rank = results.findIndex((one) => one.number === number);
+    if (rank >= 0) found += 1;
+    const where = (rank < 0 ? 'missed' : `${rank + 1} of ${results.length}`).padEnd(8);
+    const ahead = rank > 0 ? ` · after ${results.slice(0, rank).map((one) => one.number).join(', ')}` : rank < 0 ? ` · Claude gets ${results.length ? results.map((one) => one.number).join(', ') : 'no card'}` : '';
+    console.log(`  ${where} ${JSON.stringify(phrase.text)}, ${phrase.what}${ahead}`);
+  }
+
+  console.log(`\nLinked from ${places} place(s) in the web app besides the Learning Centre; Claude finds it for ${found} of ${phrases.length} phrase(s).`);
+  if (places === 0) console.log('Nobody meets this card where its topic comes up: propose a place on the to-do of the interview record (a Message, a marker, Where to next of a neighbour).');
+  if (!topic) console.log(`${number} is no topic of the plan yet: add it to packages/learning/cards/plan.json.`);
+  process.exit(0);
+}
+
 if ((command !== 'check' && command !== 'stamp') || !target) {
-  console.error('Usage: node scripts/learning-card.ts list [open | draft | reviewed] [section] | check <number | folder> | stamp <number | folder>');
+  console.error('Usage: node scripts/learning-card.ts list [open | draft | reviewed] [section] | check <number | folder> | stamp <number | folder> | links <number | folder> ["words a reader uses" …]');
   process.exit(2);
 }
 

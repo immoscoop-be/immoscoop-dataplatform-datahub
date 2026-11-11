@@ -2032,3 +2032,31 @@ svg.mp, svg.mp-g { display: block; width: 100%; height: auto; overflow: visible;
 .mb-res.on { background: var(--tint-active); }
 .mb-res.head { cursor: default; font-size: var(--text-meta); color: var(--text-muted); padding-top: 4px; padding-bottom: 4px; }
 .mb-res.head:hover { background: none; }
+
+/* The attention box: a situation that asks whoever can act to act, with the Learning Card that says why (FR-LR-43, OP-UX-75). */
+.attention-box { margin-top: 16px; border-radius: var(--radius-lg); padding: 16px 18px; border-left: 3px solid var(--signal-warn); }
+.attention-box-head { display: flex; align-items: flex-start; gap: 12px; }
+.attention-box-head > i { font-size: 20px; color: var(--signal-warn); flex: none; margin-top: 1px; }
+.attention-box-head > div { flex: 1; min-width: 0; }
+.attention-box-head h2 { margin: 0; font-size: 15px; font-weight: 500; }
+.attention-box-head p { margin: 4px 0 0; font-size: var(--text-small); color: var(--text-secondary); line-height: 1.5; }
+.attention-box-items { margin: 12px 0 0 32px; }
+.attention-box-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--tint-hover); font-size: var(--text-small); flex-wrap: wrap; }
+.attention-box-item .item-title { flex: 1; min-width: 140px; }
+.attention-box-item .why-not { font-size: var(--text-meta); color: var(--text-muted); }
+.attention-box-card { margin: 12px 0 0 32px; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-md); background: var(--surface-sub); text-decoration: none; color: inherit; font-size: var(--text-small); flex-wrap: wrap; }
+.attention-box-card > i { font-size: 18px; color: var(--col-teal-ink); }
+.attention-box-card .meta { flex: 1; }
+.attention-box.folded .attention-box-head p, .attention-box.folded .attention-box-items, .attention-box.folded .attention-box-card { display: none; }
+@media (max-width: 520px) { .attention-box-items, .attention-box-card { margin-left: 0; } }
+
+/* A card coming soon, and the family of a card under Where to next (FR-LR-40, FR-LR-41, OP-UX-76, OP-UX-77). */
+.lc-soon { font-size: var(--text-meta); color: var(--text-muted); border: 1px dashed currentColor; border-radius: var(--radius-pill); padding: 0 8px; white-space: nowrap; }
+.lc-want { font-size: var(--text-meta); }
+.lc-want[aria-pressed="true"] { color: var(--text-muted); }
+.tree-res.soon .tree-res-name { color: var(--text-muted); }
+.lc-family { margin-top: 22px; }
+.lc-family-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--tint-hover); font-size: var(--text-small); flex-wrap: wrap; text-decoration: none; color: inherit; }
+.lc-family-row .name { flex: 1; min-width: 160px; }
+.lc-family-row.this .name { font-weight: 500; }
+.lc-family-row.soon .name { color: var(--text-muted); }
