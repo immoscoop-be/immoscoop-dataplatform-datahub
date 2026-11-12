@@ -7,7 +7,6 @@
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import type { Field, KnownGap, ResourceDetail } from '../lib/catalogue.js';
   import { scopeLine } from '../lib/gaps.js';
-  import { nounOf } from '../lib/grain.js';
 
   /**
    * The Columns of a Resource (Columns table): each field with its type, its Business Description next
@@ -168,7 +167,7 @@
             <td class="type">{field.dataType ?? ''}</td>
             {#if field.businessDescription}<td>{field.businessDescription}</td>{:else}<td class="none" aria-label={t('resource.noBusiness')}>–</td>{/if}
             <td class="dbt">{field.description || '–'}</td>
-            <td>{#if mapping}<span class="code" title={mapping.identity}>{nounOf(mapping.identity)}</span>{/if}</td>
+            <td>{#if mapping}<span class="code">{mapping.identity}</span>{/if}</td>
             <td><span class="roles">{@render pills(field)}</span></td>
           </tr>
         {/each}

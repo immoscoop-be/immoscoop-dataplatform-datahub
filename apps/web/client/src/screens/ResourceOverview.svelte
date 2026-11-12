@@ -437,7 +437,7 @@
           <div class="entities" class:drawn={picture.rows.length > 0}>
             <div>
               {#each shownRelated as mapping (mapping.field)}
-                <div class="entity"><span class="code">{nounOf(mapping.identity)}</span>{t('resource.entity.on', { field: mapping.field })}</div>
+                <div class="entity"><span class="code">{mapping.identity}</span>{t('resource.entity.on', { field: mapping.field })}</div>
                 <p class="empty">
                   {#if mapping.resources.length > 0}{t('resource.entity.joins', { names: list(carriersOf(mapping)) })}
                   {:else}{t('resource.entity.alone')}{/if}

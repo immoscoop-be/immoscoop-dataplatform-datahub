@@ -42,7 +42,7 @@
   ?ov=entities, ?ov=maturity, ?ov=changes, ?ov=danger; ?lvl=two shows Maturity at 2 · Described; ?dep=on shows a deprecated Resource, its deprecation first
   in the Summary; ?descedit=on edits the Business Description, ?descview=preview previews it.
   Requirements: FR-RC-19, FR-RC-20, FR-RC-21, FR-RC-22, FR-RC-23, FR-RC-24, FR-RC-25, FR-SR-50, FR-MR-16, FR-CM-28, FR-CO-43
-  Decisions: DEC-RC-16, DEC-RC-17, DEC-RC-18, DEC-RC-19, DEC-RC-20, DEC-UX-101, DEC-UX-168, DEC-UX-169, DEC-UX-170, DEC-UX-171, DEC-UX-175, DEC-UX-176, DEC-UX-177, DEC-UX-178.
+  Decisions: DEC-RC-16, DEC-RC-17, DEC-RC-18, DEC-RC-19, DEC-RC-20, DEC-UX-101, DEC-UX-168, DEC-UX-169, DEC-UX-170, DEC-UX-171, DEC-UX-175, DEC-UX-176, DEC-UX-177, DEC-UX-178, DEC-UX-216.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="owner">
@@ -330,7 +330,7 @@ The lead source is set by the form the visitor used: website, app, partner or ma
      <div class="sub-tile">
       <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:14px;align-items:center">
        <div>
-        <div style="font-size:12px;font-weight:500"><span class="code-chip" style="margin:0 6px 0 0">leadSource</span>on <span class="mono">lead_source</span></div>
+        <div style="font-size:12px;font-weight:500"><span class="code-chip" style="margin:0 6px 0 0">leadSource.leadSourceId</span>on <span class="mono">lead_source</span></div>
         <p class="empty" style="margin:4px 0 12px">Joins Lead sources, Credit lead funnel and Lead response time.</p>
         <div style="font-size:12px;font-weight:500"><span class="code-chip" style="margin:0 6px 0 0">creditLead</span><span style="color:var(--text-muted);font-weight:400">no identifier at this grain</span></div>
         <p class="empty" style="margin-top:4px">In the lineage, but counted per week: it joins nothing here.</p>
@@ -520,7 +520,7 @@ The lead source is set by the form the visitor used: website, app, partner or ma
        <div class="sum-side"><span class="sum-n">5</span><span class="weight w2">Before you query</span></div>
        <div class="sum-main">
         <div class="sum-title"><h3>What it joins</h3><a class="text-link" data-go="ov:entities"><span>Entities</span><i class="ph ph-arrow-right"></i></a></div>
-        <p class="sum-text-line"><span class="code-chip">leadSource</span>on <span class="mono">lead_source</span> joins Lead sources, Credit lead funnel and Lead response time. <span class="code-chip">creditLead</span>has no identifier at this grain: it joins nothing here.</p>
+        <p class="sum-text-line"><span class="code-chip">leadSource.leadSourceId</span>on <span class="mono">lead_source</span> joins Lead sources, Credit lead funnel and Lead response time. <span class="code-chip">creditLead</span>has no identifier at this grain: it joins nothing here.</p>
        </div>
       </li>
       <li class="sum-part">
@@ -589,7 +589,7 @@ The lead source is set by the form the visitor used: website, app, partner or ma
    <div class="tile-head" style="margin:0 6px 4px"><p class="meta" style="flex:1;margin:0">Every field with its Business Description, from the Owner, next to its description from dbt.</p><a class="edit-link" href="collection-add-relations.html" data-for="datateam" title="Grain and relations, for a Data Admin" style="margin-right:12px"><i class="ph-fill ph-graph"></i>Edit relations</a><a class="edit-link" href="resource-columns-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
    <table><thead><tr><th>Column</th><th>Type</th><th>Business Description <span class="origin">From the Owner</span></th><th>Description <span class="origin">From dbt</span></th><th>Entity</th><th></th></tr></thead><tbody>
     <tr><td class="mono">week_start</td><td style="color:var(--text-muted)">DATE</td><td class="none" aria-label="No Business Description">–</td><td style="color:var(--text-secondary)">Monday of the week the lead was submitted</td><td></td><td><span class="pill pill-strong">Partition</span> <span class="pill">Parameter</span></td></tr>
-    <tr><td class="mono">lead_source</td><td style="color:var(--text-muted)">STRING</td><td>Where the lead came in: the website, the app, a partner or a mailing.</td><td style="color:var(--text-secondary)">Where the lead came from</td><td><span class="code-chip" style="margin:0">leadSource</span></td><td><span class="pill pill-strong">Cluster 1</span> <span class="pill">Parameter</span></td></tr>
+    <tr><td class="mono">lead_source</td><td style="color:var(--text-muted)">STRING</td><td>Where the lead came in: the website, the app, a partner or a mailing.</td><td style="color:var(--text-secondary)">Where the lead came from</td><td><span class="code-chip" style="margin:0">leadSource.leadSourceId</span></td><td><span class="pill pill-strong">Cluster 1</span> <span class="pill">Parameter</span></td></tr>
     <tr><td class="mono">lead_count</td><td style="color:var(--text-muted)">INT64</td><td>How many credit leads went to KBC that week from this source. Someone who applies twice counts twice.</td><td style="color:var(--text-secondary)">Number of credit leads sent to KBC, without test and duplicate requests</td><td></td><td></td></tr>
     <tr><td class="mono">lead_channel</td><td style="color:var(--text-muted)">STRING</td><td class="none" aria-label="No Business Description">–</td><td style="color:var(--text-secondary)">Channel of the first visit</td><td></td><td><span class="pill pill-strong">Cluster 2</span> <span class="pill" style="color:var(--signal-warn)">New</span></td></tr>
    </tbody></table>
