@@ -37,6 +37,13 @@ type Json = Record<string, unknown>;
 export const COLLECTOR_URL = 'https://colleciones-eventos.immoscoop.be';
 
 /**
+ * Where the collector serves the whole runtime contract of the model it runs, `immoscoop`: every Entity with its
+ * identifiers, references and actions, the vocabulary of relation types, and the release. `GET /domain-model` itself
+ * answers with a summary and an index of the Entities only, which holds no identifiers (TR-AR-09).
+ */
+export const CONTRACT_PATH = '/domain-model/immoscoop';
+
+/**
  * Reads the Domain Model from the collector, every time it is needed: Data Hub keeps no copy that could
  * fall behind (DEC-AR-05).
  */
@@ -44,7 +51,7 @@ export function createDomainModelSource(baseUrl: string = COLLECTOR_URL, request
   return async () => {
     let response: Response;
     try {
-      response = await request(new URL('/domain-model', baseUrl), { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(10_000) });
+      response = await request(new URL(CONTRACT_PATH, baseUrl), { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(10_000) });
     } catch (error) {
       throw new DomainModelUnavailable('The collector of Colleciónes did not answer', { cause: error });
     }
@@ -90,6 +97,10 @@ export function parseDomainModel(input: unknown): DomainModel {
       actions[action] = { performedBy, references: references(object(details).references) };
     }
     entities[name] = { identifiers: Object.keys(object(entity.identifiers)), references: references(entity.references), actions };
+  }
+  // A summary or an index of the Entities is no contract: without a single identifier, no field could map to it.
+  if (!Object.values(entities).some((entity) => entity.identifiers.length > 0)) {
+    throw new Error('No identifiers in the Domain Model');
   }
   const relationTypes: DomainModel['relationTypes'] = {};
   for (const [name, type] of Object.entries(object(object(model.vocabulary).relationTypes))) {
