@@ -1,4 +1,4 @@
-import type { NormalisedSet } from './normalise.js';
+import type { NodeRow, NormalisedSet } from './normalise.js';
 
 /** The tag with which an exposure makes the tables it depends on Resources of Data Hub (DEC-SR-22). */
 export const DATAHUB_TAG = 'datahub';
@@ -10,6 +10,21 @@ export interface ExposedColumn {
   dataType: string | null;
   description: string;
 }
+
+/**
+ * How an exposed table is stored, as dbt says (DEC-SR-34): of its own model, or, for a view, of the nearest model
+ * beneath it that is partitioned or clustered, and only the columns the table passes through by name, as the
+ * proposal of the step that adds it to a Collection has it. Until a Data Admin records its details, catalogue keeps
+ * these, so that a Preview filters on its partition column from the start.
+ */
+export interface ExposedStorage {
+  partition: { field: string; unit: NodeRow['partitionUnit'] } | null;
+  clusterBy: string[];
+  requirePartitionFilter: boolean;
+}
+
+/** How far up the lineage to look for the model beneath a view, as the proposal does. */
+const DEPTH = 10;
 
 /** A table that an exposure with the tag `datahub` depends on: a Resource to be (TR-AR-08). */
 export interface ExposedTable {
@@ -29,6 +44,8 @@ export interface ExposedTable {
   checksum: string | null;
   /** Its columns, in the order of the table (FR-SR-06). */
   columns: ExposedColumn[];
+  /** How it is stored, as dbt says; null when neither it nor a model beneath it is partitioned or clustered. */
+  storage: ExposedStorage | null;
 }
 
 /**
@@ -44,12 +61,53 @@ export function exposedTables(set: NormalisedSet): { tables: ExposedTable[]; emp
   }
   const exposures = set.nodes.filter((node) => node.resourceType === 'exposure' && node.tags.includes(DATAHUB_TAG));
   const tablesOf = new Map<string, string[]>(exposures.map((exposure) => [exposure.uniqueId, []]));
+  const parentsOf = new Map<string, string[]>();
   for (const edge of set.edges) {
     const parent = nodes.get(edge.parentId);
     if (parent?.relation) {
       tablesOf.get(edge.childId)?.push(parent.uniqueId);
     }
+    (parentsOf.get(edge.childId) ?? parentsOf.set(edge.childId, []).get(edge.childId)!).push(edge.parentId);
   }
+
+  /** The nearest Node up the lineage, the Node itself first, that is partitioned or clustered. */
+  const stored = (start: NodeRow): NodeRow | undefined => {
+    const fits = (node: NodeRow) => node.partitionField !== null || node.clusterBy.length > 0;
+    if (fits(start)) return start;
+    const seen = new Set([start.uniqueId]);
+    let level = [start.uniqueId];
+    for (let depth = 0; depth < DEPTH && level.length > 0; depth++) {
+      const next: string[] = [];
+      for (const id of level) {
+        for (const parentId of parentsOf.get(id) ?? []) {
+          if (seen.has(parentId)) continue;
+          seen.add(parentId);
+          next.push(parentId);
+        }
+      }
+      const found = next
+        .map((id) => nodes.get(id))
+        .find((node): node is NodeRow => node !== undefined && ['model', 'seed', 'snapshot'].includes(node.resourceType) && fits(node));
+      if (found) return found;
+      level = next;
+    }
+    return undefined;
+  };
+
+  const storageOf = (node: NodeRow, columns: ExposedColumn[]): ExposedStorage | null => {
+    const beneath = stored(node);
+    if (!beneath) return null;
+    const names = new Map(columns.map((column) => [column.name.toLowerCase(), column.name]));
+    const own = (name: string | null) => (name ? names.get(name.toLowerCase()) : undefined);
+    const field = own(beneath.partitionField);
+    const clusterBy = beneath.clusterBy.flatMap((name) => own(name) ?? []);
+    if (!field && clusterBy.length === 0) return null;
+    return {
+      partition: field ? { field, unit: beneath.partitionUnit } : null,
+      clusterBy,
+      requirePartitionFilter: Boolean(field && beneath.requirePartitionFilter),
+    };
+  };
 
   const tables = new Map<string, ExposedTable>();
   const empty: string[] = [];
@@ -63,6 +121,7 @@ export function exposedTables(set: NormalisedSet): { tables: ExposedTable[]; emp
       if (!node?.relation) {
         continue;
       }
+      const columns = (columnsOf.get(node.uniqueId) ?? []).toSorted((a, b) => (a.position ?? Infinity) - (b.position ?? Infinity) || a.name.localeCompare(b.name));
       const table =
         tables.get(node.relation) ??
         tables
@@ -76,7 +135,8 @@ export function exposedTables(set: NormalisedSet): { tables: ExposedTable[]; emp
             exposures: [],
             label: null,
             checksum: node.checksum,
-            columns: (columnsOf.get(node.uniqueId) ?? []).toSorted((a, b) => (a.position ?? Infinity) - (b.position ?? Infinity) || a.name.localeCompare(b.name)),
+            columns,
+            storage: storageOf(node, columns),
           })
           .get(node.relation)!;
       table.exposures.push(exposure.name);

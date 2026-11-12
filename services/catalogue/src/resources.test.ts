@@ -273,6 +273,41 @@ describe.skipIf(!url)('Resources in Postgres', () => {
     expect((await texts(reviews!.id))[0]).toBe('Added to the Collection Credit by Dirk');
   });
 
+  it('keeps how a Resource is stored as dbt says while it waits for a Collection, and what a Data Admin recorded after (DEC-SR-34)', async () => {
+    const credit = await collections.create({ name: 'Events', description: 'Events.', icon: 'coins', ownerUnit: DIGIKOM, visibility: 'private' }, dirk);
+    const stored = { partition: { field: 'created_at', unit: 'day' as const }, clusterBy: ['events_id'], requirePartitionFilter: true };
+    await resources.apply(prod('106', [table('simulations'), table('reviews'), table('events', { storage: stored })]));
+    const { events } = await byKey();
+    // Waiting for a Collection, a Preview already filters on its partition column, as dbt says.
+    expect((await resources.detail(events!.id))?.details).toMatchObject({
+      partition: { field: 'created_at', unit: 'day' },
+      clusterBy: ['events_id'],
+      partitionFilter: 'bigQuery',
+      origins: { partition: 'dbt', clusterBy: 'dbt', partitionFilter: 'dbt' },
+    });
+    // dbt changes it while it still waits: Data Hub follows.
+    await resources.apply(prod('107', [table('simulations'), table('reviews'), table('events', { storage: { ...stored, requirePartitionFilter: false } })]));
+    expect((await resources.detail(events!.id))?.details).toMatchObject({ partitionFilter: 'none' });
+    // A Data Admin adds it and records what holds; dbt no longer changes that.
+    const details: Details = {
+      partition: { field: 'created_at', unit: 'month' },
+      clusterBy: [],
+      partitionFilter: 'dataHub',
+      grain: ['events_id'],
+      grainSentence: '',
+      modelType: 'event',
+      origins: { partition: 'here', partitionFilter: 'here' },
+      release: null,
+      mappings: [],
+    };
+    expect(await resources.add([{ id: events!.id, details }], credit, dirk)).toEqual({ outcome: 'added', added: 1 });
+    await resources.apply(prod('108', [table('simulations'), table('reviews'), table('events', { storage: stored })]));
+    expect((await resources.detail(events!.id))?.details).toMatchObject({ partition: { field: 'created_at', unit: 'month' }, clusterBy: [], partitionFilter: 'dataHub' });
+    // A registry that does not send it yet changes nothing.
+    await resources.apply(prod('109', [table('simulations'), table('reviews'), table('events')]));
+    expect((await resources.detail(events!.id))?.details).toMatchObject({ partition: { field: 'created_at', unit: 'month' } });
+  });
+
   it('checks what was recorded against the fields of the Resource (FR-CO-33, DEC-RC-08)', () => {
     const base: Details = { partition: null, clusterBy: [], partitionFilter: 'none', grain: [], grainSentence: '', modelType: null, origins: {}, release: null, mappings: [] };
     const is = { kind: 'is' as const, relationType: null, subject: null, origin: 'here' as const, inDomainModel: true };
