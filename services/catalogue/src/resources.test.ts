@@ -132,20 +132,24 @@ describe.skipIf(!url)('Resources in Postgres', () => {
     ]);
   });
 
-  it('renames, refreshes, withdraws and brings back, with the whole state of the project each time (FR-SR-33, FR-SR-34)', async () => {
+  it('renames, refreshes, withdraws and brings back, with the whole state of the project each time (FR-SR-33, FR-SR-34, DEC-SR-45)', async () => {
+    const before = await byKey();
     // The label changes, the description too, and customers and visits are no longer exposed.
     const withdrawing = await resources.apply(prod('101', [table('orders', { label: 'All orders', description: 'Every order.' })]));
     let known = await byKey();
     expect(known.orders).toMatchObject({ displayName: 'All orders', description: 'Every order.' });
-    expect(known.customers?.withdrawn).toBe(true);
+    // Withdrawn, they wait for nothing and leave the list without a Collection, but are held (DEC-SR-26, DEC-SR-45).
+    expect(known.customers).toBeUndefined();
+    expect(known.visits).toBeUndefined();
+    expect(await resources.get(before.customers!.id)).toMatchObject({ name: 'customers', collectionId: null, withdrawn: true });
     // What reads a Resource that was withdrawn, or comes back, is checked; a new label or description changes nothing it reads (FR-SR-52).
-    expect(withdrawing.changed.sort()).toEqual([known.customers!.id, known.visits!.id].sort());
+    expect(withdrawing.changed.sort()).toEqual([before.customers!.id, before.visits!.id].sort());
 
-    // customers comes back as it was.
+    // customers comes back as it was, and waits for a Collection again.
     const outcome = await resources.apply(prod('102', [table('orders', { label: 'All orders' }), table('customers')]));
     expect(outcome).toMatchObject({ registered: 0, renamed: 0, withdrawn: 0, back: 1 });
     known = await byKey();
-    expect(known.customers?.withdrawn).toBe(false);
+    expect(known.customers).toMatchObject({ id: before.customers!.id, withdrawn: false });
     expect(outcome.changed).toEqual([known.customers!.id]);
     expect(await texts(known.customers!.id)).toEqual([
       'Back through exposure datahub_customers',

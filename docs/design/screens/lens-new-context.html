@@ -4,13 +4,13 @@
   The Request on a very large Lens opens on the Lens as its author made it, not yet published, with its size check on the
   right: what one run reads, the partitions, what a default would read. The floating window holds the Request, the field
   for the reason, "Refuse" and "Accept"; here it is moved beside the size check, so that both stay in view. Opened by
-  its author (?role=owner), it says that the Request waits.
+  its author (?role=owner), it says that the Request waits. Close leaves the Lens as it is, without the window (DEC-UX-210).
   While the Request waits, the Lens is frozen (DEC-LE-05); the prototype still shows its fields as editable.
   Refused (?state=refused, drawn on 2026-10-29 at the request of Max): the decision is the reply on the Request (MSG-CNV-05),
   with its reason. The Lens stays unpublished, seen only by its author and the Data Team, and does not run; it is no longer
   frozen: "Update the lens" on its query checks its size again, published within range, waiting again above 1 GB.
   Requirements: FR-SR-40, FR-LE-04, FR-LE-06, FR-LE-08, FR-LE-09, FR-LE-13, FR-CV-02, FR-CV-03, FR-CV-08, FR-CV-09
-  Decisions: DEC-UX-30, DEC-UX-75, DEC-UX-121, DEC-CV-06, DEC-LE-05, DEC-LE-15, DEC-SR-29.
+  Decisions: DEC-UX-30, DEC-UX-210, DEC-UX-75, DEC-UX-121, DEC-CV-06, DEC-LE-05, DEC-LE-15, DEC-SR-29.
   Not in v1: the label "Claude" on a query in the panel (FR-SR-26, DEC-CH-02); leave it out.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -149,7 +149,7 @@ Adds up the leads per source and puts the largest first.</textarea></label>
   <i class="ph ph-dots-six-vertical float-grip" aria-hidden="true"></i>
   <div style="flex:1;min-width:0"><div class="meta">Request on this Lens</div><div class="float-title" id="float-title">Leads per source, all weeks</div></div>
   <button class="icon-btn float-fold" aria-label="Fold" aria-expanded="true"><i class="ph ph-minus"></i></button>
-  <a class="icon-btn" href="messages.html" aria-label="Close"><i class="ph ph-x"></i></a>
+  <a class="icon-btn" href="#" onclick="this.closest('.float-win').hidden=true;return false" aria-label="Close"><i class="ph ph-x"></i></a>
  </div>
  <div class="float-body">
   <div class="thread">
