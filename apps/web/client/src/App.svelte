@@ -954,6 +954,7 @@
         folderId={page.id}
         {lenses}
         {catalogue}
+        assigns={can(permissions, 'resources.assign')}
         go={(path) => router.go(path)}
         onchanged={refresh}
         onmove={move}

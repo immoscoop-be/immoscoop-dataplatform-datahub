@@ -31,13 +31,15 @@
    * what it holds, its folders first, then its Resources and Lenses, each A to Z. A whole row opens what it is
    * with a click; the Owner Unit and the Data Team drag it onto a folder, here, in the panel or in the path, to
    * move it (DEC-UX-157), make and delete folders, and change the name and description of this one in place (DEC-UX-162). Delete stays on: on a folder that holds
-   * something, it says so and deletes nothing.
+   * something, it says so and deletes nothing. A Data Admin takes a Resource out of the Collection at the end of its row,
+   * as on the page of the Collection (DEC-UX-212).
    */
   let {
     collection,
     folderId,
     lenses,
     catalogue,
+    assigns = false,
     go,
     onchanged,
     onmove,
@@ -47,6 +49,8 @@
     folderId: string;
     lenses: readonly LensItem[] | undefined;
     catalogue: Catalogue;
+    /** May take a Resource out of the Collection (`resources.assign`, DEC-UX-212). */
+    assigns?: boolean;
     go: (path: string) => void;
     /** The folders changed: the Collections are read again. */
     onchanged: () => Promise<void>;
@@ -106,6 +110,16 @@
     await catalogue.changeFolder(collection.id, folder.id, changes);
     await onchanged();
     return undefined;
+  }
+
+  /** Takes a Resource out of the Collection: it leaves this folder too, back to Without a Collection (DEC-UX-212). */
+  async function takeOut(item: { id: string; displayName: string }) {
+    try {
+      await catalogue.removeResource(item.id);
+      await onchanged();
+    } catch (error) {
+      console.error(`${item.displayName} could not be removed from the Collection`, error);
+    }
   }
 
   async function remove() {
@@ -188,9 +202,10 @@
           <th>{t('collection.column.name')}</th>
           <th>{t('folder.level')}</th>
           <th>{t('collection.column.change')}</th>
+          {#if assigns}<th><span class="hidden">{t('collection.column.remove')}</span></th>{/if}
         </tr>
       {/snippet}
-      {#if making}<NewFolderRow columns={3} onmake={make} oncancel={() => (making = false)} />{/if}
+      {#if making}<NewFolderRow columns={assigns ? 4 : 3} onmake={make} oncancel={() => (making = false)} />{/if}
       {#each inside.folders as sub (sub.id)}
         <tr
           class="row"
@@ -205,6 +220,7 @@
           </td>
           <td class="muted">—</td>
           <td class="muted">{t('folder.made', { name: sub.createdBy, time: ago(sub.createdAt, currentLanguage()) })}</td>
+          {#if assigns}<td></td>{/if}
         </tr>
       {/each}
       {#each inside.resources as item (item.id)}
@@ -227,6 +243,9 @@
               <span class="change"><span class="change-text" title={text}>{text}</span><span class="when">&nbsp;· {ago(change.at, currentLanguage())}</span></span>
             {/if}
           </td>
+          {#if assigns}
+            <td class="remove"><IconButton icon="minus-circle" label={t('collection.remove', { name: item.displayName })} onclick={() => takeOut(item)} /></td>
+          {/if}
         </tr>
       {/each}
       {#each inside.lenses as lens (lens.id)}
@@ -240,6 +259,7 @@
           <td><span class="name"><KindIcon kind="lens" broken={brokenText(lens.broken)} /><span>{lens.name}</span></span></td>
           <td><span class="level"><MaturityIcon level={lens.level} tooltip={false} />{levelName(lens.level)}</span></td>
           <td class="muted">{t('folder.made', { name: lens.authorName, time: ago(lens.createdAt, currentLanguage()) })}</td>
+          {#if assigns}<td></td>{/if}
         </tr>
       {/each}
       {#snippet after()}<p class="meta foot">{t('folder.order')}</p>{/snippet}
@@ -250,6 +270,8 @@
 {/if}
 
 <style>
+  .remove { width: 1%; }
+  .hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .head { display: flex; align-items: flex-start; gap: 14px; margin-top: 10px; }
   .what { flex: 1; min-width: 0; }
   .actions { display: flex; gap: 8px; align-items: center; flex: none; }

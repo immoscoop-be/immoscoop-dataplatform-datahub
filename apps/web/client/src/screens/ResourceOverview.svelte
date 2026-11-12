@@ -60,6 +60,8 @@
     others,
     ondeprecate,
     onundeprecate,
+    removeFrom = null,
+    onremove,
     part = $bindable('summary'),
   }: {
     resource: ResourceDetail;
@@ -90,6 +92,10 @@
     others: readonly { id: string; displayName: string; collection: string }[];
     ondeprecate: (reason: string, insteadOf: string | null) => Promise<boolean>;
     onundeprecate: () => Promise<boolean>;
+    /** The name of its Collection, when the User may take it out of it (`resources.assign`, DEC-UX-212); null otherwise. */
+    removeFrom?: string | null;
+    /** Takes it out of its Collection; answers whether it worked. */
+    onremove?: () => Promise<boolean>;
     /** The part on screen, which the page can open, such as the Danger zone from a deprecation. */
     part?: Part;
   } = $props();
@@ -109,7 +115,9 @@
     { id: 'danger', icon: 'warning-octagon', label: 'overview.danger' },
   ];
   /** The Danger zone is for who may deprecate it only. */
-  const shown = $derived(PARTS.filter((one) => one.id !== 'danger' || canDeprecate));
+  /** The Danger zone shows for whoever may deprecate it, or take it out of its Collection (DEC-UX-176, DEC-UX-212). */
+  const dangers = $derived(canDeprecate || (removeFrom !== null && onremove !== undefined));
+  const shown = $derived(PARTS.filter((one) => one.id !== 'danger' || dangers));
   /** Which attributes each part edits: Known Behaviour holds the intended use, the pitfalls and since when it is reliable. */
   const EDITS: Record<Editable, readonly DescribeAttribute[]> = { description: ['description'], behaviour: ['behaviour', 'pitfalls', 'availableSince'], querying: ['keyFields'] };
   const mayEdit = (which: Editable) => EDITS[which].some((attribute) => describes(attribute));
@@ -463,9 +471,9 @@
       <SubTile>
         {#if log}{#if log.length > 0}<LogList entries={log.slice(0, 20)} />{:else}<p class="empty">{t('resource.nothingYet')}</p>{/if}{:else}<Loading />{/if}
       </SubTile>
-    {:else if part === 'danger' && canDeprecate}
+    {:else if part === 'danger' && dangers}
       {@render head(t('overview.danger'), t('overview.danger.lead', { name: resource.displayName }))}
-      <OverviewDanger {resource} {others} {ondeprecate} {onundeprecate} />
+      <OverviewDanger {resource} {others} deprecates={canDeprecate} collection={removeFrom} {ondeprecate} {onundeprecate} {onremove} />
     {/if}
   </div>
 </div>

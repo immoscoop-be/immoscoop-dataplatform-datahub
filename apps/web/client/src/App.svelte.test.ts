@@ -639,6 +639,13 @@ function serve({
       credit = { ...credit, folders: [...credit.folders, made] };
       return json(made, 201);
     }
+    // A Resource taken out of Credit leads: it leaves its folder with it (DEC-UX-212).
+    const [, takenOut] = /^\/resources\/([^/]+)\/collection$/.exec(path) ?? [];
+    if (takenOut && method === 'DELETE' && credit.resources.some((item) => item.id === takenOut)) {
+      credit = { ...credit, resources: credit.resources.filter((item) => item.id !== takenOut) };
+      if (resource.id === takenOut) resource = { ...resource, collectionId: null };
+      return new Response(null, { status: 204 });
+    }
     const [, folderId] = /^\/collections\/c1\/folders\/([^/]+)$/.exec(path) ?? [];
     if (folderId && method === 'PATCH') {
       const changes = JSON.parse(init.body as string) as { name?: string; description?: string };
@@ -2645,6 +2652,23 @@ describe('the page of a Resource', () => {
     await vi.waitFor(() => expect(main.queryByText(/Replaced by the figures/)).toBeNull());
   });
 
+  it('lets a Data Admin take it out of its Collection in the Danger zone, explained first (DEC-UX-212)', async () => {
+    const calls = serve({ as: 'admin' });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
+    await fireEvent.click(main.getByRole('tab', { name: 'Gevarenzone' }));
+    const danger = within(main.getByRole('tabpanel', { name: 'Gevarenzone' }));
+    expect(danger.getByRole('heading', { name: 'Uit de Collection halen' })).toBeTruthy();
+    expect(danger.getByText(/Haal Weekly lead volume uit Credit leads/)).toBeTruthy();
+    expect(danger.getByText(/Alleen het Data Team ziet hem nog, onder Zonder Collection/)).toBeTruthy();
+    await fireEvent.click(danger.getByRole('button', { name: /Uit Credit leads halen/ }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/resources/r2/collection' }));
+    // Out of its Collection, the button has done its work.
+    await vi.waitFor(() => expect(danger.queryByRole('button', { name: /Uit Credit leads halen/ })).toBeNull());
+  });
+
   it('keeps its Danger zone from who is not in its Owner Unit or the Data Team (DEC-UX-176)', async () => {
     serve({ groups: [], weekly: { published: true, level: 3, collectionId: 'c2' } });
     open('/resources/r2');
@@ -3379,6 +3403,27 @@ describe('Folders', () => {
     expect(panel.getByRole('link', { name: 'By source' }).getAttribute('aria-current')).toBe('page');
     await fireEvent.click(within(main.getByRole('table', { name: 'In deze map' })).getByText('Max Verstraete', { exact: false }));
     expect(location.pathname).toBe('/lenses/l1');
+  });
+
+  it('lets a Data Admin take a Resource in a folder out of the Collection, as on the page of the Collection (DEC-UX-212)', async () => {
+    const calls = serve({ as: 'admin', groups: ['g1'], lenses: [{ ...LENS }], creditWith: FOLDERED });
+    open('/collections/c1/folders/f1');
+    render(App, { config: CONFIG });
+    const table = within(await screen.findByRole('table', { name: 'In deze map' }));
+    await fireEvent.click(await table.findByRole('button', { name: 'Weekly lead volume uit de Collection halen' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/resources/r2/collection' }));
+    await vi.waitFor(() => expect(table.queryByText('Weekly lead volume')).toBeNull());
+    // The row opens nothing on the way: the page stays the folder.
+    expect(location.pathname).toBe('/collections/c1/folders/f1');
+  });
+
+  it('shows no such button on the page of a folder to whoever may not add Resources to a Collection', async () => {
+    serve({ groups: ['g1'], lenses: [{ ...LENS }], creditWith: FOLDERED });
+    open('/collections/c1/folders/f1');
+    render(App, { config: CONFIG });
+    const table = within(await screen.findByRole('table', { name: 'In deze map' }));
+    expect(await table.findByText('Weekly lead volume')).toBeTruthy();
+    expect(table.queryByRole('button', { name: /uit de Collection halen/ })).toBeNull();
   });
 
   it('makes, renames and deletes folders, only an empty one, with a warning for one that is not (FR-CO-39)', async () => {

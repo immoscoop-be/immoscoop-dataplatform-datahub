@@ -382,6 +382,8 @@
       {others}
       ondeprecate={(why, instead) => mark(() => catalogue.deprecate(resource.id, why, instead))}
       onundeprecate={() => mark(() => catalogue.undeprecate(resource.id))}
+      removeFrom={assigns && resource.collectionId !== null ? (collection?.name ?? null) : null}
+      onremove={() => mark(async () => (await catalogue.removeResource(resource.id), catalogue.resource(resource.id)))}
       bind:part
     />
   {:else if tab === 'columns'}
