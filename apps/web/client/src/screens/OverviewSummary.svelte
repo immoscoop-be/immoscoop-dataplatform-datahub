@@ -10,7 +10,7 @@
   import MaturityIcon from '@datahub/ui/marks/MaturityIcon.svelte';
   import OriginTag from '@datahub/ui/marks/OriginTag.svelte';
   import type { LogEntry, Related, ResourceDetail } from '../lib/catalogue.js';
-  import { nounOf } from '../lib/grain.js';
+  import { carriersOf, nounOf } from '../lib/grain.js';
   import type { Conversation } from '../lib/messages.js';
   import { STATE_TEXTS } from '../lib/messages.js';
   import { resourcePath } from '../lib/routes.js';
@@ -177,7 +177,7 @@
           {/if}
         {:else if part === 'joins'}
           {#each joins as mapping (mapping.field)}
-            <p class="line"><span class="code">{nounOf(mapping.identity)}</span> {t('resource.entity.on', { field: mapping.field })}: {t('resource.entity.joins', { names: list(mapping.resources.map((other) => other.displayName)) })}</p>
+            <p class="line"><span class="code">{nounOf(mapping.identity)}</span> {t('resource.entity.on', { field: mapping.field })}: {t('resource.entity.joins', { names: list(carriersOf(mapping)) })}</p>
           {/each}
         {:else if part === 'fields'}
           <p class="line">{t('summary.fields', { count: resource.fields.length, described })}</p>

@@ -24,7 +24,7 @@
   import Field from '@datahub/ui/primitives/Field.svelte';
   import Loading from '@datahub/ui/primitives/Loading.svelte';
   import type { CardChanges, DescribeAttribute, KnownGap, LogEntry, Related, ResourceDetail } from '../lib/catalogue.js';
-  import { nounOf } from '../lib/grain.js';
+  import { carriersOf, nounOf } from '../lib/grain.js';
   import type { Conversation } from '../lib/messages.js';
   import type { Storage } from '../lib/query.js';
   import LearningRef from './LearningRef.svelte';
@@ -436,7 +436,7 @@
               {#each shownRelated as mapping (mapping.field)}
                 <div class="entity"><span class="code">{nounOf(mapping.identity)}</span>{t('resource.entity.on', { field: mapping.field })}</div>
                 <p class="empty">
-                  {#if mapping.resources.length > 0}{t('resource.entity.joins', { names: list(mapping.resources.map((other) => other.displayName)) })}
+                  {#if mapping.resources.length > 0}{t('resource.entity.joins', { names: list(carriersOf(mapping)) })}
                   {:else}{t('resource.entity.alone')}{/if}
                   {#if !mapping.inDomainModel}{t('resource.entity.stranger')}{/if}
                 </p>

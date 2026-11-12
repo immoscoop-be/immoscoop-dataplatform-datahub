@@ -157,7 +157,8 @@
 
   /**
    * Adds it to the Collection chosen in the sheet, with its grain and relations (FR-CO-31, DEC-UX-131),
-   * then reads it again, now with its Owner. A Resource added meanwhile elsewhere is told so.
+   * then reads it again, now with its Owner, and with its Log and the Entities it now relates to (FR-RC-09).
+   * A Resource added meanwhile elsewhere is told so.
    */
   async function addTo(items: ReturnType<typeof requestOf>[], into?: string): Promise<{ outcome: 'added' | 'elsewhere' | 'refused' | 'failed'; message?: string }> {
     if (!into) {
@@ -174,7 +175,7 @@
     }
     adding = false;
     const id = resource.id;
-    onchange(await catalogue.resource(id).catch(() => ({ ...resource, collectionId: into })));
+    await changed(await catalogue.resource(id).catch(() => ({ ...resource, collectionId: into })));
     return { outcome: 'added' };
   }
 

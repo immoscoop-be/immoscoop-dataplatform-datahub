@@ -147,6 +147,14 @@ export function nounOf(identity: string): string {
   return part.endsWith('Id') ? entity : identity;
 }
 
+/**
+ * The Display Names of the other Resources that carry an identity, each once, in their order: a Resource that carries
+ * it in two fields, such as `identifier_subjectId` and `actorIdentifier_subjectId`, is named once (FR-RC-09).
+ */
+export function carriersOf(mapping: { resources: readonly { id: string; displayName: string }[] }): string[] {
+  return [...new Map(mapping.resources.map((other) => [other.id, other.displayName])).values()];
+}
+
 /** The cardinality of a mapping, shown and never chosen (DEC-RC-08): a badge, when it is known, and words. */
 export interface Shown {
   badge: string | null;

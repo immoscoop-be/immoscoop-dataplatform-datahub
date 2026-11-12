@@ -1613,6 +1613,12 @@ describe('the web app, for the Data Team', () => {
     await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     const added = calls.find((call) => call.method === 'POST' && call.path === '/collections/c1/resources');
     expect((added?.body as { resources: { id: string }[] }).resources.map((one) => one.id)).toEqual(['r1']);
+    // The page reads again what it now relates to, for its Entities, and its Log: nothing is left as it was before (FR-RC-09).
+    await vi.waitFor(() => {
+      const later = calls.slice(calls.indexOf(added!) + 1).map((call) => `${call.method} ${call.path}`);
+      expect(later).toContain('GET /resources/r1/related');
+      expect(later).toContain('GET /resources/r1/log');
+    });
   });
 
   it('shows the page for what may not be seen to anyone else (FR-SR-31, DEC-UX-32)', async () => {
