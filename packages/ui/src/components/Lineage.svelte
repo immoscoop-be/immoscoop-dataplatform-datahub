@@ -15,7 +15,7 @@
 
 <script lang="ts">
   import '@xyflow/svelte/dist/style.css';
-  import { Controls, type Edge, MarkerType, type Node, Position, SvelteFlow, type Viewport } from '@xyflow/svelte';
+  import { Controls, type Edge, type Node, Position, SvelteFlow, type Viewport } from '@xyflow/svelte';
   import Icon from '../foundations/Icon.svelte';
   import { t } from '../foundations/texts.svelte.js';
   import LineageCard, { type LineageCardData } from './LineageCard.svelte';
@@ -28,8 +28,8 @@
    * FR-SR-54), drawn on the canvas of Svelte Flow (DEC-UX-152). The Resource stays in the middle; the
    * models it is built on stand in a column on its left, those built on it on its right. A click on a
    * model adds its own next models a column further out and marks it; a click on another model opens that
-   * branch and closes the one that was open; a click on an open model closes it. Curves with an arrowhead
-   * join the models in the direction the data flows. The canvas pans when dragged and zooms with its
+   * branch and closes the one that was open; a click on an open model closes it. Curves without an arrowhead
+   * join the models: left and right say which way the data flows (DEC-UX-215). The canvas pans when dragged and zooms with its
    * buttons, a pinch, or Cmd or Ctrl and scrolling; each step brings what was walked into view.
    */
   let {
@@ -132,7 +132,6 @@
       target,
       type: 'default',
       class: on ? 'on' : undefined,
-      markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14 },
       selectable: false,
       focusable: false,
     };
@@ -218,7 +217,6 @@
     zoomOnDoubleClick={false}
     zoomActivationKey={['Meta', 'Control']}
     preventScrolling={false}
-    defaultMarkerColor={null}
     ariaLabelConfig={{
       'controls.ariaLabel': t('lineage.controls'),
       'controls.zoomIn.ariaLabel': t('lineage.zoomIn'),
