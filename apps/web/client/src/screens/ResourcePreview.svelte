@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import DataGrid from '@datahub/ui/components/DataGrid.svelte';
   import Pager from '@datahub/ui/components/Pager.svelte';
   import RunButton from '@datahub/ui/components/RunButton.svelte';
@@ -217,7 +218,7 @@
         {#snippet popout()}
           <span class="request">
             <span><b>{t('query.request.large')}</b> {t('query.request.why', { request: bytes(preflight?.thresholds.request ?? 0) })}</span>
-            <label class="word"><span>{t('query.request.word')}</span><textarea rows="2" maxlength="500" bind:value={requestText}></textarea></label>
+            <label class="word"><span>{t('query.request.word')}</span><textarea {...NO_PASSWORD_MANAGER} rows="2" maxlength="500" bind:value={requestText}></textarea></label>
             <Button wide disabled={sending} onclick={send}><Icon name="paper-plane-tilt" />{t('query.request.sendIt')}</Button>
             <span class="after" class:failed={requestFailed}>{t(requestFailed ? 'query.request.failed' : 'query.request.after')}</span>
           </span>

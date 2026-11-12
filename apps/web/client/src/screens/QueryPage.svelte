@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import DataGrid from '@datahub/ui/components/DataGrid.svelte';
   import Pager from '@datahub/ui/components/Pager.svelte';
   import RunButton from '@datahub/ui/components/RunButton.svelte';
@@ -688,8 +689,8 @@
       <div class="meta">Query</div>
       {#if renaming}
         <form class="rename" onsubmit={rename}>
-          <Field label={t('query.name')}><input type="text" bind:value={renaming.name} maxlength="120" required /></Field>
-          <Field label={t('query.question')}><textarea bind:value={renaming.question} rows="2" maxlength="500"></textarea></Field>
+          <Field label={t('query.name')}><input {...NO_PASSWORD_MANAGER} type="text" bind:value={renaming.name} maxlength="120" required /></Field>
+          <Field label={t('query.question')}><textarea {...NO_PASSWORD_MANAGER} bind:value={renaming.question} rows="2" maxlength="500"></textarea></Field>
           <span class="rename-actions">
             <Button type="submit" disabled={renameSaving || renaming.name.trim() === ''}>{t('query.save')}</Button>
             <Button variant="quiet" onclick={() => (renaming = null)}>{t('query.cancel')}</Button>
@@ -914,7 +915,7 @@
             {#snippet popout()}
               <span class="request">
                 <span><b>{t('query.request.large')}</b> {t('query.request.why', { request: bytes(current?.thresholds.request ?? 0) })}</span>
-                <label class="word"><span>{t('query.request.word')}</span><textarea rows="2" maxlength="500" bind:value={requestText}></textarea></label>
+                <label class="word"><span>{t('query.request.word')}</span><textarea {...NO_PASSWORD_MANAGER} rows="2" maxlength="500" bind:value={requestText}></textarea></label>
                 <Button wide disabled={sending} onclick={send}><Icon name="paper-plane-tilt" />{t('query.request.sendIt')}</Button>
                 <span class="after" class:failed={requestFailed} role={requestFailed ? 'alert' : undefined}>{t(requestFailed ? 'query.request.failed' : 'query.request.after')}</span>
               </span>

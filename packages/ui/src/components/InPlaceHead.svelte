@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '../foundations/fields.js';
   import type { Snippet } from 'svelte';
   import { t } from '../foundations/texts.svelte.js';
   import Button from '../primitives/Button.svelte';
@@ -90,9 +91,9 @@
 
 {#if editing}
   <form class="edit" onsubmit={save}>
-    <Field label={nameLabel}><input type="text" bind:value={editing.name} maxlength={nameMax} required onkeydown={keydown} {@attach focused('name')} /></Field>
+    <Field label={nameLabel}><input {...NO_PASSWORD_MANAGER} type="text" bind:value={editing.name} maxlength={nameMax} required onkeydown={keydown} {@attach focused('name')} /></Field>
     {#if description !== undefined}
-      <Field label={descriptionLabel}><textarea bind:value={editing.description} rows="2" maxlength={descriptionMax} onkeydown={keydown} {@attach focused('description')}></textarea></Field>
+      <Field label={descriptionLabel}><textarea {...NO_PASSWORD_MANAGER} bind:value={editing.description} rows="2" maxlength={descriptionMax} onkeydown={keydown} {@attach focused('description')}></textarea></Field>
     {/if}
     <span class="actions">
       <Button type="submit" disabled={saving || editing.name.trim() === ''}>{t('inPlace.save')}</Button>

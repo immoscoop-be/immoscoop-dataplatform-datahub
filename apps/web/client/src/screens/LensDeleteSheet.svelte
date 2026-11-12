@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import Sheet from '@datahub/ui/containers/Sheet.svelte';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
@@ -44,7 +45,7 @@
     <p class="line"><Icon name="archive-fill" /><span><b>{t('lens.delete.kept.title')}</b> {t('lens.delete.kept.text')}</span></p>
   </div>
   <div class="why">
-    <Field label={t('lens.delete.reason')}><textarea bind:value={reason} rows="3" maxlength="500"></textarea></Field>
+    <Field label={t('lens.delete.reason')}><textarea {...NO_PASSWORD_MANAGER} bind:value={reason} rows="3" maxlength="500"></textarea></Field>
   </div>
   {#if failed}<p class="failed" role="alert">{t('lens.delete.failed')}</p>{/if}
   {#snippet foot()}

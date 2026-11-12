@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
 
@@ -39,7 +40,7 @@
   <td colspan={columns}>
     <span class="cell">
       <span class="icon"><Icon name="folder-simple-plus-fill" /></span>
-      <input class="rename" bind:value={name} aria-label={t('folder.newLabel')} maxlength="80" {@attach chosen} onkeydown={key} disabled={busy} />
+      <input {...NO_PASSWORD_MANAGER} class="rename" bind:value={name} aria-label={t('folder.newLabel')} maxlength="80" {@attach chosen} onkeydown={key} disabled={busy} />
       <span class="meta">{problem || t('folder.newHint')}</span>
     </span>
   </td>
