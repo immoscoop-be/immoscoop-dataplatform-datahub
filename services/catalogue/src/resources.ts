@@ -21,6 +21,12 @@ export interface ExposedTable {
   checksum: string | null;
   /** Its columns, in the order of the table. */
   columns: Column[];
+  /**
+   * How it is stored, as dbt says (DEC-SR-34): kept while it waits for a Collection, so that a Preview filters on its
+   * partition column from the start; a Data Admin records what holds when adding it. A registry that does not send
+   * it yet leaves it out.
+   */
+  storage?: { partition: { field: string; unit: PartitionUnit | null } | null; clusterBy: string[]; requirePartitionFilter: boolean } | null;
 }
 
 /** A Change in a dbt project and the tables of Resources it reaches downstream, as registry follows it (FR-AR-12). */
@@ -676,6 +682,17 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
             exposures: table.exposures,
           };
           const columns = splitColumns(table.columns);
+          // While it waits for a Collection, it is stored as dbt says; once a Data Admin added it, as they recorded.
+          const fromDbt =
+            table.storage === undefined
+              ? {}
+              : {
+                  partitionField: table.storage?.partition?.field ?? null,
+                  partitionUnit: table.storage?.partition?.unit ?? null,
+                  clusterBy: table.storage?.clusterBy ?? [],
+                  partitionFilter: table.storage?.partition && table.storage.requirePartitionFilter ? ('bigQuery' as const) : ('none' as const),
+                  origins: table.storage ? { partition: 'dbt' as const, clusterBy: 'dbt' as const, partitionFilter: 'dbt' as const } : {},
+                };
           const row = known.get(table.key);
           if (!row) {
             // A Registration (the flow "registering a Resource"): the Resource with its Level, its
@@ -684,7 +701,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
             const { level, reason } = levelAtRegistration(table.description, columns.fields);
             const { id } = await trx
               .insertInto('resources')
-              .values({ key: table.key, ...facts, requestedName: wanted, displayName, level })
+              .values({ key: table.key, ...facts, ...fromDbt, requestedName: wanted, displayName, level })
               .returning('id')
               .executeTakeFirstOrThrow();
             await keepColumns(trx, id, columns);
@@ -715,7 +732,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
           const displayName = back || wanted !== row.requestedName ? await freeName(trx, wanted, update, table.key, row.id) : row.displayName;
           await trx
             .updateTable('resources')
-            .set({ ...facts, requestedName: wanted, displayName, withdrawnAt: null, updatedAt: new Date() })
+            .set({ ...facts, ...(row.collectionId === null ? fromDbt : {}), requestedName: wanted, displayName, withdrawnAt: null, updatedAt: new Date() })
             .where('id', '=', row.id)
             .execute();
           await keepColumns(trx, row.id, columns);

@@ -993,6 +993,19 @@ export function parseUpdate(body: unknown): ResourcesUpdate | string {
   if (!Array.isArray(input.tables)) {
     return 'The exposed tables come as a list.';
   }
+  /** How dbt says a table is stored (DEC-SR-34): a partition column with its unit or none, cluster columns, a filter. */
+  const storageFits = (value: unknown): boolean => {
+    if (typeof value !== 'object' || value === null) return false;
+    const storage = value as Record<string, unknown>;
+    const partition = storage.partition as Record<string, unknown> | null | undefined;
+    return (
+      (partition === null ||
+        (typeof partition === 'object' && partition !== undefined && text(partition.field, 300) && (partition.unit === null || ['hour', 'day', 'month', 'year'].includes(partition.unit as string)))) &&
+      Array.isArray(storage.clusterBy) &&
+      (storage.clusterBy as unknown[]).every((name) => text(name, 300)) &&
+      typeof storage.requirePartitionFilter === 'boolean'
+    );
+  };
   for (const table of input.tables as Record<string, unknown>[]) {
     const fits =
       table !== null &&
@@ -1016,9 +1029,10 @@ export function parseUpdate(body: unknown): ResourcesUpdate | string {
           (column.position === null || Number.isInteger(column.position)) &&
           (column.dataType === null || text(column.dataType, 4096)) &&
           typeof column.description === 'string',
-      );
+      ) &&
+      (table.storage === undefined || table.storage === null || storageFits(table.storage));
     if (!fits) {
-      return 'Every exposed table has a key, a Node, a name, a kind, a description, its exposures, a label or null, a checksum or null, and its columns.';
+      return 'Every exposed table has a key, a Node, a name, a kind, a description, its exposures, a label or null, a checksum or null, its columns, and how it is stored or null.';
     }
   }
   if (input.changes !== undefined) {
