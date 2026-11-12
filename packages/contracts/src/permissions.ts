@@ -33,6 +33,8 @@ export const PERMISSIONS = {
   'collections.make': { name: 'Make a Collection', part: 'collections', values: { ownerUnit: { kind: 'choice', options: ['theirs', 'any'] } } },
   'collections.manage': { name: 'Manage Collections', part: 'collections', values: { reach: REACH } },
   'resources.assign': { name: 'Manage Resources', part: 'collections', values: {} },
+  // Taking a Resource out of its Collection (DEC-PL-08): for their Owner Units only while it is not published.
+  'resources.remove': { name: 'Remove Resources from a Collection', part: 'collections', values: { reach: REACH } },
   'resources.describe': {
     name: 'Describe Resources',
     part: 'collections',
@@ -80,7 +82,7 @@ export const PERMISSIONS = {
     part: 'excel',
     values: { most: { kind: 'number', unit: 'keys', min: 1, max: 100, empty: true }, lifetimeDays: { kind: 'number', unit: 'days', min: 1, max: 3650 } },
   },
-  'admin.open': { name: 'Open Admin', part: 'admin', values: { tools: { kind: 'several', options: ['webhooks', 'excelKeys', 'users', 'permissionGroups'] } } },
+  'admin.open': { name: 'Open Admin', part: 'admin', values: { tools: { kind: 'several', options: ['webhooks', 'excelKeys', 'users', 'permissionGroups', 'withdrawn'] } } },
 } as const satisfies Record<string, PermissionSpec>;
 
 export type PermissionKey = keyof typeof PERMISSIONS;
@@ -117,6 +119,7 @@ const ADMIN: Permissions = {
   'collections.make': on({ ownerUnit: 'any' }),
   'collections.manage': on({ reach: 'every' }),
   'resources.assign': on(),
+  'resources.remove': on({ reach: 'every' }),
   'resources.describe': on({ reach: 'every', attributes: ALL_ATTRIBUTES }),
   'resources.publish': on(),
   'resources.deprecate': on({ reach: 'every' }),
@@ -145,6 +148,7 @@ const BUSINESS_ANALYST: Permissions = {
   'collections.make': on({ ownerUnit: 'theirs' }),
   'collections.manage': on({ reach: 'theirs' }),
   'resources.assign': off(),
+  'resources.remove': on({ reach: 'theirs' }),
   'resources.describe': on({ reach: 'theirs', attributes: ALL_ATTRIBUTES.filter((attribute) => attribute !== 'entityMapping') }),
   'resources.publish': on(),
   'resources.deprecate': on({ reach: 'theirs' }),
@@ -173,6 +177,7 @@ const LENS_USER: Permissions = {
   'collections.make': off({ ownerUnit: 'theirs' }),
   'collections.manage': off({ reach: 'theirs' }),
   'resources.assign': off(),
+  'resources.remove': off({ reach: 'theirs' }),
   'resources.describe': off({ reach: 'theirs', attributes: [] }),
   'resources.publish': off(),
   'resources.deprecate': off({ reach: 'theirs' }),

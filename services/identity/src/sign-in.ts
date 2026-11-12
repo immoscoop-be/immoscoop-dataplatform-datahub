@@ -85,6 +85,15 @@ export async function signInRoutes(app: FastifyInstance, options: SignInOptions)
     return { sub: user.googleId, email: user.email, name: user.name, groups, ...(await options.groups.claimsOf(user.googleId)) };
   }
 
+  /** Tells catalogue of a new User, for the Data Team; a sign-in never waits on it failing (FR-PL-16). */
+  async function tellNewUser(user: { googleId: string; email: string; name: string }, group: string): Promise<void> {
+    try {
+      await options.userNotices?.tellUser({ type: 'MSG-USR-03', userId: user.googleId, name: user.name || user.email, email: user.email, group });
+    } catch (error) {
+      app.log.error({ err: error }, 'catalogue was not told of a new User');
+    }
+  }
+
   /**
    * An Access Token for the web app, or for an MCP client: only Claude's callbacks may register one, so its tokens say
    * the User came through Claude, and every service can mark what they do so (DEC-CL-11, OP-CL-10).
@@ -225,7 +234,11 @@ export async function signInRoutes(app: FastifyInstance, options: SignInOptions)
       }
       // A new User is made first, in the default Permission group, so that their first token carries it (FR-PL-04).
       const saved = await store.saveUser(identity);
-      if (saved.created) await options.groups.noteFirstSignIn(identity.sub);
+      if (saved.created) {
+        const group = await options.groups.noteFirstSignIn(identity.sub);
+        // The Data Team hears of every new User, to check that the default fits them (FR-PL-16, MSG-USR-03).
+        if (group) await tellNewUser({ googleId: identity.sub, email: identity.email, name: identity.name }, group);
+      }
       claims = await subject({ googleId: identity.sub, email: identity.email, name: identity.name });
     } catch (error) {
       if (error instanceof SignInError) {

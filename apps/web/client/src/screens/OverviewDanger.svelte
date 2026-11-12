@@ -11,25 +11,47 @@
    * The Danger zone of the Overview, for its Owner Unit and the Data Team (DEC-UX-176): what changes how everyone may
    * rely on the Resource, each explained before its form. Deprecate (FR-SR-50): what it does and when to do it, then
    * why, required, and what to use instead, optional, a published Resource the User sees; once deprecated, who did it,
-   * when and why, and "Take it away". Only a published Resource can be deprecated.
+   * when and why, and "Take it away". Only a published Resource can be deprecated. Under it, Remove from the
+   * Collection (DEC-UX-212): what it does, then one button, for who may take it out (`resources.remove`, DEC-PL-08);
+   * its Owner Unit, once it is published, reads instead that only the Data Team takes it out now (DEC-UX-214).
    */
   let {
     resource,
     others,
+    deprecates = true,
+    collection = null,
+    later = null,
     ondeprecate,
     onundeprecate,
+    onremove,
   }: {
     resource: ResourceDetail;
+    /** May deprecate it and undo that (`resources.deprecate`). */
+    deprecates?: boolean;
+    /** The name of its Collection, when the User may take it out of it (`resources.remove`); null otherwise. */
+    collection?: string | null;
+    /** The name of its Collection, when its Owner Unit may no longer take it out, as it is published; null otherwise. */
+    later?: string | null;
     /** The published Resources the User sees, to use instead, each with its Collection. */
     others: readonly { id: string; displayName: string; collection: string }[];
     ondeprecate: (reason: string, insteadOf: string | null) => Promise<boolean>;
     onundeprecate: () => Promise<boolean>;
+    onremove?: () => Promise<boolean>;
   } = $props();
 
   let reason = $state('');
   let instead = $state('');
   let busy = $state(false);
   let failed = $state(false);
+  let removing = $state(false);
+  let removeFailed = $state(false);
+
+  async function remove() {
+    if (!onremove) return;
+    removing = true;
+    removeFailed = !(await onremove());
+    removing = false;
+  }
 
   const LOCALES = { nl: 'nl-BE', en: 'en-GB' } as const;
   const day = (value: string) => new Intl.DateTimeFormat(LOCALES[currentLanguage()], { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(value));
@@ -51,6 +73,7 @@
   }
 </script>
 
+{#if deprecates}
 <section class="danger" aria-labelledby="deprecate-title">
   <div class="head">
     <Icon name="archive-fill" />
@@ -92,6 +115,33 @@
   {/if}
   {#if failed}<p class="failed" role="alert">{t('resource.actionFailed')}</p>{/if}
 </section>
+{/if}
+{#if (collection && onremove) || later}
+  {@const from = collection ?? later ?? ''}
+  <section class="danger" class:next={deprecates} aria-labelledby="remove-title">
+    <div class="head">
+      <Icon name="minus-circle-fill" />
+      <div>
+        <h3 id="remove-title">{t('danger.remove.title')}</h3>
+        <p>{t('danger.remove.when', { name: resource.displayName, collection: from })}</p>
+      </div>
+    </div>
+    <div class="does">
+      <p class="line"><Icon name="minus-circle-fill" /><span><b>{t('danger.remove.leaves.title', { collection: from })}</b> {t('danger.remove.leaves.text')}</span></p>
+      <p class="line"><Icon name="check-circle-fill" /><span><b>{t('danger.remove.keeps.title')}</b> {t('danger.remove.keeps.text')}</span></p>
+      {#if resource.withdrawn}<p class="line"><Icon name="archive-fill" /><span><b>{t('danger.remove.withdrawn.title')}</b> {t('danger.remove.withdrawn.text')}</span></p>{/if}
+    </div>
+    {#if collection && onremove}
+      <div class="foot gap">
+        <span class="meta">{t('deprecate.history')}</span>
+        <Button disabled={removing} onclick={remove}><Icon name="minus-circle-fill" />{t('danger.remove.button', { collection })}</Button>
+      </div>
+    {:else}
+      <p class="not-yet">{t('danger.remove.later', { name: resource.displayName, collection: from })}</p>
+    {/if}
+    {#if removeFailed}<p class="failed" role="alert">{t('resource.actionFailed')}</p>{/if}
+  </section>
+{/if}
 
 <style>
   b { font-weight: var(--weight-medium); color: var(--text-primary); }
@@ -108,6 +158,8 @@
   textarea { resize: vertical; }
   textarea:focus, select:focus { outline: 2px solid var(--text-secondary); outline-offset: 1px; }
   .foot { display: flex; align-items: center; gap: 12px; }
+  .gap { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--tint-hover); max-width: 720px; }
+  .next { margin-top: 14px; }
   .meta { flex: 1; font-size: var(--text-meta); color: var(--text-muted); }
   .now { display: flex; align-items: center; gap: 14px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--tint-hover); }
   .now p { flex: 1; margin: 0; font-size: var(--text-small); line-height: 1.55; color: var(--text-secondary); }

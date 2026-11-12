@@ -87,11 +87,12 @@ export const messagePath = (id: string): string => `${MESSAGES}/${encodeURICompo
 export const usersPath = (googleId?: string): string => (googleId ? `/admin/users/${encodeURIComponent(googleId)}` : '/admin/users');
 /**
  * The page of an object a Message is on (FR-CV-02). A Message about a User, of their Permission group (FR-PL-12),
- * leads that User to My page, and the Data Team to that User on Users when Admin was given back (MSG-USR-02).
+ * leads that User to My page, and the Data Team to that User on Users when Admin was given back (MSG-USR-02) or
+ * when they are new (MSG-USR-03).
  */
 export function objectPath(subject: { kind: string; id: string }, type?: string): string {
   if (subject.kind === 'user') {
-    return type === 'MSG-USR-02' ? usersPath(subject.id) : myPagePath('profile');
+    return type === 'MSG-USR-02' || type === 'MSG-USR-03' ? usersPath(subject.id) : myPagePath('profile');
   }
   return subject.kind === 'resource'
     ? resourcePath(subject.id)

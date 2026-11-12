@@ -2,6 +2,7 @@
 // regular line where the prototypes draw one. Each is imported by name, so the page holds only the
 // icons it shows. A new icon of the interface is added here.
 import archiveFill from '@phosphor-icons/core/assets/fill/archive-fill.svg?raw';
+import archive from '@phosphor-icons/core/assets/regular/archive.svg?raw';
 import arrowBendUpLeftFill from '@phosphor-icons/core/assets/fill/arrow-bend-up-left-fill.svg?raw';
 import bellSimpleFill from '@phosphor-icons/core/assets/fill/bell-simple-fill.svg?raw';
 import calendarBlankFill from '@phosphor-icons/core/assets/fill/calendar-blank-fill.svg?raw';
@@ -163,6 +164,7 @@ import users from '@phosphor-icons/core/assets/regular/users.svg?raw';
 
 export const ICONS = {
   'archive-fill': archiveFill,
+  archive,
   'arrow-bend-up-left-fill': arrowBendUpLeftFill,
   'bell-simple-fill': bellSimpleFill,
   'calendar-blank-fill': calendarBlankFill,

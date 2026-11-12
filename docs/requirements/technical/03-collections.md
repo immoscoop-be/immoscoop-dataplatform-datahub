@@ -82,6 +82,8 @@ The Log IDs are `COL-001` to `COL-005` of the [Log catalogue](../functional/log-
 
 catalogue keeps them on the Resource and in `resource_mappings`, one row per mapped field, in the same transaction as the addition, and writes `RES-009` in the Log of the Resource with how many fields are mapped, the grain, the model type and the release. A field the Resource does not have, a field mapped twice, or a relation that starts from a field not mapped as `is` refuses all of them with `400`. The relation types are not checked against the Domain Model: catalogue does not read it, and the step that records them offers only those it has. `GET /resources/{id}` returns them with the Resource; they are kept only in Data Hub ([DEC-RC-09](../functional/05-resource-card.md#dec-rc-09), [DEC-RC-13](../functional/05-resource-card.md#dec-rc-13)).
 
+*Note of 2026-11-12: until a Data Admin adds it, a Resource is stored as dbt says: catalogue keeps the partition column, its unit, the cluster columns and, where dbt requires it, a filter required by BigQuery, from every call of registry ([TR-AR-08](01-artifact-registry.md#tr-ar-08)), with dbt as their origin. So a Preview of a Resource without a Collection filters on its partition column from the start, as on one that was added; before, it ran without one, and BigQuery refused a view over a table that requires a partition filter. Once in a Collection, what the Data Admin recorded holds, and registry no longer changes it.*
+
 <a id="tr-co-06"></a>
 ### TR-CO-06 · The start screen searches Collections, Resources and Lenses by the words of a question
 

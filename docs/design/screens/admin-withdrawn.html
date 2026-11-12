@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<!--
+  Screen: Withdrawn, a tool of Admin, the section of the Data Team (FR-SR-55, DEC-UX-213), proposed on 2026-11-12
+  Every Resource of this environment of Data Hub that dbt withdrew: no exposure with the tag datahub depends on its table
+  any more (FR-SR-34). Data Hub keeps it, with its Collection, descriptions and history, and brings it back as it was once
+  an exposure depends on it again (DEC-SR-26). Those without a Collection show nowhere else since DEC-SR-45; those in a
+  Collection still show there, marked withdrawn, to its Owner Unit and the Data Team. The newest withdrawn first: its
+  Display Name and Key, its dbt project, its Collection or none, its Level, and when and in which run it was withdrawn.
+  A whole row opens its page, where the Danger zone takes it out of its Collection. The search finds a name or a Key;
+  the filter shows all, those in a Collection, or those without one. An empty list says that nothing is withdrawn.
+  The switch at the bottom shows the list and the empty list: ?wd=list, ?wd=empty.
+  Requirements: FR-SR-55
+  Decisions: DEC-UX-213, DEC-SR-26, DEC-SR-45.
+  Related screens: admin-webhooks.html (the runs that withdrew them), resource-overview.html (?ov=danger).
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="datateam">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Admin · Withdrawn</title>
+</head>
+<body>
+<div class="app panel-open">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <a class="nav-btn" href="collections-start.html" data-label="Collections" aria-label="Collections"><i class="ph-fill ph-stack"></i></a>
+  <a class="nav-btn" href="query.html" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></a>
+  <a class="nav-btn" href="#" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <a class="nav-btn nav-admin active" href="admin-withdrawn.html" data-label="Admin" aria-label="Admin, for the Data Team" aria-current="page" data-for="datateam"><i class="ph-fill ph-toolbox"></i><span class="flare top"></span><span class="flare bottom"></span></a>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">MP</a>
+</nav>
+<aside class="panel" aria-label="Admin">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:4px">
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Admin</h1>
+   <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
+  </div>
+  <p class="meta" style="display:block;line-height:1.5;margin:10px 4px 14px">For the Data Team: what feeds Data Hub uat, and who reaches it from outside.</p>
+  <a class="mc-filter" href="admin-webhooks.html"><i class="ph ph-webhooks-logo"></i><span>Webhooks</span><span class="count" title="Deliveries to look at: refused, or failed">2</span></a>
+  <a class="mc-filter" href="admin-keys.html"><i class="ph ph-key"></i><span>Excel keys</span><span class="count" title="Active keys">14</span></a>
+  <a class="mc-filter" href="admin-users.html"><i class="ph ph-users"></i><span>Users</span></a>
+  <a class="mc-filter" href="admin-permission-groups.html"><i class="ph ph-shield-check"></i><span>Permission groups</span></a>
+  <a class="mc-filter on" href="admin-withdrawn.html" aria-current="page"><i class="ph ph-archive"></i><span>Withdrawn</span><span class="count" title="Resources dbt withdrew">6</span></a>
+ </div>
+</aside>
+<main class="main">
+<div class="breadcrumb">Admin</div>
+<div style="display:flex;align-items:flex-end;gap:12px;margin-top:8px;flex-wrap:wrap">
+ <div style="flex:1;min-width:280px"><h1 class="page-title">Withdrawn</h1>
+ <p class="meta" style="display:block;margin-top:4px;line-height:1.5;max-width:720px">Every Resource of Data Hub uat that dbt withdrew: no exposure with the tag <span class="mono">datahub</span> depends on its table any more. Data Hub keeps it, with its Collection, descriptions and history, and brings it back as it was once an exposure depends on it again. Those without a Collection show nowhere else.</p></div>
+ <span class="status"><i class="ph-fill ph-cloud"></i>Data Hub uat</span>
+</div>
+<div data-pane-group="wd" data-pane="list">
+<div style="display:flex;align-items:center;gap:10px;margin:18px 0 12px;flex-wrap:wrap">
+ <label class="search card" style="flex:1;max-width:420px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input placeholder="Search a name or a Key"></label>
+ <div data-group="wdfilter" role="tablist" aria-label="Which Resources" style="display:inline-flex;gap:2px">
+  <button class="seg on" data-target="all" role="tab" aria-selected="true">All <span class="count">6</span></button>
+  <button class="seg" data-target="in" role="tab" aria-selected="false">In a Collection <span class="count">3</span></button>
+  <button class="seg" data-target="none" role="tab" aria-selected="false">Without a Collection <span class="count">3</span></button>
+ </div>
+</div>
+<div class="table-card">
+ <table>
+ <thead><tr><th>Resource</th><th>dbt project</th><th>Collection</th><th>Level</th><th>Withdrawn</th></tr></thead>
+ <tbody>
+  <tr class="row" tabindex="0" role="link"><td><span class="name-cell"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span>Credit lead creations (flat)<span class="meta mono" style="display:block;overflow-wrap:anywhere">colleciones_dbt.mrt_immoscoop__creditLead__create__flatEvent</span></span></span></td><td class="muted">Colleciónes</td><td><span class="name-cell"><i class="ph ph-stack kind-icon" aria-hidden="true"></i><span>Credit leads</span></span></td><td><span class="level-cell"><span class="maturity" data-level="2"></span>2 · Described</span></td><td class="muted nowrap">today, 08:12<span class="meta" style="display:block">run 59772257</span></td></tr>
+  <tr class="row" tabindex="0" role="link"><td><span class="name-cell"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span>Credit leads, current (flat)<span class="meta mono" style="display:block;overflow-wrap:anywhere">colleciones_dbt.mrt_immoscoop__creditLead__currentState__flatState</span></span></span></td><td class="muted">Colleciónes</td><td><span class="name-cell"><i class="ph ph-stack kind-icon" aria-hidden="true"></i><span>Credit leads</span></span></td><td><span class="level-cell"><span class="maturity" data-level="2"></span>2 · Described</span></td><td class="muted nowrap">today, 08:12<span class="meta" style="display:block">run 59772257</span></td></tr>
+  <tr class="row" tabindex="0" role="link"><td><span class="name-cell"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span>Lead source<span class="meta mono" style="display:block;overflow-wrap:anywhere">colleciones_dbt.mrt_immoscoop__leadSource__currentState</span></span></span></td><td class="muted">Colleciónes</td><td><span class="muted">Without a Collection</span></td><td><span class="level-cell"><span class="maturity" data-level="1"></span>1 · Available</span></td><td class="muted nowrap">yesterday, 19:40<span class="meta" style="display:block">run 59751424</span></td></tr>
+  <tr class="row" tabindex="0" role="link"><td><span class="name-cell"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span>Business goal<span class="meta mono" style="display:block;overflow-wrap:anywhere">colleciones_dbt.mrt_immoscoop__businessGoal__currentState</span></span></span></td><td class="muted">Colleciónes</td><td><span class="muted">Without a Collection</span></td><td><span class="level-cell"><span class="maturity" data-level="1"></span>1 · Available</span></td><td class="muted nowrap">yesterday, 19:40<span class="meta" style="display:block">run 59751424</span></td></tr>
+  <tr class="row" tabindex="0" role="link"><td><span class="name-cell"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span>Search Console impressions per page<span class="meta mono" style="display:block;overflow-wrap:anywhere">dbt_marts.gsc_impressions_page</span></span></span></td><td class="muted">immoscoop_dataplatform_sql</td><td><span class="name-cell"><i class="ph ph-stack kind-icon" aria-hidden="true"></i><span>SEO</span></span></td><td><span class="level-cell"><span class="maturity" data-level="2"></span>2 · Described</span></td><td class="muted nowrap">3 Nov<span class="meta" style="display:block">run 59683120</span></td></tr>
+  <tr class="row" tabindex="0" role="link"><td><span class="name-cell"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span>Saved searches, old<span class="meta mono" style="display:block;overflow-wrap:anywhere">dbt_marts.saved_searches_v1</span></span></span></td><td class="muted">immoscoop_dataplatform_sql</td><td><span class="muted">Without a Collection</span></td><td><span class="level-cell"><span class="maturity" data-level="0"></span>0 · Beta</span></td><td class="muted nowrap">28 Oct<span class="meta" style="display:block">run 58912044</span></td></tr>
+ </tbody>
+ </table>
+ <p class="meta" style="display:block;padding:8px 10px 2px;line-height:1.5">The newest withdrawn first. A row opens the Resource; in its Danger zone, a Data Admin takes it out of its Collection. To bring one back, an exposure with the tag datahub depends on its table again, in the dbt project.</p>
+</div>
+</div>
+<div data-pane-group="wd" data-pane="empty" hidden>
+ <div class="sub-tile" style="padding:18px;margin-top:18px"><p class="empty" style="margin:0">Nothing is withdrawn: every Resource of Data Hub uat has an exposure with the tag <span class="mono">datahub</span>.</p></div>
+</div>
+<div style="height:60px"></div>
+</main>
+</div>
+<div class="proto-switch" data-group="wd" role="tablist" aria-label="Prototype: Withdrawn">Withdrawn
+ <button class="seg on" data-target="list" role="tab" aria-selected="true">The list</button>
+ <button class="seg" data-target="empty" role="tab" aria-selected="false">Nothing withdrawn</button>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

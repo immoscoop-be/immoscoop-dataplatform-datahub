@@ -35,11 +35,13 @@
     ?mon=none (the default) shows it unwatched, ?mon=finding with a Finding; the header keeps 4 · Explored in both, where a
     Resource with a Monitor would read 5 · Monitored.
   - Danger zone, apart at the end, for its Owner Unit and the Data Team: what deprecating does and why, and its form, or
-    who deprecated it and "Take it away"; "Deprecate" is no longer in the header (DEC-UX-176).
+    who deprecated it and "Take it away"; "Deprecate" is no longer in the header (DEC-UX-176). Under it, for the Data Team,
+    Remove from the Collection: what it does, then one button (DEC-UX-212); for its Owner Unit too while it is not
+    published, and here, published, a line that says only the Data Team takes it out now (DEC-UX-214, FR-CO-43).
   The switches at the bottom: ?ov=summary (the default), ?ov=description, ?ov=behaviour, ?ov=gaps, ?ov=querying,
   ?ov=entities, ?ov=maturity, ?ov=changes, ?ov=danger; ?lvl=two shows Maturity at 2 · Described; ?dep=on shows a deprecated Resource, its deprecation first
   in the Summary; ?descedit=on edits the Business Description, ?descview=preview previews it.
-  Requirements: FR-RC-19, FR-RC-20, FR-RC-21, FR-RC-22, FR-RC-23, FR-RC-24, FR-RC-25, FR-SR-50, FR-MR-16, FR-CM-28
+  Requirements: FR-RC-19, FR-RC-20, FR-RC-21, FR-RC-22, FR-RC-23, FR-RC-24, FR-RC-25, FR-SR-50, FR-MR-16, FR-CM-28, FR-CO-43
   Decisions: DEC-RC-16, DEC-RC-17, DEC-RC-18, DEC-RC-19, DEC-RC-20, DEC-UX-101, DEC-UX-168, DEC-UX-169, DEC-UX-170, DEC-UX-171, DEC-UX-175, DEC-UX-176, DEC-UX-177, DEC-UX-178.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -396,6 +398,16 @@ The lead source is set by the form the visitor used: website, app, partner or ma
        <p><b>Deprecated</b> by the credit team on 20 Oct 2026: replaced by the weekly figures that include partner leads. Use <a href="#">Weekly lead volume v2</a> instead.</p>
        <button class="btn-quiet outline" type="button" data-go="dep:off"><i class="ph ph-arrow-counter-clockwise"></i>Take it away</button>
       </div>
+     </section>
+     <section class="danger" data-for="owner datateam" style="margin-top:14px">
+      <div class="danger-head"><i class="ph-fill ph-minus-circle" aria-hidden="true"></i><div><h3>Remove from the Collection</h3><p>Take Weekly lead volume out of Credit leads: when it was added to the wrong Collection, or when dbt withdrew it and it no longer belongs there.</p></div></div>
+      <div class="danger-what">
+       <p class="line"><i class="ph-fill ph-minus-circle" aria-hidden="true"></i><span><b>It leaves Credit leads and its folder:</b> whoever saw it through the Collection no longer does. Only the Data Team still sees it, under Without a Collection, until it is added to a Collection again.</span></p>
+       <p class="line"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><span><b>What it holds stays:</b> its descriptions and its history stay with it.</span></p>
+       <p class="line"><i class="ph ph-archive" aria-hidden="true"></i><span><b>Withdrawn by dbt,</b> it then shows in no list at all; it comes back, without a Collection, once an exposure depends on it again.</span></p>
+      </div>
+      <div class="danger-foot" style="margin-top:14px" data-for="datateam"><span class="meta">Goes into the history, with your name.</span><button class="btn-primary" type="button"><i class="ph-fill ph-minus-circle"></i>Remove from Credit leads</button></div>
+      <p class="meta" data-for="owner" style="display:block;margin:14px 0 0;padding-top:14px;border-top:1px solid var(--tint-hover)">Weekly lead volume is published: colleagues may rely on it, so only the Data Team takes it out of Credit leads now. Before it is published, its Owner Unit can.</p>
      </section>
     </section>
 

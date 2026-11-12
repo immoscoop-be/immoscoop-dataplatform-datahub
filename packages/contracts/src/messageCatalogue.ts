@@ -917,7 +917,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     subjects: ['resource'],
     from: 'dataHub',
     to: ['owner'],
-    when: 'The Data Team adds a Resource to a Collection (FR-CO-14).',
+    when: 'The Data Team adds a Resource to a Collection (FR-CO-14). Who added it is not told, also when they are in the Owner Unit (TR-LN-02).',
     status: 'Implemented',
     sources: ['DEC-SR-27', 'FR-CO-14', 'DEC-SR-07', 'DEC-CV-11'],
     parameters: [
@@ -1332,7 +1332,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     },
     example: { subject: 'Sales dashboard, shared drive', actor: 'Dirk Vos' },
   },
-  // A User: what Data Hub tells about their Permission group (FR-PL-12, EC-PL-03).
+  // A User: what Data Hub tells about their Permission group (FR-PL-12, EC-PL-03), and the Data Team of a new User (FR-PL-16).
   {
     id: 'MSG-USR-01',
     title: 'A User was moved to another Permission group',
@@ -1447,6 +1447,48 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
       done: 'When it is read.',
     },
     example: { subject: 'Dirk Vos' },
+  },
+  {
+    id: 'MSG-USR-03',
+    title: 'A new User signed in for the first time',
+    kind: 'dataHub',
+    subjects: ['user'],
+    from: 'dataHub',
+    to: ['dataTeam'],
+    when: 'Someone signs in to Data Hub for the first time, in the web app, through Claude or for Excel: Data Hub makes them a User, in the default Permission group (FR-PL-04).',
+    per: 'One per new User. The new User does not see it: it is for who manages Users.',
+    status: 'Implemented',
+    sources: ['FR-PL-16', 'FR-PL-04'],
+    parameters: [
+      { name: 'email', type: 'name', about: 'Their Google address' },
+      { name: 'group', type: 'name', about: 'The Permission group they got: the default when they signed in' },
+    ],
+    text: {
+      nl: {
+        plain: '{subject} ({email}) meldde voor het eerst aan bij Data Hub en kreeg de Permission group {group}.',
+        rich: lines(
+          '**{subject} meldde voor het eerst aan bij Data Hub**',
+          '',
+          '{subject} ({email}) is nu een User, in {group}, de standaard Permission group. Kijk op Users, in Admin, of die past, en kies er een andere als {subject} meer of minder nodig heeft.',
+        ),
+      },
+      en: {
+        plain: '{subject} ({email}) signed in to Data Hub for the first time and got the Permission group {group}.',
+        rich: lines(
+          '**{subject} signed in to Data Hub for the first time**',
+          '',
+          '{subject} ({email}) is now a User, in {group}, the default Permission group. Check on Users, in Admin, whether it fits, and choose another if {subject} needs more or less.',
+        ),
+      },
+    },
+    learningCard: PERMISSIONS_CARD,
+    action: {
+      asks: 'nothing',
+      what: 'The Data Team checks on Users, in Admin, whether the default Permission group fits the new User, and moves them if not (FR-PL-07).',
+      buttons: [{ label: { nl: 'Users openen', en: 'Open Users' }, opens: 'Users, in Admin, with the User opened', for: ['dataTeam'] }],
+      done: 'When it is read.',
+    },
+    example: { subject: 'An Claes', email: 'an.claes@immoscoop.be', group: 'Lens user' },
   },
   {
     id: 'MSG-QRY-01',

@@ -95,6 +95,13 @@ export const PERMISSION_TEXTS: { readonly [K in PermissionKey]: { name: string; 
     },
   },
   'resources.assign': { name: 'permission.resources.assign', about: 'permission.resources.assign.about', values: {} },
+  'resources.remove': {
+    name: 'permission.resources.remove',
+    about: 'permission.resources.remove.about',
+    values: {
+      reach: { label: 'permission.resources.remove.reach', options: { theirs: 'permission.resources.remove.reach.theirs', every: 'permission.resources.remove.reach.every' } },
+    },
+  },
   'resources.describe': {
     name: 'permission.resources.describe',
     about: 'permission.resources.describe.about',
@@ -221,6 +228,7 @@ export const PERMISSION_TEXTS: { readonly [K in PermissionKey]: { name: string; 
           excelKeys: 'permission.admin.open.tools.excelKeys',
           users: 'permission.admin.open.tools.users',
           permissionGroups: 'permission.admin.open.tools.permissionGroups',
+          withdrawn: 'permission.admin.open.tools.withdrawn',
         },
       },
     },
@@ -369,4 +377,12 @@ export function changesBetween(from: Permissions, to: Permissions): Change[] {
   }
   const rank = { gain: 0, loss: 1, change: 2 } as const;
   return lines.map((line, index) => ({ line, index })).sort((one, other) => rank[one.line.kind] - rank[other.line.kind] || one.index - other.index).map(({ line }) => line);
+}
+
+/**
+ * Whether the User takes a Resource out of its Collection (DEC-PL-08, FR-CO-43), from how far `resources.remove`
+ * reaches: every Resource, or one of their Owner Units while it is not published.
+ */
+export function removable(how: 'theirs' | 'every' | null, owned: boolean, published: boolean): boolean {
+  return how === 'every' || (how === 'theirs' && owned && !published);
 }
