@@ -423,7 +423,7 @@ When the Current Version of its dbt project has no exposure with the tag `datahu
 <a id="fr-sr-55"></a>
 ### FR-SR-55 · The Data Team sees every withdrawn Resource in Admin
 
-**Status:** Proposed · **Source:** Max, 2026-11-12 ([DEC-UX-213](../../design/principles.md#dec-ux-213)) · **Screens:** [admin-withdrawn](../../design/screens/admin-withdrawn.html), [admin-permission-groups](../../design/screens/admin-permission-groups.html)
+**Status:** Implemented · **Source:** Max, 2026-11-12 ([DEC-UX-213](../../design/principles.md#dec-ux-213)) · **Screens:** [admin-withdrawn](../../design/screens/admin-withdrawn.html), [admin-permission-groups](../../design/screens/admin-permission-groups.html)
 
 Admin has a tool Withdrawn, for whose Permission group opens it ([FR-PL-15](12-permissions-and-library-cards.md#fr-pl-15)): every Resource of the environment that no exposure with the tag `datahub` depends on any more ([FR-SR-34](#fr-sr-34)), also one without a Collection, which shows nowhere else ([DEC-SR-45](#dec-sr-45)). Each with its Display Name and Key, its dbt project, its Collection or none, its Level, and when and in which run it was withdrawn, the newest first; a search by name or Key and a filter by whether it is in a Collection. A row opens the Resource, where it can be taken out of its Collection.
 

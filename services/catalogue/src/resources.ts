@@ -246,6 +246,20 @@ export type AddOutcome =
   | { outcome: 'invalid'; id: string; message: string };
 
 /** Resources in Postgres (TR-SR-02 to TR-SR-04). Who may do what is decided by the routes. */
+/** A Resource that dbt withdrew, as the tool Withdrawn of Admin lists it (FR-SR-55). */
+export interface WithdrawnResource {
+  id: string;
+  displayName: string;
+  /** Its full name in BigQuery, in its own case when a run brought it. */
+  key: string;
+  project: string;
+  collection: { id: string; name: string } | null;
+  level: number;
+  withdrawnAt: Date;
+  /** The run of dbt that withdrew it, from its Log; null when the Log does not say. */
+  run: string | null;
+}
+
 export interface Resources {
   /** Registers, renames, withdraws and brings back the Resources of one dbt project, in one go. */
   apply(update: ResourcesUpdate): Promise<UpdateOutcome>;
@@ -284,6 +298,11 @@ export interface Resources {
   related(id: string, viewer: Viewer): Promise<Related[]>;
   /** The Resources the viewer sees on the given Nodes. */
   atNodes(nodeIds: readonly string[], viewer: Viewer): Promise<ResourceAtNode[]>;
+  /**
+   * Every Resource that dbt withdrew, the newest first (FR-SR-55): its Key, dbt project, Collection or none, Level,
+   * and when and in which run it was withdrawn, for the tool Withdrawn of Admin (DEC-UX-213).
+   */
+  withdrawnList(): Promise<WithdrawnResource[]>;
   /** Publishes a Resource, from Described, and keeps that first Confirmation with its Fingerprint (FR-SR-17, FR-MR-08). */
   publish(id: string, viewer: Viewer): Promise<PublishOutcome>;
   /** Marks the changes since the last Confirmation seen; how many there were (FR-MR-12). */
@@ -1203,6 +1222,34 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         resources: carriers
           .filter((carrier) => carrier.identity === mapping.identity)
           .map((carrier) => ({ id: carrier.id, displayName: carrier.displayName, level: carrier.level, field: carrier.field })),
+      }));
+    },
+
+    async withdrawnList() {
+      const rows = await db
+        .selectFrom('resources as r')
+        .leftJoin('collections as c', 'c.id', 'r.collectionId')
+        .select(['r.id', 'r.displayName', 'r.key', 'r.fullName', 'r.projectId', 'r.projectName', 'r.level', 'r.withdrawnAt', 'c.id as collectionId', 'c.name as collectionName'])
+        .where('r.withdrawnAt', 'is not', null)
+        .orderBy('r.withdrawnAt', 'desc')
+        .orderBy(sql`lower(r.display_name)`)
+        .execute();
+      const ids = rows.map((row) => row.id);
+      // The run that withdrew it: the newest RES-004 in its Log.
+      const runs = new Map<string, string>();
+      if (ids.length > 0) {
+        const logged = await db.selectFrom('resourceLog').select(['resourceId', 'params']).where('logId', '=', 'RES-004').where('resourceId', 'in', ids).orderBy('id', 'desc').execute();
+        for (const entry of logged) if (!runs.has(entry.resourceId) && typeof entry.params.run === 'string') runs.set(entry.resourceId, entry.params.run);
+      }
+      return rows.map((row) => ({
+        id: row.id,
+        displayName: row.displayName,
+        key: row.fullName ?? row.key,
+        project: row.projectName ?? row.projectId,
+        collection: row.collectionId && row.collectionName ? { id: row.collectionId, name: row.collectionName } : null,
+        level: row.level,
+        withdrawnAt: row.withdrawnAt!,
+        run: runs.get(row.id) ?? null,
       }));
     },
 

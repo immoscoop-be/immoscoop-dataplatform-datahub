@@ -33,6 +33,7 @@
   import AdminPermissionGroups from './screens/AdminPermissionGroups.svelte';
   import AdminUsers from './screens/AdminUsers.svelte';
   import AdminWebhooks from './screens/AdminWebhooks.svelte';
+  import AdminWithdrawn from './screens/AdminWithdrawn.svelte';
   import ChartPage from './screens/ChartPage.svelte';
   import ChartsPanel from './screens/ChartsPanel.svelte';
   import CollectionPage from './screens/CollectionPage.svelte';
@@ -111,6 +112,7 @@
   /** How many Users and Permission groups there are, for the panel of Admin, once their pages told (FR-PL-06, FR-PL-09). */
   let userCount: number | undefined = $state();
   let groupCount: number | undefined = $state();
+  let withdrawnCount: number | undefined = $state();
   /** The Permission group Users shows, as "see them on Users" of a group asks (FR-PL-09). */
   let usersOf: string | null = $state(null);
   /** The view of the Message Centre chosen in its panel, and what it holds: null when it could not be read. */
@@ -1043,6 +1045,8 @@
           onusers={(group) => (usersOf = group)}
           oncount={(count) => (groupCount = count)}
         />
+      {:else if page.tool === 'withdrawn'}
+        <AdminWithdrawn {catalogue} environment={config.environment ?? 'local'} go={(path) => router.go(path)} oncount={(count) => (withdrawnCount = count)} />
       {:else}
         <AdminWebhooks {registry} environment={config.environment ?? 'local'} ontolookat={(count) => (webhooksToLookAt = count)} />
       {/if}
@@ -1160,6 +1164,7 @@
         ...(activeKeys === undefined ? {} : { keys: activeKeys }),
         ...(userCount === undefined ? {} : { users: userCount }),
         ...(groupCount === undefined ? {} : { permissionGroups: groupCount }),
+        ...(withdrawnCount === undefined ? {} : { withdrawn: withdrawnCount }),
       }}
     />
   {:else if section?.id === 'messages' && status.kind === 'signedIn'}

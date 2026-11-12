@@ -913,6 +913,30 @@ describe.skipIf(!url)('the routes of Collections', () => {
         /Every exposed table/,
       );
     });
+
+    it('lists every withdrawn Resource for who opens Withdrawn in Admin, the newest first, with the run that withdrew it (FR-SR-55)', async () => {
+      const dirk = await user('Dirk', [], 'admin');
+      const an = await user('An', [DIGIKOM]);
+      // A dbt project of its own, so that its runs follow on from each other alone.
+      const own = (runId: string, names: string[]) => ({ ...update(runId, names), projectId: '4242', projectName: 'withdrawn_test' });
+      await fromRegistry(own('1', ['w_offices', 'w_agents', 'w_regions']));
+      await fromRegistry(own('2', ['w_offices', 'w_agents']));
+      await fromRegistry(own('3', ['w_offices']));
+      expect((await an('GET', '/withdrawn')).json()).toMatchObject({ error: 'forbidden', permission: 'admin.open' });
+      const mine = async () =>
+        ((await dirk('GET', '/withdrawn')).json().resources as { displayName: string; key: string; project: string; collection: unknown; run: string | null }[]).filter(
+          (resource) => resource.project === 'withdrawn_test',
+        );
+      const listed = await mine();
+      expect(listed.map((resource) => [resource.displayName, resource.run, resource.collection])).toEqual([
+        ['w_agents', '3', null],
+        ['w_regions', '2', null],
+      ]);
+      expect(listed[0]).toMatchObject({ key: 'immoscoop-dataplatform.dbt_marts.w_agents' });
+      // Back in a run, it leaves the list.
+      await fromRegistry(own('4', ['w_offices', 'w_agents', 'w_regions']));
+      expect(await mine()).toEqual([]);
+    });
   });
 
   it('keeps a Request to run a very large query, one waiting per query and writer (MSG-QRY-01)', async () => {

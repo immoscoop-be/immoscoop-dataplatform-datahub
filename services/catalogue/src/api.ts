@@ -1,5 +1,5 @@
 import type { ServiceCallerVerifier } from '@datahub/auth';
-import { type CollectionIcon, type CollectionVisibility, NO_PERMISSIONS, permissionValue, reach } from '@datahub/contracts';
+import { canWith, type CollectionIcon, type CollectionVisibility, NO_PERMISSIONS, permissionValue, reach } from '@datahub/contracts';
 import { isCollectionIcon } from '@datahub/contracts/collection-icons';
 import { type GapScope, gapScopeSchema } from '@datahub/contracts/gaps';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
@@ -482,6 +482,14 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     return (await resources.remove(resource.id, who))
       ? reply.code(204).send()
       : reply.code(409).send({ error: 'not_in_a_collection', message: 'The Resource is in no Collection.' });
+  });
+
+  // Every Resource that dbt withdrew, for whoever opens the tool Withdrawn of Admin (FR-SR-55, DEC-UX-213).
+  app.get('/withdrawn', async (request, reply) => {
+    if (!canWith(viewer(request).permissions, 'admin.open', 'tools', 'withdrawn')) {
+      return reply.code(403).send(forbidden('admin.open', 'Only who may open Withdrawn in Admin sees every withdrawn Resource.'));
+    }
+    return { resources: await resources.withdrawnList() };
   });
 
   /** A Resource the User sees, with its Collection as they see it: none for a Resource without one. */

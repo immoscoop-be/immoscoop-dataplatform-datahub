@@ -30,6 +30,7 @@
     keys: 'admin.keys.count',
     users: 'admin.users.count',
     permissionGroups: 'admin.groups.count',
+    withdrawn: 'admin.withdrawn.count',
   };
 </script>
 

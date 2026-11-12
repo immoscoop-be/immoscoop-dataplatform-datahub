@@ -228,6 +228,21 @@ export interface Collection {
 }
 
 /** A Resource as the page of its Collection lists it, with the latest entry of its Log (FR-CO-27). */
+/** A Resource that dbt withdrew, as the tool Withdrawn of Admin lists it (FR-SR-55, DEC-UX-213). */
+export interface WithdrawnResource {
+  id: string;
+  displayName: string;
+  /** Its full name in BigQuery. */
+  key: string;
+  /** Its dbt project. */
+  project: string;
+  collection: { id: string; name: string } | null;
+  level: number;
+  withdrawnAt: string;
+  /** The run of dbt that withdrew it; null when its Log does not say. */
+  run: string | null;
+}
+
 export interface CollectionResource extends Resource {
   lastChange: LogEntry | null;
 }
@@ -318,6 +333,10 @@ export function createCatalogue(config: Config, session: Pick<Session, 'accessTo
       return (await (await call('/me/slack', { method: 'DELETE' })).json()) as SlackState;
     },
     /** The Resources that wait for a Collection: only the Data Team may ask (FR-SR-35). */
+    /** Every Resource that dbt withdrew, for the tool Withdrawn of Admin (FR-SR-55). */
+    async withdrawn(): Promise<WithdrawnResource[]> {
+      return ((await (await call('/withdrawn')).json()) as { resources: WithdrawnResource[] }).resources;
+    },
     async waiting(): Promise<Resource[]> {
       return ((await (await call('/resources?collection=none')).json()) as { resources: Resource[] }).resources;
     },

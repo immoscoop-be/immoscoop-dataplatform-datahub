@@ -758,6 +758,9 @@ function serve({
     if (path === '/resources?collection=none') {
       return dataTeam ? json({ resources: waiting }) : json({ error: 'forbidden' }, 403);
     }
+    if (path === '/withdrawn') {
+      return dataTeam ? json({ resources: WITHDRAWN }) : json({ error: 'forbidden' }, 403);
+    }
     if (path === '/resources/r1' && dataTeam) {
       return json({ resource: SAVED_SEARCHES });
     }
@@ -1630,7 +1633,64 @@ describe('the web app, for the Data Team', () => {
   });
 });
 
+const WITHDRAWN = [
+  {
+    id: 'w1',
+    displayName: 'Credit lead creations (flat)',
+    key: 'immoscoop-dataplatform-398214.colleciones_dbt.mrt_immoscoop__creditLead__create__flatEvent',
+    project: 'Colleciónes',
+    collection: { id: 'c1', name: 'Credit leads' },
+    level: 2,
+    withdrawnAt: '2026-11-12T08:12:00Z',
+    run: '59772257',
+  },
+  {
+    id: 'w2',
+    displayName: 'Lead source',
+    key: 'immoscoop-dataplatform-398214.colleciones_dbt.mrt_immoscoop__leadSource__currentState',
+    project: 'Colleciónes',
+    collection: null,
+    level: 1,
+    withdrawnAt: '2026-11-11T19:40:00Z',
+    run: '59751424',
+  },
+];
+
 describe('Admin, for the Data Team', () => {
+  it('lists every withdrawn Resource in Withdrawn, also without a Collection, filters them and opens one (FR-SR-55, DEC-UX-213)', async () => {
+    serve({ as: 'admin' });
+    open('/admin/withdrawn');
+    render(App, { config: { ...CONFIG, environment: 'uat' } });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByRole('heading', { level: 1, name: 'Withdrawn' })).toBeTruthy();
+    const table = within(await main.findByRole('table', { name: 'Withdrawn' }));
+    expect(table.getByText('Credit lead creations (flat)')).toBeTruthy();
+    expect(table.getByText('immoscoop-dataplatform-398214.colleciones_dbt.mrt_immoscoop__leadSource__currentState')).toBeTruthy();
+    expect(table.getByText('run 59772257')).toBeTruthy();
+    // The panel of Admin counts them.
+    const panel = within(screen.getByRole('complementary', { name: 'Admin' }));
+    await vi.waitFor(() => expect(panel.getByRole('link', { name: /Withdrawn/ }).textContent).toContain('2'));
+
+    // Without a Collection: only Lead source, which shows in no other list.
+    await fireEvent.click(main.getByRole('radio', { name: /Zonder Collection 1/ }));
+    expect(table.queryByText('Credit lead creations (flat)')).toBeNull();
+    expect(table.getByText('Lead source')).toBeTruthy();
+    await fireEvent.click(main.getByRole('radio', { name: /Alle 2/ }));
+    await fireEvent.input(main.getByRole('searchbox'), { target: { value: 'creditlead' } });
+    expect(table.queryByText('Lead source')).toBeNull();
+
+    // A row opens the Resource.
+    await fireEvent.click(table.getByText('Credit lead creations (flat)'));
+    await vi.waitFor(() => expect(location.pathname).toBe('/resources/w1'));
+  });
+
+  it('keeps Withdrawn from whoever may not open it (DEC-UX-130)', async () => {
+    serve();
+    open('/admin/withdrawn');
+    render(App, { config: CONFIG });
+    expect(await screen.findByRole('heading', { level: 1, name: 'Hier is niets voor jou' })).toBeTruthy();
+  });
+
   const UAT: Config = { ...CONFIG, environment: 'uat' };
 
   it('is not in the rail of anyone else, and its address shows the page for what may not be seen (DEC-UX-130)', async () => {
