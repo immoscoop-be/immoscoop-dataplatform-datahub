@@ -28,7 +28,7 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { MESSAGE_CATALOGUE } from '../packages/contracts/src/messageCatalogue.ts';
 import { type Card, parseCard, versionOf } from '../packages/learning/src/card.ts';
-import { explainWith } from '../packages/learning/src/explain.ts';
+import { type ExplainSource, explainWith } from '../packages/learning/src/explain.ts';
 import { interviewMisfits } from '../packages/learning/src/interview.ts';
 import { MARKER_PLACES, MARKERS, type MarkerPlace } from '../packages/learning/src/markers.ts';
 
@@ -39,7 +39,7 @@ const SEMGRAPHS = path.join(ROOT, 'services', 'semgraph', 'semgraphs');
 interface PlanFile {
   readonly levels: readonly { readonly id: string; readonly name: string }[];
   readonly sections: readonly { readonly level: string; readonly number: string; readonly title: { readonly en: string } }[];
-  readonly topics: readonly { readonly number: string; readonly section: string; readonly title: { readonly en: string }; readonly priority?: string }[];
+  readonly topics: readonly { readonly number: string; readonly section: string; readonly title: { readonly en: string; readonly nl: string }; readonly priority?: string }[];
 }
 
 interface ChartSchema {
@@ -167,10 +167,16 @@ if (command === 'links' && target) {
     { text: card.why.quote, what: 'the quote of Why now' },
     ...process.argv.slice(4).map((text) => ({ text, what: 'your words' })),
   ];
-  const all = [...writtenCards, card];
+  // What Claude searches: every written card in English and Dutch, this one as it stands in its folder.
+  const sourceOf = (one: Card, folder: string): ExplainSource => {
+    const dutch = existsSync(path.join(folder, 'nl.md')) ? parseCard(readFileSync(path.join(folder, 'nl.md'), 'utf8')) : null;
+    const title = plan.topics.find((topic) => topic.number === one.number)?.title;
+    return { card: one, title: title?.en ?? one.number, ...(dutch ? { translation: { card: dutch, title: title?.nl ?? one.number } } : {}) };
+  };
+  const all = [...writtenCards.map((one) => sourceOf(one, path.join(CARDS, one.number))), sourceOf(card, own)];
   let found = 0;
   for (const phrase of phrases) {
-    const results = explainWith(phrase.text, all, titleOf);
+    const results = explainWith(phrase.text, all);
     const rank = results.findIndex((one) => one.number === number);
     if (rank >= 0) found += 1;
     const where = (rank < 0 ? 'missed' : `${rank + 1} of ${results.length}`).padEnd(8);
