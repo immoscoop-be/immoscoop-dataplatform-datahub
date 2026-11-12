@@ -89,17 +89,23 @@ export function parseLensFacts(body: unknown): LensFacts | string {
   };
 }
 
-/** What identity tells about a User (MSG-USR-01, MSG-USR-02), checked; the problem as a sentence when there is one. */
+/** What identity tells about a User (MSG-USR-01, MSG-USR-02, MSG-USR-03), checked; the problem as a sentence when there is one. */
 export function parseUserNotice(body: unknown): UserNotice | string {
   const input = (body ?? {}) as Record<string, unknown>;
   const text = (value: unknown, max: number) => typeof value === 'string' && value.trim().length > 0 && value.length <= max;
   const lines = (value: unknown) => Array.isArray(value) && value.length <= 100 && value.every((line) => text(line, 500));
-  if ((input.type !== 'MSG-USR-01' && input.type !== 'MSG-USR-02') || !text(input.userId, 200)) {
-    return 'A notice about a User names its type, MSG-USR-01 or MSG-USR-02, and the User.';
+  if ((input.type !== 'MSG-USR-01' && input.type !== 'MSG-USR-02' && input.type !== 'MSG-USR-03') || !text(input.userId, 200)) {
+    return 'A notice about a User names its type, MSG-USR-01, MSG-USR-02 or MSG-USR-03, and the User.';
   }
   if (input.type === 'MSG-USR-02') {
     if (!text(input.name, 200)) return 'A User who got Admin back comes with their name.';
     return { type: 'MSG-USR-02', userId: input.userId as string, name: (input.name as string).trim() };
+  }
+  if (input.type === 'MSG-USR-03') {
+    if (!text(input.name, 200) || !text(input.email, 320) || !text(input.group, 200)) {
+      return 'A new User comes with their name, their address and the Permission group they got.';
+    }
+    return { type: 'MSG-USR-03', userId: input.userId as string, name: (input.name as string).trim(), email: (input.email as string).trim(), group: (input.group as string).trim() };
   }
   if (!text(input.actor, 200) || !text(input.from, 200) || !text(input.to, 200) || typeof input.deleted !== 'boolean') {
     return 'A User moved to another Permission group comes with who moved them, from which group to which, and whether their group was deleted.';
@@ -315,9 +321,9 @@ export async function messageRoutes(app: FastifyInstance, options: MessageRouteO
       },
     );
 
-    // identity tells about a User (FR-PL-12, EC-PL-03): moved to another Permission group, or their group deleted, a
-    // Message only they see (MSG-USR-01); or given Admin back as no User of Admin could still sign in, a Message for
-    // the Data Team (MSG-USR-02).
+    // identity tells about a User (FR-PL-12, EC-PL-03, FR-PL-16): moved to another Permission group, or their group
+    // deleted, a Message only they see (MSG-USR-01); given Admin back as no User of Admin could still sign in, a
+    // Message for the Data Team (MSG-USR-02); or new, signed in for the first time, for the Data Team (MSG-USR-03).
     app.post<{ Body: unknown }>('/internal/users/notices', { config: { public: true }, onRequest: onlyIdentity('Users') }, async (request, reply) => {
       const notice = parseUserNotice(request.body);
       if (typeof notice === 'string') return reply.code(400).send({ error: 'invalid_request', message: notice });

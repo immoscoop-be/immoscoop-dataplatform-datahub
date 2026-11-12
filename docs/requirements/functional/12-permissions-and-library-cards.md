@@ -142,6 +142,16 @@ From the moment a User signs in, every service knows their Permissions. Every se
 
 At the start, Data Hub makes the three Permission groups of [DEC-PL-07](#dec-pl-07): the members of `datahub-datateam@` get Admin, every other User Business analyst, and Lens user is the default for new Users. From then on no Group gives a role: a Role Group gives nothing, and what was done for the Data Team is done for the Users whose Permission group allows it, such as the Messages for the Data Team (`messages.dataTeam`) and the decisions on Requests (`requests.decide`).
 
+<a id="fr-pl-16"></a>
+### FR-PL-16 · The Data Team hears of every new User
+
+**Status:** Implemented · **Source:** Max, 2026-11-12: "a notification to all admins when a new user gets created" · [design](../../design/principles.md#admin) · **Screens:** [admin-users](../../design/screens/admin-users.html)
+
+When someone signs in to Data Hub for the first time, in the web app, through Claude or for Excel, and becomes a User in the default Permission group ([FR-PL-04](#fr-pl-04)), the Data Team gets a Message ([MSG-USR-03](message-catalogue.md#msg-usr-03)): who it is, their address, and the Permission group they got, with a button to open them on Users. Like every Message for the Data Team, it goes to the address of the Data Team, in Slack to each User whose Permission group gets the Messages for the Data Team (`messages.dataTeam`), and into their Message Centre. The new User does not see it. A User who signs in again is no news; a sign-in never waits on the Message.
+
+**Makes easy:** giving a new colleague the Permission group they need on their first day, instead of finding out weeks later that the default did not fit; seeing who starts using Data Hub.
+**Makes hard:** a new User staying unnoticed in a Permission group that gives them too much or too little; telling the new User about a check that is not theirs to make.
+
 <a id="the-permissions"></a>
 ## The Permissions
 

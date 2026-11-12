@@ -306,6 +306,19 @@ describe.skipIf(!url)('notifications by e-mail and in Slack (DEC-LN-02, DEC-LN-0
     expect(asked).toEqual([{ users: [], groups: [], permissions: ['messages.dataTeam'] }]);
   });
 
+  it('tells the Data Team of a new User, and not that User (FR-PL-16, MSG-USR-03)', async () => {
+    await messages.userNotice({ type: 'MSG-USR-03', userId: 'u-karel', name: 'Karel Leys', email: 'karel@immoscoop.be', group: 'Lens user' });
+    await notifications.deliver();
+    expect(mails.map((mail) => [mail.to, mail.subject])).toEqual([
+      ['datahub-datateam@immoscoop.be', 'Karel Leys (karel@immoscoop.be) meldde voor het eerst aan bij Data Hub en kreeg de Permission group Lens user.'],
+    ]);
+    expect(mails[0]?.html).toContain('Je krijgt dit als lid van het Data Team.');
+    expect(mails[0]?.html).toContain('Kijk op Users, in Admin, of die past');
+    // In Slack, each User who gets the Messages for the Data Team; Karel is not asked for.
+    expect(slacked.map((sent) => sent.email)).toEqual(['dirk@immoscoop.be']);
+    expect(asked).toEqual([{ users: [], groups: [], permissions: ['messages.dataTeam'] }]);
+  });
+
   it('tells the writer of a Request the decision, by their own address, and the author of its Lens', async () => {
     const lens = '2d3e4f5a-6b7c-4d8e-9f0a-1b2c3d4e5f6a';
     await messages.keepLens(lens, { name: 'Leads per source, all weeks', collectionId: credit.id, resourceIds: [], state: 'waiting', authorId: 'u-karel', authorName: 'Karel Leys' });

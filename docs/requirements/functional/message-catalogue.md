@@ -30,7 +30,7 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | User | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-04](#msg-cnv-04), [MSG-CNV-07](#msg-cnv-07) | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-03](#msg-cnv-03), [MSG-LRN-01](#msg-lrn-01) | [MSG-CNV-03](#msg-cnv-03), [MSG-LEN-01](#msg-len-01), [MSG-QRY-01](#msg-qry-01) |
 | Owner | [MSG-RES-07](#msg-res-07) | – | – |
 | Data Team | [MSG-CNV-05](#msg-cnv-05) | – | – |
-| Data Hub | [MSG-CNV-06](#msg-cnv-06), [MSG-LEN-02](#msg-len-02), [MSG-LEN-06](#msg-len-06), [MSG-KEY-01](#msg-key-01), [MSG-KEY-02](#msg-key-02), [MSG-USR-01](#msg-usr-01) | [MSG-RES-02](#msg-res-02), [MSG-RES-03](#msg-res-03), [MSG-RES-04](#msg-res-04), [MSG-RES-05](#msg-res-05), [MSG-RES-06](#msg-res-06), [MSG-RES-08](#msg-res-08), [MSG-LEN-03](#msg-len-03), [MSG-LEN-04](#msg-len-04), [MSG-LEN-05](#msg-len-05), [MSG-QRY-02](#msg-qry-02), [MSG-RPT-01](#msg-rpt-01) | [MSG-COL-01](#msg-col-01), [MSG-RES-01](#msg-res-01), [MSG-LEN-03](#msg-len-03), [MSG-USR-02](#msg-usr-02) |
+| Data Hub | [MSG-CNV-06](#msg-cnv-06), [MSG-LEN-02](#msg-len-02), [MSG-LEN-06](#msg-len-06), [MSG-KEY-01](#msg-key-01), [MSG-KEY-02](#msg-key-02), [MSG-USR-01](#msg-usr-01) | [MSG-RES-02](#msg-res-02), [MSG-RES-03](#msg-res-03), [MSG-RES-04](#msg-res-04), [MSG-RES-05](#msg-res-05), [MSG-RES-06](#msg-res-06), [MSG-RES-08](#msg-res-08), [MSG-LEN-03](#msg-len-03), [MSG-LEN-04](#msg-len-04), [MSG-LEN-05](#msg-len-05), [MSG-QRY-02](#msg-qry-02), [MSG-RPT-01](#msg-rpt-01) | [MSG-COL-01](#msg-col-01), [MSG-RES-01](#msg-res-01), [MSG-LEN-03](#msg-len-03), [MSG-USR-02](#msg-usr-02), [MSG-USR-03](#msg-usr-03) |
 
 ## Overview
 
@@ -62,6 +62,7 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | [MSG-KEY-02](#msg-key-02) | The Data Team revoked an Excel key | Excel key | Data Hub → its author | Nothing | To write | Implemented |
 | [MSG-USR-01](#msg-usr-01) | A User was moved to another Permission group | User | Data Hub → its author | Nothing | To write | Implemented |
 | [MSG-USR-02](#msg-usr-02) | A member of the Data Team got Admin back | User | Data Hub → Data Team | Nothing | To write | Implemented |
+| [MSG-USR-03](#msg-usr-03) | A new User signed in for the first time | User | Data Hub → Data Team | Nothing | To write | Implemented |
 | [MSG-QRY-01](#msg-qry-01) | Request to run a very large query | query | User → Data Team | A decision | By the writer | Implemented |
 | [MSG-QRY-02](#msg-qry-02) | A query is Broken | query | Data Hub → Owner | Something to do | To write | Implemented |
 | [MSG-RPT-01](#msg-rpt-01) | A Report is Broken | Report | Data Hub → Owner | Something to do | To write | Proposed |
@@ -2856,6 +2857,92 @@ Template, English, laid out:
 **{subject} got the Permission group Admin back**
 
 No User of Admin could still sign in, for example after leaving. When {subject}, a member of `datahub-datateam@`, signed in, they got Admin, so that someone can manage Data Hub. Check on Users, in Admin, who should have Admin.
+```
+
+</details>
+
+<a id="msg-usr-03"></a>
+
+### MSG-USR-03 · A new User signed in for the first time
+
+| | |
+| --- | --- |
+| Kind | Data Hub |
+| About | User |
+| From → to | Data Hub → Data Team |
+| When | Someone signs in to Data Hub for the first time, in the web app, through Claude or for Excel: Data Hub makes them a User, in the default Permission group ([FR-PL-04](12-permissions-and-library-cards.md#fr-pl-04)). |
+| How many | One per new User. The new User does not see it: it is for who manages Users. |
+| Status | Implemented |
+| Comes from | [FR-PL-16](12-permissions-and-library-cards.md#fr-pl-16), [FR-PL-04](12-permissions-and-library-cards.md#fr-pl-04) |
+
+**What it asks:** Nothing. The Data Team checks on Users, in Admin, whether the default Permission group fits the new User, and moves them if not ([FR-PL-07](12-permissions-and-library-cards.md#fr-pl-07)).
+
+**How it ends:** When it is read.
+
+| Button | Opens | For |
+| --- | --- | --- |
+| Open Users · *Users openen* | Users, in Admin, with the User opened | Data Team |
+
+**Learning Card:** To write: *Permission groups: what a User may do in Data Hub, and why something is not there for them*. The Message is about the Permission group of a User; no card of the master learning plan explains Permission groups yet.
+
+**Dutch, laid out**, with the example:
+
+> **An Claes meldde voor het eerst aan bij Data Hub**
+>
+> An Claes (an.claes@immoscoop.be) is nu een User, in Lens user, de standaard Permission group. Kijk op Users, in Admin, of die past, en kies er een andere als An Claes meer of minder nodig heeft.
+
+**Dutch, plain:**
+
+```text
+An Claes (an.claes@immoscoop.be) meldde voor het eerst aan bij Data Hub en kreeg de Permission group Lens user.
+```
+
+**English, laid out**, with the example:
+
+> **An Claes signed in to Data Hub for the first time**
+>
+> An Claes (an.claes@immoscoop.be) is now a User, in Lens user, the default Permission group. Check on Users, in Admin, whether it fits, and choose another if An Claes needs more or less.
+
+**English, plain:**
+
+```text
+An Claes (an.claes@immoscoop.be) signed in to Data Hub for the first time and got the Permission group Lens user.
+```
+
+<details>
+<summary>Parameters and templates</summary>
+
+| Parameter | Type | Holds |
+| --- | --- | --- |
+| `email` | name | Their Google address |
+| `group` | name | The Permission group they got: the default when they signed in |
+
+Template, Dutch, plain:
+
+```text
+{subject} ({email}) meldde voor het eerst aan bij Data Hub en kreeg de Permission group {group}.
+```
+
+Template, Dutch, laid out:
+
+```markdown
+**{subject} meldde voor het eerst aan bij Data Hub**
+
+{subject} ({email}) is nu een User, in {group}, de standaard Permission group. Kijk op Users, in Admin, of die past, en kies er een andere als {subject} meer of minder nodig heeft.
+```
+
+Template, English, plain:
+
+```text
+{subject} ({email}) signed in to Data Hub for the first time and got the Permission group {group}.
+```
+
+Template, English, laid out:
+
+```markdown
+**{subject} signed in to Data Hub for the first time**
+
+{subject} ({email}) is now a User, in {group}, the default Permission group. Check on Users, in Admin, whether it fits, and choose another if {subject} needs more or less.
 ```
 
 </details>

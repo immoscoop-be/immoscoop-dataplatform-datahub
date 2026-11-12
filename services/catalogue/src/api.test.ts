@@ -1529,7 +1529,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
       expect(decided.json().message).toMatchObject({ state: 'accepted', replies: [{ kind: 'decision', writer: { name: 'Dana' } }] });
     });
 
-    it('puts what identity tells about a User to that User alone, and to the Data Team (FR-PL-12, EC-PL-03, MSG-USR-01, MSG-USR-02)', async () => {
+    it('puts what identity tells about a User to that User alone, and to the Data Team (FR-PL-12, EC-PL-03, FR-PL-16, MSG-USR-01, MSG-USR-02, MSG-USR-03)', async () => {
       const notice = (payload: object, token = 'identity-token') =>
         app.inject({ method: 'POST', url: '/internal/users/notices', headers: { authorization: `Bearer ${token}` }, payload });
       const mo = await user('Mo', [PLANNING]);
@@ -1541,7 +1541,9 @@ describe.skipIf(!url)('the routes of Collections', () => {
       expect((await notice({ ...moved, deleted: 'no' })).statusCode).toBe(400);
       expect((await notice({ ...moved, to: '' })).statusCode).toBe(400);
       expect((await notice({ type: 'MSG-USR-02', userId: 'u-Mo' })).statusCode).toBe(400);
+      expect((await notice({ type: 'MSG-USR-09', userId: 'u-Mo', name: 'Mo' })).statusCode).toBe(400);
       expect((await notice({ type: 'MSG-USR-03', userId: 'u-Mo', name: 'Mo' })).statusCode).toBe(400);
+      expect((await notice({ type: 'MSG-USR-03', userId: 'u-Mo', name: 'Mo', email: 'mo@immoscoop.be', group: '' })).statusCode).toBe(400);
 
       const told = await notice(moved);
       expect(told.statusCode).toBe(201);
@@ -1569,6 +1571,22 @@ describe.skipIf(!url)('the routes of Collections', () => {
       expect(forTeam).toMatchObject({ type: 'MSG-USR-02', subject: { kind: 'user', id: 'u-Mo', name: 'Mo' } });
       expect((await (await user('Paul', [PLANNING]))('GET', `/messages/${back.json().id}`)).statusCode).toBe(404);
       expect((await mo('GET', `/messages/${back.json().id}`)).statusCode).toBe(200);
+
+      // A new User: for the Data Team, who opens them on Users; the new User does not see it (FR-PL-16).
+      const fresh = await notice({ type: 'MSG-USR-03', userId: 'u-Mo', name: 'Mo', email: 'mo@immoscoop.be', group: 'Lens user' });
+      expect(fresh.statusCode).toBe(201);
+      const forAdmin = (await admin('GET', '/messages?view=forYou')).json().messages.find((message: { id: string }) => message.id === fresh.json().id);
+      expect(forAdmin).toMatchObject({
+        type: 'MSG-USR-03',
+        kind: 'dataHub',
+        writer: null,
+        subject: { kind: 'user', id: 'u-Mo', name: 'Mo', exists: true },
+        params: { email: 'mo@immoscoop.be', group: 'Lens user' },
+        mayReply: false,
+      });
+      expect((await mo('GET', `/messages/${fresh.json().id}`)).statusCode).toBe(404);
+      expect((await mo('GET', '/messages?view=everything')).json().messages.map((message: { id: string }) => message.id)).not.toContain(fresh.json().id);
+      expect((await (await user('Paul', [PLANNING]))('GET', `/messages/${fresh.json().id}`)).statusCode).toBe(404);
     });
   });
 

@@ -123,6 +123,7 @@ describe('the addresses of the web app', () => {
   it('leads a Message about a User to My page, and one to the Data Team to that User on Users (FR-PL-12)', () => {
     expect(objectPath({ kind: 'user', id: '42' }, 'MSG-USR-01')).toBe('/me');
     expect(objectPath({ kind: 'user', id: '42' }, 'MSG-USR-02')).toBe('/admin/users/42');
+    expect(objectPath({ kind: 'user', id: '42' }, 'MSG-USR-03')).toBe('/admin/users/42');
   });
 
   it('shows the one page for what does not exist, or may not be seen, at every other address (DEC-UX-32)', () => {

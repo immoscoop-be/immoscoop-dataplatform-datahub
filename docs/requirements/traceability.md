@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 213 | 78 (21 open, 57 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 214 | 78 (21 open, 57 done) |
 | [Backlog](../overview/backlog.md) | – | – | – | 7 (5 open, 2 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
@@ -24,7 +24,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Lenses](functional/09-lenses.md) | 18 (15 implemented, 3 withdrawn) | – | 21 | 10 (10 done) |
 | [Reports](functional/10-reports.md) | – | – | – | – |
 | [Beta and promotion](functional/11-beta-and-promotion.md) | – | – | – | 1 (1 done) |
-| [Permissions and Excel keys](functional/12-permissions-and-library-cards.md) | 15 (1 proposed, 14 implemented) | 4 (4 implemented) | 8 | 2 (1 open, 1 done) |
+| [Permissions and Excel keys](functional/12-permissions-and-library-cards.md) | 16 (1 proposed, 15 implemented) | 4 (4 implemented) | 8 | 2 (1 open, 1 done) |
 | [Channels](functional/13-channels.md) | 6 (5 proposed, 1 implemented) | – | 6 | 4 (2 open, 2 done) |
 | [Conversations](functional/14-conversations.md) | 16 (16 implemented) | 2 (2 implemented) | 13 | 9 (9 done) |
 | [EDA](functional/15-eda.md) | – | – | – | – |
@@ -354,6 +354,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-PL-13](functional/12-permissions-and-library-cards.md#fr-pl-13) | My page shows a User their own Permission group | Proposed | – | – | – | [7d0ec65](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7d0ec6572e95e6a7a4a4de0bfec66702ee84c0d1) refs, 2026-11-06 |
 | [FR-PL-14](functional/12-permissions-and-library-cards.md#fr-pl-14) | Every channel applies the Permissions of the User from their sign-in | Implemented | – | – | [TR-PL-05](technical/12-permissions-and-library-cards.md#tr-pl-05), [TR-PL-06](technical/12-permissions-and-library-cards.md#tr-pl-06), [TR-PL-09](technical/12-permissions-and-library-cards.md#tr-pl-09) | [c969274](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c969274935b7ad0a21da6e0dcfca9df53d2f881e) refs, 2026-11-06<br>[7d0ec65](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7d0ec6572e95e6a7a4a4de0bfec66702ee84c0d1) implements, 2026-11-06<br>[2bb6ecc](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2bb6ecc012fa083c2de6a518b03dbbc389cb494c) implements, 2026-11-06<br>[b0e55c2](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/b0e55c26a4bf0913768d54acd87049d58ac80a29) refs, 2026-11-06<br>[4a78a35](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4a78a35b4de23e120c6899f290b95d0c378c0f62) refs, 2026-11-06<br>[7eb8cdc](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7eb8cdcb1d6861799432f47ef657f825952aef87) refs, 2026-11-06 |
 | [FR-PL-15](functional/12-permissions-and-library-cards.md#fr-pl-15) | Permission groups replace the Role Groups | Implemented | – | – | [TR-PL-08](technical/12-permissions-and-library-cards.md#tr-pl-08) | [7d0ec65](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7d0ec6572e95e6a7a4a4de0bfec66702ee84c0d1) implements, 2026-11-06<br>[b0e55c2](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/b0e55c26a4bf0913768d54acd87049d58ac80a29) refs, 2026-11-06<br>[c5d1f5a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c5d1f5afc8254bb0d69818415ae36e03fb8793f5) refs, 2026-11-06 |
+| [FR-PL-16](functional/12-permissions-and-library-cards.md#fr-pl-16) | The Data Team hears of every new User | Implemented | – | [admin-users](../design/screens/admin-users.html) | – | – |
 
 ### [Channels](functional/13-channels.md)
 

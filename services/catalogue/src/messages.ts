@@ -228,13 +228,15 @@ export interface KeyNotice {
 }
 
 /**
- * What identity tells about a User (MSG-USR-01, MSG-USR-02). A move to another Permission group says who moved them, from
- * which group to which, what they gain and lose, as lines identity writes, and whether their group was deleted; the
- * name of the User, when identity gives it, names the Message's object.
+ * What identity tells about a User (MSG-USR-01, MSG-USR-02, MSG-USR-03). A move to another Permission group says who moved
+ * them, from which group to which, what they gain and lose, as lines identity writes, and whether their group was
+ * deleted; the name of the User, when identity gives it, names the Message's object. A new User comes with their
+ * address and the Permission group they got.
  */
 export type UserNotice =
   | { type: 'MSG-USR-01'; userId: string; actor: string; from: string; to: string; gains: string[]; losses: string[]; deleted: boolean; name?: string }
-  | { type: 'MSG-USR-02'; userId: string; name: string };
+  | { type: 'MSG-USR-02'; userId: string; name: string }
+  | { type: 'MSG-USR-03'; userId: string; name: string; email: string; group: string };
 
 /**
  * Who decides on a Request through query, as their decision is shown back to query (FR-LE-09): someone who decides on
@@ -855,7 +857,8 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
     },
 
     async userNotice(notice) {
-      // Only the User sees the Messages about them; one for the Data Team, also who gets those (FR-PL-12, EC-PL-03).
+      // Only the User sees the Messages about them; one for the Data Team, also who gets those (FR-PL-12, EC-PL-03); of
+      // a new User, only the Data Team (FR-PL-16).
       const params: Record<string, string> =
         notice.type === 'MSG-USR-01'
           ? {
@@ -871,7 +874,10 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
               ...(notice.gains.length > 0 ? { gained: String(notice.gains.length) } : {}),
               ...(notice.losses.length > 0 ? { lost: String(notice.losses.length) } : {}),
             }
-          : { subject: notice.name, user: notice.userId };
+          : notice.type === 'MSG-USR-02'
+            ? { subject: notice.name, user: notice.userId }
+            : // Not named as `user`: the new User does not see it, only who gets the Messages for the Data Team (FR-PL-16).
+              { subject: notice.name, email: notice.email, group: notice.group };
       return db
         .insertInto('messages')
         .values({ type: notice.type, subjectKind: 'user', subjectId: notice.userId, writerId: null, params, state: null })
