@@ -3996,6 +3996,11 @@ describe('Messages', () => {
     expect(window.getByRole('link', { name: /Het bericht op deze Collection/ }).getAttribute('href')).toBe('/collections/c1/messages');
     // The page stays behind it, usable.
     expect(await within(screen.getByRole('main')).findByRole('heading', { level: 1, name: 'Credit leads' })).toBeTruthy();
+    // Closing it leaves the page of the object as it is, not the Message Centre (DEC-UX-210).
+    await fireEvent.click(screen.getByRole('button', { name: 'Sluiten' }));
+    await vi.waitFor(() => expect(screen.queryByRole('dialog', { name: 'Credit leads' })).toBeNull());
+    expect(location.pathname).toBe('/collections/c1');
+    expect(within(screen.getByRole('main')).getByRole('heading', { level: 1, name: 'Credit leads' })).toBeTruthy();
   });
 });
 

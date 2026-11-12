@@ -12,7 +12,7 @@
    * A Message opened in context (DEC-UX-30, FR-CV-09): the page of its object stays usable behind a floating
    * window in the lower right, which holds the Message with its replies and what it asks: a reply, or for a
    * Request the decision of the Data Team. At its foot all the Messages on the object, in the slide-in, and
-   * the way back to the Message Centre; Close goes back there too.
+   * the way back to the Message Centre; Close leaves the page as it is, without the window (DEC-UX-210).
    */
   let {
     id,
