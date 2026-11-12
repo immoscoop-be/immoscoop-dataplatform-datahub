@@ -565,6 +565,8 @@ function serve({
   conversations = [] as Record<string, unknown>[],
   learned = [] as Record<string, unknown>[],
   waiting = [SAVED_SEARCHES] as Record<string, unknown>[],
+  /** What Weekly lead volume relates to, for its Entities. */
+  related = [] as Record<string, unknown>[],
   creditWith = {} as Partial<typeof CREDIT>,
   excelKeys = [] as Record<string, unknown>[],
   everyKey = [] as Record<string, unknown>[],
@@ -806,7 +808,7 @@ function serve({
       return json({ entries: [] });
     }
     if (path === '/resources/r2/related') {
-      return json({ related: [] });
+      return json({ related });
     }
     if (path === '/resources/r2/lineage') {
       return json(WEEKLY_LINEAGE);
@@ -2733,6 +2735,24 @@ describe('the page of a Resource', () => {
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/resources/r2/collection' }));
     // Out of its Collection, the button has done its work.
     await vi.waitFor(() => expect(danger.queryByRole('button', { name: /Uit Credit leads halen/ })).toBeNull());
+  });
+
+  it('shows each identity in full, the Entity with its identifier, in Entities and Columns (DEC-UX-216)', async () => {
+    const mapping = { field: 'lead_source', kind: 'is', relationType: null, identity: 'leadSource.leadSourceId', subject: null, origin: 'name', inDomainModel: true };
+    serve({
+      groups: ['g1'],
+      weekly: { details: { ...WEEKLY_DETAIL.details, mappings: [mapping] } },
+      related: [{ ...mapping, resources: [{ id: 'r9', displayName: 'Lead sources', level: 3, field: 'lead_source_id' }] }],
+    });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
+    await fireEvent.click(main.getByRole('tab', { name: 'Entities' }));
+    const entities = within(main.getByRole('tabpanel', { name: 'Entities' }));
+    expect(await entities.findByText('leadSource.leadSourceId')).toBeTruthy();
+    await fireEvent.click(main.getByRole('tab', { name: 'Kolommen' }));
+    expect(await main.findByText('leadSource.leadSourceId')).toBeTruthy();
   });
 
   it('keeps its Danger zone from who is not in its Owner Unit or the Data Team (DEC-UX-176)', async () => {
