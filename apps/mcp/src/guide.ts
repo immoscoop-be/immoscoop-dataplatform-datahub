@@ -82,7 +82,7 @@ const ATTRIBUTE = named({
 });
 const KIND = named({ question: 'Questions', remark: 'Remarks', signal: 'Signals' });
 const WRITE = named({ descriptions: 'descriptions', messages: 'Messages', deprecations: 'deprecations', changesSeen: 'changes marked seen' });
-const TOOL = named({ webhooks: 'webhooks', excelKeys: 'Excel keys', users: 'users', permissionGroups: 'Permission groups' });
+const TOOL = named({ webhooks: 'webhooks', excelKeys: 'Excel keys', users: 'users', permissionGroups: 'Permission groups', withdrawn: 'the withdrawn Resources' });
 const RESULTS = {
   claude: 'Results of queries and Previews reach Claude: it reads their rows and works on them',
   card: 'Results of queries and Previews show in a card only: you see their rows, Claude does not read them',
@@ -103,6 +103,8 @@ export function mayDo(permissions: Permissions, permits: Permits): string[] {
     can(permissions, 'collections.make') && (permissionValue(permissions, 'collections.make', 'ownerUnit') === 'any' ? 'Make a Collection, for any group' : 'Make a Collection, for a group you are in'),
     can(permissions, 'collections.manage') && where('collections.manage', 'Change the Collections of your Owner Units', 'Change every Collection'),
     can(permissions, 'resources.assign') && 'Add Resources to Collections, move them, and set their grain and model type, in the web app',
+    can(permissions, 'resources.remove') &&
+      `Take ${where('resources.remove', 'a Resource of your Owner Units that is not published yet', 'any Resource')} out of its Collection, in the web app`,
     can(permissions, 'resources.describe') &&
       `Describe ${where('resources.describe', 'the Resources of your Owner Units', 'every Resource')}: ${list(several(permissions, 'resources.describe', 'attributes').map(ATTRIBUTE)) || 'nothing of them'}`,
     can(permissions, 'resources.publish') && 'Publish a Resource of your Owner Units',

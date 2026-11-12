@@ -56,10 +56,11 @@ export interface Actor {
   name: string;
 }
 
-/** What identity tells catalogue, to write a Message (FR-PL-12, EC-PL-03). */
+/** What identity tells catalogue, to write a Message (FR-PL-12, EC-PL-03, FR-PL-16). */
 export type UserNotice =
   | { type: 'MSG-USR-01'; userId: string; name: string; actor: string; from: string; to: string; gains: string[]; losses: string[]; deleted: boolean }
-  | { type: 'MSG-USR-02'; userId: string; name: string };
+  | { type: 'MSG-USR-02'; userId: string; name: string }
+  | { type: 'MSG-USR-03'; userId: string; name: string; email: string; group: string };
 
 export interface UserNotices {
   tellUser(notice: UserNotice): Promise<void>;
@@ -358,15 +359,17 @@ export function createPermissionGroups(db: Kysely<IdentityDatabase>, now: () => 
       return rows.map((row) => ({ at: row.at.toISOString(), from: row.fromName, to: row.toName ?? '', by: row.byName }));
     },
 
-    /** Notes that a new User got the default at their first sign-in. */
-    async noteFirstSignIn(googleId: string): Promise<void> {
+    /** Notes that a new User got the default at their first sign-in; gives the name of that group, for the Data Team (FR-PL-16). */
+    async noteFirstSignIn(googleId: string): Promise<string | null> {
       const group = await db
         .selectFrom('users')
         .innerJoin('permissionGroups', 'permissionGroups.id', 'users.permissionGroupId')
         .select(['permissionGroups.id', 'permissionGroups.name'])
         .where('users.googleId', '=', googleId)
         .executeTakeFirst();
-      if (group) await log({ kind: 'default-at-sign-in', googleId, groupId: group.id, toName: group.name });
+      if (!group) return null;
+      await log({ kind: 'default-at-sign-in', googleId, groupId: group.id, toName: group.name });
+      return group.name;
     },
   };
 }

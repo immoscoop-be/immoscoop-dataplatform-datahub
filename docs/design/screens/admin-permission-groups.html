@@ -14,7 +14,7 @@
   the two Permissions of the groups kept in Data Hub: Make groups and Manage every group (DEC-UX-201).
   The switch at the bottom shows Business, Business with two changes, deleting Business, Admin, and a new group:
   ?pg=business, ?pg=changed, ?pg=delete, ?pg=datateam, ?pg=new. ?kinds=on shows the kind of each value.
-  Requirements: FR-PL-05, FR-PL-08, FR-PL-09, FR-PL-10, FR-PL-11
+  Requirements: FR-PL-05, FR-PL-08, FR-PL-09, FR-PL-10, FR-PL-11, FR-CO-43, FR-SR-55
   Decisions: DEC-UX-186, DEC-UX-187, DEC-UX-188, DEC-UX-189, DEC-UX-190, DEC-PL-01, DEC-PL-07, DEC-UX-130, DEC-UX-71, DEC-DH-78.
   Related screens: admin-users.html, admin-keys.html, query.html (the kinds of a Parameter).
   Rules: ../principles.md  ·  Placeholder content only.
@@ -125,6 +125,13 @@
     <div class="pg-yn"><button class="seg">Yes</button><button class="seg on">No</button></div>
    </div>
    <div class="pg-perm">
+    <div><div class="pg-name">Remove Resources from a Collection <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>yes or no, with a choice</span></div><p class="pg-desc">Take a Resource out of its Collection, back to Without a Collection. Of their Owner Units, only one that is not published yet: once published, colleagues may rely on it.</p></div>
+    <div class="pg-yn"><button class="seg on">Yes</button><button class="seg">No</button></div>
+    <div class="pg-params">
+     <div class="pg-param"><span class="pe-label">Which Resources <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>choice</span></span><div class="pe-opts"><label><input type="radio" name="p-remove" checked>Those of their Owner Units, while not published</label><label><input type="radio" name="p-remove">Every Resource, published or not</label></div></div>
+    </div>
+   </div>
+   <div class="pg-perm">
     <div><div class="pg-name">Describe and publish Resources <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>yes or no</span></div><p class="pg-desc">Write the Business Description of a Resource, its intended use and pitfalls; deprecate and publish it.</p></div>
     <div class="pg-yn"><button class="seg on">Yes</button><button class="seg">No</button></div>
     <div class="pg-params">
@@ -213,7 +220,7 @@
   <div class="pg-section">
    <div class="pg-section-head"><i class="ph-fill ph-toolbox"></i>Admin</div>
    <div class="pg-perm">
-    <div><div class="pg-name">Open Admin <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>yes or no, with several choices</span></div><p class="pg-desc">The section of the Data Team, with the tools it names: Webhooks, Excel keys, Users, Permission groups.</p></div>
+    <div><div class="pg-name">Open Admin <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>yes or no, with several choices</span></div><p class="pg-desc">The section of the Data Team, with the tools it names: Webhooks, Excel keys, Users, Permission groups, Withdrawn.</p></div>
     <div class="pg-yn"><button class="seg">Yes</button><button class="seg on">No</button></div>
    </div>
   </div>
@@ -251,6 +258,7 @@
    <div class="pg-perm"><div><div class="pg-name">What they see</div><p class="pg-desc">All: also the private Collections of other Owner Units, and the Resources without a Collection</p></div><span class="pg-lock"><i class="ph-fill ph-lock-simple"></i>All</span></div>
    <div class="pg-perm"><div><div class="pg-name">Manage Collections</div></div><span class="pg-lock"><i class="ph-fill ph-lock-simple"></i>Yes</span></div>
    <div class="pg-perm"><div><div class="pg-name">Manage Resources</div></div><span class="pg-lock"><i class="ph-fill ph-lock-simple"></i>Yes</span></div>
+   <div class="pg-perm"><div><div class="pg-name">Remove Resources from a Collection</div><p class="pg-desc">Every Resource, published or not</p></div><span class="pg-lock"><i class="ph-fill ph-lock-simple"></i>Yes</span></div>
    <div class="pg-perm"><div><div class="pg-name">Describe and publish Resources</div><p class="pg-desc">Every Resource</p></div><span class="pg-lock"><i class="ph-fill ph-lock-simple"></i>Yes</span></div>
   </div>
   <div class="pg-section">
@@ -277,7 +285,7 @@
   </div>
   <div class="pg-section">
    <div class="pg-section-head"><i class="ph-fill ph-toolbox"></i>Admin</div>
-   <div class="pg-perm"><div><div class="pg-name">Open Admin</div><p class="pg-desc">Webhooks, Excel keys, Users and Permission groups</p></div><span class="pg-lock"><i class="ph-fill ph-lock-simple"></i>Yes</span></div>
+   <div class="pg-perm"><div><div class="pg-name">Open Admin</div><p class="pg-desc">Webhooks, Excel keys, Users, Permission groups and Withdrawn</p></div><span class="pg-lock"><i class="ph-fill ph-lock-simple"></i>Yes</span></div>
   </div>
  </section>
 </div>

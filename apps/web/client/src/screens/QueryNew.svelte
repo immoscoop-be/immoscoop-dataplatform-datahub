@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import { day } from '@datahub/ui/foundations/when.js';
@@ -122,10 +123,10 @@
   <section class="card own" aria-label={t('query.yourQuery')}>
     <h2>{t('query.yourQuery')}</h2>
     <Field label={t('query.name')} hint={named ? undefined : t('query.name.hint')}>
-      <input type="text" bind:value={() => name, (value) => ((name = value), (named = true))} maxlength="120" required />
+      <input {...NO_PASSWORD_MANAGER} type="text" bind:value={() => name, (value) => ((name = value), (named = true))} maxlength="120" required />
     </Field>
     <Field label={t('query.question')} hint={t('query.question.hint')}>
-      <textarea bind:value={question} rows="3" maxlength="500"></textarea>
+      <textarea {...NO_PASSWORD_MANAGER} bind:value={question} rows="3" maxlength="500"></textarea>
     </Field>
     <div class="label">{t('query.resources')}</div>
     <ul class="resources">
@@ -147,7 +148,7 @@
         {#if picking}
           <div class="picker">
             <!-- svelte-ignore a11y_autofocus -->
-            <input type="search" bind:value={search} placeholder={t('query.resources.search')} aria-label={t('query.resources.search')} autofocus onkeydown={(event) => event.key === 'Escape' && (picking = false)} />
+            <input {...NO_PASSWORD_MANAGER} type="search" bind:value={search} placeholder={t('query.resources.search')} aria-label={t('query.resources.search')} autofocus onkeydown={(event) => event.key === 'Escape' && (picking = false)} />
             <ul class="found">
               {#each found as choice (choice.id)}
                 <li><button type="button" onclick={() => add(choice.id)}><span class="name">{choice.displayName}</span><span class="meta">{choice.collection}</span><MaturityIcon level={choice.level} small /></button></li>

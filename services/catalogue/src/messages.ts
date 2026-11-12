@@ -228,13 +228,15 @@ export interface KeyNotice {
 }
 
 /**
- * What identity tells about a User (MSG-USR-01, MSG-USR-02). A move to another Permission group says who moved them, from
- * which group to which, what they gain and lose, as lines identity writes, and whether their group was deleted; the
- * name of the User, when identity gives it, names the Message's object.
+ * What identity tells about a User (MSG-USR-01, MSG-USR-02, MSG-USR-03). A move to another Permission group says who moved
+ * them, from which group to which, what they gain and lose, as lines identity writes, and whether their group was
+ * deleted; the name of the User, when identity gives it, names the Message's object. A new User comes with their
+ * address and the Permission group they got.
  */
 export type UserNotice =
   | { type: 'MSG-USR-01'; userId: string; actor: string; from: string; to: string; gains: string[]; losses: string[]; deleted: boolean; name?: string }
-  | { type: 'MSG-USR-02'; userId: string; name: string };
+  | { type: 'MSG-USR-02'; userId: string; name: string }
+  | { type: 'MSG-USR-03'; userId: string; name: string; email: string; group: string };
 
 /**
  * Who decides on a Request through query, as their decision is shown back to query (FR-LE-09): someone who decides on
@@ -319,14 +321,15 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
   /**
    * The conversations for the viewer (FR-CV-06): those they started or replied in, those whose first
    * Message notifies them, as Owner, as the Data Team (`messages.dataTeam`), as the author of its Lens,
-   * or as the User it is about.
+   * or as the User it is about; never a Message of Data Hub about what they did themselves (`actorId`).
    */
   function forYou(sight: Sight): RawBuilder<SqlBool> {
     const me = sight.viewer.id;
     return sql<SqlBool>`(
       m.writer_id = ${me}
       or exists (select 1 from messages r where r.parent_id = m.id and r.writer_id = ${me})
-      or (m.type = any(${list(TO_OWNER)}) and (
+      or ((m.params->>'actorId') is distinct from ${me} and (
+      (m.type = any(${list(TO_OWNER)}) and (
         (m.subject_kind = 'collection' and m.subject_id = any(${list(sight.ownedCollections)}))
         or (m.subject_kind = 'resource' and m.subject_id = any(${list(sight.ownedResources)}))
         or (m.subject_kind = 'lens' and m.subject_id = any(${list(sight.ownedLenses)}))))
@@ -336,6 +339,7 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
       or (m.type = any(${list(TO_OWNER)}) and m.subject_kind = 'query' and m.params->>'owner' = ${me})
       or (m.type = any(${list(TO_AUTHOR)}) and m.subject_kind in ('excelKey', 'user') and m.params->>'user' = ${me})
       or (m.type = any(${list(TO_LENS_USERS)}) and ${me} = any(string_to_array(m.params->>'users', ',')))
+      ))
     )`;
   }
 
@@ -853,7 +857,8 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
     },
 
     async userNotice(notice) {
-      // Only the User sees the Messages about them; one for the Data Team, also who gets those (FR-PL-12, EC-PL-03).
+      // Only the User sees the Messages about them; one for the Data Team, also who gets those (FR-PL-12, EC-PL-03); of
+      // a new User, only the Data Team (FR-PL-16).
       const params: Record<string, string> =
         notice.type === 'MSG-USR-01'
           ? {
@@ -869,7 +874,10 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
               ...(notice.gains.length > 0 ? { gained: String(notice.gains.length) } : {}),
               ...(notice.losses.length > 0 ? { lost: String(notice.losses.length) } : {}),
             }
-          : { subject: notice.name, user: notice.userId };
+          : notice.type === 'MSG-USR-02'
+            ? { subject: notice.name, user: notice.userId }
+            : // Not named as `user`: the new User does not see it, only who gets the Messages for the Data Team (FR-PL-16).
+              { subject: notice.name, email: notice.email, group: notice.group };
       return db
         .insertInto('messages')
         .values({ type: notice.type, subjectKind: 'user', subjectId: notice.userId, writerId: null, params, state: null })

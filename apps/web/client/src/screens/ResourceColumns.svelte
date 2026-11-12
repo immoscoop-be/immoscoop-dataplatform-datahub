@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import EditBar from '@datahub/ui/containers/EditBar.svelte';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
@@ -6,7 +7,6 @@
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import type { Field, KnownGap, ResourceDetail } from '../lib/catalogue.js';
   import { scopeLine } from '../lib/gaps.js';
-  import { nounOf } from '../lib/grain.js';
 
   /**
    * The Columns of a Resource (Columns table): each field with its type, its Business Description next
@@ -130,7 +130,7 @@
             <div class="type">{field.dataType ?? ''}</div>
             <div class="roles">{@render pills(field)}</div>
           </div>
-          <textarea bind:value={texts[field.name]} rows="3" maxlength="2000" aria-label={`${t('description.business')} · ${field.name}`} placeholder={t('resource.fields.placeholder')}></textarea>
+          <textarea {...NO_PASSWORD_MANAGER} bind:value={texts[field.name]} rows="3" maxlength="2000" aria-label={`${t('description.business')} · ${field.name}`} placeholder={t('resource.fields.placeholder')}></textarea>
           <div>
             {#if changed}<span class="pill warn">{t('resource.changedInDbt', { date: day(changed.at) })}</span>{/if}
             <p class="dbt">{field.description || '–'}</p>
@@ -167,7 +167,7 @@
             <td class="type">{field.dataType ?? ''}</td>
             {#if field.businessDescription}<td>{field.businessDescription}</td>{:else}<td class="none" aria-label={t('resource.noBusiness')}>–</td>{/if}
             <td class="dbt">{field.description || '–'}</td>
-            <td>{#if mapping}<span class="code" title={mapping.identity}>{nounOf(mapping.identity)}</span>{/if}</td>
+            <td>{#if mapping}<span class="code">{mapping.identity}</span>{/if}</td>
             <td><span class="roles">{@render pills(field)}</span></td>
           </tr>
         {/each}

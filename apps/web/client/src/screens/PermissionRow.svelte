@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
@@ -98,7 +99,7 @@
           {#if spec.kind === 'number'}
             <span class="field">
               <span class="number">
-                <input
+                <input {...NO_PASSWORD_MANAGER}
                   type="number"
                   min={spec.min}
                   max={spec.max}
@@ -139,7 +140,7 @@
             </span>
           {:else if spec.kind === 'text'}
             <span class="field">
-              <textarea rows="2" maxlength={spec.max} value={String(setting.values[name] ?? '')} aria-label={label} oninput={(event) => set(name, event.currentTarget.value)}></textarea>
+              <textarea {...NO_PASSWORD_MANAGER} rows="2" maxlength={spec.max} value={String(setting.values[name] ?? '')} aria-label={label} oninput={(event) => set(name, event.currentTarget.value)}></textarea>
               {#if hint}<span class="hint">{t(hint, { group: groupName })}</span>{/if}
             </span>
           {/if}

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import Button from '@datahub/ui/primitives/Button.svelte';
@@ -114,7 +115,7 @@
 {:else if waiting && decides}
   <div class="decision">
     <label class="label" for="reason-{message.id}">{t('messages.decision')}</label>
-    <textarea
+    <textarea {...NO_PASSWORD_MANAGER}
       id="reason-{message.id}"
       rows="2"
       maxlength="1000"

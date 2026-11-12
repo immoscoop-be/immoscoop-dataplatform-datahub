@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import Sheet from '@datahub/ui/containers/Sheet.svelte';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
@@ -121,7 +122,7 @@
     <p class="why">{t(mode === 'add' ? 'newSet.why.add' : 'newSet.why.remove', { name: query.name })}</p>
     {#if mode === 'add'}
       <div class="label">{t('newSet.add')}</div>
-      <input type="search" class="search" bind:value={search} placeholder={t('query.resources.search')} aria-label={t('query.resources.search')} />
+      <input {...NO_PASSWORD_MANAGER} type="search" class="search" bind:value={search} placeholder={t('query.resources.search')} aria-label={t('query.resources.search')} />
       <div class="picks" role="radiogroup" aria-label={t('newSet.add')}>
         {#each found as choice (choice.id)}
           <label class="pick" class:on={pick === choice.id}>
@@ -146,10 +147,10 @@
 
     <div class="fields">
       <Field label={t('query.name')} hint={named ? undefined : t('query.name.hint')}>
-        <input type="text" bind:value={() => name, (value) => ((name = value), (named = true))} maxlength="120" required />
+        <input {...NO_PASSWORD_MANAGER} type="text" bind:value={() => name, (value) => ((name = value), (named = true))} maxlength="120" required />
       </Field>
       <Field label={t('query.question')}>
-        <textarea bind:value={question} rows="2" maxlength="500"></textarea>
+        <textarea {...NO_PASSWORD_MANAGER} bind:value={question} rows="2" maxlength="500"></textarea>
       </Field>
     </div>
     {#if lensLine}

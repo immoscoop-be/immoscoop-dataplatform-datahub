@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import Sheet from '@datahub/ui/containers/Sheet.svelte';
   import { formatBytes } from '@datahub/ui/foundations/bytes.js';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
@@ -83,7 +84,7 @@
         <p class="line warn"><Icon name="warning-fill" /><span><b>{t('lens.update.large', { bytes: bytes(check.bytes) })}</b> {t('lens.update.large.text', { approve: bytes(check.thresholds.approve) })}</span></p>
       {:else}
         <p class="line urgent"><Icon name="warning-circle-fill" /><span><b>{t('lens.update.veryLarge', { bytes: bytes(check.bytes) })}</b> {t('lens.update.veryLarge.text', { request: bytes(check.thresholds.request) })}</span></p>
-        <Field label={t('lens.size.word')}><textarea rows="2" maxlength="500" bind:value={text}></textarea></Field>
+        <Field label={t('lens.size.word')}><textarea {...NO_PASSWORD_MANAGER} rows="2" maxlength="500" bind:value={text}></textarea></Field>
       {/if}
     </section>
   </div>

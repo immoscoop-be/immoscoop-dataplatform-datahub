@@ -1342,7 +1342,7 @@ const drawLineage = () => document.querySelectorAll('.lin').forEach(lin => {
   let svg = lin.querySelector(':scope > svg.lin-edges');
   if (!svg) {
     svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.classList.add('lin-edges'); svg.setAttribute('aria-hidden', 'true');
-    svg.innerHTML = '<defs><marker id="lin-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="currentColor"/></marker></defs><g></g>';
+    svg.innerHTML = '<g></g>';
     lin.prepend(svg);
   }
   const box = lin.getBoundingClientRect(), g = svg.querySelector('g');
@@ -1352,7 +1352,7 @@ const drawLineage = () => document.querySelectorAll('.lin').forEach(lin => {
   const curve = (from, to, on) => {
     if (!shown(from) || !shown(to)) return '';
     const [x1, y1] = at(from, 'right'), [x2, y2] = at(to, 'left'), dx = Math.max(18, (x2 - x1) / 2);
-    return `<path class="edge${on ? ' on' : ''}" d="M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2 - 2},${y2}" marker-end="url(#lin-arrow)"/>`;
+    return `<path class="edge${on ? ' on' : ''}" d="M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}"/>`;
   };
   const center = lin.querySelector('.lin-center .lin-node');
   const fans = side => [...lin.querySelectorAll(`.lin-wing.${side} .lin-fan`)];

@@ -22,6 +22,7 @@
   import type { Catalogue, Collection, CollectionFields, CollectionResource, LogEntry, Resource } from '../lib/catalogue.js';
   import type { requestOf } from '../lib/grain.js';
   import type { Identity } from '../lib/identity.js';
+  import { removable } from '../lib/permissions.js';
   import type { Registry } from '../lib/registry.js';
   import type { LensItem } from '../lib/query.js';
   import { brokenText } from '../lib/broken.js';
@@ -49,6 +50,7 @@
     identity,
     registry,
     assigns,
+    removes = null,
     anyOwnerUnit,
     own,
     waiting,
@@ -64,8 +66,10 @@
     catalogue: Catalogue;
     identity: Identity;
     registry: Registry;
-    /** The User may add Resources to it and remove them (`resources.assign`). */
+    /** The User may add Resources to it (`resources.assign`). */
     assigns: boolean;
+    /** How far the User takes Resources out of a Collection (`resources.remove`, DEC-PL-08): every one, or theirs while not published. */
+    removes?: 'theirs' | 'every' | null;
     /** The User may give it to any Group (`collections.make`, any group, FR-CO-35). */
     anyOwnerUnit: boolean;
     /** The fixed IDs of the groups of the User. */
@@ -237,6 +241,10 @@
   }
 
   const published = $derived(new Set(collection?.resources.filter((item) => item.published).map((item) => item.id)));
+  /** The Collection is of one of the User's Owner Units. */
+  const owned = $derived(collection !== undefined && collection !== null && (collection.owned ?? own.includes(collection.ownerUnit.id)));
+  /** A column for ⊖ when the User takes out any of its Resources: every one, or, of their own, those not published (DEC-UX-214). */
+  const removing = $derived(removes === 'every' || (removes === 'theirs' && owned));
   /** What sits at its top: its folders, and the Resources and Lenses in none (FR-CO-38). */
   const placed = $derived(listed && listed.id === collection?.id ? listed : collection);
   const top = $derived(placed ? contents(placed, lenses ?? [], null) : undefined);
@@ -377,7 +385,7 @@
           <th>{t('collection.column.publication')}</th>
           <th>Signals</th>
           <th>{t('collection.column.change')}</th>
-          {#if assigns}<th><span class="hidden">{t('collection.column.remove')}</span></th>{/if}
+          {#if removing}<th><span class="hidden">{t('collection.column.remove')}</span></th>{/if}
         </tr>
       {/snippet}
       {#each topResources as resource (resource.id)}
@@ -401,9 +409,9 @@
               <span class="change"><span class="change-text" title={text}>{text}</span><span class="when">&nbsp;· {ago(resource.lastChange.at, currentLanguage())}</span></span>
             {/if}
           </td>
-          {#if assigns}
+          {#if removing}
             <td class="remove">
-              <IconButton icon="minus-circle" label={t('collection.remove', { name: resource.displayName })} onclick={() => remove(resource)} />
+              {#if removable(removes, owned, resource.published)}<IconButton icon="minus-circle" label={t('collection.remove', { name: resource.displayName })} onclick={() => remove(resource)} />{/if}
             </td>
           {/if}
         </tr>

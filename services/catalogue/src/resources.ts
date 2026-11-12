@@ -21,6 +21,12 @@ export interface ExposedTable {
   checksum: string | null;
   /** Its columns, in the order of the table. */
   columns: Column[];
+  /**
+   * How it is stored, as dbt says (DEC-SR-34): kept while it waits for a Collection, so that a Preview filters on its
+   * partition column from the start; a Data Admin records what holds when adding it. A registry that does not send
+   * it yet leaves it out.
+   */
+  storage?: { partition: { field: string; unit: PartitionUnit | null } | null; clusterBy: string[]; requirePartitionFilter: boolean } | null;
 }
 
 /** A Change in a dbt project and the tables of Resources it reaches downstream, as registry follows it (FR-AR-12). */
@@ -240,6 +246,20 @@ export type AddOutcome =
   | { outcome: 'invalid'; id: string; message: string };
 
 /** Resources in Postgres (TR-SR-02 to TR-SR-04). Who may do what is decided by the routes. */
+/** A Resource that dbt withdrew, as the tool Withdrawn of Admin lists it (FR-SR-55). */
+export interface WithdrawnResource {
+  id: string;
+  displayName: string;
+  /** Its full name in BigQuery, in its own case when a run brought it. */
+  key: string;
+  project: string;
+  collection: { id: string; name: string } | null;
+  level: number;
+  withdrawnAt: Date;
+  /** The run of dbt that withdrew it, from its Log; null when the Log does not say. */
+  run: string | null;
+}
+
 export interface Resources {
   /** Registers, renames, withdraws and brings back the Resources of one dbt project, in one go. */
   apply(update: ResourcesUpdate): Promise<UpdateOutcome>;
@@ -278,6 +298,11 @@ export interface Resources {
   related(id: string, viewer: Viewer): Promise<Related[]>;
   /** The Resources the viewer sees on the given Nodes. */
   atNodes(nodeIds: readonly string[], viewer: Viewer): Promise<ResourceAtNode[]>;
+  /**
+   * Every Resource that dbt withdrew, the newest first (FR-SR-55): its Key, dbt project, Collection or none, Level,
+   * and when and in which run it was withdrawn, for the tool Withdrawn of Admin (DEC-UX-213).
+   */
+  withdrawnList(): Promise<WithdrawnResource[]>;
   /** Publishes a Resource, from Described, and keeps that first Confirmation with its Fingerprint (FR-SR-17, FR-MR-08). */
   publish(id: string, viewer: Viewer): Promise<PublishOutcome>;
   /** Marks the changes since the last Confirmation seen; how many there were (FR-MR-12). */
@@ -676,6 +701,17 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
             exposures: table.exposures,
           };
           const columns = splitColumns(table.columns);
+          // While it waits for a Collection, it is stored as dbt says; once a Data Admin added it, as they recorded.
+          const fromDbt =
+            table.storage === undefined
+              ? {}
+              : {
+                  partitionField: table.storage?.partition?.field ?? null,
+                  partitionUnit: table.storage?.partition?.unit ?? null,
+                  clusterBy: table.storage?.clusterBy ?? [],
+                  partitionFilter: table.storage?.partition && table.storage.requirePartitionFilter ? ('bigQuery' as const) : ('none' as const),
+                  origins: table.storage ? { partition: 'dbt' as const, clusterBy: 'dbt' as const, partitionFilter: 'dbt' as const } : {},
+                };
           const row = known.get(table.key);
           if (!row) {
             // A Registration (the flow "registering a Resource"): the Resource with its Level, its
@@ -684,7 +720,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
             const { level, reason } = levelAtRegistration(table.description, columns.fields);
             const { id } = await trx
               .insertInto('resources')
-              .values({ key: table.key, ...facts, requestedName: wanted, displayName, level })
+              .values({ key: table.key, ...facts, ...fromDbt, requestedName: wanted, displayName, level })
               .returning('id')
               .executeTakeFirstOrThrow();
             await keepColumns(trx, id, columns);
@@ -715,7 +751,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
           const displayName = back || wanted !== row.requestedName ? await freeName(trx, wanted, update, table.key, row.id) : row.displayName;
           await trx
             .updateTable('resources')
-            .set({ ...facts, requestedName: wanted, displayName, withdrawnAt: null, updatedAt: new Date() })
+            .set({ ...facts, ...(row.collectionId === null ? fromDbt : {}), requestedName: wanted, displayName, withdrawnAt: null, updatedAt: new Date() })
             .where('id', '=', row.id)
             .execute();
           await keepColumns(trx, row.id, columns);
@@ -910,7 +946,8 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
             .insertInto('collectionLog')
             .values({ collectionId: collection.id, logId: 'COL-006', params: { resource: row.displayName, actor: viewer.name }, actorId: viewer.id })
             .execute();
-          // Its Owner is told that it arrived (DEC-CV-11), with its Level as a number, as a Message keeps it.
+          // Its Owner is told that it arrived (DEC-CV-11), with its Level as a number, as a Message keeps it; never who
+          // added it, also when they are in the Owner Unit themselves (`actorId`, TR-LN-02).
           await trx
             .insertInto('messages')
             .values({
@@ -918,7 +955,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
               subjectKind: 'resource',
               subjectId: row.id,
               writerId: null,
-              params: { collection: collection.name, actor: viewer.name, level: String(row.level) },
+              params: { collection: collection.name, actor: viewer.name, actorId: viewer.id, level: String(row.level) },
               state: null,
             })
             .execute();
@@ -1185,6 +1222,34 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         resources: carriers
           .filter((carrier) => carrier.identity === mapping.identity)
           .map((carrier) => ({ id: carrier.id, displayName: carrier.displayName, level: carrier.level, field: carrier.field })),
+      }));
+    },
+
+    async withdrawnList() {
+      const rows = await db
+        .selectFrom('resources as r')
+        .leftJoin('collections as c', 'c.id', 'r.collectionId')
+        .select(['r.id', 'r.displayName', 'r.key', 'r.fullName', 'r.projectId', 'r.projectName', 'r.level', 'r.withdrawnAt', 'c.id as collectionId', 'c.name as collectionName'])
+        .where('r.withdrawnAt', 'is not', null)
+        .orderBy('r.withdrawnAt', 'desc')
+        .orderBy(sql`lower(r.display_name)`)
+        .execute();
+      const ids = rows.map((row) => row.id);
+      // The run that withdrew it: the newest RES-004 in its Log.
+      const runs = new Map<string, string>();
+      if (ids.length > 0) {
+        const logged = await db.selectFrom('resourceLog').select(['resourceId', 'params']).where('logId', '=', 'RES-004').where('resourceId', 'in', ids).orderBy('id', 'desc').execute();
+        for (const entry of logged) if (!runs.has(entry.resourceId) && typeof entry.params.run === 'string') runs.set(entry.resourceId, entry.params.run);
+      }
+      return rows.map((row) => ({
+        id: row.id,
+        displayName: row.displayName,
+        key: row.fullName ?? row.key,
+        project: row.projectName ?? row.projectId,
+        collection: row.collectionId && row.collectionName ? { id: row.collectionId, name: row.collectionName } : null,
+        level: row.level,
+        withdrawnAt: row.withdrawnAt!,
+        run: runs.get(row.id) ?? null,
       }));
     },
 

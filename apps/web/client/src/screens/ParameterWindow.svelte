@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import FloatingWindow from '@datahub/ui/containers/FloatingWindow.svelte';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
@@ -154,7 +155,7 @@
     <div class="row">
       <label class="label" for="param-name">{t('param.name')}</label>
       <div>
-        <input
+        <input {...NO_PASSWORD_MANAGER}
           id="param-name"
           class="input"
           placeholder="dateFrom"
@@ -185,7 +186,7 @@
       <div class="row">
         <label class="label" for="param-value">{t('param.value')}</label>
         <div>
-          <input id="param-value" class="input mono" bind:value={form.value} list={form.kind === 'date' ? 'param-date-fns' : undefined} spellcheck="false" autocomplete="off" disabled={readonly}
+          <input {...NO_PASSWORD_MANAGER} id="param-value" class="input mono" bind:value={form.value} list={form.kind === 'date' ? 'param-date-fns' : undefined} spellcheck="false" autocomplete="off" disabled={readonly}
             placeholder={{ date: 'DATE_TRUNC(CURRENT_DATE(), YEAR)', number: '10', decimal: '350000.50', text: '8000' }[form.kind as 'date']} />
           <p class="hint">{#if form.kind === 'date' && isFunction('date', form.value.trim()) && form.value.trim()}<Icon name="function" />{/if}{hint}</p>
         </div>
@@ -194,8 +195,8 @@
       <div class="row">
         <span class="label">{t('param.value')}</span>
         <div class="pair">
-          <label><span class="label">{t('param.from')}</span><input class="input mono" bind:value={form.from} list="param-date-fns" spellcheck="false" autocomplete="off" disabled={readonly} /></label>
-          <label><span class="label">{t('param.to')}</span><input class="input mono" bind:value={form.to} list="param-date-fns" spellcheck="false" autocomplete="off" disabled={readonly} /></label>
+          <label><span class="label">{t('param.from')}</span><input {...NO_PASSWORD_MANAGER} class="input mono" bind:value={form.from} list="param-date-fns" spellcheck="false" autocomplete="off" disabled={readonly} /></label>
+          <label><span class="label">{t('param.to')}</span><input {...NO_PASSWORD_MANAGER} class="input mono" bind:value={form.to} list="param-date-fns" spellcheck="false" autocomplete="off" disabled={readonly} /></label>
           <p class="hint">{periodHint}</p>
         </div>
       </div>
@@ -203,7 +204,7 @@
       <div class="row">
         <label class="label" for="param-list">{t('param.list')}</label>
         <div>
-          <textarea id="param-list" class="input mono" rows="3" bind:value={form.list} spellcheck="false" disabled={readonly}></textarea>
+          <textarea {...NO_PASSWORD_MANAGER} id="param-list" class="input mono" rows="3" bind:value={form.list} spellcheck="false" disabled={readonly}></textarea>
           <p class="hint">{t('param.list.hint')}</p>
         </div>
       </div>

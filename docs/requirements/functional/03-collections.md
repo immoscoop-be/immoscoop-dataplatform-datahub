@@ -345,6 +345,15 @@ The Owner Unit and the Data Team write an intro to a Collection in Markdown, wit
 
 A folder has a description of its own: plain text of at most 500 characters, under its name on its page, as a Collection has. It may be empty. The Owner Unit and the Data Team write and change it, and its name, in place with a click; a change of either goes into the Log of the Collection ([FR-CO-11](#fr-co-11)).
 
+<a id="fr-co-43"></a>
+### FR-CO-43 · The Owner Unit takes a Resource out of its Collection before it is published
+
+**Status:** Implemented · **Source:** Max, 2026-11-12 ([DEC-UX-214](../../design/principles.md#dec-ux-214), [DEC-PL-08](12-permissions-and-library-cards.md#dec-pl-08)) · **Screens:** [collection-folder](../../design/screens/collection-folder.html), [resource-overview](../../design/screens/resource-overview.html), [admin-permission-groups](../../design/screens/admin-permission-groups.html)
+
+Whoever has the Permission "Remove Resources from a Collection" takes a Resource out of its Collection: for their own Owner Units, only one that is not published yet; with every Resource as its reach, published or not, as the Data Team does. It goes back to Without a Collection, out of its folder, with its descriptions and history; the Logs of the Resource and of the Collection say who took it out. Where it may, the button shows at the end of its row, on the page of the Collection and of its folder, and in its Danger zone; on a published Resource of their own the Danger zone says that only the Data Team takes it out now.
+
+**Makes easy:** an Owner Unit refusing a Resource the Data Team added to its Collection before it vouches for it. **Makes hard:** a Resource that colleagues already rely on disappearing from its Collection without the Data Team.
+
 ## The page of a Collection
 
 What a User sees and does on the page of a Collection ([DEC-UX-13](../../design/principles.md#dec-ux-13), [DEC-UX-14](../../design/principles.md#dec-ux-14)). The screens are in the [design](../../design/principles.md#page-of-a-collection). Specified on 2026-10-23, when the design was approved.

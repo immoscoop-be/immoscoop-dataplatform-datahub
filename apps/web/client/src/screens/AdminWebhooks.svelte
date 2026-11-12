@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import Breadcrumb from '@datahub/ui/components/Breadcrumb.svelte';
   import Sheet from '@datahub/ui/containers/Sheet.svelte';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
@@ -431,7 +432,7 @@
     {:else if offered === null}
       <p class="meta">{t('admin.webhooks.dbtCloudDown')}</p>
     {:else}
-      <input class="search" type="search" bind:value={search} placeholder={t('admin.webhooks.pick.search')} aria-label={t('admin.webhooks.pick.search')} />
+      <input {...NO_PASSWORD_MANAGER} class="search" type="search" bind:value={search} placeholder={t('admin.webhooks.pick.search')} aria-label={t('admin.webhooks.pick.search')} />
       <div class="options" role="radiogroup" aria-label={t('admin.webhooks.pick.jobs')}>
         {#each groups as group (group.name)}
           <div class="group">{group.name}</div>

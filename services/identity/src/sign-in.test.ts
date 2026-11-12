@@ -212,11 +212,19 @@ describe.skipIf(!url)('signing in', () => {
     // The Groups of Data Hub Jan is in (TR-UM-03); what Jan may do comes from their Permission group (TR-PL-05).
     expect(claims.groups).toEqual(['g-sales']);
     expect(claims).not.toHaveProperty('roles');
-    // Nobody of Admin could sign in yet, and Jan is on the list of the way back in: Jan gets Admin back, and
-    // the Data Team hears of it (EC-PL-03, TR-UM-06).
+    // Jan is new: the Data Team hears of it, with the default group Jan got (FR-PL-16). Nobody of Admin could sign
+    // in yet, and Jan is on the list of the way back in: Jan gets Admin back, and the Data Team hears of that too
+    // (EC-PL-03, TR-UM-06).
     expect(claims.permissionGroup.name).toBe('Admin');
     expect(claims.permissions['admin.open'].on).toBe(true);
-    expect(told).toEqual([{ type: 'MSG-USR-02', userId: JAN.sub, name: JAN.name }]);
+    expect(told).toEqual([
+      { type: 'MSG-USR-03', userId: JAN.sub, name: JAN.name, email: JAN.email, group: 'Lens user' },
+      { type: 'MSG-USR-02', userId: JAN.sub, name: JAN.name },
+    ]);
+    // A User who is known already is no news (FR-PL-16).
+    told = [];
+    await signIn(clientId, CLAUDE);
+    expect(told).toEqual([]);
 
     const user = await database.db.selectFrom('users').selectAll().where('googleId', '=', JAN.sub).executeTakeFirst();
     expect(user?.email).toBe(JAN.email);

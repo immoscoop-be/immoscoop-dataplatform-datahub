@@ -531,6 +531,50 @@ describe.skipIf(!url)('the routes of Collections', () => {
       expect((await an('DELETE', `/collections/${collection.id}`)).statusCode).toBe(204);
     });
 
+    it('lets its Owner Unit take a Resource out of the Collection while it is not published, the Data Team always (DEC-PL-08, FR-CO-43)', async () => {
+      const an = await user('An', [DIGIKOM]);
+      const bert = await user('Bert', [SALES]);
+      const lens = await user('Lea', [DIGIKOM], 'lensUser');
+      const dirk = await user('Dirk', [], 'admin');
+      await fromRegistry(update('3', ['visits', 'leads', 'agencies', 'offices']));
+      const waiting = (await dirk('GET', '/resources?collection=none')).json().resources as { id: string; name: string }[];
+      const offices = waiting.find((resource) => resource.name === 'offices')!;
+      const collection = (await an('POST', '/collections', { name: 'Offices', description: 'Offices.', icon: 'globe', ownerUnit: DIGIKOM.id, visibility: 'public' })).json();
+      const into = () => dirk('PUT', `/resources/${offices.id}/collection`, { collectionId: collection.id });
+      expect((await into()).statusCode).toBe(200);
+
+      // Not published: An of its Owner Unit takes it out, and the Resource says so beforehand; nobody else of theirs.
+      expect((await an('GET', `/resources/${offices.id}`)).json().resource).toMatchObject({ canRemove: true, canAssign: false });
+      expect((await bert('DELETE', `/resources/${offices.id}/collection`)).json()).toMatchObject({ error: 'forbidden', permission: 'resources.remove' });
+      expect((await lens('DELETE', `/resources/${offices.id}/collection`)).statusCode).toBe(403);
+      expect((await an('DELETE', `/resources/${offices.id}/collection`)).statusCode).toBe(204);
+
+      // Published: colleagues may rely on it, so only the Data Team takes it out now.
+      expect((await into()).statusCode).toBe(200);
+      await database.db.updateTable('resources').set({ publishedAt: new Date(), publishedBy: 'u-An' }).where('id', '=', offices.id).execute();
+      expect((await an('GET', `/resources/${offices.id}`)).json().resource.canRemove).toBe(false);
+      const refused = await an('DELETE', `/resources/${offices.id}/collection`);
+      expect(refused.statusCode).toBe(403);
+      expect(refused.json().message).toMatch(/^It is published: colleagues may rely on it, so only the Data Team takes it out/);
+      expect((await dirk('GET', `/resources/${offices.id}`)).json().resource.canRemove).toBe(true);
+      expect((await dirk('DELETE', `/resources/${offices.id}/collection`)).statusCode).toBe(204);
+    });
+
+    it('tells the Owner Unit that a Resource arrived, never who added it, also when they are in it (MSG-RES-08)', async () => {
+      const an = await user('An', [DIGIKOM]);
+      const max = await user('Max', [DIGIKOM], 'admin');
+      await fromRegistry(update('3', ['arrivals']));
+      const arrival = ((await max('GET', '/resources?collection=none')).json().resources as { id: string; name: string }[]).find((resource) => resource.name === 'arrivals')!;
+      const collection = (await an('POST', '/collections', { name: 'Arrivals', description: 'What arrived.', icon: 'binoculars', ownerUnit: DIGIKOM.id, visibility: 'public' })).json();
+      expect((await max('PUT', `/resources/${arrival.id}/collection`, { collectionId: collection.id })).statusCode).toBe(200);
+      const arrived = async (who: typeof an) =>
+        (await who('GET', '/messages?view=forYou')).json().messages.filter((message: { type: string }) => message.type === 'MSG-RES-08');
+      expect(await arrived(an)).toHaveLength(1);
+      expect(await arrived(max)).toEqual([]);
+      const unread = (await max('GET', '/messages?view=unread')).json().messages.filter((message: { type: string }) => message.type === 'MSG-RES-08');
+      expect(unread).toEqual([]);
+    });
+
     it('shows a Resource with its fields to whoever sees it, and the columns left out of it (FR-SR-06, DEC-SR-33)', async () => {
       const an = await user('An', [DIGIKOM]);
       const dirk = await user('Dirk', [], 'admin');
@@ -868,6 +912,30 @@ describe.skipIf(!url)('the routes of Collections', () => {
       expect(parseUpdate({ ...update('3', []), tables: [{ ...visits, columns: [{ name: 'x', position: 1.5, dataType: null, description: '' }] }] })).toMatch(
         /Every exposed table/,
       );
+    });
+
+    it('lists every withdrawn Resource for who opens Withdrawn in Admin, the newest first, with the run that withdrew it (FR-SR-55)', async () => {
+      const dirk = await user('Dirk', [], 'admin');
+      const an = await user('An', [DIGIKOM]);
+      // A dbt project of its own, so that its runs follow on from each other alone.
+      const own = (runId: string, names: string[]) => ({ ...update(runId, names), projectId: '4242', projectName: 'withdrawn_test' });
+      await fromRegistry(own('1', ['w_offices', 'w_agents', 'w_regions']));
+      await fromRegistry(own('2', ['w_offices', 'w_agents']));
+      await fromRegistry(own('3', ['w_offices']));
+      expect((await an('GET', '/withdrawn')).json()).toMatchObject({ error: 'forbidden', permission: 'admin.open' });
+      const mine = async () =>
+        ((await dirk('GET', '/withdrawn')).json().resources as { displayName: string; key: string; project: string; collection: unknown; run: string | null }[]).filter(
+          (resource) => resource.project === 'withdrawn_test',
+        );
+      const listed = await mine();
+      expect(listed.map((resource) => [resource.displayName, resource.run, resource.collection])).toEqual([
+        ['w_agents', '3', null],
+        ['w_regions', '2', null],
+      ]);
+      expect(listed[0]).toMatchObject({ key: 'immoscoop-dataplatform.dbt_marts.w_agents' });
+      // Back in a run, it leaves the list.
+      await fromRegistry(own('4', ['w_offices', 'w_agents', 'w_regions']));
+      expect(await mine()).toEqual([]);
     });
   });
 
@@ -1514,7 +1582,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
       expect(decided.json().message).toMatchObject({ state: 'accepted', replies: [{ kind: 'decision', writer: { name: 'Dana' } }] });
     });
 
-    it('puts what identity tells about a User to that User alone, and to the Data Team (FR-PL-12, EC-PL-03, MSG-USR-01, MSG-USR-02)', async () => {
+    it('puts what identity tells about a User to that User alone, and to the Data Team (FR-PL-12, EC-PL-03, FR-PL-16, MSG-USR-01, MSG-USR-02, MSG-USR-03)', async () => {
       const notice = (payload: object, token = 'identity-token') =>
         app.inject({ method: 'POST', url: '/internal/users/notices', headers: { authorization: `Bearer ${token}` }, payload });
       const mo = await user('Mo', [PLANNING]);
@@ -1526,7 +1594,9 @@ describe.skipIf(!url)('the routes of Collections', () => {
       expect((await notice({ ...moved, deleted: 'no' })).statusCode).toBe(400);
       expect((await notice({ ...moved, to: '' })).statusCode).toBe(400);
       expect((await notice({ type: 'MSG-USR-02', userId: 'u-Mo' })).statusCode).toBe(400);
+      expect((await notice({ type: 'MSG-USR-09', userId: 'u-Mo', name: 'Mo' })).statusCode).toBe(400);
       expect((await notice({ type: 'MSG-USR-03', userId: 'u-Mo', name: 'Mo' })).statusCode).toBe(400);
+      expect((await notice({ type: 'MSG-USR-03', userId: 'u-Mo', name: 'Mo', email: 'mo@immoscoop.be', group: '' })).statusCode).toBe(400);
 
       const told = await notice(moved);
       expect(told.statusCode).toBe(201);
@@ -1554,6 +1624,22 @@ describe.skipIf(!url)('the routes of Collections', () => {
       expect(forTeam).toMatchObject({ type: 'MSG-USR-02', subject: { kind: 'user', id: 'u-Mo', name: 'Mo' } });
       expect((await (await user('Paul', [PLANNING]))('GET', `/messages/${back.json().id}`)).statusCode).toBe(404);
       expect((await mo('GET', `/messages/${back.json().id}`)).statusCode).toBe(200);
+
+      // A new User: for the Data Team, who opens them on Users; the new User does not see it (FR-PL-16).
+      const fresh = await notice({ type: 'MSG-USR-03', userId: 'u-Mo', name: 'Mo', email: 'mo@immoscoop.be', group: 'Lens user' });
+      expect(fresh.statusCode).toBe(201);
+      const forAdmin = (await admin('GET', '/messages?view=forYou')).json().messages.find((message: { id: string }) => message.id === fresh.json().id);
+      expect(forAdmin).toMatchObject({
+        type: 'MSG-USR-03',
+        kind: 'dataHub',
+        writer: null,
+        subject: { kind: 'user', id: 'u-Mo', name: 'Mo', exists: true },
+        params: { email: 'mo@immoscoop.be', group: 'Lens user' },
+        mayReply: false,
+      });
+      expect((await mo('GET', `/messages/${fresh.json().id}`)).statusCode).toBe(404);
+      expect((await mo('GET', '/messages?view=everything')).json().messages.map((message: { id: string }) => message.id)).not.toContain(fresh.json().id);
+      expect((await (await user('Paul', [PLANNING]))('GET', `/messages/${fresh.json().id}`)).statusCode).toBe(404);
     });
   });
 

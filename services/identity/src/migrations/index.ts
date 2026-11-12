@@ -7,6 +7,7 @@ import * as excelKeys from './0005-excel-keys.js';
 import * as forgetTheme from './0006-forget-theme.js';
 import * as permissionGroups from './0007-permission-groups.js';
 import * as groupsInDataHub from './0008-groups.js';
+import * as removeAndWithdrawn from './0009-remove-and-withdrawn.js';
 
 /** The migrations of identity, by name; they run in the order of their names (TR-PF-09). */
 export const migrations: Record<string, Migration> = {
@@ -18,4 +19,5 @@ export const migrations: Record<string, Migration> = {
   '0006-forget-theme': forgetTheme,
   '0007-permission-groups': permissionGroups,
   '0008-groups': groupsInDataHub,
+  '0009-remove-and-withdrawn': removeAndWithdrawn,
 };

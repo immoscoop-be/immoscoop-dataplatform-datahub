@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ResourceDetail } from './catalogue.js';
-import { cardinalityOf, draftOf, nounOf, recordedDraftOf, requestOf, strangers, subjectOf, unfinished } from './grain.js';
+import { cardinalityOf, carriersOf, draftOf, nounOf, recordedDraftOf, requestOf, strangers, subjectOf, unfinished } from './grain.js';
 import type { Proposal } from './registry.js';
 
 const resource = (fields: string[]): ResourceDetail => ({
@@ -150,5 +150,16 @@ describe('the grain and relations of a Resource being added (FR-CO-33, FR-CO-34)
   it('say what an identity is about in a word', () => {
     expect(nounOf('listing.listingId')).toBe('listing');
     expect(nounOf('homeLoanSimulation.generate')).toBe('homeLoanSimulation.generate');
+  });
+});
+
+describe('carriersOf', () => {
+  it('names a Resource that carries an identity in two fields once (FR-RC-09)', () => {
+    const resources = [
+      { id: 'r1', displayName: 'Credit lead creations (flat)' },
+      { id: 'r1', displayName: 'Credit lead creations (flat)' },
+      { id: 'r2', displayName: 'Lead sources, current (flat)' },
+    ];
+    expect(carriersOf({ resources })).toEqual(['Credit lead creations (flat)', 'Lead sources, current (flat)']);
   });
 });
