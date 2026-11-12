@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import Button from '@datahub/ui/primitives/Button.svelte';
@@ -76,7 +77,7 @@
     <p class="not-yet">{t('danger.notPublished')}</p>
   {:else}
     <form class="form" onsubmit={deprecate}>
-      <Field label={t('deprecate.reason')}><textarea bind:value={reason} rows="3" maxlength="500"></textarea></Field>
+      <Field label={t('deprecate.reason')}><textarea {...NO_PASSWORD_MANAGER} bind:value={reason} rows="3" maxlength="500"></textarea></Field>
       <Field label={t('deprecate.instead')} hint={t('deprecate.instead.hint')}>
         <select bind:value={instead}>
           <option value="">{t('deprecate.nothing')}</option>

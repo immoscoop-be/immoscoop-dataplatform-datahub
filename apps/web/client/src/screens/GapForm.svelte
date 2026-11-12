@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import { fieldsOf, type GapScope, hasScope } from '@datahub/contracts/gaps';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
@@ -93,7 +94,7 @@
   <label class="field">
     <span>{t('gaps.text')}</span>
     <!-- svelte-ignore a11y_autofocus -->
-    <textarea bind:value={text} rows="2" maxlength={MAX} autofocus onkeydown={(event) => event.key === 'Escape' && oncancel()}></textarea>
+    <textarea {...NO_PASSWORD_MANAGER} bind:value={text} rows="2" maxlength={MAX} autofocus onkeydown={(event) => event.key === 'Escape' && oncancel()}></textarea>
   </label>
   <div class="add">
     <span class="meta">{t('gaps.narrow')}</span>
@@ -105,8 +106,8 @@
     <section class="block" aria-label={t('gaps.period')}>
       <div class="head"><Icon name="calendar-blank" /><b>{t('gaps.period')}</b><span class="meta">{t('gaps.period.hint')}</span><IconButton icon="x" label={t('gaps.remove.period')} onclick={() => (period = null)} /></div>
       <div class="grid">
-        <label class="field"><span>{t('gaps.from')}</span><input type="date" bind:value={period.from} /></label>
-        <label class="field"><span>{t('gaps.to')}</span><input type="date" bind:value={period.to} /></label>
+        <label class="field"><span>{t('gaps.from')}</span><input {...NO_PASSWORD_MANAGER} type="date" bind:value={period.from} /></label>
+        <label class="field"><span>{t('gaps.to')}</span><input {...NO_PASSWORD_MANAGER} type="date" bind:value={period.to} /></label>
       </div>
     </section>
   {/if}
@@ -145,7 +146,7 @@
               {#each rows.values as one (one)}
                 <span class="code">{one}<button type="button" aria-label={t('gaps.removeValue', { value: one })} onclick={() => rows && (rows.values = rows.values.filter((other) => other !== one))}>×</button></span>
               {/each}
-              <input type="text" bind:value aria-label={t('gaps.addValue')} placeholder={t('gaps.addValue')} maxlength="200" onkeydown={addValue} onblur={() => addValue()} />
+              <input {...NO_PASSWORD_MANAGER} type="text" bind:value aria-label={t('gaps.addValue')} placeholder={t('gaps.addValue')} maxlength="200" onkeydown={addValue} onblur={() => addValue()} />
             </div>
           </div>
         {/if}

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import IconPicker from '@datahub/ui/components/IconPicker.svelte';
   import Callout from '@datahub/ui/containers/Callout.svelte';
   import { formatBytes } from '@datahub/ui/foundations/bytes.js';
@@ -314,11 +315,11 @@
     <section class="card lens" aria-labelledby="the-lens">
       <h2 id="the-lens">{t('lens.make.lens')}</h2>
       <fieldset disabled={frozen}>
-        <Field label={t('lens.field.name')}><input type="text" value={lens?.name ?? name} oninput={(event) => (name = event.currentTarget.value)} maxlength="120" required /></Field>
-        <Field label={t('lens.field.question')} hint={t('lens.field.question.hint')}><input type="text" value={lens?.question ?? question} oninput={(event) => (question = event.currentTarget.value)} maxlength="500" /></Field>
-        <Field label={t('lens.field.shows')}><textarea rows="2" maxlength="500" value={lens?.shows ?? shows} oninput={(event) => (shows = event.currentTarget.value)}></textarea></Field>
+        <Field label={t('lens.field.name')}><input {...NO_PASSWORD_MANAGER} type="text" value={lens?.name ?? name} oninput={(event) => (name = event.currentTarget.value)} maxlength="120" required /></Field>
+        <Field label={t('lens.field.question')} hint={t('lens.field.question.hint')}><input {...NO_PASSWORD_MANAGER} type="text" value={lens?.question ?? question} oninput={(event) => (question = event.currentTarget.value)} maxlength="500" /></Field>
+        <Field label={t('lens.field.shows')}><textarea {...NO_PASSWORD_MANAGER} rows="2" maxlength="500" value={lens?.shows ?? shows} oninput={(event) => (shows = event.currentTarget.value)}></textarea></Field>
         <Field label={t('lens.field.steps')} hint={t('lens.field.steps.hint')}>
-          <textarea rows="3" value={lens ? lens.steps.join('\n') : steps} oninput={(event) => (steps = event.currentTarget.value)}></textarea>
+          <textarea {...NO_PASSWORD_MANAGER} rows="3" value={lens ? lens.steps.join('\n') : steps} oninput={(event) => (steps = event.currentTarget.value)}></textarea>
         </Field>
         <Field label={t('lens.field.tags')} group>
           <div class="tags">
@@ -326,7 +327,7 @@
               <span class="tag">#{word}{#if !frozen}<button type="button" aria-label={t('lens.field.tag.remove', { tag: word })} onclick={() => (tags = tags.filter((other) => other !== word))}><Icon name="x" /></button>{/if}</span>
             {/each}
             {#if !frozen}
-              <input
+              <input {...NO_PASSWORD_MANAGER}
                 class="new-tag"
                 type="text"
                 placeholder="+ Tag"
@@ -349,7 +350,7 @@
             {@const shown = defaultOf(parameter)}
             <div class="parameter">
               <span class="mono">@{parameter.name}</span>
-              <input type="text" value={parameter.label} aria-label={t('lens.field.parameter.label', { name: parameter.name })} maxlength="60" oninput={(event) => (labels = { ...labels, [parameter.name]: event.currentTarget.value })} />
+              <input {...NO_PASSWORD_MANAGER} type="text" value={parameter.label} aria-label={t('lens.field.parameter.label', { name: parameter.name })} maxlength="60" oninput={(event) => (labels = { ...labels, [parameter.name]: event.currentTarget.value })} />
               <span class="kind"><Icon name={kindOf(parameter.kind).icon} />{t(kindOf(parameter.kind).label)}</span>
               <span class="default" title={shown.fn ? t('lens.value.function') : undefined}>{#if shown.fn}<Icon name="function" />{/if}{shown.value}</span>
             </div>
@@ -362,7 +363,7 @@
             {#if groups && groups.length === 0}
               <p class="meta">{t('lens.newCollection.noGroup')}</p>
             {:else}
-              <Field label={t('collection.field.name')}><input type="text" bind:value={newName} maxlength="80" /></Field>
+              <Field label={t('collection.field.name')}><input {...NO_PASSWORD_MANAGER} type="text" bind:value={newName} maxlength="80" /></Field>
               <Field label={t('lens.newCollection.owner')}>
                 <select bind:value={newOwner} disabled={!groups}>
                   {#each groups ?? [] as group (group.id)}<option value={group.id}>{group.name}</option>{/each}
@@ -467,11 +468,11 @@
           {:else if lens.mine && canMake}
             <!-- Sending it again takes `lenses.make` (FR-PL-14). -->
             <p class="meta failed" role="alert">{t('lens.size.notSent')}</p>
-            <Field label={t('lens.size.word')}><textarea rows="2" maxlength="500" bind:value={text}></textarea></Field>
+            <Field label={t('lens.size.word')}><textarea {...NO_PASSWORD_MANAGER} rows="2" maxlength="500" bind:value={text}></textarea></Field>
             <Button disabled={busy} onclick={sendAgain}><Icon name="paper-plane-tilt" />{t('lens.size.sendAgain')}</Button>
           {/if}
         {:else}
-          <Field label={t('lens.size.word')}><textarea rows="2" maxlength="500" bind:value={text}></textarea></Field>
+          <Field label={t('lens.size.word')}><textarea {...NO_PASSWORD_MANAGER} rows="2" maxlength="500" bind:value={text}></textarea></Field>
           <Button wide disabled={!ready} onclick={() => make(false)}><Icon name="paper-plane-tilt" />{t('lens.size.send')}</Button>
           <p class="meta">{t('lens.size.sendNote')}</p>
         {/if}

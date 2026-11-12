@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import EditBar from '@datahub/ui/containers/EditBar.svelte';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
@@ -130,7 +131,7 @@
             <div class="type">{field.dataType ?? ''}</div>
             <div class="roles">{@render pills(field)}</div>
           </div>
-          <textarea bind:value={texts[field.name]} rows="3" maxlength="2000" aria-label={`${t('description.business')} · ${field.name}`} placeholder={t('resource.fields.placeholder')}></textarea>
+          <textarea {...NO_PASSWORD_MANAGER} bind:value={texts[field.name]} rows="3" maxlength="2000" aria-label={`${t('description.business')} · ${field.name}`} placeholder={t('resource.fields.placeholder')}></textarea>
           <div>
             {#if changed}<span class="pill warn">{t('resource.changedInDbt', { date: day(changed.at) })}</span>{/if}
             <p class="dbt">{field.description || '–'}</p>

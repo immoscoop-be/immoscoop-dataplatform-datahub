@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import { renderLog } from '@datahub/contracts/log';
   import Intro from '@datahub/ui/containers/Intro.svelte';
   import Callout from '@datahub/ui/containers/Callout.svelte';
@@ -157,7 +158,7 @@
 
 <form class="find card" role="search" aria-label={t('collections.search.label')} onsubmit={search}>
   <Icon name="magnifying-glass" />
-  <input type="search" bind:value={question} placeholder={t('collections.search.placeholder')} aria-label={t('collections.search.label')} onkeydown={(event) => event.key === 'Escape' && clear()} />
+  <input {...NO_PASSWORD_MANAGER} type="search" bind:value={question} placeholder={t('collections.search.placeholder')} aria-label={t('collections.search.label')} onkeydown={(event) => event.key === 'Escape' && clear()} />
 </form>
 
 {#if asked !== null}

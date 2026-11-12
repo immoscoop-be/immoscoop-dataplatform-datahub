@@ -4,6 +4,7 @@
 </script>
 
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import type { GapScope } from '@datahub/contracts/gaps';
   import type { SummarySource } from '@datahub/contracts/summary';
   import FactsList from '@datahub/ui/components/FactsList.svelte';
@@ -341,7 +342,7 @@
             {#if describes('behaviour')}<div><div class="label">{t('resource.intendedUse')}</div><MarkdownEditor id="intended-use" bind:value={draft.intendedUse} label={t('resource.intendedUse')} maxlength={2000} /></div>{/if}
             {#if describes('pitfalls')}<div><div class="label">{t('resource.pitfalls')}</div><MarkdownEditor id="pitfalls" bind:value={draft.pitfalls} label={t('resource.pitfalls')} maxlength={2000} /></div>{/if}
           </div>
-          {#if describes('availableSince')}<div class="reliable"><Field label={t('resource.reliableSince')}><input type="date" bind:value={draft.reliableSince} /></Field></div>{/if}
+          {#if describes('availableSince')}<div class="reliable"><Field label={t('resource.reliableSince')}><input {...NO_PASSWORD_MANAGER} type="date" bind:value={draft.reliableSince} /></Field></div>{/if}
         </form>
       {:else}
         <Grid min="var(--tile-min)" tight>

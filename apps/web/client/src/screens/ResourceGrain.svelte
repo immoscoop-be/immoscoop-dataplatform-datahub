@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import type { IconName } from '@datahub/ui/foundations/icons.js';
   import { levelName } from '@datahub/ui/foundations/levels.js';
@@ -180,7 +181,7 @@
     {@render origin(draft.origins.grain ?? '')}
 
     <span class="meta">{t('grain.sentence')}</span>
-    <span class="value"><input class="sentence" bind:value={draft.grainSentence} maxlength="200" aria-label={t('grain.sentence.label')} /></span>
+    <span class="value"><input {...NO_PASSWORD_MANAGER} class="sentence" bind:value={draft.grainSentence} maxlength="200" aria-label={t('grain.sentence.label')} /></span>
     {@render origin(draft.grainSentence.trim() ? 'written' : '')}
 
     <span class="meta">{t('grain.modelType')}</span>
@@ -254,7 +255,7 @@
             </td>
             <td>
               {#if field.kind !== 'none'}
-                <input
+                <input {...NO_PASSWORD_MANAGER}
                   class="identity"
                   value={field.identity}
                   placeholder="entity.identity"

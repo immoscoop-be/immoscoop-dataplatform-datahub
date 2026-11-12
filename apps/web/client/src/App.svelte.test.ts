@@ -1414,6 +1414,9 @@ describe('the web app, signed in', () => {
     // An address no one in Slack has is said in the tile.
     await fireEvent.click(tile.getByRole('button', { name: 'Another address' }));
     const field = tile.getByRole('textbox', { name: 'Your address in Slack' });
+    // No password manager offers itself on it (DEC-UX-211).
+    expect(field.hasAttribute('data-1p-ignore')).toBe(true);
+    expect(field.getAttribute('data-lpignore')).toBe('true');
     await fireEvent.input(field, { target: { value: 'nobody@immoscoop.be' } });
     await fireEvent.click(tile.getByRole('button', { name: 'Look it up' }));
     expect(await tile.findByText('No one in Slack has this address. Check it in your profile in Slack.')).toBeTruthy();
