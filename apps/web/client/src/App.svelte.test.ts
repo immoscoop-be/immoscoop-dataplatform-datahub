@@ -1912,7 +1912,7 @@ describe('the flags the services send per object (FR-PL-14, DEC-PL-03)', () => {
   const ONLY_GAPS = { description: false, behaviour: false, pitfalls: false, availableSince: false, gaps: true, keyFields: false, entityMapping: false };
 
   it('lets a User describe a Resource only where catalogue says, and publish or deprecate it only as it says', async () => {
-    serve({ groups: ['g1'], weekly: { canEdit: true, canDescribe: ONLY_GAPS, canPublish: false, canDeprecate: false, canAssign: false } });
+    serve({ groups: ['g1'], weekly: { canEdit: true, canDescribe: ONLY_GAPS, canPublish: false, canDeprecate: false, canAssign: false, canRemove: false } });
     open('/resources/r2');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
@@ -3423,13 +3423,35 @@ describe('Folders', () => {
     expect(location.pathname).toBe('/collections/c1/folders/f1');
   });
 
-  it('shows no such button on the page of a folder to whoever may not add Resources to a Collection', async () => {
-    serve({ groups: ['g1'], lenses: [{ ...LENS }], creditWith: FOLDERED });
+  it('shows no such button on the page of a folder to whoever may not remove Resources from a Collection', async () => {
+    serve({ as: 'lensUser', groups: ['g1'], lenses: [{ ...LENS }], creditWith: FOLDERED });
     open('/collections/c1/folders/f1');
     render(App, { config: CONFIG });
     const table = within(await screen.findByRole('table', { name: 'In deze map' }));
     expect(await table.findByText('Weekly lead volume')).toBeTruthy();
     expect(table.queryByRole('button', { name: /uit de Collection halen/ })).toBeNull();
+  });
+
+  it('lets its Owner Unit take a Resource that is not published out of the Collection, on the page of a folder (DEC-UX-214, FR-CO-43)', async () => {
+    const calls = serve({ groups: ['g1'], lenses: [{ ...LENS }], creditWith: FOLDERED });
+    open('/collections/c1/folders/f1');
+    render(App, { config: CONFIG });
+    const table = within(await screen.findByRole('table', { name: 'In deze map' }));
+    await fireEvent.click(await table.findByRole('button', { name: 'Weekly lead volume uit de Collection halen' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/resources/r2/collection' }));
+  });
+
+  it('tells its Owner Unit in the Danger zone that only the Data Team takes a published Resource out now (DEC-UX-214)', async () => {
+    serve({ groups: ['g1'], weekly: { published: true, level: 3, canRemove: false } });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
+    await fireEvent.click(main.getByRole('tab', { name: 'Gevarenzone' }));
+    const danger = within(main.getByRole('tabpanel', { name: 'Gevarenzone' }));
+    expect(danger.getByRole('heading', { name: 'Uit de Collection halen' })).toBeTruthy();
+    expect(danger.getByText(/Weekly lead volume is gepubliceerd: collega’s kunnen erop rekenen, dus enkel het Data Team haalt hem nu uit Credit leads/)).toBeTruthy();
+    expect(danger.queryByRole('button', { name: /Uit Credit leads halen/ })).toBeNull();
   });
 
   it('makes, renames and deletes folders, only an empty one, with a warning for one that is not (FR-CO-39)', async () => {

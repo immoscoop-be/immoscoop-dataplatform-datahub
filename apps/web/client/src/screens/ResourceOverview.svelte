@@ -61,6 +61,7 @@
     ondeprecate,
     onundeprecate,
     removeFrom = null,
+    removeLater = null,
     onremove,
     part = $bindable('summary'),
   }: {
@@ -92,8 +93,10 @@
     others: readonly { id: string; displayName: string; collection: string }[];
     ondeprecate: (reason: string, insteadOf: string | null) => Promise<boolean>;
     onundeprecate: () => Promise<boolean>;
-    /** The name of its Collection, when the User may take it out of it (`resources.assign`, DEC-UX-212); null otherwise. */
+    /** The name of its Collection, when the User may take it out of it (`resources.remove`, DEC-UX-212, DEC-PL-08); null otherwise. */
     removeFrom?: string | null;
+    /** The name of its Collection, when only the Data Team takes it out now that it is published (DEC-UX-214); null otherwise. */
+    removeLater?: string | null;
     /** Takes it out of its Collection; answers whether it worked. */
     onremove?: () => Promise<boolean>;
     /** The part on screen, which the page can open, such as the Danger zone from a deprecation. */
@@ -116,7 +119,7 @@
   ];
   /** The Danger zone is for who may deprecate it only. */
   /** The Danger zone shows for whoever may deprecate it, or take it out of its Collection (DEC-UX-176, DEC-UX-212). */
-  const dangers = $derived(canDeprecate || (removeFrom !== null && onremove !== undefined));
+  const dangers = $derived(canDeprecate || (removeFrom !== null && onremove !== undefined) || removeLater !== null);
   const shown = $derived(PARTS.filter((one) => one.id !== 'danger' || dangers));
   /** Which attributes each part edits: Known Behaviour holds the intended use, the pitfalls and since when it is reliable. */
   const EDITS: Record<Editable, readonly DescribeAttribute[]> = { description: ['description'], behaviour: ['behaviour', 'pitfalls', 'availableSince'], querying: ['keyFields'] };
@@ -473,7 +476,7 @@
       </SubTile>
     {:else if part === 'danger' && dangers}
       {@render head(t('overview.danger'), t('overview.danger.lead', { name: resource.displayName }))}
-      <OverviewDanger {resource} {others} deprecates={canDeprecate} collection={removeFrom} {ondeprecate} {onundeprecate} {onremove} />
+      <OverviewDanger {resource} {others} deprecates={canDeprecate} collection={removeFrom} later={removeLater} {ondeprecate} {onundeprecate} {onremove} />
     {/if}
   </div>
 </div>

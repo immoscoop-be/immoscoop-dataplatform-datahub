@@ -531,6 +531,35 @@ describe.skipIf(!url)('the routes of Collections', () => {
       expect((await an('DELETE', `/collections/${collection.id}`)).statusCode).toBe(204);
     });
 
+    it('lets its Owner Unit take a Resource out of the Collection while it is not published, the Data Team always (DEC-PL-08, FR-CO-43)', async () => {
+      const an = await user('An', [DIGIKOM]);
+      const bert = await user('Bert', [SALES]);
+      const lens = await user('Lea', [DIGIKOM], 'lensUser');
+      const dirk = await user('Dirk', [], 'admin');
+      await fromRegistry(update('3', ['visits', 'leads', 'agencies', 'offices']));
+      const waiting = (await dirk('GET', '/resources?collection=none')).json().resources as { id: string; name: string }[];
+      const offices = waiting.find((resource) => resource.name === 'offices')!;
+      const collection = (await an('POST', '/collections', { name: 'Offices', description: 'Offices.', icon: 'globe', ownerUnit: DIGIKOM.id, visibility: 'public' })).json();
+      const into = () => dirk('PUT', `/resources/${offices.id}/collection`, { collectionId: collection.id });
+      expect((await into()).statusCode).toBe(200);
+
+      // Not published: An of its Owner Unit takes it out, and the Resource says so beforehand; nobody else of theirs.
+      expect((await an('GET', `/resources/${offices.id}`)).json().resource).toMatchObject({ canRemove: true, canAssign: false });
+      expect((await bert('DELETE', `/resources/${offices.id}/collection`)).json()).toMatchObject({ error: 'forbidden', permission: 'resources.remove' });
+      expect((await lens('DELETE', `/resources/${offices.id}/collection`)).statusCode).toBe(403);
+      expect((await an('DELETE', `/resources/${offices.id}/collection`)).statusCode).toBe(204);
+
+      // Published: colleagues may rely on it, so only the Data Team takes it out now.
+      expect((await into()).statusCode).toBe(200);
+      await database.db.updateTable('resources').set({ publishedAt: new Date(), publishedBy: 'u-An' }).where('id', '=', offices.id).execute();
+      expect((await an('GET', `/resources/${offices.id}`)).json().resource.canRemove).toBe(false);
+      const refused = await an('DELETE', `/resources/${offices.id}/collection`);
+      expect(refused.statusCode).toBe(403);
+      expect(refused.json().message).toMatch(/^It is published: colleagues may rely on it, so only the Data Team takes it out/);
+      expect((await dirk('GET', `/resources/${offices.id}`)).json().resource.canRemove).toBe(true);
+      expect((await dirk('DELETE', `/resources/${offices.id}/collection`)).statusCode).toBe(204);
+    });
+
     it('tells the Owner Unit that a Resource arrived, never who added it, also when they are in it (MSG-RES-08)', async () => {
       const an = await user('An', [DIGIKOM]);
       const max = await user('Max', [DIGIKOM], 'admin');

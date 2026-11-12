@@ -113,6 +113,8 @@ export interface ResourceDetail extends Resource {
   canPublish?: boolean;
   canDeprecate?: boolean;
   canAssign?: boolean;
+  /** May take it out of its Collection (`resources.remove`, DEC-PL-08); left out by an older catalogue. */
+  canRemove?: boolean;
 }
 
 /** The attributes of a Resource that are described one by one (DEC-PL-03). */

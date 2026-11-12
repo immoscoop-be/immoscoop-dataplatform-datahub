@@ -11,14 +11,16 @@
    * The Danger zone of the Overview, for its Owner Unit and the Data Team (DEC-UX-176): what changes how everyone may
    * rely on the Resource, each explained before its form. Deprecate (FR-SR-50): what it does and when to do it, then
    * why, required, and what to use instead, optional, a published Resource the User sees; once deprecated, who did it,
-   * when and why, and "Take it away". Only a published Resource can be deprecated. For the Data Team, under it, Remove
-   * from the Collection (DEC-UX-212): what it does, then one button.
+   * when and why, and "Take it away". Only a published Resource can be deprecated. Under it, Remove from the
+   * Collection (DEC-UX-212): what it does, then one button, for who may take it out (`resources.remove`, DEC-PL-08);
+   * its Owner Unit, once it is published, reads instead that only the Data Team takes it out now (DEC-UX-214).
    */
   let {
     resource,
     others,
     deprecates = true,
     collection = null,
+    later = null,
     ondeprecate,
     onundeprecate,
     onremove,
@@ -26,8 +28,10 @@
     resource: ResourceDetail;
     /** May deprecate it and undo that (`resources.deprecate`). */
     deprecates?: boolean;
-    /** The name of its Collection, when the User may take it out of it (`resources.assign`); null otherwise. */
+    /** The name of its Collection, when the User may take it out of it (`resources.remove`); null otherwise. */
     collection?: string | null;
+    /** The name of its Collection, when its Owner Unit may no longer take it out, as it is published; null otherwise. */
+    later?: string | null;
     /** The published Resources the User sees, to use instead, each with its Collection. */
     others: readonly { id: string; displayName: string; collection: string }[];
     ondeprecate: (reason: string, insteadOf: string | null) => Promise<boolean>;
@@ -112,24 +116,29 @@
   {#if failed}<p class="failed" role="alert">{t('resource.actionFailed')}</p>{/if}
 </section>
 {/if}
-{#if collection && onremove}
+{#if (collection && onremove) || later}
+  {@const from = collection ?? later ?? ''}
   <section class="danger" class:next={deprecates} aria-labelledby="remove-title">
     <div class="head">
       <Icon name="minus-circle-fill" />
       <div>
         <h3 id="remove-title">{t('danger.remove.title')}</h3>
-        <p>{t('danger.remove.when', { name: resource.displayName, collection })}</p>
+        <p>{t('danger.remove.when', { name: resource.displayName, collection: from })}</p>
       </div>
     </div>
     <div class="does">
-      <p class="line"><Icon name="minus-circle-fill" /><span><b>{t('danger.remove.leaves.title', { collection })}</b> {t('danger.remove.leaves.text')}</span></p>
+      <p class="line"><Icon name="minus-circle-fill" /><span><b>{t('danger.remove.leaves.title', { collection: from })}</b> {t('danger.remove.leaves.text')}</span></p>
       <p class="line"><Icon name="check-circle-fill" /><span><b>{t('danger.remove.keeps.title')}</b> {t('danger.remove.keeps.text')}</span></p>
       {#if resource.withdrawn}<p class="line"><Icon name="archive-fill" /><span><b>{t('danger.remove.withdrawn.title')}</b> {t('danger.remove.withdrawn.text')}</span></p>{/if}
     </div>
-    <div class="foot gap">
-      <span class="meta">{t('deprecate.history')}</span>
-      <Button disabled={removing} onclick={remove}><Icon name="minus-circle-fill" />{t('danger.remove.button', { collection })}</Button>
-    </div>
+    {#if collection && onremove}
+      <div class="foot gap">
+        <span class="meta">{t('deprecate.history')}</span>
+        <Button disabled={removing} onclick={remove}><Icon name="minus-circle-fill" />{t('danger.remove.button', { collection })}</Button>
+      </div>
+    {:else}
+      <p class="not-yet">{t('danger.remove.later', { name: resource.displayName, collection: from })}</p>
+    {/if}
     {#if removeFailed}<p class="failed" role="alert">{t('resource.actionFailed')}</p>{/if}
   </section>
 {/if}

@@ -939,6 +939,7 @@
         {identity}
         {registry}
         assigns={can(permissions, 'resources.assign')}
+        removes={reach(permissions, 'resources.remove')}
         anyOwnerUnit={can(permissions, 'collections.make') && permissions['collections.make'].values.ownerUnit === 'any'}
         own={signedIn.me.groups}
         {waiting}
@@ -954,7 +955,8 @@
         folderId={page.id}
         {lenses}
         {catalogue}
-        assigns={can(permissions, 'resources.assign')}
+        removes={reach(permissions, 'resources.remove')}
+        own={signedIn.me.groups}
         go={(path) => router.go(path)}
         onchanged={refresh}
         onmove={move}

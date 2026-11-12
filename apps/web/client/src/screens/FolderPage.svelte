@@ -20,6 +20,7 @@
   import type { Catalogue, Collection, CollectionResource, Folder } from '../lib/catalogue.js';
   import { dragging, dragOf, dropOf, isOver, type Mover } from '../lib/dragging.svelte.js';
   import { contents, counted, holdsText, pathTo } from '../lib/folders.js';
+  import { removable } from '../lib/permissions.js';
   import type { LensItem } from '../lib/query.js';
   import { collectionPath, folderPath, lensPath, resourcePath } from '../lib/routes.js';
   import { rowOf } from '../lib/rows.js';
@@ -39,7 +40,8 @@
     folderId,
     lenses,
     catalogue,
-    assigns = false,
+    removes = null,
+    own = [],
     go,
     onchanged,
     onmove,
@@ -49,8 +51,10 @@
     folderId: string;
     lenses: readonly LensItem[] | undefined;
     catalogue: Catalogue;
-    /** May take a Resource out of the Collection (`resources.assign`, DEC-UX-212). */
-    assigns?: boolean;
+    /** How far the User takes Resources out of a Collection (`resources.remove`, DEC-UX-212, DEC-PL-08): every one, or theirs while not published. */
+    removes?: 'theirs' | 'every' | null;
+    /** The fixed IDs of the groups of the User, for a Collection that does not say whose it is. */
+    own?: readonly string[];
     go: (path: string) => void;
     /** The folders changed: the Collections are read again. */
     onchanged: () => Promise<void>;
@@ -58,6 +62,10 @@
   } = $props();
 
   const folder = $derived(collection?.folders.find((candidate) => candidate.id === folderId));
+  /** The Collection is of one of the User's Owner Units. */
+  const owned = $derived(collection !== undefined && collection !== null && (collection.owned ?? own.includes(collection.ownerUnit.id)));
+  /** A column for ⊖ when the User takes out any of them: every one, or, of their own Collection, those not published (DEC-UX-214). */
+  const assigns = $derived(removes === 'every' || (removes === 'theirs' && owned));
   const inside = $derived(collection && folder ? contents(collection, lenses ?? [], folder.id) : undefined);
   const manage = $derived(collection?.canManage ?? false);
 
@@ -244,7 +252,9 @@
             {/if}
           </td>
           {#if assigns}
-            <td class="remove"><IconButton icon="minus-circle" label={t('collection.remove', { name: item.displayName })} onclick={() => takeOut(item)} /></td>
+            <td class="remove">
+              {#if removable(removes, owned, item.published)}<IconButton icon="minus-circle" label={t('collection.remove', { name: item.displayName })} onclick={() => takeOut(item)} />{/if}
+            </td>
           {/if}
         </tr>
       {/each}

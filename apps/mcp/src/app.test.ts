@@ -202,7 +202,7 @@ describe('mcp', () => {
     const text = (await tool('how_to_use', {}, token)).content[0]?.text ?? '';
     expect(text).toContain('your Permission group, Admin');
     expect(text).toContain('"What did everyone query this week?"');
-    expect(text).toContain('- Open Admin: webhooks, Excel keys, users and Permission groups');
+    expect(text).toContain('- Open Admin: webhooks, Excel keys, users, Permission groups and the withdrawn Resources');
 
     // A Business analyst sees only the queries on the Resources of their Owner Units; a Lens user makes none.
     const analyst = (await tool('how_to_use', {}, await issuer.sign())).content[0]?.text ?? '';

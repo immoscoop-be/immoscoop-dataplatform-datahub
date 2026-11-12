@@ -1,5 +1,5 @@
 import type { ServiceCallerVerifier } from '@datahub/auth';
-import { type CollectionIcon, type CollectionVisibility, NO_PERMISSIONS, permissionValue } from '@datahub/contracts';
+import { type CollectionIcon, type CollectionVisibility, NO_PERMISSIONS, permissionValue, reach } from '@datahub/contracts';
 import { isCollectionIcon } from '@datahub/contracts/collection-icons';
 import { type GapScope, gapScopeSchema } from '@datahub/contracts/gaps';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
@@ -76,7 +76,21 @@ const ADD_LIMIT = 200;
 const NOT_FOUND = { error: 'not_found', message: 'No such Collection.' };
 const NO_RESOURCE = { error: 'not_found', message: 'No such Resource.' };
 const NO_FOLDER = { error: 'not_found', message: 'No such folder, Resource or Lens in this Collection.' };
-const ASSIGN_ONLY = forbidden('resources.assign', 'Only a Data Admin adds Resources to Collections, moves and removes them.');
+const ASSIGN_ONLY = forbidden('resources.assign', 'Only a Data Admin adds Resources to Collections and moves them.');
+const REMOVE_ONLY = forbidden('resources.remove', 'You may not take this Resource out of its Collection.');
+const REMOVE_PUBLISHED = forbidden(
+  'resources.remove',
+  'It is published: colleagues may rely on it, so only the Data Team takes it out of its Collection now. Before it is published, its Owner Unit can.',
+);
+
+/**
+ * Whether the User may take a Resource out of its Collection (DEC-PL-08, FR-CO-43): with `resources.remove` for every
+ * Resource, published or not; for those of their Owner Units, only while it is not published.
+ */
+function removable(who: Viewer, published: boolean, ownerUnit: string | null): boolean {
+  const how = reach(who.permissions, 'resources.remove');
+  return how === 'every' || (how === 'theirs' && !published && theirs(who, ownerUnit));
+}
 
 /** A refusal for want of a Permission, as a route answers it (TR-PL-06): for an attribute of a Resource, with that attribute. */
 type Refusal = ReturnType<typeof forbidden> & { attribute?: Attribute };
@@ -450,14 +464,20 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     return addOutcome(reply, await resources.add([{ id: resource.id }], collection, who), () => resources.get(resource.id));
   });
 
+  // With `resources.remove`, a User takes a Resource out of its Collection: every one, or one of their Owner Units
+  // while it is not published (DEC-PL-08, FR-CO-43).
   app.delete<{ Params: { id: string } }>('/resources/:id/collection', async (request, reply) => {
     const who = viewer(request);
-    if (!may(who, 'resources.assign')) {
-      return reply.code(403).send(ASSIGN_ONLY);
+    if (!may(who, 'resources.remove')) {
+      return reply.code(403).send(REMOVE_ONLY);
     }
     const resource = await resources.get(request.params.id);
     if (!resource) {
       return reply.code(404).send(NO_RESOURCE);
+    }
+    const collection = resource.collectionId ? await collections.get(resource.collectionId, who) : undefined;
+    if (resource.collectionId && !removable(who, resource.published, collection?.ownerUnit.id ?? null)) {
+      return reply.code(403).send(reach(who.permissions, 'resources.remove') === 'theirs' && resource.published && collection?.owned ? REMOVE_PUBLISHED : REMOVE_ONLY);
     }
     return (await resources.remove(resource.id, who))
       ? reply.code(204).send()
@@ -489,9 +509,10 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
   /**
    * What the User may do with a Resource, from their Permissions and the Owner Unit of its Collection, as the web app
    * shows it (TR-PL-06): each attribute they may describe (DEC-PL-03), any of them as `canEdit`, publishing as its Owner
-   * (DEC-PL-06), deprecating, and the work of a Data Admin. Without a Collection, a Resource has nothing to describe yet.
+   * (DEC-PL-06), deprecating, taking it out of its Collection (DEC-PL-08), and the work of a Data Admin. Without a
+   * Collection, a Resource has nothing to describe yet.
    */
-  function abilities(who: Viewer, collection: Collection | undefined) {
+  function abilities(who: Viewer, collection: Collection | undefined, published: boolean) {
     const ownerUnit = collection?.ownerUnit.id ?? null;
     const canDescribe = describable(who, ownerUnit);
     return {
@@ -500,6 +521,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       canPublish: ownerUnit !== null && may(who, 'resources.publish') && theirs(who, ownerUnit),
       canDeprecate: ownerUnit !== null && reaches(who, 'resources.deprecate', ownerUnit),
       canAssign: may(who, 'resources.assign'),
+      canRemove: ownerUnit !== null && removable(who, published, ownerUnit),
     };
   }
 
@@ -514,7 +536,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     }
     const who = viewer(request);
     const collection = detail.collectionId === found.resource.collectionId ? found.collection : detail.collectionId ? await collections.get(detail.collectionId, who) : undefined;
-    return { resource: { ...detail, ...abilities(who, collection) } };
+    return { resource: { ...detail, ...abilities(who, collection, detail.published) } };
   }
 
   app.get<{ Params: { id: string } }>('/resources/:id', async (request, reply) => {

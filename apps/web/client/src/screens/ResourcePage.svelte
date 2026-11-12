@@ -14,7 +14,7 @@
   import { cardsOf } from '../lib/learning.js';
   import { useLearning } from '../lib/learning-context.js';
   import type { CardChanges, Catalogue, Collection, DescribeAttribute, KnownGap, LogEntry, Related, ResourceDetail } from '../lib/catalogue.js';
-  import { can, canWith, reach, type Permissions } from '../lib/permissions.js';
+  import { can, canWith, reach, removable, type Permissions } from '../lib/permissions.js';
   import type { Conversation } from '../lib/messages.js';
   import type { QueryClient, Storage } from '../lib/query.js';
   import type { Registry } from '../lib/registry.js';
@@ -150,6 +150,10 @@
   const mayPublish = $derived(resource.canPublish ?? (isOwner && can(permissions, 'resources.publish')));
   /** Adding it to a Collection, and its grain and model type, are the work of a Data Admin (`resources.assign`). */
   const assigns = $derived(resource.canAssign ?? can(permissions, 'resources.assign'));
+  /** Taking it out of its Collection (`resources.remove`, DEC-PL-08): every one, or one of their Owner Units while not published. */
+  const canRemove = $derived(resource.collectionId !== null && (resource.canRemove ?? removable(reach(permissions, 'resources.remove'), isOwner, resource.published)));
+  /** Its Owner Unit may no longer take it out once it is published: the Danger zone says who does now (DEC-UX-214). */
+  const removedByTeam = $derived(!canRemove && resource.published && isOwner && reach(permissions, 'resources.remove') === 'theirs');
   /** The published Resources the User sees, to use instead of this one. */
   const others = $derived(
     (collections ?? []).flatMap((one) => one.resources.filter((item) => item.published && item.id !== resource.id).map((item) => ({ ...item, collection: one.name }))),
@@ -383,7 +387,8 @@
       {others}
       ondeprecate={(why, instead) => mark(() => catalogue.deprecate(resource.id, why, instead))}
       onundeprecate={() => mark(() => catalogue.undeprecate(resource.id))}
-      removeFrom={assigns && resource.collectionId !== null ? (collection?.name ?? null) : null}
+      removeFrom={canRemove ? (collection?.name ?? null) : null}
+      removeLater={removedByTeam ? (collection?.name ?? null) : null}
       onremove={() => mark(async () => (await catalogue.removeResource(resource.id), catalogue.resource(resource.id)))}
       bind:part
     />

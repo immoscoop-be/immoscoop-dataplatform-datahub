@@ -107,7 +107,7 @@ describe.skipIf(!url)('identity migration 0008-groups', () => {
     await sql`insert into ${sql.id(schema, 'sessions')} (google_id, client_id, expires_at, ended_at, end_reason)
       values ('jan', 'web', now(), now() + interval '1 minute', 'account-inactive')`.execute(admin.db);
 
-    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    const results = await migrate({ db: admin.db, schema, migrations: before('0009'), serviceUser: 'postgres' });
     expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0008-groups', 'Success']]);
     const users = await sql<{ googleId: string; groups: string[]; workspaceGroups: string[]; active: boolean }>`
       select google_id, groups, workspace_groups, active from ${sql.id(schema, 'users')} order by google_id`.execute(admin.db);
@@ -122,6 +122,40 @@ describe.skipIf(!url)('identity migration 0008-groups', () => {
       { starting: 'admin', manage: 'true', all: 'true' },
       { starting: 'businessAnalyst', manage: 'true', all: 'false' },
       { starting: 'lensUser', manage: 'false', all: 'false' },
+    ]);
+  });
+});
+
+describe.skipIf(!url)('identity migration 0009-remove-and-withdrawn', () => {
+  const schema = `identity_test_${randomBytes(4).toString('hex')}`;
+  const admin = createDatabase<unknown>({ connectionString: url }, schema);
+
+  afterAll(async () => {
+    await sql`drop schema if exists ${sql.id(schema)} cascade`.execute(admin.db);
+    await admin.close();
+  });
+
+  it('gives each Permission group the Permission to remove Resources as DEC-PL-08 says, and Admin the tool Withdrawn', async () => {
+    await migrate({ db: admin.db, schema, migrations: before('0009'), serviceUser: 'postgres' });
+    const groups = sql.id(schema, 'permission_groups');
+    // The groups as they were before: without the new Permission, and Admin without the new tool.
+    await sql`update ${groups} set permissions = (permissions - 'resources.remove')
+      || jsonb_build_object('admin.open', jsonb_set(permissions -> 'admin.open', '{values,tools}', (permissions #> '{admin.open,values,tools}') - 'withdrawn'))`.execute(admin.db);
+    // A group made since, that adds Resources to Collections without being Admin.
+    await sql`insert into ${groups} (name, sentence, permissions, is_default, locked)
+      select 'Data stewards', '', jsonb_set(permissions, '{resources.assign,on}', 'true'), false, false from ${groups} where starting = 'lensUser'`.execute(admin.db);
+
+    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0009-remove-and-withdrawn', 'Success']]);
+    const held = await sql<{ name: string; on: string; reach: string; withdrawn: boolean }>`
+      select name, permissions -> 'resources.remove' ->> 'on' as on, permissions #>> '{resources.remove,values,reach}' as reach,
+        (permissions #> '{admin.open,values,tools}') ? 'withdrawn' as withdrawn
+      from ${groups} order by name`.execute(admin.db);
+    expect(held.rows).toEqual([
+      { name: 'Admin', on: 'true', reach: 'every', withdrawn: true },
+      { name: 'Business analyst', on: 'true', reach: 'theirs', withdrawn: false },
+      { name: 'Data stewards', on: 'true', reach: 'every', withdrawn: false },
+      { name: 'Lens user', on: 'false', reach: 'theirs', withdrawn: false },
     ]);
   });
 });
