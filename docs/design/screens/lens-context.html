@@ -5,10 +5,11 @@
   here a Lens seen by its Owner Unit, with the Message in a floating window in the lower right: the Message with its
   replies, a field to reply and who gets a notification. The page stays usable behind it: the result of the Lens stays
   in view while answering. The window can be moved by its head and folded to it; "All messages on this lens" opens the
-  slide-in (lens-messages), close goes back to the Message Centre.
+  slide-in (lens-messages); close leaves the Lens as it is, without the window (DEC-UX-210), and "Message Centre" at its
+  foot goes back there.
   The page behind is lens.html, seen by its Owner Unit; its requirements are listed there.
   Requirements: FR-CV-02, FR-CV-03, FR-CV-07, FR-CV-09
-  Decisions: DEC-UX-30, DEC-CV-04, DEC-CV-09.
+  Decisions: DEC-UX-30, DEC-UX-210, DEC-CV-04, DEC-CV-09.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="owner">
@@ -268,7 +269,7 @@
   <i class="ph ph-dots-six-vertical float-grip" aria-hidden="true"></i>
   <div style="flex:1;min-width:0"><div class="meta">Question on this Lens</div><div class="float-title" id="float-title">Leads per source name</div></div>
   <button class="icon-btn float-fold" aria-label="Fold" aria-expanded="true"><i class="ph ph-minus"></i></button>
-  <a class="icon-btn" href="messages.html" aria-label="Close"><i class="ph ph-x"></i></a>
+  <a class="icon-btn" href="lens.html" aria-label="Close"><i class="ph ph-x"></i></a>
  </div>
  <div class="float-body">
   <div class="thread">

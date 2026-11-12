@@ -1,5 +1,5 @@
 import type { GapScope } from '@datahub/contracts/gaps';
-import { createCall } from './api.js';
+import { createCall, NotFound, Refused } from './api.js';
 import type { Config } from './config.js';
 import type { Session } from './session.js';
 import type { Marked } from './query.js';
@@ -264,12 +264,57 @@ export interface FoundResource {
   shared: number;
 }
 
+/** What Profile shows of Slack (FR-LN-07). */
+export interface SlackState {
+  /** Whether the Slack app of Data Hub is set up here; without it there is no tile (OP-UX-78). */
+  on: boolean;
+  /** The address of the User's Google account. */
+  google: string;
+  /** The address Data Hub finds them by in Slack. */
+  address: string;
+  /** When they confirmed another address; null while it is the Google address. */
+  confirmedAt: string | null;
+  /** The name of the Slack account of that address; null when no one has it. */
+  name: string | null;
+}
+
 export function createCatalogue(config: Config, session: Pick<Session, 'accessToken'>, request?: typeof fetch) {
   const call = createCall('catalogue', config.catalogueUrl, session, request);
   const resource = (id: string) => `/resources/${encodeURIComponent(id)}`;
   const collection = (id: string) => `/collections/${encodeURIComponent(id)}`;
 
   return {
+    /** The Slack account Data Hub finds the User by, or that it finds none; `on` is false without the Slack app (FR-LN-07). */
+    async slack(): Promise<SlackState> {
+      return (await (await call('/me/slack')).json()) as SlackState;
+    },
+    /** The name of the Slack account that has this address; null when no one has it. */
+    async slackLookup(email: string): Promise<string | null> {
+      try {
+        return ((await (await call('/me/slack/lookup', { method: 'POST', body: { email } })).json()) as { name: string }).name;
+      } catch (error) {
+        if (error instanceof NotFound) return null;
+        throw error;
+      }
+    },
+    /** Sends a code to that Slack account, in the language of the User (OP-LN-08). */
+    async slackCode(email: string, language: 'nl' | 'en'): Promise<{ name: string; expiresAt: string }> {
+      return (await (await call('/me/slack/code', { method: 'POST', body: { email, language } })).json()) as { name: string; expiresAt: string };
+    },
+    /** Takes the address once the code is right: the new state, or how many tries are left, or that the code ended. */
+    async slackConfirm(code: string): Promise<SlackState | { wrong: number } | 'expired'> {
+      try {
+        return (await (await call('/me/slack/confirm', { method: 'POST', body: { code } })).json()) as SlackState;
+      } catch (error) {
+        if (error instanceof Refused && error.code === 'wrong_code') return { wrong: Number((error.body as { triesLeft?: number }).triesLeft ?? 0) };
+        if (error instanceof Refused && (error.code === 'expired' || error.code === 'no_code')) return 'expired';
+        throw error;
+      }
+    },
+    /** Back to the address of the Google account. */
+    async slackReset(): Promise<SlackState> {
+      return (await (await call('/me/slack', { method: 'DELETE' })).json()) as SlackState;
+    },
     /** The Resources that wait for a Collection: only the Data Team may ask (FR-SR-35). */
     async waiting(): Promise<Resource[]> {
       return ((await (await call('/resources?collection=none')).json()) as { resources: Resource[] }).resources;

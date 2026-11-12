@@ -11,7 +11,8 @@ export class SlackError extends Error {}
 /**
  * Direct messages from the Slack app of Data Hub (DEC-LN-05, DEC-LN-06): it finds the User by the e-mail
  * address of their Google account, opens the direct message with them and posts the Message there, never in
- * a channel. A User who is not in Slack gets e-mail alone.
+ * a channel. A User who is not in Slack gets e-mail alone. A User may give another address for Slack, which
+ * catalogue keeps once confirmed (FR-LN-07); the address the message goes to is chosen before.
  */
 export function createSlack(token: SlackToken, request: typeof fetch = fetch): Slack {
   async function call(method: string, token: string, body: Record<string, unknown>, form = false): Promise<Record<string, unknown>> {
@@ -28,17 +29,32 @@ export function createSlack(token: SlackToken, request: typeof fetch = fetch): S
     return (await response.json()) as Record<string, unknown>;
   }
 
+  /** The Slack account that has this address, or null when none has it. */
+  async function lookup(bot: string, email: string): Promise<{ id: string; name: string } | null> {
+    // users.lookupByEmail reads its arguments from a form, not from JSON.
+    const found = await call('users.lookupByEmail', bot, { email }, true);
+    if (found.ok !== true) {
+      if (found.error === 'users_not_found') return null;
+      throw new SlackError(`Slack did not find a user: ${String(found.error)}`);
+    }
+    const user = (found.user ?? {}) as { id?: string; name?: string; real_name?: string; profile?: { real_name?: string; display_name?: string } };
+    return { id: user.id ?? '', name: user.profile?.real_name || user.real_name || user.profile?.display_name || user.name || email };
+  }
+
   return {
+    async find(email: string) {
+      const bot = await token();
+      if (!bot) return 'off';
+      const found = await lookup(bot, email);
+      return found ? { name: found.name } : null;
+    },
+
     async send(email: string, message: SlackMessage) {
       const bot = await token();
       if (!bot) return 'off';
-      // users.lookupByEmail reads its arguments from a form, not from JSON.
-      const found = await call('users.lookupByEmail', bot, { email }, true);
-      if (found.ok !== true) {
-        if (found.error === 'users_not_found') return 'absent';
-        throw new SlackError(`Slack did not find a user: ${String(found.error)}`);
-      }
-      const user = (found.user as { id?: string } | undefined)?.id;
+      const found = await lookup(bot, email);
+      if (!found) return 'absent';
+      const user = found.id;
       const opened = await call('conversations.open', bot, { users: user });
       const channel = (opened.channel as { id?: string } | undefined)?.id;
       if (opened.ok !== true || !channel) throw new SlackError(`Slack opened no direct message: ${String(opened.error)}`);

@@ -3,6 +3,7 @@ import { createServer, type ServerOptions } from '@datahub/server';
 import type { FastifyInstance } from 'fastify';
 import { type ApiOptions, apiRoutes } from './api.js';
 import { type NotificationRouteOptions, notificationRoutes } from './notification-api.js';
+import { type SlackRouteOptions, slackRoutes } from './slack-routes.js';
 
 export interface AppOptions {
   verifier: TokenVerifier;
@@ -11,6 +12,8 @@ export interface AppOptions {
   api?: ApiOptions;
   /** Notifications by e-mail and in Slack (DEC-LN-02); left out in tests that do not need them. */
   notifications?: NotificationRouteOptions;
+  /** The address by which Data Hub finds the User in Slack (FR-LN-07); left out in tests that do not need it. */
+  slack?: SlackRouteOptions;
 }
 
 /** The catalogue service: resources, collections, maturity, the resource card, the log, search and conversations. See docs/architecture/services/catalogue.md. */
@@ -22,6 +25,9 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
   }
   if (options.api) {
     await app.register(apiRoutes, options.api);
+  }
+  if (options.slack) {
+    await app.register(slackRoutes, options.slack);
   }
   return app;
 }

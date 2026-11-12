@@ -28,6 +28,8 @@ resource "google_cloud_run_v2_service" "service" {
       }
     }
 
+    # No instance runs unless called: in office hours the scheduler keeps some warm by calling them
+    # (keep-warm.tf, DEC-PF-33), which costs nothing while they are idle, unlike a minimum instance.
     scaling {
       min_instance_count = 0
       max_instance_count = 2
@@ -50,6 +52,8 @@ resource "google_cloud_run_v2_service" "service" {
 
       resources {
         cpu_idle = true
+        # More CPU while an instance starts, so that a cold start that still happens is shorter (DEC-PF-33).
+        startup_cpu_boost = true
         limits = {
           cpu    = "1"
           memory = "512Mi"

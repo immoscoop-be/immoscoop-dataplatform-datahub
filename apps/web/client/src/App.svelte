@@ -21,7 +21,7 @@
   import { type Card, cardsIn, createLearning, drawExample, LEVELS, type LevelId, type Progress, type Step, suggestedLevels, topicOf, writtenCards } from './lib/learning.js';
   import { createQuery, type DeletedLens, type Lens, LensDeleted, type LensItem, type Run } from './lib/query.js';
   import { createRegistry } from './lib/registry.js';
-  import { collectionPath, lensPath, messagePath, messagesOnPath, NEW_COLLECTION, NEW_QUERY, objectPath, queryPath, route } from './lib/routes.js';
+  import { collectionPath, lensPath, messagesOnPath, NEW_COLLECTION, NEW_QUERY, objectPath, queryPath, route } from './lib/routes.js';
   import { Router } from './lib/router.svelte.js';
   import { can, mayQuery, NO_PERMISSIONS, PERMISSION_KEYS, PERMISSION_TEXTS, reach, sees } from './lib/permissions.js';
   import { ADMIN_TOOLS, type AdminTool, SECTIONS, sectionFor, sectionLabel, toolsFor } from './lib/sections.js';
@@ -970,6 +970,7 @@
         onlanguage={(language: Language) => signedIn.settings.set('language', language)}
         onbackground={(choice) => signedIn.backgrounds.choose(theme, choice)}
         {identity}
+        slack={catalogue}
       />
     {:else if page.kind === 'groups'}
       <!-- Groups, from My page, with no place in the rail (DEC-UX-200, FR-UM-18). -->
@@ -1118,7 +1119,7 @@
         decides={can(permissions, 'requests.decide')}
         {decideLens}
         onchanged={changedMessage}
-        onclose={() => router.go(messagePath(id))}
+        onclose={() => router.go(router.path.replace(/\/messages\/[^/]+$/, ''))}
       />
     {/if}
   </AppShell>

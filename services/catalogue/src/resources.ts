@@ -243,7 +243,7 @@ export type AddOutcome =
 export interface Resources {
   /** Registers, renames, withdraws and brings back the Resources of one dbt project, in one go. */
   apply(update: ResourcesUpdate): Promise<UpdateOutcome>;
-  /** The Resources without Collection, withdrawn ones included (FR-SR-35). */
+  /** The Resources without Collection that wait for one (FR-SR-35): a withdrawn one waits for nothing (DEC-SR-45). */
   withoutCollection(): Promise<Resource[]>;
   /** The Resources of a Collection, withdrawn ones included, each with its last change. */
   inCollection(collectionId: string): Promise<CollectionResource[]>;
@@ -736,7 +736,13 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
     },
 
     async withoutCollection() {
-      const rows = await db.selectFrom('resources').selectAll().where('collectionId', 'is', null).orderBy(sql`lower(display_name)`).execute();
+      const rows = await db
+        .selectFrom('resources')
+        .selectAll()
+        .where('collectionId', 'is', null)
+        .where('withdrawnAt', 'is', null)
+        .orderBy(sql`lower(display_name)`)
+        .execute();
       return rows.map(present);
     },
 
