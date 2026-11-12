@@ -910,7 +910,8 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
             .insertInto('collectionLog')
             .values({ collectionId: collection.id, logId: 'COL-006', params: { resource: row.displayName, actor: viewer.name }, actorId: viewer.id })
             .execute();
-          // Its Owner is told that it arrived (DEC-CV-11), with its Level as a number, as a Message keeps it.
+          // Its Owner is told that it arrived (DEC-CV-11), with its Level as a number, as a Message keeps it; never who
+          // added it, also when they are in the Owner Unit themselves (`actorId`, TR-LN-02).
           await trx
             .insertInto('messages')
             .values({
@@ -918,7 +919,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
               subjectKind: 'resource',
               subjectId: row.id,
               writerId: null,
-              params: { collection: collection.name, actor: viewer.name, level: String(row.level) },
+              params: { collection: collection.name, actor: viewer.name, actorId: viewer.id, level: String(row.level) },
               state: null,
             })
             .execute();

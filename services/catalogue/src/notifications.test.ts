@@ -400,6 +400,21 @@ describe.skipIf(!url)('notifications by e-mail and in Slack (DEC-LN-02, DEC-LN-0
     expect(mails[2]?.html).toContain('Je krijgt dit als auteur van deze Lens.');
   });
 
+  it('tells the Owner Unit that a Resource arrived, never who added it (MSG-RES-08)', async () => {
+    const { rows } = await sql<{ id: string }>`
+      insert into resources (key, project_id, node_id, name, resource_type, requested_name, display_name, level, collection_id)
+      values ('p.d.lead_sources', '9367', 'model.p.lead_sources', 'lead_sources', 'model', 'Lead sources', 'Lead sources', 2, ${credit.id})
+      returning id`.execute(database.db);
+    await database.db
+      .insertInto('messages')
+      .values({ type: 'MSG-RES-08', subjectKind: 'resource', subjectId: rows[0]!.id, writerId: null, params: { collection: 'Credit leads', actor: 'An Claes', actorId: 'u-an', level: '2' }, state: null })
+      .execute();
+    await notifications.deliver();
+    // An added it herself: only Jan, the other member of the Owner Unit, hears of it.
+    expect(mails.map((mail) => mail.to)).toEqual(['jan@immoscoop.be']);
+    expect(slacked).toEqual([]);
+  });
+
   it('tells who ran a deleted Lens lately, each by their own address, never who deleted it (MSG-LEN-06, FR-LE-18)', async () => {
     const lens = '5a6b7c8d-9e0f-4a1b-8c2d-3e4f5a6b7c8d';
     await messages.keepLens(lens, { name: 'Leads per day', collectionId: credit.id, resourceIds: [], state: 'published', authorId: 'u-an', authorName: 'An Claes' });

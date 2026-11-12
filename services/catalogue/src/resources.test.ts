@@ -208,7 +208,7 @@ describe.skipIf(!url)('Resources in Postgres', () => {
     // The Message to the Data Team has done what it asked (MSG-RES-01), and the Owner is told (MSG-RES-08, DEC-CV-11).
     expect((await message()).state).toBe('inCollection');
     const arrived = await database.db.selectFrom('messages').select(['subjectKind', 'writerId', 'params', 'state']).where('type', '=', 'MSG-RES-08').where('subjectId', '=', order.id).execute();
-    expect(arrived).toEqual([{ subjectKind: 'resource', writerId: null, params: { collection: 'Leads', actor: 'Dirk', level: '2' }, state: null }]);
+    expect(arrived).toEqual([{ subjectKind: 'resource', writerId: null, params: { collection: 'Leads', actor: 'Dirk', actorId: 'u-dt', level: '2' }, state: null }]);
     // Already in it: nothing changes, and nobody is told again.
     expect(await resources.add([{ id: order.id }], leads, dirk)).toEqual({ outcome: 'added', added: 0 });
     expect(await resources.add([{ id: order.id }], other, dirk)).toEqual({ outcome: 'in_another_collection', ids: [order.id] });

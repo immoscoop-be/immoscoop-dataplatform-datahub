@@ -531,6 +531,21 @@ describe.skipIf(!url)('the routes of Collections', () => {
       expect((await an('DELETE', `/collections/${collection.id}`)).statusCode).toBe(204);
     });
 
+    it('tells the Owner Unit that a Resource arrived, never who added it, also when they are in it (MSG-RES-08)', async () => {
+      const an = await user('An', [DIGIKOM]);
+      const max = await user('Max', [DIGIKOM], 'admin');
+      await fromRegistry(update('3', ['arrivals']));
+      const arrival = ((await max('GET', '/resources?collection=none')).json().resources as { id: string; name: string }[]).find((resource) => resource.name === 'arrivals')!;
+      const collection = (await an('POST', '/collections', { name: 'Arrivals', description: 'What arrived.', icon: 'binoculars', ownerUnit: DIGIKOM.id, visibility: 'public' })).json();
+      expect((await max('PUT', `/resources/${arrival.id}/collection`, { collectionId: collection.id })).statusCode).toBe(200);
+      const arrived = async (who: typeof an) =>
+        (await who('GET', '/messages?view=forYou')).json().messages.filter((message: { type: string }) => message.type === 'MSG-RES-08');
+      expect(await arrived(an)).toHaveLength(1);
+      expect(await arrived(max)).toEqual([]);
+      const unread = (await max('GET', '/messages?view=unread')).json().messages.filter((message: { type: string }) => message.type === 'MSG-RES-08');
+      expect(unread).toEqual([]);
+    });
+
     it('shows a Resource with its fields to whoever sees it, and the columns left out of it (FR-SR-06, DEC-SR-33)', async () => {
       const an = await user('An', [DIGIKOM]);
       const dirk = await user('Dirk', [], 'admin');

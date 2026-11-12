@@ -917,7 +917,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     subjects: ['resource'],
     from: 'dataHub',
     to: ['owner'],
-    when: 'The Data Team adds a Resource to a Collection (FR-CO-14).',
+    when: 'The Data Team adds a Resource to a Collection (FR-CO-14). Who added it is not told, also when they are in the Owner Unit (TR-LN-02).',
     status: 'Implemented',
     sources: ['DEC-SR-27', 'FR-CO-14', 'DEC-SR-07', 'DEC-CV-11'],
     parameters: [
