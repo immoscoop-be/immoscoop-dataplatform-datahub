@@ -30,6 +30,8 @@ An Owner Unit and the Data Team get one e-mail at the address of their Google gr
 
 *Note of 2026-11-10: a Group of Data Hub has no address, so each member of an Owner Unit gets an e-mail of their own ([TR-UM-07](02-user-management.md#tr-um-07)); the Data Team keeps its address.*
 
+*Note of 2026-11-12: who caused a Message of Data Hub is left out as its writer is: the Message keeps their ID as `actorId`, they get no e-mail and no direct message of it, and it is not For you for them. So a Data Admin who adds a Resource to a Collection of their own Owner Unit is not told that it arrived ([MSG-RES-08](../functional/message-catalogue.md#msg-res-08)); Max: "when you add a resource yourself, don't send a message to yourself".*
+
 <a id="tr-ln-03"></a>
 ### TR-LN-03 · E-mail goes through the SMTP relay of Workspace, from one fixed address
 

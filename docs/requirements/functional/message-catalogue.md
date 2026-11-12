@@ -1856,7 +1856,7 @@ If that was not intended, ask the data team.
 | Kind | Data Hub |
 | About | Resource |
 | From → to | Data Hub → Owner |
-| When | The Data Team adds a Resource to a Collection ([FR-CO-14](03-collections.md#fr-co-14)). |
+| When | The Data Team adds a Resource to a Collection ([FR-CO-14](03-collections.md#fr-co-14)). Who added it is not told, also when they are in the Owner Unit ([TR-LN-02](../technical/07-log-and-notifications.md#tr-ln-02)). |
 | Status | Implemented |
 | Comes from | [DEC-SR-27](04-stacks-and-resources.md#dec-sr-27), [FR-CO-14](03-collections.md#fr-co-14), [DEC-SR-07](04-stacks-and-resources.md#dec-sr-07), [DEC-CV-11](14-conversations.md#dec-cv-11) |
 

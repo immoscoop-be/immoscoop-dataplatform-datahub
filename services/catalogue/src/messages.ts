@@ -319,14 +319,15 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
   /**
    * The conversations for the viewer (FR-CV-06): those they started or replied in, those whose first
    * Message notifies them, as Owner, as the Data Team (`messages.dataTeam`), as the author of its Lens,
-   * or as the User it is about.
+   * or as the User it is about; never a Message of Data Hub about what they did themselves (`actorId`).
    */
   function forYou(sight: Sight): RawBuilder<SqlBool> {
     const me = sight.viewer.id;
     return sql<SqlBool>`(
       m.writer_id = ${me}
       or exists (select 1 from messages r where r.parent_id = m.id and r.writer_id = ${me})
-      or (m.type = any(${list(TO_OWNER)}) and (
+      or ((m.params->>'actorId') is distinct from ${me} and (
+      (m.type = any(${list(TO_OWNER)}) and (
         (m.subject_kind = 'collection' and m.subject_id = any(${list(sight.ownedCollections)}))
         or (m.subject_kind = 'resource' and m.subject_id = any(${list(sight.ownedResources)}))
         or (m.subject_kind = 'lens' and m.subject_id = any(${list(sight.ownedLenses)}))))
@@ -336,6 +337,7 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
       or (m.type = any(${list(TO_OWNER)}) and m.subject_kind = 'query' and m.params->>'owner' = ${me})
       or (m.type = any(${list(TO_AUTHOR)}) and m.subject_kind in ('excelKey', 'user') and m.params->>'user' = ${me})
       or (m.type = any(${list(TO_LENS_USERS)}) and ${me} = any(string_to_array(m.params->>'users', ',')))
+      ))
     )`;
   }
 
