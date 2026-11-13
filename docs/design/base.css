@@ -2159,3 +2159,14 @@ svg.mp, svg.mp-g { display: block; width: 100%; height: auto; overflow: visible;
 .ml-warn { color: var(--signal-warn); }
 .ml-nav { display: flex; align-items: center; gap: 8px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--tint-hover); }
 .ml-nav .btn-quiet { display: inline-flex; align-items: center; gap: 6px; }
+
+/* Why "Make it a lens" is greyed, on a hover or on focus: what keeps the query from becoming a Lens (DEC-UX-232) */
+.why-anchor { position: relative; display: inline-flex; border-radius: var(--radius-pill); }
+.why-anchor > button:disabled { pointer-events: none; }
+.why-anchor:focus-visible { outline: 2px solid var(--text-secondary); outline-offset: 2px; }
+.why-pop { display: none; z-index: 20; }
+.why-anchor:hover .why-pop, .why-anchor:focus-within .why-pop { display: block; }
+.why-title { display: block; margin-bottom: 4px; font-weight: var(--weight-medium); color: var(--text-primary); }
+.why-list { display: grid; gap: 4px; margin: 6px 0 8px; }
+.why-item { display: flex; align-items: center; gap: 6px; color: var(--text-primary); }
+.why-item .meta { margin-left: auto; }

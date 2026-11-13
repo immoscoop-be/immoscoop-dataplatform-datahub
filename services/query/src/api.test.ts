@@ -844,6 +844,33 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     expect((await call(karel, 'PATCH', `/lenses/${lensId}`, { name: 'Mine now' })).statusCode).toBe(404);
   });
 
+  it('lets its Owner Unit change the descriptions of its fields, also of a Lens made before it had them (DEC-UX-231)', async () => {
+    // A Lens made before its fields had descriptions: its columns come from a dry run of its SQL.
+    await database.db.updateTable('lenses').set({ fields: '[]' }).where('id', '=', largeLens).execute();
+    const described = await call(mia, 'PATCH', `/lenses/${largeLens}`, {
+      fields: [
+        { name: 'leads', description: 'How many leads came in.', from: { resourceId: WEEKLY.id, field: 'lead_count' } },
+        { name: 'lead_source', description: 'Its source code.', from: { resourceId: SOURCES.id, field: 'lead_source' } },
+        { name: 'gone', description: 'No longer in its result.', from: null },
+      ],
+    });
+    expect(described.statusCode).toBe(200);
+    // In the order of its result, with its type; a description from a Resource it does not read, or of a field it no longer has, is not kept.
+    expect(described.json().lens.fields).toEqual([
+      { name: 'week_start', type: 'DATE', description: '', from: null },
+      { name: 'lead_source', type: 'STRING', description: '', from: null },
+      { name: 'leads', type: 'INT64', description: 'How many leads came in.', from: { resourceId: WEEKLY.id, field: 'lead_count' } },
+    ]);
+    // Once it has them, a change keeps their types without a dry run.
+    const again = await call(mia, 'PATCH', `/lenses/${largeLens}`, { fields: [{ name: 'week_start', description: 'The Monday of the week.', from: null }] });
+    expect(again.json().lens.fields.map((field: { name: string; type: string; description: string }) => [field.name, field.type, field.description])).toEqual([
+      ['week_start', 'DATE', 'The Monday of the week.'],
+      ['lead_source', 'STRING', ''],
+      ['leads', 'INT64', ''],
+    ]);
+    expect((await call(mia, 'PATCH', `/lenses/${largeLens}`, { fields: [{ name: 'x', description: 'y', type: 'INT64' }] })).statusCode).toBe(400);
+  });
+
   it('updates a Lens from a query used as it, measured again, as its next version (FR-LE-16)', async () => {
     expect((await call(an, 'PATCH', `/queries/${lensQuery}`, { sql: `${withParameters} -- reads 90000000` })).statusCode).toBe(200);
     // Another query of An is not used as the Lens.

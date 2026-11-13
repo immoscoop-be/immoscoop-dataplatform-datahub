@@ -6,6 +6,9 @@
   import SqlEditor, { type At, CTE_LINE, type ErrorMark, type Explained, type ParameterSuggestion, type Suggestion, type TableSuggestion } from '@datahub/ui/components/SqlEditor.svelte';
   import { formatBytes } from '@datahub/ui/foundations/bytes.js';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
+  import type { IconName } from '@datahub/ui/foundations/icons.js';
+  import { levelName } from '@datahub/ui/foundations/levels.js';
+  import { formatBigQuery } from '@datahub/ui/components/sqlFormat.js';
   import { currentLanguage, t, tParts } from '@datahub/ui/foundations/texts.svelte.js';
   import { ago } from '@datahub/ui/foundations/when.js';
   import KindIcon from '@datahub/ui/marks/KindIcon.svelte';
@@ -155,7 +158,7 @@
 
   let query = $state<Query | null | undefined>();
   /** Its Resources not published yet: they grey "Make it a lens", with why (DEC-LE-22, DEC-UX-218). */
-  const unpublished = $derived((query?.resources ?? []).filter((resource) => resource.visible && resource.published === false));
+  const unpublished = $derived((query?.resources ?? []).flatMap((resource) => (resource.visible && resource.published === false ? [resource] : [])));
   /** Whether the User hid it from their panel: as it was read, or as changed since (DEC-UX-138). */
   const hidden = $derived(hiddenChange?.id === id ? hiddenChange.hidden : (query?.hidden ?? false));
   let hiding = $state(false);
@@ -218,6 +221,16 @@
   let lensesOpen = $state(false);
   let loadedId: string | undefined;
 
+  /** The SQL of a query as it opens: in the house layout, as Format writes it (DEC-UX-233); SQL Format cannot read stays as it is. */
+  function formatted(text: string): string {
+    if (text.trim() === '') return text;
+    try {
+      return formatBigQuery(text);
+    } catch {
+      return text;
+    }
+  }
+
   $effect(() => {
     if (id === loadedId) return;
     loadedId = id;
@@ -248,7 +261,8 @@
         query = found;
         broken = found.broken ?? null;
         atOnce = true;
-        sql = found.sql;
+        // It opens formatted, as a click on Format writes it; their own query keeps it through its Pre-flight (DEC-UX-233).
+        sql = formatted(found.sql);
         parameters = found.parameters;
         run = found.lastRun;
         failure = found.lastRun?.state === 'failed' ? found.lastRun.error : null;
@@ -802,22 +816,54 @@
         ><Icon name={hidden ? 'eye' : 'eye-slash-fill'} />{t(hidden ? 'query.page.unhide' : 'query.page.hide')}</Button
       >
       {#if query.mine && query.kind === 'query' && query.lens}
-        <!-- A query used as a Lens overwrites it, after its size check (DEC-UX-77). -->
-        <Button disabled={query.lens.state === 'waiting' || noLens !== null} title={t(query.lens.state === 'waiting' ? 'lens.update.waiting' : (noLens ?? 'lens.update.hint'))} onclick={() => (updating = true)}
-          ><Icon name="arrows-clockwise" />{t('lens.update.button')}</Button
-        >
+        <!-- A query used as a Lens overwrites it, after its size check (DEC-UX-77); greyed, it says why (DEC-UX-232). -->
+        {#if noLens && query.lens.state !== 'waiting'}
+          {@render whyNot(t('lens.update.button'), 'arrows-clockwise')}
+        {:else}
+          <Button disabled={query.lens.state === 'waiting'} title={t(query.lens.state === 'waiting' ? 'lens.update.waiting' : 'lens.update.hint')} onclick={() => (updating = true)}
+            ><Icon name="arrows-clockwise" />{t('lens.update.button')}</Button
+          >
+        {/if}
       {:else if query.mine && query.kind === 'query'}
-        <!-- The logical next step once a query answers a question that comes back (DEC-UX-25); greyed on a Resource not published (DEC-UX-218). -->
-        {#if noLens}
-          <Button disabled title={t(noLens)}>{t('query.makeLens')}</Button>
-        {:else if unpublished.length > 0}
-          <Button disabled title={t('query.unpublished.hint')}>{t('query.makeLens')}</Button>
+        <!-- The logical next step once a query answers a question that comes back (DEC-UX-25); greyed on a Resource not published, it says why (DEC-UX-218, DEC-UX-232). -->
+        {#if noLens || unpublished.length > 0}
+          {@render whyNot(t('query.makeLens'), null)}
         {:else}
           <Button href={newLensPath(query.id)}>{t('query.makeLens')}</Button>
         {/if}
       {/if}
     </div>
   </header>
+
+  <!--
+    A greyed "Make it a lens" or "Update the lens" says why on a hover or on keyboard focus (DEC-UX-232): each Resource
+    not published yet with its Level, or each table outside Data Hub it reads, and what makes the button work.
+  -->
+  {#snippet whyNot(label: string, icon: IconName | null)}
+    <!-- Focusable, so that the keyboard reaches why as a hover does; the button itself is disabled. -->
+    <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+    <span class="why-anchor" tabindex="0" role="group" aria-label={label} aria-describedby="why-not-lens">
+      <Button disabled>{#if icon}<Icon name={icon} />{/if}{label}</Button>
+      <span class="why-pop" id="why-not-lens" role="tooltip">
+        <b class="why-title">{t('query.why.title')}</b>
+        {#if known.length > 0}
+          {t('query.why.known', { count: known.length })}
+          <span class="why-list">
+            {#each known as table (table.key)}<span class="why-item"><Icon name="cube" /><span class="mono">{table.name}</span><span class="meta">{table.layer}</span></span>{/each}
+          </span>
+          {t('query.why.known.then')}
+        {:else if unpublished.length > 0}
+          {t('query.why.unpublished')}
+          <span class="why-list">
+            {#each unpublished as resource (resource.id)}<span class="why-item"><KindIcon kind="resource" />{resource.displayName}<span class="meta">{levelName(resource.level)}</span><MaturityIcon level={resource.level} small /></span>{/each}
+          </span>
+          {t('query.why.unpublished.then', { count: unpublished.length })}
+        {:else}
+          {t('query.why.none')}
+        {/if}
+      </span>
+    </span>
+  {/snippet}
 
   {#if broken}
     <!-- A Broken query: Run is off and this names what it misses, and since when (FR-SR-53, DEC-UX-160). -->
@@ -1213,6 +1259,17 @@
   .origin { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; }
   .origin a { color: var(--text-secondary); }
   .actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  /* Why the button is greyed, on a hover or on focus (DEC-UX-232) */
+  .why-anchor { position: relative; display: inline-flex; border-radius: var(--radius-pill); }
+  .why-anchor :global(button:disabled) { pointer-events: none; }
+  .why-anchor:focus-visible { outline: 2px solid var(--text-secondary); outline-offset: 2px; }
+  .why-pop { display: none; position: absolute; right: 0; top: calc(100% + 10px); z-index: 20; width: 300px; padding: 12px 14px; border-radius: var(--radius-md);
+    background: var(--surface-solid); box-shadow: var(--sheet-shadow); outline: 1px solid var(--tint-active); font-size: var(--text-small); line-height: 1.5; color: var(--text-secondary); white-space: normal; text-align: left; }
+  .why-anchor:hover .why-pop, .why-anchor:focus-within .why-pop { display: block; }
+  .why-title { display: block; margin-bottom: 4px; font-weight: var(--weight-medium); color: var(--text-primary); }
+  .why-list { display: grid; gap: 4px; margin: 6px 0 8px; }
+  .why-item { display: flex; align-items: center; gap: 6px; color: var(--text-primary); }
+  .why-item .meta { margin-left: auto; }
   /* The page fills the height of the screen: the query and the result split it, each scrolling on its own (DEC-UX-144). */
   .page { height: 100%; min-height: 0; display: flex; flex-direction: column; }
   .head { flex: none; }
