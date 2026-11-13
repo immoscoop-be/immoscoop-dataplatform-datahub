@@ -1772,6 +1772,11 @@ document.addEventListener('click', e => {
     const all = [
       ...here,
       ...COMMANDS.map(r => ({ ...r, group: 'Commands', kind: 'Command' })),
+      // On a flagged query, the next and the previous one, round the row (DEC-UX-241)
+      ...(document.querySelector('.q-flag.current') ? [
+        { icon: 'ph ph-arrow-right', title: 'Next flagged query', meta: 'Partner share per week · ⌘2', href: 'query.html', group: 'Flagged queries', kind: 'Command', words: 'next flagged tab switch' },
+        { icon: 'ph ph-arrow-left', title: 'Previous flagged query', meta: 'Saved searches by price band · ⌘4', href: 'query.html', group: 'Flagged queries', kind: 'Command', words: 'previous flagged tab switch back' },
+      ] : []),
       ...FLAGGED.map(r => ({ ...r, icon: 'ph-fill ph-flag', group: 'Flagged queries', kind: 'Query' })),
       ...ITEMS.map(r => ({ ...r, kind: KIND[r.group] })),
       ...GO.filter(visible).map(r => ({ ...r, group: 'Go to', kind: 'Section' })),

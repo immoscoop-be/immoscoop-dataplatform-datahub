@@ -58,13 +58,15 @@
   columns, and adds the ones ticked: each comes as a CTE at the start of the SQL, after "with", named after its table,
   selecting its fields and filtering on its recent partitions; the sheet shows which CTEs come (DEC-UX-224, DEC-UX-225,
   FR-SR-58, FR-SR-59, OP-UX-81). A Resource found there starts a new query with it. ?find=open opens it.
-  Flagged queries (DEC-UX-236): "Flag" in the head keeps a query in a row on top of every screen of Query, a tab per
+  Flagged queries (DEC-UX-236, DEC-UX-241): "Flag this query" at the end of the row on top, while fewer than ten are
+  flagged, keeps a query in that row on top of every screen of Query, a tab per
   flagged query in the order flagged, up to ten (OP-UX-84). ⌘1 to ⌘9 and ⌘0 (Ctrl on Windows) open the first to the
   tenth, from anywhere in Query, also while typing in the SQL; the open one stands out. A flagged query keeps what was
   done in it while the User is in another one: its result, its tab, a run still going (OP-UX-85). Its tab marks a
-  run going, a result not seen yet, a run that failed and Broken. The × on a tab, or "Flagged" in the head, unflags it;
+  run going, a result not seen yet, a run that failed and Broken. The × on a tab unflags it, and the query stays open;
   dragging a tab changes its place, and its number. The panel shows a flag on a flagged query. The switch "Flagged"
-  shows the row with this query, without it, empty and full; full, Flag is greyed with why.
+  shows the row with this query, without it, empty and full; full, the row has no Flag. The quick window has Next and
+  Previous flagged query.
   The quick window (DEC-UX-237): Cmd+Shift+P or Cmd+K, anywhere in Data Hub (app.js draws it on every screen; the search
   at the right of the row of flagged queries opens it too). On a query it lists first what can be done to this query
   now, a command for every button of the page that does something to it (DEC-UX-239): Show info when the cursor is on
@@ -207,10 +209,6 @@
  <h1 class="page-title" style="flex:1" id="q-title">Leads per source name</h1>
  <span class="q-layouts" role="group" aria-label="Layout"><button aria-pressed="true" data-layout="horizontal" aria-label="The query above the result" onclick="location.search=''"><i class="ph ph-rows"></i></button><button aria-pressed="false" data-layout="side" aria-label="The query next to the result" onclick="location.search='?layout=side'"><i class="ph ph-columns"></i></button></span>
  <a class="btn-quiet outline" href="query-new.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-plus-circle"></i>New query</a>
- <!-- Flag keeps the query in the flagged queries on top, with its key; flagged, it is pressed and shows its key, and a
-      click unflags it. At ten flagged it is greyed, with why on a hover (DEC-UX-236, OP-UX-84). -->
- <span class="why-anchor" id="flag-anchor" tabindex="-1"><button class="btn-quiet outline" id="flag-btn" type="button" aria-pressed="false" title="Keep this query on top, to jump to it with its key" style="display:inline-flex;align-items:center;gap:6px"><i class="ph ph-flag"></i><span>Flag</span></button>
-  <span class="run-pop why-pop" id="why-flag" role="tooltip" hidden><span class="why-title">Ten queries are flagged.</span>Unflag one, with the × on its tab on top, to flag this one.</span></span>
  <button class="btn-quiet outline" id="hide-btn" type="button" title="Hide this query from your panel; Hidden in the panel shows it again" style="display:inline-flex;align-items:center;gap:6px"><i class="ph ph-eye-slash"></i><span>Hide</span></button>
  <a class="btn-primary" data-pane-group="lens" data-pane="free" hidden href="lens-new.html" style="text-decoration:none" title="Turn this query into a Lens for everyone who may use its Resources"><i class="ph ph-aperture" style="font-size:15px"></i>Make it a Lens</a>
  <!-- Greyed, with why on a hover or on focus: each Resource not published yet with its Level, or each table outside Data Hub (DEC-UX-232) -->
@@ -736,16 +734,14 @@
       ? '<span class="q-flags-mod" title="Hold ⌘ and press the number of a query to open it">⌘</span>' + flags.map((f, i) => `<a class="q-flag${f.title === here() ? ' current' : ''}" href="query.html" draggable="true" data-i="${i}"${f.title === here() ? ' aria-current="page"' : ''} title="${esc2(f.title)} · ${keyOf(i)}${what[f.state] || ''}"><span class="kbd">${i === 9 ? 0 : i + 1}</span><span class="q-flag-name">${esc2(f.title)}</span>${mark(f)}<button class="q-flag-x" type="button" aria-label="Unflag ${esc2(f.title)}"><i class="ph ph-x"></i></button></a>`).join('')
         + '<button class="q-flags-quick" type="button" data-quick-open aria-label="Quick window" title="Quick window: every command of this query, and every place in Data Hub"><i class="ph ph-magnifying-glass"></i><span class="kbd">⌘⇧P</span></button>'
       : '<span class="q-flags-empty"><i class="ph ph-flag"></i><span>Flag a query to keep it here, and jump between them with <span class="kbd">⌘1</span> to <span class="kbd">⌘0</span>.</span></span><button class="q-flags-quick" type="button" data-quick-open>Quick window <span class="kbd">⌘⇧P</span></button>';
-    // The Flag button: pressed with its key when this query is flagged; greyed with why when ten others are
-    const at = flags.findIndex(f => f.title === here()), btn = document.getElementById('flag-btn'), full = at < 0 && flags.length >= 10;
-    btn.setAttribute('aria-pressed', String(at >= 0));
-    btn.disabled = full;
-    btn.innerHTML = at >= 0 ? `<i class="ph-fill ph-flag"></i><span>Flagged</span><span class="kbd">${keyOf(at)}</span>` : '<i class="ph ph-flag"></i><span>Flag</span>';
-    btn.title = at >= 0 ? 'Flagged: click to unflag it' : 'Keep this query on top, to jump to it with its key';
-    document.getElementById('why-flag').hidden = !full;
-    const anchor = document.getElementById('flag-anchor');
-    anchor.tabIndex = full ? 0 : -1;
-    full ? anchor.setAttribute('aria-describedby', 'why-flag') : anchor.removeAttribute('aria-describedby');
+    // Flag lives in the row itself, after the tabs, with the key it will get, for the open query while it is not
+    // flagged and fewer than ten are (DEC-UX-241); at ten it is not there. The × on a tab unflags.
+    const at = flags.findIndex(f => f.title === here());
+    if (at < 0 && flags.length < 10) {
+      const add = `<button class="q-flags-add" type="button" data-flag-add title="Keep this query on top, to jump to it with its key"><i class="ph ph-flag"></i><span>Flag this query</span><span class="kbd">${keyOf(flags.length)}</span></button>`;
+      const quick = bar.querySelector('.q-flags-quick');
+      quick.insertAdjacentHTML('beforebegin', add);
+    }
     // The panel: a flagged query has the flag at its end
     document.querySelectorAll('.panel .q-item').forEach(item => {
       const on = flags.some(f => f.title === item.querySelector('.item-title')?.textContent);
@@ -754,17 +750,19 @@
       if (!on && flag) flag.remove();
     });
   }
-  document.getElementById('flag-btn').addEventListener('click', () => {
+  // Flag this query, and unflag it: only its tab comes and goes, the query stays open as it is
+  window.toggleFlag = () => {
     const at = flags.findIndex(f => f.title === here());
     if (at >= 0) flags.splice(at, 1); else if (flags.length < 10) flags.push({ title: here(), state: '' });
     drawFlags();
-  });
+  };
   document.getElementById('hide-btn').addEventListener('click', e => {
     const b = e.currentTarget, hidden = b.getAttribute('aria-pressed') !== 'true';
     b.setAttribute('aria-pressed', String(hidden));
     b.innerHTML = hidden ? '<i class="ph ph-eye"></i><span>Show again</span>' : '<i class="ph ph-eye-slash"></i><span>Hide</span>';
   });
   document.getElementById('q-flags').addEventListener('click', e => {
+    if (e.target.closest('[data-flag-add]')) { window.toggleFlag(); return; }
     const x = e.target.closest('.q-flag-x'), tab = e.target.closest('.q-flag');
     if (x) { e.preventDefault(); flags.splice(+tab.dataset.i, 1); drawFlags(); return; }
     if (tab) { e.preventDefault(); jump(+tab.dataset.i); }
@@ -825,8 +823,8 @@
           ? { icon: 'ph ph-arrows-clockwise', title: 'Update the Lens', meta: 'overwrites Leads per source name with this query', click: '[data-sheet-open="update-lens"]', words: 'lens update overwrite' }
           : { icon: 'ph ph-aperture', title: 'Make it a Lens', meta: 'for everyone who may use its Resources', run: () => { location.href = 'lens-new.html'; }, disabled: lens === 'unpublished', why: 'Not published yet: Lead sources. A Lens is made only on published Resources.', words: 'lens create new make share' },
         at >= 0
-          ? { icon: 'ph-fill ph-flag', title: 'Unflag this query', meta: `takes it off the top, and ${keyOf(at)} with it`, click: '#flag-btn', words: 'flag pin remove quick list' }
-          : { icon: 'ph ph-flag', title: 'Flag this query', meta: full ? '' : `keeps it on top, as ${keyOf(flags.length)}`, click: '#flag-btn', disabled: full, why: 'Ten queries are flagged. Unflag one first.', words: 'pin star keep quick list' },
+          ? { icon: 'ph-fill ph-flag', title: 'Unflag this query', meta: `takes it off the top, and ${keyOf(at)} with it`, run: () => window.toggleFlag(), words: 'flag pin remove quick list' }
+          : { icon: 'ph ph-flag', title: 'Flag this query', meta: full ? '' : `keeps it on top, as ${keyOf(flags.length)}`, run: () => window.toggleFlag(), disabled: full, why: 'Ten queries are flagged. Unflag one first.', words: 'pin star keep quick list' },
         { icon: 'ph ph-pencil-simple', title: 'Rename this query', meta: 'its name and question, in place', run: () => { const h = document.getElementById('q-title'); h.contentEditable = 'true'; h.focus(); }, words: 'rename name question title' },
         { icon: 'ph ph-arrows-in-line-vertical', title: 'Fold all', meta: 'every CTE of the SQL', click: '#fold-all', words: 'collapse cte' },
         { icon: 'ph ph-text-align-left', title: 'Format the SQL', meta: 'in the house layout', keys: '⇧⌥F', click: '#format-btn', words: 'format layout indent pretty' },

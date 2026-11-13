@@ -783,6 +783,16 @@
       rows.push({ key: 'new-query', group: 'commands', icon: 'plus-circle-fill', title: t('query.new'), kind: command, words: t('quick.new.words'), does: 'do', run: () => router.go(NEW_QUERY) });
     }
     rows.push({ key: 'theme', group: 'commands', icon: theme === 'dark' ? 'sun-fill' : 'moon-fill', title: t('quick.theme'), kind: command, words: t('quick.theme.words'), does: 'do', run: () => themeOnScreen.switch() });
+    // On a flagged query, the next and the previous one, round the row (DEC-UX-241).
+    const here = openId ? flagged.indexOf(openId) : -1;
+    if (here >= 0 && flagged.length > 1) {
+      const step = (by: 1 | -1) => (here + by + flagged.length) % flagged.length;
+      for (const [by, key, icon] of [[1, 'quick.flags.next', 'arrow-right'], [-1, 'quick.flags.previous', 'arrow-left']] as const) {
+        const at = step(by);
+        const id = flagged[at];
+        if (id) rows.push({ key: `flags:${by > 0 ? 'next' : 'previous'}`, group: 'flagged', icon, title: t(key), meta: `${flagNames[id] || '…'} · ${modLabel(mac)}${digitOf(at)}`, kind: command, words: t('quick.flags.words'), does: 'go', run: () => router.go(queryPath(id)) });
+      }
+    }
     flagged.forEach((id, at) =>
       rows.push({ key: `flag:${id}`, group: 'flagged', icon: 'flag-fill', title: flagNames[id] || '…', keys: `${modLabel(mac)}${digitOf(at)}`, kind: t('quick.kind.query'), does: 'open', run: () => router.go(queryPath(id)) }),
     );
@@ -1402,6 +1412,7 @@
     onunflag={(id) => setFlagged(unflag(flagged, id))}
     onmove={(from, to) => setFlagged(moveFlag(flagged, from, to))}
     onquick={() => (quickOpen = true)}
+    onflag={page.kind === 'query' && !flagged.includes(page.id) && flagged.length < MOST_FLAGGED ? () => openId && setFlagged(flag(flagged, openId)) : undefined}
   />
 {/snippet}
 

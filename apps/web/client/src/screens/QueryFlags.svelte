@@ -8,8 +8,9 @@
    * The flagged queries on top of every screen of Query (DEC-UX-236): a tab per query in the order they were flagged,
    * with its number; one Cmd (Ctrl elsewhere) at the start of the row says which key goes with the numbers. The open
    * query stands out. A tab marks a run going, a result not seen yet, a run that failed and Broken; its × unflags it,
-   * and dragging it changes its place, and its number with it. With nothing flagged, the row says how. At its right end,
-   * the quick window (DEC-UX-237).
+   * and dragging it changes its place, and its number with it; the query stays open. With nothing flagged, the row says
+   * how. After the tabs, "Flag this query" with the key it will get, for the open query while there is room (DEC-UX-241).
+   * At its right end, the quick window (DEC-UX-237).
    */
   let {
     items,
@@ -18,6 +19,7 @@
     onunflag,
     onmove,
     onquick,
+    onflag,
   }: {
     /** The flagged queries in their order; a name not read yet is null. */
     items: readonly { id: string; name: string | null; mark: FlagMark }[];
@@ -28,6 +30,8 @@
     onunflag: (id: string) => void;
     onmove: (from: number, to: number) => void;
     onquick: () => void;
+    /** Flags the open query: only while it is not flagged and fewer than ten are (DEC-UX-241). */
+    onflag?: () => void;
   } = $props();
 
   const mod = $derived(modLabel(mac));
@@ -102,6 +106,11 @@
   {:else}
     <span class="empty"><Icon name="flag" /><span>{t('flags.empty', { first: `${mod}1`, last: `${mod}0` })}</span></span>
   {/if}
+  {#if onflag}
+    <button type="button" class="add" title={t('flags.add.hint')} onclick={onflag}
+      ><Icon name="flag" /><span>{t('flags.add')}</span><span class="kbd">{mod}{digitOf(items.length)}</span></button
+    >
+  {/if}
   <button type="button" class="quick" aria-label={t('quick.title')} title={t('quick.hint')} onclick={onquick}
     ><Icon name="magnifying-glass" /><span class="kbd">{mac ? '⌘⇧P' : 'Ctrl+Shift+P'}</span></button
   >
@@ -134,6 +143,9 @@
   .tab:hover .dot, .tab:focus-within .dot { display: none; }
   .x:hover { background: var(--tint-active); color: var(--text-primary); }
   .empty { display: flex; align-items: center; gap: 8px; padding: 4px 8px; color: var(--text-muted); font-size: var(--text-small); }
+  .add { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; color: var(--text-secondary); font: var(--text-small) var(--font-family); padding: 6px 8px; border-radius: var(--radius-sm); cursor: pointer; flex: none; white-space: nowrap; }
+  .add:hover { background: var(--tint-hover); color: var(--text-primary); }
+  .add .kbd { font-size: var(--text-meta); }
   .quick { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; color: var(--text-muted); font: var(--text-meta) var(--font-family); padding: 6px 8px; border-radius: var(--radius-sm); cursor: pointer; flex: none; }
   .quick:hover { background: var(--tint-hover); color: var(--text-primary); }
   .kbd { font-weight: var(--weight-medium); background: var(--card); border-radius: var(--radius-mark); padding: 1px 5px; }

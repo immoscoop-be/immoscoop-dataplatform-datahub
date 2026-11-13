@@ -3148,10 +3148,14 @@ describe('Query', () => {
     const flags = within(await main.findByRole('navigation', { name: 'Gemarkeerde queries' }));
     expect((await flags.findByRole('link', { name: /Partner share per week/ })).getAttribute('href')).toBe('/query/q2');
     expect(flags.getByText('1')).toBeTruthy();
-    // This query is not flagged yet: Flag keeps it on top, as the second, with its key.
-    await fireEvent.click(await main.findByRole('button', { name: 'Markeren' }, { timeout: 3000 }));
+    // This query is not flagged yet: "Flag this query" in the row keeps it on top, as the second, with its key (DEC-UX-241).
+    const add = await flags.findByRole('button', { name: /^Markeer deze query/ }, { timeout: 3000 });
+    expect(add.textContent).toContain('Ctrl+2');
+    // The head of a query has no Flag.
+    expect(main.queryByRole('button', { name: 'Markeren' })).toBeNull();
+    await fireEvent.click(add);
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/query.flagged', body: { value: ['q2', 'q1'] } }));
-    expect(await main.findByRole('button', { name: /^Gemarkeerd/ })).toBeTruthy();
+    await vi.waitFor(() => expect(flags.queryByRole('button', { name: /^Markeer deze query/ })).toBeNull());
     expect((await flags.findByRole('link', { name: /Leads per source name/ })).getAttribute('aria-current')).toBe('page');
     // The panel shows the flag at the end of a flagged query.
     const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
@@ -3182,22 +3186,41 @@ describe('Query', () => {
     const flags = within(await main.findByRole('navigation', { name: 'Gemarkeerde queries' }));
     const editor = await main.findByRole('textbox', { name: /Leads per source name/ }, { timeout: 3000 });
     await typeInEditor(editor, ' -- mine');
-    // "Flagged" in its head unflags it: it leaves the row on top, and stays open as it was.
-    await fireEvent.click(await main.findByRole('button', { name: /^Gemarkeerd/ }));
+    // Unflagged from the quick window: it leaves the row on top, and stays open as it was.
+    await quickDo('niet meer markeren');
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/query.flagged', body: { value: ['q2'] } }));
     await vi.waitFor(() => expect(flags.queryByRole('link', { name: /Leads per source name/ })).toBeNull());
     expect(main.getByRole('heading', { level: 1, name: 'Leads per source name' })).toBeTruthy();
     const still = main.getByRole('textbox', { name: /Leads per source name/ });
     expect(still).toBe(editor);
     expect(still.textContent).toContain('-- mine');
-    expect(await main.findByRole('button', { name: 'Markeren' })).toBeTruthy();
-    // Flagged again, and unflagged with the × on its tab: it stays open all the same.
-    await fireEvent.click(main.getByRole('button', { name: 'Markeren' }));
+    // Flagged again from the row, and unflagged with the × on its tab: it stays open all the same.
+    await fireEvent.click(await flags.findByRole('button', { name: /^Markeer deze query/ }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/query.flagged', body: { value: ['q2', 'q1'] } }));
     await fireEvent.click(await flags.findByRole('button', { name: 'Leads per source name niet meer markeren' }));
     await vi.waitFor(() => expect(flags.queryByRole('link', { name: /Leads per source name/ })).toBeNull());
     expect(main.getByRole('textbox', { name: /Leads per source name/ })).toBe(editor);
     expect(location.pathname).toBe('/query/q1');
+  });
+
+  it('goes to the next and the previous flagged query from the quick window, round the row (DEC-UX-241)', async () => {
+    const named = (id: string, name: string) => ({ ...QUERY, id, name });
+    serve({ queries: [named('q1', 'Leads per source name'), named('q2', 'Partner share per week'), named('q3', 'Listings per postal code')], settings: { 'query.flagged': ['q1', 'q2', 'q3'] } });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const flags = within(await main.findByRole('navigation', { name: 'Gemarkeerde queries' }));
+    await flags.findByRole('link', { name: /Listings per postal code/ }, { timeout: 3000 });
+    const next = await quickRow('Volgende gemarkeerde query');
+    expect(next.textContent).toContain('Partner share per week · Ctrl+2');
+    await closeQuick();
+    await quickDo('volgende gemarkeerde');
+    await vi.waitFor(() => expect(location.pathname).toBe('/query/q2'));
+    // From the first, the previous one is the last, round the row.
+    await quickDo('vorige gemarkeerde');
+    await vi.waitFor(() => expect(location.pathname).toBe('/query/q1'));
+    await quickDo('vorige gemarkeerde');
+    await vi.waitFor(() => expect(location.pathname).toBe('/query/q3'));
   });
 
   it('moves a flagged query by dragging its tab, and its key with it (DEC-UX-236)', async () => {
@@ -3218,15 +3241,19 @@ describe('Query', () => {
     await vi.waitFor(() => expect(location.pathname).toBe('/query/q3'));
   });
 
-  it('greys Flag at ten flagged queries, and says why (OP-UX-84)', async () => {
+  it('has no Flag in the row at ten flagged queries, and greys it in the quick window with why (OP-UX-84, DEC-UX-241)', async () => {
     const ten = Array.from({ length: 10 }, (_, at) => ({ ...QUERY, id: `f${at}`, name: `Flagged ${at}` }));
     serve({ queries: [QUERY, ...ten], settings: { 'query.flagged': ten.map((query) => query.id) } });
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    const why = await main.findByRole('group', { name: 'Markeren' }, { timeout: 3000 });
-    expect((within(why).getByRole('button', { name: 'Markeren' }) as HTMLButtonElement).disabled).toBe(true);
-    expect(document.getElementById(why.getAttribute('aria-describedby') ?? '')?.textContent).toContain('Tien queries zijn gemarkeerd.');
+    const flags = within(await main.findByRole('navigation', { name: 'Gemarkeerde queries' }));
+    await main.findByRole('heading', { level: 1, name: 'Leads per source name' }, { timeout: 3000 });
+    await flags.findByRole('link', { name: /Flagged 9/ });
+    expect(flags.queryByRole('button', { name: /^Markeer deze query/ })).toBeNull();
+    const row = await quickRow('Markeer deze query');
+    expect(row.getAttribute('aria-disabled')).toBe('true');
+    expect(row.nextElementSibling?.textContent).toBe('Tien queries zijn gemarkeerd. Haal er eerst één weg.');
   });
 
   it('opens the quick window with Ctrl+K and Ctrl+Shift+P, with the commands of the query first, and does one (DEC-UX-237, OP-UX-87)', async () => {
@@ -3234,7 +3261,7 @@ describe('Query', () => {
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    await main.findByRole('button', { name: 'Markeren' }, { timeout: 3000 });
+    await main.findByRole('heading', { level: 1, name: 'Leads per source name' }, { timeout: 3000 });
     await fireEvent.keyDown(document.body, { key: 'k', code: 'KeyK', ctrlKey: true });
     const quick = within(await screen.findByRole('dialog', { name: 'Snelvenster' }));
     const titles = () => quick.queryAllByRole('option').map((option) => option.querySelector('.title')?.textContent);

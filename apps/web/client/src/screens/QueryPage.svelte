@@ -1018,20 +1018,6 @@
         {/each}
       </span>
       <Button variant="outline" href={NEW_QUERY}><Icon name="plus-circle-fill" />{t('query.new')}</Button>
-      {#if onflag}
-        <!-- Flag keeps it on top of Query, with its key; at ten it is greyed, with why (DEC-UX-236, OP-UX-84). -->
-        {#if flagAt === null && flagsFull}
-          <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-          <span class="why-anchor" tabindex="0" role="group" aria-label={t('flags.flag')} aria-describedby={`${uid}-why-flag`}>
-            <Button variant="outline" disabled><Icon name="flag" />{t('flags.flag')}</Button>
-            <span class="why-pop" id={`${uid}-why-flag`} role="tooltip"><b class="why-title">{t('flags.full.title')}</b>{t('flags.full.text')}</span>
-          </span>
-        {:else}
-          <Button variant="outline" pressed={flagAt !== null} title={t(flagAt === null ? 'flags.flag.hint' : 'flags.unflag.hint')} onclick={() => onflag(flagAt === null)}
-            ><Icon name={flagAt === null ? 'flag' : 'flag-fill'} />{t(flagAt === null ? 'flags.flag' : 'flags.flagged')}{#if flagAt !== null}<span class="kbd">{modLabel(mac)}{digitOf(flagAt)}</span>{/if}</Button
-          >
-        {/if}
-      {/if}
       <Button variant="outline" disabled={hiding} title={t(hidden ? 'query.unhide.hint' : 'query.hide.hint')} onclick={toggleHidden}
         ><Icon name={hidden ? 'eye' : 'eye-slash-fill'} />{t(hidden ? 'query.page.unhide' : 'query.page.hide')}</Button
       >
