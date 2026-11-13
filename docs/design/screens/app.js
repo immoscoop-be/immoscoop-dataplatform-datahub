@@ -903,14 +903,21 @@ const syncRun = () => {
   if (!btn || !editor) return;
   const live = sel => [...editor.querySelectorAll(sel)].filter(el => !el.closest('.ln.off'));
   const scope = new Set([...document.querySelectorAll('#scope-chips [data-res]:not([hidden])')].map(c => c.dataset.res));
-  live('.sql-key[data-table]').forEach(t => { const out = !scope.has(t.dataset.table); t.classList.toggle('outside', out); t.title = out ? 'Not a resource of this query' : ''; });
+  // A table Data Hub knows that is no Resource is no error for a power user (DEC-UX-220)
+  live('.sql-key[data-table]').forEach(t => { const out = !scope.has(t.dataset.table) && !t.dataset.known; t.classList.toggle('outside', out); t.title = out ? 'Not a resource of this query' : t.dataset.known ? 'A table Data Hub knows, not a Resource' : ''; });
+  const known = [...new Set(live('.sql-key[data-known]').map(t => t.dataset.table + '|' + t.dataset.known))].map(k => k.split('|'));
   const tables = [...new Set(live('.sql-key.outside').map(t => t.dataset.table))];
   const params = [...new Set(live('.sql-param.undefined').map(t => t.dataset.param))];
   editor.querySelectorAll('[data-fold-start]').forEach(st => st.classList.toggle('has-error',
     [...editor.querySelectorAll(`[data-fold-in="${st.dataset.foldStart}"]:not(.off)`)].some(l => l.querySelector('.sql-key.outside, .sql-param.undefined'))));
   const out = document.getElementById('scope-outside');
   if (out) out.innerHTML = tables.map(t => `<span class="scope-chip outside"><i class="ph-fill ph-warning"></i><span class="mono">${t}</span> is not a resource of this query`
-    + (t === removedRes ? '' : `<button class="text-link" type="button" data-add-res="${t}">Start a new query with it</button>`) + '</span>').join('');
+    + (t === removedRes ? '' : `<button class="text-link" type="button" data-add-res="${t}">Start a new query with it</button>`) + '</span>').join('')
+    + known.map(([t, layer]) => `<span class="scope-chip known" title="A table Data Hub knows from a dbt project it follows; no Resource, so no Owner, Level or Publication"><i class="ph ph-cube kind-icon" role="img" aria-label="Model"></i><span class="mono">${t}</span><span class="muted">· ${layer}, not a Resource</span></span>`).join('');
+  const knownLine = document.getElementById('q-known');
+  if (knownLine) knownLine.hidden = !known.length;
+  // ...and it cannot become a Lens: "Make it a lens" is greyed (DEC-LE-22)
+  document.querySelectorAll('a.btn-primary[href="lens-new.html"]').forEach(a => { a.classList.toggle('is-off', known.length > 0); a.setAttribute('aria-disabled', String(known.length > 0)); });
   const notes = [];
   if (tables.length) notes.push(`${tables.map(t => `<span class="mono">${t}</span>`).join(', ')} ${tables.length > 1 ? 'are' : 'is'} not a resource of this query.`);
   if (params.length) notes.push(`${params.map(n => `<span class="mono">@${n}</span>`).join(', ')} ${params.length > 1 ? 'are' : 'is'} in the query, but not a parameter.`);
@@ -1248,9 +1255,9 @@ if (scopeBox) {
   };
 
   // Prototype: the SQL as written, or with a table outside the Resources of the query
+  // ...or, for a power user, with a table Data Hub knows that is no Resource (DEC-UX-220)
   document.querySelectorAll('[data-group="sqlstate"] [data-target]').forEach(b => b.addEventListener('click', () => {
-    const outside = b.dataset.target === 'outside';
-    document.querySelectorAll('.ln[data-variant]').forEach(l => l.classList.toggle('off', (l.dataset.variant === 'outside') !== outside));
+    document.querySelectorAll('.ln[data-variant]').forEach(l => l.classList.toggle('off', l.dataset.variant !== b.dataset.target));
     syncRun();
   }));
 

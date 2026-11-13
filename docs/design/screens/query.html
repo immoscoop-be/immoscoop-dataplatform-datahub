@@ -11,6 +11,11 @@
   queries may share a set: a query is its name, its question and its Resources. The panel has one item per query, with
   how many runs, unfolding to its last runs; the result card has a tab History: every run is a variation, a row with when it ran, Preview and Apply (DEC-UX-88), of its
   values, its SQL or both. The switch "SQL" shows a table outside the Resources.
+  A power user, who has the Permission "Query tables outside Data Hub" (Admin only to start), may also read a table that
+  Data Hub knows but that is no Resource: a model, seed, snapshot or source of a dbt project it follows through its Source
+  Jobs. Such a table is a quiet chip next to the Resources, "not a Resource", and the query runs; a table that is a
+  Resource stays one, to start a new query with, and a table Data Hub does not know stays an error. A query that reads one
+  cannot become a Lens (DEC-LE-22): a line under its question says so. The switch "SQL" shows it (DEC-UX-220, DEC-SR-46).
   One white frame holds two dark boxes: the editor, at the full width, and under it the Parameters, which fold open and
   shut (folded, a chip each). A Parameter has a name, a kind from a standard list (Date, Period, Whole number, Decimal
   number, Text, Choice, Several choices, Yes or no, each with its BigQuery type) and a value: a value such as 2026-10-25,
@@ -31,8 +36,8 @@
   The switch "Query" shows it Broken (DEC-UX-160, FR-SR-53, DEC-UX-81): a table or column it reads no longer exists, so
   Run is off, a callout on top names what is missing, and the query has the red dot in the panel; its SQL can still be
   changed, and a change that runs makes it work again, as does the return of what it reads.
-  Requirements: FR-SR-53, FR-SR-36, FR-SR-37, FR-SR-40, FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-45, FR-SR-47, FR-SR-48, FR-SR-51, FR-LN-05, FR-LN-06, FR-LE-07, FR-LE-08, FR-LE-16, FR-RC-18
-  Decisions: DEC-UX-219, DEC-UX-218, DEC-UX-163, DEC-UX-17, DEC-UX-20, DEC-UX-70, DEC-UX-71, DEC-UX-72, DEC-UX-73, DEC-UX-74, DEC-UX-76, DEC-UX-77, DEC-UX-88, DEC-UX-97, DEC-UX-99, DEC-UX-115, DEC-SR-29, DEC-SR-35, DEC-LN-01.
+  Requirements: FR-SR-56, FR-SR-53, FR-SR-36, FR-SR-37, FR-SR-40, FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-45, FR-SR-47, FR-SR-48, FR-SR-51, FR-LN-05, FR-LN-06, FR-LE-07, FR-LE-08, FR-LE-16, FR-RC-18
+  Decisions: DEC-UX-220, DEC-UX-219, DEC-UX-218, DEC-UX-163, DEC-UX-17, DEC-UX-20, DEC-UX-70, DEC-UX-71, DEC-UX-72, DEC-UX-73, DEC-UX-74, DEC-UX-76, DEC-UX-77, DEC-UX-88, DEC-UX-97, DEC-UX-99, DEC-UX-115, DEC-SR-29, DEC-SR-35, DEC-LN-01.
   Not in v1: the label "Claude" on a query in the panel (FR-SR-26, DEC-CH-02); leave it out.
   "Make it a lens" turns the query into a Lens (FR-LE-07, DEC-UX-25). The query stays, used as the Lens: then "Update the lens"
   takes its place and overwrites the Lens after a size check, and "Lenses on these resources" goes (DEC-LE-03, DEC-LE-04,
@@ -175,6 +180,7 @@
  <button class="btn-primary" data-pane-group="lens" data-pane="linked" type="button" data-sheet-open="update-lens" title="Overwrite the Lens with this query: its SQL and Parameters"><i class="ph ph-arrows-clockwise" style="font-size:15px"></i>Update the Lens</button>
 </div>
 <p class="q-question" id="q-question">Which sources bring our leads, week by week?</p>
+<p class="q-origin" id="q-known" hidden><i class="ph ph-cube"></i><span>Reads a table outside Data Hub: <span class="mono">stg_oltp__leads</span>. A Lens is made only on published Resources, so this query cannot become one.</span></p>
 <p class="q-origin" data-pane-group="lens" data-pane="unpublished" hidden><i class="ph ph-globe-simple"></i><span>Not published yet: <a href="resource-detail.html">Lead sources</a>. A Lens is made only on published Resources.</span></p>
 <p class="q-origin" data-pane-group="lens" data-pane="linked"><i class="ph ph-aperture"></i><span>Used as the Lens <a href="lens.html">Leads per source name</a>, in Credit leads, since 23 Oct. "Update the Lens" overwrites it with this query.</span></p>
 <p class="q-origin" id="q-origin" hidden><i class="ph ph-git-branch"></i><span>Started from <a href="query.html">Leads per source name</a>, after run 14. That query stays as it was.</span></p>
@@ -223,6 +229,7 @@
       <div class="suggest-info" aria-label="lead_source"><div class="si-head"><span class="mono">lead_source</span><span class="muted">STRING · Weekly lead volume</span></div><p><span class="origin">From the Owner</span>Where the lead came in: the website, the app, a partner or a mailing.</p><p class="si-dbt"><span class="origin">From dbt</span>Source system code of the lead.</p></div>
      </div></div>
     <div class="ln off" data-fold-in="weekly_lead_volume" data-variant="outside"><span class="ln-no">9</span><span class="ln-fold"></span><span class="ln-code">    and lead_source in (select lead_source from <span class="sql-key" data-table="partner_contracts">`immoscoop-dataplatform-398214.dbt_prod_stacks.partner_contracts`</span>)</span></div>
+    <div class="ln off" data-fold-in="weekly_lead_volume" data-variant="known"><span class="ln-no">9</span><span class="ln-fold"></span><span class="ln-code">    and lead_id in (select lead_id from <span class="sql-key" data-table="stg_oltp__leads" data-known="staging">`immoscoop-dataplatform-398214.dbt_prod_staging.stg_oltp__leads`</span>)</span></div>
     <div class="ln" data-fold-in="weekly_lead_volume"><span class="ln-no">10</span><span class="ln-fold"></span><span class="ln-code">),</span></div>
     <div class="ln"><span class="ln-no">11</span><span class="ln-fold"></span><span class="ln-code"></span></div>
     <div class="ln"><span class="ln-no">12</span><span class="ln-fold"></span><span class="ln-code"><span class="sql-comment">-- The readable name of every lead source</span></span></div>
@@ -550,6 +557,7 @@
 <div class="proto-switch" data-group="sqlstate" role="tablist" aria-label="Prototype: the SQL" style="top:28px;bottom:auto;right:290px">SQL
  <button class="seg on" data-target="ok" role="tab" aria-selected="true">As written</button>
  <button class="seg" data-target="outside" role="tab" aria-selected="false">With a table outside</button>
+ <button class="seg" data-target="known" role="tab" aria-selected="false">A table Data Hub knows, as a power user</button>
 </div>
 <div class="role-switch" data-group="role" role="tablist" aria-label="Prototype: seen as" style="top:28px;bottom:auto">Seen as
  <button class="seg on" data-target="colleague" role="tab" aria-selected="true">Colleague</button>

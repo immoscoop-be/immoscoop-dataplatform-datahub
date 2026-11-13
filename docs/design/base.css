@@ -490,6 +490,7 @@ button.ln-fold i { transition: transform 200ms ease; }
 .scope-x:hover { background: var(--tint-active); color: var(--text-primary); }
 .scope-chip.outside { padding-right: 10px; color: var(--signal-warn); background: color-mix(in srgb, var(--signal-warn) 13%, var(--surface-solid)); outline: 1.5px solid var(--signal-warn); }
 .scope-chip.outside .text-link { color: var(--signal-warn); font-weight: var(--weight-medium); font-size: var(--text-meta); }
+.scope-chip.known { padding-right: 10px; color: var(--text-secondary); background: transparent; outline: 1.5px dashed var(--text-muted); }
 .scope-add { display: inline-flex; align-items: center; gap: 5px; font: var(--text-meta) var(--font-family); color: var(--text-secondary); background: none; border: 1px dashed var(--tint-active); border-radius: var(--radius-pill); padding: 4px 10px; cursor: pointer; }
 .scope-add:hover { color: var(--text-primary); border-color: var(--text-muted); }
 .sql-key.outside { color: var(--signal-warn); text-decoration: underline wavy var(--signal-warn); text-underline-offset: 3px; background: color-mix(in srgb, var(--signal-warn) 12%, transparent); border-radius: 3px; }
@@ -823,6 +824,7 @@ a.nav-btn { display: inline-flex; align-items: center; justify-content: center; 
 .confirm-bar input:disabled + span { color: var(--text-muted); }
 .confirm-bar .btn-primary { flex: none; }
 .btn-primary[disabled] { opacity: .4; cursor: not-allowed; }
+.btn-primary.is-off { opacity: .4; pointer-events: none; }
 
 /* A link to something the User may not see: the same page as for what does not exist (DEC-UX-32) */
 .gone { max-width: 520px; margin: 11vh auto 0; text-align: center; }

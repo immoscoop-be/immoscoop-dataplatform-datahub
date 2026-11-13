@@ -55,6 +55,7 @@ In library terms: a book is only in the library once the librarian registers it.
 - <a id="dec-sr-43"></a>**DEC-SR-43** · A new query offers only Lenses that run now: published, not stopped and not Broken. A Lens that waits for the Data Team, has stopped or is Broken is not offered to reuse ([FR-SR-47](#fr-sr-47)). *Decided on 2026-10-29, by Max.*
 - <a id="dec-sr-44"></a>**DEC-SR-44** · A Resource keeps the full name of its table twice: as its Key, in lower case, and in its own case, as dbt writes the database, schema and table name of its Node. The Key knows the table again, also in the SQL of a query, whatever the case it is written in. What asks BigQuery for the table, shows the name or copies it takes the name in its own case, since BigQuery names are case-sensitive: `mrt_leadSources` is not `mrt_leadsources`. Until the next run of its Source Job brings it, a Resource has its Key as both. It refines [DEC-SR-04](#dec-sr-04). *Decided on 2026-10-30, by Max (a Preview asked BigQuery for a table in lower case that exists only in camel case).*
 - <a id="dec-sr-45"></a>**DEC-SR-45** · A withdrawn Resource without a Collection is not in the list of Resources without a Collection ([FR-SR-35](#fr-sr-35)): it waits for nothing, as no exposure depends on it. It is held as [DEC-SR-26](#dec-sr-26) says, and the Data Team still opens it by its link; it is back in the list when an exposure with the tag `datahub` depends on it again. A withdrawn Resource in a Collection stays in its Collection, marked as withdrawn. It refines [DEC-SR-26](#dec-sr-26). *Decided on 2026-11-11, by Max (the nested models of the credits stopped being exposed in favour of their flat models, and would otherwise have waited for good).*
+- <a id="dec-sr-46"></a>**DEC-SR-46** · A power user may query tables outside Data Hub: whose Permission group has `queries.outside` ([DEC-PL-09](12-permissions-and-library-cards.md#dec-pl-09)) reads in a query, besides its Resources, every table Data Hub knows that is no Resource, the models, seeds, snapshots and sources of the dbt projects it follows through their Source Jobs, and may start a query from SQL, without Resources. A table that is a Resource is read as that Resource, with its rules: Data Hub prefers the Resource to the table typed by hand, and a Resource the User may not see stays refused. A table of no dbt project Data Hub follows stays an error. A query that reads a table outside Data Hub cannot become a Lens ([DEC-LE-22](09-lenses.md#dec-le-22)). In Claude the same holds as in the web app. Only Admin has it to start; a group of power users is made in Admin. *Decided on 2026-11-13, by Max.*
 
 Further decisions on using a Resource are under [Using a Resource](#using-a-resource).
 
@@ -429,6 +430,15 @@ Admin has a tool Withdrawn, for whose Permission group opens it ([FR-PL-15](12-p
 
 **Makes easy:** finding back a Resource that a refactoring in dbt withdrew, and cleaning up the Collections it still sits in. **Makes hard:** losing track of what Data Hub still keeps once it shows nowhere else.
 
+<a id="fr-sr-56"></a>
+### FR-SR-56 · A power user queries tables outside Data Hub
+
+**Status:** Specified · **Source:** Max, 2026-11-13 ([DEC-SR-46](#dec-sr-46)) · **Screens:** [query](../../design/screens/query.html), [query-new](../../design/screens/query-new.html)
+
+A User whose Permission group has `queries.outside` ([DEC-PL-09](12-permissions-and-library-cards.md#dec-pl-09)) may read in a query, besides its Resources, a table that Data Hub knows but that is no Resource: a model, seed, snapshot or source of a dbt project it follows through its Source Jobs, as the registry keeps it in its Current Version. They may also start a query from SQL, without Resources. Such a table shows next to the Resources of the query as "not a Resource", without Level, Owner or Publication; the Pre-flight measures it and the run reads it as any other, within the ranges of the User ([FR-SR-37](#fr-sr-37)), and the Query Log keeps which tables it read. A table that is a Resource is read as that Resource, with its rules ([DEC-UX-73](../../design/principles.md#dec-ux-73)), and a table of no dbt project Data Hub follows stays an error. A query that reads a table outside Data Hub cannot become a Lens ([DEC-LE-22](09-lenses.md#dec-le-22)). Claude, through the MCP server, does the same for such a User ([FR-CL-18](17-claude.md#fr-cl-18)).
+
+**Makes easy:** a power user exploring raw and staging data, such as event tables, in Data Hub itself, measured and logged as every query, before it becomes a Resource. **Makes hard:** reading around a Resource, its Publication or its Owner, sharing a figure from unconfirmed data as a Lens, and reading tables of projects Data Hub does not follow.
+
 <a id="fr-sr-35"></a>
 ### FR-SR-35 · A new Resource waits for a Collection
 
@@ -509,6 +519,8 @@ The Pre-flight ([FR-SR-36](#fr-sr-36)) says, per Resource, how many of its parti
 Data Hub has a section Query, next to Collections, in which a User writes SQL over every Resource they may see, and later Lenses. A query that touches a Resource they cannot see is refused, as through Claude ([FR-SR-26](#fr-sr-26)). Every query passes the Pre-flight, with its thresholds ([FR-SR-36](#fr-sr-36), [FR-SR-37](#fr-sr-37)), gets a byte limit and a label ([FR-SR-27](#fr-sr-27)), and its result carries its Query ID ([FR-LN-06](07-log-and-notifications.md#fr-ln-06)). From the page of a Resource, "Query this resource" opens Query with it.
 
 *Note of 2026-10-27: a query reads only its own Resources; a table outside them is an error, and another set of Resources is another query ([DEC-UX-73](../../design/principles.md#dec-ux-73)).*
+
+*Note of 2026-11-13: a power user may also read tables Data Hub knows that are no Resource ([FR-SR-56](#fr-sr-56), [DEC-SR-46](#dec-sr-46)).*
 
 *Note of 2026-10-29, on building it: Query, its panel, a new query and the page of a query, reading only its own Resources ([TR-SR-15](../technical/04-stacks-and-resources.md#tr-sr-15) to [TR-SR-17](../technical/04-stacks-and-resources.md#tr-sr-17)); Lenses come with part 6 of the [build order](../../design/build-order.md), Claude in version 2.*
 
