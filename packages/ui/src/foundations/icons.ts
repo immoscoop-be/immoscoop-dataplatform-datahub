@@ -68,6 +68,7 @@ import textH from '@phosphor-icons/core/assets/regular/text-h.svg?raw';
 import textItalic from '@phosphor-icons/core/assets/regular/text-italic.svg?raw';
 import userFocus from '@phosphor-icons/core/assets/regular/user-focus.svg?raw';
 import userGear from '@phosphor-icons/core/assets/regular/user-gear.svg?raw';
+import arrowBendDownRight from '@phosphor-icons/core/assets/regular/arrow-bend-down-right.svg?raw';
 import arrowCounterClockwise from '@phosphor-icons/core/assets/regular/arrow-counter-clockwise.svg?raw';
 import arrowDownRight from '@phosphor-icons/core/assets/regular/arrow-down-right.svg?raw';
 import arrowLeft from '@phosphor-icons/core/assets/regular/arrow-left.svg?raw';
@@ -93,6 +94,7 @@ import chatText from '@phosphor-icons/core/assets/regular/chat-text.svg?raw';
 import check from '@phosphor-icons/core/assets/regular/check.svg?raw';
 import checkCircle from '@phosphor-icons/core/assets/regular/check-circle.svg?raw';
 import circle from '@phosphor-icons/core/assets/regular/circle.svg?raw';
+import code from '@phosphor-icons/core/assets/regular/code.svg?raw';
 import columns from '@phosphor-icons/core/assets/regular/columns.svg?raw';
 import rows from '@phosphor-icons/core/assets/regular/rows.svg?raw';
 import cube from '@phosphor-icons/core/assets/regular/cube.svg?raw';
@@ -230,6 +232,7 @@ export const ICONS = {
   'text-italic': textItalic,
   'user-focus': userFocus,
   'user-gear': userGear,
+  'arrow-bend-down-right': arrowBendDownRight,
   'arrow-counter-clockwise': arrowCounterClockwise,
   'arrow-down-right': arrowDownRight,
   'arrow-left': arrowLeft,
@@ -255,6 +258,7 @@ export const ICONS = {
   check,
   'check-circle': checkCircle,
   circle,
+  code,
   columns,
   rows,
   cube,

@@ -4,6 +4,18 @@ import type { Parameter } from './parameters.js';
 /** A Parameter of a Lens: one of its query, with the name Users see (DEC-DH-11). */
 export type LensParameterRow = Parameter & { label: string };
 
+/**
+ * A field of the result of a Lens as Users see it (FR-LE-19): its name and type, and its description, taken from a
+ * field of one of its Resources, or written by its author when `from` is null. An empty description is none.
+ */
+export interface LensField {
+  name: string;
+  type: string;
+  description: string;
+  /** The field of one of its Resources the description was taken from (DEC-UX-227). */
+  from: { resourceId: string; field: string } | null;
+}
+
 /** A timestamp: read as a Date, written as a Date or left to the database. */
 type Timestamp = ColumnType<Date, Date | undefined, Date>;
 
@@ -106,6 +118,8 @@ export interface QueryDatabase {
     /** Its Parameters, each with the name Users see and its default (DEC-LE-01). */
     parameters: ColumnType<LensParameterRow[], string | undefined, string>;
     resources: ColumnType<NamedResource[], string, string>;
+    /** Its fields, each with its description (FR-LE-19). */
+    fields: ColumnType<LensField[], string | undefined, string>;
     version: Generated<number>;
     state: LensState;
     range: LensRange;

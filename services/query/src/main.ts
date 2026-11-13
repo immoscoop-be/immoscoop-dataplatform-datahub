@@ -7,6 +7,7 @@ import { createBigQuery } from './bigquery.js';
 import { createCatalogue } from './catalogue.js';
 import type { QueryDatabase } from './database.js';
 import { createBeneath } from './preflight.js';
+import { createRegistry } from './registry.js';
 import { createStorage } from './preview.js';
 import { createLenses } from './lenses.js';
 import { createQueries } from './queries.js';
@@ -25,6 +26,8 @@ const app = await buildApp({
     lenses: createLenses(database.db),
     // What the User may see, asked with their own token (FR-SR-41); about the Lenses as query itself (DEC-PF-30).
     catalogue: createCatalogue(required('DATAHUB_CATALOGUE_URL'), fetch, metadataIdToken()),
+    // Which tables Data Hub knows besides its Resources, for a power user's query, asked with their token (FR-SR-56).
+    ...(process.env.DATAHUB_REGISTRY_URL ? { registry: createRegistry(process.env.DATAHUB_REGISTRY_URL) } : {}),
     bigquery,
     beneath,
     project,

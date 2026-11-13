@@ -29,6 +29,7 @@
   import { Settings } from './lib/settings.svelte.js';
   import { ThemeOnScreen } from './lib/theme.svelte.js';
   import AdminPanel from './screens/AdminPanel.svelte';
+  import type { SummaryData } from './screens/ResourceSummaryWindow.svelte';
   import AdminExcelKeys from './screens/AdminExcelKeys.svelte';
   import AdminPermissionGroups from './screens/AdminPermissionGroups.svelte';
   import AdminUsers from './screens/AdminUsers.svelte';
@@ -509,6 +510,21 @@
         ? (page.message ?? null)
         : null,
   );
+  /** The Summary of a Resource, as its page builds it, for a double-click on its name in the SQL (DEC-UX-221): a piece that does not come leaves out its part. */
+  async function summaryOf(id: string): Promise<SummaryData> {
+    const [resource, log, related, storage, threads] = await Promise.all([
+      catalogue.resource(id),
+      catalogue.log(id).catch(() => undefined),
+      catalogue.related(id).catch(() => undefined),
+      queries.storage(id).catch(() => null),
+      messages.on('resource', id).then(
+        (found) => found.messages.filter((message) => ['question', 'remark', 'signal'].includes(message.kind)),
+        () => undefined,
+      ),
+    ]);
+    return { resource, log, related, storage, threads };
+  }
+
   function readOnObject(subject: { kind: WrittenOn; id: string }): void {
     const key = `${subject.kind}:${subject.id}`;
     if (onObject?.key !== key) onObject = { key };
@@ -817,6 +833,7 @@
           initial={page.resource}
           {collections}
           {catalogue}
+          outside={can(permissions, 'queries.outside')}
           lensesOn={(on, words) => queries.suggestions(on, words)}
           ondraft={(name) => (draft = name)}
           onstart={async (fields) => {
@@ -840,6 +857,8 @@
           id={page.id}
           opened={page.run}
           client={queries}
+          {summaryOf}
+          findTables={can(permissions, 'queries.outside') ? (words, filter) => registry.findTables(words, filter) : undefined}
           {collections}
           nonce={config.styleNonce}
           onran={refreshQueries}

@@ -122,10 +122,12 @@ locals {
     # query asks catalogue which Resources the User may see, with their token, and runs the jobs in
     # the project and location of Data Hub, where the tables of its dbt projects are (DEC-SR-32). The
     # scheduler starts its daily check of every Lens and query, and catalogue its check of what reads a
-    # Resource that changed, each by a Google ID token for its address (DEC-LE-20, FR-SR-52).
+    # Resource that changed, each by a Google ID token for its address (DEC-LE-20, FR-SR-52). For a power
+    # user it asks registry, with their token, which tables outside Data Hub it knows (FR-SR-56).
     query = merge(local.database_env["query"], {
       DATAHUB_CATALOGUE_SERVICE_ACCOUNT = google_service_account.service["catalogue"].email
       DATAHUB_CATALOGUE_URL             = local.urls["catalogue"]
+      DATAHUB_REGISTRY_URL              = local.urls["registry"]
       DATAHUB_BIGQUERY_PROJECT          = var.project_id
       DATAHUB_BIGQUERY_LOCATION         = var.region
       DATAHUB_QUERY_URL                 = local.urls["query"]

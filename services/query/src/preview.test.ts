@@ -11,6 +11,7 @@ const WEEKLY: QueryResource = {
   collectionId: 'c-credit',
   level: 3,
   deprecated: false,
+  published: true,
   partition: { field: 'week_start', unit: 'day' },
   clusterBy: ['lead_source', 'lead_channel'],
   partitionFilter: 'none',

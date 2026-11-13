@@ -74,6 +74,12 @@
   --col-ochre: #B07A28;
   --col-slate: #4A7698;
   --col-olive: #6E7C34;
+  /* The colours of SQL in the editor, by kind of word, as BigQuery colours it (DEC-UX-223): each 4.5 : 1 or more on
+     the editor (--surface-sub); names of tables, CTEs and columns keep the colour of the text, comments are muted */
+  --code-keyword: #3F6A8C;       /* keywords, functions and types: 5.3 : 1 */
+  --code-string: #5B6820;        /* text in quotes: 5.6 : 1 */
+  --code-number: #1F7A75;        /* numbers: 4.7 : 1 */
+  --code-param: #C21F75;         /* @Parameters: 5.2 : 1 */
   /* The values of a monitor's picture (DEC-UX-197): three shades of olive that stand for several values, never one each;
      the strongest is the one judged first. Not a Tone: a Tone colours a judgement, these only tell values apart. */
   --seg-1: #C2CB8E;
@@ -176,6 +182,10 @@
   --text-muted: #8F877F;
   --signal-warn: #D9A453;
   --signal-urgent: #E2725E;
+  --code-keyword: #8DB6DA;       /* 5.6 : 1 on the editor */
+  --code-string: #B4C46C;        /* 6.3 : 1 */
+  --code-number: #5CCBC4;        /* 6.2 : 1 */
+  --code-param: #F27BB8;         /* 4.7 : 1 */
   --glass: rgba(40,36,32,.5);
   --glass-solid: rgba(40,36,32,.92);
   --glass-edge: rgba(255,255,255,.12);

@@ -22,6 +22,8 @@ export type QueryResource =
       collectionId: string | null;
       level: number;
       deprecated: boolean;
+      /** Whether its Owner published it: a Lens is made only on published Resources (DEC-LE-22). */
+      published?: boolean;
       partition: { field: string; unit: string | null } | null;
       clusterBy: string[];
       partitionFilter: 'none' | 'dataHub' | 'bigQuery';
@@ -223,10 +225,23 @@ export interface LensLogEntry {
   at: string;
 }
 
+/**
+ * A field of the result of a Lens as Users see it (FR-LE-19): its type, and its description, taken from a field of one of
+ * its Resources, or written by its author when `from` is null. An empty description is none.
+ */
+export interface LensField {
+  name: string;
+  type: string;
+  description: string;
+  from: { resourceId: string; field: string } | null;
+}
+
 /** A Lens as its page shows it: everything but its SQL (FR-LE-14). */
 export interface Lens extends Omit<LensItem, 'resources'> {
   steps: string[];
   parameters: LensParameter[];
+  /** Its fields, each with its description (FR-LE-19); a Lens made before has none. */
+  fields?: LensField[];
   resources: { id: string; displayName: string; collectionId: string | null; level: number }[];
   /** Whether the User may change it: its Owner Unit and the Data Team (DEC-CO-15, DEC-CO-18). */
   canManage: boolean;
@@ -274,6 +289,8 @@ export interface NewLens {
   steps: string[];
   tags: string[];
   labels: Record<string, string>;
+  /** The description of each field of its result, by name (FR-LE-19). */
+  fields?: Omit<LensField, 'type'>[];
   approve?: boolean;
   text?: string;
 }
@@ -294,6 +311,8 @@ export type Problem =
   | { kind: 'empty' }
   | { kind: 'notVisible'; resource: { id: string; displayName: string } }
   | { kind: 'outside'; name: string; start: number | null; end: number | null }
+  /** In a power user's query: a table Data Hub does not know from a dbt project it follows (FR-SR-56). */
+  | { kind: 'unknown'; name: string; start: number | null; end: number | null }
   /** An @name that is not a Parameter, with the kind suggested from the column it is compared with. */
   | { kind: 'undefinedParameter'; name: string; start: number; end: number; suggestedKind: ParameterKind | null }
   | { kind: 'notSelect'; statementType: string }
@@ -324,6 +343,18 @@ export interface Preflight {
   thresholds: { approve: number; request: number; above?: 'request' | 'refuse' };
   /** The Parameters that are not in the SQL: they are not sent. */
   unused: string[];
+  /** The tables outside Data Hub a power user's query reads: Data Hub knows them, they are no Resource (FR-SR-56). */
+  tables?: OutsideTable[];
+  /** The columns of its result, as the dry run says them (FR-LE-19). */
+  columns?: ResultColumn[];
+}
+
+/** A table outside Data Hub, known from a dbt project Data Hub follows, with its layer (DEC-UX-220). */
+export interface OutsideTable {
+  key: string;
+  fullName: string;
+  name: string;
+  layer: string;
 }
 
 /** What a run came to: its result, or why it did not run. */
@@ -515,6 +546,10 @@ export function createQuery(config: Config, session: Pick<Session, 'accessToken'
       return ((await (await call('/lenses')).json()) as { lenses: LensItem[] }).lenses;
     },
     /** The Lenses a new query may reuse, by its Resources and the words of its question (FR-SR-47, FR-SR-48). */
+    /** The SQL with a CTE at its start for each Resource and table added (FR-SR-59, DEC-UX-225), and those CTEs. */
+    async ctes(sql: string, added: { resources?: readonly string[]; tables?: readonly string[] }): Promise<{ sql: string; ctes: string[] }> {
+      return (await (await call('/queries/ctes', { method: 'POST', body: { sql, resources: added.resources ?? [], tables: added.tables ?? [] } })).json()) as { sql: string; ctes: string[] };
+    },
     async suggestions(resources: readonly string[], question: string): Promise<LensSuggestions> {
       const search = new URLSearchParams({ resources: resources.join(','), question });
       return (await (await call(`/lenses/suggestions?${search}`)).json()) as LensSuggestions;
