@@ -441,6 +441,15 @@ A User whose Permission group has `queries.outside` ([DEC-PL-09](12-permissions-
 
 *Note of 2026-11-13, on building it: registry tells query which tables it knows, with the token of the User ([TR-SR-27](../technical/04-stacks-and-resources.md#tr-sr-27)).*
 
+<a id="fr-sr-57"></a>
+### FR-SR-57 · A double-click in the SQL explains what a word names
+
+**Status:** Specified · **Source:** Max, 2026-11-13 ([DEC-UX-221](../../design/principles.md#dec-ux-221)) · **Screens:** [query](../../design/screens/query.html)
+
+In the editor of Query, a double-click on a word of the SQL selects it, as in any editor, and opens what it names: on a Parameter of the query, its window, where it is changed; on an `@name` that is no Parameter, the window that defines it; on the name of a Resource the User sees, its Summary ([FR-RC-19](05-resource-card.md#fr-rc-19)), with a way to its page; on a field of the Resources of the query, its type, whether it is a partition or cluster column, and its descriptions, the Business Description next to the one from dbt ([FR-RC-18](05-resource-card.md#fr-rc-18)), once for each Resource of the query that holds it. The query stays as it is, and any other word is only selected.
+
+**Makes easy:** reading what a Resource is, how to query it and what a field means, at the moment of writing SQL on it, without leaving the query. **Makes hard:** writing SQL on a field or a Resource without knowing what it means, and losing the query to look it up.
+
 <a id="fr-sr-35"></a>
 ### FR-SR-35 · A new Resource waits for a Collection
 

@@ -1108,7 +1108,83 @@ if (pbox) {
     else if (e.target.closest('[data-define-first]')) open(null, missing(inSql())[0]);
     else if (e.target.closest('[data-add-filter]')) { noFilter = false; syncRun(); }
   });
+  // A double-click on a Parameter in the SQL opens it, as a click on its tile does; an @name that is not one, to be
+  // defined (DEC-UX-221). The word is selected as well, as in any editor
+  document.querySelector('.sql-editor')?.addEventListener('dblclick', e => {
+    const at = e.target.closest('.sql-param[data-param]');
+    if (!at) return;
+    if (at.classList.contains('undefined')) open(null, at.dataset.param); else open(at.dataset.param);
+  });
+  document.querySelector('[data-group="dbl"] [data-target="param"]')?.addEventListener('click', () => open('dateFrom'));
   render();
+}
+
+// A double-click on the name of a Resource in the SQL opens its Summary in a floating window over the query, with "Open
+// the Resource"; on a field, its type and descriptions in a pop-out at the word, once for each Resource of the query that
+// holds it (DEC-UX-221, DEC-UX-115). Any other word is only selected, as in any editor
+{
+  const box = document.querySelector('.sql-editor'), rs = document.getElementById('rs'), pop = document.getElementById('fd-pop');
+  if (box && rs && pop) {
+    const RESOURCES = { weekly_lead_volume: ['Weekly lead volume', 'Credit leads'], lead_sources: ['Lead sources', 'Credit leads'] };
+    const OWNER = 'Where the lead came in: the website, the app, a partner or a mailing.';
+    const FIELDS = {
+      lead_source: [['Weekly lead volume', 'STRING', 'Cluster 1', OWNER, 'Source system code of the lead.'], ['Lead sources', 'STRING', null, null, 'Source system code; one row per code.']],
+      week_start: [['Weekly lead volume', 'DATE', 'Partition', 'The Monday of the week the lead came in.', 'Start of the ISO week (Monday).']],
+      lead_count: [['Weekly lead volume', 'INT64', null, null, 'Number of credit leads sent to KBC in the week, for the source.']],
+      lead_channel: [['Weekly lead volume', 'STRING', 'Cluster 2', null, 'Channel through which the lead was submitted.']],
+      source_name: [['Lead sources', 'STRING', null, 'The name of the source as colleagues know it.', 'Display name of the lead source.']],
+    };
+    const esc = t => t.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+    const shut = () => { pop.hidden = true; };
+    const showResource = table => {
+      const [name, collection] = RESOURCES[table];
+      document.getElementById('rs-title').textContent = name;
+      document.getElementById('rs-meta').textContent = `Resource of this query · ${collection}`;
+      shut(); rs.hidden = false;
+      if (rs.classList.contains('folded')) rs.querySelector('.float-fold').click();
+    };
+    const showField = (word, rect) => {
+      pop.innerHTML = FIELDS[word].map(([resource, type, role, owner, dbt]) => `<div class="fd-block"><div class="si-head"><span class="mono">${word}</span><span class="muted">${type} · ${resource}</span>`
+        + (role ? `<span class="pill pill-strong">${role}</span>` : '') + '</div>'
+        + (owner ? `<p><span class="origin">From the Owner</span>${esc(owner)}</p>` : '<p class="muted">No Business Description yet.</p>')
+        + `<p class="si-dbt"><span class="origin">From dbt</span>${esc(dbt)}</p></div>`).join('');
+      pop.hidden = false;
+      const width = pop.offsetWidth, left = Math.min(Math.max(12, rect.left + rect.width / 2 - 28), innerWidth - width - 12);
+      const below = rect.bottom + 10 + pop.offsetHeight < innerHeight;
+      pop.dataset.side = below ? 'below' : 'above';
+      pop.style.left = left + 'px';
+      pop.style.top = (below ? rect.bottom + 10 : rect.top - 10 - pop.offsetHeight) + 'px';
+      pop.style.setProperty('--arrow-x', Math.max(14, rect.left + rect.width / 2 - left) + 'px');
+    };
+    box.addEventListener('dblclick', e => {
+      const key = e.target.closest('.sql-key[data-table]');
+      if (key) { if (RESOURCES[key.dataset.table] && !key.classList.contains('outside')) showResource(key.dataset.table); return; }
+      if (e.target.closest('.sql-param')) return;
+      const sel = getSelection(), word = sel.toString().trim();
+      if (FIELDS[word] && sel.rangeCount) showField(word, sel.getRangeAt(0).getBoundingClientRect());
+    });
+    // The pop-out goes with a click elsewhere, Escape or typing; the window stays until it is closed
+    document.addEventListener('mousedown', e => { if (!pop.contains(e.target)) shut(); });
+    document.addEventListener('keydown', e => { if (!pop.hidden && (e.key === 'Escape' || e.key.length === 1)) shut(); });
+    box.closest('.main, main')?.addEventListener('scroll', shut, true);
+    // The switch "Double-click", for the prototype: each case at once
+    const dbl = target => document.querySelector(`[data-group="dbl"] [data-target="${target}"]`);
+    dbl('none')?.addEventListener('click', () => { shut(); rs.hidden = true; document.getElementById('pm').hidden = true; });
+    dbl('resource')?.addEventListener('click', () => { document.getElementById('pm').hidden = true; showResource('weekly_lead_volume'); });
+    dbl('field')?.addEventListener('click', () => {
+      rs.hidden = true; document.getElementById('pm').hidden = true;
+      const code = [...box.querySelectorAll('.ln:not([hidden]) .ln-code')].find(c => c.textContent.trim() === 'lead_source,');
+      if (!code) return;
+      const text = code.firstChild, from = text.textContent.indexOf('lead_source'), range = document.createRange();
+      range.setStart(text, from); range.setEnd(text, from + 'lead_source'.length);
+      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(range);
+      setTimeout(() => showField('lead_source', range.getBoundingClientRect()));
+    });
+    dbl('param')?.addEventListener('click', () => { shut(); rs.hidden = true; });
+    // ?dbl= in the address was clicked before these listeners were there
+    const asked = new URLSearchParams(location.search).get('dbl');
+    if (asked && asked !== 'none') dbl(asked)?.click();
+  }
 }
 
 // The result of a query, as a grid like that of BigQuery (Proposal): the row number, then a column per field with its

@@ -36,13 +36,18 @@
   The switch "Query" shows it Broken (DEC-UX-160, FR-SR-53, DEC-UX-81): a table or column it reads no longer exists, so
   Run is off, a callout on top names what is missing, and the query has the red dot in the panel; its SQL can still be
   changed, and a change that runs makes it work again, as does the return of what it reads.
-  Requirements: FR-SR-56, FR-SR-53, FR-SR-36, FR-SR-37, FR-SR-40, FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-45, FR-SR-47, FR-SR-48, FR-SR-51, FR-LN-05, FR-LN-06, FR-LE-07, FR-LE-08, FR-LE-16, FR-RC-18
-  Decisions: DEC-UX-220, DEC-UX-219, DEC-UX-218, DEC-UX-163, DEC-UX-17, DEC-UX-20, DEC-UX-70, DEC-UX-71, DEC-UX-72, DEC-UX-73, DEC-UX-74, DEC-UX-76, DEC-UX-77, DEC-UX-88, DEC-UX-97, DEC-UX-99, DEC-UX-115, DEC-SR-29, DEC-SR-35, DEC-LN-01.
+  Requirements: FR-SR-57, FR-SR-56, FR-SR-53, FR-SR-36, FR-SR-37, FR-SR-40, FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-45, FR-SR-47, FR-SR-48, FR-SR-51, FR-LN-05, FR-LN-06, FR-LE-07, FR-LE-08, FR-LE-16, FR-RC-18
+  Decisions: DEC-UX-221, DEC-UX-220, DEC-UX-219, DEC-UX-218, DEC-UX-163, DEC-UX-17, DEC-UX-20, DEC-UX-70, DEC-UX-71, DEC-UX-72, DEC-UX-73, DEC-UX-74, DEC-UX-76, DEC-UX-77, DEC-UX-88, DEC-UX-97, DEC-UX-99, DEC-UX-115, DEC-SR-29, DEC-SR-35, DEC-LN-01.
   Not in v1: the label "Claude" on a query in the panel (FR-SR-26, DEC-CH-02); leave it out.
   "Make it a lens" turns the query into a Lens (FR-LE-07, DEC-UX-25). The query stays, used as the Lens: then "Update the lens"
   takes its place and overwrites the Lens after a size check, and "Lenses on these resources" goes (DEC-LE-03, DEC-LE-04,
   FR-LE-16, DEC-UX-77); the switch "Lens" shows both. On a Resource not published, "Make it a lens" is greyed and a line
   under the question names it, with a link (DEC-UX-218, DEC-LE-22): the third place of the switch "Lens". The box of the SQL folds as the Parameters do (DEC-UX-76).
+  A double-click on a word of the SQL selects it, as in any editor, and opens what it names (DEC-UX-221, FR-SR-57): on a
+  Parameter its floating window, as a click on its tile; on the name of a Resource its Summary, in a floating window over
+  the query, with "Open the Resource" (OP-UX-79); on a field its type and descriptions, the Business Description next to
+  the one from dbt, in a pop-out at the word, as the suggestions show them (DEC-UX-115); a field that more Resources of
+  the query hold shows once for each. The switch "Double-click" shows each.
   Related screens: resource-history.html (the queries on a Resource), lens-new.html (Make it a lens).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -405,6 +410,71 @@
   <option value="LAST_DAY(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))" data-gives="2026-09-30">End of the last complete month</option>
  </datalist>
 </section>
+<!-- Double-click on the name of a Resource in the SQL: its Summary, in a floating window over the query (DEC-UX-221, OP-UX-79) -->
+<section class="float-win rs-win" id="rs" role="dialog" aria-modal="false" aria-labelledby="rs-title" hidden>
+ <div class="float-head" title="Drag to move">
+  <i class="ph ph-dots-six-vertical float-grip" aria-hidden="true"></i>
+  <i class="ph ph-table" style="font-size:17px;color:var(--text-secondary)" aria-hidden="true"></i>
+  <div style="flex:1;min-width:0"><div class="meta" id="rs-meta">Resource of this query · Credit leads</div><div class="float-title" id="rs-title">Weekly lead volume</div></div>
+  <span class="maturity" data-level="4"></span>
+  <button class="icon-btn float-fold" aria-label="Fold" aria-expanded="true"><i class="ph ph-minus"></i></button>
+  <button class="icon-btn" data-float-close aria-label="Close"><i class="ph ph-x"></i></button>
+ </div>
+ <div class="float-body">
+  <p class="meta rs-lead">Its Summary, as on its page: in the order to read it, each part with its weight.</p>
+  <ol class="sum">
+   <li class="sum-part">
+    <div class="sum-side"><span class="sum-n">1</span><span class="weight w1">Read first</span><h3>What it is</h3></div>
+    <div class="sum-main"><p class="sum-text-line">The number of <b>credit leads</b> we send to KBC each week, per lead source. It counts leads, not people: someone who applies twice counts twice.</p></div>
+   </li>
+   <li class="sum-part">
+    <div class="sum-side"><span class="sum-n">2</span><span class="weight w1">Read first</span><h3>One row is</h3></div>
+    <div class="sum-main"><p class="sum-text-line">One week × one lead source <span class="code-chip">week_start</span><span class="code-chip">lead_source</span> · an <b>aggregate</b>, counted per week.</p></div>
+   </li>
+   <li class="sum-part">
+    <div class="sum-side"><span class="sum-n">3</span><span class="weight w1">Read first</span><h3>Use it for</h3></div>
+    <div class="sum-main"><p class="sum-text-line">Weekly trends and comparing lead sources.</p></div>
+   </li>
+   <li class="sum-part">
+    <div class="sum-side"><span class="sum-n">4</span><span class="weight w2">Before you query</span><h3>How to query it cheaply</h3></div>
+    <div class="sum-main"><p class="sum-text-line">Filter on <span class="mono">week_start</span> first, a partition per week: without it a query reads all 6.2 GB, with it about 20 MB a week. Then on <span class="mono">lead_source</span>, the first cluster column.</p></div>
+   </li>
+   <li class="sum-part">
+    <div class="sum-side"><span class="sum-n">5</span><span class="weight w2">Before you query</span><h3>What it joins</h3></div>
+    <div class="sum-main"><p class="sum-text-line"><span class="code-chip">leadSource.leadSourceId</span>on <span class="mono">lead_source</span> joins Lead sources, Credit lead funnel and Lead response time.</p></div>
+   </li>
+   <li class="sum-part">
+    <div class="sum-side"><span class="sum-n">6</span><span class="weight w3">When interpreting results</span><h3>Watch out</h3></div>
+    <div class="sum-main"><p class="sum-text-line">The current week is incomplete. Don’t sum across sources for unique people. Reliable since <b>1 Jan 2025</b>.</p></div>
+   </li>
+   <li class="sum-part">
+    <div class="sum-side"><span class="sum-n">7</span><span class="weight w3">When interpreting results</span><h3>Known Gaps</h3></div>
+    <div class="sum-main"><ul class="sum-gaps"><li>No leads from the source <span class="mono">partner</span> before March 2025: the partner feed started then. <span class="sum-scope">until 28 Feb 2025 · <span class="mono">lead_source</span> is <span class="mono">partner</span></span></li></ul></div>
+   </li>
+   <li class="sum-part">
+    <div class="sum-side"><span class="sum-n">8</span><span class="weight w4">Context</span><h3>Where it stands</h3></div>
+    <div class="sum-main"><p class="sum-text-line">4 · Explored. Published by Karel Leys on 2 Sep 2026, confirmed on 30 Oct 2026. Owner Unit Credit team.</p></div>
+   </li>
+  </ol>
+ </div>
+ <div class="float-foot">
+  <span class="meta" style="flex:1">Your query stays as it is.</span>
+  <a class="btn-primary" href="resource-overview.html"><i class="ph ph-arrow-square-out"></i>Open the Resource</a>
+ </div>
+</section>
+<!-- Double-click on a field in the SQL: its type and descriptions, in a pop-out at the word (DEC-UX-221, as DEC-UX-115) -->
+<div class="lc-pop fd-pop" id="fd-pop" role="dialog" aria-label="Field" data-side="below" hidden>
+ <div class="fd-block">
+  <div class="si-head"><span class="mono">lead_source</span><span class="muted">STRING · Weekly lead volume</span><span class="pill pill-strong">Cluster 1</span></div>
+  <p><span class="origin">From the Owner</span>Where the lead came in: the website, the app, a partner or a mailing.</p>
+  <p class="si-dbt"><span class="origin">From dbt</span>Source system code of the lead.</p>
+ </div>
+ <div class="fd-block">
+  <div class="si-head"><span class="mono">lead_source</span><span class="muted">STRING · Lead sources</span></div>
+  <p class="muted">No Business Description yet.</p>
+  <p class="si-dbt"><span class="origin">From dbt</span>Source system code; one row per code.</p>
+ </div>
+</div>
 <div class="sheet-wrap" id="lenses-sheet" hidden>
 <div class="sheet-backdrop" data-sheet-close></div>
 <section class="sheet lens-sheet" role="dialog" aria-modal="true" aria-labelledby="lenses-title">
@@ -558,6 +628,12 @@
  <button class="seg on" data-target="ok" role="tab" aria-selected="true">As written</button>
  <button class="seg" data-target="outside" role="tab" aria-selected="false">With a table outside</button>
  <button class="seg" data-target="known" role="tab" aria-selected="false">A table Data Hub knows, as a power user</button>
+</div>
+<div class="proto-switch" data-group="dbl" role="tablist" aria-label="Prototype: a double-click in the SQL" style="bottom:24px;top:auto;right:260px">Double-click
+ <button class="seg on" data-target="none" role="tab" aria-selected="true">Nothing</button>
+ <button class="seg" data-target="param" role="tab" aria-selected="false">A Parameter</button>
+ <button class="seg" data-target="resource" role="tab" aria-selected="false">A Resource</button>
+ <button class="seg" data-target="field" role="tab" aria-selected="false">A field</button>
 </div>
 <div class="role-switch" data-group="role" role="tablist" aria-label="Prototype: seen as" style="top:28px;bottom:auto">Seen as
  <button class="seg on" data-target="colleague" role="tab" aria-selected="true">Colleague</button>

@@ -2060,3 +2060,20 @@ svg.mp, svg.mp-g { display: block; width: 100%; height: auto; overflow: visible;
 .lc-family-row .name { flex: 1; min-width: 160px; }
 .lc-family-row.this .name { font-weight: 500; }
 .lc-family-row.soon .name { color: var(--text-muted); }
+
+/* A double-click in the SQL of a query (DEC-UX-221): the Summary of a Resource in a floating window, a field in a pop-out */
+.float-win.rs-win { width: 480px; max-width: calc(100vw - 48px); }
+.rs-win .float-body { padding-top: 10px; }
+.rs-win .rs-lead { display: block; margin: 0 0 10px; }
+.rs-win .sum { gap: 6px; }
+.rs-win .sum-part { grid-template-columns: minmax(0, 1fr); gap: 4px; padding: 10px 12px; }
+.rs-win .sum-side { flex-direction: row; align-items: center; gap: 8px; }
+.rs-win .sum-n { font-size: 15px; min-width: 14px; }
+.rs-win .sum-side h3 { margin: 0; font-size: var(--text-small); font-weight: var(--weight-medium); }
+.rs-win .float-foot .btn-primary { text-decoration: none; }
+.fd-pop { width: 340px; padding: 10px 12px; font-size: var(--text-meta); line-height: 1.5; }
+.fd-pop .fd-block + .fd-block { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--tint-hover); }
+.fd-pop .si-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; }
+.fd-pop p { margin: 8px 0 0; }
+.fd-pop .origin { display: table; margin: 0 0 3px; }
+.fd-pop .si-dbt { color: var(--text-secondary); }
