@@ -77,8 +77,12 @@ export function parseDomainModel(input: unknown): DomainModel {
   if (!isObject(model.entities)) {
     throw new Error('No Entities in the Domain Model');
   }
-  const meta = object(model.meta);
-  const release = object(meta.release);
+  // Its domain, version and release: in `meta` next to its Entities, as the contract had them, or on what wraps them, or
+  // at the top; a release as an object with its version or tag, or as text. Without them it still serves its Entities.
+  const sources = [object(model.meta), object(wrapped.meta), model, wrapped];
+  const first = (key: string): unknown => sources.map((source) => source[key]).find((value) => value !== undefined && value !== null && value !== '');
+  const releaseOf = (value: unknown): string | null =>
+    typeof value === 'string' ? value.replace(/^v/, '') : (string(object(value).version) ?? string(object(value).tag)?.replace(/^v/, '') ?? null);
   const references = (value: unknown): Reference[] =>
     (Array.isArray(value) ? value : []).filter(isObject).flatMap((reference) => {
       const type = string(reference.type);
@@ -109,10 +113,11 @@ export function parseDomainModel(input: unknown): DomainModel {
     );
     relationTypes[name] = { cardinality, inverse: string(object(type).inverse), description: string(object(type).description) ?? '' };
   }
+  const version = string(first('version'));
   return {
-    domain: string(meta.domain) ?? '',
-    version: string(meta.version) ?? '',
-    release: string(release.version) ?? string(release.tag)?.replace(/^v/, '') ?? string(meta.version) ?? '',
+    domain: string(first('domain')) ?? '',
+    version: version ?? '',
+    release: releaseOf(first('release')) ?? version ?? '',
     entities,
     relationTypes,
   };

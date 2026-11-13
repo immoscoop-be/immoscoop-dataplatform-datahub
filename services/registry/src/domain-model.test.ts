@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CONTRACT_PATH, createDomainModelSource, DomainModelUnavailable, identitiesOf } from './domain-model.js';
+import { CONTRACT_PATH, createDomainModelSource, DomainModelUnavailable, identitiesOf, parseDomainModel } from './domain-model.js';
 import { domainModelContract } from './fixtures.js';
 
 /** A collector that answers each path with what it is given, and keeps what was asked. */
@@ -22,6 +22,20 @@ describe('the Domain Model from the collector (TR-AR-09)', () => {
     expect(asked).toEqual(['/domain-model/immoscoop']);
     expect(model.release).toBe('0.0.70');
     expect(identitiesOf(model)).toEqual(expect.arrayContaining(['subject.subjectId', 'user.userId', 'visitor.visitorId', 'homeLoanSimulation.generate']));
+  });
+
+  it('finds its version and release also on what wraps its Entities, or at its top; without them its Entities still serve', () => {
+    const { meta, ...contract } = domainModelContract() as { meta: { domain: string; version: string; release: Record<string, string> } } & Record<string, unknown>;
+    // Its meta on the wrapper, around the model.
+    expect(parseDomainModel({ meta, model: contract })).toMatchObject({ domain: 'immoscoop', version: '0.1.0', release: '0.0.70' });
+    // Its domain, version and release at the top, the release as text.
+    expect(parseDomainModel({ ...contract, domain: 'immoscoop', version: '0.1.0', release: 'v0.0.71' })).toMatchObject({ domain: 'immoscoop', release: '0.0.71' });
+    // Without a release, its version.
+    expect(parseDomainModel({ ...contract, meta: { domain: 'immoscoop', version: '0.1.0' } }).release).toBe('0.1.0');
+    // Without either, an empty release, which the web app sends on as none: catalogue refuses an empty one.
+    const bare = parseDomainModel(contract);
+    expect(bare.release).toBe('');
+    expect(Object.keys(bare.entities).length).toBeGreaterThan(0);
   });
 
   it('takes a summary with an index of the Entities, without identifiers, for no Domain Model (EC-AR-05)', async () => {

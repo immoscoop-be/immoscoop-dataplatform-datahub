@@ -149,6 +149,7 @@ export default {
   'grain.title': 'Grain and relations of {name}',
   'grain.text': 'Check how the Resource is stored and what one row is: the fields that together identify each row. Then map each field. is: the field is the identity of an Entity the row is about. A relation: how that Entity relates to another, with the cardinality its type fixes. You don\'t join tables here: Data Hub links every Resource that carries the same identity.',
   'grain.model': 'Relation types, Entities and identities come from the Domain Model, version {release}, as it runs on prod.',
+  'grain.model.unversioned': 'Relation types, Entities and identities come from the Domain Model, as it runs on prod; it does not say its version.',
   'grain.model.open': 'Open the overview',
   'grain.model.missing': 'Data Hub could not read the Domain Model from Colleciónes just now, so no field gets a mapping from it. What dbt says is there.',
   'grain.model.retry': 'Try again',
