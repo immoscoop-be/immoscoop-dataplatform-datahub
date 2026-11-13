@@ -3152,6 +3152,24 @@ describe('Query', () => {
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/query.flagged', body: { value: ['q1'] } }));
   });
 
+  it('moves a flagged query by dragging its tab, and its key with it (DEC-UX-236)', async () => {
+    const named = (id: string, name: string) => ({ ...QUERY, id, name });
+    const calls = serve({ queries: [named('q1', 'Leads per source name'), named('q2', 'Partner share per week'), named('q3', 'Listings per postal code')], settings: { 'query.flagged': ['q1', 'q2', 'q3'] } });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const flags = within(await screen.findByRole('navigation', { name: 'Gemarkeerde queries' }));
+    const tab = async (name: string) => (await flags.findByRole('link', { name: new RegExp(name) })).closest('[role="listitem"]') as HTMLElement;
+    const third = await tab('Listings per postal code');
+    const first = await tab('Leads per source name');
+    // The third onto the first: it becomes the first, and Ctrl+1 opens it.
+    await fireEvent.dragStart(third);
+    await fireEvent.dragOver(first);
+    await fireEvent.drop(first);
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/query.flagged', body: { value: ['q3', 'q1', 'q2'] } }));
+    await fireEvent.keyDown(document.body, { key: '1', code: 'Digit1', ctrlKey: true });
+    await vi.waitFor(() => expect(location.pathname).toBe('/query/q3'));
+  });
+
   it('greys Flag at ten flagged queries, and says why (OP-UX-84)', async () => {
     const ten = Array.from({ length: 10 }, (_, at) => ({ ...QUERY, id: `f${at}`, name: `Flagged ${at}` }));
     serve({ queries: [QUERY, ...ten], settings: { 'query.flagged': ten.map((query) => query.id) } });
