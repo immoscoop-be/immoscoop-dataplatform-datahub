@@ -588,6 +588,8 @@ function serve({
   conversations = [] as Record<string, unknown>[],
   learned = [] as Record<string, unknown>[],
   waiting = [SAVED_SEARCHES] as Record<string, unknown>[],
+  /** The release of the Domain Model registry gives; empty when the collector says no version. */
+  modelRelease = '0.0.70',
   /** What Weekly lead volume relates to, for its Entities. */
   related = [] as Record<string, unknown>[],
   creditWith = {} as Partial<typeof CREDIT>,
@@ -761,7 +763,7 @@ function serve({
       return json({
         domain: 'immoscoop',
         version: '0.1.0',
-        release: '0.0.70',
+        release: modelRelease,
         relationTypes: [{ name: 'occurredWithin', cardinality: 'one', description: '' }],
         identities: ['visitor.visitorId', 'search.searchId'],
       });
@@ -774,7 +776,7 @@ function serve({
         grain: { fields: ['search_id'], origin: 'test' },
         modelType: null,
         mappings: [{ field: 'search_id', kind: 'is', relationType: null, identity: 'search.searchId', origin: 'name' }],
-        domainModel: { release: '0.0.70' },
+        domainModel: { release: modelRelease },
       });
     }
     if (path === '/groups') {
@@ -3022,6 +3024,24 @@ describe('the web app, for the Data Team, with Collections', () => {
     await vi.waitFor(() => expect([...owner.options].map((option) => option.value)).toEqual(['g1', 'g2']));
     expect(main.getByText(/Elke Group van Data Hub/)).toBeTruthy();
     expect(owner.options[0]?.textContent).toBe('Data');
+  });
+
+  it('adds a Resource while the Domain Model says no version, recording none rather than an empty one', async () => {
+    const calls = serve({ as: 'admin', modelRelease: '' });
+    open('/collections/c1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click((await main.findAllByRole('button', { name: /Resources toevoegen/ }))[0]!);
+    const sheet = within(screen.getByRole('dialog', { name: 'Een Resource toevoegen aan Credit leads' }));
+    await fireEvent.click(sheet.getByRole('radio', { name: /Saved searches/ }));
+    await fireEvent.click(sheet.getByRole('button', { name: /Volgende: grain en relaties/ }));
+    const second = within(await screen.findByRole('dialog', { name: 'Grain en relaties van Saved searches' }));
+    expect(await second.findByText(/zoals het op prod draait; het zegt zijn versie niet/)).toBeTruthy();
+    await fireEvent.input(second.getByRole('textbox', { name: 'Wat één rij is, in woorden' }), { target: { value: 'saved search' } });
+    await fireEvent.click(second.getByRole('button', { name: 'Resource toevoegen' }));
+    await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    const added = calls.find((call) => call.method === 'POST' && call.path === '/collections/c1/resources')?.body as { resources: { release: unknown }[] };
+    expect(added.resources[0]?.release).toBeNull();
   });
 
   it('adds a Resource without a Collection from the page of a Collection, one at a time, in a sheet of two steps (FR-CO-31, FR-CO-33, FR-CO-34, DEC-UX-132)', async () => {

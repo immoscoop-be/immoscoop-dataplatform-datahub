@@ -148,6 +148,7 @@ export default {
   'grain.title': 'Grain en relaties van {name}',
   'grain.text': 'Kijk na hoe de Resource bewaard wordt en wat één rij is: de velden die samen elke rij identificeren. Map dan elk veld. is: het veld is de identiteit van een Entity waar de rij over gaat. Een relatie: hoe die Entity zich verhoudt tot een andere, met de cardinaliteit die haar type vastlegt. Je joint hier geen tabellen: Data Hub linkt elke Resource die dezelfde identiteit draagt.',
   'grain.model': 'Relatietypes, Entities en identiteiten komen uit het Domain Model, versie {release}, zoals het op prod draait.',
+  'grain.model.unversioned': 'Relatietypes, Entities en identiteiten komen uit het Domain Model, zoals het op prod draait; het zegt zijn versie niet.',
   'grain.model.open': 'Open het overzicht',
   'grain.model.missing': 'Data Hub kon het Domain Model nu niet lezen bij Colleciónes, dus geen veld krijgt er een mapping uit. Wat dbt zegt, staat er wel.',
   'grain.model.retry': 'Opnieuw proberen',

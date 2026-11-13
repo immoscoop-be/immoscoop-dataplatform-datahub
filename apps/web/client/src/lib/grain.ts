@@ -85,7 +85,8 @@ export function draftOf(resource: ResourceDetail, proposal: Proposal | null): Dr
       };
     }),
     leftOut: resource.leftOut,
-    release: proposal?.domainModel?.release ?? null,
+    // A Domain Model without a version records none, rather than an empty one catalogue refuses.
+    release: proposal?.domainModel?.release || null,
   };
 }
 
@@ -221,7 +222,7 @@ export function requestOf(draft: Draft, identities: ReadonlySet<string>) {
       ...draft.origins,
       ...(draft.grainSentence.trim() && !draft.origins.grainSentence ? { grainSentence: 'here' as const } : {}),
     },
-    release: draft.release,
+    release: draft.release || null,
     mappings: draft.fields
       .filter((field) => field.kind !== 'none')
       .map((field) => ({
