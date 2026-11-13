@@ -3387,6 +3387,8 @@ describe('Query', () => {
     expect(window.getByRole('radio', { name: /Keuze/ }).getAttribute('aria-checked')).toBe('true');
     await fireEvent.input(window.getByRole('textbox', { name: 'De lijst' }), { target: { value: 'Form\nPhone\nForm' } });
     await fireEvent.click(window.getByRole('button', { name: 'Toevoegen' }));
+    // Kept, the Parameter closes its window (DEC-UX-219).
+    await vi.waitFor(() => expect(screen.queryByRole('dialog', { name: /@leadChannel/ })).toBeNull());
     const leadChannel = { name: 'leadChannel', kind: 'choice', value: 'Form', list: ['Form', 'Phone'] };
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/preflight', body: { sql: withParameters, parameters: [dateFrom, leadChannel] } }), { timeout: 3000 });
     await vi.waitFor(() => expect((main.getByRole('button', { name: /Uitvoeren\s*80 MB/ }) as HTMLButtonElement).disabled).toBe(false), { timeout: 3000 });

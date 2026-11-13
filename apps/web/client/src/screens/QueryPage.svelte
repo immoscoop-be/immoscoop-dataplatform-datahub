@@ -487,8 +487,10 @@
     }
   }
 
+  /** Keeps a Parameter, and closes its window: the work in it is done (DEC-UX-219). */
   function saveParameter(next: Parameter, before: string | null): void {
     parameters = before === null ? [...parameters, next] : parameters.map((parameter) => (parameter.name === before ? next : parameter));
+    parameterWindow = null;
   }
 
   /** Saves its name and question, changed in place; a name stays required (DEC-UX-119, FR-SR-45). */

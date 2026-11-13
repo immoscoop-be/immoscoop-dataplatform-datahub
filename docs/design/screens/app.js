@@ -1088,7 +1088,8 @@ if (pbox) {
     if (kind === 'choice' || kind === 'several') p.list = values();
     const i = params.findIndex(x => x.name === current);
     if (i >= 0) params[i] = p; else params.push(p);
-    render(); open(p.name); $('pm-saved').hidden = false;
+    // Kept: the window closes (DEC-UX-219)
+    render(); pm.hidden = true;
   });
   $('pm-remove').addEventListener('click', () => { const i = params.findIndex(x => x.name === current); if (i >= 0) params.splice(i, 1); render(); pm.hidden = true; });
   $('param-add').addEventListener('click', () => open(null));
