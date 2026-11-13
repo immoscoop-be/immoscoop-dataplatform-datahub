@@ -6,8 +6,11 @@
   "Start your own" the alternative, so that nobody builds twice what exists.
   The lenses rank by the words they share with the question of the query (name, description and tags of the lens), common words left out;
   the shared words are marked. The new query is in the panel at once, as not run yet.
-  Requirements: FR-SR-43, FR-SR-45, FR-SR-46, FR-SR-47, FR-SR-48, FR-LE-06
-  Decisions: DEC-UX-21, DEC-UX-22, DEC-UX-23, DEC-CO-16.
+  A power user, with the Permission "Query tables outside Data Hub" (Admin only to start; seen here as the Data Team), may
+  also start from SQL, without Resources: the query then reads tables Data Hub knows from the dbt projects it follows, and a
+  table that is a Resource stays one (DEC-UX-220, DEC-SR-46).
+  Requirements: FR-SR-43, FR-SR-45, FR-SR-46, FR-SR-47, FR-SR-48, FR-SR-56, FR-LE-06
+  Decisions: DEC-UX-21, DEC-UX-22, DEC-UX-23, DEC-CO-16, DEC-UX-220.
   Not in v1: the label "Claude" on a query in the panel (FR-SR-26, DEC-CH-02); leave it out.
   Related screens: resource-detail.html (the button "Query"), query.html (Start your own).
   Rules: ../principles.md  ·  Placeholder content only.
@@ -87,6 +90,7 @@
   <div class="src-row"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><div style="flex:1;min-width:0"><div class="item-title clip">Search sessions</div><div class="meta" style="display:block">Data Team · partitioned by session_date</div></div><span class="maturity" data-level="3"></span><button class="icon-btn" type="button" aria-label="Remove Search sessions" title="Remove"><i class="ph ph-x"></i></button></div>
   <label class="search card" style="margin-top:8px;background:var(--surface-sub)"><i class="ph ph-plus" style="font-size:14px"></i><input placeholder="Add a Resource"></label>
   <p class="meta" style="display:block;line-height:1.5;margin-top:12px">Each Resource you add narrows the Lenses on the right to those that already use it.</p>
+  <p class="meta" data-for="datateam" style="display:flex;gap:6px;align-items:flex-start;line-height:1.5;margin-top:10px"><i class="ph ph-code" style="margin-top:3px"></i><span><a class="text-link" href="query.html">Or start from SQL, without Resources</a>: as a power user you may query every table Data Hub knows from the dbt projects it follows. A table that is a Resource is read as that Resource.</span></p>
  </section>
  <section class="card nq-right" aria-labelledby="nq-made">
   <h2 id="nq-made" class="nq-title">Already made: Lenses on these Resources</h2>

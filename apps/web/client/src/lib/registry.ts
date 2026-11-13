@@ -100,12 +100,33 @@ export interface Delivery {
 }
 
 /** The calls of the page to registry, with the Access Token of the User; only the Data Team may ask. */
+/** A table Data Hub knows from a dbt project it follows, as a power user finds it (FR-SR-58). */
+export interface KnownTable {
+  key: string;
+  fullName: string;
+  name: string;
+  resourceType: string;
+  layer: string;
+  projectId: string;
+  projectName: string | null;
+  /** An exposure with the tag datahub makes it a Resource: it starts a new query, as a Resource does (DEC-SR-46). */
+  resource: boolean;
+  partition: { field: string; unit: string | null } | null;
+  description: string;
+  columns: { name: string; dataType: string | null; description: string }[];
+}
+
 export function createRegistry(config: Config, session: Pick<Session, 'accessToken'>, request?: typeof fetch) {
   const call = createCall('registry', config.registryUrl, session, request);
   return {
     /** The Domain Model, read from the collector at this moment (DEC-AR-05). */
     async domainModel(): Promise<DomainModelView> {
       return (await call('/domain-model')).json() as Promise<DomainModelView>;
+    },
+    /** The tables Data Hub knows, by words, layer and project, for a power user (FR-SR-58, DEC-UX-224). */
+    async findTables(words: string, filter: { layer?: string; project?: string } = {}): Promise<KnownTable[]> {
+      const search = new URLSearchParams({ q: words, ...(filter.layer ? { layer: filter.layer } : {}), ...(filter.project ? { project: filter.project } : {}) });
+      return ((await (await call(`/known-tables/search?${search}`)).json()) as { tables: KnownTable[] }).tables;
     },
     async proposal(nodeId: string): Promise<Proposal> {
       return (await call(`/nodes/${encodeURIComponent(nodeId)}/proposal`)).json() as Promise<Proposal>;

@@ -15,6 +15,7 @@ const resource = (name: string, extra: Partial<QueryResource> = {}): QueryResour
   collectionId: 'c1',
   level: 3,
   deprecated: false,
+  published: true,
   partition: null,
   clusterBy: [],
   partitionFilter: 'none',

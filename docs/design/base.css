@@ -490,6 +490,7 @@ button.ln-fold i { transition: transform 200ms ease; }
 .scope-x:hover { background: var(--tint-active); color: var(--text-primary); }
 .scope-chip.outside { padding-right: 10px; color: var(--signal-warn); background: color-mix(in srgb, var(--signal-warn) 13%, var(--surface-solid)); outline: 1.5px solid var(--signal-warn); }
 .scope-chip.outside .text-link { color: var(--signal-warn); font-weight: var(--weight-medium); font-size: var(--text-meta); }
+.scope-chip.known { padding-right: 10px; color: var(--text-secondary); background: transparent; outline: 1.5px dashed var(--text-muted); }
 .scope-add { display: inline-flex; align-items: center; gap: 5px; font: var(--text-meta) var(--font-family); color: var(--text-secondary); background: none; border: 1px dashed var(--tint-active); border-radius: var(--radius-pill); padding: 4px 10px; cursor: pointer; }
 .scope-add:hover { color: var(--text-primary); border-color: var(--text-muted); }
 .sql-key.outside { color: var(--signal-warn); text-decoration: underline wavy var(--signal-warn); text-underline-offset: 3px; background: color-mix(in srgb, var(--signal-warn) 12%, transparent); border-radius: 3px; }
@@ -586,6 +587,9 @@ button.ln-fold i { transition: transform 200ms ease; }
 .rgrid .rh-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.35; }
 .rgrid .rh-name { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .rgrid .rh-name > span { overflow: hidden; text-overflow: ellipsis; }
+/* A field of a Lens with a description: a dotted line under its name, the description on a hover (DEC-UX-230) */
+.rgrid .rh-described { text-decoration: underline dotted color-mix(in srgb, currentColor 50%, transparent); text-decoration-thickness: 1.5px; text-underline-offset: 3px; cursor: help; }
+.about-fields td .meta { display: block; margin-top: 2px; }
 .rgrid .rh-type { font: 10.5px var(--font-mono); color: var(--text-muted); font-weight: var(--weight-regular); overflow: hidden; text-overflow: ellipsis; }
 .rgrid .rh-menu { width: 22px; height: 22px; font-size: 12px; margin-left: auto; flex: none; }
 .rgrid .rh-sorted { font-size: 12px; color: var(--text-secondary); }
@@ -743,7 +747,7 @@ button.menu-item { width: 100%; border: 0; background: none; font: var(--text-sm
 .about-tile { border-radius: var(--radius-lg); background: var(--surface-sub); padding: 16px; font-size: var(--text-small); line-height: 1.5; }
 .about-tile p { margin: 4px 0 0; }
 .about-lead { font-size: var(--text-body); }
-.about-params td, .about-params th { padding-left: 0; }
+.about-params td, .about-params th, .about-fields td, .about-fields th { padding-left: 0; }
 /* Messages: the item in the rail with the number unread (DEC-UX-29) */
 a.nav-btn { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; color: inherit; position: relative; }
 .nav-badge { position: absolute; top: 5px; right: 5px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: var(--text-primary); color: var(--surface-solid);
@@ -823,6 +827,7 @@ a.nav-btn { display: inline-flex; align-items: center; justify-content: center; 
 .confirm-bar input:disabled + span { color: var(--text-muted); }
 .confirm-bar .btn-primary { flex: none; }
 .btn-primary[disabled] { opacity: .4; cursor: not-allowed; }
+.btn-primary.is-off { opacity: .4; pointer-events: none; }
 
 /* A link to something the User may not see: the same page as for what does not exist (DEC-UX-32) */
 .gone { max-width: 520px; margin: 11vh auto 0; text-align: center; }
@@ -2058,3 +2063,99 @@ svg.mp, svg.mp-g { display: block; width: 100%; height: auto; overflow: visible;
 .lc-family-row .name { flex: 1; min-width: 160px; }
 .lc-family-row.this .name { font-weight: 500; }
 .lc-family-row.soon .name { color: var(--text-muted); }
+
+/* A double-click in the SQL of a query (DEC-UX-221): the Summary of a Resource in a floating window, a field in a pop-out */
+.float-win.rs-win { width: 480px; max-width: calc(100vw - 48px); }
+.rs-win .float-body { padding-top: 10px; }
+.rs-win .rs-lead { display: block; margin: 0 0 10px; }
+.rs-win .sum { gap: 6px; }
+.rs-win .sum-part { grid-template-columns: minmax(0, 1fr); gap: 4px; padding: 10px 12px; }
+.rs-win .sum-side { flex-direction: row; align-items: center; gap: 8px; }
+.rs-win .sum-n { font-size: 15px; min-width: 14px; }
+.rs-win .sum-side h3 { margin: 0; font-size: var(--text-small); font-weight: var(--weight-medium); }
+.rs-win .float-foot .btn-primary { text-decoration: none; }
+.fd-pop { width: 340px; padding: 10px 12px; font-size: var(--text-meta); line-height: 1.5; }
+.fd-pop .fd-block + .fd-block { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--tint-hover); }
+.fd-pop .si-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; }
+.fd-pop p { margin: 8px 0 0; }
+.fd-pop .origin { display: table; margin: 0 0 3px; }
+.fd-pop .si-dbt { color: var(--text-secondary); }
+
+/* The SQL of the editor, coloured by kind of word, as BigQuery colours it (DEC-UX-223); names keep the colour of the text */
+.sql-editor .sql-kw { color: var(--code-keyword); }
+.sql-editor .sql-str { color: var(--code-string); }
+.sql-editor .sql-num { color: var(--code-number); }
+.sql-editor .sql-param:not(.undefined) { color: var(--code-param); }
+.sql-editor .sql-key:not(.outside), .sql-editor .sql-ref { color: inherit; }
+/* What a double-click explains has a dotted line under it, softer than the word; a wavy line stays an error (DEC-UX-222) */
+.sql-editor .sql-key:not(.outside):not([data-known]), .sql-editor .sql-param:not(.undefined), .sql-editor .sql-field {
+  text-decoration: underline dotted color-mix(in srgb, currentColor 50%, transparent); text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+.sql-editor .sql-key:not(.outside):not([data-known]):hover, .sql-editor .sql-param:not(.undefined):hover, .sql-editor .sql-field:hover { text-decoration-color: currentColor; }
+
+/* Find a table, for a power user (DEC-UX-224), and the CTEs that come at the start of the SQL (DEC-UX-225) */
+.ft-sheet { width: max(540px, var(--sheet-width)); }
+.ft-filters { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin: 10px 0 0; }
+.ft-project select { font: var(--text-meta) var(--font-family); color: var(--text-primary); background: var(--surface-sub); border: 0; border-radius: var(--radius-pill); padding: 4px 8px; margin-left: 4px; }
+.ft-list { margin-top: 8px; }
+.ft-row { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 0 8px; padding: 10px; border-radius: var(--radius-md); }
+.ft-row + .ft-row { margin-top: 2px; }
+.ft-row:hover { background: var(--tint-hover); }
+.ft-row.on { background: var(--surface-sub); }
+.ft-row input { margin: 3px 0 0; accent-color: var(--text-primary); }
+.ft-open { all: unset; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; cursor: pointer; }
+.ft-open:focus-visible { outline: 2px solid var(--text-secondary); outline-offset: 2px; border-radius: 4px; }
+.ft-open .ph-caret-right { font-size: 12px; color: var(--text-muted); transition: transform var(--motion-fold) ease; }
+.ft-row.unfolded .ft-open .ph-caret-right { transform: rotate(90deg); }
+.ft-name { font-family: var(--font-mono); font-size: var(--text-small); color: var(--text-primary); }
+.ft-where { font-size: var(--text-meta); color: var(--text-muted); }
+.ft-desc { grid-column: 2; margin: 3px 0 0; font-size: var(--text-small); line-height: 1.5; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ft-row.unfolded .ft-desc { white-space: normal; }
+.ft-res { grid-column: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 5px; font-size: var(--text-meta); color: var(--text-secondary); }
+.ft-cols { grid-column: 2; margin: 8px 0 2px; display: grid; gap: 3px; font-size: var(--text-meta); }
+.ft-col { display: grid; grid-template-columns: minmax(130px, max-content) 64px minmax(0, 1fr); gap: 10px; align-items: baseline; }
+.ft-col .mono { color: var(--text-primary); }
+.ft-col .pill { margin-left: 6px; }
+.ft-ctes { margin-top: 10px; }
+.cte-preview { margin: 0; padding: 10px 12px; border-radius: var(--radius-md); background: var(--surface-sub); font: 12px/1.6 var(--font-mono); color: var(--text-secondary); white-space: pre; overflow: auto; max-height: 150px; }
+
+/* CTEs just added at the start of the SQL show where they came, for a moment (DEC-UX-225) */
+.sql-editor .ln { transition: background-color 1.2s ease; }
+.sql-editor .ln.just-added { background: color-mix(in srgb, var(--code-keyword) 12%, transparent); transition: none; }
+
+/* The fields of a Lens, each with a description: from a field of the same name of its Resources, taken from one, or
+   written by its author (DEC-UX-227) */
+.lf-list { display: grid; gap: 6px; }
+.lf-row { display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; gap: 4px 12px; align-items: start; padding: 10px 12px; border-radius: var(--radius-md); background: var(--surface-sub); font-size: var(--text-small); }
+.lf-head { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.lf-head .mono { overflow: hidden; text-overflow: ellipsis; }
+.lf-desc { min-width: 0; }
+.lf-desc p { margin: 2px 0 0; line-height: 1.5; color: var(--text-primary); }
+.lf-from { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; font-size: var(--text-meta); color: var(--text-muted); }
+.lf-from .pill { margin-left: 2px; }
+.lf-desc textarea { width: 100%; box-sizing: border-box; margin-top: 4px; font: var(--text-small)/1.5 var(--font-family); color: var(--text-primary); background: var(--surface-solid); border: 0; border-radius: 8px; padding: 6px 8px; resize: vertical; }
+.lf-none { color: var(--text-secondary) !important; }
+.lf-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.lf-change { font-size: var(--text-meta); }
+.lf-pick { margin-top: 8px; padding: 8px; border-radius: var(--radius-md); background: var(--surface-solid); outline: 1px solid var(--tint-active); }
+.lf-options { display: grid; gap: 2px; margin-top: 6px; max-height: 220px; overflow: auto; }
+.lf-group { padding: 6px 8px 2px; font-size: var(--text-meta); color: var(--text-muted); }
+.lf-option { all: unset; box-sizing: border-box; display: grid; grid-template-columns: minmax(110px, max-content) 64px minmax(0, 1fr); gap: 10px; align-items: baseline; padding: 6px 8px; border-radius: var(--radius-sm); cursor: pointer; font-size: var(--text-meta); }
+.lf-option:hover, .lf-option:focus-visible { background: var(--tint-hover); }
+.lf-option .mono { color: var(--text-primary); }
+.lf-option .lf-text { color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Making a Lens as a flow (DEC-UX-229): one step at a time on the left, the steps with how far each is above the size check */
+.ml-side { display: grid; gap: 14px; align-items: start; }
+.ml-steps { border-radius: var(--radius-xl); padding: 8px; display: grid; gap: 2px; }
+.ml-stepbtn { all: unset; box-sizing: border-box; display: flex; align-items: flex-start; gap: 10px; padding: 9px 10px; border-radius: var(--radius-md); cursor: pointer; }
+.ml-stepbtn:hover { background: var(--tint-hover); }
+.ml-stepbtn.on { background: var(--surface-sub); }
+.ml-stepbtn:focus-visible { outline: 2px solid var(--text-secondary); }
+.ml-n { display: inline-grid; place-items: center; flex: none; width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--tint-active); font-size: 11px; font-weight: var(--weight-medium); color: var(--text-secondary); }
+.ml-stepbtn.on .ml-n { background: var(--text-primary); border-color: var(--text-primary); color: var(--surface-solid); }
+.ml-t { display: flex; flex-direction: column; gap: 1px; min-width: 0; font-size: var(--text-small); }
+.ml-t b { font-weight: var(--weight-medium); }
+.ml-t .meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ml-warn { color: var(--signal-warn); }
+.ml-nav { display: flex; align-items: center; gap: 8px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--tint-hover); }
+.ml-nav .btn-quiet { display: inline-flex; align-items: center; gap: 6px; }

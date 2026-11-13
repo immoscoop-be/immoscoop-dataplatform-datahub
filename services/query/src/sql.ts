@@ -303,6 +303,41 @@ export function template(resources: TemplateResource[]): string {
   return `with ${ctes.join(',\n')}\n\nselect *\nfrom ${cteName((resources[0] as TemplateResource).key)}\n`;
 }
 
+/** A table added to a query as a CTE, in the house layout of the Data Team (DEC-UX-225, DEC-UX-228). */
+function cte(resource: TemplateResource, name: string): string {
+  const fields = resource.fields.length > 0 ? resource.fields.map((field) => field.name) : ['*'];
+  const partitionType = resource.partition ? (resource.fields.find((field) => field.name === resource.partition?.field)?.dataType ?? null) : null;
+  const filter = resource.partition ? recent(resource.partition.field, partitionType, resource.partition.unit) : null;
+  return [`${name} as (`, '    select', `        ${fields.join(',\n        ')}`, '    from', `        \`${resource.fullName}\``, ...(filter ? ['    where', `        ${filter}`] : []), ')'].join('\n');
+}
+
+/**
+ * The SQL with a CTE for each table added, at its start (DEC-UX-225): after its `with`, before the CTEs already there,
+ * or with a `with` of its own before its first statement, the comments on top staying on top. Each CTE is named after
+ * its table, with `_2` when that name is taken, selects its fields and filters on its recent partitions. Without SQL,
+ * the query reads the first of them.
+ */
+export function withCtes(sql: string, tables: readonly TemplateResource[]): { sql: string; ctes: string[] } {
+  const tokens = tokenize(sql);
+  const taken = cteNames(tokens);
+  const ctes = tables.map((table) => {
+    const base = cteName(table.key);
+    let name = base;
+    for (let n = 2; taken.has(name.toLowerCase()); n += 1) name = `${base}_${n}`;
+    taken.add(name.toLowerCase());
+    return { name, text: cte(table, name) };
+  });
+  if (ctes.length === 0) return { sql, ctes: [] };
+  const added = ctes.map((entry) => entry.text).join(',\n\n');
+  const first = tokens[0];
+  if (!first) return { sql: `${sql.trimEnd()}${sql.trim() ? '\n\n' : ''}with\n\n${added}\n\nselect\n    *\nfrom\n    ${ctes[0]?.name}\n`, ctes: ctes.map((entry) => entry.text) };
+  if (is(first, 'with')) {
+    const after = is(tokens[1], 'recursive') ? (tokens[1] as Token).end : first.end;
+    return { sql: `${sql.slice(0, after)}\n\n${added},\n\n${sql.slice(after).replace(/^\s+/, '')}`, ctes: ctes.map((entry) => entry.text) };
+  }
+  return { sql: `${sql.slice(0, first.start)}with\n\n${added}\n\n${sql.slice(first.start)}`, ctes: ctes.map((entry) => entry.text) };
+}
+
 /**
  * Whether a name in the SQL is this Key: in full, or without its project when that is the project the query
  * runs in. In any case: the Key is in lower case, and BigQuery itself tells a name in the wrong case.

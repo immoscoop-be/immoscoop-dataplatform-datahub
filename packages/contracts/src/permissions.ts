@@ -50,6 +50,8 @@ export const PERMISSIONS = {
   'groups.all.manage': { name: 'Manage every group', part: 'groups', values: {} },
   'resources.preview': { name: 'Preview a Resource', part: 'query', values: {} },
   'queries.make': { name: 'Make and run queries', part: 'query', values: {} },
+  // A power user also reads the tables Data Hub knows that are no Resource, and starts a query from SQL (DEC-PL-09, FR-SR-56).
+  'queries.outside': { name: 'Query tables outside Data Hub', part: 'query', values: {} },
   'runs.ranges': {
     name: 'How much a run may read',
     part: 'query',
@@ -127,6 +129,7 @@ const ADMIN: Permissions = {
   'groups.all.manage': on(),
   'resources.preview': on(),
   'queries.make': on(),
+  'queries.outside': on(),
   'runs.ranges': on(RANGES),
   'queries.seeOthers': on({ reach: 'every' }),
   'requests.decide': on(),
@@ -156,6 +159,7 @@ const BUSINESS_ANALYST: Permissions = {
   'groups.all.manage': off(),
   'resources.preview': on(),
   'queries.make': on(),
+  'queries.outside': off(),
   'runs.ranges': on(RANGES),
   'queries.seeOthers': on({ reach: 'theirs' }),
   'requests.decide': off(),
@@ -185,6 +189,7 @@ const LENS_USER: Permissions = {
   'groups.all.manage': off(),
   'resources.preview': off(),
   'queries.make': off(),
+  'queries.outside': off(),
   'runs.ranges': on(RANGES),
   'queries.seeOthers': off({ reach: 'theirs' }),
   'requests.decide': off(),

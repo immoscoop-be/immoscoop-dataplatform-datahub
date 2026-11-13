@@ -145,7 +145,7 @@ describe.skipIf(!url)('identity migration 0009-remove-and-withdrawn', () => {
     await sql`insert into ${groups} (name, sentence, permissions, is_default, locked)
       select 'Data stewards', '', jsonb_set(permissions, '{resources.assign,on}', 'true'), false, false from ${groups} where starting = 'lensUser'`.execute(admin.db);
 
-    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    const results = await migrate({ db: admin.db, schema, migrations: before('0010'), serviceUser: 'postgres' });
     expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0009-remove-and-withdrawn', 'Success']]);
     const held = await sql<{ name: string; on: string; reach: string; withdrawn: boolean }>`
       select name, permissions -> 'resources.remove' ->> 'on' as on, permissions #>> '{resources.remove,values,reach}' as reach,
@@ -156,6 +156,36 @@ describe.skipIf(!url)('identity migration 0009-remove-and-withdrawn', () => {
       { name: 'Business analyst', on: 'true', reach: 'theirs', withdrawn: false },
       { name: 'Data stewards', on: 'true', reach: 'every', withdrawn: false },
       { name: 'Lens user', on: 'false', reach: 'theirs', withdrawn: false },
+    ]);
+  });
+});
+
+describe.skipIf(!url)('identity migration 0010-query-outside', () => {
+  const schema = `identity_test_${randomBytes(4).toString('hex')}`;
+  const admin = createDatabase<unknown>({ connectionString: url }, schema);
+
+  afterAll(async () => {
+    await sql`drop schema if exists ${sql.id(schema)} cascade`.execute(admin.db);
+    await admin.close();
+  });
+
+  it('gives Admin the Permission to query tables outside Data Hub, and every other group it off (DEC-PL-09)', async () => {
+    await migrate({ db: admin.db, schema, migrations: before('0010'), serviceUser: 'postgres' });
+    const groups = sql.id(schema, 'permission_groups');
+    // The groups as they were before, and a group made since by copying Admin.
+    await sql`update ${groups} set permissions = permissions - 'queries.outside'`.execute(admin.db);
+    await sql`insert into ${groups} (name, sentence, permissions, is_default, locked)
+      select 'Power users', '', permissions, false, false from ${groups} where starting = 'admin'`.execute(admin.db);
+
+    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0010-query-outside', 'Success']]);
+    const held = await sql<{ name: string; on: string }>`
+      select name, permissions -> 'queries.outside' ->> 'on' as on from ${groups} order by name`.execute(admin.db);
+    expect(held.rows).toEqual([
+      { name: 'Admin', on: 'true' },
+      { name: 'Business analyst', on: 'false' },
+      { name: 'Lens user', on: 'false' },
+      { name: 'Power users', on: 'false' },
     ]);
   });
 });

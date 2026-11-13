@@ -111,6 +111,9 @@ export function mayDo(permissions: Permissions, permits: Permits): string[] {
     can(permissions, 'resources.deprecate') && `Deprecate ${where('resources.deprecate', 'the Resources of your Owner Units', 'every Resource')}, and undo it`,
     can(permissions, 'resources.preview') && 'Preview a Resource',
     can(permissions, 'queries.make') && 'Make and run queries of your own',
+    can(permissions, 'queries.make') &&
+      can(permissions, 'queries.outside') &&
+      'Query tables outside Data Hub: every table Data Hub knows from the dbt projects it follows, also without Resources; such a query never becomes a Lens',
     (can(permissions, 'queries.make') || can(permissions, 'resources.preview')) &&
       `A run reads freely up to ${bytes(ranges.approve)}, up to ${bytes(ranges.request)} once you approve it, and above that ${ranges.above === 'request' ? 'once the Data Team accepts a Request' : 'not at all'}`,
     can(permissions, 'queries.seeOthers') && where('queries.seeOthers', 'See the queries on the Resources of your Owner Units, with who ran them', 'See every query, with who ran it'),

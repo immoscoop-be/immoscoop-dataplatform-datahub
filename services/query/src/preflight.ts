@@ -1,7 +1,8 @@
 import { type BigQuery, BigQueryRefused } from './bigquery.js';
 import type { QueryResource } from './catalogue.js';
-import type { NamedResource } from './database.js';
+import type { NamedResource, ResultColumn } from './database.js';
 import { bind, kindFor, type Parameter, type ParameterKind } from './parameters.js';
+import type { KnownTable } from './registry.js';
 import { comparedWith, filtersOn, inOwnCase, names, recent, tablesOf, withFilter } from './sql.js';
 
 /**
@@ -25,6 +26,8 @@ export type Problem =
   | { kind: 'notVisible'; resource: Pick<NamedResource, 'id' | 'displayName'> }
   /** A table that is not one of its Resources, where it stands in the SQL if it is named there (DEC-UX-73). */
   | { kind: 'outside'; name: string; start: number | null; end: number | null }
+  /** In a power user's query: a table Data Hub does not know from a dbt project it follows (FR-SR-56). */
+  | { kind: 'unknown'; name: string; start: number | null; end: number | null }
   /** An @name that is not a Parameter, where it stands, with the kind suggested from the column it is compared with (DEC-UX-71). */
   | { kind: 'undefinedParameter'; name: string; start: number; end: number; suggestedKind: ParameterKind | null }
   /** A change or a script: a query only reads. */
@@ -59,6 +62,19 @@ export interface Preflight {
   thresholds: Required<Thresholds>;
   /** The Parameters that are not in the SQL: they are not sent (DEC-UX-71). */
   unused: string[];
+  /** The tables outside Data Hub it reads, for a power user: known from a dbt project Data Hub follows, no Resource (FR-SR-56). */
+  tables: OutsideTable[];
+  /** The columns of its result, as the dry run says them; none when it did not get that far (FR-LE-19). */
+  columns: ResultColumn[];
+}
+
+/** A table outside Data Hub a power user's query reads, as the query shows it next to its Resources (DEC-UX-220). */
+export type OutsideTable = Pick<KnownTable, 'key' | 'fullName' | 'name' | 'layer'>;
+
+/** A table as written in SQL, as a Key: `project.dataset.table` in lowercase, the project of Data Hub when it names none. */
+export function keyOf(written: string, project: string): string {
+  const name = written.replace(/`/g, '').toLowerCase();
+  return name.split('.').length === 2 ? `${project.toLowerCase()}.${name}` : name;
 }
 
 /** A Resource of a query: as catalogue gives it to this User, or null when they may not see it. */
@@ -117,11 +133,20 @@ function fixFor(sql: string, resource: QueryResource, project: string): string |
 export async function preflight(
   sql: string,
   resources: ResourceOfQuery[],
-  context: { bigquery: BigQuery; beneath: (resource: QueryResource) => Promise<string[]>; project: string; thresholds: Thresholds },
+  context: {
+    bigquery: BigQuery;
+    beneath: (resource: Pick<QueryResource, 'key' | 'fullName' | 'partition'>) => Promise<string[]>;
+    project: string;
+    thresholds: Thresholds;
+    /** For a power user, which tables Data Hub knows besides its Resources (FR-SR-56); absent for anyone else. */
+    known?: (keys: string[]) => Promise<KnownTable[]>;
+  },
   parameters: readonly Parameter[] = [],
 ): Promise<Preflight> {
-  const { bigquery, beneath, project, thresholds } = context;
+  const { bigquery, beneath, project, thresholds, known } = context;
   const bound = bind(sql, parameters);
+  // The tables outside Data Hub it reads, shown next to its Resources also while something else keeps it from running.
+  const outside = new Map<string, KnownTable>();
   const done = (fields: Partial<Preflight>): Preflight => {
     const problems = fields.problems ?? [];
     return {
@@ -129,6 +154,8 @@ export async function preflight(
       range: null,
       partitions: null,
       warnings: [],
+      tables: [...outside.values()].map(({ key, fullName, name, layer }) => ({ key, fullName, name, layer })),
+      columns: [],
       ...fields,
       problems,
       thresholds: { approve: thresholds.approve, request: thresholds.request, above: thresholds.above ?? 'request' },
@@ -154,15 +181,28 @@ export async function preflight(
   // of a Parameter stands where its @name is.
   const { tables, functions } = tablesOf(bound.sql);
   const read = new Set<QueryResource>();
+  const others: typeof tables = [];
   for (const table of [...tables, ...functions]) {
     const resource = functions.includes(table) ? undefined : visible.find((candidate) => names(table.name, candidate.key, project));
     if (resource) read.add(resource);
+    else if (known && !functions.includes(table)) others.push(table);
     else problems.push({ kind: 'outside', name: table.name, start: bound.original(table.start, 'start'), end: bound.original(table.end, 'end') });
+  }
+  // A power user may also read a table Data Hub knows that is no Resource (FR-SR-56). One that is a Resource stays
+  // one, to start a new query with; one Data Hub does not know stays an error (DEC-SR-46).
+  if (known && others.length > 0) {
+    const byKey = new Map((await known([...new Set(others.map((table) => keyOf(table.name, project)))])).map((table) => [table.key, table]));
+    for (const table of others) {
+      const found = byKey.get(keyOf(table.name, project));
+      const where = { name: table.name, start: bound.original(table.start, 'start'), end: bound.original(table.end, 'end') };
+      if (found && !found.resource) outside.set(found.key, found);
+      else problems.push({ kind: found ? 'outside' : 'unknown', ...where });
+    }
   }
   if (problems.length > 0) return done({ problems });
 
-  // BigQuery gets each Resource by its full name in its own case, however it is written (DEC-SR-44).
-  const resolved = [...read];
+  // BigQuery gets each Resource, and each table outside Data Hub, by its full name in its own case, however it is written (DEC-SR-44).
+  const resolved = [...read, ...outside.values()];
   let dry: Awaited<ReturnType<BigQuery['dryRun']>>;
   try {
     dry = await bigquery.dryRun(inOwnCase(bound.sql, resolved, project), bound.parameters);
@@ -181,8 +221,8 @@ export async function preflight(
   }
   if (dry.statementType !== 'SELECT') return done({ problems: [{ kind: 'notSelect', statementType: dry.statementType }] });
 
-  // And again by what BigQuery reads: only its Resources, or the tables beneath them.
-  const allowed = new Set((await Promise.all([...read].map((resource) => beneath(resource)))).flat().map((table) => table.toLowerCase()));
+  // And again by what BigQuery reads: only its Resources and the tables outside Data Hub it may read, or the tables beneath them.
+  const allowed = new Set((await Promise.all([...read, ...outside.values()].map((table) => beneath(table)))).flat().map((table) => table.toLowerCase()));
   for (const table of dry.referencedTables) {
     if (!allowed.has(table.toLowerCase())) problems.push({ kind: 'outside', name: table, start: null, end: null });
   }
@@ -203,5 +243,5 @@ export async function preflight(
   const range = rangeOf(dry.bytes, thresholds);
   // Above its ranges it goes to the Data Team, unless the Permission group of the User says it cannot run (runs.ranges).
   if (range === 'request' && thresholds.above === 'refuse') problems.push({ kind: 'tooLarge', bytes: dry.bytes, limit: thresholds.request });
-  return done({ bytes: dry.bytes, range, partitions: dry.partitions, problems, warnings });
+  return done({ bytes: dry.bytes, range, partitions: dry.partitions, problems, warnings, columns: dry.columns ?? [] });
 }

@@ -37,6 +37,8 @@ describe('a dry run', () => {
               statementType: 'SELECT',
               totalBytesProcessed: '84000000',
               referencedTables: [{ projectId: 'immoscoop-dataplatform', datasetId: 'dbt_prod_stacks', tableId: 'weekly_lead_volume' }],
+              // The columns of its result, with their types as GoogleSQL names them (FR-LE-19).
+              schema: { fields: [{ name: 'week_start', type: 'DATE' }, { name: 'leads', type: 'INTEGER' }, { name: 'sources', type: 'STRING', mode: 'REPEATED' }] },
             },
           },
         },
@@ -47,6 +49,7 @@ describe('a dry run', () => {
       bytes: 84_000_000,
       referencedTables: ['immoscoop-dataplatform.dbt_prod_stacks.weekly_lead_volume'],
       partitions: null,
+      columns: [{ name: 'week_start', type: 'DATE' }, { name: 'leads', type: 'INT64' }, { name: 'sources', type: 'ARRAY<STRING>' }],
     });
     expect(calls).toEqual([
       {

@@ -14,7 +14,6 @@
   import EditBar from '@datahub/ui/containers/EditBar.svelte';
   import Grid from '@datahub/ui/containers/Grid.svelte';
   import SubTile from '@datahub/ui/containers/SubTile.svelte';
-  import { formatBytes } from '@datahub/ui/foundations/bytes.js';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import type { IconName } from '@datahub/ui/foundations/icons.js';
   import { levelName } from '@datahub/ui/foundations/levels.js';
@@ -27,6 +26,7 @@
   import { carriersOf, nounOf } from '../lib/grain.js';
   import type { Conversation } from '../lib/messages.js';
   import type { Storage } from '../lib/query.js';
+  import { sizeText } from '../lib/size.js';
   import LearningRef from './LearningRef.svelte';
   import OverviewDanger from './OverviewDanger.svelte';
   import OverviewGaps from './OverviewGaps.svelte';
@@ -162,13 +162,7 @@
   const list = (names: readonly string[]) => new Intl.ListFormat(LOCALES[currentLanguage()], { type: 'conjunction' }).format(names);
   const day = (value: string) => new Intl.DateTimeFormat(LOCALES[currentLanguage()], { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(value));
   /** Its size in all, and about how much a partition holds where it has them (FR-SR-39). */
-  const size = $derived.by(() => {
-    if (!storage || storage.bytes === null) return null;
-    const language = currentLanguage();
-    const bytes = formatBytes(storage.bytes, language);
-    const unit = details.partition?.unit;
-    return storage.partitions && unit ? t('resource.sizePer', { bytes, per: formatBytes(storage.bytes / storage.partitions, language), unit: t(UNIT_KEYS[unit]) }) : t('resource.sizeOf', { bytes });
-  });
+  const size = $derived(sizeText(storage, details.partition?.unit));
 
   // Editing in place, one part at a time.
   let saving = $state(false);

@@ -3,7 +3,7 @@
   import DataGrid from '@datahub/ui/components/DataGrid.svelte';
   import Pager from '@datahub/ui/components/Pager.svelte';
   import RunButton from '@datahub/ui/components/RunButton.svelte';
-  import SqlEditor, { CTE_LINE, type ErrorMark, type ParameterSuggestion, type Suggestion, type TableSuggestion } from '@datahub/ui/components/SqlEditor.svelte';
+  import SqlEditor, { type At, CTE_LINE, type ErrorMark, type Explained, type ParameterSuggestion, type Suggestion, type TableSuggestion } from '@datahub/ui/components/SqlEditor.svelte';
   import { formatBytes } from '@datahub/ui/foundations/bytes.js';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { currentLanguage, t, tParts } from '@datahub/ui/foundations/texts.svelte.js';
@@ -27,7 +27,11 @@
   import { lensPath, NEW_QUERY, newLensPath, queryPath, resourcePath } from '../lib/routes.js';
   import NewSetSheet from './NewSetSheet.svelte';
   import NotFound from './NotFound.svelte';
+  import FieldExplain from './FieldExplain.svelte';
+  import FindTableSheet from './FindTableSheet.svelte';
+  import type { KnownTable } from '../lib/registry.js';
   import ParameterWindow from './ParameterWindow.svelte';
+  import ResourceSummaryWindow, { type SummaryData } from './ResourceSummaryWindow.svelte';
   import QueryHistory from './QueryHistory.svelte';
   import QueryParameters, { type Missing as MissingParameter } from './QueryParameters.svelte';
   import LensSuggestions from './LensSuggestions.svelte';
@@ -56,6 +60,8 @@
     onlens,
     hiddenChange,
     onhidden,
+    summaryOf,
+    findTables,
     layout = 'horizontal',
     onlayout,
   }: {
@@ -76,6 +82,10 @@
     hiddenChange?: { id: string; hidden: boolean };
     /** It was hidden or shown again here. */
     onhidden?: (id: string, hidden: boolean) => void;
+    /** The Summary of a Resource, for a double-click on its name in the SQL (DEC-UX-221). */
+    summaryOf?: (id: string) => Promise<SummaryData>;
+    /** For a power user, with `queries.outside`: the tables Data Hub knows, to find and add (FR-SR-58). */
+    findTables?: (words: string, filter: { layer?: string; project?: string }) => Promise<KnownTable[]>;
     /** The query above the result, or next to it, as the User chose it (DEC-UX-143). */
     layout?: Layout;
     onlayout?: (layout: Layout) => void;
@@ -144,6 +154,8 @@
   const PAUSE = 2000;
 
   let query = $state<Query | null | undefined>();
+  /** Its Resources not published yet: they grey "Make it a lens", with why (DEC-LE-22, DEC-UX-218). */
+  const unpublished = $derived((query?.resources ?? []).filter((resource) => resource.visible && resource.published === false));
   /** Whether the User hid it from their panel: as it was read, or as changed since (DEC-UX-138). */
   const hidden = $derived(hiddenChange?.id === id ? hiddenChange.hidden : (query?.hidden ?? false));
   let hiding = $state(false);
@@ -186,8 +198,12 @@
   /** A run of its history, shown read only, with its result while BigQuery keeps it (OP-UX-27, DEC-UX-99). */
   let preview = $state<{ run: Run; page: Page | null; expired: boolean } | null>(null);
   let parameterWindow = $state<{ key: number; parameter: Parameter | null; defines: MissingParameter | null } | null>(null);
+  /** What a double-click in the SQL opened (DEC-UX-221): the Summary of a Resource, or the descriptions of a field. */
+  let summaryWindow = $state<TableSuggestion | null>(null);
+  let fieldExplained = $state<{ fields: Suggestion[]; at: At } | null>(null);
   let windows = 0;
   let newSet = $state<{ mode: 'add' | 'remove'; resource: string | null } | null>(null);
+  let finding = $state(false);
   let requestOpen = $state(false);
   let requestText = $state('');
   let sending = $state(false);
@@ -215,7 +231,10 @@
     history = undefined;
     preview = null;
     parameterWindow = null;
+    summaryWindow = null;
+    fieldExplained = null;
     newSet = null;
+    finding = false;
     requestOpen = false;
     requestText = '';
     renaming = null;
@@ -485,8 +504,10 @@
     }
   }
 
+  /** Keeps a Parameter, and closes its window: the work in it is done (DEC-UX-219). */
   function saveParameter(next: Parameter, before: string | null): void {
     parameters = before === null ? [...parameters, next] : parameters.map((parameter) => (parameter.name === before ? next : parameter));
+    parameterWindow = null;
   }
 
   /** Saves its name and question, changed in place; a name stays required (DEC-UX-119, FR-SR-45). */
@@ -516,6 +537,19 @@
   }
 
   const openParameter = (parameter: Parameter | null, defines: MissingParameter | null = null) => (parameterWindow = { key: ++windows, parameter, defines });
+
+  function explain(what: Explained): void {
+    fieldExplained = null;
+    if (what.kind === 'parameter') {
+      const parameter = parameters.find((candidate) => namesOf(candidate).includes(what.name));
+      if (parameter) openParameter(parameter);
+    } else if (what.kind === 'table') {
+      if (summaryOf) summaryWindow = what.table;
+    } else {
+      const fields = suggestions.filter((field) => field.name.toLowerCase() === what.name.toLowerCase());
+      if (fields.length > 0) fieldExplained = { fields, at: what.at };
+    }
+  }
 
   const language = $derived(currentLanguage());
   const bytes = (value: number) => formatBytes(value, language);
@@ -551,9 +585,17 @@
   /** The problems and warnings of the Pre-flight of the SQL and Parameters as they are now. */
   const current = $derived(preflight && checked === key ? preflight : null);
   const problems = $derived(current?.problems ?? []);
+  /**
+   * The tables outside Data Hub a power user's query reads, from the last Pre-flight, so that they stay while the
+   * SQL changes (FR-SR-56, DEC-UX-220). A query that reads one, or no Resource at all, cannot become a Lens.
+   */
+  const known = $derived(preflight?.tables ?? []);
+  const noLens = $derived(known.length > 0 ? 'query.known.hint' : query && query.resources.length === 0 ? 'query.noResources.hint' : null);
   const marks: ErrorMark[] = $derived(
     problems.flatMap((problem): ErrorMark[] => {
-      if (problem.kind === 'outside' && problem.start !== null && problem.end !== null) return [{ from: problem.start, to: problem.end, message: t('query.problem.outside', { name: problem.name }), kind: 'outside' }];
+      if ((problem.kind === 'outside' || problem.kind === 'unknown') && problem.start !== null && problem.end !== null) {
+        return [{ from: problem.start, to: problem.end, message: said(problem), kind: 'outside' }];
+      }
       if (problem.kind === 'undefinedParameter') return [{ from: problem.start, to: problem.end, message: t('query.problem.undefinedParameter', { name: problem.name }), kind: 'undefined' }];
       return [];
     }),
@@ -583,6 +625,8 @@
         return t('query.problem.notVisible', { name: problem.resource.displayName });
       case 'outside':
         return t('query.problem.outside', { name: problem.name });
+      case 'unknown':
+        return t('query.problem.unknown', { name: problem.name });
       case 'undefinedParameter':
         return t('query.problem.undefinedParameter', { name: problem.name });
       case 'notSelect':
@@ -725,6 +769,26 @@
           >
         </p>
       {/if}
+      {#if query.mine && query.kind === 'query' && !query.lens && unpublished.length > 0}
+        <!-- A Lens is made only on published Resources: which ones are not yet, with a link to each (DEC-UX-218). -->
+        <p class="meta origin unpublished">
+          <Icon name="globe-simple" /><span
+            >{#each tParts('query.unpublished', {}, { names: '' }) as part, index (index)}{#if 'name' in part}{#each unpublished as resource, at (resource.id)}{#if at > 0}, {/if}<a
+                    href={resourcePath(resource.id)}>{resource.displayName}</a
+                  >{/each}{:else}{part.text}{/if}{/each}</span
+          >
+        </p>
+      {/if}
+      {#if query.mine && query.kind === 'query' && !query.lens && known.length > 0}
+        <!-- A query that reads a table outside Data Hub cannot become a Lens, and says so (DEC-UX-220). -->
+        <p class="meta origin known">
+          <Icon name="cube" /><span
+            >{#each tParts('query.known.line', { count: known.length }, { names: '' }) as part, index (index)}{#if 'name' in part}{#each known as table, at (table.key)}{#if at > 0}, {/if}<span
+                    class="mono">{table.name}</span
+                  >{/each}{:else}{part.text}{/if}{/each}</span
+          >
+        </p>
+      {/if}
       {#if !query.mine}<p class="meta">{t('query.of', { name: query.ownerName })}</p>{/if}
     </div>
     <div class="actions">
@@ -739,12 +803,18 @@
       >
       {#if query.mine && query.kind === 'query' && query.lens}
         <!-- A query used as a Lens overwrites it, after its size check (DEC-UX-77). -->
-        <Button disabled={query.lens.state === 'waiting'} title={t(query.lens.state === 'waiting' ? 'lens.update.waiting' : 'lens.update.hint')} onclick={() => (updating = true)}
+        <Button disabled={query.lens.state === 'waiting' || noLens !== null} title={t(query.lens.state === 'waiting' ? 'lens.update.waiting' : (noLens ?? 'lens.update.hint'))} onclick={() => (updating = true)}
           ><Icon name="arrows-clockwise" />{t('lens.update.button')}</Button
         >
       {:else if query.mine && query.kind === 'query'}
-        <!-- The logical next step once a query answers a question that comes back (DEC-UX-25). -->
-        <Button href={newLensPath(query.id)}>{t('query.makeLens')}</Button>
+        <!-- The logical next step once a query answers a question that comes back (DEC-UX-25); greyed on a Resource not published (DEC-UX-218). -->
+        {#if noLens}
+          <Button disabled title={t(noLens)}>{t('query.makeLens')}</Button>
+        {:else if unpublished.length > 0}
+          <Button disabled title={t('query.unpublished.hint')}>{t('query.makeLens')}</Button>
+        {:else}
+          <Button href={newLensPath(query.id)}>{t('query.makeLens')}</Button>
+        {/if}
       {/if}
     </div>
   </header>
@@ -779,8 +849,16 @@
             {/if}
           </span>
         {/each}
+        {#each known as table (table.key)}
+          <!-- A table outside Data Hub: quiet, dashed, without Level, Owner or Publication (DEC-UX-220). -->
+          <span class="chip known" title={t('query.known.title')}><Icon name="cube" /><span class="mono">{table.name}</span><span class="meta">· {t('query.known', { layer: table.layer })}</span></span>
+        {/each}
         {#if query.mine && !preview && query.resources.length < 10}
           <button type="button" class="add" onclick={() => (newSet = { mode: 'add', resource: null })}><Icon name="plus" />{t('query.resources.add')}</button>
+        {/if}
+        {#if query.mine && !preview && query.kind === 'query' && findTables}
+          <!-- A power user also finds tables Data Hub knows outside its Resources (DEC-UX-224). -->
+          <button type="button" class="add" title={t('find.button.hint')} onclick={() => (finding = true)}><Icon name="magnifying-glass" />{t('find.button')}</button>
         {/if}
         {#each outside as table (table.name)}
           <span class="chip outside">
@@ -833,6 +911,7 @@
               if (entry) openParameter(null, entry);
             }}
             onrun={runFromKeys}
+            onexplain={explain}
             label={t('query.sql', { name: query.name })}
             readonly={!query.mine}
             {nonce}
@@ -1023,6 +1102,15 @@
   </div>
   </div>
 
+  {#if summaryWindow && summaryOf}
+    {#key summaryWindow.id}
+      <ResourceSummaryWindow table={summaryWindow} load={summaryOf} onclose={() => (summaryWindow = null)} />
+    {/key}
+  {/if}
+  {#if fieldExplained}
+    <FieldExplain fields={fieldExplained.fields} at={fieldExplained.at} onclose={() => (fieldExplained = null)} />
+  {/if}
+
   {#if parameterWindow}
     {#key parameterWindow.key}
       <ParameterWindow
@@ -1050,6 +1138,26 @@
       onclose={() => (newSet = null)}
       onstart={startNew}
       lensesOn={(on, words) => client.suggestions(on, words)}
+      ctesOf={(text, ids) => client.ctes(text, { resources: ids })}
+    />
+  {/if}
+
+  {#if finding && findTables}
+    <FindTableSheet
+      queryName={query.name}
+      {sql}
+      find={findTables}
+      ctesOf={(text, keys) => client.ctes(text, { tables: keys })}
+      onadd={(next) => {
+        sql = next;
+        finding = false;
+      }}
+      onresource={(table) => {
+        const id = (collections ?? []).flatMap((collection) => collection.resources).find((item) => item.key === table.key)?.id;
+        finding = false;
+        if (id) newSet = { mode: 'add', resource: id };
+      }}
+      onclose={() => (finding = false)}
     />
   {/if}
 
@@ -1081,7 +1189,7 @@
 {/if}
 
 {#snippet grid(of: Run, rows: Page)}
-  <DataGrid columns={rows.columns} rows={rows.rows} first={(rows.number - 1) * rows.size + 1} label={t('query.resultOf', { number: of.number })} />
+  <DataGrid columns={rows.columns} rows={rows.rows} first={(rows.number - 1) * rows.size + 1} label={t('query.resultOf', { number: of.number })} fill />
   <div class="foot">
     <span>{t('query.rows', { count: rows.totalRows })}</span>
     {#if of.processedBytes !== null}<span class="dot">·</span><span>{t('query.read', { bytes: bytes(of.processedBytes) })}</span>{/if}
@@ -1148,6 +1256,8 @@
   .chip:hover { background: var(--tint-active); }
   .chip .meta { white-space: nowrap; }
   .chip.gone { color: var(--text-muted); }
+  .chip.known { color: var(--text-secondary); background: transparent; outline: 1.5px dashed var(--text-muted); outline-offset: -1.5px; padding-right: 10px; }
+  .chip.known:hover { background: transparent; }
   .chip.outside { color: var(--signal-warn); background: color-mix(in srgb, var(--signal-warn) 12%, var(--surface-solid)); padding-right: 10px; }
   .chip.outside .text-link { color: var(--signal-warn); font-weight: var(--weight-medium); }
   .x { width: 20px; height: 20px; border: 0; border-radius: 50%; background: none; color: var(--text-muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 11px; }
@@ -1188,7 +1298,10 @@
   .word textarea:focus-visible { outline: 2px solid var(--text-secondary); }
   .after { font-size: var(--text-meta); color: var(--text-muted); }
   .after.failed { color: var(--signal-urgent); }
-  .result { min-height: 0; overflow: auto; border-radius: var(--radius-xl); padding: 16px; }
+  /* The grid of a result takes all the height of its pane; its head and foot keep theirs (DEC-UX-226). */
+  .result { min-height: 0; overflow: auto; border-radius: var(--radius-xl); padding: 16px; display: flex; flex-direction: column; }
+  .result > :global(*) { flex: none; }
+  .result > :global(.wrap.fill) { flex: 1 1 auto; }
   .result-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
   .preview-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 10px; padding: 12px 14px; border-radius: var(--radius-md);
     background: color-mix(in srgb, var(--signal-warn) 10%, var(--surface-solid)); font-size: var(--text-small); line-height: 1.5; }

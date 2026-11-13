@@ -366,12 +366,25 @@ const LENS = {
  * table outside, or 80 MB.
  */
 function preflightOf(sql: string, parameters: { name: string }[] = []) {
-  const base = { partitions: 4, problems: [] as unknown[], warnings: [] as unknown[], thresholds: { approve: 100_000_000, request: 1_000_000_000 }, unused: [] as string[] };
+  const base = {
+    partitions: 4,
+    problems: [] as unknown[],
+    warnings: [] as unknown[],
+    thresholds: { approve: 100_000_000, request: 1_000_000_000 },
+    unused: [] as string[],
+    // The columns of its result, as the dry run says them (FR-LE-19).
+    columns: [{ name: 'week_start', type: 'DATE' }, { name: 'leads', type: 'INT64' }, { name: 'share', type: 'FLOAT64' }],
+  };
   const at = sql.indexOf('@leadChannel');
   if (at >= 0 && !parameters.some((parameter) => parameter.name === 'leadChannel')) {
     return { ...base, runnable: false, bytes: null, range: null, partitions: null, problems: [{ kind: 'undefinedParameter', name: 'leadChannel', start: at, end: at + 12, suggestedKind: 'choice' }] };
   }
   if (sql.includes('-- every year')) return { ...base, runnable: true, bytes: 4_800_000_000, range: 'request' };
+  // A power user's query reads a table Data Hub knows that is no Resource (FR-SR-56).
+  if (sql.includes('stg_oltp__leads')) {
+    const key = 'immoscoop-dataplatform-398214.dbt_prod_staging.stg_oltp__leads';
+    return { ...base, runnable: true, bytes: 80_000_000, range: 'free', tables: [{ key, fullName: key, name: 'stg_oltp__leads', layer: 'staging' }] };
+  }
   if (sql.includes('partner_contracts')) {
     const start = sql.indexOf('`immoscoop-dataplatform-398214.dbt_prod_stacks.partner_contracts`');
     return { ...base, runnable: false, bytes: null, range: null, partitions: null, problems: [{ kind: 'outside', name: 'immoscoop-dataplatform-398214.dbt_prod_stacks.partner_contracts', start, end: start + 66 }] };
@@ -988,6 +1001,22 @@ function serve({
       if (method === 'PUT') hiddenQueries.add(hiding[1] as string);
       else hiddenQueries.delete(hiding[1] as string);
       return json({ hidden: method === 'PUT' });
+    }
+    // What is added to a query comes as CTEs at its start (FR-SR-59); a power user finds tables Data Hub knows (FR-SR-58).
+    if (path === '/queries/ctes' && method === 'POST') {
+      const asked = JSON.parse(init.body as string) as { sql: string; resources: string[]; tables: string[] };
+      const names = [...asked.resources.map((id) => ({ r5: 'listings', r6: 'saved_searches' })[id] ?? id), ...asked.tables.map((key) => key.split('.').at(-1) as string)];
+      const ctes = names.map((name) => `${name} as (\n    select\n        *\n    from\n        \`p.d.${name}\`\n)`);
+      return json({ sql: `with\n\n${ctes.join(',\n\n')}\n\n${asked.sql}`, ctes });
+    }
+    if (path.startsWith('/known-tables/search?')) {
+      const key = 'immoscoop-dataplatform-398214.dbt_prod_staging.stg_oltp__leads';
+      return json({
+        tables: [
+          { key, fullName: key, name: 'stg_oltp__leads', resourceType: 'model', layer: 'staging', projectId: '9367', projectName: 'dbt-prod', resource: false, partition: { field: 'created_date', unit: 'day' }, description: 'One row per lead as the OLTP database keeps it.', columns: [{ name: 'lead_id', dataType: 'STRING', description: 'Id of the lead.' }, { name: 'created_date', dataType: 'DATE', description: 'Day it came in.' }] },
+          { key: 'immoscoop-dataplatform-398214.dbt_prod_leads.weekly_lead_volume', fullName: 'x', name: 'weekly_lead_volume', resourceType: 'model', layer: 'mart', projectId: '9367', projectName: 'dbt-prod', resource: true, partition: null, description: '', columns: [] },
+        ],
+      });
     }
     if (path === '/queries' && method === 'POST') {
       const { name, question } = JSON.parse(init.body as string) as { name: string; question: string };
@@ -3088,6 +3117,59 @@ describe('Query', () => {
     expect(main.getByRole('link', { name: 'Maak er een Lens van' }).getAttribute('href')).toBe('/query/q1/lens');
   });
 
+  it('greys "Make it a lens" on a query that reads a Resource not published yet, and says which (DEC-LE-22, DEC-UX-218)', async () => {
+    serve({ queries: [{ ...QUERY, lastRunAt: new Date().toISOString(), resources: [{ ...QUERY.resources[0]!, published: false }] }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByRole('heading', { level: 1, name: 'Leads per source name' }, { timeout: 3000 })).toBeTruthy();
+    // No link to make it a Lens: the button is greyed, with why.
+    expect(main.queryByRole('link', { name: 'Maak er een Lens van' })).toBeNull();
+    const button = main.getByRole('button', { name: 'Maak er een Lens van' }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    expect(button.title).toBe('Een Lens maak je enkel op gepubliceerde Resources: deze query leest er een die nog niet gepubliceerd is.');
+    // Under the question: which Resource is not published yet, with a link to it.
+    const line = main.getByText(/Nog niet gepubliceerd:/).closest('p') as HTMLElement;
+    expect(line.textContent?.replace(/\s+/g, ' ').trim()).toBe('Nog niet gepubliceerd: Weekly lead volume. Een Lens maak je enkel op gepubliceerde Resources.');
+    expect(within(line).getByRole('link', { name: 'Weekly lead volume' }).getAttribute('href')).toBe('/resources/r2');
+  });
+
+  it('shows a table outside Data Hub as a quiet chip, and keeps a query that reads one from becoming a Lens (FR-SR-56, DEC-UX-220)', async () => {
+    const sql = `${QUERY.sql.replace('\n', ', lead_id\n')}and lead_id in (select lead_id from \`immoscoop-dataplatform-398214.dbt_prod_staging.stg_oltp__leads\`)\n`;
+    serve({ as: 'admin', queries: [{ ...QUERY, sql, lastRunAt: new Date().toISOString() }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    // Next to its Resources: the table, its layer and that it is not a Resource.
+    const chip = (await main.findByText('stg_oltp__leads', { selector: '.chip .mono' }, { timeout: 3000 })).closest('.chip') as HTMLElement;
+    expect(within(chip).getByText('· staging, geen Resource')).toBeTruthy();
+    expect(chip.title).toMatch(/^Een tabel die Data Hub kent uit een dbt-project dat het volgt/);
+    // It runs, but cannot become a Lens: greyed, with why, and a line under the question.
+    expect(await main.findByRole('button', { name: /Uitvoeren\s*80 MB/ })).toBeTruthy();
+    const button = main.getByRole('button', { name: 'Maak er een Lens van' }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    expect(button.title).toBe('Een Lens maak je enkel op gepubliceerde Resources: deze query leest een tabel buiten Data Hub.');
+    const line = main.getByText(/Leest een tabel buiten Data Hub:/).closest('p') as HTMLElement;
+    expect(line.textContent?.replace(/\s+/g, ' ').trim()).toBe('Leest een tabel buiten Data Hub: stg_oltp__leads. Een Lens maak je enkel op gepubliceerde Resources, dus deze query kan er geen worden.');
+  });
+
+  it('lets a power user start a query from SQL, without Resources, and nobody else (FR-SR-56, DEC-UX-220)', async () => {
+    serve({});
+    open('/query/new');
+    const { unmount } = render(App, { config: CONFIG });
+    expect(await within(await screen.findByRole('main')).findByRole('textbox', { name: /Naam/ }, { timeout: 3000 })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Of begin vanuit SQL, zonder Resources' })).toBeNull();
+    unmount();
+
+    const calls = serve({ as: 'admin' });
+    open('/query/new');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('button', { name: 'Of begin vanuit SQL, zonder Resources' }, { timeout: 3000 }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/query/q-made'));
+    expect(calls).toContainEqual({ method: 'POST', path: '/queries', body: { name: expect.stringMatching(/^SQL, \d+ /), question: '', resources: [] } });
+  });
+
   it('starts a new query on a Resource, named from it and the date, as not run yet (FR-SR-45, FR-SR-46, DEC-UX-114)', async () => {
     const calls = serve({ groups: ['g1'] });
     open('/query/new/r2');
@@ -3370,6 +3452,8 @@ describe('Query', () => {
     expect(window.getByRole('radio', { name: /Keuze/ }).getAttribute('aria-checked')).toBe('true');
     await fireEvent.input(window.getByRole('textbox', { name: 'De lijst' }), { target: { value: 'Form\nPhone\nForm' } });
     await fireEvent.click(window.getByRole('button', { name: 'Toevoegen' }));
+    // Kept, the Parameter closes its window (DEC-UX-219).
+    await vi.waitFor(() => expect(screen.queryByRole('dialog', { name: /@leadChannel/ })).toBeNull());
     const leadChannel = { name: 'leadChannel', kind: 'choice', value: 'Form', list: ['Form', 'Phone'] };
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/preflight', body: { sql: withParameters, parameters: [dateFrom, leadChannel] } }), { timeout: 3000 });
     await vi.waitFor(() => expect((main.getByRole('button', { name: /Uitvoeren\s*80 MB/ }) as HTMLButtonElement).disabled).toBe(false), { timeout: 3000 });
@@ -3417,6 +3501,59 @@ describe('Query', () => {
     expect(await main.findByText(/Wacht op het Data Team sinds \d\d:\d\d/)).toBeTruthy();
     expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/requests', body: { sql: `${QUERY.sql}-- every year\n`, parameters: [], text: 'For the five-year review.' } });
     expect(await within(screen.getByRole('complementary', { name: 'Query' })).findByText('Naar het Data Team')).toBeTruthy();
+  });
+
+  it('adds several Resources at once to a new query, each as a CTE at the start of its SQL (FR-SR-59, DEC-UX-225)', async () => {
+    const more = [
+      { ...CREDIT.resources[0]!, id: 'r5', key: 'immoscoop-dataplatform-398214.dbt_prod_listings.listings', displayName: 'Listings', published: true },
+      { ...CREDIT.resources[0]!, id: 'r6', key: 'immoscoop-dataplatform-398214.dbt_prod_search.saved_searches', displayName: 'Saved searches', published: true },
+    ];
+    const calls = serve({ queries: [{ ...QUERY }], creditWith: { resources: [CREDIT.resources[0]!, ...more] } });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('button', { name: 'Een Resource toevoegen' }, { timeout: 3000 }));
+    const dialog = await screen.findByRole('dialog', { name: 'Met één Resource meer' });
+    const sheet = within(dialog);
+    await fireEvent.click(await sheet.findByRole('checkbox', { name: /Listings/ }));
+    await fireEvent.click(sheet.getByRole('checkbox', { name: /Saved searches/ }));
+    expect(dialog.getAttribute('aria-label') ?? within(dialog).getByRole('heading', { level: 2 }).textContent).toMatch(/Met 2 Resources meer/);
+    // The CTEs that come at the start of the SQL, before the new query starts.
+    expect(await sheet.findByText(/listings as \(/, {}, { timeout: 3000 })).toBeTruthy();
+    await fireEvent.click(sheet.getByRole('button', { name: /De nieuwe query starten/ }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/query/q-made'));
+    expect(calls).toContainEqual({ method: 'POST', path: '/queries/ctes', body: { sql: QUERY.sql, resources: ['r5', 'r6'], tables: [] } });
+    const made = calls.find((call) => call.method === 'POST' && call.path === '/queries')?.body as { resources: string[]; sql: string };
+    expect(made.resources).toEqual(['r2', 'r5', 'r6']);
+    expect(made.sql).toMatch(/^with\n\nlistings as \([\s\S]*\),\n\nsaved_searches as \([\s\S]*\)\n\nselect week_start/);
+  });
+
+  it('lets a power user find tables Data Hub knows and add the ones ticked as CTEs at the start of the SQL (FR-SR-58, FR-SR-59)', async () => {
+    serve({ queries: [{ ...QUERY }] });
+    open('/query/q1');
+    const { unmount } = render(App, { config: CONFIG });
+    expect(await within(await screen.findByRole('main')).findByRole('button', { name: 'Een Resource toevoegen' }, { timeout: 3000 })).toBeTruthy();
+    // Nobody else has it.
+    expect(screen.queryByRole('button', { name: /Zoek een tabel/ })).toBeNull();
+    unmount();
+
+    const calls = serve({ as: 'admin', queries: [{ ...QUERY }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('button', { name: /Zoek een tabel/ }, { timeout: 3000 }));
+    const sheet = within(await screen.findByRole('dialog', { name: 'Zoek een tabel' }));
+    // A table that is a Resource cannot be ticked: it starts a new query with it.
+    expect(await sheet.findByRole('button', { name: 'Begin er een nieuwe query mee' }, { timeout: 3000 })).toBeTruthy();
+    await fireEvent.click(sheet.getByRole('button', { name: 'Kolommen van stg_oltp__leads' }));
+    expect(sheet.getByText('Day it came in.')).toBeTruthy();
+    await fireEvent.click(sheet.getByRole('checkbox', { name: 'stg_oltp__leads' }));
+    expect(await sheet.findByText(/stg_oltp__leads as \(/)).toBeTruthy();
+    await fireEvent.click(sheet.getByRole('button', { name: /Voeg 1 tabel toe/ }));
+    await vi.waitFor(() => expect(screen.queryByRole('dialog', { name: 'Zoek een tabel' })).toBeNull());
+    expect(calls).toContainEqual({ method: 'POST', path: '/queries/ctes', body: { sql: QUERY.sql, resources: [], tables: ['immoscoop-dataplatform-398214.dbt_prod_staging.stg_oltp__leads'] } });
+    expect(calls.some((call) => call.path.startsWith('/known-tables/search?q='))).toBe(true);
+    await vi.waitFor(() => expect(main.getByRole('textbox', { name: /SQL/ }).textContent).toContain('stg_oltp__leads as ('));
   });
 
   it('starts a new query without one of its Resources, taking the SQL and Parameters along (DEC-UX-73)', async () => {
@@ -3654,17 +3791,40 @@ describe('Lenses', () => {
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
     expect(await main.findByRole('heading', { level: 1, name: 'Maak er een Lens van' })).toBeTruthy();
+    // A flow of four steps, one at a time; on the right each with how far it is (DEC-UX-229).
+    const steps = within(main.getByRole('navigation', { name: 'Stappen van de Lens' }));
+    expect(main.getByRole('heading', { level: 2, name: 'Wat hij is' })).toBeTruthy();
     expect((await main.findByRole('textbox', { name: 'Naam' }) as HTMLInputElement).value).toBe('Leads per source name');
-    // The Parameters come from the query, each with the name Users see; its default stands as its function (DEC-UX-75).
-    expect(((await main.findByRole('textbox', { name: 'Naam die Users zien van @dateFrom' })) as HTMLInputElement).value).toBe('Date from');
-    expect(main.getByText('Begin van dit jaar')).toBeTruthy();
-    // Within range: its author publishes it (FR-LE-08).
-    expect(await main.findByText('Binnen de grenzen.')).toBeTruthy();
+    await vi.waitFor(() => expect(steps.getByRole('button', { name: /Wat hij is.*Leads per source name · Credit leads/ })).toBeTruthy());
     await fireEvent.input(main.getByRole('textbox', { name: /Wat hij doet, stap voor stap/ }), { target: { value: 'Takes the weekly lead volume.\n\nAdds the sources.' } });
-    await fireEvent.input(main.getByRole('textbox', { name: 'Naam die Users zien van @dateFrom' }), { target: { value: 'From' } });
+    // Within range: its author publishes it, from any step (FR-LE-08).
+    expect(await main.findByText('Binnen de grenzen.')).toBeTruthy();
+
+    await fireEvent.click(main.getByRole('button', { name: /Volgende: Tags/ }));
     const tag = main.getByRole('textbox', { name: 'Een tag toevoegen' });
     await fireEvent.input(tag, { target: { value: '#Leads' } });
     await fireEvent.keyDown(tag, { key: 'Enter' });
+    expect(steps.getByRole('button', { name: /Tags.*1 tag/ })).toBeTruthy();
+
+    // The Parameters come from the query, each with the name Users see; its default stands as its function (DEC-UX-75).
+    await fireEvent.click(steps.getByRole('button', { name: /Parameters/ }));
+    expect(((await main.findByRole('textbox', { name: 'Naam die Users zien van @dateFrom' })) as HTMLInputElement).value).toBe('Date from');
+    expect(main.getByText('Begin van dit jaar')).toBeTruthy();
+    await fireEvent.input(main.getByRole('textbox', { name: 'Naam die Users zien van @dateFrom' }), { target: { value: 'From' } });
+
+    // Its fields: one named as a field of its Resources takes that description; another its author takes from its
+    // Resources or writes; without one it still publishes (DEC-UX-227, FR-LE-19).
+    expect(steps.getByRole('button', { name: /Zijn velden.*3 velden · 2 zonder beschrijving/ })).toBeTruthy();
+    await fireEvent.click(main.getByRole('button', { name: /Volgende: Zijn velden/ }));
+    expect(main.getByText('Monday of the week')).toBeTruthy();
+    const pick = main.getAllByRole('button', { name: /Neem er een van zijn Resources/ });
+    await fireEvent.click(pick[0] as HTMLElement);
+    await fireEvent.input(main.getByRole('searchbox', { name: 'Zoek in de velden van zijn Resources' }), { target: { value: 'monday' } });
+    await fireEvent.click(main.getByRole('button', { name: /week_start.*Monday of the week/ }));
+    expect(main.getByText(/Overgenomen van Weekly lead volume/)).toBeTruthy();
+    await fireEvent.click(main.getByRole('button', { name: 'Schrijf er een' }));
+    await fireEvent.input(main.getByRole('textbox', { name: 'Beschrijving van share' }), { target: { value: 'The share of the week, in percent.' } });
+    expect(steps.getByRole('button', { name: /Zijn velden.*3 velden/ }).textContent).not.toContain('zonder beschrijving');
     await fireEvent.click(main.getByRole('button', { name: 'Lens publiceren' }));
     await vi.waitFor(() => expect(location.pathname).toBe('/lenses/l-made'));
     expect(calls).toContainEqual({
@@ -3679,6 +3839,11 @@ describe('Lenses', () => {
         steps: ['Takes the weekly lead volume.', 'Adds the sources.'],
         tags: ['leads'],
         labels: { dateFrom: 'From' },
+        fields: [
+          { name: 'week_start', description: 'Monday of the week', from: { resourceId: 'r2', field: 'week_start' } },
+          { name: 'leads', description: 'Monday of the week', from: { resourceId: 'r2', field: 'week_start' } },
+          { name: 'share', description: 'The share of the week, in percent.', from: null },
+        ],
         approve: false,
         text: '',
       },
@@ -3686,7 +3851,11 @@ describe('Lenses', () => {
   });
 
   it('runs a Lens only when its User runs it, with the values they chose, and marks a result for old values (FR-LE-12, DEC-LE-12)', async () => {
-    const calls = serve({ groups: ['g1'], lenses: [{ ...LENS }] });
+    const fields = [
+      { name: 'week_start', type: 'DATE', description: 'The Monday of the week.', from: { resourceId: 'r2', field: 'week_start' } },
+      { name: 'leads', type: 'INT64', description: 'How many leads came in.', from: null },
+    ];
+    const calls = serve({ groups: ['g1'], lenses: [{ ...LENS, fields }] });
     open('/lenses/l1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
@@ -3704,6 +3873,10 @@ describe('Lenses', () => {
     await fireEvent.click(run);
     expect(await main.findByText('q-20261029-1e2a3b')).toBeTruthy();
     expect(calls).toContainEqual({ method: 'POST', path: '/lenses/l1/runs', body: { values: { dateFrom: 'DATE_TRUNC(CURRENT_DATE(), YEAR)', leadChannel: 'Phone' }, approve: false } });
+    // A field with a description shows it on a hover of the head of its column, with a dotted line under its name (DEC-UX-230).
+    const head = within(main.getByRole('grid')).getByText('week_start');
+    expect(head.getAttribute('title')).toBe('week_start: The Monday of the week.');
+    expect(head.classList.contains('described')).toBe(true);
     await fireEvent.click(main.getByRole('button', { name: 'Standaard' }));
     expect(await main.findByText('De Parameters veranderden.')).toBeTruthy();
     // About tells what it does as its author wrote it, never its SQL (FR-LE-14, DEC-UX-121).
@@ -3711,6 +3884,11 @@ describe('Lenses', () => {
     expect(main.getByText('Keeps one lead channel.')).toBeTruthy();
     expect(main.getByText('Geschreven door wie hem maakte, in gewone taal.')).toBeTruthy();
     expect(main.queryByText(/select/)).toBeNull();
+    // Its fields, each with its type, its description and where that comes from (DEC-UX-230, FR-LE-19).
+    const its = within(main.getByRole('table', { name: 'Zijn velden' }));
+    expect(its.getByText('The Monday of the week.')).toBeTruthy();
+    expect(its.getByText(/Van Weekly lead volume/)).toBeTruthy();
+    expect(its.getByText('Geschreven door wie hem maakte')).toBeTruthy();
   });
 
   it('gives the address of a Lens for Excel, with the steps and a way to an Excel key (FR-PL-01, DEC-UX-159)', async () => {

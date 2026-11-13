@@ -19,6 +19,8 @@ query keeps a Lens in `lenses` of its schema: its Collection in catalogue, the q
 
 `POST /lenses` makes a Lens of a query of the kind `query`, for who made it only, into a Collection they manage as its Owner Unit or the Data Team, as catalogue answers with their token. Its SQL and Parameters are those the query keeps; its Parameters are those the SQL uses. The Pre-flight of the query, as for a run ([TR-SR-16](04-stacks-and-resources.md#tr-sr-16)), measures one run: within 100 MB the Lens is published; above it, only when its author says so (`approve`), otherwise `409 approval_needed`; above 1 GB it is kept as `waiting`, frozen, and query sends the Request on it to the Data Team for its author ([MSG-LEN-01](../functional/message-catalogue.md#msg-len-01)), which catalogue keeps as it keeps those on queries ([TR-SR-18](04-stacks-and-resources.md#tr-sr-18)), with its word and the partitions it reads. When the Request does not reach catalogue, the Lens stays waiting, and `POST /lenses/{id}/requests` sends it again for its author. A query that cannot run makes no Lens. An author who owns no Collection makes a private one first in catalogue, with the name, group and icon they chose ([DEC-CO-24](../functional/03-collections.md#dec-co-24)); its description names the Lens.
 
+*Note of 2026-11-13: `POST /lenses` refuses a query that reads a Resource not published with `409 not_published`, naming those Resources, before it measures the query; catalogue says whether a Resource is published, and the view of a query passes it on, so that the web app greys "Make it a lens" ([DEC-LE-22](../functional/09-lenses.md#dec-le-22)).*
+
 <a id="tr-le-02"></a>
 ### TR-LE-02 · Who sees a Lens, never with its SQL
 
@@ -88,6 +90,15 @@ Only a published Lens answers: a waiting, refused or stopped Lens answers 409 wi
 `DELETE /lenses/{id}` of query, with an optional `reason` of at most 500 characters, deletes a Lens for its Owner Unit and the Data Team: anyone else who sees it gets 403, and a Lens that is already deleted 404. query keeps the row of the Lens, with when, by whom and why it was deleted, and leaves it out of every list, search and suggestion, and of the daily check and what it tells catalogue at its start; its runs, versions and Log stay, and its Log gets `LEN-003`. `GET /lenses/{id}` answers 410 with its name, Collection and who deleted it when and why, to whoever saw it; the routes that run it and Excel answer 404, as for a Lens that does not exist. `GET /lenses/{id}` tells its Owner Unit and the Data Team how many Users ran it in the last 30 days, `usedBy`, for the sheet that deletes it.
 
 query then tells catalogue, as itself (`POST /internal/lenses/{id}/deleted`), who deleted it, why, and the Users who ran it in the 30 days before, also from Excel, without who deleted it. catalogue keeps the Lens as deleted, so that the Messages on it still show for whoever saw it, marked as deleted; takes it out of its folder; withdraws a Request on it that waits (`withdrawn`); and writes [MSG-LEN-06](../functional/message-catalogue.md#msg-len-06) on it, which notifies those Users. query tells catalogue before it deletes the Lens itself: when catalogue does not answer, nothing is deleted, and the User is asked to try again (503).
+
+<a id="tr-le-10"></a>
+### TR-LE-10 · The fields of a Lens keep their descriptions
+
+**Status:** Implemented · **Realises:** [FR-LE-19](../functional/09-lenses.md#fr-le-19), [DEC-UX-227](../../design/principles.md#dec-ux-227), [DEC-UX-230](../../design/principles.md#dec-ux-230)
+
+The Pre-flight of query gives the columns of the result, each with its type as GoogleSQL names it, from the schema of the dry run (`columns`). `POST /lenses` takes `fields`: at most 300, each a `name`, a `description` of at most 1,000 characters and `from`, the field of one of its Resources the description was taken from (`resourceId`, `field`), or null when its author wrote it. query keeps them in `lenses.fields`, one per column of the result of its Pre-flight, in its order and with its type; a column without a sent description gets none, and a description from a Resource the query does not read is not kept. A new version of the Lens keeps the description of each field by name ([TR-LE-04](#tr-le-04)). `GET /lenses/{id}` gives the fields to its page, which shows each description on the head of its column and under About; `GET /lenses/suggestions` gives each field with its type and description, so that Claude reads the result of a Lens as its author meant it ([TR-LE-07](#tr-le-07)).
+
+Which description a field gets is decided in the web app, from the fields of its Resources it already has, by name only: the Business Description first, else the one from dbt, from the first Resource of the query that holds the name. Nothing is worked out from the SQL.
 
 ## Open points
 

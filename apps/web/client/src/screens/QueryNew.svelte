@@ -25,6 +25,7 @@
     ondraft,
     onstart,
     lensesOn,
+    outside = false,
   }: {
     /** The Resource it starts on, from "Query" on its page (FR-SR-46). */
     initial: string | null;
@@ -35,6 +36,8 @@
     onstart: (fields: { name: string; question: string; resources: string[] }) => Promise<boolean>;
     /** The Lenses on these Resources, by the words of the question (FR-SR-47, FR-SR-48). */
     lensesOn: (resources: readonly string[], question: string) => Promise<Found>;
+    /** A power user may start from SQL, without Resources (FR-SR-56, DEC-UX-220). */
+    outside?: boolean;
   } = $props();
 
   /** How long typing the question pauses before the Lenses are looked up again. */
@@ -112,6 +115,14 @@
     failed = !(await onstart({ name: name.trim(), question: question.trim(), resources: chosen }));
     busy = false;
   }
+
+  /** A power user's query from SQL alone: the name they typed, or "SQL" with the date (FR-SR-56). */
+  async function startFromSql(): Promise<void> {
+    busy = true;
+    const own = named && name.trim() ? name.trim() : t('query.name.suggested', { names: 'SQL', date: day(new Date(), currentLanguage()) });
+    failed = !(await onstart({ name: own, question: question.trim(), resources: [] }));
+    busy = false;
+  }
 </script>
 
 <header class="head">
@@ -163,6 +174,14 @@
       </li>
     </ul>
     <p class="meta hint">{t('query.resources.hint')}</p>
+    {#if outside}
+      <!-- A power user also reads tables outside Data Hub, so may start from SQL alone (DEC-UX-220). -->
+      <p class="meta hint sql"
+        ><Icon name="code" /><span
+          ><button type="button" class="text-link" disabled={busy} onclick={startFromSql}>{t('query.fromSql')}</button>{t('query.fromSql.about')}</span
+        ></p
+      >
+    {/if}
   </section>
 
   <section class="card lenses" aria-label={t('query.lenses.title')}>
@@ -205,6 +224,10 @@
   .found .name { flex: 1; }
   .found .none { padding: 7px 8px; }
   .hint { margin: 12px 0 0; line-height: 1.5; }
+  .hint.sql { display: flex; gap: 6px; align-items: flex-start; }
+  .hint.sql :global(svg) { flex: none; margin-top: 3px; }
+  .text-link { all: unset; cursor: pointer; color: var(--text-primary); text-decoration: underline; text-underline-offset: 3px; }
+  .text-link:focus-visible { outline: 2px solid var(--text-secondary); }
   .intro { margin: -4px 0 16px; line-height: 1.5; }
   .none { margin: 0; padding: 14px 16px; border-radius: var(--radius-md); background: var(--surface-sub); font-size: var(--text-small); color: var(--text-secondary); }
   .foot { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 14px; flex-wrap: wrap; }

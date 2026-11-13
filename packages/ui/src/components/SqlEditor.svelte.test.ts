@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
-import SqlEditor from './SqlEditor.svelte';
+import SqlEditor, { writtenAs } from './SqlEditor.svelte';
 
 const content = () => screen.getByRole('textbox', { name: 'SQL' });
 
@@ -61,5 +61,40 @@ describe('the SQL editor', () => {
     await fireEvent.mouseDown(options[1] as Element);
     expect(onothertable).toHaveBeenCalledWith(other);
     expect(editor.textContent).toContain('`p.dbt.lead_sources`');
+  });
+
+  it('colours the SQL by kind of word, and puts a dotted line under what a double-click explains (DEC-UX-222, DEC-UX-223)', async () => {
+    render(SqlEditor, {
+      value: "select week_start, count(*) as n\nfrom `p.dbt.weekly`\nwhere week_start >= @dateFrom and lead_source = 'web' and n > 1 and channel = @leadChannel",
+      suggestions: [{ name: 'week_start', type: 'DATE', resource: 'Weekly', role: { kind: 'partition' }, description: '', businessDescription: '' }],
+      parameters: [{ name: 'dateFrom', type: 'DATE', value: '2026-01-01' }],
+      tables: [{ id: 'r2', name: 'Weekly', fullName: 'p.dbt.weekly' }],
+      marks: [{ from: 131, to: 143, message: '@leadChannel is no Parameter', kind: 'undefined' }],
+      label: 'SQL',
+    });
+    const explained = await vi.waitFor(() => {
+      const found = [...document.querySelectorAll('.cm-explain')].map((element) => [element.textContent, element.getAttribute('title')]);
+      expect(found.length).toBeGreaterThan(0);
+      return found;
+    });
+    // A Parameter, the Resource by its table and each use of its field; not a word it does not know, nor an error.
+    expect(explained).toEqual([
+      ['week_start', 'Dubbelklik voor de beschrijvingen'],
+      ['`p.dbt.weekly`', 'Dubbelklik voor de samenvatting'],
+      ['week_start', 'Dubbelklik voor de beschrijvingen'],
+      ['@dateFrom', 'Dubbelklik om deze Parameter te openen'],
+    ]);
+    const words = (kind: string) => [...document.querySelectorAll(`.${kind}`)].map((element) => element.textContent);
+    expect(words('cm-kw')).toEqual(expect.arrayContaining(['select', 'count', 'as', 'from', 'where', 'and']));
+    expect(words('cm-num')).toEqual(['1']);
+    expect(words('cm-string')).toEqual(["'web'"]);
+  });
+
+  it('knows a table as written in the SQL, in full or by its dataset, in any case', () => {
+    const table = { fullName: 'Immoscoop-Dataplatform.dbt_prod.Weekly' };
+    expect(writtenAs('`immoscoop-dataplatform.dbt_prod.weekly`', table)).toBe(true);
+    expect(writtenAs('dbt_prod.WEEKLY', table)).toBe(true);
+    expect(writtenAs('weekly', table)).toBe(false);
+    expect(writtenAs('v.weekly', table)).toBe(false);
   });
 });
