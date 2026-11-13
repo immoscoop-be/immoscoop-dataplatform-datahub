@@ -115,7 +115,8 @@ export function parseDomainModel(input: unknown): DomainModel {
   }
   const version = string(first('version'));
   return {
-    domain: string(first('domain')) ?? '',
+    // The collector names its domain `model`, as text, next to its version and release.
+    domain: string(first('domain')) ?? (typeof wrapped.model === 'string' ? wrapped.model : null) ?? '',
     version: version ?? '',
     release: releaseOf(first('release')) ?? version ?? '',
     entities,

@@ -28,6 +28,12 @@ describe('the Domain Model from the collector (TR-AR-09)', () => {
     const { meta, ...contract } = domainModelContract() as { meta: { domain: string; version: string; release: Record<string, string> } } & Record<string, unknown>;
     // Its meta on the wrapper, around the model.
     expect(parseDomainModel({ meta, model: contract })).toMatchObject({ domain: 'immoscoop', version: '0.1.0', release: '0.0.70' });
+    // As the collector answers it: the domain as `model`, its version and release at the top, no `meta`.
+    expect(parseDomainModel({ model: 'immoscoop', version: '0.1.0', release: { version: '0.0.70', name: 'v0.0.70', tag: 'v0.0.70' }, ...contract })).toMatchObject({
+      domain: 'immoscoop',
+      version: '0.1.0',
+      release: '0.0.70',
+    });
     // Its domain, version and release at the top, the release as text.
     expect(parseDomainModel({ ...contract, domain: 'immoscoop', version: '0.1.0', release: 'v0.0.71' })).toMatchObject({ domain: 'immoscoop', release: '0.0.71' });
     // Without a release, its version.
