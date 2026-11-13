@@ -157,24 +157,25 @@ export function parseLens(body: unknown): LensFields | string {
   };
 }
 
-/** What its Owner Unit changes about a Lens: its texts, tags and the names Users see, never its SQL. */
-export function parseEdit(body: unknown): Partial<Pick<LensFields, 'name' | 'question' | 'shows' | 'steps' | 'tags' | 'labels'>> | string {
+/** What its Owner Unit changes about a Lens: its texts, tags, the names Users see and the descriptions of its fields, never its SQL (DEC-UX-231). */
+export function parseEdit(body: unknown): Partial<Pick<LensFields, 'name' | 'question' | 'shows' | 'steps' | 'tags' | 'labels' | 'fields'>> | string {
   if (typeof body !== 'object' || body === null || Array.isArray(body)) return 'Send a JSON object.';
   const fields = body as Record<string, unknown>;
-  const editable = ['name', 'question', 'shows', 'steps', 'tags', 'labels'];
+  const editable = ['name', 'question', 'shows', 'steps', 'tags', 'labels', 'fields'];
   const unknown = Object.keys(fields).find((key) => !editable.includes(key));
   if (unknown) return `A Lens has no field ${unknown} to change here.`;
   if (Object.keys(fields).length === 0) return 'Send at least one field to change.';
   // The same rules as when it was made, on a query and a Collection that do not change.
   const parsed = parseLens({ queryId: '00000000-0000-4000-8000-000000000000', collectionId: '00000000-0000-4000-8000-000000000000', name: 'x', ...fields });
   if (typeof parsed === 'string') return parsed;
-  const changes: Partial<Pick<LensFields, 'name' | 'question' | 'shows' | 'steps' | 'tags' | 'labels'>> = {};
+  const changes: Partial<Pick<LensFields, 'name' | 'question' | 'shows' | 'steps' | 'tags' | 'labels' | 'fields'>> = {};
   if (fields.name !== undefined) changes.name = parsed.name;
   if (fields.question !== undefined) changes.question = parsed.question;
   if (fields.shows !== undefined) changes.shows = parsed.shows;
   if (fields.steps !== undefined) changes.steps = parsed.steps;
   if (fields.tags !== undefined) changes.tags = parsed.tags;
   if (fields.labels !== undefined) changes.labels = parsed.labels;
+  if (fields.fields !== undefined) changes.fields = parsed.fields;
   return changes;
 }
 
@@ -692,7 +693,21 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     const seen = await managed(request, reply);
     if (!seen) return reply;
     if (seen.lens.state === 'waiting') return reply.code(409).send({ error: 'waiting', message: 'This Lens waits for the Data Team: nobody changes it until they decide.' });
-    const lens = await told(await lenses.edit(seen.lens.id, changes), request.log);
+    const { fields: described, ...rest } = changes;
+    let fields: LensField[] | undefined;
+    if (described) {
+      // Its fields as its result has them: as kept, or, for a Lens made before they were, from a dry run of its SQL (DEC-UX-231).
+      let columns: ResultColumn[] = seen.lens.fields.map(({ name, type }) => ({ name, type }));
+      if (columns.length === 0) {
+        try {
+          columns = (await check(seen.lens.sql, valuesFor(seen.lens, undefined) as Parameter[], await resourcesOf(request, seen.lens), thresholds)).columns;
+        } catch (error) {
+          return unavailable(error, reply, request);
+        }
+      }
+      fields = lensFields(described, columns, seen.lens.resources);
+    }
+    const lens = await told(await lenses.edit(seen.lens.id, { ...rest, ...(fields ? { fields } : {}) }), request.log);
     return { lens: await viewOf(request, seen.sight, lens) };
   });
 

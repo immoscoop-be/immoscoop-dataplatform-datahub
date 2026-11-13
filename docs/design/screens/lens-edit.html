@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <!--
   Screen: Edit the lens, "Edit more" on the page of a Lens, for its Owner Unit and the Data Team (DEC-UX-162).
-  Left: what it tells, as when it was made: its name, the question it answers, what it shows, what it does step by
-  step, its tags and the names users see of its Parameters; it stays in its Collection. Right: what one run of its
-  version reads, that its SQL changes through its query (DEC-UX-27, DEC-LE-04), and Save.
+  The same four steps as making it (DEC-UX-231, OP-UX-83): What it is (its name, question, what it shows, step by step;
+  it stays in its Collection), Tags, Parameters (the names users see) and Its fields, each with its description, one
+  at a time on the left with Back and Next. Right: the steps with how far each is, a click opening one; under them what
+  one run of its version reads, that its SQL changes through its query (DEC-UX-27, DEC-LE-04), and Save. ?step=2, 3 or
+  4 opens a step, ?lf=pick the search of the fields of its Resources.
   Under Save, small: "Delete this lens…" (DEC-UX-185, DEC-LE-21), which opens a sheet: what deleting does, explained
   first, with how many colleagues used it in the last 30 days, also from Excel; why, optional; and "Keep it" or
   "Delete for good". A deleted Lens: lens-deleted.html.
-  Requirements: FR-LE-06, FR-LE-18
-  Decisions: DEC-UX-162, DEC-UX-174, DEC-UX-185, DEC-UX-27, DEC-LE-04, DEC-LE-16, DEC-LE-21.
+  Requirements: FR-LE-06, FR-LE-18, FR-LE-19
+  Decisions: DEC-UX-231, DEC-UX-229, DEC-UX-227, DEC-UX-162, DEC-UX-174, DEC-UX-185, DEC-UX-27, DEC-LE-04, DEC-LE-16, DEC-LE-21.
   Related screens: lens.html (Edit more), lens-new.html (Make it a lens), lens-deleted.html.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -113,7 +115,10 @@
 </div>
 <div class="make-lens" style="margin-top:14px">
  <section class="card nq-left" aria-labelledby="ml-lens">
-  <h2 id="ml-lens" class="nq-title">The Lens</h2>
+  <!-- Edit more is the same four steps as making it (DEC-UX-231, OP-UX-83) -->
+  <div data-pane-group="step" data-pane="1">
+  <div class="meta">Step 1 of 4</div>
+  <h2 id="ml-lens" class="nq-title">What it is</h2>
   <label class="field" style="margin-top:12px"><span>Name</span><input value="Leads per source name" required></label>
   <label class="field"><span>The question it answers</span><input value="Which sources bring the most leads?"></label>
   <p class="meta" style="display:block;line-height:1.5;margin:-6px 0 12px">Its words help colleagues find this Lens when they start a query.</p>
@@ -122,22 +127,83 @@
 Adds the name of each lead source.
 Adds up the leads per source and puts the largest first.</textarea></label>
   <p class="meta" style="display:block;line-height:1.5;margin:0 0 12px">A step a line, in plain language: colleagues never see the SQL of a Lens, so this is how they know what it does.</p>
-  <div class="field"><span>Tags</span>
-   <div class="tags" style="margin-top:0"><span class="tag">#leads</span><span class="tag">#source</span><span class="tag">#weekly</span><button class="add-chip" type="button">+ Tag</button></div>
-  </div>
-  <div class="field" style="margin-top:16px"><span>Parameters, the names users see</span>
-   <div class="param-row"><span class="mono">@dateFrom</span><input value="From" aria-label="Name users see"><span class="meta">Date</span><span class="param-fn" title="A function, worked out at every run"><i class="ph ph-function"></i>Start of this month<i class="ph ph-caret-down" style="margin-left:auto"></i></span></div>
-   <div class="param-row" style="margin-top:6px"><span class="mono">@dateTo</span><input value="To" aria-label="Name users see"><span class="meta">Date</span><span class="param-fn" title="A function, worked out at every run"><i class="ph ph-function"></i>Today − 3 days<i class="ph ph-caret-down" style="margin-left:auto"></i></span></div>
-   <div class="param-row" style="margin-top:6px"><span class="mono">@leadChannel</span><input value="Lead channel" aria-label="Name users see"><span class="meta">List</span><span class="meta" title="The default of this Parameter, from the query">Form</span></div>
-   <p class="meta" style="display:block;line-height:1.5;margin:8px 0 0">Their defaults come from its query. To add one or change a default, open it in Query and update the lens.</p>
-  </div>
   <label class="field" style="margin-top:16px"><span>In the Collection</span>
    <select disabled><option selected>Credit leads · the credit team</option></select>
    <span class="meta" style="display:block;line-height:1.5;margin-top:6px">A Lens stays in the Collection it was made in.</span>
   </label>
   <div class="status-row" style="margin-top:4px"><span class="meta" style="margin-right:2px">Uses</span><span class="status"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Weekly lead volume<span class="muted">· Credit leads</span><span class="maturity" data-level="4"></span></span><span class="status"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Lead sources<span class="muted">· Credit leads</span><span class="maturity" data-level="4"></span></span></div>
   <p class="meta" style="display:block;line-height:1.5;margin-top:10px">Level 4 · Explored, the lowest of its Resources. Everyone who may use both Resources finds it.</p>
+  <div class="ml-nav"><span style="flex:1"></span><button class="btn-quiet outline" type="button" data-step-go="2">Next: Tags<i class="ph ph-arrow-right"></i></button></div>
+  </div>
+  <div data-pane-group="step" data-pane="2" hidden>
+  <div class="meta">Step 2 of 4</div>
+  <h2 class="nq-title">Tags</h2>
+  <p class="meta" style="display:block;line-height:1.5;margin:6px 0 10px">Words colleagues search for, beside its name and question. Tags it shares with other Lenses bring them together.</p>
+  <div class="field">
+   <div class="tags" style="margin-top:0"><span class="tag">#leads</span><span class="tag">#source</span><span class="tag">#weekly</span><button class="add-chip" type="button">+ Tag</button></div>
+  </div>
+  <div class="ml-nav"><button class="btn-quiet outline" type="button" data-step-go="1"><i class="ph ph-arrow-left"></i>Back</button><span style="flex:1"></span><button class="btn-quiet outline" type="button" data-step-go="3">Next: Parameters<i class="ph ph-arrow-right"></i></button></div>
+  </div>
+  <div data-pane-group="step" data-pane="3" hidden>
+  <div class="meta">Step 3 of 4</div>
+  <h2 class="nq-title">Parameters</h2>
+  <div class="field" style="margin-top:12px"><span>Parameters, the names users see</span>
+   <div class="param-row"><span class="mono">@dateFrom</span><input value="From" aria-label="Name users see"><span class="meta">Date</span><span class="param-fn" title="A function, worked out at every run"><i class="ph ph-function"></i>Start of this month<i class="ph ph-caret-down" style="margin-left:auto"></i></span></div>
+   <div class="param-row" style="margin-top:6px"><span class="mono">@dateTo</span><input value="To" aria-label="Name users see"><span class="meta">Date</span><span class="param-fn" title="A function, worked out at every run"><i class="ph ph-function"></i>Today − 3 days<i class="ph ph-caret-down" style="margin-left:auto"></i></span></div>
+   <div class="param-row" style="margin-top:6px"><span class="mono">@leadChannel</span><input value="Lead channel" aria-label="Name users see"><span class="meta">List</span><span class="meta" title="The default of this Parameter, from the query">Form</span></div>
+   <p class="meta" style="display:block;line-height:1.5;margin:8px 0 0">Their defaults come from its query. To add one or change a default, open it in Query and update the lens.</p>
+  </div>
+  <div class="ml-nav"><button class="btn-quiet outline" type="button" data-step-go="2"><i class="ph ph-arrow-left"></i>Back</button><span style="flex:1"></span><button class="btn-quiet outline" type="button" data-step-go="4">Next: Its fields<i class="ph ph-arrow-right"></i></button></div>
+  </div>
+  <div data-pane-group="step" data-pane="4" hidden>
+  <div class="meta">Step 4 of 4</div>
+  <h2 class="nq-title">Its fields, as users see them</h2>
+  <!-- Its fields: a field named as a field of its Resources takes that description; for another, its author takes one from its Resources or writes one (DEC-UX-227, FR-LE-19, OP-UX-82) -->
+  <div class="field lf" style="margin-top:12px">
+   <p class="meta" style="display:block;line-height:1.5;margin:0 0 8px">Each field of its result. One named as a field of its Resources takes that description; for the others, take one from its Resources or write one. Users see it on the head of the column and under About. A field its new version added comes without one, unless a field of its Resources has its name.</p>
+   <div class="lf-list" id="lf-list">
+    <div class="lf-row">
+     <div class="lf-head"><span class="mono">week_start</span><span class="meta">DATE</span></div>
+     <div class="lf-desc"><span class="lf-from"><i class="ph ph-arrow-bend-down-right"></i>From Weekly lead volume · <span class="mono">week_start</span></span><p>The Monday of the week the lead came in.</p></div>
+     <button class="text-link lf-change" type="button" data-lf-pick>Change</button>
+    </div>
+    <div class="lf-row">
+     <div class="lf-head"><span class="mono">lead_source</span><span class="meta">STRING</span></div>
+     <div class="lf-desc"><span class="lf-from"><i class="ph ph-arrow-bend-down-right"></i>From Weekly lead volume · <span class="mono">lead_source</span><span class="pill" title="Lead sources holds a field of this name too: Change takes its description instead">also in Lead sources</span></span><p>Where the lead came in: the website, the app, a partner or a mailing.</p></div>
+     <button class="text-link lf-change" type="button" data-lf-pick>Change</button>
+    </div>
+    <div class="lf-row">
+     <div class="lf-head"><span class="mono">source_name</span><span class="meta">STRING</span></div>
+     <div class="lf-desc"><span class="lf-from"><i class="ph ph-arrow-bend-down-right"></i>From Lead sources · <span class="mono">source_name</span></span><p>The name of the source as colleagues know it.</p></div>
+     <button class="text-link lf-change" type="button" data-lf-pick>Change</button>
+    </div>
+    <div class="lf-row lf-missing" id="lf-leads">
+     <div class="lf-head"><span class="mono">leads</span><span class="meta">INT64</span></div>
+     <div class="lf-desc"><p class="lf-none">No field of its Resources is called <span class="mono">leads</span>.</p>
+      <div class="lf-actions"><button class="btn-quiet outline" type="button" data-lf-pick><i class="ph ph-magnifying-glass"></i>Take one from its Resources</button><button class="btn-quiet" type="button" data-lf-write>Write one</button></div>
+      <div class="lf-pick" id="lf-pick" hidden>
+       <label class="search" style="background:var(--surface-sub)"><i class="ph ph-magnifying-glass" style="font-size:14px"></i><input id="lf-q" value="lead" placeholder="Search the fields of its Resources" autocomplete="off"></label>
+       <div class="lf-options" id="lf-options"></div>
+      </div>
+     </div>
+    </div>
+    <div class="lf-row">
+     <div class="lf-head"><span class="mono">share_of_week</span><span class="meta">FLOAT64</span></div>
+     <div class="lf-desc"><span class="lf-from"><i class="ph ph-pencil-simple"></i>Written by its author</span><textarea rows="2" aria-label="Description of share_of_week">The share of the leads of that week that came from this source, in percent.</textarea></div>
+     <button class="text-link lf-change" type="button" data-lf-pick>Change</button>
+    </div>
+   </div>
+  </div>
+  <div class="ml-nav"><button class="btn-quiet outline" type="button" data-step-go="3"><i class="ph ph-arrow-left"></i>Back</button><span style="flex:1"></span><span class="meta">Save on the right, when it reads right.</span></div>
+  </div>
  </section>
+ <div class="ml-side">
+ <nav class="card ml-steps" aria-label="Steps of the Lens" data-group="step">
+  <button class="ml-stepbtn on" type="button" data-target="1" aria-selected="true"><span class="ml-n">1</span><span class="ml-t"><b>What it is</b><span class="meta">Leads per source name · Credit leads</span></span></button>
+  <button class="ml-stepbtn" type="button" data-target="2" aria-selected="false"><span class="ml-n">2</span><span class="ml-t"><b>Tags</b><span class="meta">3 tags</span></span></button>
+  <button class="ml-stepbtn" type="button" data-target="3" aria-selected="false"><span class="ml-n">3</span><span class="ml-t"><b>Parameters</b><span class="meta">3 Parameters</span></span></button>
+  <button class="ml-stepbtn" type="button" data-target="4" aria-selected="false"><span class="ml-n">4</span><span class="ml-t"><b>Its fields</b><span class="meta">5 fields · <span class="ml-warn">1 without a description</span></span></span></button>
+ </nav>
  <aside class="card nq-right" aria-labelledby="le-size">
   <h2 id="le-size" class="nq-title">Size</h2>
   <p class="meta" style="display:block;line-height:1.5;margin:4px 0 0">What one run of version 2 reads, as it was measured.</p>
@@ -148,6 +214,7 @@ Adds up the leads per source and puts the largest first.</textarea></label>
   <!-- Under Save, small: Delete, which opens its sheet (DEC-UX-185) -->
   <button class="btn-quiet" type="button" data-sheet-open="delete" style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-top:6px;color:var(--signal-urgent)"><i class="ph-fill ph-trash"></i>Delete this lens…</button>
  </aside>
+ </div>
 </div>
 
 </main>

@@ -9,7 +9,7 @@
   A power user, with the Permission "Query tables outside Data Hub" (Admin only to start; seen here as the Data Team), may
   also start from SQL, without Resources: the query then reads tables Data Hub knows from the dbt projects it follows, and a
   table that is a Resource stays one (DEC-UX-220, DEC-SR-46).
-  Requirements: FR-SR-43, FR-SR-45, FR-SR-46, FR-SR-47, FR-SR-48, FR-SR-56, FR-LE-06
+  Requirements: FR-SR-60, FR-SR-43, FR-SR-45, FR-SR-46, FR-SR-47, FR-SR-48, FR-SR-56, FR-LE-06
   Decisions: DEC-UX-21, DEC-UX-22, DEC-UX-23, DEC-CO-16, DEC-UX-220.
   Not in v1: the label "Claude" on a query in the panel (FR-SR-26, DEC-CH-02); leave it out.
   Related screens: resource-detail.html (the button "Query"), query.html (Start your own).
@@ -76,6 +76,14 @@
  </div>
 </aside>
 <main class="main">
+<!-- Flagged queries (DEC-UX-236): on every screen of Query, also here; none stands out, as no flagged query is open.
+     ⌘1 to ⌘0 (Ctrl+1 to Ctrl+0 on Windows) open one. -->
+<nav class="q-flags" aria-label="Flagged queries"><span class="q-flags-mod" title="Hold ⌘ and press the number of a query to open it">⌘</span>
+ <a class="q-flag" href="query.html" title="Leads per source name · ⌘1"><span class="kbd">1</span><span class="q-flag-name">Leads per source name</span></a>
+ <a class="q-flag" href="query.html" title="Partner share per week · ⌘2, running"><span class="kbd">2</span><span class="q-flag-name">Partner share per week</span><i class="ph ph-circle-notch q-flag-spin" role="img" aria-label="Running"></i></a>
+ <a class="q-flag" href="query.html" title="Listings per postal code, last 28 days · ⌘3, a result you have not seen yet"><span class="kbd">3</span><span class="q-flag-name">Listings per postal code, last 28 days</span><span class="q-flag-mark seen-not" role="img" aria-label="A result you have not seen yet"></span></a>
+ <button class="q-flags-quick" type="button" data-quick-open aria-label="Quick window" title="Quick window: every command of this screen, and every place in Data Hub"><i class="ph ph-magnifying-glass"></i><span class="kbd">⌘⇧P</span></button>
+</nav>
 <div class="breadcrumb">Query</div>
 <h1 class="page-title" style="margin-top:8px">New query</h1>
 <div class="new-query">
@@ -149,6 +157,14 @@
  <button class="seg on" data-target="colleague" role="tab" aria-selected="true">Colleague</button>
  <button class="seg" data-target="datateam" role="tab" aria-selected="false">Data Team</button>
 </div>
+<script>
+  // ⌘1 to ⌘0 open a flagged query, from every screen of Query (DEC-UX-236)
+  document.addEventListener('keydown', e => {
+    if (!(e.metaKey || e.ctrlKey) || e.shiftKey || e.altKey || !/^[0-9]$/.test(e.key)) return;
+    const tab = document.querySelectorAll('.q-flag')[e.key === '0' ? 9 : +e.key - 1];
+    if (tab) { e.preventDefault(); location.href = tab.href; }
+  }, true);
+</script>
 <script src="app.js"></script>
 </body>
 </html>

@@ -76,6 +76,11 @@ describe('the Resources to add, in a request (FR-CO-31, FR-CO-33, FR-CO-34)', ()
   it('are IDs, or objects with what the Data Admin recorded', () => {
     expect(parseAdd({ resources: ['r1'] })).toEqual([{ id: 'r1' }]);
     expect(parseAdd({ resources: [{ id: 'r2', ...details }] })).toEqual([{ id: 'r2', details: { ...details, grainSentence: 'generated simulation' } }]);
+    // The release of the Domain Model is optional: missing or empty, it is none, and the Resource is added (DEC-AR-05).
+    for (const release of ['', '  ', null, undefined]) {
+      expect(parseAdd({ resources: [{ id: 'r3', ...details, release }] })).toEqual([{ id: 'r3', details: { ...details, grainSentence: 'generated simulation', release: null } }]);
+    }
+    expect(parseAdd({ resources: [{ id: 'r4', ...details, release: 42 }] })).toBe('The release of the Domain Model is a version, or none.');
   });
 
   it('refuses what does not fit', () => {

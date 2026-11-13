@@ -2159,3 +2159,89 @@ svg.mp, svg.mp-g { display: block; width: 100%; height: auto; overflow: visible;
 .ml-warn { color: var(--signal-warn); }
 .ml-nav { display: flex; align-items: center; gap: 8px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--tint-hover); }
 .ml-nav .btn-quiet { display: inline-flex; align-items: center; gap: 6px; }
+
+/* Why "Make it a lens" is greyed, on a hover or on focus: what keeps the query from becoming a Lens (DEC-UX-232) */
+.why-anchor { position: relative; display: inline-flex; border-radius: var(--radius-pill); }
+.why-anchor > button:disabled { pointer-events: none; }
+.why-anchor:focus-visible { outline: 2px solid var(--text-secondary); outline-offset: 2px; }
+.why-pop { display: none; z-index: 20; }
+.why-anchor:hover .why-pop, .why-anchor:focus-within .why-pop { display: block; }
+.why-title { display: block; margin-bottom: 4px; font-weight: var(--weight-medium); color: var(--text-primary); }
+.why-list { display: grid; gap: 4px; margin: 6px 0 8px; }
+.why-item { display: flex; align-items: center; gap: 6px; color: var(--text-primary); }
+.why-item .meta { margin-left: auto; }
+
+/* A key of the keyboard, as a shortcut shows it: ⌘1, ⇧⌥F, esc */
+.kbd { display: inline-flex; align-items: center; gap: 1px; font: var(--weight-medium) 10.5px var(--font-family); color: var(--text-muted);
+  background: var(--tint-hover); border-radius: 5px; padding: 1px 5px; line-height: 16px; white-space: nowrap; flex: none; }
+
+/* Flagged queries (DEC-UX-236): a row at the very top of every screen of Query, one tab per flagged query in the order
+   they were flagged, its key ⌘1 to ⌘0 on it; the open one stands out. A tab marks a run still going, a result not seen
+   yet, a run that failed and a query that is Broken. Dragged, a tab changes place, and its number with it. */
+.q-flags { display: flex; align-items: center; gap: 4px; margin: -12px -14px 14px; padding: 4px; border-radius: var(--radius-md); background: var(--surface-sub); min-height: 38px; }
+.q-flag { position: relative; display: flex; align-items: center; gap: 7px; flex: 0 1 200px; min-width: 64px; padding: 6px 8px 6px 7px; border-radius: 9px;
+  color: var(--text-secondary); text-decoration: none; font-size: var(--text-small); cursor: pointer; user-select: none; }
+.q-flag:hover { background: var(--tint-hover); color: var(--text-primary); }
+.q-flag.current { background: var(--card); color: var(--text-primary); }
+.q-flag .kbd { background: none; padding: 0; min-width: 8px; justify-content: center; }
+.q-flags-mod { font: var(--weight-medium) 13px var(--font-family); color: var(--text-muted); padding: 0 4px 0 8px; flex: none; }
+.q-flag.current .kbd { color: var(--text-primary); }
+.q-flag-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.q-flag-mark { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.q-flag-mark.seen-not { background: var(--text-primary); }
+.q-flag-mark.failed { background: var(--signal-urgent); }
+.q-flag-spin { font-size: 13px; color: var(--text-muted); flex: none; animation: q-flag-spin var(--motion-spin) infinite; }
+@keyframes q-flag-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .q-flag-spin { animation: none; } }
+.q-flag-broken { color: var(--signal-urgent); font-size: 14px; flex: none; }
+.q-flag-x { display: none; width: 18px; height: 18px; border: 0; border-radius: 5px; background: none; color: var(--text-muted); align-items: center; justify-content: center; padding: 0; cursor: pointer; flex: none; margin-left: -2px; }
+.q-flag:hover .q-flag-x, .q-flag:focus-within .q-flag-x { display: inline-flex; }
+.q-flag:hover .q-flag-mark { display: none; }
+.q-flag-x:hover { background: var(--tint-active); color: var(--text-primary); }
+.q-flag.dragging { opacity: .5; }
+.q-flag.drop-before::before { content: ""; position: absolute; left: -3px; top: 6px; bottom: 6px; width: 2px; border-radius: 1px; background: var(--text-primary); }
+.q-flags-empty { display: flex; align-items: center; gap: 8px; padding: 4px 8px; color: var(--text-muted); font-size: var(--text-small); }
+.q-flags-empty .kbd { background: var(--card); }
+.q-flags-quick { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; color: var(--text-muted); font: var(--text-meta) var(--font-family); padding: 6px 8px; border-radius: 9px; cursor: pointer; flex: none; }
+.q-flags-quick:hover { background: var(--tint-hover); color: var(--text-primary); }
+.q-flags-quick .kbd { background: var(--card); }
+/* The Flag button in the head of a query: flagged, it is pressed, with its key */
+.btn-quiet.outline[aria-pressed="true"] { background: var(--tint-active); }
+.btn-quiet[aria-pressed="true"] .kbd { background: var(--card); color: var(--text-primary); }
+/* A flagged query in the panel has the flag at its end */
+.q-item .flag-mark { margin-left: auto; font-size: 13px; color: var(--text-muted); flex: none; }
+
+/* The quick window (DEC-UX-237): Cmd+Shift+P (Ctrl+Shift+P) anywhere in Data Hub. A search over the commands of the
+   screen, then Go to: every section, and every Resource, Collection, Lens, query and Learning Card the User may see.
+   It floats over the top of the window, the page lightly dimmed; Escape, the shortcut again, or a click beside it closes it. */
+.quick-backdrop { position: fixed; inset: 0; z-index: 40; background: var(--quick-backdrop); }
+.quick { position: fixed; z-index: 41; top: 12vh; left: 50%; transform: translateX(-50%); width: min(720px, calc(100vw - 48px)); max-height: 70vh;
+  display: flex; flex-direction: column; border-radius: var(--radius-xl); background: var(--glass-solid); backdrop-filter: var(--blur-glass); -webkit-backdrop-filter: var(--blur-glass);
+  outline: 1px solid var(--glass-edge); box-shadow: var(--glass-shadow); overflow: hidden; }
+.quick[hidden], .quick-backdrop[hidden] { display: none; }
+.quick-head { display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--tint-active); }
+.quick-head > i { font-size: 18px; color: var(--text-muted); }
+.quick-head input { all: unset; flex: 1; font: 17px var(--font-family); color: var(--text-primary); }
+.quick-head input::placeholder { color: var(--text-muted); }
+.quick-where { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-meta); color: var(--text-secondary); background: var(--tint-hover); border-radius: var(--radius-pill); padding: 3px 10px; white-space: nowrap; max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+.quick-list { flex: 1; overflow: auto; padding: 6px 8px 8px; }
+.quick-group { font-size: var(--text-meta); color: var(--text-muted); padding: 10px 12px 4px; }
+.quick-row { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: var(--radius-md); cursor: pointer; color: var(--text-primary); min-height: 22px; }
+.quick-row > i { font-size: 17px; color: var(--text-secondary); width: 20px; text-align: center; flex: none; }
+.quick-row .quick-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.quick-row .quick-title b { font-weight: var(--weight-semibold); }
+.quick-row .quick-meta { color: var(--text-muted); font-size: var(--text-small); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
+.quick-row .quick-kind { color: var(--text-muted); font-size: var(--text-small); white-space: nowrap; flex: none; }
+.quick-row .kbd { margin-left: 4px; }
+.quick-row.on { background: var(--tint-active); }
+.quick-row[aria-disabled="true"] { cursor: default; }
+.quick-row[aria-disabled="true"] .quick-title, .quick-row[aria-disabled="true"] > i { color: var(--text-muted); }
+.quick-why { font-size: var(--text-small); color: var(--text-muted); padding: 0 12px 6px 44px; margin-top: -2px; }
+.quick-none { padding: 22px 12px; color: var(--text-muted); text-align: center; }
+.quick-foot { display: flex; align-items: center; gap: 10px; padding: 9px 14px 9px 20px; border-top: 1px solid var(--tint-active); font-size: var(--text-small); color: var(--text-secondary); }
+.quick-foot .logo { opacity: .55; }
+.quick-foot .quick-act { margin-left: auto; font-weight: var(--weight-medium); color: var(--text-primary); }
+.quick-foot .sep { width: 1px; height: 16px; background: var(--tint-active); }
+.why-anchor:is(:hover, :focus-within) .why-pop[hidden], .why-pop[hidden] { display: none; }
+.btn-quiet:disabled { opacity: .45; cursor: default; }
+.quick-foot [hidden] { display: none; }

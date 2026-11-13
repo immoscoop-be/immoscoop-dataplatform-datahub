@@ -83,11 +83,20 @@
     { label: 'with … as', template: 'with ${} as (\n    ${}\n)\n' },
     { label: 'final as … order by', template: 'final as (\n    ${}\n)\nselect *\nfrom final\norder by ${}' },
   ];
+
+  /**
+   * On `count(*`, the template `count(*) as …Count` (DEC-UX-235): it writes `count(*) as rowCount` with `row` selected, so
+   * that the User types the name in front of Count, as the Data Team names a count; Tab leaves it.
+   */
+  export const COUNT_TEMPLATE = { label: 'count(*) as …Count', template: 'count(*) as ${row}Count${}' } as const;
+
+  /** What was typed of `count(*` before the cursor. */
+  const COUNTING = /\bcount\s*\(\s*\*?$/i;
 </script>
 
 <script lang="ts">
   import { autocompletion, type Completion, type CompletionContext, completionKeymap, snippetCompletion } from '@codemirror/autocomplete';
-  import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
+  import { defaultKeymap, history, historyKeymap, indentWithTab, insertNewlineKeepIndent } from '@codemirror/commands';
   import { SQLDialect } from '@codemirror/lang-sql';
   import { codeFolding, foldedRanges, foldEffect, foldGutter, foldKeymap, foldNodeProp, foldService, HighlightStyle, LanguageSupport, syntaxHighlighting, syntaxTree } from '@codemirror/language';
   import { EditorState, type Range, StateEffect, StateField } from '@codemirror/state';
@@ -350,6 +359,11 @@
       const options: Completion[] = parameters.map((suggested) => ({ label: `@${suggested.name}`, detail: suggested.type, info: suggested.value }));
       return options.length ? { from: parameter.from, options, validFor: /^@\w*$/ } : null;
     }
+    const counting = context.matchBefore(COUNTING);
+    if (counting) {
+      const option = snippetCompletion(COUNT_TEMPLATE.template, { label: COUNT_TEMPLATE.label, detail: t('editor.template') });
+      return { from: counting.from, options: [option], filter: false, validFor: COUNTING };
+    }
     const word = context.matchBefore(/[\w]+/);
     // After `from` or `join`: the Resources of the query, written as BigQuery knows them, then every other
     // the User may use, which starts a new query, and a way to choose one (DEC-UX-148, DEC-UX-155).
@@ -385,7 +399,7 @@
         role: suggestion.role,
         info: () => info(suggestion),
       }));
-    const templates = TEMPLATES.map(({ label: name, template }) => snippetCompletion(template, { label: name, detail: t('editor.template'), boost: -1 }));
+    const templates = [...TEMPLATES, COUNT_TEMPLATE].map(({ label: name, template }) => snippetCompletion(template, { label: name, detail: t('editor.template'), boost: -1 }));
     return { from: word?.from ?? context.pos, options: [...options, ...templates], validFor: /^\w*$/ };
   }
 
@@ -464,7 +478,10 @@
                 return onrun !== undefined;
               },
             },
-            indentWithTab, ...completionKeymap, ...foldKeymap, ...historyKeymap, ...defaultKeymap]),
+            indentWithTab, ...completionKeymap,
+            // Enter starts the new line at the indent of the line above, never more or less (DEC-UX-234)
+            { key: 'Enter', run: insertNewlineKeepIndent },
+            ...foldKeymap, ...historyKeymap, ...defaultKeymap]),
           EditorState.readOnly.of(readonly),
           EditorView.editable.of(!readonly),
           EditorView.contentAttributes.of({ 'aria-label': label }),

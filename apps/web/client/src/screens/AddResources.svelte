@@ -205,7 +205,7 @@
     {#if model}
       <p class="model">
         <Icon name="graph" />
-        <span>{t('grain.model', { release: model.release })} <a class="text-link" href="https://colleciones-eventos.immoscoop.be/domain-model" target="_blank" rel="noopener">{t('grain.model.open')}</a></span>
+        <span>{model.release ? t('grain.model', { release: model.release }) : t('grain.model.unversioned')} <a class="text-link" href="https://colleciones-eventos.immoscoop.be/domain-model" target="_blank" rel="noopener">{t('grain.model.open')}</a></span>
       </p>
     {:else if model === null}
       <p class="model warn" role="alert">

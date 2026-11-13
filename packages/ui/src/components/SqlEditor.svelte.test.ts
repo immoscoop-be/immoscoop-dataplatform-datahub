@@ -23,7 +23,36 @@ describe('the SQL editor', () => {
       expect(options.some((option) => option.startsWith('where true and'))).toBe(true);
       return options;
     });
-    expect(listed.filter((option) => option.endsWith('Sjabloon')).map((option) => option.replace('Sjabloon', ''))).toEqual(['final as … order by', 'select … from', 'where false or', 'where true and', 'with … as']);
+    expect(listed.filter((option) => option.endsWith('Sjabloon')).map((option) => option.replace('Sjabloon', ''))).toEqual(['count(*) as …Count', 'final as … order by', 'select … from', 'where false or', 'where true and', 'with … as']);
+  });
+
+  it('proposes count(*) as …Count on count(*, with the name before Count to type (DEC-UX-235)', async () => {
+    render(SqlEditor, { value: 'select\n    count(*', suggestions: [], label: 'SQL' });
+    const editor = content();
+    editor.focus();
+    await fireEvent.keyDown(editor, { key: 'End', code: 'End', ctrlKey: true });
+    await fireEvent.keyDown(editor, { key: ' ', code: 'Space', ctrlKey: true });
+    const options = await vi.waitFor(() => {
+      const listed = [...document.querySelectorAll('.cm-tooltip-autocomplete li')];
+      expect(listed.length).toBe(1);
+      return listed;
+    });
+    expect(options[0]?.textContent).toBe('count(*) as …CountSjabloon');
+    await fireEvent.mouseDown(options[0] as Element);
+    expect(editor.textContent).toContain('count(*) as rowCount');
+    // `row` is selected: what the User types takes its place
+    expect(document.getSelection()?.toString()).toBe('row');
+  });
+
+  it('starts a new line at the indent of the line above on Enter, never more or less (DEC-UX-234)', async () => {
+    render(SqlEditor, { value: 'with leads as (\n    select\n        week_start,', suggestions: [], label: 'SQL' });
+    const editor = content();
+    editor.focus();
+    await fireEvent.keyDown(editor, { key: 'End', code: 'End', ctrlKey: true });
+    await fireEvent.keyDown(editor, { key: 'Enter', code: 'Enter' });
+    const lines = [...editor.querySelectorAll('.cm-line')].map((line) => line.textContent);
+    expect(lines).toHaveLength(4);
+    expect(lines[3]).toBe('        ');
   });
 
   it('suggests the Resources of the query after from, and a new Resource that starts a new query (DEC-UX-148)', async () => {

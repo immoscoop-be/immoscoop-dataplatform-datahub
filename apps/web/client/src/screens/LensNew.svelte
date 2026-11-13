@@ -16,7 +16,7 @@
   import type { Catalogue, Collection } from '../lib/catalogue.js';
   import { clock, when } from '../lib/moment.js';
   import { describe, isFunction, kindOf, suggestedOf } from '../lib/parameters.js';
-  import type { Lens, LensField, LensParameter, Parameter, Preflight, Query, QueryClient, QueryRequest, Storage } from '../lib/query.js';
+  import type { Lens, LensField, LensParameter, Parameter, Preflight, Query, QueryClient, QueryField, QueryRequest, ResultColumn, Storage } from '../lib/query.js';
   import LensDeleteSheet from './LensDeleteSheet.svelte';
   import { lensPath, queryPath } from '../lib/routes.js';
 
@@ -35,7 +35,8 @@
    * left, with Back and Next; on the right, above the size check, the steps with how far each is, a click opening
    * one in any order. Only a name keeps it from being published. Its fields: each field of its result with its type
    * and a description, that of a field of its Resources of the same name, or one its author takes from another field
-   * of its Resources or writes (DEC-UX-227, FR-LE-19). Edit stays one page, as it was drawn (OP-UX-83).
+   * of its Resources or writes (DEC-UX-227, FR-LE-19). Edit is the same four steps (DEC-UX-231): a Lens made before its
+   * fields had descriptions gets its columns from a Pre-flight, and the fields of its Resources from catalogue.
    */
   let {
     queryId,
@@ -58,7 +59,8 @@
     /** A Lens its Owner Unit edits. */
     editing?: Lens;
     client: QueryClient;
-    catalogue: Pick<Catalogue, 'createCollection'>;
+    /** To make a new Collection, and to read the fields of the Resources of a Lens being edited (DEC-UX-231). */
+    catalogue: Pick<Catalogue, 'createCollection' | 'resource'>;
     collections: readonly Collection[] | undefined;
     me: { name: string; groups: readonly string[] };
     /** The User manages every Lens (`lenses.manage`, every): a Lens may go into any Collection they manage. */
@@ -109,8 +111,14 @@
   let resent = $state<QueryRequest | null>(null);
   /** The step of making it that is open (DEC-UX-229). */
   let step = $state(1);
-  /** The description its author chose for a field: taken from a field of its Resources, or written (DEC-UX-227). */
-  let chosen = $state<Record<string, Omit<LensField, 'name' | 'type'>>>({});
+  /**
+   * The description its author chose for a field: taken from a field of its Resources, or written (DEC-UX-227); for a
+   * Lens being edited, also those it has, `named` when it came from a field of its Resources.
+   */
+  let chosen = $state<Record<string, Omit<LensField, 'name' | 'type'> & { named?: boolean }>>({});
+  /** For a Lens being edited (DEC-UX-231): the columns of its result, and the fields of its Resources from catalogue. */
+  let editColumns = $state<ResultColumn[]>([]);
+  let editSources = $state<{ id: string; displayName: string; fields: readonly Pick<QueryField, 'name' | 'dataType' | 'description' | 'businessDescription'>[] }[]>([]);
   /** The field whose search of the fields of its Resources is open, and the words searched. */
   let picking = $state<string | null>(null);
   let words = $state('');
@@ -159,6 +167,23 @@
     editedId = editing.id;
     [name, question, shows, steps, tags, collectionId] = [editing.name, editing.question, editing.shows, editing.steps.join('\n'), [...editing.tags], editing.collectionId];
     labels = Object.fromEntries(editing.parameters.map((parameter) => [parameter.name, parameter.label]));
+    // Its fields as kept, with their descriptions; a Lens made before has none, and its Pre-flight tells its columns (DEC-UX-231).
+    const kept = editing.fields ?? [];
+    chosen = Object.fromEntries(kept.filter((field) => field.description).map((field) => [field.name, { description: field.description, from: field.from, named: field.from !== null }]));
+    const id = editing.id;
+    if (kept.length) editColumns = kept.map(({ name: field, type }) => ({ name: field, type }));
+    else {
+      client.lensPreflight(id, {}).then(
+        (checked) => {
+          if (editedId === id && 'columns' in checked) editColumns = checked.columns ?? [];
+        },
+        () => undefined,
+      );
+    }
+    Promise.allSettled(editing.resources.map((resource) => catalogue.resource(resource.id))).then((read) => {
+      if (editedId !== id) return;
+      editSources = read.flatMap((result) => (result.status === 'fulfilled' ? [{ id: result.value.id, displayName: result.value.displayName, fields: result.value.fields }] : []));
+    });
   });
   // The Collection whose "New Lens" started the query comes first, when its author owns it (DEC-UX-123).
   $effect(() => {
@@ -212,13 +237,11 @@
 
   /** The fields of its Resources that have a description: the Business Description first, else the one from dbt. */
   const sourceFields = $derived(
-    (query?.resources ?? []).flatMap((resource) =>
-      resource.visible
-        ? resource.fields.flatMap((field) => {
-            const description = field.businessDescription.trim() || field.description.trim();
-            return description ? [{ resourceId: resource.id, resource: resource.displayName, name: field.name, type: field.dataType ?? '', description }] : [];
-          })
-        : [],
+    (editing ? editSources : (query?.resources ?? []).flatMap((resource) => (resource.visible ? [resource] : []))).flatMap((resource) =>
+      resource.fields.flatMap((field) => {
+        const description = field.businessDescription.trim() || field.description.trim();
+        return description ? [{ resourceId: resource.id, resource: resource.displayName, name: field.name, type: field.dataType ?? '', description }] : [];
+      }),
     ),
   );
   const resourceName = (id: string) => existing?.resources.find((resource) => resource.id === id)?.displayName ?? query?.resources.find((resource) => resource.id === id)?.displayName ?? '';
@@ -250,10 +273,11 @@
           how: field.description ? (field.from ? 'named' : 'written') : 'none',
           others: [],
         }))
-      : (preflight?.columns ?? []).map((column) => {
+      : (editing ? editColumns : (preflight?.columns ?? [])).map((column) => {
           const own = chosen[column.name];
           if (own) {
-            return { name: column.name, type: column.type, description: own.description, from: own.from ? { ...own.from, resource: resourceName(own.from.resourceId) } : null, how: own.from ? 'taken' : 'written', others: [] };
+            const how = own.from ? (own.named ? 'named' : 'taken') : 'written';
+            return { name: column.name, type: column.type, description: own.description, from: own.from ? { ...own.from, resource: resourceName(own.from.resourceId) } : null, how, others: [] };
           }
           const same = sourceFields.filter((field) => field.name.toLowerCase() === column.name.toLowerCase());
           const first = same[0];
@@ -290,6 +314,12 @@
     picking = null;
   }
 
+  /** The descriptions of its fields as they are sent: each field that has one, with where it comes from. */
+  const described = () =>
+    fieldRows.flatMap((field) =>
+      field.description.trim() ? [{ name: field.name, description: field.description.trim(), from: field.from ? { resourceId: field.from.resourceId, field: field.from.field } : null }] : [],
+    );
+
   /** What each step says on the right: how far it is (DEC-UX-229). */
   const collectionName = $derived(
     making ? newName.trim() : (collections ?? []).find((collection) => collection.id === (existing?.collectionId ?? collectionId))?.name ?? '',
@@ -298,7 +328,7 @@
   const statusOf = (index: number): string => {
     if (index === 1) return [(lens?.name ?? name).trim() || t('lens.flow.status.noName'), collectionName].filter(Boolean).join(' · ');
     if (index === 2) return t('lens.flow.status.tags', { count: (lens?.tags ?? tags).length });
-    if (index === 3) return t('lens.flow.status.parameters', { count: parameters.length });
+    if (index === 3) return t(editing ? 'lens.flow.status.parameters.edit' : 'lens.flow.status.parameters', { count: parameters.length });
     return fieldRows.length ? t('lens.flow.status.fields', { count: fieldRows.length }) : t('lens.flow.status.noFields');
   };
 
@@ -346,9 +376,7 @@
         steps: steps.split('\n').map((step) => step.trim()).filter(Boolean),
         tags,
         labels,
-        fields: fieldRows.flatMap((field) =>
-          field.description.trim() ? [{ name: field.name, description: field.description.trim(), from: field.from ? { resourceId: field.from.resourceId, field: field.from.field } : null }] : [],
-        ),
+        fields: described(),
         approve,
         text: text.trim(),
       });
@@ -380,6 +408,8 @@
           steps: steps.split('\n').map((step) => step.trim()).filter(Boolean),
           tags,
           labels: Object.fromEntries(Object.entries(labels).map(([parameter, label]) => [parameter, label.trim() || parameter])),
+          // The descriptions of its fields, those of fields of its Resources of the same name included (DEC-UX-231).
+          ...(fieldRows.length ? { fields: described() } : {}),
         }),
       );
     } catch (error) {
@@ -525,7 +555,7 @@
           <div class="lf-head"><span class="mono" title={field.name}>{field.name}</span><span class="meta">{field.type}</span></div>
           <div class="lf-desc">
             {#if field.how === 'written' && !frozen}
-              <span class="lf-from"><Icon name="pencil-simple" />{t('lens.fields.written')}</span>
+              <span class="lf-from"><Icon name="pencil-simple" />{t(editing ? 'lens.fields.writtenBy' : 'lens.fields.written')}</span>
               <textarea {...NO_PASSWORD_MANAGER} rows="2" maxlength="1000" aria-label={t('lens.fields.describe', { name: field.name })} value={field.description}
                 oninput={(event) => (chosen = { ...chosen, [field.name]: { description: event.currentTarget.value, from: null } })}></textarea>
             {:else if field.how === 'written'}
@@ -576,27 +606,14 @@
       {#if next}
         <Button variant="outline" onclick={() => (step = next)}>{t('lens.flow.next', { step: t(STEPS[next - 1] ?? 'lens.flow.what') })}<Icon name="arrow-right" /></Button>
       {:else if !frozen}
-        <span class="meta">{t('lens.flow.publish')}</span>
+        <span class="meta">{t(editing ? 'lens.flow.save' : 'lens.flow.publish')}</span>
       {/if}
     </div>
   {/snippet}
 
   <div class="halves">
-    {#if editing}
-      <!-- Edit stays one page, as it was drawn (DEC-UX-162, OP-UX-83). -->
-      <section class="card lens" aria-labelledby="the-lens">
-        <h2 id="the-lens">{t('lens.make.lens')}</h2>
-        <fieldset>
-          {@render texts()}
-          {@render tagsField()}
-          {@render parametersField()}
-          {@render collectionField()}
-        </fieldset>
-        {@render uses()}
-      </section>
-    {:else}
-      <!-- One step at a time (DEC-UX-229). -->
-      <section class="card lens" aria-labelledby="the-step">
+    <!-- One step at a time, when making it and when editing it (DEC-UX-229, DEC-UX-231). -->
+    <section class="card lens" aria-labelledby="the-step">
         <div class="meta">{t('lens.flow.of', { step })}</div>
         <h2 id="the-step">{t(step === 4 ? 'lens.fields.title' : (STEPS[step - 1] ?? 'lens.flow.what'))}</h2>
         <fieldset disabled={frozen}>
@@ -613,7 +630,16 @@
         {#if step === 4}{@render fieldsList()}{/if}
         {@render nav(step > 1 ? step - 1 : null, step < 4 ? step + 1 : null)}
       </section>
-    {/if}
+    <div class="side">
+    <!-- The steps of making it, each with how far it is; a click opens one, in any order (DEC-UX-229). -->
+    <nav class="card steps" aria-label={t('lens.flow.steps')}>
+      {#each STEPS as title, index (title)}
+        <button type="button" class="stepbtn" class:on={step === index + 1} aria-current={step === index + 1 ? 'step' : undefined} onclick={() => (step = index + 1)}>
+          <span class="n">{index + 1}</span>
+          <span class="t"><b>{t(title)}</b><span class="meta">{statusOf(index + 1)}{#if index === 3 && undescribed > 0}{' · '}<span class="warn">{t('lens.flow.status.undescribed', { count: undescribed })}</span>{/if}</span></span>
+        </button>
+      {/each}
+    </nav>
     {#if editing}
       <aside class="card size" aria-labelledby="size-check">
         <h2 id="size-check">{t('lens.size.title')}</h2>
@@ -626,16 +652,6 @@
         {#if failed}<p class="failed" role="alert">{failed}</p>{/if}
       </aside>
     {:else}
-    <div class="side">
-    <!-- The steps of making it, each with how far it is; a click opens one, in any order (DEC-UX-229). -->
-    <nav class="card steps" aria-label={t('lens.flow.steps')}>
-      {#each STEPS as title, index (title)}
-        <button type="button" class="stepbtn" class:on={step === index + 1} aria-current={step === index + 1 ? 'step' : undefined} onclick={() => (step = index + 1)}>
-          <span class="n">{index + 1}</span>
-          <span class="t"><b>{t(title)}</b><span class="meta">{statusOf(index + 1)}{#if index === 3 && undescribed > 0}{' · '}<span class="warn">{t('lens.flow.status.undescribed', { count: undescribed })}</span>{/if}</span></span>
-        </button>
-      {/each}
-    </nav>
     <aside class="card size" aria-labelledby="size-check">
       <h2 id="size-check">{t('lens.size.title')}</h2>
       <p class="meta">{t('lens.size.intro')}</p>
@@ -711,8 +727,8 @@
       {#if failed}<p class="failed" role="alert">{failed}</p>{/if}
       <p class="meta later">{t('lens.size.later')}</p>
     </aside>
-    </div>
     {/if}
+    </div>
   </div>
   <!-- "Delete this lens…" under Save opens its sheet (DEC-UX-185, FR-LE-18). -->
   {#if editing && deleting}<LensDeleteSheet name={editing.name} usedBy={editing.usedBy ?? 0} ondelete={remove} onclose={() => (deleting = false)} />{/if}

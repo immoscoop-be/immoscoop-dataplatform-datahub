@@ -48,4 +48,17 @@ describe('Format, in the house layout of the Data Team (DEC-UX-228)', () => {
       ['with', '', 'a as (', '    select', "        'DAY' as x -- DAY stays", '    from', '        `p.DAY.t`', '),', '', 'b as (', '    select', '        *', '    from', '        a', ')', '', 'select', '    *', 'from', '    b'].join('\n'),
     );
   });
+
+  it('leaves SQL it wrote as it is, so that a query that opens formatted does not change again (DEC-UX-233)', () => {
+    const samples = [
+      "WITH leads AS (SELECT eventId, DATE(collectorDatetime) AS day FROM `p.d.leads` WHERE collectorDatetime >= TIMESTAMP(@dateFrom)) SELECT day, COUNT(*) AS leads FROM leads GROUP BY day ORDER BY day",
+      "with a as (select 'DAY' as x -- DAY stays\nfrom `p.DAY.t`), b as (select * from a) select * from b",
+      'select week_start, lead_source\nfrom `immoscoop-dataplatform-398214.dbt_prod_leads.weekly_lead_volume`\nwhere week_start >= date_sub(current_date(), interval 28 day)\n',
+      "select * from `p.d.t` where true and lead_channel in unnest(@leadChannel) qualify row_number() over (partition by id order by at desc) = 1",
+    ];
+    for (const sql of samples) {
+      const once = formatBigQuery(sql);
+      expect(formatBigQuery(once)).toBe(once);
+    }
+  });
 });

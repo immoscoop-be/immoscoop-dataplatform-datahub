@@ -17,7 +17,8 @@
    * name suggested from its Resources and the date (DEC-UX-21), the question carried along, and the Lenses
    * on the new set, which can be a very different list (DEC-UX-114). "Start the new query" takes the SQL and
    * its Parameters along; the old query stays as it was, with its history. Resources are ticked one or more at once,
-   * up to ten in all, and each comes as a CTE at the start of the SQL, shown before (DEC-UX-225, FR-SR-59).
+   * up to ten in all, and each comes as a CTE at the start of the SQL, shown before (DEC-UX-225, FR-SR-59). "New query
+   * from this one", in the quick window, starts one with the same Resources (DEC-UX-237).
    */
   let {
     query,
@@ -36,7 +37,7 @@
     sql: string;
     parameters: readonly Parameter[];
     collections: readonly Collection[] | undefined;
-    mode: 'add' | 'remove';
+    mode: 'add' | 'remove' | 'same';
     /** The Resource to add, chosen already, or the one to remove. */
     resource: string | null;
     onclose: () => void;
@@ -157,10 +158,13 @@
   }
 </script>
 
-<Sheet title={mode === 'add' ? t('newSet.addMany', { count: Math.max(1, picks.length) }) : t('newSet.removeTitle', { name: removed?.displayName ?? '' })} {onclose}>
+<Sheet
+  title={mode === 'add' ? t('newSet.addMany', { count: Math.max(1, picks.length) }) : mode === 'same' ? t('newSet.sameTitle') : t('newSet.removeTitle', { name: removed?.displayName ?? '' })}
+  {onclose}
+>
   {#snippet top()}<div class="meta from"><Icon name="git-branch" />{t('newSet.from', { name: query.name })}</div>{/snippet}
   <div class="body">
-    <p class="why">{t(mode === 'add' ? 'newSet.why.add' : 'newSet.why.remove', { name: query.name })}</p>
+    <p class="why">{t(mode === 'add' ? 'newSet.why.add' : mode === 'same' ? 'newSet.why.same' : 'newSet.why.remove', { name: query.name })}</p>
     {#if mode === 'add'}
       <div class="label">{t('newSet.add')}</div>
       <input {...NO_PASSWORD_MANAGER} type="search" class="search" bind:value={search} placeholder={t('query.resources.search')} aria-label={t('query.resources.search')} />
