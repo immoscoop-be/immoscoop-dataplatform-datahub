@@ -67,8 +67,12 @@
   shows the row with this query, without it, empty and full; full, Flag is greyed with why.
   The quick window (DEC-UX-237): Cmd+Shift+P or Cmd+K, anywhere in Data Hub (app.js draws it on every screen; the search
   at the right of the row of flagged queries opens it too). On a query it lists first what can be done to this query
-  now: Show info when the cursor is on a field, Parameter or Resource (DEC-UX-238), Flag or Unflag, Fold all, Format the SQL, Add a Resource, Add a table (a power user), New query from this one,
-  Hide or Show again, and the view: the query next to or above the result. ?quick=open opens it, &q=lea types in it.
+  now, a command for every button of the page that does something to it (DEC-UX-239): Show info when the cursor is on
+  a field, Parameter or Resource (DEC-UX-238); Run as ⌘↵ does, which above 100 MB puts the focus on the red button,
+  where Enter approves; Add the partition filter (with ?pf=nofilter); Make it a Lens or Update the Lens; Flag or
+  Unflag; Rename; Fold all; Format the SQL; Add a Parameter; Add a Resource; Remove each Resource; Add a table (a power
+  user); New query from this one; Lenses on these Resources; Show the history or the result; Copy the Query ID; Hide
+  or Show again, and the view: the query next to or above the result. ?quick=open opens it, &q=lea types in it.
   Related screens: resource-history.html (the queries on a Resource), lens-new.html (Make it a lens).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -792,8 +796,9 @@
   }));
   drawFlags();
 
-  // The commands of a query in the quick window (DEC-UX-237): only what applies to it now, such as Flag or Unflag,
-  // Hide or Show again; Add a table only for a power user; Flag greyed, with why, when ten others are flagged.
+  // The commands of a query in the quick window (DEC-UX-237, DEC-UX-239): a command for every button of the page that
+  // does something to it, only what applies now, such as Flag or Unflag, Hide or Show again; Add a table only for a
+  // power user; what cannot be done now greyed, with why, such as Flag when ten others are flagged.
   window.QUICK = {
     group: 'This query',
     get where() { return 'Query · ' + here(); },
@@ -801,17 +806,40 @@
       const at = flags.findIndex(f => f.title === here()), full = at < 0 && flags.length >= 10;
       const hidden = document.getElementById('hide-btn').getAttribute('aria-pressed') === 'true';
       const side = new URLSearchParams(location.search).get('layout') === 'side';
+      const state = g => document.querySelector(`[data-group="${g}"] .seg.on`)?.dataset.target;
+      const lens = state('lens'), broken = state('qstate') === 'broken';
+      const history = document.getElementById('hist-tab')?.getAttribute('aria-selected') === 'true';
+      const filter = document.querySelector('[data-add-filter]');
+      // Remove a Resource: one for each of its Resources, as the × on its chip (DEC-UX-73)
+      const removes = [...document.querySelectorAll('.scope-chip:not([hidden]) [data-remove-res]')].map(x => {
+        const name = x.closest('.scope-chip').childNodes[1]?.textContent.trim();
+        return { icon: 'ph ph-minus-circle', title: 'Remove ' + name, meta: 'starts a new query without it', click: `[data-remove-res="${x.dataset.removeRes}"]`, words: 'remove drop resource without' };
+      });
       return [
         // The word the cursor is on in the SQL, here lead_source: what a double-click on it opens (DEC-UX-238)
         { icon: 'ph ph-info', title: 'Show info', meta: 'the field lead_source, where the cursor is', run: () => document.querySelector('[data-group="dbl"] [data-target="field"]')?.click(), words: 'info explain describe what is this' },
+        // Run does what ⌘↵ does (DEC-UX-142): above 100 MB, the focus on the red button, where Enter approves it
+        { icon: 'ph-fill ph-play', title: 'Approve and run', meta: 'reads 840 MB: Enter on its red button approves it', keys: '⌘↵', run: () => document.getElementById('run-btn')?.focus(), disabled: broken, why: 'It does not run now: what it reads no longer exists', words: 'run execute go play approve' },
+        ...(filter && !filter.hidden ? [{ icon: 'ph ph-funnel', title: 'Add the partition filter', meta: 'on week_start, as the Pre-flight asks', click: '[data-add-filter]', words: 'filter partition where week less' }] : []),
+        lens === 'linked'
+          ? { icon: 'ph ph-arrows-clockwise', title: 'Update the Lens', meta: 'overwrites Leads per source name with this query', click: '[data-sheet-open="update-lens"]', words: 'lens update overwrite' }
+          : { icon: 'ph ph-aperture', title: 'Make it a Lens', meta: 'for everyone who may use its Resources', run: () => { location.href = 'lens-new.html'; }, disabled: lens === 'unpublished', why: 'Not published yet: Lead sources. A Lens is made only on published Resources.', words: 'lens create new make share' },
         at >= 0
           ? { icon: 'ph-fill ph-flag', title: 'Unflag this query', meta: `takes it off the top, and ${keyOf(at)} with it`, click: '#flag-btn', words: 'flag pin remove quick list' }
           : { icon: 'ph ph-flag', title: 'Flag this query', meta: full ? '' : `keeps it on top, as ${keyOf(flags.length)}`, click: '#flag-btn', disabled: full, why: 'Ten queries are flagged. Unflag one first.', words: 'pin star keep quick list' },
+        { icon: 'ph ph-pencil-simple', title: 'Rename this query', meta: 'its name and question, in place', run: () => { const h = document.getElementById('q-title'); h.contentEditable = 'true'; h.focus(); }, words: 'rename name question title' },
         { icon: 'ph ph-arrows-in-line-vertical', title: 'Fold all', meta: 'every CTE of the SQL', click: '#fold-all', words: 'collapse cte' },
         { icon: 'ph ph-text-align-left', title: 'Format the SQL', meta: 'in the house layout', keys: '⇧⌥F', click: '#format-btn', words: 'format layout indent pretty' },
+        { icon: 'ph ph-function', title: 'Add a Parameter', meta: 'a value to choose at each run, as @name', click: '#param-add', words: 'parameter variable value @' },
         { icon: 'ph ph-plus', title: 'Add a Resource', meta: 'starts a new query with it', click: '[data-add-res]', words: 'resource table join new' },
+        ...removes,
         { icon: 'ph ph-magnifying-glass', title: 'Add a table', meta: 'a table outside Data Hub, as a CTE', click: '[data-find-table]', for: 'datateam', words: 'find table outside dbt model staging power' },
         { icon: 'ph ph-git-branch', title: 'New query from this one', meta: 'the same Resources, its SQL and Parameters', run: () => window.quickNewSame?.(), words: 'copy duplicate current start from' },
+        ...(lens === 'linked' ? [] : [{ icon: 'ph ph-aperture', title: 'Lenses on these Resources', meta: '3 Lenses already answer questions on them', click: '#lenses-btn', words: 'lenses reuse existing find' }]),
+        history
+          ? { icon: 'ph ph-table', title: 'Show the result', meta: 'of run 14', click: '[data-target="result"][role="tab"]', words: 'result rows grid tab' }
+          : { icon: 'ph ph-clock-counter-clockwise', title: 'Show the history', meta: '14 runs, each a variation', click: '#hist-tab', words: 'history runs earlier tab' },
+        { icon: 'ph ph-copy', title: 'Copy the Query ID', meta: 'q-20261027-4c2e1a, of run 14', click: '.query-id .icon-btn', words: 'copy id reference ref share' },
         hidden
           ? { icon: 'ph ph-eye', title: 'Show this query again', meta: 'in your panel', click: '#hide-btn', words: 'unhide show' }
           : { icon: 'ph ph-eye-slash', title: 'Hide this query', meta: 'from your panel; Hidden shows it again', click: '#hide-btn', words: 'hide remove' },

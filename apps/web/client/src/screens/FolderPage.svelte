@@ -23,6 +23,8 @@
   import { removable } from '../lib/permissions.js';
   import type { LensItem } from '../lib/query.js';
   import { collectionPath, folderPath, lensPath, resourcePath } from '../lib/routes.js';
+  import { command, place, useScreenCommands } from '../lib/commands.svelte.js';
+  import type { QuickRow } from '../lib/quick.js';
   import { rowOf } from '../lib/rows.js';
   import NewFolderRow from './NewFolderRow.svelte';
   import NotFound from './NotFound.svelte';
@@ -148,6 +150,20 @@
       }
     }
   }
+
+  // In the quick window: a folder in it and deleting it, for who manages its Collection, and back to the Collection (DEC-UX-240).
+  useScreenCommands(() => {
+    const here = folder;
+    const into = collection;
+    if (!here || !into) return null;
+    const rows: QuickRow[] = [];
+    if (manage) {
+      rows.push(command('folder:new', 'folder-simple-plus-fill', t('folder.new'), () => (making = true), { meta: t('quick.folder.new.meta', { name: here.name }), words: t('quick.folder.words') }));
+      rows.push(command('folder:delete', 'trash', t('quick.folder.delete'), () => void remove(), { meta: t('quick.folder.delete.meta'), words: t('quick.folder.delete.words') }));
+    }
+    rows.push(place('folder:collection', 'stack', into.name, () => go(collectionPath(into.id)), { meta: t('quick.folder.collection.meta'), words: t('quick.resource.collection.words') }));
+    return { group: t('quick.group.folder'), where: `${into.name} · ${here.name}`, rows };
+  });
 </script>
 
 {#if collection === null || (collection && !folder)}

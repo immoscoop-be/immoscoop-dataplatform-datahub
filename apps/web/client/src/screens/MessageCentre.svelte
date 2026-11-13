@@ -23,6 +23,8 @@
     VIEW_TEXTS,
   } from '../lib/messages.js';
   import { contextPath, messagePath, objectPath } from '../lib/routes.js';
+  import { command, place, useScreenCommands } from '../lib/commands.svelte.js';
+  import type { QuickRow } from '../lib/quick.js';
   import MessageOpened from './MessageOpened.svelte';
   import { KIND_NAMES, STATE_ICONS } from './MessageThread.svelte';
 
@@ -81,6 +83,24 @@
     const href = message.subject.kind === 'user' ? objectPath(message.subject, message.type) : contextPath(message.subject, message.id);
     return { label: context?.label[language] ?? message.subject.name, href };
   }
+
+  // In the quick window: the next and the previous Message, where the opened one was said, and the other chips (DEC-UX-240).
+  const CHIPS = { all: 'messages.all', open: 'messages.open', answered: 'messages.answered', closed: 'messages.closed' } as const;
+  useScreenCommands((go) => {
+    const rows: QuickRow[] = [];
+    const at = shown.findIndex((message) => message.id === opened?.id);
+    const after = shown[at + 1] ?? (at < 0 ? shown[0] : undefined);
+    const before = at > 0 ? shown[at - 1] : undefined;
+    if (after) rows.push(place('messages:next', 'arrow-down-right', t('quick.messages.next'), () => go(messagePath(after.id)), { meta: after.subject.name, words: t('quick.messages.step.words') }));
+    if (before) rows.push(place('messages:previous', 'arrow-left', t('quick.messages.previous'), () => go(messagePath(before.id)), { meta: before.subject.name, words: t('quick.messages.step.words') }));
+    const message = opened?.message;
+    if (message && message.subject.exists) {
+      const open = opener(message);
+      rows.push(place('messages:context', 'arrow-square-out', open.label, () => go(open.href), { meta: message.subject.name, words: t('quick.messages.context.words') }));
+    }
+    for (const value of ['all', 'open', 'answered', 'closed'] as const) if (value !== chip) rows.push(command(`messages:chip:${value}`, 'funnel', t('quick.messages.chip', { name: t(CHIPS[value]) }), () => (chip = value), { words: t('quick.messages.chip.words') }));
+    return { group: 'Messages', rows };
+  });
 </script>
 
 <div class="crumb meta">{t('section.messages')}</div>

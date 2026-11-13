@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { untrack } from 'svelte';
+  import { tick, untrack } from 'svelte';
   import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import DataGrid from '@datahub/ui/components/DataGrid.svelte';
   import Pager from '@datahub/ui/components/Pager.svelte';
@@ -75,6 +75,7 @@
     onflag,
     onstatus,
     oncommands,
+    go,
     mac = false,
   }: {
     id: string;
@@ -111,6 +112,8 @@
     onstatus?: (id: string, status: QueryStatus) => void;
     /** What can be done to it now, for the quick window (DEC-UX-237). */
     oncommands?: (id: string, commands: QuickRow[]) => void;
+    /** Goes to another page of Data Hub, for a command of the quick window such as Make it a Lens. */
+    go?: (path: string) => void;
     /** Cmd on a Mac, Ctrl elsewhere, as its keys are written. */
     mac?: boolean;
   } = $props();
@@ -239,6 +242,8 @@
   /** Its name and question while they are changed in place (DEC-UX-119). */
   let renaming = $state<{ name: string; question: string } | null>(null);
   let renameSaving = $state(false);
+  let renameField = $state<HTMLInputElement | undefined>();
+  let requestField = $state<HTMLTextAreaElement | undefined>();
   let renameFailed = $state(false);
   let updating = $state(false);
   /** The Lenses on its Resources, to reuse while writing (DEC-UX-73); not for a query used as a Lens (DEC-UX-77). */
@@ -464,9 +469,36 @@
     untrack(() => onstatus?.(id, now));
   });
 
+  /** Its name and question opened in place, the name ready to type (DEC-UX-119), as a click on them does. */
+  async function startRename(): Promise<void> {
+    if (!query) return;
+    renaming = { name: query.name, question: query.question };
+    renameFailed = false;
+    await tick();
+    renameField?.focus();
+  }
+
+  /** The Request to the Data Team opened on its button, ready for a word (DEC-UX-116). */
+  async function openRequest(): Promise<void> {
+    requestOpen = true;
+    await tick();
+    requestField?.focus();
+  }
+
+  /** The Query ID of the result shown, on the clipboard, as its copy button does (DEC-UX-72). */
+  async function copyRef(ref: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(ref);
+    } catch (error) {
+      // A browser that refuses the clipboard leaves the Query ID to be selected under the result.
+      console.error('The Query ID could not be copied', error);
+    }
+  }
+
   /**
-   * What can be done to it now, for the quick window (DEC-UX-237): of each pair only the one that applies, and what may
-   * not be done now greyed, with why (DEC-UX-207). Editing it is for who made it, as on the page.
+   * What can be done to it now, for the quick window (DEC-UX-237, DEC-UX-239): a command for every button of the page
+   * that does something to it, of each pair only the one that applies, and what may not be done now greyed, with why
+   * (DEC-UX-207). Writing and running it is for who made it, as on the page.
    */
   $effect(() => {
     if (!oncommands) return;
@@ -477,6 +509,8 @@
       return;
     }
     const own = found.mine && found.kind === 'query' && !preview;
+    /** Its maker, on the query itself rather than on a past run: they write and run it. */
+    const writes = found.mine && !preview;
     const command = (key: string, icon: IconName, title: string, run: () => void, more: Partial<QuickRow> = {}): QuickRow => ({
       key: `query:${key}`,
       group: 'screen',
@@ -494,6 +528,33 @@
       const about = { parameter: 'quick.query.info.parameter', table: 'quick.query.info.table', field: 'quick.query.info.field' } as const;
       rows.push(command('info', 'info', t('quick.query.info'), () => editor?.explainAtCursor(), { meta: t(about[word.kind], { name: word.name }), words: t('quick.query.info.words') }));
     }
+    if (writes) {
+      rows.push(runCommand(found, command));
+      // The filter the Pre-flight asks for, as "Add the filter" next to it adds it.
+      const note = [...(current?.problems ?? []), ...(current?.warnings ?? [])].find((one) => (one.kind === 'filterRequired' || one.kind === 'noPartitionFilter') && one.fix);
+      if (note && (note.kind === 'filterRequired' || note.kind === 'noPartitionFilter') && note.fix) {
+        const fix = note.fix;
+        const less = note.kind === 'noPartitionFilter' && note.bytesWithFilter !== null ? bytes(note.bytesWithFilter) : null;
+        rows.push(
+          command('filter', 'funnel', t('quick.query.filter'), () => ((atOnce = true), (sql = fix)), {
+            meta: t(less ? 'quick.query.filter.less' : 'quick.query.filter.meta', { column: note.column, name: note.resource.displayName, bytes: less ?? '' }),
+            words: t('quick.query.filter.words'),
+          }),
+        );
+      }
+    }
+    if (found.mine && found.kind === 'query') {
+      const lens = found.lens;
+      if (lens) {
+        // Its Lens, overwritten after a size check, greyed as its button is (DEC-UX-77, DEC-UX-232).
+        const why = noLens && lens.state !== 'waiting' ? t(noLens) : lens.state === 'waiting' ? t('lens.update.waiting') : undefined;
+        rows.push(command('lens', 'arrows-clockwise', t('lens.update.button'), () => (updating = true), { meta: t('quick.query.update.meta', { name: lens.name }), words: t('quick.query.update.words'), ...(why ? { why } : {}) }));
+      } else if (go) {
+        const open = go;
+        const why = noLens ? t(noLens) : unpublished.length > 0 ? t('quick.query.lens.unpublished', { names: unpublished.map((resource) => resource.displayName).join(', ') }) : undefined;
+        rows.push(command('lens', 'aperture', t('quick.query.lens'), () => open(newLensPath(found.id)), { meta: t('quick.query.lens.meta'), words: t('quick.query.lens.words'), ...(why ? { why } : {}) }));
+      }
+    }
     if (onflag) {
       const flag = onflag;
       rows.push(
@@ -502,12 +563,37 @@
           : command('unflag', 'flag-fill', t('quick.query.unflag'), () => flag(false), { meta: t('quick.query.unflag.meta', { key: `${modLabel(mac)}${digitOf(flagAt)}` }), words: t('quick.query.flag.words') }),
       );
     }
+    if (found.mine) rows.push(command('rename', 'pencil-simple', t('quick.query.rename'), () => void startRename(), { meta: t('quick.query.rename.meta'), words: t('quick.query.rename.words') }));
     rows.push(command('fold', 'arrows-in-line-vertical', t('quick.query.fold'), () => editor?.foldAll(), { meta: t('quick.query.fold.meta'), words: t('quick.query.fold.words') }));
-    if (own) {
-      rows.push(command('format', 'text-align-left', t('quick.query.format'), () => editor?.formatSql(), { meta: t('quick.query.format.meta'), keys: mac ? '⇧⌥F' : 'Shift+Alt+F', words: t('quick.query.format.words') }));
-      if (found.resources.length < 10) rows.push(command('resource', 'plus', t('quick.query.resource'), () => (newSet = { mode: 'add', resource: null }), { meta: t('quick.query.resource.meta'), words: t('quick.query.resource.words') }));
-      if (findTables) rows.push(command('table', 'magnifying-glass', t('quick.query.table'), () => (finding = true), { meta: t('quick.query.table.meta'), words: t('quick.query.table.words') }));
-      if (found.resources.length > 0) rows.push(command('copy', 'git-branch', t('quick.query.copy'), () => (newSet = { mode: 'same', resource: null }), { meta: t('quick.query.copy.meta'), words: t('quick.query.copy.words') }));
+    if (own) rows.push(command('format', 'text-align-left', t('quick.query.format'), () => editor?.formatSql(), { meta: t('quick.query.format.meta'), keys: mac ? '⇧⌥F' : 'Shift+Alt+F', words: t('quick.query.format.words') }));
+    if (writes) rows.push(command('parameter', 'function', t('quick.query.parameter'), () => openParameter(null), { meta: t('quick.query.parameter.meta'), words: t('quick.query.parameter.words') }));
+    if (own && found.resources.length < 10) rows.push(command('resource', 'plus', t('quick.query.resource'), () => (newSet = { mode: 'add', resource: null }), { meta: t('quick.query.resource.meta'), words: t('quick.query.resource.words') }));
+    // One for each of its Resources, as the × on its chip: it starts a new query without it (DEC-UX-73).
+    if (writes && found.resources.length > 1) {
+      for (const resource of found.resources) {
+        rows.push(command(`remove:${resource.id}`, 'minus-circle', t('quick.query.remove', { name: resource.displayName }), () => (newSet = { mode: 'remove', resource: resource.id }), { meta: t('quick.query.remove.meta'), words: t('quick.query.remove.words') }));
+      }
+    }
+    if (own && findTables) rows.push(command('table', 'magnifying-glass', t('quick.query.table'), () => (finding = true), { meta: t('quick.query.table.meta'), words: t('quick.query.table.words') }));
+    if (own && found.resources.length > 0) rows.push(command('copy', 'git-branch', t('quick.query.copy'), () => (newSet = { mode: 'same', resource: null }), { meta: t('quick.query.copy.meta'), words: t('quick.query.copy.words') }));
+    // The Lenses on its Resources, to reuse one (DEC-UX-73); not on a query used as a Lens (DEC-UX-77).
+    if (!found.lens && found.kind === 'query' && visible.length > 0) {
+      const lenses = lensesOn;
+      rows.push(
+        command('lenses', 'aperture', t('quick.query.lenses'), () => (lensesOpen = true), {
+          words: t('quick.query.lenses.words'),
+          ...(lenses ? { meta: t('quick.query.lenses.meta', { count: lenses.exact.length + lenses.more.length }) } : { why: t('quick.query.lenses.looking') }),
+        }),
+      );
+    }
+    rows.push(
+      tab === 'history'
+        ? command('tab', 'table', t('quick.query.result'), () => (tab = 'result'), { ...(shownRun ? { meta: t('quick.query.result.meta', { number: shownRun.number }) } : {}), words: t('quick.query.result.words') })
+        : command('tab', 'clock-counter-clockwise', t('quick.query.history'), () => (tab = 'history'), { meta: t('quick.query.history.meta', { count: found.runs }), words: t('quick.query.history.words') }),
+    );
+    if (shownRun) {
+      const ref = shownRun.ref;
+      rows.push(command('ref', 'copy', t('query.copyRef'), () => void copyRef(ref), { meta: t('quick.query.ref.meta', { ref, number: shownRun.number }), words: t('quick.query.ref.words') }));
     }
     rows.push(
       hidden
@@ -524,6 +610,33 @@
     }
     untrack(() => tell(id, rows));
   });
+
+  /**
+   * Run in the quick window does what Cmd+Enter does (DEC-UX-142, DEC-UX-239): up to 100 MB it runs; above, as Approve
+   * and run, it puts the focus on the red button, where Enter approves it; above 1 GB, as Send to the Data Team, it
+   * opens the Request on its button. Greyed, with why, while it runs, when the Pre-flight stops it, when it is Broken or
+   * when its Request waits.
+   */
+  function runCommand(found: Query, command: (key: string, icon: IconName, title: string, run: () => void, more?: Partial<QuickRow>) => QuickRow): QuickRow {
+    const reads = current?.bytes !== null && current?.bytes !== undefined ? bytes(current.bytes) : null;
+    const words = t('quick.query.run.words');
+    const request = found.request;
+    if (current?.range === 'request' && request?.state === 'waiting') {
+      return command('run', 'paper-plane-tilt', t('query.request.send'), () => undefined, { words, why: t('query.request.waiting', { time: since(request.sentAt) }) });
+    }
+    if (current?.range === 'request' && !current.problems.some((problem) => problem.kind === 'tooLarge') && request?.state !== 'accepted') {
+      return command('run', 'paper-plane-tilt', t('query.request.send'), () => void openRequest(), {
+        words,
+        ...(reads ? { meta: t('quick.query.run.request.meta', { bytes: reads }) } : {}),
+        ...(current.runnable && !checking ? {} : { why: t('query.cannotRun') }),
+      });
+    }
+    const approve = current?.range === 'approve' || current?.range === 'request';
+    // While the Pre-flight reads it, Run waits for it and then does what it says, as Cmd+Enter does (DEC-UX-154).
+    const why = broken !== null ? t('query.broken.run') : running ? t('quick.query.run.running') : checking ? null : !current ? t('quick.query.run.unchecked') : !current.runnable ? t('query.cannotRun') : null;
+    const meta = checking ? t('quick.query.run.checking') : reads ? t(approve ? 'quick.query.run.approve.meta' : 'quick.query.run.meta', { bytes: reads }) : null;
+    return command('run', 'play-fill', t(approve ? 'run.approve' : 'run.run'), runFromKeys, { keys: mac ? '⌘↵' : 'Ctrl+Enter', words, ...(meta ? { meta } : {}), ...(why ? { why } : {}) });
+  }
   let runBar = $state<HTMLElement | undefined>();
 
   /**
@@ -840,7 +953,7 @@
       <div class="meta">Query</div>
       {#if renaming}
         <form class="rename" onsubmit={rename}>
-          <Field label={t('query.name')}><input {...NO_PASSWORD_MANAGER} type="text" bind:value={renaming.name} maxlength="120" required /></Field>
+          <Field label={t('query.name')}><input {...NO_PASSWORD_MANAGER} bind:this={renameField} type="text" bind:value={renaming.name} maxlength="120" required /></Field>
           <Field label={t('query.question')}><textarea {...NO_PASSWORD_MANAGER} bind:value={renaming.question} rows="2" maxlength="500"></textarea></Field>
           <span class="rename-actions">
             <Button type="submit" disabled={renameSaving || renaming.name.trim() === ''}>{t('query.save')}</Button>
@@ -1148,7 +1261,7 @@
             {#snippet popout()}
               <span class="request">
                 <span><b>{t('query.request.large')}</b> {t('query.request.why', { request: bytes(current?.thresholds.request ?? 0) })}</span>
-                <label class="word"><span>{t('query.request.word')}</span><textarea {...NO_PASSWORD_MANAGER} rows="2" maxlength="500" bind:value={requestText}></textarea></label>
+                <label class="word"><span>{t('query.request.word')}</span><textarea {...NO_PASSWORD_MANAGER} bind:this={requestField} rows="2" maxlength="500" bind:value={requestText}></textarea></label>
                 <Button wide disabled={sending} onclick={send}><Icon name="paper-plane-tilt" />{t('query.request.sendIt')}</Button>
                 <span class="after" class:failed={requestFailed} role={requestFailed ? 'alert' : undefined}>{t(requestFailed ? 'query.request.failed' : 'query.request.after')}</span>
               </span>

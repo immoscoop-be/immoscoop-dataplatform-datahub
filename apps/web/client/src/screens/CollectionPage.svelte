@@ -29,6 +29,8 @@
   import { dragging, dragOf, dropOf, isOver, type Mover } from '../lib/dragging.svelte.js';
   import { contents, counted, holdsText } from '../lib/folders.js';
   import { collectionPath, folderPath, groupPath, lensPath, newLensForPath, resourcePath } from '../lib/routes.js';
+  import { command, place, useScreenCommands } from '../lib/commands.svelte.js';
+  import type { QuickRow } from '../lib/quick.js';
   import { rowOf } from '../lib/rows.js';
   import AddResources from './AddResources.svelte';
   import CollectionForm, { type Saved } from './CollectionForm.svelte';
@@ -256,6 +258,26 @@
       unpublished.length > 3 ? [...unpublished.slice(0, 3).map((resource) => resource.displayName), t('collection.more', { count: unpublished.length - 3 })] : unpublished.map((resource) => resource.displayName),
     ),
   );
+
+  // In the quick window: the buttons of its head, its folders and its Lenses, for who may (DEC-UX-240).
+  useScreenCommands((go) => {
+    const shown = collection;
+    if (!shown) return null;
+    const rows: QuickRow[] = [];
+    if (shown.canManage && !editing) rows.push(command('collection:edit', 'pencil-simple-fill', t('quick.collection.edit'), () => (editing = true), { meta: t('quick.collection.edit.meta'), words: t('quick.collection.edit.words') }));
+    if (assigns) rows.push(command('collection:add', 'plus-circle-fill', t('collection.addResources'), () => (adding = true), { meta: t('quick.collection.add.meta'), words: t('quick.collection.add.words') }));
+    if (shown.canManage && !editing) {
+      rows.push(command('collection:folder', 'folder-simple-plus-fill', t('folder.new'), () => (making = true), { meta: t('quick.collection.folder.meta'), words: t('quick.folder.words') }));
+      rows.push(place('collection:lens', 'aperture', t('quick.collection.lens'), () => go(newLensForPath(shown.id)), { meta: t('quick.collection.lens.meta'), words: t('quick.collection.lens.words') }));
+      rows.push(command('collection:intro', 'text-align-left', t('collection.intro.edit'), () => void editIntro(), { words: t('quick.collection.intro.words') }));
+    }
+    if (messages) {
+      const href = messages.href;
+      rows.push(place('collection:messages', 'chat-circle-dots-fill', 'Messages', () => go(href), { meta: t('quick.messages.meta', { count: messages.count ?? 0 }), words: t('quick.messages.words') }));
+    }
+    rows.push(place('collection:owner', 'users-three-fill', shown.ownerUnit.name, () => go(groupPath(shown.ownerUnit.id)), { meta: t('quick.owner.meta'), words: t('quick.owner.words') }));
+    return { group: t('quick.group.collection'), where: `Collection · ${shown.name}`, rows };
+  });
 </script>
 
 {#if id === undefined}

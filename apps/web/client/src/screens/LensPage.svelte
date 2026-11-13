@@ -27,6 +27,8 @@
   import { describe, formatDay, isFunction, kindOf, suggestedOf } from '../lib/parameters.js';
   import type { Lens, LensParameter, LensValue as Value, Page, Parameter, Preflight, QueryClient, Run } from '../lib/query.js';
   import { collectionPath, editLensPath, queryPath, resourcePath } from '../lib/routes.js';
+  import { command, place, useScreenCommands } from '../lib/commands.svelte.js';
+  import type { QuickRow } from '../lib/quick.js';
   import LensValue from './LensValue.svelte';
 
   /**
@@ -249,6 +251,40 @@
     { id: 'run', label: 'lens.tab.run' },
     { id: 'about', label: 'lens.tab.about' },
   ] as const;
+
+  let runBox = $state<HTMLElement | undefined>();
+  /**
+   * In the quick window (DEC-UX-240): Run as its button, which above 100 MB puts the focus on the red button, where Enter
+   * approves the run, as on a query (DEC-UX-239); Open in Excel, its Messages, Open in Query and Edit more for its
+   * Owner Unit, and its Collection.
+   */
+  useScreenCommands((go) => {
+    const rows: QuickRow[] = [];
+    const approve = preflight?.range === 'approve';
+    const reads = preflight?.bytes !== null && preflight?.bytes !== undefined ? bytes(preflight.bytes) : null;
+    const why = halted ? t('lens.run.halted') : running ? t('quick.query.run.running') : checking ? t('query.checking') : !preflight?.runnable || preflight.range === 'request' ? t('quick.lens.run.cannot') : null;
+    rows.push(
+      command('lens:run', 'play-fill', t(approve ? 'run.approve' : 'run.run'), () => (approve ? runBox?.querySelector<HTMLButtonElement>('button.run')?.focus() : void start()), {
+        words: t('quick.query.run.words'),
+        ...(reads ? { meta: t(approve ? 'quick.query.run.approve.meta' : 'quick.query.run.meta', { bytes: reads }) } : {}),
+        ...(why ? { why } : {}),
+      }),
+    );
+    if (excelAddress) rows.push(command('lens:excel', 'file-xls', t('excel.title'), () => (excel = true), { meta: t('quick.lens.excel.meta'), words: t('quick.lens.excel.words') }));
+    if (messages) {
+      const href = messages.href;
+      rows.push(place('lens:messages', 'chat-circle-dots-fill', 'Messages', () => go(href), { meta: t('quick.messages.meta', { count: messages.count ?? 0 }), words: t('quick.messages.words') }));
+    }
+    if (lens.canManage) {
+      if (canQuery) rows.push(command('lens:query', 'terminal-window-fill', t('lens.openInQuery'), () => void openQuery(), { meta: t('quick.lens.query.meta'), words: t('quick.lens.query.words'), ...(opening ? { why: t('quick.lens.opening') } : {}) }));
+      rows.push(place('lens:edit', 'pencil-simple-fill', t('lens.editMore'), () => go(editLensPath(lens.id)), { meta: t('quick.lens.edit.meta'), words: t('quick.lens.edit.words') }));
+    }
+    if (collection) {
+      const into = collection;
+      rows.push(place('lens:collection', 'stack', into.name, () => go(collectionPath(into.id)), { meta: t('quick.lens.collection.meta'), words: t('quick.resource.collection.words') }));
+    }
+    return { group: t('quick.group.lens'), where: `Lens · ${lens.name}`, rows };
+  });
 </script>
 
 {#snippet openAction()}
@@ -346,7 +382,7 @@
           {/each}
         </div>
       </FoldBox>
-      <div class="run">
+      <div class="run" bind:this={runBox}>
         {#if preflight && (preflight.range === 'request' || preflight.problems.some((problem) => problem.kind === 'tooLarge'))}
           <span class="meta too">{t('lens.run.tooLarge', { request: bytes(preflight.thresholds.request) })}</span>
         {/if}

@@ -12,6 +12,7 @@
   import { isYours, listOf, managedBy, managesItself, matches, tagsOf, whomToAsk } from '../lib/groups.js';
   import type { GroupDetail, GroupFields, GroupSummary, Identity } from '../lib/identity.js';
   import { GROUPS, groupPath, myPagePath, NEW_GROUP } from '../lib/routes.js';
+  import { place, useScreenCommands } from '../lib/commands.svelte.js';
   import GroupOpened from './GroupOpened.svelte';
   import NewGroupSheet from './NewGroupSheet.svelte';
   import NotFound from './NotFound.svelte';
@@ -226,6 +227,9 @@
     if (every) loadAll();
     return undefined;
   }
+
+  // In the quick window: a new Group, for who may make one (DEC-UX-240).
+  useScreenCommands((go) => (makes ? { group: 'Groups', rows: [place('groups:new', 'plus', t('group.new'), () => go(NEW_GROUP), { words: t('quick.group.new.words') })] } : null));
 </script>
 
 {#if id && opened?.id === id && opened.group === null}

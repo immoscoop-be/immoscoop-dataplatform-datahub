@@ -12,6 +12,7 @@
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import { Refused } from '../lib/api.js';
   import type { DbtJob, DbtProject, Delivery, DeliveryReason, JobKind, NotChoosable, Registry, SetStatus, SourceJobTile } from '../lib/registry.js';
+  import { command, useScreenCommands } from '../lib/commands.svelte.js';
 
   /**
    * Webhooks, the first tool of Admin (FR-AR-18, FR-AR-19, DEC-UX-130): per dbt project Data Hub follows its
@@ -237,6 +238,9 @@
     signature: 'admin.todo.signature',
   };
   const NOT_CHOOSABLE: Record<NotChoosable, string> = { ci: 'admin.notChoosable.ci', otherEnvironment: 'admin.notChoosable.otherEnvironment', noDocs: 'admin.notChoosable.noDocs' };
+
+  // In the quick window: following another dbt project (DEC-UX-240).
+  useScreenCommands(() => (tiles !== null ? { group: 'Webhooks', rows: [command('webhooks:follow', 'plus', t('admin.webhooks.follow'), () => void startFollowing(), { words: t('quick.webhooks.follow.words') })] } : null));
 </script>
 
 <Breadcrumb steps={[{ label: 'Admin' }]} />

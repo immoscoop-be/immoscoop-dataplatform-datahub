@@ -6,6 +6,8 @@
   import { buttonsOf, type Conversation, type MessagesClient, SUBJECT_TITLES } from '../lib/messages.js';
   import MessageComposer from './MessageComposer.svelte';
   import MessageThread from './MessageThread.svelte';
+  import { command, useScreenCommands } from '../lib/commands.svelte.js';
+  import type { QuickRow } from '../lib/quick.js';
 
   /**
    * A Message opened, in the Message Centre or in context (FR-CV-09): the Message with its replies, and what
@@ -72,6 +74,23 @@
         ? t('messages.decision.lens', { writer: message.writer.name })
         : t('messages.decision.stopped'),
   );
+
+  let replyBox = $state<HTMLElement | undefined>();
+  let decisionBox = $state<HTMLElement | undefined>();
+  /**
+   * In the quick window (DEC-UX-240): Reply puts the cursor in the reply; on a Request that waits, Accept puts the focus
+   * on its button, where Enter accepts it, and Refuse on the reason it needs, so that a decision stays a press on its
+   * button (DEC-UX-239).
+   */
+  useScreenCommands(() => {
+    const rows: QuickRow[] = [];
+    if (repliable) rows.push(command('message:reply', 'arrow-bend-up-left-fill', t('messages.reply'), () => replyBox?.querySelector('textarea')?.focus(), { meta: t('quick.message.reply.meta'), words: t('quick.message.reply.words') }));
+    if (waiting && decides) {
+      rows.push(command('message:accept', 'check-fill', label('Accept'), () => decisionBox?.querySelector<HTMLButtonElement>('.buttons button:last-child')?.focus(), { meta: t('quick.message.accept.meta'), words: t('quick.message.decide.words') }));
+      rows.push(command('message:refuse', 'x', label('Refuse'), () => decisionBox?.querySelector('textarea')?.focus(), { meta: t('quick.message.refuse.meta'), words: t('quick.message.decide.words') }));
+    }
+    return { group: t('quick.group.message'), rows };
+  });
 </script>
 
 <MessageThread
@@ -96,6 +115,7 @@
   }}
 />
 {#if repliable}
+  <div class="reply" bind:this={replyBox}>
   <MessageComposer
     label={t('messages.yourReply')}
     placeholder={t('messages.replyPlaceholder', { kind: kindName })}
@@ -112,8 +132,9 @@
       }
     }}
   />
+  </div>
 {:else if waiting && decides}
-  <div class="decision">
+  <div class="decision" bind:this={decisionBox}>
     <label class="label" for="reason-{message.id}">{t('messages.decision')}</label>
     <textarea {...NO_PASSWORD_MANAGER}
       id="reason-{message.id}"
@@ -135,6 +156,7 @@
 {/if}
 
 <style>
+  .reply { display: contents; }
   .decision { border-radius: var(--radius-lg); padding: 14px 16px; background: var(--surface-sub); margin-top: 6px; }
   .label { display: block; margin-bottom: 8px; font-size: var(--text-meta); font-weight: var(--weight-medium); color: var(--text-secondary); }
   textarea { width: 100%; box-sizing: border-box; font: var(--text-small) var(--font-family); line-height: 1.5; color: var(--text-primary); background: var(--surface-solid);
