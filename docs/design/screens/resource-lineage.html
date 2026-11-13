@@ -8,7 +8,8 @@
   the columns; every card the same height, its name on two lines at most. The switch shows the places: ?lin=down1, ?lin=down2,
   ?lin=up1, ?lin=up2; the other branches open by clicking.
   Requirements: FR-AR-08, FR-SR-54, FR-MR-10
-  Decisions: DEC-UX-90, DEC-UX-100, DEC-UX-102, DEC-UX-215.
+  The canvas takes all the room left in the frame below the tabs, across its whole width (DEC-UX-217).
+  Decisions: DEC-UX-90, DEC-UX-100, DEC-UX-102, DEC-UX-215, DEC-UX-217.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="owner">
@@ -21,6 +22,13 @@
 <link rel="stylesheet" href="../tokens.css">
 <link rel="stylesheet" href="../base.css">
 <title>Data Hub — Weekly lead volume, lineage</title>
+<style>
+  /* The canvas takes all the room left in the frame below the tabs, across its whole width (DEC-UX-217). */
+  .main.fill { display: flex; flex-direction: column; }
+  .main.fill > * { flex-shrink: 0; }
+  .main.fill > .tab-content { flex: 1 0 auto; display: flex; flex-direction: column; }
+  .main.fill > .tab-content > .lin { flex: 1 0 auto; }
+</style>
 </head>
 <body>
 <div class="app panel-open">
@@ -104,7 +112,7 @@
   <p id="no-results" class="meta" style="padding:8px 4px" hidden>Nothing matches your search.</p>
  </div>
 </aside>
-<main class="main">
+<main class="main fill">
 
  <div class="breadcrumb">Collections / Credit leads</div>
  <div style="display:flex;align-items:flex-start;gap:14px;margin-top:8px">
