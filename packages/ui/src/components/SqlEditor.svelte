@@ -45,6 +45,30 @@
     kind?: 'outside' | 'undefined';
   }
 
+  /** Where a word stands on the screen, to show what it explains next to it. */
+  export interface At {
+    left: number;
+    right: number;
+    top: number;
+    bottom: number;
+  }
+
+  /**
+   * What a double-click on a word of the SQL explains (DEC-UX-221): a Parameter, a Resource the User sees by the
+   * name of its table, or a field of the Resources of the query. Each such word has a dotted line (DEC-UX-222).
+   */
+  export type Explained =
+    | { kind: 'parameter'; name: string; at: At }
+    | { kind: 'table'; table: TableSuggestion; at: At }
+    | { kind: 'field'; name: string; at: At };
+
+  /** Whether a table as written in the SQL is this one: in full, or as `dataset.table` (Keys are in lower case, BigQuery reads names in any). */
+  export function writtenAs(written: string, table: Pick<TableSuggestion, 'fullName'>): boolean {
+    const name = written.replace(/`/g, '').toLowerCase();
+    const full = table.fullName.toLowerCase();
+    return name === full || (name.split('.').length === 2 && full.endsWith(`.${name}`));
+  }
+
   /** The CTEs of the SQL: a line that ends in `name as (`. */
   export const CTE_LINE = /\bas\s*\(\s*$/i;
 
@@ -65,9 +89,9 @@
   import { autocompletion, type Completion, type CompletionContext, completionKeymap, snippetCompletion } from '@codemirror/autocomplete';
   import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
   import { SQLDialect } from '@codemirror/lang-sql';
-  import { codeFolding, foldedRanges, foldEffect, foldGutter, foldKeymap, foldNodeProp, foldService, HighlightStyle, LanguageSupport, syntaxHighlighting } from '@codemirror/language';
+  import { codeFolding, foldedRanges, foldEffect, foldGutter, foldKeymap, foldNodeProp, foldService, HighlightStyle, LanguageSupport, syntaxHighlighting, syntaxTree } from '@codemirror/language';
   import { EditorState, type Range, StateEffect, StateField } from '@codemirror/state';
-  import { Decoration, type DecorationSet, EditorView, keymap, lineNumbers } from '@codemirror/view';
+  import { Decoration, type DecorationSet, EditorView, keymap, lineNumbers, type ViewUpdate, ViewPlugin } from '@codemirror/view';
   import { tags } from '@lezer/highlight';
   import { bigquery, formatDialect } from 'sql-formatter';
   import { onMount } from 'svelte';
@@ -94,6 +118,7 @@
     onrun,
     onnewtable,
     onothertable,
+    onexplain,
     label,
     readonly = false,
     nonce,
@@ -112,6 +137,8 @@
     onnewtable?: () => void;
     /** Another Resource picked among the suggestions, after its name is written: it starts a new query (DEC-UX-155). */
     onothertable?: (table: TableSuggestion) => void;
+    /** A double-click on a word the editor explains: a Parameter, a Resource or a field (DEC-UX-221). */
+    onexplain?: (explained: Explained) => void;
     label: string;
     readonly?: boolean;
     /** The nonce of the page: CodeMirror adds its own styles, which the Content Security Policy allows by it. */
@@ -124,7 +151,7 @@
   /** BigQuery as a dialect of SQL: its keywords, functions and types, backtick names, double-quoted strings, `#` comments and `@` Parameters. */
   const BIGQUERY = SQLDialect.define({
     keywords:
-      'all and any array as asc assert_rows_modified at between by case cast collate contains create cross cube current default define desc distinct else end enum escape except exclude exists extract false fetch following for from full group grouping groups hash having if ignore in inner intersect interval into is join lateral left like limit lookup merge natural new no not null nulls of offset on or order outer over partition preceding proto qualify range recursive respect right rollup rows select set some struct tablesample then to treat true unbounded union unnest using when where window with within replace pivot unpivot',
+      'all and any array as asc assert_rows_modified at between by case cast collate contains create cross cube current default define desc distinct else end enum escape except exclude exists extract false fetch following for from full group grouping groups hash having if ignore in inner intersect interval into is join lateral left like limit lookup merge natural new no not null nulls of offset on or order outer over partition preceding proto qualify range recursive respect right rollup rows select set some struct tablesample then to treat true unbounded union unnest using when where window with within replace pivot unpivot day week isoweek month quarter year isoyear hour minute second millisecond microsecond dayofweek dayofyear',
     builtin:
       'count sum avg min max any_value array_agg string_agg countif logical_and logical_or approx_count_distinct coalesce ifnull nullif if safe_cast safe_divide date_trunc date_add date_sub date_diff timestamp_trunc timestamp_add timestamp_sub timestamp_diff datetime_trunc datetime_add datetime_sub format_date parse_date current_date current_timestamp current_datetime extract lower upper concat length substr trim regexp_contains regexp_extract split round floor ceil abs mod div row_number rank dense_rank lag lead first_value last_value generate_date_array',
     types: 'int64 float64 numeric bignumeric bool string bytes date datetime time timestamp geography json interval',
@@ -183,6 +210,72 @@
     provide: (field) => EditorView.decorations.from(field, (value) => value.decorations),
   });
 
+  /** What a double-click explains, as the props give it: the Parameters, the fields of the Resources of the query, the Resources the User sees. */
+  interface Explaining {
+    parameters: ReadonlySet<string>;
+    fields: ReadonlySet<string>;
+    tables: readonly TableSuggestion[];
+  }
+  const setExplaining = StateEffect.define<Explaining>();
+  const explaining = StateField.define<Explaining>({
+    create: () => ({ parameters: new Set(), fields: new Set(), tables: [] }),
+    update(value, transaction) {
+      for (const effect of transaction.effects) if (effect.is(setExplaining)) value = effect.value;
+      return value;
+    },
+  });
+
+  type Item = { from: number; to: number } & ({ kind: 'parameter'; name: string } | { kind: 'table'; table: TableSuggestion } | { kind: 'field'; name: string });
+  const TITLES = { parameter: 'editor.explain.parameter', table: 'editor.explain.table', field: 'editor.explain.field' } as const;
+
+  /** The words a double-click explains, from the syntax of the SQL; never one that stands out as an error. */
+  function explainables(state: EditorState): Item[] {
+    const { parameters, fields, tables: known } = state.field(explaining);
+    const marked = state.field(errors).marks;
+    const items: Item[] = [];
+    syntaxTree(state).iterate({
+      enter(node) {
+        const text = state.sliceDoc(node.from, node.to);
+        if (node.name === 'SpecialVar') {
+          if (parameters.has(text.slice(1))) items.push({ kind: 'parameter', name: text.slice(1), from: node.from, to: node.to });
+          return false;
+        }
+        if (node.name === 'QuotedIdentifier' || node.name === 'CompositeIdentifier') {
+          const table = known.find((candidate) => writtenAs(text, candidate));
+          if (table) {
+            items.push({ kind: 'table', table, from: node.from, to: node.to });
+            return false;
+          }
+          return node.name === 'CompositeIdentifier';
+        }
+        if (node.name === 'Identifier' && fields.has(text.toLowerCase())) items.push({ kind: 'field', name: text, from: node.from, to: node.to });
+        return undefined;
+      },
+    });
+    return items.filter((item) => !marked.some((mark) => mark.from < item.to && mark.to > item.from));
+  }
+
+  /** A dotted line under each word a double-click explains, and on a hover what it opens (DEC-UX-222). */
+  const explained = ViewPlugin.fromClass(
+    class {
+      items: Item[] = [];
+      decorations: DecorationSet = Decoration.none;
+      constructor(view: EditorView) {
+        this.build(view.state);
+      }
+      update(update: ViewUpdate) {
+        const changed = update.docChanged || syntaxTree(update.startState) !== syntaxTree(update.state) || update.startState.field(explaining) !== update.state.field(explaining)
+          || update.transactions.some((transaction) => transaction.effects.some((effect) => effect.is(setMarks)));
+        if (changed) this.build(update.state);
+      }
+      build(state: EditorState) {
+        this.items = explainables(state);
+        this.decorations = Decoration.set(this.items.map((item) => Decoration.mark({ class: 'cm-explain', attributes: { title: t(TITLES[item.kind]) } }).range(item.from, item.to)), true);
+      }
+    },
+    { decorations: (plugin) => plugin.decorations },
+  );
+
   /** "⋯ n lines" in the place of a folded CTE, marked when an error is in it. */
   const folding = codeFolding({
     preparePlaceholder(state, range) {
@@ -209,7 +302,10 @@
     return span;
   };
 
+  // Coloured by kind of word, as BigQuery colours SQL (DEC-UX-223): names keep the colour of the text.
   const style = HighlightStyle.define([
+    { tag: [tags.keyword, tags.typeName, tags.standard(tags.name), tags.bool, tags.null], class: 'cm-kw' },
+    { tag: tags.number, class: 'cm-num' },
     { tag: tags.special(tags.string), class: 'cm-key' },
     { tag: tags.special(tags.name), class: 'cm-param' },
     { tag: [tags.lineComment, tags.blockComment], class: 'cm-comment' },
@@ -334,6 +430,8 @@
           ...(nonce ? [EditorView.cspNonce.of(nonce)] : []),
           lineNumbers(),
           errors,
+          explaining,
+          explained,
           folding,
           ctes,
           foldGutter({ markerDOM: arrow }),
@@ -378,6 +476,18 @@
               onmark(mark);
               return true;
             },
+            // The word is selected as in any editor; what it names opens beside it (DEC-UX-221).
+            dblclick(event, editorView) {
+              const at = editorView.posAtCoords({ x: event.clientX, y: event.clientY });
+              const item = at === null ? undefined : editorView.plugin(explained)?.items.find((candidate) => candidate.from <= at && at <= candidate.to);
+              if (!item || !onexplain) return false;
+              const start = editorView.coordsAtPos(item.from, 1);
+              const end = editorView.coordsAtPos(item.to, -1);
+              const where: At = start && end ? { left: start.left, right: end.right, top: start.top, bottom: start.bottom } : { left: event.clientX, right: event.clientX, top: event.clientY, bottom: event.clientY };
+              if (item.kind === 'table') onexplain({ kind: 'table', table: item.table, at: where });
+              else onexplain({ kind: item.kind, name: item.name, at: where });
+              return false;
+            },
           }),
           EditorView.updateListener.of((update) => {
             if (update.docChanged) value = update.state.doc.toString();
@@ -385,7 +495,7 @@
         ],
       }),
     });
-    view.dispatch({ effects: setMarks.of(marks) });
+    view.dispatch({ effects: [setMarks.of(marks), setExplaining.of(explainingNow())] });
     return () => view?.destroy();
   });
 
@@ -397,6 +507,15 @@
   });
   $effect(() => {
     view?.dispatch({ effects: setMarks.of(marks) });
+  });
+  const explainingNow = (): Explaining => ({
+    parameters: new Set(parameters.map((parameter) => parameter.name)),
+    fields: new Set(suggestions.map((suggestion) => suggestion.name.toLowerCase())),
+    tables: [...tables],
+  });
+  $effect(() => {
+    const next = explainingNow();
+    view?.dispatch({ effects: setExplaining.of(next) });
   });
 </script>
 
@@ -422,10 +541,14 @@
   .editor :global(.cm-fold-lines) { font: var(--text-meta) var(--font-family); color: var(--text-secondary); background: var(--tint-active); border: 0; border-radius: var(--radius-sm); padding: 0 7px; margin: 0 3px; cursor: pointer; vertical-align: 1px; }
   .editor :global(.cm-fold-lines:hover) { color: var(--text-primary); }
   .editor :global(.cm-fold-error) { color: var(--signal-warn); outline: 1.5px solid var(--signal-warn); }
-  .editor :global(.cm-key) { color: var(--col-slate); }
-  .editor :global(.cm-param) { color: var(--col-magenta); }
+  .editor :global(.cm-kw) { color: var(--code-keyword); }
+  .editor :global(.cm-num) { color: var(--code-number); }
+  .editor :global(.cm-key) { color: inherit; }
+  .editor :global(.cm-param) { color: var(--code-param); }
   .editor :global(.cm-comment) { color: var(--text-muted); }
-  .editor :global(.cm-string) { color: var(--col-teal-ink); }
+  .editor :global(.cm-string) { color: var(--code-string); }
+  .editor :global(.cm-explain) { text-decoration: underline dotted color-mix(in srgb, currentColor 50%, transparent); text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+  .editor :global(.cm-explain:hover) { text-decoration-color: currentColor; }
   .editor :global(.cm-outside), .editor :global(.cm-undefined) { color: var(--signal-warn); text-decoration: underline wavy var(--signal-warn); text-underline-offset: 3px; background: color-mix(in srgb, var(--signal-warn) 12%, transparent); border-radius: var(--radius-sm); }
   .editor :global(.cm-undefined) { cursor: pointer; }
   .editor :global(.cm-tooltip) { border: 0; background: none; }

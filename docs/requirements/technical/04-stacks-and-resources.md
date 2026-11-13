@@ -272,6 +272,15 @@ query asks it, at `DATAHUB_REGISTRY_URL` and with the token of the User, only fo
 
 The web app shows each table of `tables` as a chip with a dashed outline next to the Resources, a line under the question and "Make it a lens" greyed while there are any, greys it too on a query without Resources, and offers "Or start from SQL, without Resources" on a new query to a User with the Permission. The MCP server lets such a User make a query without Resources with `create_query`, and `check_query` says what it reads outside Data Hub.
 
+<a id="tr-sr-28"></a>
+### TR-SR-28 · The editor explains the words of the SQL, and colours them
+
+**Status:** Implemented · **Realises:** [FR-SR-57](../functional/04-stacks-and-resources.md#fr-sr-57), [DEC-UX-221](../../design/principles.md#dec-ux-221), [DEC-UX-222](../../design/principles.md#dec-ux-222), [DEC-UX-223](../../design/principles.md#dec-ux-223), [DEC-UX-226](../../design/principles.md#dec-ux-226)
+
+The SQL editor (`SqlEditor.svelte` in `@datahub/ui`) reads the syntax tree of CodeMirror's SQL language with the dialect of BigQuery. A `SpecialVar` that is a Parameter of the query, a `QuotedIdentifier` or `CompositeIdentifier` that names a Resource the User may use (in full, or as `dataset.table`, in any case), and an `Identifier` that is a field of the Resources of the query, each get a dotted line and a title that says what a double-click opens; a word under an error mark keeps its wavy line instead. A double-click selects the word as CodeMirror does, and hands what it names, with where it stands on the screen, to the page (`onexplain`). Keywords, functions, types, Booleans and `null` take `--code-keyword`, numbers `--code-number`, text in quotes `--code-string`, Parameters `--code-param`, and names the colour of the text; date parts such as `day` are keywords of the dialect.
+
+The page of a query opens the floating window of a Parameter, a pop-out at the word with each field of that name, its type, role and both descriptions, or a floating window with the Summary of the Resource (`OverviewSummary`, compact, without its legend), and "Open the Resource". The web app reads that Summary as the page of the Resource does ([TR-SR-26](#tr-sr-26)): the Resource, its Log, what it relates to, its size from query and the Messages on it, each piece that does not come leaving out its part. The grid of a result fills the height of its pane (`DataGrid` with `fill`); on a Lens and a Preview it keeps its height of at most 620 px.
+
 ## Open points
 
 None yet; reading the data of Resources is [OP-SR-10](../functional/04-stacks-and-resources.md#op-sr-10).

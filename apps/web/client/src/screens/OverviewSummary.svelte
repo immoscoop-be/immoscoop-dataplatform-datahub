@@ -32,6 +32,7 @@
     size,
     messagesHref,
     ongo,
+    compact = false,
   }: {
     resource: ResourceDetail;
     related: readonly Related[] | undefined;
@@ -41,8 +42,10 @@
     /** Its size, as the part Querying says it; null when BigQuery does not tell it. */
     size: string | null;
     messagesHref: string | undefined;
-    /** Opens a part of the Overview, or the Columns; the Messages are a link. */
-    ongo: (target: Exclude<SummarySource, 'messages'>) => void;
+    /** Opens a part of the Overview, or the Columns; the Messages are a link. Without it, the parts have no way to themselves. */
+    ongo?: (target: Exclude<SummarySource, 'messages'>) => void;
+    /** In a floating window over a query: one column, no legend, no way to each part (DEC-UX-221). */
+    compact?: boolean;
   } = $props();
 
   const card = $derived(resource.card);
@@ -124,11 +127,13 @@
   </li>
 {/snippet}
 
-<div class="legend">
-  {#each WEIGHTS as weight (weight)}<span class="weight {weight}">{t(WEIGHT_KEYS[weight].name)}</span><span class="means">{t(WEIGHT_KEYS[weight].means)}</span>{/each}
-</div>
+{#if !compact}
+  <div class="legend">
+    {#each WEIGHTS as weight (weight)}<span class="weight {weight}">{t(WEIGHT_KEYS[weight].name)}</span><span class="means">{t(WEIGHT_KEYS[weight].means)}</span>{/each}
+  </div>
+{/if}
 
-<ol class="parts">
+<ol class="parts" class:compact>
   {#each parts as { part, weight, from, number } (part)}
     <li class="part" class:deprecated={part === 'deprecated'}>
       <div class="side">
@@ -138,10 +143,13 @@
       <div class="main">
         <div class="title">
           <h3>{t(PART_KEYS[part])}</h3>
-          {#if from === 'messages' && messagesHref}
+          {#if compact}
+            <!-- In a window over a query: "Open the Resource" under it is the way to every part. -->
+          {:else if from === 'messages' && messagesHref}
             <a class="go" href={messagesHref}>{t(WHERE.messages)}<Icon name="arrow-right" /></a>
-          {:else if from && from !== 'messages'}
-            <button type="button" class="go" onclick={() => ongo(from)}>{t(WHERE[from])}<Icon name="arrow-right" /></button>
+          {:else if from && from !== 'messages' && ongo}
+            {@const go = ongo}
+            <button type="button" class="go" onclick={() => go(from)}>{t(WHERE[from])}<Icon name="arrow-right" /></button>
           {/if}
         </div>
         {#if part === 'deprecated' && resource.deprecation}
@@ -254,4 +262,10 @@
   .log li { display: flex; gap: 10px; padding: 4px 0; color: var(--text-secondary); }
   .log .text { flex: 1; }
   .log .at { color: var(--text-muted); white-space: nowrap; }
+  .compact { gap: 6px; }
+  .compact .part { grid-template-columns: minmax(0, 1fr); gap: 4px; padding: 10px 12px; }
+  .compact .side { flex-direction: row; align-items: center; gap: 8px; }
+  .compact .number { font-size: 15px; min-width: 14px; }
+  .compact .title { margin-bottom: 4px; }
+  .compact .title h3 { font-size: var(--text-small); }
 </style>

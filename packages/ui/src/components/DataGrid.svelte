@@ -23,6 +23,7 @@
     rows,
     first = 1,
     label,
+    fill = false,
   }: {
     columns: readonly GridColumn[];
     /** Each value as text, or null. */
@@ -30,6 +31,8 @@
     /** The number of the first row of this page. */
     first?: number;
     label: string;
+    /** Takes all the height its parent gives it, rather than at most 620 px: the result of a query fills its pane (DEC-UX-226). */
+    fill?: boolean;
   } = $props();
 
   const NUMERIC = new Set(['INT64', 'FLOAT64', 'NUMERIC', 'BIGNUMERIC']);
@@ -142,7 +145,7 @@
 
 <svelte:window onclick={() => (menu = null)} onkeydown={(event) => event.key === 'Escape' && (menu = null)} />
 
-<div class="wrap" bind:this={wrap}>
+<div class="wrap" class:fill bind:this={wrap}>
   <div class="scroll">
     <table bind:this={table} role="grid" aria-label={label} tabindex="0" style:width="{total}px" onkeydown={keydown} onclick={select}>
       <colgroup>
@@ -206,6 +209,8 @@
 
 <style>
   .wrap { position: relative; }
+  .wrap.fill { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  .wrap.fill .scroll { flex: 1 1 auto; min-height: 120px; max-height: none; }
   .scroll { overflow: auto; max-height: min(620px, calc(100vh - 220px)); border-radius: var(--radius-md); outline: 1px solid var(--tint-active); background: var(--surface-solid); }
   table { table-layout: fixed; border-collapse: separate; border-spacing: 0; font-size: var(--text-small); font-variant-numeric: tabular-nums; }
   table:focus-visible { outline: 2px solid var(--text-secondary); outline-offset: -2px; }

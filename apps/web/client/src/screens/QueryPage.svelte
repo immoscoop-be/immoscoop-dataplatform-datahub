@@ -3,7 +3,7 @@
   import DataGrid from '@datahub/ui/components/DataGrid.svelte';
   import Pager from '@datahub/ui/components/Pager.svelte';
   import RunButton from '@datahub/ui/components/RunButton.svelte';
-  import SqlEditor, { CTE_LINE, type ErrorMark, type ParameterSuggestion, type Suggestion, type TableSuggestion } from '@datahub/ui/components/SqlEditor.svelte';
+  import SqlEditor, { type At, CTE_LINE, type ErrorMark, type Explained, type ParameterSuggestion, type Suggestion, type TableSuggestion } from '@datahub/ui/components/SqlEditor.svelte';
   import { formatBytes } from '@datahub/ui/foundations/bytes.js';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { currentLanguage, t, tParts } from '@datahub/ui/foundations/texts.svelte.js';
@@ -27,7 +27,9 @@
   import { lensPath, NEW_QUERY, newLensPath, queryPath, resourcePath } from '../lib/routes.js';
   import NewSetSheet from './NewSetSheet.svelte';
   import NotFound from './NotFound.svelte';
+  import FieldExplain from './FieldExplain.svelte';
   import ParameterWindow from './ParameterWindow.svelte';
+  import ResourceSummaryWindow, { type SummaryData } from './ResourceSummaryWindow.svelte';
   import QueryHistory from './QueryHistory.svelte';
   import QueryParameters, { type Missing as MissingParameter } from './QueryParameters.svelte';
   import LensSuggestions from './LensSuggestions.svelte';
@@ -56,6 +58,7 @@
     onlens,
     hiddenChange,
     onhidden,
+    summaryOf,
     layout = 'horizontal',
     onlayout,
   }: {
@@ -76,6 +79,8 @@
     hiddenChange?: { id: string; hidden: boolean };
     /** It was hidden or shown again here. */
     onhidden?: (id: string, hidden: boolean) => void;
+    /** The Summary of a Resource, for a double-click on its name in the SQL (DEC-UX-221). */
+    summaryOf?: (id: string) => Promise<SummaryData>;
     /** The query above the result, or next to it, as the User chose it (DEC-UX-143). */
     layout?: Layout;
     onlayout?: (layout: Layout) => void;
@@ -188,6 +193,9 @@
   /** A run of its history, shown read only, with its result while BigQuery keeps it (OP-UX-27, DEC-UX-99). */
   let preview = $state<{ run: Run; page: Page | null; expired: boolean } | null>(null);
   let parameterWindow = $state<{ key: number; parameter: Parameter | null; defines: MissingParameter | null } | null>(null);
+  /** What a double-click in the SQL opened (DEC-UX-221): the Summary of a Resource, or the descriptions of a field. */
+  let summaryWindow = $state<TableSuggestion | null>(null);
+  let fieldExplained = $state<{ fields: Suggestion[]; at: At } | null>(null);
   let windows = 0;
   let newSet = $state<{ mode: 'add' | 'remove'; resource: string | null } | null>(null);
   let requestOpen = $state(false);
@@ -217,6 +225,8 @@
     history = undefined;
     preview = null;
     parameterWindow = null;
+    summaryWindow = null;
+    fieldExplained = null;
     newSet = null;
     requestOpen = false;
     requestText = '';
@@ -520,6 +530,19 @@
   }
 
   const openParameter = (parameter: Parameter | null, defines: MissingParameter | null = null) => (parameterWindow = { key: ++windows, parameter, defines });
+
+  function explain(what: Explained): void {
+    fieldExplained = null;
+    if (what.kind === 'parameter') {
+      const parameter = parameters.find((candidate) => namesOf(candidate).includes(what.name));
+      if (parameter) openParameter(parameter);
+    } else if (what.kind === 'table') {
+      if (summaryOf) summaryWindow = what.table;
+    } else {
+      const fields = suggestions.filter((field) => field.name.toLowerCase() === what.name.toLowerCase());
+      if (fields.length > 0) fieldExplained = { fields, at: what.at };
+    }
+  }
 
   const language = $derived(currentLanguage());
   const bytes = (value: number) => formatBytes(value, language);
@@ -877,6 +900,7 @@
               if (entry) openParameter(null, entry);
             }}
             onrun={runFromKeys}
+            onexplain={explain}
             label={t('query.sql', { name: query.name })}
             readonly={!query.mine}
             {nonce}
@@ -1067,6 +1091,15 @@
   </div>
   </div>
 
+  {#if summaryWindow && summaryOf}
+    {#key summaryWindow.id}
+      <ResourceSummaryWindow table={summaryWindow} load={summaryOf} onclose={() => (summaryWindow = null)} />
+    {/key}
+  {/if}
+  {#if fieldExplained}
+    <FieldExplain fields={fieldExplained.fields} at={fieldExplained.at} onclose={() => (fieldExplained = null)} />
+  {/if}
+
   {#if parameterWindow}
     {#key parameterWindow.key}
       <ParameterWindow
@@ -1125,7 +1158,7 @@
 {/if}
 
 {#snippet grid(of: Run, rows: Page)}
-  <DataGrid columns={rows.columns} rows={rows.rows} first={(rows.number - 1) * rows.size + 1} label={t('query.resultOf', { number: of.number })} />
+  <DataGrid columns={rows.columns} rows={rows.rows} first={(rows.number - 1) * rows.size + 1} label={t('query.resultOf', { number: of.number })} fill />
   <div class="foot">
     <span>{t('query.rows', { count: rows.totalRows })}</span>
     {#if of.processedBytes !== null}<span class="dot">·</span><span>{t('query.read', { bytes: bytes(of.processedBytes) })}</span>{/if}
@@ -1234,7 +1267,10 @@
   .word textarea:focus-visible { outline: 2px solid var(--text-secondary); }
   .after { font-size: var(--text-meta); color: var(--text-muted); }
   .after.failed { color: var(--signal-urgent); }
-  .result { min-height: 0; overflow: auto; border-radius: var(--radius-xl); padding: 16px; }
+  /* The grid of a result takes all the height of its pane; its head and foot keep theirs (DEC-UX-226). */
+  .result { min-height: 0; overflow: auto; border-radius: var(--radius-xl); padding: 16px; display: flex; flex-direction: column; }
+  .result > :global(*) { flex: none; }
+  .result > :global(.wrap.fill) { flex: 1 1 auto; }
   .result-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
   .preview-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 10px; padding: 12px 14px; border-radius: var(--radius-md);
     background: color-mix(in srgb, var(--signal-warn) 10%, var(--surface-solid)); font-size: var(--text-small); line-height: 1.5; }
