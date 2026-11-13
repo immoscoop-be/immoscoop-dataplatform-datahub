@@ -276,8 +276,8 @@ export class LensDeleted extends Error {
   }
 }
 
-/** What its Owner Unit changes about a Lens: what it tells, never its SQL (FR-LE-06, DEC-UX-27). */
-export type LensEdit = Partial<Pick<NewLens, 'name' | 'question' | 'shows' | 'steps' | 'tags' | 'labels'>>;
+/** What its Owner Unit changes about a Lens: what it tells and the descriptions of its fields, never its SQL (FR-LE-06, DEC-UX-27, DEC-UX-231). */
+export type LensEdit = Partial<Pick<NewLens, 'name' | 'question' | 'shows' | 'steps' | 'tags' | 'labels' | 'fields'>>;
 
 /** What its author tells about a new Lens (FR-LE-06, DEC-LE-16). */
 export interface NewLens {

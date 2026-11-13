@@ -1,3 +1,4 @@
+import { formatBigQuery } from '@datahub/ui/components/sqlFormat.js';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/svelte';
 import { setLanguage } from '@datahub/ui/foundations/texts.svelte.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -277,7 +278,8 @@ const QUERY = {
   lens: null as unknown,
   name: 'Leads per source name',
   question: 'Which sources bring our leads, week by week?',
-  sql: 'select week_start, lead_source\nfrom `immoscoop-dataplatform-398214.dbt_prod_leads.weekly_lead_volume`\nwhere week_start >= date_sub(current_date(), interval 28 day)\n',
+  // In the house layout, as a query opens (DEC-UX-233).
+  sql: 'select\n    week_start,\n    lead_source\nfrom\n    `immoscoop-dataplatform-398214.dbt_prod_leads.weekly_lead_volume`\nwhere\n    week_start >= date_sub(current_date(), interval 28 day)',
   ownerName: 'Max Verstraete',
   mine: true,
   createdAt: '2026-10-29T08:00:00Z',
@@ -360,6 +362,14 @@ const LENS = {
   versions: [{ version: 1, madeByName: 'Max Verstraete', madeAt: '2026-10-29T08:00:00Z', fromQuery: 'Leads per source name' }],
   log: [] as unknown[],
 };
+
+/** Types at the end of the SQL editor, as a User does: CodeMirror reads the change from its own text. */
+async function typeInEditor(editor: HTMLElement, text: string): Promise<void> {
+  const lines = editor.querySelectorAll('.cm-line');
+  const last = lines[lines.length - 1] as HTMLElement;
+  last.appendChild(document.createTextNode(text));
+  await new Promise((resolve) => setTimeout(resolve, 50));
+}
 
 /**
  * The Pre-flight query gives: an @name that is not a Parameter, 4.8 GB or 840 MB for SQL that says so, a
@@ -578,6 +588,8 @@ function serve({
   conversations = [] as Record<string, unknown>[],
   learned = [] as Record<string, unknown>[],
   waiting = [SAVED_SEARCHES] as Record<string, unknown>[],
+  /** The release of the Domain Model registry gives; empty when the collector says no version. */
+  modelRelease = '0.0.70',
   /** What Weekly lead volume relates to, for its Entities. */
   related = [] as Record<string, unknown>[],
   creditWith = {} as Partial<typeof CREDIT>,
@@ -751,7 +763,7 @@ function serve({
       return json({
         domain: 'immoscoop',
         version: '0.1.0',
-        release: '0.0.70',
+        release: modelRelease,
         relationTypes: [{ name: 'occurredWithin', cardinality: 'one', description: '' }],
         identities: ['visitor.visitorId', 'search.searchId'],
       });
@@ -764,7 +776,7 @@ function serve({
         grain: { fields: ['search_id'], origin: 'test' },
         modelType: null,
         mappings: [{ field: 'search_id', kind: 'is', relationType: null, identity: 'search.searchId', origin: 'name' }],
-        domainModel: { release: '0.0.70' },
+        domainModel: { release: modelRelease },
       });
     }
     if (path === '/groups') {
@@ -3014,6 +3026,24 @@ describe('the web app, for the Data Team, with Collections', () => {
     expect(owner.options[0]?.textContent).toBe('Data');
   });
 
+  it('adds a Resource while the Domain Model says no version, recording none rather than an empty one', async () => {
+    const calls = serve({ as: 'admin', modelRelease: '' });
+    open('/collections/c1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click((await main.findAllByRole('button', { name: /Resources toevoegen/ }))[0]!);
+    const sheet = within(screen.getByRole('dialog', { name: 'Een Resource toevoegen aan Credit leads' }));
+    await fireEvent.click(sheet.getByRole('radio', { name: /Saved searches/ }));
+    await fireEvent.click(sheet.getByRole('button', { name: /Volgende: grain en relaties/ }));
+    const second = within(await screen.findByRole('dialog', { name: 'Grain en relaties van Saved searches' }));
+    expect(await second.findByText(/zoals het op prod draait; het zegt zijn versie niet/)).toBeTruthy();
+    await fireEvent.input(second.getByRole('textbox', { name: 'Wat één rij is, in woorden' }), { target: { value: 'saved search' } });
+    await fireEvent.click(second.getByRole('button', { name: 'Resource toevoegen' }));
+    await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    const added = calls.find((call) => call.method === 'POST' && call.path === '/collections/c1/resources')?.body as { resources: { release: unknown }[] };
+    expect(added.resources[0]?.release).toBeNull();
+  });
+
   it('adds a Resource without a Collection from the page of a Collection, one at a time, in a sheet of two steps (FR-CO-31, FR-CO-33, FR-CO-34, DEC-UX-132)', async () => {
     const reviews = { ...SAVED_SEARCHES, id: 'r9', displayName: 'Agency reviews', name: 'agency_reviews', exposures: ['datahub_agencyReviews'] };
     const calls = serve({ as: 'admin', waiting: [SAVED_SEARCHES, reviews] });
@@ -3127,15 +3157,18 @@ describe('Query', () => {
     expect(main.queryByRole('link', { name: 'Maak er een Lens van' })).toBeNull();
     const button = main.getByRole('button', { name: 'Maak er een Lens van' }) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
-    expect(button.title).toBe('Een Lens maak je enkel op gepubliceerde Resources: deze query leest er een die nog niet gepubliceerd is.');
+    // On a hover or on focus, why: each Resource not published yet, with its Level (DEC-UX-232).
+    const why = (document.getElementById(button.closest('[aria-describedby]')?.getAttribute('aria-describedby') ?? '')?.textContent ?? '').replace(/\s+/g, ' ').trim();
+    expect(why).toMatch(/^Een Lens wordt alleen gemaakt op gepubliceerde Resources\. Nog niet gepubliceerd: Weekly lead volume.*Zijn Owner publiceert hem op zijn pagina; dan werkt deze knop\.$/);
+    expect(button.closest('[aria-describedby]')?.getAttribute('tabindex')).toBe('0');
     // Under the question: which Resource is not published yet, with a link to it.
-    const line = main.getByText(/Nog niet gepubliceerd:/).closest('p') as HTMLElement;
+    const line = main.getByText(/Nog niet gepubliceerd:/, { selector: 'p.origin span' }).closest('p') as HTMLElement;
     expect(line.textContent?.replace(/\s+/g, ' ').trim()).toBe('Nog niet gepubliceerd: Weekly lead volume. Een Lens maak je enkel op gepubliceerde Resources.');
     expect(within(line).getByRole('link', { name: 'Weekly lead volume' }).getAttribute('href')).toBe('/resources/r2');
   });
 
   it('shows a table outside Data Hub as a quiet chip, and keeps a query that reads one from becoming a Lens (FR-SR-56, DEC-UX-220)', async () => {
-    const sql = `${QUERY.sql.replace('\n', ', lead_id\n')}and lead_id in (select lead_id from \`immoscoop-dataplatform-398214.dbt_prod_staging.stg_oltp__leads\`)\n`;
+    const sql = `${QUERY.sql.replace('lead_source', 'lead_source,\n    lead_id')}\n    and lead_id in (select lead_id from \`immoscoop-dataplatform-398214.dbt_prod_staging.stg_oltp__leads\`)`;
     serve({ as: 'admin', queries: [{ ...QUERY, sql, lastRunAt: new Date().toISOString() }] });
     open('/query/q1');
     render(App, { config: CONFIG });
@@ -3148,7 +3181,8 @@ describe('Query', () => {
     expect(await main.findByRole('button', { name: /Uitvoeren\s*80 MB/ })).toBeTruthy();
     const button = main.getByRole('button', { name: 'Maak er een Lens van' }) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
-    expect(button.title).toBe('Een Lens maak je enkel op gepubliceerde Resources: deze query leest een tabel buiten Data Hub.');
+    const why = (document.getElementById(button.closest('[aria-describedby]')?.getAttribute('aria-describedby') ?? '')?.textContent ?? '').replace(/\s+/g, ' ').trim();
+    expect(why).toBe('Een Lens wordt alleen gemaakt op gepubliceerde Resources. Hij leest een tabel buiten Data Hub: stg_oltp__leadsstaging Lees er een Resource in de plaats; dan werkt deze knop.');
     const line = main.getByText(/Leest een tabel buiten Data Hub:/).closest('p') as HTMLElement;
     expect(line.textContent?.replace(/\s+/g, ' ').trim()).toBe('Leest een tabel buiten Data Hub: stg_oltp__leads. Een Lens maak je enkel op gepubliceerde Resources, dus deze query kan er geen worden.');
   });
@@ -3211,7 +3245,8 @@ describe('Query', () => {
     const run = await main.findByRole('button', { name: /Goedkeuren en uitvoeren\s*840 MB/ }, { timeout: 3000 });
     await vi.waitFor(() => expect((run as HTMLButtonElement).disabled).toBe(false));
     await fireEvent.click(run);
-    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/runs', body: { sql: `${QUERY.sql}-- all weeks\n`, parameters: [], approve: true } }));
+    // It opened formatted, as Format writes it (DEC-UX-233).
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/runs', body: { sql: formatBigQuery(`${QUERY.sql}-- all weeks\n`), parameters: [], approve: true } }));
   });
 
   it('shows a Broken query with what it misses and since when, Run off, and a red dot in the panel (FR-SR-53, DEC-UX-160)', async () => {
@@ -3319,7 +3354,7 @@ describe('Query', () => {
     const checks = () => calls.filter((call) => call.path === '/queries/q1/preflight').length;
     const before = checks();
     // A change in the editor, as typing is: the Pre-flight waits, and the line keeps what it said, softer.
-    await fireEvent.click(main.getByRole('button', { name: 'Opmaken' }));
+    await typeInEditor(main.getByRole('textbox', { name: /Leads per source name/ }), ' -- typed');
     await new Promise((resolve) => setTimeout(resolve, 900));
     expect(checks()).toBe(before);
     expect(main.getByText('Pre-flight').closest('.status')?.classList.contains('stale')).toBe(true);
@@ -3335,7 +3370,7 @@ describe('Query', () => {
     await main.findByRole('button', { name: /Uitvoeren\s*80 MB/ }, { timeout: 3000 });
     const checks = () => calls.filter((call) => call.path === '/queries/q1/preflight').length;
     const before = checks();
-    await fireEvent.click(main.getByRole('button', { name: 'Opmaken' }));
+    await typeInEditor(main.getByRole('textbox', { name: /Leads per source name/ }), ' -- typed');
     await fireEvent.keyDown(main.getByRole('textbox', { name: /Leads per source name/ }), { key: 'Enter', ctrlKey: true });
     await vi.waitFor(() => expect(checks()).toBe(before + 1), { timeout: 800 });
     await vi.waitFor(() => expect(calls.some((call) => call.method === 'POST' && call.path === '/queries/q1/runs')).toBe(true));
@@ -3428,7 +3463,7 @@ describe('Query', () => {
     const main = within(await screen.findByRole('main'));
     expect(await main.findByText('Zonder filter op week_start leest hij heel Weekly lead volume; met een filter op de recente partities hoogstens 82 MB.', {}, { timeout: 3000 })).toBeTruthy();
     await fireEvent.click(main.getByRole('button', { name: 'Voeg de filter toe' }));
-    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/preflight', body: { sql: `${plain} where week_start >= '2026-10-01'`, parameters: [] } }), { timeout: 3000 });
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/preflight', body: { sql: `${formatBigQuery(plain)} where week_start >= '2026-10-01'`, parameters: [] } }), { timeout: 3000 });
   });
 
   const withParameters = 'select week_start\nfrom `immoscoop-dataplatform-398214.dbt_prod_leads.weekly_lead_volume`\nwhere week_start >= @dateFrom and lead_source = @leadChannel\n';
@@ -3455,7 +3490,7 @@ describe('Query', () => {
     // Kept, the Parameter closes its window (DEC-UX-219).
     await vi.waitFor(() => expect(screen.queryByRole('dialog', { name: /@leadChannel/ })).toBeNull());
     const leadChannel = { name: 'leadChannel', kind: 'choice', value: 'Form', list: ['Form', 'Phone'] };
-    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/preflight', body: { sql: withParameters, parameters: [dateFrom, leadChannel] } }), { timeout: 3000 });
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/preflight', body: { sql: formatBigQuery(withParameters), parameters: [dateFrom, leadChannel] } }), { timeout: 3000 });
     await vi.waitFor(() => expect((main.getByRole('button', { name: /Uitvoeren\s*80 MB/ }) as HTMLButtonElement).disabled).toBe(false), { timeout: 3000 });
     expect(layerOf(main.getByText('Pre-flight')).classList.contains('shown')).toBe(true);
     expect(layerOf(problem).getAttribute('aria-hidden')).toBe('true');
@@ -3499,7 +3534,7 @@ describe('Query', () => {
     await fireEvent.input(main.getByRole('textbox', { name: /Een woordje voor het Data Team/ }), { target: { value: 'For the five-year review.' } });
     await fireEvent.click(main.getByRole('button', { name: /Versturen/ }));
     expect(await main.findByText(/Wacht op het Data Team sinds \d\d:\d\d/)).toBeTruthy();
-    expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/requests', body: { sql: `${QUERY.sql}-- every year\n`, parameters: [], text: 'For the five-year review.' } });
+    expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/requests', body: { sql: formatBigQuery(`${QUERY.sql}-- every year\n`), parameters: [], text: 'For the five-year review.' } });
     expect(await within(screen.getByRole('complementary', { name: 'Query' })).findByText('Naar het Data Team')).toBeTruthy();
   });
 
@@ -3525,7 +3560,7 @@ describe('Query', () => {
     expect(calls).toContainEqual({ method: 'POST', path: '/queries/ctes', body: { sql: QUERY.sql, resources: ['r5', 'r6'], tables: [] } });
     const made = calls.find((call) => call.method === 'POST' && call.path === '/queries')?.body as { resources: string[]; sql: string };
     expect(made.resources).toEqual(['r2', 'r5', 'r6']);
-    expect(made.sql).toMatch(/^with\n\nlistings as \([\s\S]*\),\n\nsaved_searches as \([\s\S]*\)\n\nselect week_start/);
+    expect(made.sql).toMatch(/^with\n\nlistings as \([\s\S]*\),\n\nsaved_searches as \([\s\S]*\)\n\nselect\n    week_start/);
   });
 
   it('lets a power user find tables Data Hub knows and add the ones ticked as CTEs at the start of the SQL (FR-SR-58, FR-SR-59)', async () => {
@@ -4026,6 +4061,32 @@ describe('Lenses', () => {
     expect(gone.queryByRole('button', { name: /Run/ })).toBeNull();
     // It is listed nowhere.
     expect(within(screen.getByRole('complementary', { name: /Collections/ })).queryByText('Leads per source, week by week')).toBeNull();
+  });
+
+  it('edits a Lens in the same four steps, Its fields included, also of a Lens made before it had them (DEC-UX-231)', async () => {
+    const calls = serve({ groups: ['g1'], queries: [{ ...QUERY }], lenses: [{ ...LENS }] });
+    open('/lenses/l1/edit');
+    render(App, { config: CONFIG });
+    const edit = within(await screen.findByRole('main'));
+    expect(await edit.findByRole('heading', { level: 1, name: 'De Lens bewerken' })).toBeTruthy();
+    const steps = within(edit.getByRole('navigation', { name: 'Stappen van de Lens' }));
+    expect(edit.getByRole('heading', { level: 2, name: 'Wat hij is' })).toBeTruthy();
+    await fireEvent.click(steps.getByRole('button', { name: /Parameters.*2 Parameters/ }));
+    expect(((await edit.findByRole('textbox', { name: 'Naam die Users zien van @dateFrom' })) as HTMLInputElement).value).toBe('From');
+    // Made before its fields had descriptions: its columns from its Pre-flight, a field of its Resources of the same name gives its own.
+    await fireEvent.click(steps.getByRole('button', { name: /Zijn velden/ }));
+    expect(await edit.findByText('Monday of the week')).toBeTruthy();
+    await vi.waitFor(() => expect(steps.getByRole('button', { name: /Zijn velden.*3 velden · 2 zonder beschrijving/ })).toBeTruthy());
+    await fireEvent.click(edit.getAllByRole('button', { name: 'Schrijf er een' })[1] as HTMLElement);
+    await fireEvent.input(edit.getByRole('textbox', { name: 'Beschrijving van share' }), { target: { value: 'The share of the week, in percent.' } });
+    await fireEvent.click(edit.getByRole('button', { name: 'Bewaren' }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/lenses/l1'));
+    expect(calls.find((call) => call.method === 'PATCH' && call.path === '/lenses/l1')?.body).toMatchObject({
+      fields: [
+        { name: 'week_start', description: 'Monday of the week', from: { resourceId: 'r2', field: 'week_start' } },
+        { name: 'share', description: 'The share of the week, in percent.', from: null },
+      ],
+    });
   });
 
   it('opens the query of a Lens for its Owner Unit, and edits what it tells, never its SQL (DEC-LE-18, FR-LE-06)', async () => {

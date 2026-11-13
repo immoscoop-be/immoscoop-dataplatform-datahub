@@ -74,6 +74,8 @@ export interface LensEdit {
   tags?: string[];
   /** The name Users see, per Parameter. */
   labels?: Record<string, string>;
+  /** Its fields, each with its description (FR-LE-19, DEC-UX-231). */
+  fields?: LensField[];
 }
 
 /** What makes the next version of a Lens: a query used as it, measured now (FR-LE-16). */
@@ -241,7 +243,7 @@ export function createLenses(db: Kysely<QueryDatabase>): Lenses {
       });
     },
 
-    async edit(id, { labels, steps, tags, ...fields }) {
+    async edit(id, { labels, steps, tags, fields: described, ...fields }) {
       return db.transaction().execute(async (trx) => {
         const row = await trx.selectFrom('lenses').selectAll().where('id', '=', id).forUpdate().executeTakeFirstOrThrow();
         const parameters = labels ? row.parameters.map((parameter) => ({ ...parameter, label: labels[parameter.name] ?? parameter.label })) : undefined;
@@ -252,6 +254,7 @@ export function createLenses(db: Kysely<QueryDatabase>): Lenses {
             ...(steps ? { steps: JSON.stringify(steps) } : {}),
             ...(tags ? { tags: JSON.stringify(tags) } : {}),
             ...(parameters ? { parameters: JSON.stringify(parameters) } : {}),
+            ...(described ? { fields: JSON.stringify(described) } : {}),
             updatedAt: new Date(),
           })
           .where('id', '=', id)

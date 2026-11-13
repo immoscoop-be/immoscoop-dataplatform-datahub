@@ -1256,8 +1256,11 @@ function parseDetails(input: Record<string, unknown>): Details | string {
   if (typeof origins !== 'object' || Array.isArray(origins) || !Object.entries(origins).every(([key, value]) => one(ORIGIN_KEYS, key) && one(ORIGINS, value))) {
     return 'The origins name where the partition, cluster, filter, grain, sentence and model type come from.';
   }
-  if (input.release !== null && !NAME(input.release, 40)) {
-    return 'The release of the Domain Model is a version, or null.';
+  // The release of the Domain Model is optional: it only says which version each mapping was made against
+  // (DEC-AR-05). Missing or empty, it is none, and never keeps a Resource from being added.
+  const release = typeof input.release === 'string' && input.release.trim() === '' ? null : (input.release ?? null);
+  if (release !== null && !NAME(release, 40)) {
+    return 'The release of the Domain Model is a version, or none.';
   }
   if (!Array.isArray(input.mappings) || input.mappings.length > 1000) {
     return 'The mappings come as a list.';
@@ -1295,7 +1298,7 @@ function parseDetails(input: Record<string, unknown>): Details | string {
     grainSentence: (input.grainSentence as string).trim(),
     modelType: input.modelType as ModelType | null,
     origins: origins as Origins,
-    release: (input.release as string | null) ?? null,
+    release: release as string | null,
     mappings,
   };
 }
