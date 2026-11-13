@@ -93,7 +93,7 @@
   import { EditorState, type Range, StateEffect, StateField } from '@codemirror/state';
   import { Decoration, type DecorationSet, EditorView, keymap, lineNumbers, type ViewUpdate, ViewPlugin } from '@codemirror/view';
   import { tags } from '@lezer/highlight';
-  import { bigquery, formatDialect } from 'sql-formatter';
+  import { formatBigQuery } from './sqlFormat.js';
   import { onMount } from 'svelte';
   import { ICONS } from '../foundations/icons.js';
   import { t } from '../foundations/texts.svelte.js';
@@ -104,8 +104,8 @@
    * gutter and "⋯ n lines" in its place, and the line numbers keep their count; a folded CTE with an error
    * in it shows it on its "⋯ n lines". It suggests the columns of the Resources of the query, partition
    * and cluster columns first and marked, and beside the list the type and descriptions of the one that
-   * is selected (FR-SR-42, DEC-UX-115); after `@`, the Parameters. It formats on request, Shift+Alt+F
-   * (sql-formatter, which knows BigQuery). What stands out as an error is given by the Pre-flight; a click on
+   * is selected (FR-SR-42, DEC-UX-115); after `@`, the Parameters. It formats on request, Shift+Alt+F, in the house
+   * layout of the Data Team (DEC-UX-228). What stands out as an error is given by the Pre-flight; a click on
    * an `@name` that is not a Parameter defines it (DEC-UX-71).
    */
   let {
@@ -389,12 +389,12 @@
     return { from: word?.from ?? context.pos, options: [...options, ...templates], validFor: /^\w*$/ };
   }
 
-  /** Writes the SQL in the layout of sql-formatter, for BigQuery; SQL it cannot read stays as it is. */
+  /** Writes the SQL in the house layout of the Data Team (DEC-UX-228); SQL it cannot read stays as it is. */
   export function formatSql(): boolean {
     if (!view || readonly) return false;
     try {
-      // Only the dialect of BigQuery, so that the page carries no other.
-      const formatted = formatDialect(view.state.doc.toString(), { dialect: bigquery, keywordCase: 'lower', tabWidth: 2, paramTypes: { named: ['@'] } });
+      // The house layout of the Data Team for dbt (DEC-UX-228); only the dialect of BigQuery, so that the page carries no other.
+      const formatted = formatBigQuery(view.state.doc.toString());
       view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: formatted } });
       return true;
     } catch {
