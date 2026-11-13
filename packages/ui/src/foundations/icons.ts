@@ -68,6 +68,7 @@ import textH from '@phosphor-icons/core/assets/regular/text-h.svg?raw';
 import textItalic from '@phosphor-icons/core/assets/regular/text-italic.svg?raw';
 import userFocus from '@phosphor-icons/core/assets/regular/user-focus.svg?raw';
 import userGear from '@phosphor-icons/core/assets/regular/user-gear.svg?raw';
+import arrowBendDownRight from '@phosphor-icons/core/assets/regular/arrow-bend-down-right.svg?raw';
 import arrowCounterClockwise from '@phosphor-icons/core/assets/regular/arrow-counter-clockwise.svg?raw';
 import arrowDownRight from '@phosphor-icons/core/assets/regular/arrow-down-right.svg?raw';
 import arrowLeft from '@phosphor-icons/core/assets/regular/arrow-left.svg?raw';
@@ -231,6 +232,7 @@ export const ICONS = {
   'text-italic': textItalic,
   'user-focus': userFocus,
   'user-gear': userGear,
+  'arrow-bend-down-right': arrowBendDownRight,
   'arrow-counter-clockwise': arrowCounterClockwise,
   'arrow-down-right': arrowDownRight,
   'arrow-left': arrowLeft,

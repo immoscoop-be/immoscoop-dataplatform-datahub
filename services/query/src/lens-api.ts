@@ -5,7 +5,7 @@ import { forbidden, ownerUnitsOf, permissionsOf } from './access.js';
 import { type BigQuery, BigQueryRefused } from './bigquery.js';
 import { missingIn, missingOf } from './broken.js';
 import type { Catalogue, QueryRequest, SeenCollection } from './catalogue.js';
-import type { LensRange, NamedResource } from './database.js';
+import type { LensField, LensRange, NamedResource, ResultColumn } from './database.js';
 import type { Lens, LensParameter, Lenses } from './lenses.js';
 import { bind, type Parameter, parseParameters } from './parameters.js';
 import { type Preflight, rangeOf, type ResourceOfQuery, type Thresholds } from './preflight.js';
@@ -46,7 +46,7 @@ const DAY = 24 * 60 * 60 * 1000;
 export const RECENT_DAYS = 30;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const TAG = /^[\p{L}\p{N}][\p{L}\p{N}_-]{0,29}$/u;
-const LIMITS = { name: 120, question: 500, shows: 500, steps: 20, step: 300, tags: 10, label: 60, text: 500 };
+const LIMITS = { name: 120, question: 500, shows: 500, steps: 20, step: 300, tags: 10, label: 60, text: 500, fields: 300, field: 300, description: 1000 };
 /** The ranges of one run, from small to large (DEC-SR-29). */
 const ORDER: Record<LensRange, number> = { free: 0, approve: 1, request: 2 };
 
@@ -65,6 +65,46 @@ export interface LensFields {
   approve: boolean;
   /** A word for the Data Team, above 1 GB a run (FR-LE-09). */
   text: string;
+  /** The description of each field of its result, by name; the type comes from the Pre-flight (FR-LE-19). */
+  fields: Omit<LensField, 'type'>[];
+}
+
+/** The descriptions of the fields of a Lens: each by name once, from a field of one of its Resources or written (DEC-UX-227). */
+function fieldsOf(value: unknown): Omit<LensField, 'type'>[] | string {
+  if (value === undefined) return [];
+  const wrong = `Its fields are at most ${LIMITS.fields}, each with a name, a description of at most ${LIMITS.description} characters, and where it comes from: a field of one of its Resources, or null.`;
+  if (!Array.isArray(value) || value.length > LIMITS.fields) return wrong;
+  const fields: Omit<LensField, 'type'>[] = [];
+  for (const item of value as unknown[]) {
+    if (typeof item !== 'object' || item === null || Array.isArray(item)) return wrong;
+    const { name, description, from, ...rest } = item as Record<string, unknown>;
+    if (Object.keys(rest).length > 0) return wrong;
+    if (typeof name !== 'string' || name.trim().length < 1 || name.trim().length > LIMITS.field) return wrong;
+    if (typeof description !== 'string' || description.trim().length > LIMITS.description) return wrong;
+    let source: LensField['from'] = null;
+    if (from !== null && from !== undefined) {
+      const { resourceId, field } = (typeof from === 'object' && !Array.isArray(from) ? from : {}) as Record<string, unknown>;
+      if (typeof resourceId !== 'string' || !UUID.test(resourceId) || typeof field !== 'string' || field.length < 1 || field.length > LIMITS.field) return wrong;
+      source = { resourceId: resourceId.toLowerCase(), field };
+    }
+    if (fields.some((other) => other.name === name.trim())) return `The field ${name.trim()} is named twice.`;
+    fields.push({ name: name.trim(), description: description.trim(), from: source });
+  }
+  return fields;
+}
+
+/**
+ * The fields of a Lens as Users see them (FR-LE-19): each field of its result, in its order and with its type, with the
+ * description its author gave it; a description from a Resource the query does not read is not kept. Without the
+ * columns of a Pre-flight, those its author sent.
+ */
+export function lensFields(given: readonly (Omit<LensField, 'type'> & { type?: string })[], columns: readonly ResultColumn[], resources: readonly { id: string }[]): LensField[] {
+  const reads = new Set(resources.map((resource) => resource.id.toLowerCase()));
+  const kept = (field: Omit<LensField, 'type'> | undefined) =>
+    field && (field.from === null || reads.has(field.from.resourceId)) ? { description: field.description, from: field.from } : { description: '', from: null };
+  const byName = new Map(given.map((field) => [field.name, field]));
+  if (columns.length === 0) return given.map((field) => ({ name: field.name, type: field.type ?? '', ...kept(field) }));
+  return columns.map((column) => ({ name: column.name, type: column.type, ...kept(byName.get(column.name)) }));
 }
 
 const texts = (value: unknown, max: number, each: number): string[] | null => {
@@ -77,7 +117,7 @@ const texts = (value: unknown, max: number, each: number): string[] | null => {
 export function parseLens(body: unknown): LensFields | string {
   if (typeof body !== 'object' || body === null || Array.isArray(body)) return 'Send a JSON object.';
   const fields = body as Record<string, unknown>;
-  const known = ['queryId', 'collectionId', 'name', 'question', 'shows', 'steps', 'tags', 'labels', 'approve', 'text'];
+  const known = ['queryId', 'collectionId', 'name', 'question', 'shows', 'steps', 'tags', 'labels', 'approve', 'text', 'fields'];
   const unknown = Object.keys(fields).find((key) => !known.includes(key));
   if (unknown) return `A Lens has no field ${unknown}.`;
   if (typeof fields.queryId !== 'string' || !UUID.test(fields.queryId)) return 'A Lens is made from a query, named by its ID.';
@@ -100,6 +140,8 @@ export function parseLens(body: unknown): LensFields | string {
   if (fields.approve !== undefined && typeof fields.approve !== 'boolean') return 'approve is true or false.';
   const text = fields.text ?? '';
   if (typeof text !== 'string' || text.trim().length > LIMITS.text) return `A word for the Data Team has at most ${LIMITS.text} characters.`;
+  const described = fieldsOf(fields.fields);
+  if (typeof described === 'string') return described;
   return {
     queryId: fields.queryId.toLowerCase(),
     collectionId: fields.collectionId.toLowerCase(),
@@ -111,6 +153,7 @@ export function parseLens(body: unknown): LensFields | string {
     labels: Object.fromEntries(Object.entries(labels as Record<string, string>).map(([name, label]) => [name, label.trim()])),
     approve: fields.approve === true,
     text: text.trim(),
+    fields: described,
   };
 }
 
@@ -305,6 +348,8 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
       ...itemOf(sight, lens),
       steps: lens.steps,
       parameters: lens.parameters,
+      // Each field with its description and where it comes from, for the head of its column and About (DEC-UX-230).
+      fields: lens.fields,
       resources: lens.resources.map(({ id, displayName }) => {
         const seen = sight.resources.get(id);
         return { id, displayName: seen?.displayName ?? displayName, collectionId: seen?.collectionId ?? null, level: seen?.level ?? 0 };
@@ -408,6 +453,7 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
         steps: fields.steps,
         tags: fields.tags,
         parameters,
+        fields: lensFields(fields.fields, checked.columns, query.resources),
         range: checked.range,
         reads: checked.bytes ?? 0,
       }),
@@ -489,7 +535,8 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     const ranked = usable
       .map((lens) => {
         const shared = words.get(lens.id);
-        return { ...itemOf(sight, lens), exact: lens.resources.length === ids.length, shared: shared?.shared ?? 0, marked: shared ? { name: shared.name, question: shared.question, shows: shared.shows } : null, sharedTags: shared?.tags ?? [] };
+        // With what each of its fields holds, so that Claude reads its result as its author meant it (DEC-UX-230).
+        return { ...itemOf(sight, lens), fields: lens.fields.map(({ name, type, description }) => ({ name, type, description })), exact: lens.resources.length === ids.length, shared: shared?.shared ?? 0, marked: shared ? { name: shared.name, question: shared.question, shows: shared.shows } : null, sharedTags: shared?.tags ?? [] };
       })
       .sort((a, b) => b.shared - a.shared || (b.publishedAt?.getTime() ?? 0) - (a.publishedAt?.getTime() ?? 0) || a.name.localeCompare(b.name));
     const strip = ({ exact: _exact, ...item }: (typeof ranked)[number]) => item;
@@ -716,7 +763,8 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
       .filter((parameter) => !checked.unused.includes(parameter.name))
       .map((parameter) => ({ ...parameter, label: lens.parameters.find((known) => known.name === parameter.name)?.label ?? parameter.name }));
     // Refused, a Lens is no longer frozen: a new version is measured again, and published or sent again (DEC-UX-128).
-    const updated = await told(await lenses.version(lens.id, { by: who, query: { ...query, sql: ownCase(query.sql, resources) }, parameters, range: checked.range, reads: checked.bytes ?? 0 }), request.log);
+    // Its fields follow the new result; a field keeps the description it had by name (FR-LE-19).
+    const updated = await told(await lenses.version(lens.id, { by: who, query: { ...query, sql: ownCase(query.sql, resources) }, parameters, fields: lensFields(lens.fields, checked.columns, query.resources), range: checked.range, reads: checked.bytes ?? 0 }), request.log);
     if (updated.state === 'waiting') {
       try {
         await catalogue.sendLensRequest({ lensId: lens.id, name: lens.name, reads: updated.reads, threshold: thresholds.request, text: text.trim(), partitions: checked.partitions }, authorization(request));

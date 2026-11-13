@@ -1,6 +1,6 @@
 import { type BigQuery, BigQueryRefused } from './bigquery.js';
 import type { QueryResource } from './catalogue.js';
-import type { NamedResource } from './database.js';
+import type { NamedResource, ResultColumn } from './database.js';
 import { bind, kindFor, type Parameter, type ParameterKind } from './parameters.js';
 import type { KnownTable } from './registry.js';
 import { comparedWith, filtersOn, inOwnCase, names, recent, tablesOf, withFilter } from './sql.js';
@@ -64,6 +64,8 @@ export interface Preflight {
   unused: string[];
   /** The tables outside Data Hub it reads, for a power user: known from a dbt project Data Hub follows, no Resource (FR-SR-56). */
   tables: OutsideTable[];
+  /** The columns of its result, as the dry run says them; none when it did not get that far (FR-LE-19). */
+  columns: ResultColumn[];
 }
 
 /** A table outside Data Hub a power user's query reads, as the query shows it next to its Resources (DEC-UX-220). */
@@ -153,6 +155,7 @@ export async function preflight(
       partitions: null,
       warnings: [],
       tables: [...outside.values()].map(({ key, fullName, name, layer }) => ({ key, fullName, name, layer })),
+      columns: [],
       ...fields,
       problems,
       thresholds: { approve: thresholds.approve, request: thresholds.request, above: thresholds.above ?? 'request' },
@@ -240,5 +243,5 @@ export async function preflight(
   const range = rangeOf(dry.bytes, thresholds);
   // Above its ranges it goes to the Data Team, unless the Permission group of the User says it cannot run (runs.ranges).
   if (range === 'request' && thresholds.above === 'refuse') problems.push({ kind: 'tooLarge', bytes: dry.bytes, limit: thresholds.request });
-  return done({ bytes: dry.bytes, range, partitions: dry.partitions, problems, warnings });
+  return done({ bytes: dry.bytes, range, partitions: dry.partitions, problems, warnings, columns: dry.columns ?? [] });
 }

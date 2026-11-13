@@ -1253,7 +1253,7 @@ if (grid) {
     cols.forEach((c, i) => { c.style.width = widths[i] + 'px'; });
     table.style.width = ROW_W + widths.reduce((a, b) => a + b, 0) + 'px';
   };
-  thead.innerHTML = `<tr><th class="rn" scope="col">Row</th>${COLS.map((c, i) => `<th scope="col" data-col="${i}"><span class="rh"><span class="rh-text"><span class="rh-name"><span>${c.name}</span><i class="ph rh-sorted" hidden></i></span><span class="rh-type">${c.type}</span></span>`
+  thead.innerHTML = `<tr><th class="rn" scope="col">Row</th>${COLS.map((c, i) => `<th scope="col" data-col="${i}"><span class="rh"><span class="rh-text"><span class="rh-name"><span${c.description ? ` class="rh-described" title="${esc(c.description)}"` : ''}>${c.name}</span><i class="ph rh-sorted" hidden></i></span><span class="rh-type">${c.type}</span></span>`
     + `<button class="icon-btn rh-menu" aria-label="Menu of ${c.name}" aria-haspopup="menu"><i class="ph ph-caret-down"></i></button></span><span class="rh-resize" title="Drag to resize, double-click to fit"></span></th>`).join('')}</tr>`;
 
   const draw = () => {

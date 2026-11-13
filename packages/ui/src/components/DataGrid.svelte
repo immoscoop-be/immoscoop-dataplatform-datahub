@@ -3,6 +3,8 @@
     name: string;
     /** Its type in BigQuery, shown under its name. */
     type: string;
+    /** What it holds, on a hover of its name, which has a dotted line under it: the fields of a Lens (DEC-UX-230). */
+    description?: string | undefined;
   }
 </script>
 
@@ -16,7 +18,8 @@
    * with its type under its name. A column starts as wide as its values; the edge of its head makes it
    * narrower or wider, and a double click fits it again. A value that does not fit ends in "…" and shows
    * whole on hover. Numbers to the right, `null` in grey. A click selects a cell, Ctrl+C copies it, the
-   * arrows move. The menu of a column sorts this page only, fits it, or copies its name.
+   * arrows move. The menu of a column sorts this page only, fits it, or copies its name. A column with a
+   * description has a dotted line under its name and shows it on a hover (DEC-UX-230).
    */
   let {
     columns,
@@ -159,7 +162,7 @@
             <th scope="col" aria-sort={sort?.column === index ? sort.direction : undefined}>
               <span class="head">
                 <span class="text">
-                  <span class="name"><span title={column.name}>{column.name}</span>{#if sort?.column === index}<Icon name={sort.direction === 'ascending' ? 'sort-ascending' : 'sort-descending'} />{/if}</span>
+                  <span class="name"><span class:described={!!column.description} title={column.description ? `${column.name}: ${column.description}` : column.name}>{column.name}</span>{#if sort?.column === index}<Icon name={sort.direction === 'ascending' ? 'sort-ascending' : 'sort-descending'} />{/if}</span>
                   <span class="type">{column.type}</span>
                 </span>
                 <button type="button" class="menu-button" aria-label={t('grid.menu', { name: column.name })} aria-expanded={menu?.column === index} onclick={(event) => openMenu(event, index)}><Icon name="dots-three" /></button>
@@ -220,6 +223,7 @@
   .text { display: flex; flex-direction: column; min-width: 0; line-height: 1.35; }
   .name { display: flex; align-items: center; gap: 4px; min-width: 0; }
   .name > span { overflow: hidden; text-overflow: ellipsis; }
+  .name > .described { text-decoration: underline dotted color-mix(in srgb, currentColor 50%, transparent); text-decoration-thickness: 1.5px; text-underline-offset: 3px; cursor: help; }
   .name :global(.icon) { font-size: 12px; color: var(--text-secondary); flex: none; }
   .type { font: 10.5px var(--font-mono); color: var(--text-muted); font-weight: var(--weight-regular); overflow: hidden; text-overflow: ellipsis; }
   .menu-button { width: 22px; height: 22px; margin-left: auto; flex: none; border: 0; border-radius: var(--radius-sm); background: none; color: var(--text-muted); cursor: pointer;

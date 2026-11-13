@@ -13,6 +13,8 @@ export interface DryRun {
   referencedTables: string[];
   /** How many partitions it reads, where BigQuery says so. */
   partitions: number | null;
+  /** The columns of its result, with their types (FR-LE-19). */
+  columns?: ResultColumn[];
 }
 
 /** A page of a result: its columns, how many rows it has in all, and these rows. */
@@ -185,7 +187,7 @@ export function createBigQuery(options: { project: string; location: string; tok
   return {
     async dryRun(sql, parameters) {
       const job = await call<{
-        statistics?: { query?: { statementType?: string; totalBytesProcessed?: string; totalPartitionsProcessed?: string; referencedTables?: { projectId: string; datasetId: string; tableId: string }[] } };
+        statistics?: { query?: { statementType?: string; totalBytesProcessed?: string; totalPartitionsProcessed?: string; referencedTables?: { projectId: string; datasetId: string; tableId: string }[]; schema?: { fields?: SchemaField[] } } };
       }>('POST', '/jobs', { configuration: { dryRun: true, query: { query: sql, useLegacySql: false, ...named(parameters) } }, jobReference: { projectId: project, location } }, 20_000);
       const stats = job.statistics?.query ?? {};
       return {
@@ -193,6 +195,7 @@ export function createBigQuery(options: { project: string; location: string; tok
         bytes: Number(stats.totalBytesProcessed ?? 0),
         referencedTables: (stats.referencedTables ?? []).map((table) => `${table.projectId}.${table.datasetId}.${table.tableId}`),
         partitions: stats.totalPartitionsProcessed === undefined ? null : Number(stats.totalPartitionsProcessed),
+        columns: (stats.schema?.fields ?? []).map((field) => ({ name: field.name, type: typeOf(field) })),
       };
     },
 

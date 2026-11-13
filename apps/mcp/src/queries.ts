@@ -99,7 +99,7 @@ export function queryTools({ server, hub, user, permits }: Context): void {
     {
       title: 'Find a Lens first',
       description:
-        'The Lenses that use these Resources and run now: first those on exactly these Resources, then those on these and more, those that share most words with the question first. Call it before you write a query, and offer a Lens that answers the question.',
+        'The Lenses that use these Resources and run now: first those on exactly these Resources, then those on these and more, those that share most words with the question first, each with its fields and what each holds. Call it before you write a query, and offer a Lens that answers the question.',
       inputSchema: {
         resources: z.array(z.string()).min(1).max(10).describe('The IDs of the Resources the question needs.'),
         question: z.string().max(500).optional().describe('The question of the User, in their words.'),

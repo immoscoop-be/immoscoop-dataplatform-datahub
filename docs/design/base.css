@@ -587,6 +587,9 @@ button.ln-fold i { transition: transform 200ms ease; }
 .rgrid .rh-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.35; }
 .rgrid .rh-name { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .rgrid .rh-name > span { overflow: hidden; text-overflow: ellipsis; }
+/* A field of a Lens with a description: a dotted line under its name, the description on a hover (DEC-UX-230) */
+.rgrid .rh-described { text-decoration: underline dotted color-mix(in srgb, currentColor 50%, transparent); text-decoration-thickness: 1.5px; text-underline-offset: 3px; cursor: help; }
+.about-fields td .meta { display: block; margin-top: 2px; }
 .rgrid .rh-type { font: 10.5px var(--font-mono); color: var(--text-muted); font-weight: var(--weight-regular); overflow: hidden; text-overflow: ellipsis; }
 .rgrid .rh-menu { width: 22px; height: 22px; font-size: 12px; margin-left: auto; flex: none; }
 .rgrid .rh-sorted { font-size: 12px; color: var(--text-secondary); }
@@ -744,7 +747,7 @@ button.menu-item { width: 100%; border: 0; background: none; font: var(--text-sm
 .about-tile { border-radius: var(--radius-lg); background: var(--surface-sub); padding: 16px; font-size: var(--text-small); line-height: 1.5; }
 .about-tile p { margin: 4px 0 0; }
 .about-lead { font-size: var(--text-body); }
-.about-params td, .about-params th { padding-left: 0; }
+.about-params td, .about-params th, .about-fields td, .about-fields th { padding-left: 0; }
 /* Messages: the item in the rail with the number unread (DEC-UX-29) */
 a.nav-btn { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; color: inherit; position: relative; }
 .nav-badge { position: absolute; top: 5px; right: 5px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: var(--text-primary); color: var(--surface-solid);

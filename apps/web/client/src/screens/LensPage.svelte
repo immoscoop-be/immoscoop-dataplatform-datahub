@@ -152,6 +152,10 @@
   };
 
   /** A value as it reads: a suggested function by its name, any other as written; with the function sign. */
+  /** The columns of its result, each with the description its author gave its field, shown on a hover of its head (DEC-UX-230). */
+  const described = (columns: readonly { name: string; type: string }[]) =>
+    columns.map((column) => ({ ...column, description: lens.fields?.find((field) => field.name === column.name)?.description || undefined }));
+
   function shown(parameter: Parameter): { text: string; fn: boolean } {
     const raw = parameter.kind === 'date' || parameter.kind === 'number' || parameter.kind === 'decimal' || parameter.kind === 'text' ? parameter.value : null;
     if (raw !== null && isFunction(parameter.kind, raw)) {
@@ -377,7 +381,7 @@
           <p class="meta ran">{t('lens.result.ran', { time: when(run.startedAt, language), values: ranText })}</p>
         {/if}
         <div class="grid" class:stale>
-          <DataGrid columns={page.columns} rows={page.rows} first={(page.number - 1) * page.size + 1} label={t('preview.label', { name: lens.name })} />
+          <DataGrid columns={described(page.columns)} rows={page.rows} first={(page.number - 1) * page.size + 1} label={t('preview.label', { name: lens.name })} />
         </div>
         <div class="foot">
           <span>{t('query.rows', { count: page.totalRows })}</span>
@@ -429,7 +433,31 @@
           <p class="meta">{t('lens.field.parameters.none')}</p>
         {/if}
       </SubTile>
-      <SubTile label={t('lens.about.history')}>
+      <!-- Its fields, each with its type, its description and where that comes from (DEC-UX-230, FR-LE-19) -->
+      {#if lens.fields?.length}
+        <SubTile label={t('lens.about.fields')} span="all">
+          <table class="params fields" aria-label={t('lens.about.fields')}>
+            <thead><tr><th>{t('lens.about.field')}</th><th>{t('lens.about.type')}</th><th>{t('lens.about.description')}</th></tr></thead>
+            <tbody>
+              {#each lens.fields as field (field.name)}
+                {@const source = field.from ? lens.resources.find((resource) => resource.id === field.from?.resourceId) : undefined}
+                <tr>
+                  <td class="mono">{field.name}</td>
+                  <td class="muted">{field.type}</td>
+                  <td>
+                    {#if field.description}{field.description}{:else}<span class="muted">{t('lens.fields.empty')}</span>{/if}
+                    {#if field.description}
+                      <span class="from">{#if field.from}{t('lens.fields.from', { resource: source?.displayName ?? '' })} · <span class="mono">{field.from.field}</span>{:else}{t('lens.fields.writtenBy')}{/if}</span>
+                    {/if}
+                  </td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+          <p class="meta">{t('lens.about.fields.hint')}</p>
+        </SubTile>
+      {/if}
+      <SubTile label={t('lens.about.history')} span="all">
         {#each history as line, index (index)}
           <div class="line">
             <span class="grow">{#if line.link}<a href={line.link}>{line.text}</a>{:else}{line.text}{/if}</span>
@@ -485,6 +513,9 @@
   .built:hover .grow { text-decoration: underline; text-underline-offset: 3px; }
   .grow { flex: 1; min-width: 0; }
   .params { width: 100%; border-collapse: collapse; font-size: var(--text-small); }
+  .fields td { vertical-align: top; line-height: 1.5; }
+  .fields .muted { color: var(--text-muted); }
+  .fields .from { display: block; font-size: var(--text-meta); color: var(--text-muted); }
   .params th { text-align: left; font-weight: var(--weight-regular); color: var(--text-muted); font-size: var(--text-meta); padding: 0 8px 6px 0; }
   .params td { padding: 6px 8px 6px 0; border-top: 1px solid var(--tint-active); }
   .line { display: flex; gap: 10px; font-size: var(--text-small); padding: 4px 0; }

@@ -366,7 +366,15 @@ const LENS = {
  * table outside, or 80 MB.
  */
 function preflightOf(sql: string, parameters: { name: string }[] = []) {
-  const base = { partitions: 4, problems: [] as unknown[], warnings: [] as unknown[], thresholds: { approve: 100_000_000, request: 1_000_000_000 }, unused: [] as string[] };
+  const base = {
+    partitions: 4,
+    problems: [] as unknown[],
+    warnings: [] as unknown[],
+    thresholds: { approve: 100_000_000, request: 1_000_000_000 },
+    unused: [] as string[],
+    // The columns of its result, as the dry run says them (FR-LE-19).
+    columns: [{ name: 'week_start', type: 'DATE' }, { name: 'leads', type: 'INT64' }, { name: 'share', type: 'FLOAT64' }],
+  };
   const at = sql.indexOf('@leadChannel');
   if (at >= 0 && !parameters.some((parameter) => parameter.name === 'leadChannel')) {
     return { ...base, runnable: false, bytes: null, range: null, partitions: null, problems: [{ kind: 'undefinedParameter', name: 'leadChannel', start: at, end: at + 12, suggestedKind: 'choice' }] };
@@ -3783,17 +3791,40 @@ describe('Lenses', () => {
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
     expect(await main.findByRole('heading', { level: 1, name: 'Maak er een Lens van' })).toBeTruthy();
+    // A flow of four steps, one at a time; on the right each with how far it is (DEC-UX-229).
+    const steps = within(main.getByRole('navigation', { name: 'Stappen van de Lens' }));
+    expect(main.getByRole('heading', { level: 2, name: 'Wat hij is' })).toBeTruthy();
     expect((await main.findByRole('textbox', { name: 'Naam' }) as HTMLInputElement).value).toBe('Leads per source name');
-    // The Parameters come from the query, each with the name Users see; its default stands as its function (DEC-UX-75).
-    expect(((await main.findByRole('textbox', { name: 'Naam die Users zien van @dateFrom' })) as HTMLInputElement).value).toBe('Date from');
-    expect(main.getByText('Begin van dit jaar')).toBeTruthy();
-    // Within range: its author publishes it (FR-LE-08).
-    expect(await main.findByText('Binnen de grenzen.')).toBeTruthy();
+    await vi.waitFor(() => expect(steps.getByRole('button', { name: /Wat hij is.*Leads per source name · Credit leads/ })).toBeTruthy());
     await fireEvent.input(main.getByRole('textbox', { name: /Wat hij doet, stap voor stap/ }), { target: { value: 'Takes the weekly lead volume.\n\nAdds the sources.' } });
-    await fireEvent.input(main.getByRole('textbox', { name: 'Naam die Users zien van @dateFrom' }), { target: { value: 'From' } });
+    // Within range: its author publishes it, from any step (FR-LE-08).
+    expect(await main.findByText('Binnen de grenzen.')).toBeTruthy();
+
+    await fireEvent.click(main.getByRole('button', { name: /Volgende: Tags/ }));
     const tag = main.getByRole('textbox', { name: 'Een tag toevoegen' });
     await fireEvent.input(tag, { target: { value: '#Leads' } });
     await fireEvent.keyDown(tag, { key: 'Enter' });
+    expect(steps.getByRole('button', { name: /Tags.*1 tag/ })).toBeTruthy();
+
+    // The Parameters come from the query, each with the name Users see; its default stands as its function (DEC-UX-75).
+    await fireEvent.click(steps.getByRole('button', { name: /Parameters/ }));
+    expect(((await main.findByRole('textbox', { name: 'Naam die Users zien van @dateFrom' })) as HTMLInputElement).value).toBe('Date from');
+    expect(main.getByText('Begin van dit jaar')).toBeTruthy();
+    await fireEvent.input(main.getByRole('textbox', { name: 'Naam die Users zien van @dateFrom' }), { target: { value: 'From' } });
+
+    // Its fields: one named as a field of its Resources takes that description; another its author takes from its
+    // Resources or writes; without one it still publishes (DEC-UX-227, FR-LE-19).
+    expect(steps.getByRole('button', { name: /Zijn velden.*3 velden · 2 zonder beschrijving/ })).toBeTruthy();
+    await fireEvent.click(main.getByRole('button', { name: /Volgende: Zijn velden/ }));
+    expect(main.getByText('Monday of the week')).toBeTruthy();
+    const pick = main.getAllByRole('button', { name: /Neem er een van zijn Resources/ });
+    await fireEvent.click(pick[0] as HTMLElement);
+    await fireEvent.input(main.getByRole('searchbox', { name: 'Zoek in de velden van zijn Resources' }), { target: { value: 'monday' } });
+    await fireEvent.click(main.getByRole('button', { name: /week_start.*Monday of the week/ }));
+    expect(main.getByText(/Overgenomen van Weekly lead volume/)).toBeTruthy();
+    await fireEvent.click(main.getByRole('button', { name: 'Schrijf er een' }));
+    await fireEvent.input(main.getByRole('textbox', { name: 'Beschrijving van share' }), { target: { value: 'The share of the week, in percent.' } });
+    expect(steps.getByRole('button', { name: /Zijn velden.*3 velden/ }).textContent).not.toContain('zonder beschrijving');
     await fireEvent.click(main.getByRole('button', { name: 'Lens publiceren' }));
     await vi.waitFor(() => expect(location.pathname).toBe('/lenses/l-made'));
     expect(calls).toContainEqual({
@@ -3808,6 +3839,11 @@ describe('Lenses', () => {
         steps: ['Takes the weekly lead volume.', 'Adds the sources.'],
         tags: ['leads'],
         labels: { dateFrom: 'From' },
+        fields: [
+          { name: 'week_start', description: 'Monday of the week', from: { resourceId: 'r2', field: 'week_start' } },
+          { name: 'leads', description: 'Monday of the week', from: { resourceId: 'r2', field: 'week_start' } },
+          { name: 'share', description: 'The share of the week, in percent.', from: null },
+        ],
         approve: false,
         text: '',
       },
@@ -3815,7 +3851,11 @@ describe('Lenses', () => {
   });
 
   it('runs a Lens only when its User runs it, with the values they chose, and marks a result for old values (FR-LE-12, DEC-LE-12)', async () => {
-    const calls = serve({ groups: ['g1'], lenses: [{ ...LENS }] });
+    const fields = [
+      { name: 'week_start', type: 'DATE', description: 'The Monday of the week.', from: { resourceId: 'r2', field: 'week_start' } },
+      { name: 'leads', type: 'INT64', description: 'How many leads came in.', from: null },
+    ];
+    const calls = serve({ groups: ['g1'], lenses: [{ ...LENS, fields }] });
     open('/lenses/l1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
@@ -3833,6 +3873,10 @@ describe('Lenses', () => {
     await fireEvent.click(run);
     expect(await main.findByText('q-20261029-1e2a3b')).toBeTruthy();
     expect(calls).toContainEqual({ method: 'POST', path: '/lenses/l1/runs', body: { values: { dateFrom: 'DATE_TRUNC(CURRENT_DATE(), YEAR)', leadChannel: 'Phone' }, approve: false } });
+    // A field with a description shows it on a hover of the head of its column, with a dotted line under its name (DEC-UX-230).
+    const head = within(main.getByRole('grid')).getByText('week_start');
+    expect(head.getAttribute('title')).toBe('week_start: The Monday of the week.');
+    expect(head.classList.contains('described')).toBe(true);
     await fireEvent.click(main.getByRole('button', { name: 'Standaard' }));
     expect(await main.findByText('De Parameters veranderden.')).toBeTruthy();
     // About tells what it does as its author wrote it, never its SQL (FR-LE-14, DEC-UX-121).
@@ -3840,6 +3884,11 @@ describe('Lenses', () => {
     expect(main.getByText('Keeps one lead channel.')).toBeTruthy();
     expect(main.getByText('Geschreven door wie hem maakte, in gewone taal.')).toBeTruthy();
     expect(main.queryByText(/select/)).toBeNull();
+    // Its fields, each with its type, its description and where that comes from (DEC-UX-230, FR-LE-19).
+    const its = within(main.getByRole('table', { name: 'Zijn velden' }));
+    expect(its.getByText('The Monday of the week.')).toBeTruthy();
+    expect(its.getByText(/Van Weekly lead volume/)).toBeTruthy();
+    expect(its.getByText('Geschreven door wie hem maakte')).toBeTruthy();
   });
 
   it('gives the address of a Lens for Excel, with the steps and a way to an Excel key (FR-PL-01, DEC-UX-159)', async () => {

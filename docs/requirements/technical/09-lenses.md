@@ -91,6 +91,15 @@ Only a published Lens answers: a waiting, refused or stopped Lens answers 409 wi
 
 query then tells catalogue, as itself (`POST /internal/lenses/{id}/deleted`), who deleted it, why, and the Users who ran it in the 30 days before, also from Excel, without who deleted it. catalogue keeps the Lens as deleted, so that the Messages on it still show for whoever saw it, marked as deleted; takes it out of its folder; withdraws a Request on it that waits (`withdrawn`); and writes [MSG-LEN-06](../functional/message-catalogue.md#msg-len-06) on it, which notifies those Users. query tells catalogue before it deletes the Lens itself: when catalogue does not answer, nothing is deleted, and the User is asked to try again (503).
 
+<a id="tr-le-10"></a>
+### TR-LE-10 · The fields of a Lens keep their descriptions
+
+**Status:** Implemented · **Realises:** [FR-LE-19](../functional/09-lenses.md#fr-le-19), [DEC-UX-227](../../design/principles.md#dec-ux-227), [DEC-UX-230](../../design/principles.md#dec-ux-230)
+
+The Pre-flight of query gives the columns of the result, each with its type as GoogleSQL names it, from the schema of the dry run (`columns`). `POST /lenses` takes `fields`: at most 300, each a `name`, a `description` of at most 1,000 characters and `from`, the field of one of its Resources the description was taken from (`resourceId`, `field`), or null when its author wrote it. query keeps them in `lenses.fields`, one per column of the result of its Pre-flight, in its order and with its type; a column without a sent description gets none, and a description from a Resource the query does not read is not kept. A new version of the Lens keeps the description of each field by name ([TR-LE-04](#tr-le-04)). `GET /lenses/{id}` gives the fields to its page, which shows each description on the head of its column and under About; `GET /lenses/suggestions` gives each field with its type and description, so that Claude reads the result of a Lens as its author meant it ([TR-LE-07](#tr-le-07)).
+
+Which description a field gets is decided in the web app, from the fields of its Resources it already has, by name only: the Business Description first, else the one from dbt, from the first Resource of the query that holds the name. Nothing is worked out from the SQL.
+
 ## Open points
 
 None yet.

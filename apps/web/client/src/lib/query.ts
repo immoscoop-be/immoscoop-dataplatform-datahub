@@ -225,10 +225,23 @@ export interface LensLogEntry {
   at: string;
 }
 
+/**
+ * A field of the result of a Lens as Users see it (FR-LE-19): its type, and its description, taken from a field of one of
+ * its Resources, or written by its author when `from` is null. An empty description is none.
+ */
+export interface LensField {
+  name: string;
+  type: string;
+  description: string;
+  from: { resourceId: string; field: string } | null;
+}
+
 /** A Lens as its page shows it: everything but its SQL (FR-LE-14). */
 export interface Lens extends Omit<LensItem, 'resources'> {
   steps: string[];
   parameters: LensParameter[];
+  /** Its fields, each with its description (FR-LE-19); a Lens made before has none. */
+  fields?: LensField[];
   resources: { id: string; displayName: string; collectionId: string | null; level: number }[];
   /** Whether the User may change it: its Owner Unit and the Data Team (DEC-CO-15, DEC-CO-18). */
   canManage: boolean;
@@ -276,6 +289,8 @@ export interface NewLens {
   steps: string[];
   tags: string[];
   labels: Record<string, string>;
+  /** The description of each field of its result, by name (FR-LE-19). */
+  fields?: Omit<LensField, 'type'>[];
   approve?: boolean;
   text?: string;
 }
@@ -330,6 +345,8 @@ export interface Preflight {
   unused: string[];
   /** The tables outside Data Hub a power user's query reads: Data Hub knows them, they are no Resource (FR-SR-56). */
   tables?: OutsideTable[];
+  /** The columns of its result, as the dry run says them (FR-LE-19). */
+  columns?: ResultColumn[];
 }
 
 /** A table outside Data Hub, known from a dbt project Data Hub follows, with its layer (DEC-UX-220). */

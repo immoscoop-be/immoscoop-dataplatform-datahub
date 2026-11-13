@@ -7,7 +7,7 @@ import type { FastifyInstance } from 'fastify';
 import { sql } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { label, parseQuery, parseRun } from './api.js';
-import { parseLens, valuesFor } from './lens-api.js';
+import { lensFields, parseLens, valuesFor } from './lens-api.js';
 import { createLenses } from './lenses.js';
 import { buildApp } from './app.js';
 import { type BigQuery, BigQueryRefused, type DryRun, type RunOptions, ResultExpired } from './bigquery.js';
@@ -71,12 +71,43 @@ describe('the fields of a Lens, in a request', () => {
       labels: { dateFrom: 'From' },
       approve: false,
       text: '',
+      fields: [],
     });
     expect(parseLens({ ...fields, name: '' })).toBe('The name has 1 to 120 characters.');
     expect(parseLens({ ...fields, collectionId: 'c-credit' })).toBe('A Lens goes into a Collection, named by its ID.');
     expect(parseLens({ ...fields, tags: ['two words'] })).toMatch(/each a word/);
     expect(parseLens({ ...fields, labels: { dateFrom: '' } })).toMatch(/name Users see/);
     expect(parseLens({ ...fields, sql: 'select 1' })).toBe('A Lens has no field sql.');
+  });
+
+  it('with the description of each field, from a field of one of its Resources or written by its author (FR-LE-19)', () => {
+    const from = { resourceId: WEEKLY.id.toUpperCase(), field: 'lead_count' };
+    expect((parseLens({ ...fields, fields: [{ name: ' leads ', description: ' How many leads. ', from }, { name: 'share', description: '', from: null }] }) as { fields: unknown }).fields).toEqual([
+      { name: 'leads', description: 'How many leads.', from: { resourceId: WEEKLY.id, field: 'lead_count' } },
+      { name: 'share', description: '', from: null },
+    ]);
+    expect(parseLens({ ...fields, fields: [{ name: 'leads', description: 'x' }, { name: 'leads', description: 'y' }] })).toBe('The field leads is named twice.');
+    expect(parseLens({ ...fields, fields: [{ name: 'leads', description: 'x'.repeat(1001) }] })).toMatch(/at most 1000 characters/);
+    expect(parseLens({ ...fields, fields: [{ name: 'leads', description: 'x', from: { resourceId: 'weekly', field: 'leads' } }] })).toMatch(/Its fields are/);
+    expect(parseLens({ ...fields, fields: [{ name: 'leads', description: 'x', type: 'INT64' }] })).toMatch(/Its fields are/);
+  });
+
+  it('as its result has them: in its order, with its type, a description only from a Resource it reads (FR-LE-19)', () => {
+    const given = [
+      { name: 'leads', description: 'How many leads.', from: { resourceId: WEEKLY.id, field: 'lead_count' } },
+      { name: 'share', description: 'The share of the week.', from: null },
+      { name: 'secret', description: 'From elsewhere.', from: { resourceId: SECRET.id, field: 'secret' } },
+      { name: 'gone', description: 'No longer in the result.', from: null },
+    ];
+    const columns = [{ name: 'week_start', type: 'DATE' }, { name: 'leads', type: 'INT64' }, { name: 'share', type: 'FLOAT64' }, { name: 'secret', type: 'STRING' }];
+    expect(lensFields(given, columns, [WEEKLY, SOURCES])).toEqual([
+      { name: 'week_start', type: 'DATE', description: '', from: null },
+      { name: 'leads', type: 'INT64', description: 'How many leads.', from: { resourceId: WEEKLY.id, field: 'lead_count' } },
+      { name: 'share', type: 'FLOAT64', description: 'The share of the week.', from: null },
+      { name: 'secret', type: 'STRING', description: '', from: null },
+    ]);
+    // Without the columns of a dry run, what its author sent.
+    expect(lensFields(given.slice(0, 1), [], [WEEKLY])).toEqual([{ name: 'leads', type: '', description: 'How many leads.', from: { resourceId: WEEKLY.id, field: 'lead_count' } }]);
   });
 
   it('to run, change only the values of its Parameters, never their kind or list (DEC-LE-01)', () => {
@@ -159,7 +190,7 @@ function fakeBigQuery() {
       if (gone && text.includes(gone.text)) throw new BigQueryRefused(gone.message);
       const bytes = size ?? Number(/-- reads (\d+)/.exec(text)?.[1] ?? 80_000_000);
       const referencedTables = [WEEKLY, SOURCES, SECRET].filter((resource) => text.includes(resource.key)).map((resource) => resource.key);
-      return { statementType: 'SELECT', bytes, referencedTables, partitions: 42 };
+      return { statementType: 'SELECT', bytes, referencedTables, partitions: 42, columns: [{ name: 'week_start', type: 'DATE' }, { name: 'lead_source', type: 'STRING' }, { name: 'leads', type: 'INT64' }] };
     },
     async run(text, options) {
       runs.push({ sql: text, options });
@@ -670,6 +701,11 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
       steps: ['Takes the weekly lead volume from From.', 'Keeps one lead channel.'],
       tags: ['#leads', 'source'],
       labels: { dateFrom: 'From', leadChannel: 'Lead channel' },
+      // A field named as one of its Resources takes that description; another, one its author takes or writes (FR-LE-19).
+      fields: [
+        { name: 'week_start', description: 'The Monday of the week.', from: { resourceId: WEEKLY.id, field: 'week_start' } },
+        { name: 'leads', description: 'How many leads came in.', from: null },
+      ],
     };
     expect((await call(an, 'POST', '/lenses', { ...fields, collectionId: CREDIT })).json()).toMatchObject({ error: 'invalid_request', message: 'A Lens goes into a Collection you own.' });
     expect((await call(karel, 'POST', '/lenses', fields)).statusCode).toBe(404);
@@ -693,6 +729,12 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
       parameters: [
         { ...dateFrom, label: 'From' },
         { ...channel, label: 'Lead channel' },
+      ],
+      // Each field of its result, in its order and with its type, as the Pre-flight says them (DEC-UX-230).
+      fields: [
+        { name: 'week_start', type: 'DATE', description: 'The Monday of the week.', from: { resourceId: WEEKLY.id, field: 'week_start' } },
+        { name: 'lead_source', type: 'STRING', description: '', from: null },
+        { name: 'leads', type: 'INT64', description: 'How many leads came in.', from: null },
       ],
     });
     // No page shows the SQL of a Lens (FR-LE-14).
@@ -1006,6 +1048,12 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     expect(found.exact[0]).toMatchObject({ shared: 1, marked: { name: [{ text: 'All weeks per ', shared: false }, { text: 'source', shared: true }] }, sharedTags: [] });
     // Its name, its question and its tags share "sources", "bring" and "leads", by their stem; "the" does not count.
     expect(found.more[0]).toMatchObject({ shared: 3, sharedTags: ['leads', 'source'] });
+    // Claude gets what each field of a Lens holds with it (DEC-UX-230).
+    expect(found.more[0].fields).toEqual([
+      { name: 'week_start', type: 'DATE', description: 'The Monday of the week.' },
+      { name: 'lead_source', type: 'STRING', description: '' },
+      { name: 'leads', type: 'INT64', description: 'How many leads came in.' },
+    ]);
     expect(found.more[0].marked.question).toEqual([
       { text: 'Which ', shared: false },
       { text: 'sources', shared: true },
