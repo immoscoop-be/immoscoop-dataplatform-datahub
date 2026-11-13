@@ -12,6 +12,7 @@
   import Field from '@datahub/ui/primitives/Field.svelte';
   import Gauge from '@datahub/ui/primitives/Gauge.svelte';
   import Loading from '@datahub/ui/primitives/Loading.svelte';
+  import { Refused } from '../lib/api.js';
   import type { Catalogue, Collection } from '../lib/catalogue.js';
   import { clock, when } from '../lib/moment.js';
   import { describe, isFunction, kindOf, suggestedOf } from '../lib/parameters.js';
@@ -248,7 +249,8 @@
       else onmade(outcome.lens);
     } catch (error) {
       console.error('The Lens could not be made', error);
-      failed = t('lens.make.failed');
+      // A Lens is made only on published Resources: say so, rather than that it failed (DEC-LE-22).
+      failed = error instanceof Refused && error.code === 'not_published' ? t('query.unpublished.hint') : t('lens.make.failed');
     } finally {
       busy = false;
     }

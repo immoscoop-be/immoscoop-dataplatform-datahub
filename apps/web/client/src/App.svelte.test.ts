@@ -3088,6 +3088,23 @@ describe('Query', () => {
     expect(main.getByRole('link', { name: 'Maak er een Lens van' }).getAttribute('href')).toBe('/query/q1/lens');
   });
 
+  it('greys "Make it a lens" on a query that reads a Resource not published yet, and says which (DEC-LE-22, DEC-UX-218)', async () => {
+    serve({ queries: [{ ...QUERY, lastRunAt: new Date().toISOString(), resources: [{ ...QUERY.resources[0]!, published: false }] }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByRole('heading', { level: 1, name: 'Leads per source name' }, { timeout: 3000 })).toBeTruthy();
+    // No link to make it a Lens: the button is greyed, with why.
+    expect(main.queryByRole('link', { name: 'Maak er een Lens van' })).toBeNull();
+    const button = main.getByRole('button', { name: 'Maak er een Lens van' }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    expect(button.title).toBe('Een Lens maak je enkel op gepubliceerde Resources: deze query leest er een die nog niet gepubliceerd is.');
+    // Under the question: which Resource is not published yet, with a link to it.
+    const line = main.getByText(/Nog niet gepubliceerd:/).closest('p') as HTMLElement;
+    expect(line.textContent?.replace(/\s+/g, ' ').trim()).toBe('Nog niet gepubliceerd: Weekly lead volume. Een Lens maak je enkel op gepubliceerde Resources.');
+    expect(within(line).getByRole('link', { name: 'Weekly lead volume' }).getAttribute('href')).toBe('/resources/r2');
+  });
+
   it('starts a new query on a Resource, named from it and the date, as not run yet (FR-SR-45, FR-SR-46, DEC-UX-114)', async () => {
     const calls = serve({ groups: ['g1'] });
     open('/query/new/r2');

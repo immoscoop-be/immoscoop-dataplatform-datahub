@@ -19,6 +19,8 @@ query keeps a Lens in `lenses` of its schema: its Collection in catalogue, the q
 
 `POST /lenses` makes a Lens of a query of the kind `query`, for who made it only, into a Collection they manage as its Owner Unit or the Data Team, as catalogue answers with their token. Its SQL and Parameters are those the query keeps; its Parameters are those the SQL uses. The Pre-flight of the query, as for a run ([TR-SR-16](04-stacks-and-resources.md#tr-sr-16)), measures one run: within 100 MB the Lens is published; above it, only when its author says so (`approve`), otherwise `409 approval_needed`; above 1 GB it is kept as `waiting`, frozen, and query sends the Request on it to the Data Team for its author ([MSG-LEN-01](../functional/message-catalogue.md#msg-len-01)), which catalogue keeps as it keeps those on queries ([TR-SR-18](04-stacks-and-resources.md#tr-sr-18)), with its word and the partitions it reads. When the Request does not reach catalogue, the Lens stays waiting, and `POST /lenses/{id}/requests` sends it again for its author. A query that cannot run makes no Lens. An author who owns no Collection makes a private one first in catalogue, with the name, group and icon they chose ([DEC-CO-24](../functional/03-collections.md#dec-co-24)); its description names the Lens.
 
+*Note of 2026-11-13: `POST /lenses` refuses a query that reads a Resource not published with `409 not_published`, naming those Resources, before it measures the query; catalogue says whether a Resource is published, and the view of a query passes it on, so that the web app greys "Make it a lens" ([DEC-LE-22](../functional/09-lenses.md#dec-le-22)).*
+
 <a id="tr-le-02"></a>
 ### TR-LE-02 · Who sees a Lens, never with its SQL
 

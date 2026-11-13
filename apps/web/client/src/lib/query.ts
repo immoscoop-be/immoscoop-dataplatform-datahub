@@ -22,6 +22,8 @@ export type QueryResource =
       collectionId: string | null;
       level: number;
       deprecated: boolean;
+      /** Whether its Owner published it: a Lens is made only on published Resources (DEC-LE-22). */
+      published?: boolean;
       partition: { field: string; unit: string | null } | null;
       clusterBy: string[];
       partitionFilter: 'none' | 'dataHub' | 'bigQuery';

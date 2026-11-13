@@ -37,6 +37,7 @@ const WEEKLY: QueryResource = {
   collectionId: CREDIT,
   level: 3,
   deprecated: false,
+  published: true,
   partition: { field: 'week_start', unit: 'day' },
   clusterBy: ['lead_source'],
   partitionFilter: 'none',
@@ -48,6 +49,8 @@ const WEEKLY: QueryResource = {
 };
 const SOURCES: QueryResource = { ...WEEKLY, id: '7a2d3c5f-9b2e-4d4f-8a31-2c3d4e5f6a71', key: `${PROJECT}.dbt_prod_stacks.lead_sources`, fullName: `${PROJECT}.dbt_prod_stacks.lead_sources`, displayName: 'Lead sources', partition: null, clusterBy: [] };
 const SECRET: QueryResource = { ...SOURCES, id: '8b3e4d6a-0c3f-4e5a-9b42-3d4e5f6a7b82', key: `${PROJECT}.dbt_prod_stacks.salaries`, fullName: `${PROJECT}.dbt_prod_stacks.salaries`, displayName: 'Salaries' };
+/** A Resource of An's unit that is not published yet: a query may read it, but no Lens is made of it (DEC-LE-22). */
+const DRAFT: QueryResource = { ...SOURCES, id: '9c4f5e7b-1d4a-4f6b-8c53-4e5f6a7b8c93', key: `${PROJECT}.dbt_prod_stacks.draft_leads`, fullName: `${PROJECT}.dbt_prod_stacks.draft_leads`, displayName: 'Draft leads', collectionId: AN_WORK, published: false };
 
 describe('the fields of a Lens, in a request', () => {
   const fields = { queryId: '2b1f3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d', collectionId: CREDIT, name: ' Leads per source ' };
@@ -245,7 +248,7 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     async resource(id, authorization) {
       const ids = visible.get(authorization);
       if (ids === null) throw new CatalogueUnavailable('down');
-      return ids?.includes(id) ? ([WEEKLY, SOURCES, SECRET].find((resource) => resource.id === id) ?? null) : null;
+      return ids?.includes(id) ? ([WEEKLY, SOURCES, SECRET, DRAFT].find((resource) => resource.id === id) ?? null) : null;
     },
     async requests(queryId, authorization, subjectKind = 'query') {
       if (visible.get(authorization) === null) throw new CatalogueUnavailable('down');
@@ -334,7 +337,7 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     writers.set(mia, '104');
     deciders.add(dataTeam);
     visible.set(mia, [WEEKLY.id, SOURCES.id]);
-    visible.set(an, [WEEKLY.id, SOURCES.id]);
+    visible.set(an, [WEEKLY.id, SOURCES.id, DRAFT.id]);
     visible.set(karel, [WEEKLY.id]);
     visible.set(dataTeam, [WEEKLY.id, SOURCES.id, SECRET.id]);
     app = await buildApp({
@@ -618,6 +621,24 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
   let largeLens: string;
   let hugeLens: string;
   let hugeQuery: string;
+
+  it('makes no Lens of a query that reads a Resource not published yet, and says which (DEC-LE-22)', async () => {
+    const made = await call(an, 'POST', '/queries', { name: 'Leads per source, draft', resources: [WEEKLY.id, DRAFT.id], sql: withParameters, parameters: [dateFrom, channel] });
+    const draftQuery = made.json().query;
+    // The query passes on whether each of its Resources is published, so that the web app greys "Make it a lens" (DEC-UX-218).
+    expect(draftQuery.resources.map((resource: { displayName: string; published: boolean }) => [resource.displayName, resource.published])).toEqual([
+      ['Weekly lead volume', true],
+      ['Draft leads', false],
+    ]);
+    const refused = await call(an, 'POST', '/lenses', { queryId: draftQuery.id, collectionId: AN_WORK, name: 'Leads per source, draft' });
+    expect(refused.statusCode).toBe(409);
+    expect(refused.json()).toEqual({
+      error: 'not_published',
+      message: 'A Lens is made only on published Resources: Draft leads is not published yet.',
+      resources: [{ id: DRAFT.id, displayName: 'Draft leads' }],
+    });
+    expect((await call(an, 'GET', `/queries/${draftQuery.id}`)).json().query.lens).toBeNull();
+  });
 
   it('makes a Lens of a query of its author, into a Collection they own, measured now (FR-LE-07, FR-LE-08, DEC-CO-20)', async () => {
     const made = await call(an, 'POST', '/queries', { name: 'Leads per source, week by week', resources: [WEEKLY.id, SOURCES.id], sql: withParameters, parameters: [dateFrom, channel], forCollection: AN_WORK });

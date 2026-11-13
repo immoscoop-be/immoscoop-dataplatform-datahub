@@ -144,6 +144,8 @@
   const PAUSE = 2000;
 
   let query = $state<Query | null | undefined>();
+  /** Its Resources not published yet: they grey "Make it a lens", with why (DEC-LE-22, DEC-UX-218). */
+  const unpublished = $derived((query?.resources ?? []).filter((resource) => resource.visible && resource.published === false));
   /** Whether the User hid it from their panel: as it was read, or as changed since (DEC-UX-138). */
   const hidden = $derived(hiddenChange?.id === id ? hiddenChange.hidden : (query?.hidden ?? false));
   let hiding = $state(false);
@@ -725,6 +727,16 @@
           >
         </p>
       {/if}
+      {#if query.mine && query.kind === 'query' && !query.lens && unpublished.length > 0}
+        <!-- A Lens is made only on published Resources: which ones are not yet, with a link to each (DEC-UX-218). -->
+        <p class="meta origin unpublished">
+          <Icon name="globe-simple" /><span
+            >{#each tParts('query.unpublished', {}, { names: '' }) as part, index (index)}{#if 'name' in part}{#each unpublished as resource, at (resource.id)}{#if at > 0}, {/if}<a
+                    href={resourcePath(resource.id)}>{resource.displayName}</a
+                  >{/each}{:else}{part.text}{/if}{/each}</span
+          >
+        </p>
+      {/if}
       {#if !query.mine}<p class="meta">{t('query.of', { name: query.ownerName })}</p>{/if}
     </div>
     <div class="actions">
@@ -743,8 +755,12 @@
           ><Icon name="arrows-clockwise" />{t('lens.update.button')}</Button
         >
       {:else if query.mine && query.kind === 'query'}
-        <!-- The logical next step once a query answers a question that comes back (DEC-UX-25). -->
-        <Button href={newLensPath(query.id)}>{t('query.makeLens')}</Button>
+        <!-- The logical next step once a query answers a question that comes back (DEC-UX-25); greyed on a Resource not published (DEC-UX-218). -->
+        {#if unpublished.length > 0}
+          <Button disabled title={t('query.unpublished.hint')}>{t('query.makeLens')}</Button>
+        {:else}
+          <Button href={newLensPath(query.id)}>{t('query.makeLens')}</Button>
+        {/if}
       {/if}
     </div>
   </header>

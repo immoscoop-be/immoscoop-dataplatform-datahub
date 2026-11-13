@@ -618,6 +618,8 @@ export default {
   'query.startFailed': 'De query kon niet gemaakt worden. Probeer het zo meteen opnieuw.',
   'query.of': 'Een query van {name}: je leest hem, enkel {name} schrijft en voert hem uit.',
   'query.makeLens': 'Maak er een Lens van',
+  'query.unpublished': 'Nog niet gepubliceerd: {names}. Een Lens maak je enkel op gepubliceerde Resources.',
+  'query.unpublished.hint': 'Een Lens maak je enkel op gepubliceerde Resources: deze query leest er een die nog niet gepubliceerd is.',
   'query.readsOnly': 'Leest enkel',
   'query.lensesOn': 'Lenses op deze Resources · {count}',
   'query.foldAll': 'Alles dichtvouwen',

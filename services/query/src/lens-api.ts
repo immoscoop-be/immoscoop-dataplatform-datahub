@@ -360,6 +360,15 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
         return reply.code(400).send({ error: 'invalid_request', message: 'A Lens goes into a Collection you own.' });
       }
       resources = await resourcesOf(request, query);
+      // A Lens is made only on published Resources: one not published is not confirmed by its Owner yet (DEC-LE-22).
+      const unpublished = resources.flatMap(({ resource }) => (resource && !resource.published ? [{ id: resource.id, displayName: resource.displayName }] : []));
+      if (unpublished.length > 0) {
+        return reply.code(409).send({
+          error: 'not_published',
+          message: `A Lens is made only on published Resources: ${unpublished.map((resource) => resource.displayName).join(', ')} ${unpublished.length === 1 ? 'is' : 'are'} not published yet.`,
+          resources: unpublished,
+        });
+      }
       // The size of a Lens is measured with the ranges of Data Hub: it is about the Lens, not its author.
       checked = await check(query.sql, query.parameters, resources, thresholds);
     } catch (error) {

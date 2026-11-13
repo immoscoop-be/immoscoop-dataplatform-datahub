@@ -42,6 +42,7 @@ Pointers to material this domain will build on, collected during the migration. 
 - <a id="dec-le-19"></a>**DEC-LE-19** · Only a run with the default values of a Lens measures it for growth ([FR-LE-10](#fr-le-10)). A run in which a User chose other values is that run alone: its author approves it above 100 MB, and above 1 GB it does not run; the Lens stays as it is. *Decided on 2026-10-29, by Max.*
 - <a id="dec-le-20"></a>**DEC-LE-20** · To start with, Data Hub finds a Broken Lens when its Pre-flight or a run fails on a table or column that is not found, and once a day, when it dry-runs every Lens; the check right after a new Current Version of a dbt project ([FR-SR-52](04-stacks-and-resources.md#fr-sr-52)) comes later, and until then the daily check finds it within a day. *Decided on 2026-10-29, by Max.*
 - <a id="dec-le-21"></a>**DEC-LE-21** · A Lens can be deleted, by its Owner Unit and the Data Team. Deleting is for good and for everyone: the Lens is gone from every list, search, Claude and Excel, and runs for nobody; its address tells whoever saw it that it was deleted, by whom, when and why. What hangs on it is kept for the record: its runs in the Query Log, its versions and its Log, and the Messages on it, which still show for whoever saw it, with the Lens marked as deleted. A Request on it that still waits is withdrawn. The queries made from it stay, as they are their owners' own. Whoever ran it in the 30 days before, also from Excel, is told, with the reason when one was given; never who deleted it. *Decided on 2026-11-04, by Max: who may delete, what goes and what stays, and who is told, each as proposed.*
+- <a id="dec-le-22"></a>**DEC-LE-22** · A Lens is made only from a query whose Resources are all published ([FR-SR-31](04-stacks-and-resources.md#fr-sr-31)): a Lens is meant to be shared and relied on, and a Resource that is not published is not confirmed by its Owner yet. On a query that reads a Resource not published, "Make it a lens" is greyed and says which Resource, and query refuses to make the Lens; once its Owner publishes the Resource, the query can become a Lens. Lenses made before this rule stay as they are. *Decided on 2026-11-13, by Max.*
 
 ## Requirements
 
@@ -121,6 +122,8 @@ Whoever ran a query in Query ([FR-SR-41](04-stacks-and-resources.md#fr-sr-41)) c
 *Note of 2026-10-27: the query stays, used as the Lens ([DEC-LE-03](#dec-le-03)).*
 
 *Note of 2026-10-29, on building part 6a: "Make it a lens" on a query of its author ([TR-LE-01](../technical/09-lenses.md#tr-le-01)); what "New Lens" on the page of a Collection opens is [OP-UX-43](../../design/principles.md#op-ux-43).*
+
+*Note of 2026-11-13: only a query whose Resources are all published becomes a Lens; on another, "Make it a lens" is greyed and says which Resource is not published yet ([DEC-LE-22](#dec-le-22), [DEC-UX-218](../../design/principles.md#dec-ux-218)).*
 
 <a id="fr-le-08"></a>
 ### FR-LE-08 · Making a Lens checks what one run reads, in three ranges

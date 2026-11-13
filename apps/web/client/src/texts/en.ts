@@ -619,6 +619,8 @@ export default {
   'query.startFailed': 'The query could not be made. Try again in a moment.',
   'query.of': 'A query of {name}: you read it, only {name} writes and runs it.',
   'query.makeLens': 'Make it a lens',
+  'query.unpublished': 'Not published yet: {names}. A Lens is made only on published Resources.',
+  'query.unpublished.hint': 'A Lens is made only on published Resources: this query reads one that is not published yet.',
   'query.readsOnly': 'Reads only',
   'query.lensesOn': 'Lenses on these Resources · {count}',
   'query.foldAll': 'Fold all',

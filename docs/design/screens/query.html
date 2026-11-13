@@ -32,11 +32,12 @@
   Run is off, a callout on top names what is missing, and the query has the red dot in the panel; its SQL can still be
   changed, and a change that runs makes it work again, as does the return of what it reads.
   Requirements: FR-SR-53, FR-SR-36, FR-SR-37, FR-SR-40, FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-45, FR-SR-47, FR-SR-48, FR-SR-51, FR-LN-05, FR-LN-06, FR-LE-07, FR-LE-08, FR-LE-16, FR-RC-18
-  Decisions: DEC-UX-163, DEC-UX-17, DEC-UX-20, DEC-UX-70, DEC-UX-71, DEC-UX-72, DEC-UX-73, DEC-UX-74, DEC-UX-76, DEC-UX-77, DEC-UX-88, DEC-UX-97, DEC-UX-99, DEC-UX-115, DEC-SR-29, DEC-SR-35, DEC-LN-01.
+  Decisions: DEC-UX-218, DEC-UX-163, DEC-UX-17, DEC-UX-20, DEC-UX-70, DEC-UX-71, DEC-UX-72, DEC-UX-73, DEC-UX-74, DEC-UX-76, DEC-UX-77, DEC-UX-88, DEC-UX-97, DEC-UX-99, DEC-UX-115, DEC-SR-29, DEC-SR-35, DEC-LN-01.
   Not in v1: the label "Claude" on a query in the panel (FR-SR-26, DEC-CH-02); leave it out.
   "Make it a lens" turns the query into a Lens (FR-LE-07, DEC-UX-25). The query stays, used as the Lens: then "Update the lens"
   takes its place and overwrites the Lens after a size check, and "Lenses on these resources" goes (DEC-LE-03, DEC-LE-04,
-  FR-LE-16, DEC-UX-77); the switch "Lens" shows both. The box of the SQL folds as the Parameters do (DEC-UX-76).
+  FR-LE-16, DEC-UX-77); the switch "Lens" shows both. On a Resource not published, "Make it a lens" is greyed and a line
+  under the question names it, with a link (DEC-UX-218, DEC-LE-22): the third place of the switch "Lens". The box of the SQL folds as the Parameters do (DEC-UX-76).
   Related screens: resource-history.html (the queries on a Resource), lens-new.html (Make it a lens).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -170,9 +171,11 @@
  <a class="btn-quiet outline" href="query-new.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-plus-circle"></i>New query</a>
  <button class="btn-quiet outline" type="button" title="Hide this query from your panel; Hidden in the panel shows it again" style="display:inline-flex;align-items:center;gap:6px"><i class="ph ph-eye-slash"></i>Hide</button>
  <a class="btn-primary" data-pane-group="lens" data-pane="free" hidden href="lens-new.html" style="text-decoration:none" title="Turn this query into a Lens for everyone who may use its Resources"><i class="ph ph-aperture" style="font-size:15px"></i>Make it a Lens</a>
+ <button class="btn-primary" data-pane-group="lens" data-pane="unpublished" hidden type="button" disabled title="A Lens is made only on published Resources: this query reads one that is not published yet"><i class="ph ph-aperture" style="font-size:15px"></i>Make it a Lens</button>
  <button class="btn-primary" data-pane-group="lens" data-pane="linked" type="button" data-sheet-open="update-lens" title="Overwrite the Lens with this query: its SQL and Parameters"><i class="ph ph-arrows-clockwise" style="font-size:15px"></i>Update the Lens</button>
 </div>
 <p class="q-question" id="q-question">Which sources bring our leads, week by week?</p>
+<p class="q-origin" data-pane-group="lens" data-pane="unpublished" hidden><i class="ph ph-globe-simple"></i><span>Not published yet: <a href="resource-detail.html">Lead sources</a>. A Lens is made only on published Resources.</span></p>
 <p class="q-origin" data-pane-group="lens" data-pane="linked"><i class="ph ph-aperture"></i><span>Used as the Lens <a href="lens.html">Leads per source name</a>, in Credit leads, since 23 Oct. "Update the Lens" overwrites it with this query.</span></p>
 <p class="q-origin" id="q-origin" hidden><i class="ph ph-git-branch"></i><span>Started from <a href="query.html">Leads per source name</a>, after run 14. That query stays as it was.</span></p>
 <div class="alert urgent" data-pane-group="qstate" data-pane="broken" hidden><i class="ph-fill ph-link-break"></i><p><b>This query can't run.</b> The column <span class="mono">lead_channel</span> of Weekly lead volume no longer exists, since the dbt run of 28 Oct 2026. Change the SQL so that it no longer reads it and run it, and the query works again; it also works again by itself when the column comes back.</p></div>
@@ -190,7 +193,7 @@
    <span id="scope-outside"></span>
    <button class="scope-add" type="button" data-add-res><i class="ph ph-plus"></i>Add a Resource</button>
   </span>
-  <button class="btn-quiet outline" type="button" data-pane-group="lens" data-pane="free" hidden data-sheet-open="lenses-sheet" id="lenses-btn" title="See which Lenses already use these Resources"><i class="ph ph-aperture"></i><span>Lenses on these Resources</span><span class="count">3</span></button>
+  <button class="btn-quiet outline" type="button" data-pane-group="lens" data-pane="free unpublished" hidden data-sheet-open="lenses-sheet" id="lenses-btn" title="See which Lenses already use these Resources"><i class="ph ph-aperture"></i><span>Lenses on these Resources</span><span class="count">3</span></button>
  </div>
  <div class="q-body">
  <div class="q-box sql-fold open" id="sql-box">
@@ -542,6 +545,7 @@
 <div class="proto-switch" data-group="lens" role="tablist" aria-label="Prototype: used as a Lens" style="top:28px;bottom:auto;right:600px">Lens
  <button class="seg on" data-target="linked" role="tab" aria-selected="true">Used as a Lens</button>
  <button class="seg" data-target="free" role="tab" aria-selected="false">Not a Lens</button>
+ <button class="seg" data-target="unpublished" role="tab" aria-selected="false">On an unpublished Resource</button>
 </div>
 <div class="proto-switch" data-group="sqlstate" role="tablist" aria-label="Prototype: the SQL" style="top:28px;bottom:auto;right:290px">SQL
  <button class="seg on" data-target="ok" role="tab" aria-selected="true">As written</button>
