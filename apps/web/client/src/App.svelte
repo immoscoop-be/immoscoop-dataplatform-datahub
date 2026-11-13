@@ -1230,6 +1230,7 @@
                   onflag={(on) => setFlagged(on ? flag(flagged, id) : unflag(flagged, id))}
                   onstatus={statusOf}
                   oncommands={(of, rows) => (queryCommands = { ...queryCommands, [of]: rows })}
+                  go={(path) => router.go(path)}
                   {mac}
                 />
               </div>
