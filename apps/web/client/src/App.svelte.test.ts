@@ -3212,6 +3212,33 @@ describe('Query', () => {
     expect(screen.queryByRole('dialog', { name: 'Snelvenster' })).toBeNull();
   });
 
+  it('shows the info of the word at the cursor from the quick window, as a double-click does (DEC-UX-238)', async () => {
+    serve({ queries: [{ ...QUERY, sql: 'select\n    week_start\nfrom\n    `immoscoop-dataplatform-398214.dbt_prod_leads.weekly_lead_volume`\n-- by\n    , week_start' }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const editor = await main.findByRole('textbox', { name: /Leads per source name/ }, { timeout: 3000 });
+    await vi.waitFor(() => expect(editor.querySelector('.cm-explain')).toBeTruthy());
+    // Not on such a word: no Show info.
+    editor.focus();
+    await fireEvent.keyDown(editor, { key: 'Home', code: 'Home', ctrlKey: true });
+    await fireEvent.keyDown(document.body, { key: 'k', code: 'KeyK', ctrlKey: true });
+    let quick = within(await screen.findByRole('dialog', { name: 'Snelvenster' }));
+    expect(quick.queryByText('Info tonen')).toBeNull();
+    await fireEvent.keyDown(quick.getByRole('combobox'), { key: 'Escape' });
+    // At the end of week_start, the field: Show info comes first, and opens its descriptions.
+    editor.focus();
+    await fireEvent.keyDown(editor, { key: 'End', code: 'End', ctrlKey: true });
+    await fireEvent.keyDown(document.body, { key: 'k', code: 'KeyK', ctrlKey: true });
+    quick = within(await screen.findByRole('dialog', { name: 'Snelvenster' }));
+    const first = quick.getAllByRole('option')[0] as HTMLElement;
+    expect(first.textContent).toContain('Info tonen');
+    expect(first.textContent).toContain('het veld week_start, waar de cursor staat');
+    await fireEvent.keyDown(quick.getByRole('combobox'), { key: 'Enter' });
+    const explained = await screen.findByRole('dialog', { name: 'week_start' });
+    expect(explained.textContent).toContain('Monday of the week');
+  });
+
   it('goes to a Resource the User may see from the quick window, anywhere in Data Hub (DEC-UX-237, OP-UX-88)', async () => {
     serve({ queries: [{ ...QUERY }] });
     open('/collections');

@@ -4,7 +4,7 @@
   import DataGrid from '@datahub/ui/components/DataGrid.svelte';
   import Pager from '@datahub/ui/components/Pager.svelte';
   import RunButton from '@datahub/ui/components/RunButton.svelte';
-  import SqlEditor, { type At, CTE_LINE, type ErrorMark, type Explained, type ParameterSuggestion, type Suggestion, type TableSuggestion } from '@datahub/ui/components/SqlEditor.svelte';
+  import SqlEditor, { type At, type AtCursor, CTE_LINE, type ErrorMark, type Explained, type ParameterSuggestion, type Suggestion, type TableSuggestion } from '@datahub/ui/components/SqlEditor.svelte';
   import { formatBytes } from '@datahub/ui/foundations/bytes.js';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import type { IconName } from '@datahub/ui/foundations/icons.js';
@@ -227,6 +227,8 @@
   /** What a double-click in the SQL opened (DEC-UX-221): the Summary of a Resource, or the descriptions of a field. */
   let summaryWindow = $state<TableSuggestion | null>(null);
   let fieldExplained = $state<{ fields: Suggestion[]; at: At } | null>(null);
+  /** The word under the cursor that a double-click explains: "Show info" in the quick window opens it (DEC-UX-238). */
+  let atCursor = $state<AtCursor | null>(null);
   let windows = 0;
   let newSet = $state<{ mode: 'add' | 'remove' | 'same'; resource: string | null } | null>(null);
   let finding = $state(false);
@@ -486,6 +488,12 @@
       ...more,
     });
     const rows: QuickRow[] = [];
+    // What the cursor is on comes first: a field, a Parameter or a Resource, explained as a double-click does (DEC-UX-238).
+    if (atCursor && !preview) {
+      const word = atCursor;
+      const about = { parameter: 'quick.query.info.parameter', table: 'quick.query.info.table', field: 'quick.query.info.field' } as const;
+      rows.push(command('info', 'info', t('quick.query.info'), () => editor?.explainAtCursor(), { meta: t(about[word.kind], { name: word.name }), words: t('quick.query.info.words') }));
+    }
     if (onflag) {
       const flag = onflag;
       rows.push(
@@ -1057,6 +1065,7 @@
             }}
             onrun={runFromKeys}
             onexplain={explain}
+            oncursor={(word) => (atCursor = word)}
             label={t('query.sql', { name: query.name })}
             readonly={!query.mine}
             {nonce}

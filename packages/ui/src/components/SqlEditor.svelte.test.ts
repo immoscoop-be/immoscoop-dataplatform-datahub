@@ -44,6 +44,28 @@ describe('the SQL editor', () => {
     expect(document.getSelection()?.toString()).toBe('row');
   });
 
+  it('tells which word the cursor is on that a double-click explains, and opens it as a double-click does (DEC-UX-238)', async () => {
+    const oncursor = vi.fn();
+    const onexplain = vi.fn();
+    const { component } = render(SqlEditor, {
+      value: 'select\n    lead_source',
+      suggestions: [{ name: 'lead_source', type: 'STRING', resource: 'Weekly', role: null, description: '', businessDescription: '' }],
+      label: 'SQL',
+      oncursor,
+      onexplain,
+    });
+    const editor = content();
+    editor.focus();
+    expect(component.explainAtCursor()).toBe(false);
+    await fireEvent.keyDown(editor, { key: 'End', code: 'End', ctrlKey: true });
+    await vi.waitFor(() => expect(oncursor).toHaveBeenLastCalledWith({ kind: 'field', name: 'lead_source' }));
+    expect(component.explainAtCursor()).toBe(true);
+    expect(onexplain).toHaveBeenCalledWith(expect.objectContaining({ kind: 'field', name: 'lead_source' }));
+    // Off the word, it says so once.
+    await fireEvent.keyDown(editor, { key: 'Home', code: 'Home', ctrlKey: true });
+    await vi.waitFor(() => expect(oncursor).toHaveBeenLastCalledWith(null));
+  });
+
   it('starts a new line at the indent of the line above on Enter, never more or less (DEC-UX-234)', async () => {
     render(SqlEditor, { value: 'with leads as (\n    select\n        week_start,', suggestions: [], label: 'SQL' });
     const editor = content();

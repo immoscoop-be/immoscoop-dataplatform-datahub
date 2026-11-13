@@ -694,4 +694,11 @@ describe('the MCP App', () => {
       for (const [name, value] of ours) expect([name, value]).toEqual([name, theirs.get(name)]);
     }
   });
+
+  it('tells the browser its theme, so no white shows behind the rounded card in dark mode', () => {
+    // A frame whose colour scheme differs from the page around it is painted white behind it by the browser.
+    expect(VIEW_PAGE).toContain(':root { color-scheme: light; }');
+    expect(VIEW_PAGE).toContain('[data-theme="dark"] { color-scheme: dark; }');
+    expect(VIEW_PAGE).toMatch(/html, body \{[^}]*background: transparent;/);
+  });
 });
