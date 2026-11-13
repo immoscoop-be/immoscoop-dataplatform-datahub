@@ -23,7 +23,7 @@
   import { createQuery, type DeletedLens, type Lens, LensDeleted, type LensItem, type Run } from './lib/query.js';
   import { createRegistry } from './lib/registry.js';
   import { digitOf, flag, markOf, modLabel, MOST_FLAGGED, moveFlag, onMac, placeOf, type QueryStatus, unflag, withMod } from './lib/flags.js';
-  import type { QuickRow } from './lib/quick.js';
+  import { type QuickRow, used } from './lib/quick.js';
   import { provideScreenCommands } from './lib/commands.svelte.js';
   import { collectionPath, GROUPS, learningPath, lensPath, messagesOnPath, myPagePath, NEW_COLLECTION, NEW_QUERY, objectPath, queryPath, resourcePath, route } from './lib/routes.js';
   import { Router } from './lib/router.svelte.js';
@@ -739,6 +739,8 @@
 
   /** The quick window, Cmd+Shift+P or Cmd+K anywhere in Data Hub (DEC-UX-237, OP-UX-87). */
   let quickOpen = $state(false);
+  /** What the User did from the quick window in this session, most recent first (DEC-UX-242). */
+  let quickUsed = $state<string[]>([]);
   $effect(() => {
     if (status.kind !== 'signedIn') return;
     const keys = (event: KeyboardEvent) => {
@@ -750,6 +752,8 @@
         quickOpen = !quickOpen;
         return;
       }
+      // While the quick window is open, Cmd+1 to Cmd+9 are its own: they highlight a row there (DEC-UX-242).
+      if (quickOpen) return;
       // By where the key is, so that a keyboard that needs Shift for its digits, such as AZERTY, works too.
       const digit = /^Digit([0-9])$/.exec(event.code)?.[1] ?? (/^[0-9]$/.test(event.key) ? event.key : undefined);
       if (!event.shiftKey && digit !== undefined && inQuery) {
@@ -794,7 +798,7 @@
       }
     }
     flagged.forEach((id, at) =>
-      rows.push({ key: `flag:${id}`, group: 'flagged', icon: 'flag-fill', title: flagNames[id] || '…', keys: `${modLabel(mac)}${digitOf(at)}`, kind: t('quick.kind.query'), does: 'open', run: () => router.go(queryPath(id)) }),
+      rows.push({ key: `flag:${id}`, group: 'flagged', icon: 'flag-fill', title: flagNames[id] || '…', meta: `${modLabel(mac)}${digitOf(at)}`, kind: t('quick.kind.query'), does: 'open', run: () => router.go(queryPath(id)) }),
     );
     for (const collection of collections ?? []) {
       rows.push({ key: `collection:${collection.id}`, group: 'collections', icon: 'stack', title: collection.name, meta: t('quick.collection.meta', { count: collection.resources.filter((item) => !item.withdrawn).length }), kind: 'Collection', does: 'open', run: () => router.go(collectionPath(collection.id)) });
@@ -1341,7 +1345,7 @@
   </AppShell>
   {#if quickOpen}
     <!-- Cmd+Shift+P or Cmd+K, anywhere in Data Hub (DEC-UX-237). -->
-    <QuickWindow where={quickWhere} screenGroup={page.kind === 'query' ? t('quick.group.query') : (screenCommands.group ?? t('quick.group.query'))} rows={quickRows} {findQueries} onclose={() => (quickOpen = false)} />
+    <QuickWindow where={quickWhere} screenGroup={page.kind === 'query' ? t('quick.group.query') : (screenCommands.group ?? t('quick.group.query'))} rows={quickRows} {findQueries} onclose={() => (quickOpen = false)} recent={quickUsed} onused={(key) => (quickUsed = used(quickUsed, key))} {mac} />
   {/if}
   <!-- What is dragged, and the line that says where it went (DEC-UX-157). -->
   <DragGhost item={dragging.item} />

@@ -1705,15 +1705,18 @@ document.addEventListener('click', e => {
 // queries with their keys, and Go to: every section. Typed, it searches those and everything the User may see,
 // Resources, Collections, Lenses, their queries and Learning Cards, grouped by kind, each with its kind on the right.
 // Up and Down move, Enter does what the row says, Escape, the shortcut again or a click beside it closes it.
+// Empty, it lists first what the User did from it in this session, most recent first, five at most (DEC-UX-242). The
+// first nine rows that can be done carry ⌘1 to ⌘9: that key highlights the row, and Enter then does it; while the window
+// is open, ⌘1 to ⌘9 no longer open a flagged query, whose key shows in its name line.
 // What the User may never do is not listed; what they cannot do right now is greyed, with why (DEC-UX-207).
 // Prototype: ?quick=open opens it, ?quick=open&q=lead with a search typed.
 (() => {
   const role = () => document.documentElement.dataset.role || 'colleague';
   const FLAGGED = [
-    { title: 'Leads per source name', keys: '⌘1', href: 'query.html' },
-    { title: 'Partner share per week', keys: '⌘2', href: 'query.html' },
-    { title: 'Listings per postal code, last 28 days', keys: '⌘3', href: 'query.html' },
-    { title: 'Saved searches by price band', keys: '⌘4', href: 'query.html' },
+    { title: 'Leads per source name', meta: '⌘1', href: 'query.html' },
+    { title: 'Partner share per week', meta: '⌘2', href: 'query.html' },
+    { title: 'Listings per postal code, last 28 days', meta: '⌘3', href: 'query.html' },
+    { title: 'Saved searches by price band', meta: '⌘4', href: 'query.html' },
   ];
   const GO = [
     { icon: 'ph-fill ph-stack', title: 'Collections', href: 'collections-start.html', words: 'home start' },
@@ -1762,6 +1765,8 @@ document.addEventListener('click', e => {
   document.body.append(back, win);
   const input = win.querySelector('#quick-q'), list = win.querySelector('#quick-list');
   let rows = [], on = 0;
+  // What the User did from the window in this session, most recent first (DEC-UX-242)
+  const recent = [];
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const bold = (text, q) => { const i = q ? text.toLowerCase().indexOf(q) : -1; return i < 0 ? esc(text) : esc(text.slice(0, i)) + '<b>' + esc(text.slice(i, i + q.length)) + '</b>' + esc(text.slice(i + q.length)); };
   const score = (row, q) => { const t = row.title.toLowerCase(), w = `${t} ${(row.words || '').toLowerCase()} ${(row.meta || '').toLowerCase()}`; return t.startsWith(q) ? 3 : new RegExp(`\\b${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`).test(w) ? 2 : w.includes(q) ? 1 : 0; };
@@ -1782,19 +1787,26 @@ document.addEventListener('click', e => {
       ...GO.filter(visible).map(r => ({ ...r, group: 'Go to', kind: 'Section' })),
     ];
     let shown;
-    if (!q) shown = [...here, ...all.filter(r => r.group === 'Flagged queries'), ...all.filter(r => r.group === 'Go to')];
+    if (!q) {
+      const usual = [...here, ...all.filter(r => r.group === 'Flagged queries'), ...all.filter(r => r.group === 'Go to')];
+      const used = recent.map(title => usual.find(r => r.title === title)).filter(Boolean).slice(0, 5);
+      shown = [...used.map(r => ({ ...r, group: 'Recently used' })), ...usual.filter(r => !used.includes(r))];
+    }
     else {
       const groups = [ctx.group || 'This screen', ...ORDER];
       shown = groups.flatMap(g => all.filter(r => r.group === g).map(r => ({ r, s: score(r, q) })).filter(x => x.s).sort((a, b) => b.s - a.s).slice(0, g === (ctx.group || 'This screen') ? 9 : 4).map(x => x.r));
     }
     // A greyed row is never the one Enter does; with nothing to do, the foot says nothing about Enter
     rows = shown; on = shown.findIndex(r => !r.disabled);
+    // ⌘1 to ⌘9 on the first nine rows that can be done
+    let picks = 0;
+    const pickOf = shown.map(r => (!r.disabled && picks < 9 ? ++picks : null));
     let last = null, html = '';
     shown.forEach((r, i) => {
       if (r.group !== last) { html += `<div class="quick-group" role="presentation">${esc(r.group)}</div>`; last = r.group; }
       html += `<div class="quick-row${i === on ? ' on' : ''}" role="option" id="quick-${i}" data-i="${i}" aria-selected="${i === on}"${r.disabled ? ' aria-disabled="true"' : ''}>`
         + `<i class="${r.icon || 'ph ph-arrow-right'}" aria-hidden="true"></i><span class="quick-title">${bold(r.title, q)}</span>`
-        + `<span class="quick-meta">${r.meta ? esc(r.meta) : ''}</span>${r.keys ? `<span class="kbd">${esc(r.keys)}</span>` : ''}<span class="quick-kind">${esc(r.kind)}</span></div>`
+        + `<span class="quick-meta">${r.meta ? esc(r.meta) : ''}</span>${r.keys ? `<span class="kbd">${esc(r.keys)}</span>` : ''}<span class="quick-kind">${esc(r.kind)}</span>${pickOf[i] ? `<span class="quick-pick">⌘${pickOf[i]}</span>` : ''}</div>`
         + (r.disabled && r.why ? `<div class="quick-why">${esc(r.why)}</div>` : '');
     });
     list.innerHTML = html || `<div class="quick-none">Nothing found for “${esc(input.value.trim())}”. Data Hub only finds what you may see.</div>`;
@@ -1810,6 +1822,9 @@ document.addEventListener('click', e => {
   }
   function doRow(r) {
     if (!r || r.disabled) return;
+    const at = recent.indexOf(r.title);
+    if (at >= 0) recent.splice(at, 1);
+    recent.unshift(r.title);
     close();
     if (r.href) location.href = r.href;
     else if (r.click) document.querySelector(r.click)?.click();
@@ -1827,6 +1842,14 @@ document.addEventListener('click', e => {
     // Cmd+Shift+P, or Cmd+K, which Firefox leaves to the page (OP-UX-87)
     if ((e.metaKey || e.ctrlKey) && ((e.shiftKey && e.key.toLowerCase() === 'p') || (!e.shiftKey && e.key.toLowerCase() === 'k'))) { e.preventDefault(); e.stopPropagation(); win.hidden ? open() : close(); return; }
     if (win.hidden) return;
+    // ⌘1 to ⌘9 highlight that row; Enter does it (DEC-UX-242)
+    const pick = /^Digit([1-9])$/.exec(e.code);
+    if ((e.metaKey || e.ctrlKey) && !e.shiftKey && pick) {
+      e.preventDefault(); e.stopPropagation();
+      const at = list.querySelectorAll('.quick-pick')[+pick[1] - 1]?.closest('.quick-row');
+      if (at) { on = +at.dataset.i; act(); }
+      return;
+    }
     const move = d => { if (on < 0) return; let i = on; do { i = (i + d + rows.length) % rows.length; } while (rows[i].disabled && i !== on); on = i; act(); };
     if (e.key === 'Escape') { e.preventDefault(); close(); }
     else if (e.key === 'ArrowDown') { e.preventDefault(); move(1); }

@@ -3203,6 +3203,37 @@ describe('Query', () => {
     expect(location.pathname).toBe('/query/q1');
   });
 
+  it('lists what was done first, and Ctrl+1 to Ctrl+9 highlight a row without doing it (DEC-UX-242)', async () => {
+    const named = (id: string, name: string) => ({ ...QUERY, id, name });
+    const calls = serve({ queries: [named('q1', 'Leads per source name'), named('q2', 'Partner share per week'), named('q3', 'Listings per postal code')], settings: { 'query.flagged': ['q1', 'q2', 'q3'] } });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('heading', { level: 1, name: 'Leads per source name' }, { timeout: 3000 });
+    await quickDo('verberg');
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/queries/q1/hidden' }));
+    await fireEvent.keyDown(document.body, { key: 'k', code: 'KeyK', ctrlKey: true });
+    const quick = within(await screen.findByRole('dialog', { name: 'Snelvenster' }));
+    // Recently used on top, each row that can be done with its key.
+    expect(quick.getAllByRole('presentation').map((group) => group.textContent)[0]).toBe('Recent gebruikt');
+    const options = quick.getAllByRole('option');
+    // Hidden, the same button is now Show this query again: Recently used keeps it.
+    expect(options[0]?.textContent).toContain('Deze query weer tonen');
+    expect(options[0]?.textContent).toContain('Ctrl+1');
+    // The flagged queries show their own key in their line.
+    expect(options.find((option) => option.querySelector('.title')?.textContent === 'Partner share per week')?.querySelector('.meta')?.textContent).toBe('Ctrl+2');
+    // Ctrl+3 highlights the third, and does not open the third flagged query.
+    const third = options.find((option) => option.textContent?.includes('Ctrl+3'));
+    await fireEvent.keyDown(quick.getByRole('combobox'), { key: '3', code: 'Digit3', ctrlKey: true });
+    expect(third?.getAttribute('aria-selected')).toBe('true');
+    expect(location.pathname).toBe('/query/q1');
+    expect(screen.queryByRole('dialog', { name: 'Snelvenster' })).toBeTruthy();
+    // Enter does it.
+    expect(third?.textContent).toContain('Maak er een Lens van');
+    await fireEvent.keyDown(quick.getByRole('combobox'), { key: 'Enter' });
+    await vi.waitFor(() => expect(location.pathname).toBe('/query/q1/lens'));
+  });
+
   it('goes to the next and the previous flagged query from the quick window, round the row (DEC-UX-241)', async () => {
     const named = (id: string, name: string) => ({ ...QUERY, id, name });
     serve({ queries: [named('q1', 'Leads per source name'), named('q2', 'Partner share per week'), named('q3', 'Listings per postal code')], settings: { 'query.flagged': ['q1', 'q2', 'q3'] } });

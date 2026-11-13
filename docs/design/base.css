@@ -2233,6 +2233,7 @@ svg.mp, svg.mp-g { display: block; width: 100%; height: auto; overflow: visible;
 .quick-row > i { font-size: 17px; color: var(--text-secondary); width: 20px; text-align: center; flex: none; }
 .quick-row .quick-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .quick-row .quick-title b { font-weight: var(--weight-semibold); }
+.quick-pick { font-size: var(--text-meta); font-weight: var(--weight-medium); color: var(--text-muted); min-width: 26px; text-align: right; flex: none; }
 .quick-row .quick-meta { color: var(--text-muted); font-size: var(--text-small); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
 .quick-row .quick-kind { color: var(--text-muted); font-size: var(--text-small); white-space: nowrap; flex: none; }
 .quick-row .kbd { margin-left: 4px; }

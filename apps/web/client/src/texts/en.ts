@@ -622,6 +622,7 @@ export default {
   'quick.go': 'Go there',
   'quick.close': 'Close',
   'quick.group.query': 'This query',
+  'quick.group.recent': 'Recently used',
   'quick.group.commands': 'Commands',
   'quick.group.flagged': 'Flagged queries',
   'quick.group.resources': 'Resources',

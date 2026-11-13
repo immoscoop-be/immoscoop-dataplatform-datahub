@@ -621,6 +621,7 @@ export default {
   'quick.go': 'Ga erheen',
   'quick.close': 'Sluiten',
   'quick.group.query': 'Deze query',
+  'quick.group.recent': 'Recent gebruikt',
   'quick.group.commands': 'Opdrachten',
   'quick.group.flagged': 'Gemarkeerde queries',
   'quick.group.resources': 'Resources',

@@ -161,6 +161,8 @@
   // ⌘1 to ⌘0 open a flagged query, from every screen of Query (DEC-UX-236)
   document.addEventListener('keydown', e => {
     if (!(e.metaKey || e.ctrlKey) || e.shiftKey || e.altKey || !/^[0-9]$/.test(e.key)) return;
+    // While the quick window is open, its own ⌘1 to ⌘9 highlight a row there (DEC-UX-242)
+    if (document.querySelector('.quick:not([hidden])')) return;
     const tab = document.querySelectorAll('.q-flag')[e.key === '0' ? 9 : +e.key - 1];
     if (tab) { e.preventDefault(); location.href = tab.href; }
   }, true);
