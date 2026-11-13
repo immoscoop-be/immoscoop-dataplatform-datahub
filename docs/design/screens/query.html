@@ -36,8 +36,8 @@
   The switch "Query" shows it Broken (DEC-UX-160, FR-SR-53, DEC-UX-81): a table or column it reads no longer exists, so
   Run is off, a callout on top names what is missing, and the query has the red dot in the panel; its SQL can still be
   changed, and a change that runs makes it work again, as does the return of what it reads.
-  Requirements: FR-SR-59, FR-SR-58, FR-SR-57, FR-SR-56, FR-SR-53, FR-SR-36, FR-SR-37, FR-SR-40, FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-45, FR-SR-47, FR-SR-48, FR-SR-51, FR-LN-05, FR-LN-06, FR-LE-07, FR-LE-08, FR-LE-16, FR-RC-18
-  Decisions: DEC-UX-225, DEC-UX-224, DEC-UX-223, DEC-UX-222, DEC-UX-221, DEC-UX-220, DEC-UX-219, DEC-UX-218, DEC-UX-163, DEC-UX-17, DEC-UX-20, DEC-UX-70, DEC-UX-71, DEC-UX-72, DEC-UX-73, DEC-UX-74, DEC-UX-76, DEC-UX-77, DEC-UX-88, DEC-UX-97, DEC-UX-99, DEC-UX-115, DEC-SR-29, DEC-SR-35, DEC-LN-01.
+  Requirements: FR-SR-61, FR-SR-60, FR-SR-59, FR-SR-58, FR-SR-57, FR-SR-56, FR-SR-53, FR-SR-36, FR-SR-37, FR-SR-40, FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-45, FR-SR-47, FR-SR-48, FR-SR-51, FR-LN-05, FR-LN-06, FR-LE-07, FR-LE-08, FR-LE-16, FR-RC-18
+  Decisions: DEC-UX-237, DEC-UX-236, DEC-UX-235, DEC-UX-234, DEC-UX-225, DEC-UX-224, DEC-UX-223, DEC-UX-222, DEC-UX-221, DEC-UX-220, DEC-UX-219, DEC-UX-218, DEC-UX-163, DEC-UX-17, DEC-UX-20, DEC-UX-70, DEC-UX-71, DEC-UX-72, DEC-UX-73, DEC-UX-74, DEC-UX-76, DEC-UX-77, DEC-UX-88, DEC-UX-97, DEC-UX-99, DEC-UX-115, DEC-SR-29, DEC-SR-35, DEC-LN-01.
   Not in v1: the label "Claude" on a query in the panel (FR-SR-26, DEC-CH-02); leave it out.
   "Make it a lens" turns the query into a Lens (FR-LE-07, DEC-UX-25). The query stays, used as the Lens: then "Update the lens"
   takes its place and overwrites the Lens after a size check, and "Lenses on these resources" goes (DEC-LE-03, DEC-LE-04,
@@ -58,6 +58,17 @@
   columns, and adds the ones ticked: each comes as a CTE at the start of the SQL, after "with", named after its table,
   selecting its fields and filtering on its recent partitions; the sheet shows which CTEs come (DEC-UX-224, DEC-UX-225,
   FR-SR-58, FR-SR-59, OP-UX-81). A Resource found there starts a new query with it. ?find=open opens it.
+  Flagged queries (DEC-UX-236): "Flag" in the head keeps a query in a row on top of every screen of Query, a tab per
+  flagged query in the order flagged, up to ten (OP-UX-84). ⌘1 to ⌘9 and ⌘0 (Ctrl on Windows) open the first to the
+  tenth, from anywhere in Query, also while typing in the SQL; the open one stands out. A flagged query keeps what was
+  done in it while the User is in another one: its result, its tab, a run still going (OP-UX-85). Its tab marks a
+  run going, a result not seen yet, a run that failed and Broken. The × on a tab, or "Flagged" in the head, unflags it;
+  dragging a tab changes its place, and its number. The panel shows a flag on a flagged query. The switch "Flagged"
+  shows the row with this query, without it, empty and full; full, Flag is greyed with why.
+  The quick window (DEC-UX-237): Cmd+Shift+P or Cmd+K, anywhere in Data Hub (app.js draws it on every screen; the search
+  at the right of the row of flagged queries opens it too). On a query it lists first what can be done to this query
+  now: Flag or Unflag, Fold all, Format the SQL, Add a Resource, Add a table (a power user), New query from this one,
+  Hide or Show again, and the view: the query next to or above the result. ?quick=open opens it, &q=lea types in it.
   Related screens: resource-history.html (the queries on a Resource), lens-new.html (Make it a lens).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -184,12 +195,19 @@
  </div>
 </aside>
 <main class="main">
+<!-- Flagged queries (DEC-UX-236): on top of every screen of Query, a tab per flagged query with its key, ⌘1 to ⌘0
+     (Ctrl+1 to Ctrl+0 on Windows); the open one stands out; drawn by the script at the foot of this page. -->
+<nav class="q-flags" id="q-flags" aria-label="Flagged queries"></nav>
 <div class="breadcrumb">Query</div>
 <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
  <h1 class="page-title" style="flex:1" id="q-title">Leads per source name</h1>
  <span class="q-layouts" role="group" aria-label="Layout"><button aria-pressed="true" data-layout="horizontal" aria-label="The query above the result" onclick="location.search=''"><i class="ph ph-rows"></i></button><button aria-pressed="false" data-layout="side" aria-label="The query next to the result" onclick="location.search='?layout=side'"><i class="ph ph-columns"></i></button></span>
  <a class="btn-quiet outline" href="query-new.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-plus-circle"></i>New query</a>
- <button class="btn-quiet outline" type="button" title="Hide this query from your panel; Hidden in the panel shows it again" style="display:inline-flex;align-items:center;gap:6px"><i class="ph ph-eye-slash"></i>Hide</button>
+ <!-- Flag keeps the query in the flagged queries on top, with its key; flagged, it is pressed and shows its key, and a
+      click unflags it. At ten flagged it is greyed, with why on a hover (DEC-UX-236, OP-UX-84). -->
+ <span class="why-anchor" id="flag-anchor" tabindex="-1"><button class="btn-quiet outline" id="flag-btn" type="button" aria-pressed="false" title="Keep this query on top, to jump to it with its key" style="display:inline-flex;align-items:center;gap:6px"><i class="ph ph-flag"></i><span>Flag</span></button>
+  <span class="run-pop why-pop" id="why-flag" role="tooltip" hidden><span class="why-title">Ten queries are flagged.</span>Unflag one, with the × on its tab on top, to flag this one.</span></span>
+ <button class="btn-quiet outline" id="hide-btn" type="button" title="Hide this query from your panel; Hidden in the panel shows it again" style="display:inline-flex;align-items:center;gap:6px"><i class="ph ph-eye-slash"></i><span>Hide</span></button>
  <a class="btn-primary" data-pane-group="lens" data-pane="free" hidden href="lens-new.html" style="text-decoration:none" title="Turn this query into a Lens for everyone who may use its Resources"><i class="ph ph-aperture" style="font-size:15px"></i>Make it a Lens</a>
  <!-- Greyed, with why on a hover or on focus: each Resource not published yet with its Level, or each table outside Data Hub (DEC-UX-232) -->
  <span class="why-anchor" data-pane-group="lens" data-pane="unpublished" hidden tabindex="0" aria-describedby="why-lens"><button class="btn-primary" type="button" disabled><i class="ph ph-aperture" style="font-size:15px"></i>Make it a Lens</button>
@@ -229,7 +247,7 @@
    <span class="sql-summary meta">36 lines · 3 CTEs</span>
    <span style="flex:1"></span>
    <button class="btn-quiet outline" id="fold-all" title="Fold or unfold every CTE"><i class="ph ph-arrows-in-line-vertical"></i><span>Fold all</span></button>
-   <button class="btn-quiet outline" title="Format the SQL (Shift+Alt+F)"><i class="ph ph-text-align-left"></i>Format</button>
+   <button class="btn-quiet outline" id="format-btn" title="Format the SQL (Shift+Alt+F)"><i class="ph ph-text-align-left"></i>Format</button>
   </div>
   <div class="sql-editor" aria-label="SQL">
     <div class="ln"><span class="ln-no">1</span><span class="ln-fold"></span><span class="ln-code"><span class="sql-comment">-- Leads per week and source, from @dateFrom to @dateTo</span></span></div>
@@ -657,12 +675,12 @@
  <button class="seg on" data-target="works" role="tab" aria-selected="true">Works</button>
  <button class="seg" data-target="broken" role="tab" aria-selected="false">Broken</button>
 </div>
-<div class="proto-switch" data-group="lens" role="tablist" aria-label="Prototype: used as a Lens" style="top:28px;bottom:auto;right:600px">Lens
+<div class="proto-switch" data-group="lens" role="tablist" aria-label="Prototype: used as a Lens" style="top:auto;bottom:156px;right:24px">Lens
  <button class="seg on" data-target="linked" role="tab" aria-selected="true">Used as a Lens</button>
  <button class="seg" data-target="free" role="tab" aria-selected="false">Not a Lens</button>
  <button class="seg" data-target="unpublished" role="tab" aria-selected="false">On an unpublished Resource</button>
 </div>
-<div class="proto-switch" data-group="sqlstate" role="tablist" aria-label="Prototype: the SQL" style="top:28px;bottom:auto;right:290px">SQL
+<div class="proto-switch" data-group="sqlstate" role="tablist" aria-label="Prototype: the SQL" style="top:auto;bottom:112px;right:24px">SQL
  <button class="seg on" data-target="ok" role="tab" aria-selected="true">As written</button>
  <button class="seg" data-target="outside" role="tab" aria-selected="false">With a table outside</button>
  <button class="seg" data-target="known" role="tab" aria-selected="false">A table Data Hub knows, as a power user</button>
@@ -677,10 +695,131 @@
  <button class="seg" data-target="resource" role="tab" aria-selected="false">A Resource</button>
  <button class="seg" data-target="field" role="tab" aria-selected="false">A field</button>
 </div>
-<div class="role-switch" data-group="role" role="tablist" aria-label="Prototype: seen as" style="top:28px;bottom:auto">Seen as
+<div class="role-switch" data-group="role" role="tablist" aria-label="Prototype: seen as" style="top:auto;bottom:68px;right:500px">Seen as
  <button class="seg on" data-target="colleague" role="tab" aria-selected="true">Colleague</button>
  <button class="seg" data-target="datateam" role="tab" aria-selected="false">Data Team</button>
 </div>
+<div class="proto-switch" data-group="flags" role="tablist" aria-label="Prototype: flagged queries" style="bottom:68px;top:auto;right:24px">Flagged
+ <button class="seg on" data-target="this" role="tab" aria-selected="true">This one, with three more</button>
+ <button class="seg" data-target="others" role="tab" aria-selected="false">Three others</button>
+ <button class="seg" data-target="none" role="tab" aria-selected="false">None</button>
+ <button class="seg" data-target="full" role="tab" aria-selected="false">Ten others</button>
+</div>
+<script>
+  // Flagged queries (DEC-UX-236). A tab each, in the order they were flagged; its key is its place, 1 to 9, then 0
+  // for the tenth. ⌘ on a Mac, Ctrl on Windows and Linux; the prototype shows ⌘. A tab marks what happened while the
+  // User was elsewhere: a run still going (the turning circle), a result not seen yet (a dot), a run that failed (a red
+  // dot) and a query that is Broken (the red mark of the panel). Hovered, a tab offers its × to unflag it; dragged,
+  // it changes place, and the numbers follow. The open query stands out; when it is not flagged, none does.
+  const SETS = {
+    this: [['Leads per source name', 'current'], ['Partner share per week', 'running'], ['Listings per postal code, last 28 days', 'new'], ['Saved searches by price band', 'failed']],
+    others: [['Partner share per week', 'running'], ['Listings per postal code, last 28 days', 'new'], ['Saved searches by price band', 'failed']],
+    none: [],
+    full: [['Partner share per week', 'running'], ['Listings per postal code, last 28 days', 'new'], ['Saved searches by price band', 'failed'], ['Leads that came back within a week', ''], ['Credit leads per partner, this year', ''], ['Price per m² by province', 'broken'], ['New listings per day', ''], ['Leads without a source', ''], ['Partner contracts ending soon', ''], ['Searches per user, last week', '']],
+  };
+  let flags = SETS.this.map(([title, state]) => ({ title, state }));
+  const here = () => document.getElementById('q-title').textContent;
+  const keyOf = i => '⌘' + (i === 9 ? 0 : i + 1);
+  const esc2 = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  function drawFlags() {
+    const bar = document.getElementById('q-flags');
+    const mark = f => f.state === 'running' ? '<i class="ph ph-circle-notch q-flag-spin" role="img" aria-label="Running"></i>'
+      : f.state === 'new' ? '<span class="q-flag-mark seen-not" role="img" aria-label="A result you have not seen yet"></span>'
+      : f.state === 'failed' ? '<span class="q-flag-mark failed" role="img" aria-label="Its run failed"></span>'
+      : f.state === 'broken' ? '<i class="ph ph-link-break q-flag-broken" role="img" aria-label="Broken"></i>' : '';
+    const what = { running: ', running', new: ', a result you have not seen yet', failed: ', its run failed', broken: ', Broken' };
+    bar.innerHTML = flags.length
+      ? '<span class="q-flags-mod" title="Hold ⌘ and press the number of a query to open it">⌘</span>' + flags.map((f, i) => `<a class="q-flag${f.title === here() ? ' current' : ''}" href="query.html" draggable="true" data-i="${i}"${f.title === here() ? ' aria-current="page"' : ''} title="${esc2(f.title)} · ${keyOf(i)}${what[f.state] || ''}"><span class="kbd">${i === 9 ? 0 : i + 1}</span><span class="q-flag-name">${esc2(f.title)}</span>${mark(f)}<button class="q-flag-x" type="button" aria-label="Unflag ${esc2(f.title)}"><i class="ph ph-x"></i></button></a>`).join('')
+        + '<button class="q-flags-quick" type="button" data-quick-open aria-label="Quick window" title="Quick window: every command of this query, and every place in Data Hub"><i class="ph ph-magnifying-glass"></i><span class="kbd">⌘⇧P</span></button>'
+      : '<span class="q-flags-empty"><i class="ph ph-flag"></i><span>Flag a query to keep it here, and jump between them with <span class="kbd">⌘1</span> to <span class="kbd">⌘0</span>.</span></span><button class="q-flags-quick" type="button" data-quick-open>Quick window <span class="kbd">⌘⇧P</span></button>';
+    // The Flag button: pressed with its key when this query is flagged; greyed with why when ten others are
+    const at = flags.findIndex(f => f.title === here()), btn = document.getElementById('flag-btn'), full = at < 0 && flags.length >= 10;
+    btn.setAttribute('aria-pressed', String(at >= 0));
+    btn.disabled = full;
+    btn.innerHTML = at >= 0 ? `<i class="ph-fill ph-flag"></i><span>Flagged</span><span class="kbd">${keyOf(at)}</span>` : '<i class="ph ph-flag"></i><span>Flag</span>';
+    btn.title = at >= 0 ? 'Flagged: click to unflag it' : 'Keep this query on top, to jump to it with its key';
+    document.getElementById('why-flag').hidden = !full;
+    const anchor = document.getElementById('flag-anchor');
+    anchor.tabIndex = full ? 0 : -1;
+    full ? anchor.setAttribute('aria-describedby', 'why-flag') : anchor.removeAttribute('aria-describedby');
+    // The panel: a flagged query has the flag at its end
+    document.querySelectorAll('.panel .q-item').forEach(item => {
+      const on = flags.some(f => f.title === item.querySelector('.item-title')?.textContent);
+      const flag = item.querySelector('.flag-mark');
+      if (on && !flag) item.insertAdjacentHTML('beforeend', '<i class="ph-fill ph-flag flag-mark" role="img" aria-label="Flagged"></i>');
+      if (!on && flag) flag.remove();
+    });
+  }
+  document.getElementById('flag-btn').addEventListener('click', () => {
+    const at = flags.findIndex(f => f.title === here());
+    if (at >= 0) flags.splice(at, 1); else if (flags.length < 10) flags.push({ title: here(), state: '' });
+    drawFlags();
+  });
+  document.getElementById('hide-btn').addEventListener('click', e => {
+    const b = e.currentTarget, hidden = b.getAttribute('aria-pressed') !== 'true';
+    b.setAttribute('aria-pressed', String(hidden));
+    b.innerHTML = hidden ? '<i class="ph ph-eye"></i><span>Show again</span>' : '<i class="ph ph-eye-slash"></i><span>Hide</span>';
+  });
+  document.getElementById('q-flags').addEventListener('click', e => {
+    const x = e.target.closest('.q-flag-x'), tab = e.target.closest('.q-flag');
+    if (x) { e.preventDefault(); flags.splice(+tab.dataset.i, 1); drawFlags(); return; }
+    if (tab) { e.preventDefault(); jump(+tab.dataset.i); }
+  });
+  // In the prototype, a jump shows the name of that query on the page; in Data Hub that query opens as the User left it
+  function jump(i) {
+    const f = flags[i];
+    if (!f) return;
+    document.getElementById('q-title').textContent = f.title;
+    if (f.state === 'new' || f.state === 'failed') f.state = f.state === 'new' ? '' : f.state;
+    drawFlags();
+  }
+  document.addEventListener('keydown', e => {
+    if (!(e.metaKey || e.ctrlKey) || e.shiftKey || e.altKey || !/^[0-9]$/.test(e.key)) return;
+    e.preventDefault();
+    jump(e.key === '0' ? 9 : +e.key - 1);
+  }, true);
+  // Dragging a tab changes its place, and the numbers follow
+  let dragged = null;
+  const bar = document.getElementById('q-flags');
+  bar.addEventListener('dragstart', e => { const t = e.target.closest('.q-flag'); if (!t) return; dragged = +t.dataset.i; t.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
+  bar.addEventListener('dragover', e => { const t = e.target.closest('.q-flag'); if (dragged === null || !t) return; e.preventDefault(); bar.querySelectorAll('.drop-before').forEach(x => x.classList.remove('drop-before')); t.classList.add('drop-before'); });
+  bar.addEventListener('drop', e => { const t = e.target.closest('.q-flag'); if (dragged === null || !t) return; e.preventDefault(); const [f] = flags.splice(dragged, 1); flags.splice(+t.dataset.i > dragged ? +t.dataset.i - 1 : +t.dataset.i, 0, f); dragged = null; drawFlags(); });
+  bar.addEventListener('dragend', () => { dragged = null; drawFlags(); });
+  document.querySelectorAll('[data-group="flags"] [data-target]').forEach(b => b.addEventListener('click', () => {
+    document.getElementById('q-title').textContent = 'Leads per source name';
+    flags = SETS[b.dataset.target].map(([title, state]) => ({ title, state }));
+    drawFlags();
+  }));
+  drawFlags();
+
+  // The commands of a query in the quick window (DEC-UX-237): only what applies to it now, such as Flag or Unflag,
+  // Hide or Show again; Add a table only for a power user; Flag greyed, with why, when ten others are flagged.
+  window.QUICK = {
+    group: 'This query',
+    get where() { return 'Query · ' + here(); },
+    get commands() {
+      const at = flags.findIndex(f => f.title === here()), full = at < 0 && flags.length >= 10;
+      const hidden = document.getElementById('hide-btn').getAttribute('aria-pressed') === 'true';
+      const side = new URLSearchParams(location.search).get('layout') === 'side';
+      return [
+        at >= 0
+          ? { icon: 'ph-fill ph-flag', title: 'Unflag this query', meta: `takes it off the top, and ${keyOf(at)} with it`, click: '#flag-btn', words: 'flag pin remove quick list' }
+          : { icon: 'ph ph-flag', title: 'Flag this query', meta: full ? '' : `keeps it on top, as ${keyOf(flags.length)}`, click: '#flag-btn', disabled: full, why: 'Ten queries are flagged. Unflag one first.', words: 'pin star keep quick list' },
+        { icon: 'ph ph-arrows-in-line-vertical', title: 'Fold all', meta: 'every CTE of the SQL', click: '#fold-all', words: 'collapse cte' },
+        { icon: 'ph ph-text-align-left', title: 'Format the SQL', meta: 'in the house layout', keys: '⇧⌥F', click: '#format-btn', words: 'format layout indent pretty' },
+        { icon: 'ph ph-plus', title: 'Add a Resource', meta: 'starts a new query with it', click: '[data-add-res]', words: 'resource table join new' },
+        { icon: 'ph ph-magnifying-glass', title: 'Add a table', meta: 'a table outside Data Hub, as a CTE', click: '[data-find-table]', for: 'datateam', words: 'find table outside dbt model staging power' },
+        { icon: 'ph ph-git-branch', title: 'New query from this one', meta: 'the same Resources, its SQL and Parameters', run: () => window.quickNewSame?.(), words: 'copy duplicate current start from' },
+        hidden
+          ? { icon: 'ph ph-eye', title: 'Show this query again', meta: 'in your panel', click: '#hide-btn', words: 'unhide show' }
+          : { icon: 'ph ph-eye-slash', title: 'Hide this query', meta: 'from your panel; Hidden shows it again', click: '#hide-btn', words: 'hide remove' },
+        side
+          ? { icon: 'ph ph-rows', title: 'Put the query above the result', meta: 'the view, kept for you', run: () => { location.search = ''; }, words: 'view layout portrait orientation above stacked' }
+          : { icon: 'ph ph-columns', title: 'Put the query next to the result', meta: 'the view, kept for you', run: () => { location.search = '?layout=side'; }, words: 'view layout landscape orientation side by side' },
+      ];
+    },
+  };
+</script>
 <script src="app.js"></script>
 </body>
 </html>

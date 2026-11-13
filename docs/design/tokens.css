@@ -59,6 +59,7 @@
   --delay-tooltip: 150ms;
   --delay-focus: 120ms;             /* a passing mouse must not trigger focus */
   --motion-loading: 1s ease-in-out;  /* the three dots going back and forth while something is read (DEC-UX-165) */
+  --motion-spin: 1s linear;          /* the circle turning on the tab of a flagged query while it runs (DEC-UX-236) */
   --delay-loading: 300ms;           /* before the dots show: a quick answer shows none */
   --delay-loading-step: 160ms;      /* each dot a little after the one before it */
   --opacity-out-of-focus: .68;      /* the window out of focus, its text and all, softer (DEC-UX-146) */
@@ -156,6 +157,8 @@
   --sheet-backdrop: rgba(40,34,30,.5);
   --sheet-width: 50vw;
   --sheet-shadow: 0 20px 60px rgba(0,0,0,.18);
+  /* The quick window, Cmd+Shift+P: the page behind it only lightly dimmed, as it is a moment (DEC-UX-237) */
+  --quick-backdrop: rgba(40,34,30,.18);
 }
 
 [data-theme="dark"] {
@@ -192,4 +195,5 @@
   --glass-shadow: 0 30px 80px rgba(0,0,0,.3);
   --sheet-backdrop: rgba(0,0,0,.62);
   --sheet-shadow: 0 20px 60px rgba(0,0,0,.4);
+  --quick-backdrop: rgba(0,0,0,.3);
 }

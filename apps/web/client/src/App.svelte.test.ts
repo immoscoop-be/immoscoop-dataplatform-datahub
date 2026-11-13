@@ -3118,6 +3118,115 @@ describe('Query', () => {
     expect(within(item as HTMLElement).getByText('Claude').getAttribute('title')).toBe('Gemaakt via Claude');
   });
 
+  it('keeps flagged queries on top of Query, flags with Flag and jumps with Ctrl+1 to Ctrl+0 (DEC-UX-236, OP-UX-84, OP-UX-86)', async () => {
+    const partners = { ...QUERY, id: 'q2', name: 'Partner share per week', lastRunAt: new Date().toISOString() };
+    const calls = serve({ queries: [{ ...QUERY, lastRunAt: new Date().toISOString() }, partners], settings: { 'query.flagged': ['q2'] } });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const flags = within(await main.findByRole('navigation', { name: 'Gemarkeerde queries' }));
+    expect((await flags.findByRole('link', { name: /Partner share per week/ })).getAttribute('href')).toBe('/query/q2');
+    expect(flags.getByText('1')).toBeTruthy();
+    // This query is not flagged yet: Flag keeps it on top, as the second, with its key.
+    await fireEvent.click(await main.findByRole('button', { name: 'Markeren' }, { timeout: 3000 }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/query.flagged', body: { value: ['q2', 'q1'] } }));
+    expect(await main.findByRole('button', { name: /^Gemarkeerd/ })).toBeTruthy();
+    expect((await flags.findByRole('link', { name: /Leads per source name/ })).getAttribute('aria-current')).toBe('page');
+    // The panel shows the flag at the end of a flagged query.
+    const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
+    expect(await panel.findAllByRole('img', { name: 'Gemarkeerd' })).toHaveLength(2);
+    // Ctrl+1 opens the first; the one left stays as the User left it, what was typed in its SQL too (OP-UX-85).
+    const editor = await main.findByRole('textbox', { name: /Leads per source name/ });
+    await typeInEditor(editor, ' -- mine');
+    await fireEvent.keyDown(document.body, { key: '1', code: 'Digit1', ctrlKey: true });
+    await vi.waitFor(() => expect(location.pathname).toBe('/query/q2'));
+    await main.findByRole('textbox', { name: /Partner share per week/ });
+    // A keyboard that needs Shift for its digits, as AZERTY does, opens it by where the key is.
+    await fireEvent.keyDown(document.body, { key: '&', code: 'Digit2', ctrlKey: true });
+    await vi.waitFor(() => expect(location.pathname).toBe('/query/q1'));
+    const back = await main.findByRole('textbox', { name: /Leads per source name/ });
+    expect(back).toBe(editor);
+    expect(back.textContent).toContain('-- mine');
+    // The × on a tab unflags it.
+    await fireEvent.click(flags.getByRole('button', { name: 'Partner share per week niet meer markeren' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/query.flagged', body: { value: ['q1'] } }));
+  });
+
+  it('moves a flagged query by dragging its tab, and its key with it (DEC-UX-236)', async () => {
+    const named = (id: string, name: string) => ({ ...QUERY, id, name });
+    const calls = serve({ queries: [named('q1', 'Leads per source name'), named('q2', 'Partner share per week'), named('q3', 'Listings per postal code')], settings: { 'query.flagged': ['q1', 'q2', 'q3'] } });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const flags = within(await screen.findByRole('navigation', { name: 'Gemarkeerde queries' }));
+    const tab = async (name: string) => (await flags.findByRole('link', { name: new RegExp(name) })).closest('[role="listitem"]') as HTMLElement;
+    const third = await tab('Listings per postal code');
+    const first = await tab('Leads per source name');
+    // The third onto the first: it becomes the first, and Ctrl+1 opens it.
+    await fireEvent.dragStart(third);
+    await fireEvent.dragOver(first);
+    await fireEvent.drop(first);
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/query.flagged', body: { value: ['q3', 'q1', 'q2'] } }));
+    await fireEvent.keyDown(document.body, { key: '1', code: 'Digit1', ctrlKey: true });
+    await vi.waitFor(() => expect(location.pathname).toBe('/query/q3'));
+  });
+
+  it('greys Flag at ten flagged queries, and says why (OP-UX-84)', async () => {
+    const ten = Array.from({ length: 10 }, (_, at) => ({ ...QUERY, id: `f${at}`, name: `Flagged ${at}` }));
+    serve({ queries: [QUERY, ...ten], settings: { 'query.flagged': ten.map((query) => query.id) } });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const why = await main.findByRole('group', { name: 'Markeren' }, { timeout: 3000 });
+    expect((within(why).getByRole('button', { name: 'Markeren' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(document.getElementById(why.getAttribute('aria-describedby') ?? '')?.textContent).toContain('Tien queries zijn gemarkeerd.');
+  });
+
+  it('opens the quick window with Ctrl+K and Ctrl+Shift+P, with the commands of the query first, and does one (DEC-UX-237, OP-UX-87)', async () => {
+    const calls = serve({ queries: [{ ...QUERY }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('button', { name: 'Markeren' }, { timeout: 3000 });
+    await fireEvent.keyDown(document.body, { key: 'k', code: 'KeyK', ctrlKey: true });
+    const quick = within(await screen.findByRole('dialog', { name: 'Snelvenster' }));
+    const titles = () => quick.queryAllByRole('option').map((option) => option.querySelector('.title')?.textContent);
+    expect(titles().slice(0, 7)).toEqual([
+      'Markeer deze query',
+      'Alles dichtvouwen',
+      'De SQL opmaken',
+      'Een Resource toevoegen',
+      'Nieuwe query vanuit deze',
+      'Deze query verbergen',
+      'De query naast het resultaat',
+    ]);
+    // Add a table is for a power user only.
+    expect(titles()).not.toContain('Een tabel toevoegen');
+    // Escape closes it; Ctrl+Shift+P opens it again.
+    await fireEvent.keyDown(quick.getByRole('combobox'), { key: 'Escape' });
+    await vi.waitFor(() => expect(screen.queryByRole('dialog', { name: 'Snelvenster' })).toBeNull());
+    await fireEvent.keyDown(document.body, { key: 'P', code: 'KeyP', ctrlKey: true, shiftKey: true });
+    const again = within(await screen.findByRole('dialog', { name: 'Snelvenster' }));
+    await fireEvent.input(again.getByRole('combobox'), { target: { value: 'verberg' } });
+    await fireEvent.keyDown(again.getByRole('combobox'), { key: 'Enter' });
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/queries/q1/hidden' }));
+    expect(screen.queryByRole('dialog', { name: 'Snelvenster' })).toBeNull();
+  });
+
+  it('goes to a Resource the User may see from the quick window, anywhere in Data Hub (DEC-UX-237, OP-UX-88)', async () => {
+    serve({ queries: [{ ...QUERY }] });
+    open('/collections');
+    render(App, { config: CONFIG });
+    await screen.findByRole('main');
+    await vi.waitFor(() => expect(screen.getByRole('complementary', { name: 'Collections' }).textContent).toContain('Credit leads'));
+    await fireEvent.keyDown(document.body, { key: 'k', code: 'KeyK', ctrlKey: true });
+    const quick = within(await screen.findByRole('dialog', { name: 'Snelvenster' }));
+    await fireEvent.input(quick.getByRole('combobox'), { target: { value: 'weekly' } });
+    const found = await quick.findByRole('option', { name: /Weekly lead volume/ });
+    expect(found.textContent).toContain('Resource');
+    await fireEvent.click(found);
+    await vi.waitFor(() => expect(location.pathname).toBe('/resources/r2'));
+  });
+
   it('reads the queries again with Refresh, such as those Claude made meanwhile (DEC-UX-163)', async () => {
     const calls = serve({ queries: [{ ...QUERY }] });
     open('/query/q1');

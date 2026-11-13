@@ -7,6 +7,7 @@
   import { addTexts, setLanguage, currentLanguage, type Language } from '@datahub/ui/foundations/texts.svelte.js';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
   import IconButton from '@datahub/ui/primitives/IconButton.svelte';
+  import { levelName } from '@datahub/ui/foundations/levels.js';
   import Loading from '@datahub/ui/primitives/Loading.svelte';
   import { NotFound as Missing, onPermissionRefused, onSignedOut } from './lib/api.js';
   import { Backgrounds } from './lib/background.svelte.js';
@@ -21,7 +22,9 @@
   import { type Card, cardsIn, createLearning, drawExample, LEVELS, type LevelId, type Progress, type Step, suggestedLevels, topicOf, writtenCards } from './lib/learning.js';
   import { createQuery, type DeletedLens, type Lens, LensDeleted, type LensItem, type Run } from './lib/query.js';
   import { createRegistry } from './lib/registry.js';
-  import { collectionPath, lensPath, messagesOnPath, NEW_COLLECTION, NEW_QUERY, objectPath, queryPath, route } from './lib/routes.js';
+  import { digitOf, flag, markOf, modLabel, MOST_FLAGGED, moveFlag, onMac, placeOf, type QueryStatus, unflag, withMod } from './lib/flags.js';
+  import type { QuickRow } from './lib/quick.js';
+  import { collectionPath, GROUPS, learningPath, lensPath, messagesOnPath, myPagePath, NEW_COLLECTION, NEW_QUERY, objectPath, queryPath, resourcePath, route } from './lib/routes.js';
   import { Router } from './lib/router.svelte.js';
   import { can, mayQuery, NO_PERMISSIONS, PERMISSION_KEYS, PERMISSION_TEXTS, reach, sees } from './lib/permissions.js';
   import { ADMIN_TOOLS, type AdminTool, SECTIONS, sectionFor, sectionLabel, toolsFor } from './lib/sections.js';
@@ -57,7 +60,9 @@
   import MyPage from './screens/MyPage.svelte';
   import NotFound from './screens/NotFound.svelte';
   import QueryNew from './screens/QueryNew.svelte';
+  import QueryFlags from './screens/QueryFlags.svelte';
   import QueryPanel from './screens/QueryPanel.svelte';
+  import QuickWindow from './screens/QuickWindow.svelte';
   import ResourcePage from './screens/ResourcePage.svelte';
   import AppShell from './templates/AppShell.svelte';
   import SignIn from './templates/SignIn.svelte';
@@ -666,6 +671,143 @@
       ? page.section
       : undefined,
   );
+  /** Cmd on a Mac, Ctrl elsewhere: how the keys are pressed and written. */
+  const mac = onMac();
+  /** The queries the User flagged, in their order on top of Query (DEC-UX-236): kept with their settings (OP-UX-84). */
+  const flagged: readonly string[] = $derived(settings?.values['query.flagged'] ?? []);
+  function setFlagged(ids: string[]): void {
+    settings?.set('query.flagged', ids);
+  }
+  /** The names on the tabs of the flagged queries, as query gives them. */
+  let flagNames = $state<Record<string, string>>({});
+  /** What each open query tells, for the mark on its tab: a run going, a failure, Broken. */
+  let queryStatus = $state<Record<string, QueryStatus>>({});
+  /** A run ended while the User was in another query: its tab says so until they open it again. */
+  let unseen = $state<Record<string, boolean>>({});
+  /** What each open query offers in the quick window (DEC-UX-237). */
+  let queryCommands = $state<Record<string, QuickRow[]>>({});
+  /**
+   * The flagged queries opened since this browser tab loaded: each stays as the User left it while they work in another,
+   * its result, its tab and a run still going, until the tab closes or reloads (OP-UX-85).
+   */
+  let kept = $state<string[]>([]);
+  const openId = $derived(page.kind === 'query' ? page.id : undefined);
+  $effect(() => {
+    const id = openId;
+    if (!id) return;
+    if (flagged.includes(id) && !kept.includes(id)) kept = [...kept, id];
+    if (unseen[id]) unseen = { ...unseen, [id]: false };
+  });
+  /** The query pages that live: those kept and still flagged, and the one open. */
+  const alive = $derived([...kept.filter((id) => flagged.includes(id)), ...(openId && !kept.includes(openId) ? [openId] : [])]);
+  function statusOf(id: string, now: QueryStatus): void {
+    const before = queryStatus[id];
+    queryStatus = { ...queryStatus, [id]: now };
+    if (before?.running && !now.running && openId !== id) unseen = { ...unseen, [id]: true };
+  }
+  // The names of the flagged queries; one that the User may no longer see leaves the row.
+  $effect(() => {
+    if (status.kind !== 'signedIn') return;
+    for (const id of flagged) {
+      if (flagNames[id] !== undefined) continue;
+      flagNames = { ...flagNames, [id]: '' };
+      queries.get(id).then(
+        (found) => (flagNames = { ...flagNames, [id]: found.name }),
+        (error: unknown) => {
+          if (error instanceof Missing) setFlagged(unflag(flagged, id));
+          else console.error(`The name of the query ${id} could not be read`, error);
+        },
+      );
+    }
+  });
+  // A rename of the open query shows on its tab.
+  $effect(() => {
+    if (queryName && flagNames[queryName.id] !== undefined && flagNames[queryName.id] !== queryName.name) flagNames = { ...flagNames, [queryName.id]: queryName.name };
+  });
+  const flagItems = $derived(flagged.map((id) => ({ id, name: flagNames[id] || null, mark: markOf(queryStatus[id], unseen[id] ?? false) })));
+  /** On the screens of Query, Cmd+1 to Cmd+0 open the flagged queries; elsewhere they stay the browser's (OP-UX-86). */
+  const inQuery = $derived(section?.id === 'query' && mayQuery(permissions));
+
+  /** The quick window, Cmd+Shift+P or Cmd+K anywhere in Data Hub (DEC-UX-237, OP-UX-87). */
+  let quickOpen = $state(false);
+  $effect(() => {
+    if (status.kind !== 'signedIn') return;
+    const keys = (event: KeyboardEvent) => {
+      if (!withMod(event, mac) || event.altKey) return;
+      const letter = event.key.toLowerCase();
+      if ((event.shiftKey && (letter === 'p' || event.code === 'KeyP')) || (!event.shiftKey && (letter === 'k' || event.code === 'KeyK'))) {
+        event.preventDefault();
+        event.stopPropagation();
+        quickOpen = !quickOpen;
+        return;
+      }
+      // By where the key is, so that a keyboard that needs Shift for its digits, such as AZERTY, works too.
+      const digit = /^Digit([0-9])$/.exec(event.code)?.[1] ?? (/^[0-9]$/.test(event.key) ? event.key : undefined);
+      if (!event.shiftKey && digit !== undefined && inQuery) {
+        const id = flagged[placeOf(digit)];
+        if (id) {
+          event.preventDefault();
+          event.stopPropagation();
+          quickOpen = false;
+          router.go(queryPath(id));
+        }
+      }
+    };
+    window.addEventListener('keydown', keys, true);
+    return () => window.removeEventListener('keydown', keys, true);
+  });
+  /** Where the quick window opened, which its commands belong to. */
+  const quickWhere = $derived(
+    page.kind === 'query' ? (queryName?.id === page.id ? `Query · ${queryName.name}` : 'Query') : section ? sectionLabel(section) : page.kind === 'me' ? 'My page' : page.kind === 'groups' ? 'Groups' : null,
+  );
+  /** Every row of the quick window: the commands of the screen and of Data Hub, the flagged queries, the places and what the User may see (OP-UX-88). */
+  const quickRows: QuickRow[] = $derived.by(() => {
+    if (status.kind !== 'signedIn') return [];
+    const language = currentLanguage();
+    const rows: QuickRow[] = [...(page.kind === 'query' ? (queryCommands[page.id] ?? []) : [])];
+    const command = t('quick.kind.command');
+    if (mayQuery(permissions) && can(permissions, 'queries.make')) {
+      rows.push({ key: 'new-query', group: 'commands', icon: 'plus-circle-fill', title: t('query.new'), kind: command, words: t('quick.new.words'), does: 'do', run: () => router.go(NEW_QUERY) });
+    }
+    rows.push({ key: 'theme', group: 'commands', icon: theme === 'dark' ? 'sun-fill' : 'moon-fill', title: t('quick.theme'), kind: command, words: t('quick.theme.words'), does: 'do', run: () => themeOnScreen.switch() });
+    flagged.forEach((id, at) =>
+      rows.push({ key: `flag:${id}`, group: 'flagged', icon: 'flag-fill', title: flagNames[id] || '…', keys: `${modLabel(mac)}${digitOf(at)}`, kind: t('quick.kind.query'), does: 'open', run: () => router.go(queryPath(id)) }),
+    );
+    for (const collection of collections ?? []) {
+      rows.push({ key: `collection:${collection.id}`, group: 'collections', icon: 'stack', title: collection.name, meta: t('quick.collection.meta', { count: collection.resources.filter((item) => !item.withdrawn).length }), kind: 'Collection', does: 'open', run: () => router.go(collectionPath(collection.id)) });
+      for (const item of collection.resources) {
+        if (item.withdrawn) continue;
+        rows.push({ key: `resource:${item.id}`, group: 'resources', icon: 'table', title: item.displayName, meta: `${collection.name} · ${item.level} · ${levelName(item.level)}`, words: item.key, kind: 'Resource', does: 'open', run: () => router.go(resourcePath(item.id)) });
+      }
+    }
+    for (const lens of lenses ?? []) {
+      const where = collections?.find((collection) => collection.id === lens.collectionId)?.name ?? '';
+      rows.push({ key: `lens:${lens.id}`, group: 'lenses', icon: 'aperture', title: lens.name, meta: where, words: lens.question, kind: 'Lens', does: 'open', run: () => router.go(lensPath(lens.id)) });
+    }
+    for (const number of localCards.keys()) {
+      const topic = topicOf(number);
+      if (topic) rows.push({ key: `card:${number}`, group: 'cards', icon: 'graduation-cap-fill', title: topic.title[language], meta: number, kind: 'Learning Card', does: 'open', run: () => router.go(learningPath(number)) });
+    }
+    for (const one of SECTIONS.filter((candidate) => sectionFor(candidate, permissions))) {
+      if (one.id === 'admin') continue;
+      rows.push({ key: `section:${one.id}`, group: 'goTo', icon: one.icon, title: sectionLabel(one), meta: one.id === 'messages' && unread > 0 ? t('quick.unread', { count: unread }) : undefined, kind: t('quick.kind.section'), does: 'go', run: () => router.go(one.path) });
+    }
+    rows.push({ key: 'section:me', group: 'goTo', icon: 'user', title: 'My page', kind: t('quick.kind.section'), does: 'go', run: () => router.go(myPagePath('profile')) });
+    rows.push({ key: 'section:groups', group: 'goTo', icon: 'users-three', title: 'Groups', kind: t('quick.kind.section'), does: 'go', run: () => router.go(GROUPS) });
+    for (const tool of ADMIN_TOOLS.filter((candidate) => adminTools.includes(candidate.id))) {
+      rows.push({ key: `admin:${tool.id}`, group: 'goTo', icon: tool.icon, title: `Admin · ${tool.name}`, kind: t('quick.kind.section'), does: 'go', run: () => router.go(tool.path) });
+    }
+    return rows;
+  });
+  /** The User's own queries matching the words typed, newest first. */
+  async function findQueries(words: string): Promise<QuickRow[]> {
+    if (!mayQuery(permissions)) return [];
+    const found = await queries.list(false, { q: words, limit: 4 });
+    return found
+      .filter((item) => item.kind === 'query')
+      .map((item): QuickRow => ({ key: `query:${item.id}`, group: 'queries', icon: 'terminal-window', title: item.name, meta: item.resources.map((resource) => resource.displayName).join(', '), kind: t('quick.kind.query'), does: 'open', run: () => router.go(queryPath(item.id)) }));
+  }
+
   /** The Collection whose page is open, or that holds the Resource or Lens whose page is open (FR-CO-19). */
   const currentCollection = $derived(
     page.kind === 'collection'
@@ -748,6 +890,10 @@
     panel={section ? panel : undefined}
     panelActions={section?.id === 'collections' && can(permissions, 'collections.make') ? newCollection : section?.id === 'query' && can(permissions, 'queries.make') ? newQuery : undefined}
   >
+    {#if inQuery && page.kind !== 'query'}
+      <!-- The flagged queries on top of every screen of Query (DEC-UX-236). -->
+      {@render flagsBar()}
+    {/if}
     {#if page.kind === 'start' && page.section.id === 'collections'}
       <CollectionsStart
         {collections}
@@ -851,31 +997,7 @@
         />
       {/key}
     {:else if page.kind === 'query'}
-      <!-- The editor of Query comes when a query opens, so that the other pages load without it. -->
-      {#await import('./screens/QueryPage.svelte') then { default: QueryPage }}
-        <QueryPage
-          id={page.id}
-          opened={page.run}
-          client={queries}
-          {summaryOf}
-          findTables={can(permissions, 'queries.outside') ? (words, filter) => registry.findTables(words, filter) : undefined}
-          {collections}
-          nonce={config.styleNonce}
-          onran={refreshQueries}
-          onmade={(made) => {
-            refreshQueries();
-            router.go(queryPath(made.id));
-          }}
-          onlens={made}
-          hiddenChange={queryHidden}
-          layout={settings?.values['query.layout'] ?? 'horizontal'}
-          onlayout={(layout) => settings?.set('query.layout', layout)}
-          onhidden={(id, hidden) => {
-            queryHidden = { id, hidden };
-            refreshQueries();
-          }}
-        />
-      {/await}
+      <!-- Its page lives below the others, where the flagged queries stay open (OP-UX-85). -->
     {:else if page.kind === 'newLens'}
       {#key page.query}
         <LensNew
@@ -1072,6 +1194,50 @@
     {:else if page.kind === 'notFound'}
       <NotFound />
     {/if}
+    {#if mayQuery(permissions) && alive.length > 0}
+      <!-- Every flagged query opened since this tab loaded stays as the User left it; only the open one shows (OP-UX-85). -->
+      <div class="query-screen" style:display={page.kind === 'query' ? undefined : 'none'}>
+        {#if page.kind === 'query'}{@render flagsBar()}{/if}
+        <div class="query-pages">
+          <!-- The editor of Query comes when a query opens, so that the other pages load without it. -->
+          {#await import('./screens/QueryPage.svelte') then { default: QueryPage }}
+            {#each alive as id (id)}
+              {@const shown = page.kind === 'query' && page.id === id}
+              <div class="query-kept" style:display={shown ? undefined : 'none'}>
+                <QueryPage
+                  {id}
+                  opened={shown && page.kind === 'query' ? page.run : null}
+                  client={queries}
+                  {summaryOf}
+                  findTables={can(permissions, 'queries.outside') ? (words, filter) => registry.findTables(words, filter) : undefined}
+                  {collections}
+                  nonce={config.styleNonce}
+                  onran={refreshQueries}
+                  onmade={(made) => {
+                    refreshQueries();
+                    router.go(queryPath(made.id));
+                  }}
+                  onlens={made}
+                  hiddenChange={queryHidden}
+                  layout={settings?.values['query.layout'] ?? 'horizontal'}
+                  onlayout={(layout) => settings?.set('query.layout', layout)}
+                  onhidden={(id, hidden) => {
+                    queryHidden = { id, hidden };
+                    refreshQueries();
+                  }}
+                  flagAt={flagged.includes(id) ? flagged.indexOf(id) : null}
+                  flagsFull={flagged.length >= MOST_FLAGGED}
+                  onflag={(on) => setFlagged(on ? flag(flagged, id) : unflag(flagged, id))}
+                  onstatus={statusOf}
+                  oncommands={(of, rows) => (queryCommands = { ...queryCommands, [of]: rows })}
+                  {mac}
+                />
+              </div>
+            {/each}
+          {/await}
+        </div>
+      </div>
+    {/if}
     {#if talkedAbout && (page.kind === 'resource' || page.kind === 'collection' || page.kind === 'lens') && page.messages}
       {@const about = talkedAbout}
       {@const collection =
@@ -1149,6 +1315,10 @@
       />
     {/if}
   </AppShell>
+  {#if quickOpen}
+    <!-- Cmd+Shift+P or Cmd+K, anywhere in Data Hub (DEC-UX-237). -->
+    <QuickWindow where={quickWhere} screenGroup={t('quick.group.query')} rows={quickRows} {findQueries} onclose={() => (quickOpen = false)} />
+  {/if}
   <!-- What is dragged, and the line that says where it went (DEC-UX-157). -->
   <DragGhost item={dragging.item} />
   <Toast key={moved.key} tone={moved.failed ? 'failed' : 'done'}>
@@ -1197,6 +1367,7 @@
       draft={page.kind === 'newQuery' ? draft : null}
       version={queriesVersion}
       onhidden={(id, hidden) => (queryHidden = { id, hidden })}
+      {flagged}
     />
   {:else if section?.id === 'charts' && status.kind === 'signedIn'}
     <ChartsPanel overview={chartsShown} current={page.kind === 'chart' ? page.id : undefined} iconUrl={(id) => charts.iconUrl(id)} />
@@ -1209,6 +1380,24 @@
   <IconButton icon="plus-circle-fill" label={t('query.new')} href={NEW_QUERY} />
 {/snippet}
 
+{#snippet flagsBar()}
+  <QueryFlags
+    items={flagItems}
+    current={openId}
+    {mac}
+    onunflag={(id) => setFlagged(unflag(flagged, id))}
+    onmove={(from, to) => setFlagged(moveFlag(flagged, from, to))}
+    onquick={() => (quickOpen = true)}
+  />
+{/snippet}
+
 {#snippet newCollection()}
   <IconButton icon="plus-circle-fill" label={t('collections.new')} href={NEW_COLLECTION} />
 {/snippet}
+
+<style>
+  /* A query fills the height of the screen under the row of flagged queries (DEC-UX-144, DEC-UX-236). */
+  .query-screen { height: 100%; min-height: 0; display: flex; flex-direction: column; }
+  .query-pages { flex: 1; min-height: 0; }
+  .query-kept { height: 100%; }
+</style>
