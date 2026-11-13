@@ -104,6 +104,19 @@ describe.skipIf(!url)('the settings of a User (DEC-UX-96)', () => {
     expect((await app.inject({ method: 'PUT', url: '/me/settings/intro.collections', headers: jan, payload: {} })).statusCode).toBe(400);
   });
 
+  it('keeps the flagged queries in their order, at most ten and each once (DEC-UX-236, OP-UX-84)', async () => {
+    const an = await as('an');
+    const ids = Array.from({ length: 11 }, (_, at) => `00000000-0000-4000-8000-${String(at).padStart(12, '0')}`);
+    const flag = (value: unknown) => app.inject({ method: 'PUT', url: '/me/settings/query.flagged', headers: an, payload: { value } });
+    expect((await flag([ids[2], ids[0], ids[1]])).statusCode).toBe(204);
+    expect((await app.inject({ url: '/me/settings', headers: an })).json().settings).toEqual({ 'query.flagged': [ids[2], ids[0], ids[1]] });
+    expect((await flag(ids.slice(0, 10))).statusCode).toBe(204);
+    // An eleventh has no key, a query is flagged once, and only a query is flagged.
+    expect((await flag(ids)).statusCode).toBe(400);
+    expect((await flag([ids[0], ids[0]])).statusCode).toBe(400);
+    expect((await flag(['leads'])).statusCode).toBe(400);
+  });
+
   it('needs an Access Token', async () => {
     expect((await app.inject({ url: '/me/settings' })).statusCode).toBe(401);
   });

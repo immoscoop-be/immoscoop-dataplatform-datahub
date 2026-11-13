@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import DataGrid from '@datahub/ui/components/DataGrid.svelte';
   import Pager from '@datahub/ui/components/Pager.svelte';
@@ -33,6 +34,8 @@
   import FieldExplain from './FieldExplain.svelte';
   import FindTableSheet from './FindTableSheet.svelte';
   import type { KnownTable } from '../lib/registry.js';
+  import { digitOf, modLabel, type QueryStatus } from '../lib/flags.js';
+  import type { QuickRow } from '../lib/quick.js';
   import ParameterWindow from './ParameterWindow.svelte';
   import ResourceSummaryWindow, { type SummaryData } from './ResourceSummaryWindow.svelte';
   import QueryHistory from './QueryHistory.svelte';
@@ -67,6 +70,12 @@
     findTables,
     layout = 'horizontal',
     onlayout,
+    flagAt = null,
+    flagsFull = false,
+    onflag,
+    onstatus,
+    oncommands,
+    mac = false,
   }: {
     id: string;
     /** Its history opened from the panel, at one of its runs or at all of them. */
@@ -92,7 +101,21 @@
     /** The query above the result, or next to it, as the User chose it (DEC-UX-143). */
     layout?: Layout;
     onlayout?: (layout: Layout) => void;
+    /** Its place among the flagged queries, or null when it is not flagged (DEC-UX-236). */
+    flagAt?: number | null;
+    /** Ten queries are flagged: Flag is greyed, with why (OP-UX-84). */
+    flagsFull?: boolean;
+    /** Flags or unflags it; without it, the page has no Flag. */
+    onflag?: (on: boolean) => void;
+    /** What it tells on its tab while the User is in another query: a run going, a failure, Broken (DEC-UX-236). */
+    onstatus?: (id: string, status: QueryStatus) => void;
+    /** What can be done to it now, for the quick window (DEC-UX-237). */
+    oncommands?: (id: string, commands: QuickRow[]) => void;
+    /** Cmd on a Mac, Ctrl elsewhere, as its keys are written. */
+    mac?: boolean;
   } = $props();
+  /** Several queries stay open at once (OP-UX-85): what one names by an id is its own. */
+  const uid = $props.id();
 
   /** How much room the query takes, in percent, at first and at least and at most, per layout (DEC-UX-144). */
   const SPLIT = { horizontal: 55, sideBySide: 45 } as const;
@@ -205,7 +228,7 @@
   let summaryWindow = $state<TableSuggestion | null>(null);
   let fieldExplained = $state<{ fields: Suggestion[]; at: At } | null>(null);
   let windows = 0;
-  let newSet = $state<{ mode: 'add' | 'remove'; resource: string | null } | null>(null);
+  let newSet = $state<{ mode: 'add' | 'remove' | 'same'; resource: string | null } | null>(null);
   let finding = $state(false);
   let requestOpen = $state(false);
   let requestText = $state('');
@@ -431,6 +454,68 @@
   }
 
   const start = () => runWith(sql, parameters, current?.range !== 'free');
+
+  // What its tab tells while the User is in another query: a run going, its last run failed, Broken (DEC-UX-236).
+  $effect(() => {
+    const now = { running, failed: failure !== null, broken: broken !== null };
+    // What the page that listens reads is its own: this effect follows only the query.
+    untrack(() => onstatus?.(id, now));
+  });
+
+  /**
+   * What can be done to it now, for the quick window (DEC-UX-237): of each pair only the one that applies, and what may
+   * not be done now greyed, with why (DEC-UX-207). Editing it is for who made it, as on the page.
+   */
+  $effect(() => {
+    if (!oncommands) return;
+    const found = query;
+    const tell = oncommands;
+    if (!found) {
+      untrack(() => tell(id, []));
+      return;
+    }
+    const own = found.mine && found.kind === 'query' && !preview;
+    const command = (key: string, icon: IconName, title: string, run: () => void, more: Partial<QuickRow> = {}): QuickRow => ({
+      key: `query:${key}`,
+      group: 'screen',
+      icon,
+      title,
+      kind: t('quick.kind.command'),
+      does: 'do',
+      run,
+      ...more,
+    });
+    const rows: QuickRow[] = [];
+    if (onflag) {
+      const flag = onflag;
+      rows.push(
+        flagAt === null
+          ? command('flag', 'flag', t('quick.query.flag'), () => flag(true), flagsFull ? { why: t('flags.full.short'), words: t('quick.query.flag.words') } : { meta: t('quick.query.flag.meta'), words: t('quick.query.flag.words') })
+          : command('unflag', 'flag-fill', t('quick.query.unflag'), () => flag(false), { meta: t('quick.query.unflag.meta', { key: `${modLabel(mac)}${digitOf(flagAt)}` }), words: t('quick.query.flag.words') }),
+      );
+    }
+    rows.push(command('fold', 'arrows-in-line-vertical', t('quick.query.fold'), () => editor?.foldAll(), { meta: t('quick.query.fold.meta'), words: t('quick.query.fold.words') }));
+    if (own) {
+      rows.push(command('format', 'text-align-left', t('quick.query.format'), () => editor?.formatSql(), { meta: t('quick.query.format.meta'), keys: mac ? '⇧⌥F' : 'Shift+Alt+F', words: t('quick.query.format.words') }));
+      if (found.resources.length < 10) rows.push(command('resource', 'plus', t('quick.query.resource'), () => (newSet = { mode: 'add', resource: null }), { meta: t('quick.query.resource.meta'), words: t('quick.query.resource.words') }));
+      if (findTables) rows.push(command('table', 'magnifying-glass', t('quick.query.table'), () => (finding = true), { meta: t('quick.query.table.meta'), words: t('quick.query.table.words') }));
+      if (found.resources.length > 0) rows.push(command('copy', 'git-branch', t('quick.query.copy'), () => (newSet = { mode: 'same', resource: null }), { meta: t('quick.query.copy.meta'), words: t('quick.query.copy.words') }));
+    }
+    rows.push(
+      hidden
+        ? command('show', 'eye', t('quick.query.show'), () => void toggleHidden(), { meta: t('quick.query.show.meta'), words: t('quick.query.show.words') })
+        : command('hide', 'eye-slash-fill', t('quick.query.hide'), () => void toggleHidden(), { meta: t('quick.query.hide.meta'), words: t('quick.query.hide.words') }),
+    );
+    if (onlayout) {
+      const choose = onlayout;
+      rows.push(
+        layout === 'horizontal'
+          ? command('view', 'columns', t('quick.query.side'), () => choose('sideBySide'), { meta: t('quick.query.view.meta'), words: t('quick.query.view.words') })
+          : command('view', 'rows', t('quick.query.above'), () => choose('horizontal'), { meta: t('quick.query.view.meta'), words: t('quick.query.view.words') }),
+      );
+    }
+    untrack(() => tell(id, rows));
+  });
   let runBar = $state<HTMLElement | undefined>();
 
   /**
@@ -812,6 +897,20 @@
         {/each}
       </span>
       <Button variant="outline" href={NEW_QUERY}><Icon name="plus-circle-fill" />{t('query.new')}</Button>
+      {#if onflag}
+        <!-- Flag keeps it on top of Query, with its key; at ten it is greyed, with why (DEC-UX-236, OP-UX-84). -->
+        {#if flagAt === null && flagsFull}
+          <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+          <span class="why-anchor" tabindex="0" role="group" aria-label={t('flags.flag')} aria-describedby={`${uid}-why-flag`}>
+            <Button variant="outline" disabled><Icon name="flag" />{t('flags.flag')}</Button>
+            <span class="why-pop" id={`${uid}-why-flag`} role="tooltip"><b class="why-title">{t('flags.full.title')}</b>{t('flags.full.text')}</span>
+          </span>
+        {:else}
+          <Button variant="outline" pressed={flagAt !== null} title={t(flagAt === null ? 'flags.flag.hint' : 'flags.unflag.hint')} onclick={() => onflag(flagAt === null)}
+            ><Icon name={flagAt === null ? 'flag' : 'flag-fill'} />{t(flagAt === null ? 'flags.flag' : 'flags.flagged')}{#if flagAt !== null}<span class="kbd">{modLabel(mac)}{digitOf(flagAt)}</span>{/if}</Button
+          >
+        {/if}
+      {/if}
       <Button variant="outline" disabled={hiding} title={t(hidden ? 'query.unhide.hint' : 'query.hide.hint')} onclick={toggleHidden}
         ><Icon name={hidden ? 'eye' : 'eye-slash-fill'} />{t(hidden ? 'query.page.unhide' : 'query.page.hide')}</Button
       >
@@ -842,9 +941,9 @@
   {#snippet whyNot(label: string, icon: IconName | null)}
     <!-- Focusable, so that the keyboard reaches why as a hover does; the button itself is disabled. -->
     <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-    <span class="why-anchor" tabindex="0" role="group" aria-label={label} aria-describedby="why-not-lens">
+    <span class="why-anchor" tabindex="0" role="group" aria-label={label} aria-describedby={`${uid}-why-lens`}>
       <Button disabled>{#if icon}<Icon name={icon} />{/if}{label}</Button>
-      <span class="why-pop" id="why-not-lens" role="tooltip">
+      <span class="why-pop" id={`${uid}-why-lens`} role="tooltip">
         <b class="why-title">{t('query.why.title')}</b>
         {#if known.length > 0}
           {t('query.why.known', { count: known.length })}
@@ -1260,6 +1359,7 @@
   .origin a { color: var(--text-secondary); }
   .actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
   /* Why the button is greyed, on a hover or on focus (DEC-UX-232) */
+  .kbd { font-size: var(--text-meta); background: var(--card); border-radius: var(--radius-mark); padding: 1px 5px; }
   .why-anchor { position: relative; display: inline-flex; border-radius: var(--radius-pill); }
   .why-anchor :global(button:disabled) { pointer-events: none; }
   .why-anchor:focus-visible { outline: 2px solid var(--text-secondary); outline-offset: 2px; }

@@ -1700,7 +1700,7 @@ document.addEventListener('click', e => {
   if (go) { document.querySelector(`[data-group="step"] [data-target="${go.dataset.stepGo}"]`)?.click(); document.querySelector('.nq-left')?.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
 });
 
-// The quick window (DEC-UX-237): Cmd+Shift+P, or Ctrl+Shift+P, anywhere in Data Hub, also while typing in the SQL
+// The quick window (DEC-UX-237): Cmd+Shift+P or Cmd+K (Ctrl on Windows), anywhere in Data Hub, also while typing in the SQL
 // editor. Empty, it lists the commands of the screen it opened on (a page declares them in window.QUICK), the flagged
 // queries with their keys, and Go to: every section. Typed, it searches those and everything the User may see,
 // Resources, Collections, Lenses, their queries and Learning Cards, grouped by kind, each with its kind on the right.
@@ -1819,7 +1819,8 @@ document.addEventListener('click', e => {
   function close() { back.hidden = win.hidden = true; }
   window.quickOpen = open;
   document.addEventListener('keydown', e => {
-    if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'p') { e.preventDefault(); e.stopPropagation(); win.hidden ? open() : close(); return; }
+    // Cmd+Shift+P, or Cmd+K, which Firefox leaves to the page (OP-UX-87)
+    if ((e.metaKey || e.ctrlKey) && ((e.shiftKey && e.key.toLowerCase() === 'p') || (!e.shiftKey && e.key.toLowerCase() === 'k'))) { e.preventDefault(); e.stopPropagation(); win.hidden ? open() : close(); return; }
     if (win.hidden) return;
     const move = d => { if (on < 0) return; let i = on; do { i = (i + d + rows.length) % rows.length; } while (rows[i].disabled && i !== on); on = i; act(); };
     if (e.key === 'Escape') { e.preventDefault(); close(); }

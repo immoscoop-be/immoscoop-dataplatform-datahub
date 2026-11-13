@@ -30,6 +30,7 @@
     draft,
     version,
     onhidden,
+    flagged = [],
   }: {
     client: Pick<QueryClient, 'list' | 'days' | 'hide'>;
     /** The User sees the queries of everyone (`queries.seeOthers`, every, FR-PL-14). */
@@ -44,6 +45,8 @@
     version: number;
     /** A query was hidden or shown again from the panel. */
     onhidden?: (id: string, hidden: boolean) => void;
+    /** The queries the User flagged: each has the flag at its end (DEC-UX-236). */
+    flagged?: readonly string[];
   } = $props();
 
   /** How long typing pauses before the search asks for the queries. */
@@ -212,6 +215,7 @@
         <!-- Made through Claude, as it stays once its User goes on in Query (DEC-CL-11, FR-CL-22). -->
         <span class="pill" title={t('query.label.claude.hint')}>{t('query.label.claude')}</span>
       {/if}
+      {#if flagged.includes(item.id)}<span class="flag"><Icon name="flag-fill" label={t('flags.flaggedMark')} /></span>{/if}
     </a>
     <span class="buttons">
       <button type="button" class="eye" aria-label={t(item.hidden ? 'query.unhide' : 'query.hide', { name: item.name })} title={t(item.hidden ? 'query.unhide.hint' : 'query.hide.hint')} onclick={() => hide(item)}
@@ -316,6 +320,7 @@
   .item { display: flex; align-items: center; gap: 10px; padding: 9px 40px 9px 12px; border-radius: var(--radius-md); color: inherit; text-decoration: none; outline: 1px solid transparent; }
   .draft { margin-bottom: 7px; padding-right: 12px; }
   .item.unfolds { padding-right: 68px; }
+  .flag { display: inline-flex; margin-left: auto; font-size: var(--text-small); color: var(--text-muted); flex: none; }
   .item:hover { outline-color: var(--tint-active); }
   .item.current { outline: 1.5px solid var(--text-muted); }
   .item:focus-visible { outline: 2px solid var(--text-secondary); }

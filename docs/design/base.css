@@ -2182,7 +2182,7 @@ svg.mp, svg.mp-g { display: block; width: 100%; height: auto; overflow: visible;
 .q-flag { position: relative; display: flex; align-items: center; gap: 7px; flex: 0 1 200px; min-width: 64px; padding: 6px 8px 6px 7px; border-radius: 9px;
   color: var(--text-secondary); text-decoration: none; font-size: var(--text-small); cursor: pointer; user-select: none; }
 .q-flag:hover { background: var(--tint-hover); color: var(--text-primary); }
-.q-flag.current { background: var(--card); color: var(--text-primary); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.q-flag.current { background: var(--card); color: var(--text-primary); }
 .q-flag .kbd { background: none; padding: 0; min-width: 8px; justify-content: center; }
 .q-flags-mod { font: var(--weight-medium) 13px var(--font-family); color: var(--text-muted); padding: 0 4px 0 8px; flex: none; }
 .q-flag.current .kbd { color: var(--text-primary); }
@@ -2190,7 +2190,7 @@ svg.mp, svg.mp-g { display: block; width: 100%; height: auto; overflow: visible;
 .q-flag-mark { width: 7px; height: 7px; border-radius: 50%; flex: none; }
 .q-flag-mark.seen-not { background: var(--text-primary); }
 .q-flag-mark.failed { background: var(--signal-urgent); }
-.q-flag-spin { font-size: 13px; color: var(--text-muted); flex: none; animation: q-flag-spin 1s linear infinite; }
+.q-flag-spin { font-size: 13px; color: var(--text-muted); flex: none; animation: q-flag-spin var(--motion-spin) infinite; }
 @keyframes q-flag-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .q-flag-spin { animation: none; } }
 .q-flag-broken { color: var(--signal-urgent); font-size: 14px; flex: none; }
@@ -2214,7 +2214,7 @@ svg.mp, svg.mp-g { display: block; width: 100%; height: auto; overflow: visible;
 /* The quick window (DEC-UX-237): Cmd+Shift+P (Ctrl+Shift+P) anywhere in Data Hub. A search over the commands of the
    screen, then Go to: every section, and every Resource, Collection, Lens, query and Learning Card the User may see.
    It floats over the top of the window, the page lightly dimmed; Escape, the shortcut again, or a click beside it closes it. */
-.quick-backdrop { position: fixed; inset: 0; z-index: 40; background: rgba(40,34,30,.18); }
+.quick-backdrop { position: fixed; inset: 0; z-index: 40; background: var(--quick-backdrop); }
 .quick { position: fixed; z-index: 41; top: 12vh; left: 50%; transform: translateX(-50%); width: min(720px, calc(100vw - 48px)); max-height: 70vh;
   display: flex; flex-direction: column; border-radius: var(--radius-xl); background: var(--glass-solid); backdrop-filter: var(--blur-glass); -webkit-backdrop-filter: var(--blur-glass);
   outline: 1px solid var(--glass-edge); box-shadow: var(--glass-shadow); overflow: hidden; }

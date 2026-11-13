@@ -163,6 +163,11 @@ import plugsConnected from '@phosphor-icons/core/assets/regular/plugs-connected.
 import shieldCheck from '@phosphor-icons/core/assets/regular/shield-check.svg?raw';
 import userPlus from '@phosphor-icons/core/assets/regular/user-plus.svg?raw';
 import users from '@phosphor-icons/core/assets/regular/users.svg?raw';
+// Flagged queries and the quick window (DEC-UX-236, DEC-UX-237).
+import flagFill from '@phosphor-icons/core/assets/fill/flag-fill.svg?raw';
+import arrowsInLineVertical from '@phosphor-icons/core/assets/regular/arrows-in-line-vertical.svg?raw';
+import circleNotch from '@phosphor-icons/core/assets/regular/circle-notch.svg?raw';
+import linkBreak from '@phosphor-icons/core/assets/regular/link-break.svg?raw';
 
 export const ICONS = {
   'archive-fill': archiveFill,
@@ -326,6 +331,10 @@ export const ICONS = {
   'shield-check': shieldCheck,
   'user-plus': userPlus,
   users: users,
+  'flag-fill': flagFill,
+  'arrows-in-line-vertical': arrowsInLineVertical,
+  'circle-notch': circleNotch,
+  'link-break': linkBreak,
 } as const;
 
 export type IconName = keyof typeof ICONS;

@@ -16,6 +16,7 @@
     label,
     title,
     form,
+    pressed,
     onclick,
     children,
   }: {
@@ -31,6 +32,8 @@
     title?: string;
     /** The form it submits, when it stands outside it, such as in the foot of a sheet. */
     form?: string;
+    /** A button that stays on, such as Flagged: pressed, it says so (DEC-UX-236). */
+    pressed?: boolean;
     onclick?: (event: MouseEvent) => void;
     children: Snippet;
   } = $props();
@@ -39,7 +42,7 @@
 {#if href && !disabled}
   <a class="button {variant}" class:large class:wide {href} aria-label={label} {title} {onclick}>{@render children()}</a>
 {:else}
-  <button class="button {variant}" class:large class:wide {type} {form} {disabled} aria-label={label} {title} {onclick}>{@render children()}</button>
+  <button class="button {variant}" class:large class:wide {type} {form} {disabled} aria-label={label} aria-pressed={pressed} {title} {onclick}>{@render children()}</button>
 {/if}
 
 <style>
@@ -50,7 +53,7 @@
   .quiet, .outline { background: var(--tint-hover); color: var(--text-primary); padding: 8px 14px; }
   .quiet:hover { background: var(--tint-active); }
   .outline { background: var(--card); }
-  .outline:hover { background: var(--tint-active); }
+  .outline:hover, .outline[aria-pressed='true'] { background: var(--tint-active); }
   .button:disabled { opacity: .4; cursor: not-allowed; }
   .large { padding: 14px 24px; font-size: 15px; }
   .wide { width: 100%; justify-content: center; }

@@ -472,6 +472,24 @@ Resources added to a query, which start a new query ([DEC-UX-73](../../design/pr
 
 *Note of 2026-11-13, on building it: query writes the CTEs, and registry finds the tables it knows with their columns ([TR-SR-29](../technical/04-stacks-and-resources.md#tr-sr-29)).*
 
+<a id="fr-sr-60"></a>
+### FR-SR-60 · A User flags queries to work on several side by side
+
+**Status:** Implemented · **Source:** Max, 2026-11-13 ([DEC-UX-236](../../design/principles.md#dec-ux-236)) · **Screens:** [query](../../design/screens/query.html), [query-new](../../design/screens/query-new.html)
+
+A User flags a query, theirs or one they may read, to keep it in a row on top of every screen of Query: at most ten, in the order they were flagged, which dragging a tab changes ([OP-UX-84](../../design/principles.md#op-ux-84)). Cmd+1 to Cmd+0, Ctrl on Windows and Linux, open the first to the tenth on those screens, and elsewhere stay the browser's ([OP-UX-86](../../design/principles.md#op-ux-86)). A flagged query stays as the User left it while they work in another, a run still going included, until the browser tab closes or reloads; its tab shows a run going, a result or a failure not seen yet, and Broken ([OP-UX-85](../../design/principles.md#op-ux-85)). The flags follow the User to every computer they sign in on.
+
+**Makes easy:** working on several questions at once, letting a long run go on in one query while writing another, and coming back to each as it was. **Makes hard:** losing a query among the many in the panel, and losing what was typed or run by going to another query.
+
+<a id="fr-sr-61"></a>
+### FR-SR-61 · The quick window does the commands of a query, and goes anywhere
+
+**Status:** Implemented · **Source:** Max, 2026-11-13 ([DEC-UX-237](../../design/principles.md#dec-ux-237)) · **Screens:** [query](../../design/screens/query.html)
+
+Cmd+Shift+P or Cmd+K, Ctrl on Windows and Linux, opens the quick window anywhere in Data Hub ([OP-UX-87](../../design/principles.md#op-ux-87)). On a query it lists first what can be done to it now: Flag or Unflag, Fold all, Format the SQL, Add a Resource, Add a table for a User with `queries.outside`, New query from this one, Hide or Show again, and the view; then the flagged queries and Go to. Typed, it searches those and the Resources, Collections, Lenses, the User's own queries and the Learning Cards that the User may see ([OP-UX-88](../../design/principles.md#op-ux-88)). What the User may never do is not listed; what they cannot do right now is greyed, with why.
+
+**Makes easy:** doing what a query needs from the keyboard, and reaching a Resource, Lens or query by a few letters of its name. **Makes hard:** hunting through panels and pages for a button, and finding through the quick window anything the User may not see.
+
 <a id="fr-sr-35"></a>
 ### FR-SR-35 · A new Resource waits for a Collection
 
