@@ -1376,6 +1376,7 @@ if (scopeBox) {
   const newSet = () => {
     const cur = scopeNow();
     if (mode === 'remove') return cur.filter(r => r !== removing);
+    if (mode === 'same') return cur;
     // One or more at once, a query reading up to ten (DEC-UX-225)
     return [...new Set([...cur, ...picks()])].slice(0, 10);
   };
@@ -1438,8 +1439,9 @@ if (scopeBox) {
   };
   const openNew = (m, res) => {
     mode = m; removing = m === 'remove' ? res : null;
-    $('newq-title').textContent = m === 'add' ? 'With more resources' : `Without ${NAMES[res]}`;
-    $('newq-why-what').textContent = m === 'add' ? 'Adding Resources' : 'Removing one';
+    // "New query from this one", in the quick window (DEC-UX-237): the same Resources, the SQL and Parameters along
+    $('newq-title').textContent = m === 'add' ? 'With more resources' : m === 'same' ? 'With the same resources' : `Without ${NAMES[res]}`;
+    $('newq-why-what').textContent = m === 'add' ? 'Adding Resources' : m === 'same' ? 'Starting from this one' : 'Removing one';
     $('newq-start').disabled = false;
     sheet.querySelector('[data-newq="add"]').hidden = m !== 'add';
     sheet.querySelector('[data-newq="remove"]').hidden = m !== 'remove';
@@ -1448,6 +1450,7 @@ if (scopeBox) {
     update(); sheet.hidden = false;
   };
   sheet.querySelectorAll('input[name="newq-pick"]').forEach(i => i.addEventListener('change', update));
+  window.quickNewSame = () => openNew('same');
   document.addEventListener('click', e => {
     const add = e.target.closest('[data-add-res]'), remove = e.target.closest('[data-remove-res]');
     if (add) openNew('add', add.dataset.addRes || null);
@@ -1696,3 +1699,139 @@ document.addEventListener('click', e => {
   const go = e.target.closest('[data-step-go]');
   if (go) { document.querySelector(`[data-group="step"] [data-target="${go.dataset.stepGo}"]`)?.click(); document.querySelector('.nq-left')?.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
 });
+
+// The quick window (DEC-UX-237): Cmd+Shift+P, or Ctrl+Shift+P, anywhere in Data Hub, also while typing in the SQL
+// editor. Empty, it lists the commands of the screen it opened on (a page declares them in window.QUICK), the flagged
+// queries with their keys, and Go to: every section. Typed, it searches those and everything the User may see,
+// Resources, Collections, Lenses, their queries and Learning Cards, grouped by kind, each with its kind on the right.
+// Up and Down move, Enter does what the row says, Escape, the shortcut again or a click beside it closes it.
+// What the User may never do is not listed; what they cannot do right now is greyed, with why (DEC-UX-207).
+// Prototype: ?quick=open opens it, ?quick=open&q=lead with a search typed.
+(() => {
+  const role = () => document.documentElement.dataset.role || 'colleague';
+  const FLAGGED = [
+    { title: 'Leads per source name', keys: '⌘1', href: 'query.html' },
+    { title: 'Partner share per week', keys: '⌘2', href: 'query.html' },
+    { title: 'Listings per postal code, last 28 days', keys: '⌘3', href: 'query.html' },
+    { title: 'Saved searches by price band', keys: '⌘4', href: 'query.html' },
+  ];
+  const GO = [
+    { icon: 'ph-fill ph-stack', title: 'Collections', href: 'collections-start.html', words: 'home start' },
+    { icon: 'ph-fill ph-terminal-window', title: 'Query', href: 'query-new.html', words: 'sql' },
+    { icon: 'ph-fill ph-chart-bar', title: 'Charts', href: 'charts.html', words: 'semgraph gallery' },
+    { icon: 'ph-fill ph-chat-circle-text', title: 'Messages', href: 'messages.html', meta: '3 unread', words: 'message centre inbox' },
+    { icon: 'ph-fill ph-graduation-cap', title: 'Learning Centre', href: 'learning-start.html', words: 'cards learn' },
+    { icon: 'ph ph-user-circle', title: 'My page', href: 'my-page.html', words: 'profile background language slack' },
+    { icon: 'ph ph-users-three', title: 'Groups', href: 'groups.html', words: 'team owner unit' },
+    { icon: 'ph-fill ph-toolbox', title: 'Admin · Webhooks', href: 'admin-webhooks.html', for: 'datateam', words: 'dbt' },
+    { icon: 'ph-fill ph-toolbox', title: 'Admin · Users', href: 'admin-users.html', for: 'datateam' },
+    { icon: 'ph-fill ph-toolbox', title: 'Admin · Permission groups', href: 'admin-permission-groups.html', for: 'datateam' },
+  ];
+  const COMMANDS = [
+    { icon: 'ph-fill ph-plus-circle', title: 'New query', href: 'query-new.html', words: 'start sql' },
+    { icon: 'ph ph-moon', title: 'Switch light or dark', run: () => document.getElementById('theme')?.click(), words: 'theme day night' },
+  ];
+  const ITEMS = [
+    { group: 'Resources', icon: 'ph ph-table', title: 'Weekly lead volume', meta: 'Credit leads · 4 · Explored', href: 'resource-overview.html' },
+    { group: 'Resources', icon: 'ph ph-table', title: 'Lead sources', meta: 'Credit leads · 2 · Described', href: 'resource-overview.html' },
+    { group: 'Resources', icon: 'ph ph-table', title: 'Listings', meta: 'Listings and sales · 3 · Confirmed', href: 'resource-overview.html' },
+    { group: 'Resources', icon: 'ph ph-table', title: 'Leads per day', meta: 'Credit leads · 1 · Available', href: 'resource-overview.html' },
+    { group: 'Resources', icon: 'ph ph-table', title: 'Partner contracts', meta: 'Partners · 4 · Explored', href: 'resource-overview.html' },
+    { group: 'Collections', icon: 'ph ph-coins', title: 'Credit leads', meta: '12 Resources · 4 Lenses', href: 'collection-overview.html' },
+    { group: 'Collections', icon: 'ph ph-house-line', title: 'Listings and sales', meta: '9 Resources', href: 'collection-overview.html' },
+    { group: 'Lenses', icon: 'ph ph-aperture', title: 'Leads per source name', meta: 'Credit leads', href: 'lens.html' },
+    { group: 'Lenses', icon: 'ph ph-aperture', title: 'Lead quality by partner', meta: 'Credit leads', href: 'lens.html' },
+    { group: 'Your queries', icon: 'ph ph-table', title: 'Lead volume per province', meta: 'Mon 26 Oct', href: 'query.html' },
+    { group: 'Your queries', icon: 'ph ph-table', title: 'Leads that came back within a week', meta: 'yesterday', href: 'query.html' },
+    { group: 'Learning Cards', icon: 'ph ph-graduation-cap', title: 'What one row stands for', meta: '2.1.3 · grain', href: 'learning-card.html' },
+    { group: 'Learning Cards', icon: 'ph ph-graduation-cap', title: 'When a figure is final', meta: 'K5.4', href: 'learning-card.html' },
+  ];
+  const KIND = { Resources: 'Resource', Collections: 'Collection', Lenses: 'Lens', 'Your queries': 'Query', 'Learning Cards': 'Learning Card' };
+  const ORDER = ['Commands', 'Flagged queries', 'Resources', 'Collections', 'Lenses', 'Your queries', 'Learning Cards', 'Go to'];
+  const back = document.createElement('div');
+  back.className = 'quick-backdrop'; back.hidden = true;
+  const win = document.createElement('section');
+  win.className = 'quick'; win.hidden = true;
+  win.setAttribute('role', 'dialog'); win.setAttribute('aria-modal', 'true'); win.setAttribute('aria-label', 'Quick window');
+  win.innerHTML = `<div class="quick-head"><i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+    <input id="quick-q" placeholder="Search commands, Resources, Lenses, queries…" role="combobox" aria-expanded="true" aria-controls="quick-list" autocomplete="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-bwignore data-form-type="other">
+    <span class="quick-where" id="quick-where" hidden></span></div>
+    <div class="quick-list" id="quick-list" role="listbox" aria-label="Commands and places"></div>
+    <div class="quick-foot"><svg class="logo" width="24" height="16" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+    <span class="meta">↑↓ to move</span><span class="quick-act" id="quick-act">Open</span><span class="kbd">↵</span><span class="sep"></span><span>Close</span><span class="kbd">esc</span></div>`;
+  document.body.append(back, win);
+  const input = win.querySelector('#quick-q'), list = win.querySelector('#quick-list');
+  let rows = [], on = 0;
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const bold = (text, q) => { const i = q ? text.toLowerCase().indexOf(q) : -1; return i < 0 ? esc(text) : esc(text.slice(0, i)) + '<b>' + esc(text.slice(i, i + q.length)) + '</b>' + esc(text.slice(i + q.length)); };
+  const score = (row, q) => { const t = row.title.toLowerCase(), w = `${t} ${(row.words || '').toLowerCase()} ${(row.meta || '').toLowerCase()}`; return t.startsWith(q) ? 3 : new RegExp(`\\b${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`).test(w) ? 2 : w.includes(q) ? 1 : 0; };
+  const visible = r => !r.for || r.for.split(' ').includes(role());
+  function draw() {
+    const q = input.value.trim().toLowerCase(), ctx = window.QUICK || {};
+    const here = (ctx.commands || []).filter(visible).map(r => ({ ...r, group: ctx.group || 'This screen', kind: 'Command' }));
+    const all = [
+      ...here,
+      ...COMMANDS.map(r => ({ ...r, group: 'Commands', kind: 'Command' })),
+      ...FLAGGED.map(r => ({ ...r, icon: 'ph-fill ph-flag', group: 'Flagged queries', kind: 'Query' })),
+      ...ITEMS.map(r => ({ ...r, kind: KIND[r.group] })),
+      ...GO.filter(visible).map(r => ({ ...r, group: 'Go to', kind: 'Section' })),
+    ];
+    let shown;
+    if (!q) shown = [...here, ...all.filter(r => r.group === 'Flagged queries'), ...all.filter(r => r.group === 'Go to')];
+    else {
+      const groups = [ctx.group || 'This screen', ...ORDER];
+      shown = groups.flatMap(g => all.filter(r => r.group === g).map(r => ({ r, s: score(r, q) })).filter(x => x.s).sort((a, b) => b.s - a.s).slice(0, g === (ctx.group || 'This screen') ? 9 : 4).map(x => x.r));
+    }
+    // A greyed row is never the one Enter does; with nothing to do, the foot says nothing about Enter
+    rows = shown; on = shown.findIndex(r => !r.disabled);
+    let last = null, html = '';
+    shown.forEach((r, i) => {
+      if (r.group !== last) { html += `<div class="quick-group" role="presentation">${esc(r.group)}</div>`; last = r.group; }
+      html += `<div class="quick-row${i === on ? ' on' : ''}" role="option" id="quick-${i}" data-i="${i}" aria-selected="${i === on}"${r.disabled ? ' aria-disabled="true"' : ''}>`
+        + `<i class="${r.icon || 'ph ph-arrow-right'}" aria-hidden="true"></i><span class="quick-title">${bold(r.title, q)}</span>`
+        + `<span class="quick-meta">${r.meta ? esc(r.meta) : ''}</span>${r.keys ? `<span class="kbd">${esc(r.keys)}</span>` : ''}<span class="quick-kind">${esc(r.kind)}</span></div>`
+        + (r.disabled && r.why ? `<div class="quick-why">${esc(r.why)}</div>` : '');
+    });
+    list.innerHTML = html || `<div class="quick-none">Nothing found for “${esc(input.value.trim())}”. Data Hub only finds what you may see.</div>`;
+    act();
+  }
+  function act() {
+    list.querySelectorAll('.quick-row').forEach(el => { const i = +el.dataset.i; el.classList.toggle('on', i === on); el.setAttribute('aria-selected', String(i === on)); });
+    const r = rows[on], label = win.querySelector('#quick-act');
+    label.textContent = !r ? '' : r.action || (r.kind === 'Command' ? 'Do it' : r.kind === 'Section' ? 'Go there' : 'Open');
+    label.hidden = label.nextElementSibling.hidden = !r;
+    input.setAttribute('aria-activedescendant', r ? `quick-${on}` : '');
+    list.querySelector(`#quick-${on}`)?.scrollIntoView({ block: 'nearest' });
+  }
+  function doRow(r) {
+    if (!r || r.disabled) return;
+    close();
+    if (r.href) location.href = r.href;
+    else if (r.click) document.querySelector(r.click)?.click();
+    else if (r.run) r.run();
+  }
+  function open() {
+    const ctx = window.QUICK || {};
+    const where = win.querySelector('#quick-where');
+    where.hidden = !ctx.where; where.textContent = ctx.where || '';
+    back.hidden = win.hidden = false; input.value = ''; draw(); input.focus();
+  }
+  function close() { back.hidden = win.hidden = true; }
+  window.quickOpen = open;
+  document.addEventListener('keydown', e => {
+    if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'p') { e.preventDefault(); e.stopPropagation(); win.hidden ? open() : close(); return; }
+    if (win.hidden) return;
+    const move = d => { if (on < 0) return; let i = on; do { i = (i + d + rows.length) % rows.length; } while (rows[i].disabled && i !== on); on = i; act(); };
+    if (e.key === 'Escape') { e.preventDefault(); close(); }
+    else if (e.key === 'ArrowDown') { e.preventDefault(); move(1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); move(-1); }
+    else if (e.key === 'Enter') { e.preventDefault(); doRow(rows[on]); }
+  }, true);
+  input.addEventListener('input', draw);
+  list.addEventListener('mousemove', e => { const el = e.target.closest('.quick-row'); if (el && !rows[+el.dataset.i].disabled && +el.dataset.i !== on) { on = +el.dataset.i; act(); } });
+  list.addEventListener('click', e => { const el = e.target.closest('.quick-row'); if (el) doRow(rows[+el.dataset.i]); });
+  back.addEventListener('click', close);
+  document.addEventListener('click', e => { if (e.target.closest('[data-quick-open]')) open(); });
+  const params = new URLSearchParams(location.search);
+  if (params.get('quick') === 'open') { open(); if (params.get('q')) { input.value = params.get('q'); draw(); } }
+})();

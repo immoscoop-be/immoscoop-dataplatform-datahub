@@ -76,6 +76,14 @@
  </div>
 </aside>
 <main class="main">
+<!-- Flagged queries (DEC-UX-236): on every screen of Query, also here; none stands out, as no flagged query is open.
+     ⌘1 to ⌘0 (Ctrl+1 to Ctrl+0 on Windows) open one. -->
+<nav class="q-flags" aria-label="Flagged queries"><span class="q-flags-mod" title="Hold ⌘ and press the number of a query to open it">⌘</span>
+ <a class="q-flag" href="query.html" title="Leads per source name · ⌘1"><span class="kbd">1</span><span class="q-flag-name">Leads per source name</span></a>
+ <a class="q-flag" href="query.html" title="Partner share per week · ⌘2, running"><span class="kbd">2</span><span class="q-flag-name">Partner share per week</span><i class="ph ph-circle-notch q-flag-spin" role="img" aria-label="Running"></i></a>
+ <a class="q-flag" href="query.html" title="Listings per postal code, last 28 days · ⌘3, a result you have not seen yet"><span class="kbd">3</span><span class="q-flag-name">Listings per postal code, last 28 days</span><span class="q-flag-mark seen-not" role="img" aria-label="A result you have not seen yet"></span></a>
+ <button class="q-flags-quick" type="button" data-quick-open aria-label="Quick window" title="Quick window: every command of this screen, and every place in Data Hub"><i class="ph ph-magnifying-glass"></i><span class="kbd">⌘⇧P</span></button>
+</nav>
 <div class="breadcrumb">Query</div>
 <h1 class="page-title" style="margin-top:8px">New query</h1>
 <div class="new-query">
@@ -149,6 +157,14 @@
  <button class="seg on" data-target="colleague" role="tab" aria-selected="true">Colleague</button>
  <button class="seg" data-target="datateam" role="tab" aria-selected="false">Data Team</button>
 </div>
+<script>
+  // ⌘1 to ⌘0 open a flagged query, from every screen of Query (DEC-UX-236)
+  document.addEventListener('keydown', e => {
+    if (!(e.metaKey || e.ctrlKey) || e.shiftKey || e.altKey || !/^[0-9]$/.test(e.key)) return;
+    const tab = document.querySelectorAll('.q-flag')[e.key === '0' ? 9 : +e.key - 1];
+    if (tab) { e.preventDefault(); location.href = tab.href; }
+  }, true);
+</script>
 <script src="app.js"></script>
 </body>
 </html>
