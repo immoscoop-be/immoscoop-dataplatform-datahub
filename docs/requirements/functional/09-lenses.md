@@ -248,6 +248,15 @@ A Broken Lens cannot run, for anyone: Run is off, and a callout on top of its pa
 
 Its Owner Unit and the Data Team delete a Lens from its Edit: a small button under Save opens a sheet that says what deleting does, with an optional reason, and "Delete for good". From then on the Lens is in no list, search or suggestion, Claude does not find it, and it does not run, on its page or in Excel. Its address shows whoever saw it that it was deleted, by whom, when and why; anyone else finds nothing. Its runs, versions and Log are kept, and its Log says who deleted it and why (`LEN-003`). The Messages on it stay, with the Lens marked as deleted; a Request on it that still waits is withdrawn. Whoever ran it in the 30 days before, also from Excel, gets a Message ([MSG-LEN-06](message-catalogue.md#msg-len-06)); who deleted it does not.
 
+<a id="fr-le-19"></a>
+### FR-LE-19 · Every field of a Lens has a description
+
+**Status:** Specified · **Source:** Max, 2026-11-13 ([DEC-UX-227](../../design/principles.md#dec-ux-227)) · **Screens:** [lens-new](../../design/screens/lens-new.html)
+
+Making a Lens lists each field of its result with its type and a description. A field named as a field of its Resources takes that description, the Business Description first, else the one from dbt, with where it comes from; when more Resources hold that name, that of the first Resource of the query. For a field no Resource names, and to change any, its author takes the description of a field of its Resources, found by name and words, or writes one. A field without a description does not keep the Lens from being published. Users of the Lens see the descriptions with its result ([OP-UX-82](../../design/principles.md#op-ux-82)).
+
+**Makes easy:** a Lens whose figures say what they mean, mostly from descriptions already written, with a quick way to reuse one for a field that was renamed or computed. **Makes hard:** a Lens whose columns nobody can read without its author, and descriptions written twice for the same field.
+
 ## Open points
 
 - [x] <a id="op-le-01"></a>**OP-LE-01** · Decide the form in which the story of a Lens is asked ([FR-LE-05](#fr-le-05)): a skill, a form or the interface. The meeting notes ask Hannelore to help shape how a question becomes actionable before a Lens is built. *Decided on 2026-10-28, by Max: in v1, a field of the Lens ([DEC-LE-10](#dec-le-10)).*
@@ -264,12 +273,3 @@ Its Owner Unit and the Data Team delete a Lens from its Edit: a small button und
 ## Builds on
 
 - [Workshop data agents and governance, 2026-10-22](../../workshops/2026-10-22-data-agents-and-governance.md), and its [meeting notes](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1378746422) (Confluence, Dutch)
-
-<a id="fr-le-19"></a>
-### FR-LE-19 · Every field of a Lens has a description
-
-**Status:** Specified · **Source:** Max, 2026-11-13 ([DEC-UX-227](../../design/principles.md#dec-ux-227)) · **Screens:** [lens-new](../../design/screens/lens-new.html)
-
-Making a Lens lists each field of its result with its type and a description. A field named as a field of its Resources takes that description, the Business Description first, else the one from dbt, with where it comes from; when more Resources hold that name, that of the first Resource of the query. For a field no Resource names, and to change any, its author takes the description of a field of its Resources, found by name and words, or writes one. A field without a description does not keep the Lens from being published. Users of the Lens see the descriptions with its result ([OP-UX-82](../../design/principles.md#op-ux-82)).
-
-**Makes easy:** a Lens whose figures say what they mean, mostly from descriptions already written, with a quick way to reuse one for a field that was renamed or computed. **Makes hard:** a Lens whose columns nobody can read without its author, and descriptions written twice for the same field.
