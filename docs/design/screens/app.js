@@ -1687,6 +1687,12 @@ document.querySelectorAll('.metric-table .agg').forEach(a => { a.setAttribute('r
       }
     });
     q.addEventListener('input', draw);
-    if (new URLSearchParams(location.search).get('lf') === 'pick') open(document.getElementById('lf-leads'));
+    if (new URLSearchParams(location.search).get('lf') === 'pick') { document.querySelector('[data-group="step"] [data-target="4"]')?.click(); open(document.getElementById('lf-leads')); }
   }
 }
+
+// Making a Lens as a flow (DEC-UX-229): Back and Next open the step before or after, as a click on it on the right does
+document.addEventListener('click', e => {
+  const go = e.target.closest('[data-step-go]');
+  if (go) { document.querySelector(`[data-group="step"] [data-target="${go.dataset.stepGo}"]`)?.click(); document.querySelector('.nq-left')?.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
+});

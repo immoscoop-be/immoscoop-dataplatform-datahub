@@ -2140,3 +2140,19 @@ svg.mp, svg.mp-g { display: block; width: 100%; height: auto; overflow: visible;
 .lf-option:hover, .lf-option:focus-visible { background: var(--tint-hover); }
 .lf-option .mono { color: var(--text-primary); }
 .lf-option .lf-text { color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Making a Lens as a flow (DEC-UX-229): one step at a time on the left, the steps with how far each is above the size check */
+.ml-side { display: grid; gap: 14px; align-items: start; }
+.ml-steps { border-radius: var(--radius-xl); padding: 8px; display: grid; gap: 2px; }
+.ml-stepbtn { all: unset; box-sizing: border-box; display: flex; align-items: flex-start; gap: 10px; padding: 9px 10px; border-radius: var(--radius-md); cursor: pointer; }
+.ml-stepbtn:hover { background: var(--tint-hover); }
+.ml-stepbtn.on { background: var(--surface-sub); }
+.ml-stepbtn:focus-visible { outline: 2px solid var(--text-secondary); }
+.ml-n { display: inline-grid; place-items: center; flex: none; width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--tint-active); font-size: 11px; font-weight: var(--weight-medium); color: var(--text-secondary); }
+.ml-stepbtn.on .ml-n { background: var(--text-primary); border-color: var(--text-primary); color: var(--surface-solid); }
+.ml-t { display: flex; flex-direction: column; gap: 1px; min-width: 0; font-size: var(--text-small); }
+.ml-t b { font-weight: var(--weight-medium); }
+.ml-t .meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ml-warn { color: var(--signal-warn); }
+.ml-nav { display: flex; align-items: center; gap: 8px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--tint-hover); }
+.ml-nav .btn-quiet { display: inline-flex; align-items: center; gap: 6px; }
