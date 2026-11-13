@@ -497,7 +497,8 @@
 
   /**
    * What can be done to it now, for the quick window (DEC-UX-237, DEC-UX-239): a command for every button of the page
-   * that does something to it, of each pair only the one that applies, and what may not be done now greyed, with why
+   * that does something to it, of each pair only the one that applies, under one key, so that Recently used keeps it
+   * (DEC-UX-242), and what may not be done now greyed, with why
    * (DEC-UX-207). Writing and running it is for who made it, as on the page.
    */
   $effect(() => {
@@ -560,7 +561,7 @@
       rows.push(
         flagAt === null
           ? command('flag', 'flag', t('quick.query.flag'), () => flag(true), flagsFull ? { why: t('flags.full.short'), words: t('quick.query.flag.words') } : { meta: t('quick.query.flag.meta'), words: t('quick.query.flag.words') })
-          : command('unflag', 'flag-fill', t('quick.query.unflag'), () => flag(false), { meta: t('quick.query.unflag.meta', { key: `${modLabel(mac)}${digitOf(flagAt)}` }), words: t('quick.query.flag.words') }),
+          : command('flag', 'flag-fill', t('quick.query.unflag'), () => flag(false), { meta: t('quick.query.unflag.meta', { key: `${modLabel(mac)}${digitOf(flagAt)}` }), words: t('quick.query.flag.words') }),
       );
     }
     if (found.mine) rows.push(command('rename', 'pencil-simple', t('quick.query.rename'), () => void startRename(), { meta: t('quick.query.rename.meta'), words: t('quick.query.rename.words') }));
@@ -597,8 +598,8 @@
     }
     rows.push(
       hidden
-        ? command('show', 'eye', t('quick.query.show'), () => void toggleHidden(), { meta: t('quick.query.show.meta'), words: t('quick.query.show.words') })
-        : command('hide', 'eye-slash-fill', t('quick.query.hide'), () => void toggleHidden(), { meta: t('quick.query.hide.meta'), words: t('quick.query.hide.words') }),
+        ? command('hidden', 'eye', t('quick.query.show'), () => void toggleHidden(), { meta: t('quick.query.show.meta'), words: t('quick.query.show.words') })
+        : command('hidden', 'eye-slash-fill', t('quick.query.hide'), () => void toggleHidden(), { meta: t('quick.query.hide.meta'), words: t('quick.query.hide.words') }),
     );
     if (onlayout) {
       const choose = onlayout;
@@ -1018,20 +1019,6 @@
         {/each}
       </span>
       <Button variant="outline" href={NEW_QUERY}><Icon name="plus-circle-fill" />{t('query.new')}</Button>
-      {#if onflag}
-        <!-- Flag keeps it on top of Query, with its key; at ten it is greyed, with why (DEC-UX-236, OP-UX-84). -->
-        {#if flagAt === null && flagsFull}
-          <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-          <span class="why-anchor" tabindex="0" role="group" aria-label={t('flags.flag')} aria-describedby={`${uid}-why-flag`}>
-            <Button variant="outline" disabled><Icon name="flag" />{t('flags.flag')}</Button>
-            <span class="why-pop" id={`${uid}-why-flag`} role="tooltip"><b class="why-title">{t('flags.full.title')}</b>{t('flags.full.text')}</span>
-          </span>
-        {:else}
-          <Button variant="outline" pressed={flagAt !== null} title={t(flagAt === null ? 'flags.flag.hint' : 'flags.unflag.hint')} onclick={() => onflag(flagAt === null)}
-            ><Icon name={flagAt === null ? 'flag' : 'flag-fill'} />{t(flagAt === null ? 'flags.flag' : 'flags.flagged')}{#if flagAt !== null}<span class="kbd">{modLabel(mac)}{digitOf(flagAt)}</span>{/if}</Button
-          >
-        {/if}
-      {/if}
       <Button variant="outline" disabled={hiding} title={t(hidden ? 'query.unhide.hint' : 'query.hide.hint')} onclick={toggleHidden}
         ><Icon name={hidden ? 'eye' : 'eye-slash-fill'} />{t(hidden ? 'query.page.unhide' : 'query.page.hide')}</Button
       >
