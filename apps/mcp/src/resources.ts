@@ -668,6 +668,8 @@ export interface Preflight {
   partitions: number | null;
   problems: Record<string, unknown>[];
   warnings: Record<string, unknown>[];
+  /** The tables outside Data Hub a power user's query reads (FR-SR-56). */
+  tables?: { key: string; name: string; layer: string }[];
 }
 
 /**

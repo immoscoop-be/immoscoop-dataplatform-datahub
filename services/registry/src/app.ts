@@ -4,6 +4,7 @@ import type { FastifyInstance } from 'fastify';
 import { type AdminOptions, adminRoutes } from './admin-api.js';
 import { type ApiOptions, apiRoutes } from './api.js';
 import { type InternalOptions, internalRoutes } from './internal.js';
+import { tableRoutes } from './tables-api.js';
 import { type WebhookOptions, webhookRoutes } from './webhook.js';
 
 export interface AppOptions {
@@ -27,6 +28,8 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
   }
   if (options.api) {
     await app.register(apiRoutes, options.api);
+    // Which tables Data Hub knows, for a power user's query: a gate of its own, `queries.outside` (FR-SR-56).
+    await app.register(tableRoutes, { reading: options.api.reading });
   }
   if (options.internal) {
     await app.register(internalRoutes, options.internal);

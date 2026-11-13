@@ -29,7 +29,7 @@ export interface LensContext {
   /** Whether the User may read the query: their own, or one of others they see (`queries.seeOthers`). */
   readable(request: FastifyRequest, query: Query): Promise<boolean>;
   resourcesOf(request: FastifyRequest, of: { resources: NamedResource[] }): Promise<ResourceOfQuery[]>;
-  check(sql: string, parameters: Parameter[], resources: ResourceOfQuery[], ranges: Thresholds): Promise<Preflight>;
+  check(sql: string, parameters: Parameter[], resources: ResourceOfQuery[], ranges: Thresholds, request?: FastifyRequest): Promise<Preflight>;
   /** The SQL with each Resource by its full name in its own case, as BigQuery gets it (DEC-SR-44). */
   ownCase(sql: string, resources: ResourceOfQuery[]): string;
   unavailable(error: unknown, reply: FastifyReply, request: FastifyRequest): FastifyReply | undefined;
@@ -175,6 +175,16 @@ interface Sight {
 /** A Request as a waiting or refused Lens shows it, with the decision of the Data Team (FR-LE-09, DEC-UX-128). */
 const requestView = (request: QueryRequest | undefined) =>
   request ? { id: request.id, state: request.state, sentAt: request.createdAt, reads: request.reads, text: request.text, decision: request.decision } : null;
+
+/** A Lens is made only on published Resources: never of a query that reads a table outside Data Hub (DEC-LE-22, FR-SR-56). */
+function readsOutside(checked: Preflight) {
+  const names = checked.tables.map((table) => table.name).join(', ');
+  return {
+    error: 'reads_outside',
+    message: `A Lens is made only on published Resources: this query reads ${checked.tables.length === 1 ? 'a table' : 'tables'} outside Data Hub, ${names}.`,
+    tables: checked.tables,
+  };
+}
 
 /**
  * The routes of Lenses (TR-LE-01): making one from a query, with its size check (FR-LE-07, FR-LE-08);
@@ -361,6 +371,8 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
       }
       resources = await resourcesOf(request, query);
       // A Lens is made only on published Resources: one not published is not confirmed by its Owner yet (DEC-LE-22).
+      // ...and on at least one: a power user's query from SQL alone reads none (FR-SR-56).
+      if (resources.length === 0) return reply.code(409).send({ error: 'no_resources', message: 'A Lens is made only on published Resources: this query reads none.' });
       const unpublished = resources.flatMap(({ resource }) => (resource && !resource.published ? [{ id: resource.id, displayName: resource.displayName }] : []));
       if (unpublished.length > 0) {
         return reply.code(409).send({
@@ -369,11 +381,13 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
           resources: unpublished,
         });
       }
-      // The size of a Lens is measured with the ranges of Data Hub: it is about the Lens, not its author.
-      checked = await check(query.sql, query.parameters, resources, thresholds);
+      // The size of a Lens is measured with the ranges of Data Hub: it is about the Lens, not its author. With the
+      // request, a power user's query says which tables outside Data Hub it reads, so that it is refused for them.
+      checked = await check(query.sql, query.parameters, resources, thresholds, request);
     } catch (error) {
       return unavailable(error, reply, request);
     }
+    if (checked.tables.length > 0) return reply.code(409).send(readsOutside(checked));
     if (!checked.runnable || checked.range === null) return reply.code(409).send({ error: 'not_runnable', message: 'This query cannot run as it is.', preflight: checked });
     if (checked.range === 'approve' && !fields.approve) {
       return reply.code(409).send({ error: 'approval_needed', message: 'One run reads more than 100 MB: publish it anyway, or make it read less.', preflight: checked });
@@ -688,10 +702,11 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     let resources: ResourceOfQuery[];
     try {
       resources = await resourcesOf(request, query);
-      checked = await check(query.sql, query.parameters, resources, thresholds);
+      checked = await check(query.sql, query.parameters, resources, thresholds, request);
     } catch (error) {
       return unavailable(error, reply, request);
     }
+    if (checked.tables.length > 0) return reply.code(409).send(readsOutside(checked));
     if (!checked.runnable || checked.range === null) return reply.code(409).send({ error: 'not_runnable', message: 'This query cannot run as it is.', preflight: checked });
     if (checked.range === 'approve' && body.approve !== true) {
       return reply.code(409).send({ error: 'approval_needed', message: 'One run reads more than 100 MB: update it anyway, or make it read less.', preflight: checked });

@@ -133,6 +133,7 @@ export const PERMISSION_TEXTS: { readonly [K in PermissionKey]: { name: string; 
   'groups.manage': { name: 'permission.groups.manage', about: 'permission.groups.manage.about', values: {} },
   'groups.all.manage': { name: 'permission.groups.all.manage', about: 'permission.groups.all.manage.about', values: {} },
   'queries.make': { name: 'permission.queries.make', about: 'permission.queries.make.about', values: {} },
+  'queries.outside': { name: 'permission.queries.outside', about: 'permission.queries.outside.about', values: {} },
   'runs.ranges': {
     name: 'permission.runs.ranges',
     about: 'permission.runs.ranges.about',

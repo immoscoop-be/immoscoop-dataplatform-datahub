@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { createDatabase, migrate, type Database } from '@datahub/db';
 import { type Kysely, sql } from 'kysely';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, onTestFinished } from 'vitest';
 import { createArtifactSets } from './artifact-sets.js';
 import type { RegistryDatabase } from './database.js';
 import { collecionesCatalog, collecionesManifest, sampleCatalog, sampleManifest } from './fixtures.js';
@@ -45,6 +45,32 @@ describe.skipIf(!url)('reading the registry', () => {
   afterAll(async () => {
     await sql`drop schema if exists ${sql.id(schema)} cascade`.execute(database.db);
     await database.close();
+  });
+
+  it('knows the tables of its dbt projects for a power user, in their own case, and which are Resources (FR-SR-56, DEC-SR-46)', async () => {
+    const db = database.db;
+    const project = await db.selectFrom('projects').select('currentSetId').where('projectId', '=', '9367').executeTakeFirstOrThrow();
+    const setId = project.currentSetId as number;
+    // An exposure with the tag datahub on orders makes orders a Resource; sales_dashboard, without it, makes nothing one.
+    await db
+      .insertInto('nodes')
+      .values({ setId, uniqueId: `exposure.${P}.datahub_orders`, resourceType: 'exposure', name: 'datahub_orders', packageName: P, databaseName: null, schemaName: null, tableName: null, relation: null, description: '', materialized: null, tags: ['datahub'], filePath: null, checksum: null, meta: {}, entity: null, action: null, strategy: null, layer: null, partitionField: null, partitionUnit: null })
+      .execute();
+    await db.insertInto('edges').values({ setId, parentId: `model.${P}.orders`, childId: `exposure.${P}.datahub_orders` }).execute();
+    onTestFinished(async () => {
+      // The other tests read the dbt projects as they were.
+      await db.deleteFrom('edges').where('setId', '=', setId).where('childId', '=', `exposure.${P}.datahub_orders`).execute();
+      await db.deleteFrom('nodes').where('setId', '=', setId).where('uniqueId', '=', `exposure.${P}.datahub_orders`).execute();
+    });
+
+    const tables = await reading.knownTables(['IMMOSCOOP-DATAPLATFORM.dbt_marts.orders', 'immoscoop-dataplatform.dbt_marts.dim_customers', 'immoscoop-dataplatform.raw_shop.orders_export', 'immoscoop-dataplatform.nowhere.nothing']);
+    expect(tables.map((table) => [table.relation, table.resourceType, table.resource, [table.databaseName, table.schemaName, table.tableName].join('.')])).toEqual([
+      ['immoscoop-dataplatform.dbt_marts.dim_customers', 'model', false, 'immoscoop-dataplatform.dbt_marts.dim_customers'],
+      ['immoscoop-dataplatform.dbt_marts.orders', 'model', true, 'immoscoop-dataplatform.dbt_marts.orders'],
+      // A source keeps its own case: BigQuery names are case-sensitive.
+      ['immoscoop-dataplatform.raw_shop.orders_export', 'source', false, 'Immoscoop-Dataplatform.raw_shop.orders_export'],
+    ]);
+    expect(await reading.knownTables([])).toEqual([]);
   });
 
   it('tells the Current Version of each dbt project', async () => {

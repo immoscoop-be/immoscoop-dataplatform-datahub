@@ -1,5 +1,6 @@
 import { type Kysely, sql } from 'kysely';
 import type { PartitionUnit, RegistryDatabase, SetStatus } from './database.js';
+import { DATAHUB_TAG } from './exposed.js';
 
 /** A Node in a list: enough to recognise it and find its table. */
 export interface NodeSummary {
@@ -13,6 +14,26 @@ export interface NodeSummary {
   /** The layer Colleciónes tags it with, such as `mart`; null for another model. */
   layer: string | null;
   filePath: string | null;
+}
+
+/**
+ * A table of the Current Version of a dbt project Data Hub follows, as a power user may query it (FR-SR-56): its
+ * own-case parts, and whether an exposure with the tag `datahub` depends on it, which makes it a Resource.
+ */
+export interface KnownTableRow {
+  relation: string;
+  databaseName: string | null;
+  schemaName: string | null;
+  tableName: string | null;
+  name: string;
+  resourceType: string;
+  layer: string | null;
+  filePath: string | null;
+  partitionField: string | null;
+  partitionUnit: string | null;
+  projectId: string;
+  projectName: string | null;
+  resource: boolean;
 }
 
 export interface SearchHit extends NodeSummary {
@@ -177,6 +198,35 @@ export function createReading(db: Kysely<RegistryDatabase>) {
           ts_rank(n.search, ${words}) desc,
           n.name
         limit ${options.limit}`.execute(db);
+      return result.rows;
+    },
+
+    /**
+     * Which of these tables Data Hub knows, from the Current Version of a dbt project it follows, for a power user's
+     * query (FR-SR-56): one row per table, a model before a source of the same table; `resource` when an exposure with
+     * the tag `datahub` depends on it in any dbt project, which makes it a Resource, to be read as one (DEC-SR-46).
+     */
+    async knownTables(relations: readonly string[]): Promise<KnownTableRow[]> {
+      const keys = [...new Set(relations.map((relation) => relation.toLowerCase()))];
+      if (keys.length === 0) return [];
+      const result = await sql<KnownTableRow>`
+        with current_sets as (select current_set_id as set_id from projects where current_set_id is not null),
+        exposed as (
+          select distinct t.relation
+          from nodes t
+          join edges e on e.set_id = t.set_id and e.parent_id = t.unique_id
+          join nodes x on x.set_id = e.set_id and x.unique_id = e.child_id
+          where t.set_id in (select set_id from current_sets)
+            and t.relation in (${sql.join(keys)})
+            and x.resource_type = 'exposure' and ${DATAHUB_TAG} = any(x.tags)
+        )
+        select distinct on (n.relation)
+          n.relation, n.database_name, n.schema_name, n.table_name, n.name, n.resource_type, n.layer, n.file_path,
+          n.partition_field, n.partition_unit, p.project_id::text as project_id, p.name as project_name,
+          n.relation in (select relation from exposed) as resource
+        from nodes n join projects p on p.current_set_id = n.set_id
+        where n.relation in (${sql.join(keys)})
+        order by n.relation, n.resource_type = 'source', p.project_id`.execute(db);
       return result.rows;
     },
 

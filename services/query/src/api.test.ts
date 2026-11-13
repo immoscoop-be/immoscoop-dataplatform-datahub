@@ -12,6 +12,7 @@ import { createLenses } from './lenses.js';
 import { buildApp } from './app.js';
 import { type BigQuery, BigQueryRefused, type DryRun, type RunOptions, ResultExpired } from './bigquery.js';
 import { type BrokenMessage, type Catalogue, CatalogueUnavailable, type QueryRequest, type QueryResource, type SeenCollection } from './catalogue.js';
+import type { KnownTable } from './registry.js';
 import type { QueryDatabase } from './database.js';
 import { migrations } from './migrations/index.js';
 import { createBeneath } from './preflight.js';
@@ -51,6 +52,9 @@ const SOURCES: QueryResource = { ...WEEKLY, id: '7a2d3c5f-9b2e-4d4f-8a31-2c3d4e5
 const SECRET: QueryResource = { ...SOURCES, id: '8b3e4d6a-0c3f-4e5a-9b42-3d4e5f6a7b82', key: `${PROJECT}.dbt_prod_stacks.salaries`, fullName: `${PROJECT}.dbt_prod_stacks.salaries`, displayName: 'Salaries' };
 /** A Resource of An's unit that is not published yet: a query may read it, but no Lens is made of it (DEC-LE-22). */
 const DRAFT: QueryResource = { ...SOURCES, id: '9c4f5e7b-1d4a-4f6b-8c53-4e5f6a7b8c93', key: `${PROJECT}.dbt_prod_stacks.draft_leads`, fullName: `${PROJECT}.dbt_prod_stacks.draft_leads`, displayName: 'Draft leads', collectionId: AN_WORK, published: false };
+/** Tables Data Hub knows from its dbt projects, as registry answers a power user (FR-SR-56): a staging model, no Resource; and one an exposure makes a Resource. */
+const STG: KnownTable = { key: `${PROJECT}.dbt_prod_staging.stg_oltp__leads`, fullName: `${PROJECT}.dbt_prod_staging.STG_OLTP__Leads`, name: 'stg_oltp__leads', resourceType: 'model', layer: 'staging', projectId: '9367', projectName: 'dbt-prod', resource: false, partition: null };
+const PARTNERS: KnownTable = { ...STG, key: `${PROJECT}.dbt_prod_stacks.partner_contracts`, fullName: `${PROJECT}.dbt_prod_stacks.partner_contracts`, name: 'partner_contracts', layer: 'mart', resource: true };
 
 describe('the fields of a Lens, in a request', () => {
   const fields = { queryId: '2b1f3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d', collectionId: CREDIT, name: ' Leads per source ' };
@@ -98,7 +102,9 @@ describe('the fields of a query, in a request', () => {
   it('need a name and its Resources to make one (FR-SR-45)', () => {
     expect(parseQuery({ name: ' Leads per source ', question: ' Which? ', resources: [WEEKLY.id] }, true)).toEqual({ name: 'Leads per source', question: 'Which?', resources: [WEEKLY.id] });
     expect(parseQuery({ resources: [WEEKLY.id] }, true)).toBe('The name has 1 to 120 characters.');
-    expect(parseQuery({ name: 'x', resources: [] }, true)).toMatch(/1 to 10 Resources/);
+    // None passes here: only a power user may make one without Resources, which the route decides (FR-SR-56).
+    expect(parseQuery({ name: 'x', resources: [] }, true)).toEqual({ name: 'x', resources: [] });
+    expect(parseQuery({ name: 'x', resources: Array.from({ length: 11 }, (_, i) => `${i}`) }, true)).toMatch(/1 to 10 Resources/);
     expect(parseQuery({ name: 'x', resources: [WEEKLY.id, WEEKLY.id] }, true)).toMatch(/each named once/);
     expect(parseQuery({ name: 'x', resources: [WEEKLY.id], owner: '101' }, true)).toBe('A query has no field owner here.');
   });
@@ -231,6 +237,8 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
   /** What query told catalogue became Broken, and works again (MSG-QRY-02, MSG-LEN-05). */
   const brokenTold: { subject: { kind: string; id: string; name?: string; ownerId?: string }; fields: BrokenMessage }[] = [];
   const worksTold: { kind: string; id: string }[] = [];
+  /** What query asked registry about the tables outside Data Hub, and for whom (FR-SR-56). */
+  const knownAsked: { keys: string[]; authorization: string }[] = [];
   /** The Lenses query told catalogue were deleted (FR-LE-18); while catalogueDown, catalogue does not answer. */
   const deletedTold: { lensId: string; name: string; actor: { id: string; name: string }; reason: string; users: string[] }[] = [];
   let catalogueDown = false;
@@ -350,6 +358,13 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
         bigquery: fake.bigquery,
         beneath: createBeneath(fake.bigquery),
         project: PROJECT,
+        // registry, which answers only who may query tables outside Data Hub, as the registry route itself does.
+        registry: {
+          async knownTables(keys, authorization) {
+            knownAsked.push({ keys: [...keys], authorization });
+            return [STG, PARTNERS].filter((table) => keys.includes(table.key));
+          },
+        },
         thresholds: { approve: 100_000_000, request: 1_000_000_000 },
         storage: createStorage(fake.bigquery, createBeneath(fake.bigquery)),
         // The scheduler, by its Google ID token for query's own address (DEC-LE-20).
@@ -1342,5 +1357,56 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     // Its author without lenses.make sends no Request on a Lens again.
     const miaNoLenses = await userOf('104', 'Mia Peeters', 'businessAnalyst', (permissions) => (permissions['lenses.make'].on = false), [CREDIT_UNIT]);
     expect((await call(miaNoLenses, 'POST', `/lenses/${waiting.id}/requests`, {})).json()).toMatchObject({ error: 'forbidden', permission: 'lenses.make' });
+  });
+
+  describe('a power user, with tables outside Data Hub (FR-SR-56, DEC-SR-46)', () => {
+    const raw = `select lead_id, created_date from \`${STG.key}\``;
+
+    it('starts a query from SQL alone, and reads a table Data Hub knows that is no Resource, in its own case', async () => {
+      // Without Resources only for a power user: Dirk, in Admin, has queries.outside; An does not.
+      expect((await call(an, 'POST', '/queries', { name: 'Raw leads', resources: [] })).statusCode).toBe(400);
+      const made = await call(dataTeam, 'POST', '/queries', { name: 'Raw leads', resources: [] });
+      expect(made.statusCode).toBe(201);
+      const raws = made.json().query.id as string;
+      expect(made.json().query.resources).toEqual([]);
+
+      const checked = (await call(dataTeam, 'POST', `/queries/${raws}/preflight`, { sql: raw })).json().preflight;
+      expect(checked).toMatchObject({ runnable: true, problems: [], tables: [{ key: STG.key, fullName: STG.fullName, name: 'stg_oltp__leads', layer: 'staging' }] });
+      expect(knownAsked.at(-1)).toEqual({ keys: [STG.key], authorization: dataTeam });
+      // BigQuery gets it by its full name in its own case, as it would a Resource (DEC-SR-44).
+      const ran = await call(dataTeam, 'POST', `/queries/${raws}/runs`, { sql: raw });
+      expect(ran.statusCode).toBe(201);
+      expect(fake.runs.at(-1)?.sql).toContain(`\`${STG.fullName}\``);
+    });
+
+    it('keeps a Resource a Resource, and a table Data Hub does not know an error', async () => {
+      const raws = (await call(dataTeam, 'POST', '/queries', { name: 'Raw leads, again', resources: [] })).json().query.id as string;
+      const resource = (await call(dataTeam, 'POST', `/queries/${raws}/preflight`, { sql: `select * from \`${PARTNERS.key}\`` })).json().preflight;
+      expect(resource).toMatchObject({ runnable: false, tables: [], problems: [{ kind: 'outside', name: PARTNERS.key }] });
+      const unknown = (await call(dataTeam, 'POST', `/queries/${raws}/preflight`, { sql: 'select * from `other-project.somewhere.something`' })).json().preflight;
+      expect(unknown).toMatchObject({ runnable: false, problems: [{ kind: 'unknown', name: 'other-project.somewhere.something' }] });
+      // The table it may read still shows next to the Resources while another one keeps it from running.
+      const both = (await call(dataTeam, 'POST', `/queries/${raws}/preflight`, { sql: `${raw} join \`other-project.somewhere.something\` using (lead_id)` })).json().preflight;
+      expect(both).toMatchObject({ runnable: false, tables: [{ key: STG.key }], problems: [{ kind: 'unknown' }] });
+    });
+
+    it('never reads one for a colleague without the Permission, and asks registry nothing for them', async () => {
+      const theirs = (await call(an, 'POST', '/queries', { name: 'Weekly and raw', resources: [WEEKLY.id] })).json().query.id as string;
+      const asked = knownAsked.length;
+      const checked = (await call(an, 'POST', `/queries/${theirs}/preflight`, { sql: raw })).json().preflight;
+      expect(checked).toMatchObject({ runnable: false, tables: [], problems: [{ kind: 'outside', name: STG.key }] });
+      expect(knownAsked).toHaveLength(asked);
+    });
+
+    it('makes no Lens of a query that reads one, nor of a query without Resources (DEC-LE-22)', async () => {
+      const mixed = (
+        await call(dataTeam, 'POST', '/queries', { name: 'Weekly and raw', resources: [WEEKLY.id], sql: `select * from \`${WEEKLY.key}\` join \`${STG.key}\` using (lead_id) where week_start > '2026-01-01'` })
+      ).json().query.id as string;
+      const refused = await call(dataTeam, 'POST', '/lenses', { queryId: mixed, collectionId: CREDIT, name: 'Weekly and raw' });
+      expect(refused.statusCode).toBe(409);
+      expect(refused.json()).toMatchObject({ error: 'reads_outside', message: 'A Lens is made only on published Resources: this query reads a table outside Data Hub, stg_oltp__leads.', tables: [{ name: 'stg_oltp__leads' }] });
+      const alone = (await call(dataTeam, 'POST', '/queries', { name: 'Only SQL', resources: [], sql: 'select 1 as one' })).json().query.id as string;
+      expect((await call(dataTeam, 'POST', '/lenses', { queryId: alone, collectionId: CREDIT, name: 'Only SQL' })).json()).toMatchObject({ error: 'no_resources' });
+    });
   });
 });

@@ -555,9 +555,17 @@
   /** The problems and warnings of the Pre-flight of the SQL and Parameters as they are now. */
   const current = $derived(preflight && checked === key ? preflight : null);
   const problems = $derived(current?.problems ?? []);
+  /**
+   * The tables outside Data Hub a power user's query reads, from the last Pre-flight, so that they stay while the
+   * SQL changes (FR-SR-56, DEC-UX-220). A query that reads one, or no Resource at all, cannot become a Lens.
+   */
+  const known = $derived(preflight?.tables ?? []);
+  const noLens = $derived(known.length > 0 ? 'query.known.hint' : query && query.resources.length === 0 ? 'query.noResources.hint' : null);
   const marks: ErrorMark[] = $derived(
     problems.flatMap((problem): ErrorMark[] => {
-      if (problem.kind === 'outside' && problem.start !== null && problem.end !== null) return [{ from: problem.start, to: problem.end, message: t('query.problem.outside', { name: problem.name }), kind: 'outside' }];
+      if ((problem.kind === 'outside' || problem.kind === 'unknown') && problem.start !== null && problem.end !== null) {
+        return [{ from: problem.start, to: problem.end, message: said(problem), kind: 'outside' }];
+      }
       if (problem.kind === 'undefinedParameter') return [{ from: problem.start, to: problem.end, message: t('query.problem.undefinedParameter', { name: problem.name }), kind: 'undefined' }];
       return [];
     }),
@@ -587,6 +595,8 @@
         return t('query.problem.notVisible', { name: problem.resource.displayName });
       case 'outside':
         return t('query.problem.outside', { name: problem.name });
+      case 'unknown':
+        return t('query.problem.unknown', { name: problem.name });
       case 'undefinedParameter':
         return t('query.problem.undefinedParameter', { name: problem.name });
       case 'notSelect':
@@ -739,6 +749,16 @@
           >
         </p>
       {/if}
+      {#if query.mine && query.kind === 'query' && !query.lens && known.length > 0}
+        <!-- A query that reads a table outside Data Hub cannot become a Lens, and says so (DEC-UX-220). -->
+        <p class="meta origin known">
+          <Icon name="cube" /><span
+            >{#each tParts('query.known.line', { count: known.length }, { names: '' }) as part, index (index)}{#if 'name' in part}{#each known as table, at (table.key)}{#if at > 0}, {/if}<span
+                    class="mono">{table.name}</span
+                  >{/each}{:else}{part.text}{/if}{/each}</span
+          >
+        </p>
+      {/if}
       {#if !query.mine}<p class="meta">{t('query.of', { name: query.ownerName })}</p>{/if}
     </div>
     <div class="actions">
@@ -753,12 +773,14 @@
       >
       {#if query.mine && query.kind === 'query' && query.lens}
         <!-- A query used as a Lens overwrites it, after its size check (DEC-UX-77). -->
-        <Button disabled={query.lens.state === 'waiting'} title={t(query.lens.state === 'waiting' ? 'lens.update.waiting' : 'lens.update.hint')} onclick={() => (updating = true)}
+        <Button disabled={query.lens.state === 'waiting' || noLens !== null} title={t(query.lens.state === 'waiting' ? 'lens.update.waiting' : (noLens ?? 'lens.update.hint'))} onclick={() => (updating = true)}
           ><Icon name="arrows-clockwise" />{t('lens.update.button')}</Button
         >
       {:else if query.mine && query.kind === 'query'}
         <!-- The logical next step once a query answers a question that comes back (DEC-UX-25); greyed on a Resource not published (DEC-UX-218). -->
-        {#if unpublished.length > 0}
+        {#if noLens}
+          <Button disabled title={t(noLens)}>{t('query.makeLens')}</Button>
+        {:else if unpublished.length > 0}
           <Button disabled title={t('query.unpublished.hint')}>{t('query.makeLens')}</Button>
         {:else}
           <Button href={newLensPath(query.id)}>{t('query.makeLens')}</Button>
@@ -796,6 +818,10 @@
               <button type="button" class="x" aria-label={t('query.remove', { name: resource.displayName })} onclick={() => (newSet = { mode: 'remove', resource: resource.id })}><Icon name="x" /></button>
             {/if}
           </span>
+        {/each}
+        {#each known as table (table.key)}
+          <!-- A table outside Data Hub: quiet, dashed, without Level, Owner or Publication (DEC-UX-220). -->
+          <span class="chip known" title={t('query.known.title')}><Icon name="cube" /><span class="mono">{table.name}</span><span class="meta">· {t('query.known', { layer: table.layer })}</span></span>
         {/each}
         {#if query.mine && !preview && query.resources.length < 10}
           <button type="button" class="add" onclick={() => (newSet = { mode: 'add', resource: null })}><Icon name="plus" />{t('query.resources.add')}</button>
@@ -1166,6 +1192,8 @@
   .chip:hover { background: var(--tint-active); }
   .chip .meta { white-space: nowrap; }
   .chip.gone { color: var(--text-muted); }
+  .chip.known { color: var(--text-secondary); background: transparent; outline: 1.5px dashed var(--text-muted); outline-offset: -1.5px; padding-right: 10px; }
+  .chip.known:hover { background: transparent; }
   .chip.outside { color: var(--signal-warn); background: color-mix(in srgb, var(--signal-warn) 12%, var(--surface-solid)); padding-right: 10px; }
   .chip.outside .text-link { color: var(--signal-warn); font-weight: var(--weight-medium); }
   .x { width: 20px; height: 20px; border: 0; border-radius: 50%; background: none; color: var(--text-muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 11px; }

@@ -257,6 +257,21 @@ A gap may have a scope, where it holds ([FR-RC-24](../functional/05-resource-car
 
 The web app builds its Summary from the Resource, its Log, what it relates to, its size from query and the Messages on it, as the page already has them ([web](../../architecture/services/web.md)). The MCP builds the same parts, in the same order, as Markdown for `get_resource`: it reads the Resource, the Messages on it, its Log and what it relates to, and a piece that does not come leaves out its part, never the Summary ([mcp](../../architecture/services/mcp.md)).
 
+<a id="tr-sr-27"></a>
+### TR-SR-27 · A power user's query reads the tables registry knows
+
+**Status:** Implemented · **Realises:** [FR-SR-56](../functional/04-stacks-and-resources.md#fr-sr-56), [DEC-SR-46](../functional/04-stacks-and-resources.md#dec-sr-46), [DEC-PL-09](../functional/12-permissions-and-library-cards.md#dec-pl-09), [DEC-LE-22](../functional/09-lenses.md#dec-le-22), [DEC-UX-220](../../design/principles.md#dec-ux-220)
+
+The Permission `queries.outside` is in `@datahub/contracts/permissions`, in the part Query, without values: yes in the starting group Admin, no in Business analyst and Lens user. Migration `0010-query-outside` of identity sets it on every Permission group already kept: yes on those that started as Admin, no on the others, so that nobody gets it without an Admin choosing so.
+
+registry answers `GET /known-tables?relations=` with the Access Token of the User, only with `queries.outside` (`403` with the Permission otherwise), for 1 to 50 names `project.dataset.table` (`400` otherwise). For each that a Node of the Current Version of a dbt project it follows has as its relation, it gives one table: its Key in lower case, its full name in its own case, its name, its resource type, its layer, its project, how it is partitioned, and whether an exposure tagged `datahub` exposes it, which makes it a Resource. A source wins over a model of the same relation. A name it does not know is left out.
+
+query asks it, at `DATAHUB_REGISTRY_URL` and with the token of the User, only for a User with `queries.outside`: the Pre-flight sends every table of the SQL that is no Resource of the query, as a Key (a name of two parts gets the project of Data Hub). A table registry knows that is no Resource is read: the Pre-flight lists it in `tables` (`key`, `fullName`, `name`, `layer`), also when something else keeps the query from running; BigQuery gets it by its full name in its own case, as a Resource ([DEC-SR-44](../functional/04-stacks-and-resources.md#dec-sr-44)), the check of what BigQuery read allows it and the tables beneath it, and it counts in the bytes and the range as any table. A Resource that is not of the query stays the problem `outside`, and a table registry does not know is the problem `unknown`. For a User without the Permission registry is not asked, and every table outside the Resources of the query is `outside`. registry not answering gives `503`, as catalogue not answering does. Each run keeps its SQL in the Query Log, with the tables it read by name.
+
+`POST /queries` takes `resources: []` only from a User with `queries.outside` (`400` otherwise). `POST /lenses` and the update of a Lens from its query refuse a query without Resources (`409 no_resources`) and one that reads a table outside Data Hub (`409 reads_outside`, with `tables`), after the refusal of a Resource not published ([DEC-LE-22](../functional/09-lenses.md#dec-le-22)).
+
+The web app shows each table of `tables` as a chip with a dashed outline next to the Resources, a line under the question and "Make it a lens" greyed while there are any, greys it too on a query without Resources, and offers "Or start from SQL, without Resources" on a new query to a User with the Permission. The MCP server lets such a User make a query without Resources with `create_query`, and `check_query` says what it reads outside Data Hub.
+
 ## Open points
 
 None yet; reading the data of Resources is [OP-SR-10](../functional/04-stacks-and-resources.md#op-sr-10).

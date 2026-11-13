@@ -817,6 +817,7 @@
           initial={page.resource}
           {collections}
           {catalogue}
+          outside={can(permissions, 'queries.outside')}
           lensesOn={(on, words) => queries.suggestions(on, words)}
           ondraft={(name) => (draft = name)}
           onstart={async (fields) => {

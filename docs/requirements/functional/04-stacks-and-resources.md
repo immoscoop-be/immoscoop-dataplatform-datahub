@@ -433,11 +433,13 @@ Admin has a tool Withdrawn, for whose Permission group opens it ([FR-PL-15](12-p
 <a id="fr-sr-56"></a>
 ### FR-SR-56 · A power user queries tables outside Data Hub
 
-**Status:** Specified · **Source:** Max, 2026-11-13 ([DEC-SR-46](#dec-sr-46)) · **Screens:** [query](../../design/screens/query.html), [query-new](../../design/screens/query-new.html)
+**Status:** Implemented · **Source:** Max, 2026-11-13 ([DEC-SR-46](#dec-sr-46)) · **Screens:** [query](../../design/screens/query.html), [query-new](../../design/screens/query-new.html)
 
 A User whose Permission group has `queries.outside` ([DEC-PL-09](12-permissions-and-library-cards.md#dec-pl-09)) may read in a query, besides its Resources, a table that Data Hub knows but that is no Resource: a model, seed, snapshot or source of a dbt project it follows through its Source Jobs, as the registry keeps it in its Current Version. They may also start a query from SQL, without Resources. Such a table shows next to the Resources of the query as "not a Resource", without Level, Owner or Publication; the Pre-flight measures it and the run reads it as any other, within the ranges of the User ([FR-SR-37](#fr-sr-37)), and the Query Log keeps which tables it read. A table that is a Resource is read as that Resource, with its rules ([DEC-UX-73](../../design/principles.md#dec-ux-73)), and a table of no dbt project Data Hub follows stays an error. A query that reads a table outside Data Hub cannot become a Lens ([DEC-LE-22](09-lenses.md#dec-le-22)). Claude, through the MCP server, does the same for such a User ([FR-CL-18](17-claude.md#fr-cl-18)).
 
 **Makes easy:** a power user exploring raw and staging data, such as event tables, in Data Hub itself, measured and logged as every query, before it becomes a Resource. **Makes hard:** reading around a Resource, its Publication or its Owner, sharing a figure from unconfirmed data as a Lens, and reading tables of projects Data Hub does not follow.
+
+*Note of 2026-11-13, on building it: registry tells query which tables it knows, with the token of the User ([TR-SR-27](../technical/04-stacks-and-resources.md#tr-sr-27)).*
 
 <a id="fr-sr-35"></a>
 ### FR-SR-35 · A new Resource waits for a Collection

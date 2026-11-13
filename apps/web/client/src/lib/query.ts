@@ -296,6 +296,8 @@ export type Problem =
   | { kind: 'empty' }
   | { kind: 'notVisible'; resource: { id: string; displayName: string } }
   | { kind: 'outside'; name: string; start: number | null; end: number | null }
+  /** In a power user's query: a table Data Hub does not know from a dbt project it follows (FR-SR-56). */
+  | { kind: 'unknown'; name: string; start: number | null; end: number | null }
   /** An @name that is not a Parameter, with the kind suggested from the column it is compared with. */
   | { kind: 'undefinedParameter'; name: string; start: number; end: number; suggestedKind: ParameterKind | null }
   | { kind: 'notSelect'; statementType: string }
@@ -326,6 +328,16 @@ export interface Preflight {
   thresholds: { approve: number; request: number; above?: 'request' | 'refuse' };
   /** The Parameters that are not in the SQL: they are not sent. */
   unused: string[];
+  /** The tables outside Data Hub a power user's query reads: Data Hub knows them, they are no Resource (FR-SR-56). */
+  tables?: OutsideTable[];
+}
+
+/** A table outside Data Hub, known from a dbt project Data Hub follows, with its layer (DEC-UX-220). */
+export interface OutsideTable {
+  key: string;
+  fullName: string;
+  name: string;
+  layer: string;
 }
 
 /** What a run came to: its result, or why it did not run. */

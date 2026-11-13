@@ -93,6 +93,7 @@ import chatText from '@phosphor-icons/core/assets/regular/chat-text.svg?raw';
 import check from '@phosphor-icons/core/assets/regular/check.svg?raw';
 import checkCircle from '@phosphor-icons/core/assets/regular/check-circle.svg?raw';
 import circle from '@phosphor-icons/core/assets/regular/circle.svg?raw';
+import code from '@phosphor-icons/core/assets/regular/code.svg?raw';
 import columns from '@phosphor-icons/core/assets/regular/columns.svg?raw';
 import rows from '@phosphor-icons/core/assets/regular/rows.svg?raw';
 import cube from '@phosphor-icons/core/assets/regular/cube.svg?raw';
@@ -255,6 +256,7 @@ export const ICONS = {
   check,
   'check-circle': checkCircle,
   circle,
+  code,
   columns,
   rows,
   cube,

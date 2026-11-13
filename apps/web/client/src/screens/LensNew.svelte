@@ -250,7 +250,10 @@
     } catch (error) {
       console.error('The Lens could not be made', error);
       // A Lens is made only on published Resources: say so, rather than that it failed (DEC-LE-22).
-      failed = error instanceof Refused && error.code === 'not_published' ? t('query.unpublished.hint') : t('lens.make.failed');
+      // A Lens is made only on published Resources (DEC-LE-22): not on one not published, a table outside Data Hub or none (FR-SR-56).
+      const why = { not_published: 'query.unpublished.hint', reads_outside: 'query.known.hint', no_resources: 'query.noResources.hint' } as const;
+      const code = error instanceof Refused ? error.code : undefined;
+      failed = code && code in why ? t(why[code as keyof typeof why]) : t('lens.make.failed');
     } finally {
       busy = false;
     }

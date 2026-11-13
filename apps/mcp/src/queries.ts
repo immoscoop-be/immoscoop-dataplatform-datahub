@@ -123,12 +123,15 @@ export function queryTools({ server, hub, user, permits }: Context): void {
       'create_query',
       {
         title: 'Make a query',
-        description:
-          'Makes a query of the User on 1 to 10 Resources, with a name and their question; it reads only those Resources, so choose them first. Without SQL, Data Hub writes a start that filters on the partition column. To add a Resource later, make a new query with startedFrom.',
+        description: permits.outside
+          ? 'Makes a query of the User on up to 10 Resources, with a name and their question. Without SQL, Data Hub writes a start that filters on the partition column. To add a Resource later, make a new query with startedFrom. The User is a power user: the query also reads every table Data Hub knows that is no Resource, and may be made without Resources, on SQL alone (FR-SR-56). Prefer the Resources: a table that is a Resource is read as that Resource, and a query that reads a table outside Data Hub never becomes a Lens.'
+          : 'Makes a query of the User on 1 to 10 Resources, with a name and their question; it reads only those Resources, so choose them first. Without SQL, Data Hub writes a start that filters on the partition column. To add a Resource later, make a new query with startedFrom.',
         inputSchema: {
           name: z.string().min(1).max(120).describe('A short name, such as "Partner share per week".'),
           question: z.string().max(500).optional().describe('The question of the User, in their words.'),
-          resources: z.array(z.string()).min(1).max(10).describe('The IDs of the Resources it reads.'),
+          resources: permits.outside
+            ? z.array(z.string()).max(10).describe('The IDs of the Resources it reads; none for SQL alone on tables outside Data Hub.')
+            : z.array(z.string()).min(1).max(10).describe('The IDs of the Resources it reads.'),
           sql: z.string().max(100_000).optional().describe('The SQL; name a Resource by its Key, in backticks.'),
           parameters,
           startedFrom: z.string().optional().describe('The ID of the query this one starts from, when it needs another set of Resources.'),
@@ -163,7 +166,11 @@ export function queryTools({ server, hub, user, permits }: Context): void {
             : preflight.range === 'free'
               ? `It can run: it reads ${bytes(preflight.bytes)}.`
               : `It can run, but reads ${bytes(preflight.bytes)}: ${preflight.range === 'request' ? `above ${large}, the Data Team accepts it first` : `above ${free}, the User approves it`}. A filter on the partition column reads less.`;
-          return answer({ ...checked, reads: bytes(preflight.bytes) }, note);
+          // A power user's query that reads a table outside Data Hub: no Level, Owner or Publication, and no Lens (DEC-SR-46).
+          const outside = preflight.tables?.length
+            ? ` It reads ${preflight.tables.map((table) => `${table.name} (${table.layer})`).join(', ')} outside Data Hub: no Resource, so no Level, Owner or Publication, and this query cannot become a Lens. Say so to the User.`
+            : '';
+          return answer({ ...checked, reads: bytes(preflight.bytes) }, `${note}${outside}`);
         }),
     );
 

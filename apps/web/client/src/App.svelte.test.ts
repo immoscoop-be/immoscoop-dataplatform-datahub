@@ -372,6 +372,11 @@ function preflightOf(sql: string, parameters: { name: string }[] = []) {
     return { ...base, runnable: false, bytes: null, range: null, partitions: null, problems: [{ kind: 'undefinedParameter', name: 'leadChannel', start: at, end: at + 12, suggestedKind: 'choice' }] };
   }
   if (sql.includes('-- every year')) return { ...base, runnable: true, bytes: 4_800_000_000, range: 'request' };
+  // A power user's query reads a table Data Hub knows that is no Resource (FR-SR-56).
+  if (sql.includes('stg_oltp__leads')) {
+    const key = 'immoscoop-dataplatform-398214.dbt_prod_staging.stg_oltp__leads';
+    return { ...base, runnable: true, bytes: 80_000_000, range: 'free', tables: [{ key, fullName: key, name: 'stg_oltp__leads', layer: 'staging' }] };
+  }
   if (sql.includes('partner_contracts')) {
     const start = sql.indexOf('`immoscoop-dataplatform-398214.dbt_prod_stacks.partner_contracts`');
     return { ...base, runnable: false, bytes: null, range: null, partitions: null, problems: [{ kind: 'outside', name: 'immoscoop-dataplatform-398214.dbt_prod_stacks.partner_contracts', start, end: start + 66 }] };
@@ -3103,6 +3108,42 @@ describe('Query', () => {
     const line = main.getByText(/Nog niet gepubliceerd:/).closest('p') as HTMLElement;
     expect(line.textContent?.replace(/\s+/g, ' ').trim()).toBe('Nog niet gepubliceerd: Weekly lead volume. Een Lens maak je enkel op gepubliceerde Resources.');
     expect(within(line).getByRole('link', { name: 'Weekly lead volume' }).getAttribute('href')).toBe('/resources/r2');
+  });
+
+  it('shows a table outside Data Hub as a quiet chip, and keeps a query that reads one from becoming a Lens (FR-SR-56, DEC-UX-220)', async () => {
+    const sql = `${QUERY.sql.replace('\n', ', lead_id\n')}and lead_id in (select lead_id from \`immoscoop-dataplatform-398214.dbt_prod_staging.stg_oltp__leads\`)\n`;
+    serve({ as: 'admin', queries: [{ ...QUERY, sql, lastRunAt: new Date().toISOString() }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    // Next to its Resources: the table, its layer and that it is not a Resource.
+    const chip = (await main.findByText('stg_oltp__leads', { selector: '.chip .mono' }, { timeout: 3000 })).closest('.chip') as HTMLElement;
+    expect(within(chip).getByText('· staging, geen Resource')).toBeTruthy();
+    expect(chip.title).toMatch(/^Een tabel die Data Hub kent uit een dbt-project dat het volgt/);
+    // It runs, but cannot become a Lens: greyed, with why, and a line under the question.
+    expect(await main.findByRole('button', { name: /Uitvoeren\s*80 MB/ })).toBeTruthy();
+    const button = main.getByRole('button', { name: 'Maak er een Lens van' }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    expect(button.title).toBe('Een Lens maak je enkel op gepubliceerde Resources: deze query leest een tabel buiten Data Hub.');
+    const line = main.getByText(/Leest een tabel buiten Data Hub:/).closest('p') as HTMLElement;
+    expect(line.textContent?.replace(/\s+/g, ' ').trim()).toBe('Leest een tabel buiten Data Hub: stg_oltp__leads. Een Lens maak je enkel op gepubliceerde Resources, dus deze query kan er geen worden.');
+  });
+
+  it('lets a power user start a query from SQL, without Resources, and nobody else (FR-SR-56, DEC-UX-220)', async () => {
+    serve({});
+    open('/query/new');
+    const { unmount } = render(App, { config: CONFIG });
+    expect(await within(await screen.findByRole('main')).findByRole('textbox', { name: /Naam/ }, { timeout: 3000 })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Of begin vanuit SQL, zonder Resources' })).toBeNull();
+    unmount();
+
+    const calls = serve({ as: 'admin' });
+    open('/query/new');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('button', { name: 'Of begin vanuit SQL, zonder Resources' }, { timeout: 3000 }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/query/q-made'));
+    expect(calls).toContainEqual({ method: 'POST', path: '/queries', body: { name: expect.stringMatching(/^SQL, \d+ /), question: '', resources: [] } });
   });
 
   it('starts a new query on a Resource, named from it and the date, as not run yet (FR-SR-45, FR-SR-46, DEC-UX-114)', async () => {
