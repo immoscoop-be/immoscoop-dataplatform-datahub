@@ -9,6 +9,8 @@
   import type { Catalogue, Collection, ResourceDetail } from '../lib/catalogue.js';
   import type { LensSuggestions as Found } from '../lib/query.js';
   import LensSuggestions from './LensSuggestions.svelte';
+  import { command, useScreenCommands } from '../lib/commands.svelte.js';
+  import type { QuickRow } from '../lib/quick.js';
 
   /**
    * A new query (query-new, DEC-UX-22), in two halves. Left, the query: its name, required and suggested
@@ -123,6 +125,15 @@
     failed = !(await onstart({ name: own, question: question.trim(), resources: [] }));
     busy = false;
   }
+
+  // In the quick window: a Resource to read, starting from SQL for a power user, and starting the query (DEC-UX-240).
+  useScreenCommands(() => {
+    const rows: QuickRow[] = [];
+    if (!picking) rows.push(command('new-query:add', 'plus', t('query.resources.add'), () => (picking = true), { meta: t('quick.newQuery.add.meta'), words: t('quick.query.resource.words') }));
+    if (outside) rows.push(command('new-query:sql', 'code', t('quick.newQuery.sql'), () => void startFromSql(), { meta: t('query.fromSql.about'), words: t('quick.newQuery.sql.words'), ...(busy ? { why: t('quick.newQuery.busy') } : {}) }));
+    rows.push(command('new-query:start', 'play-fill', t('query.startOwn'), () => void start(), { meta: t('quick.newQuery.start.meta'), words: t('quick.newQuery.start.words'), ...(busy || !name.trim() || chosen.length === 0 ? { why: t('quick.newQuery.start.why') } : {}) }));
+    return { group: t('quick.group.newQuery'), rows };
+  });
 </script>
 
 <header class="head">

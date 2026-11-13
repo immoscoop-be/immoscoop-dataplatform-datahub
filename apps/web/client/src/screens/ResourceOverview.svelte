@@ -27,6 +27,8 @@
   import type { Conversation } from '../lib/messages.js';
   import type { Storage } from '../lib/query.js';
   import { sizeText } from '../lib/size.js';
+  import { command, useScreenCommands, view } from '../lib/commands.svelte.js';
+  import type { QuickRow } from '../lib/quick.js';
   import LearningRef from './LearningRef.svelte';
   import OverviewDanger from './OverviewDanger.svelte';
   import OverviewGaps from './OverviewGaps.svelte';
@@ -222,6 +224,16 @@
     return { rows, height, identities, middle: height / 2 };
   });
   const clip = (text: string, length: number) => (text.length > length ? `${text.slice(0, length - 1)}…` : text);
+
+  // In the quick window: editing the part on screen, for who may, and its other parts (DEC-UX-240).
+  useScreenCommands(() => {
+    const rows: QuickRow[] = [];
+    const which = part === 'description' || part === 'behaviour' || part === 'querying' ? part : null;
+    const label = t((PARTS.find((one) => one.id === part) ?? PARTS[0]!).label);
+    if (which && mayEdit(which) && editing !== which) rows.push(command(`overview:edit`, 'pencil-simple-fill', t('quick.overview.edit', { name: label }), () => start(which), { words: t('quick.overview.edit.words') }));
+    for (const one of shown) if (one.id !== part) rows.push(view(`overview:${one.id}`, one.icon, t(one.label), () => open(one.id), { meta: t('quick.overview.meta'), words: t('quick.tab.words') }));
+    return { group: t('quick.group.resource'), rows };
+  });
 </script>
 
 {#snippet head(title: string, lead: string, which?: Editable)}

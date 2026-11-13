@@ -24,6 +24,7 @@
   import { createRegistry } from './lib/registry.js';
   import { digitOf, flag, markOf, modLabel, MOST_FLAGGED, moveFlag, onMac, placeOf, type QueryStatus, unflag, withMod } from './lib/flags.js';
   import type { QuickRow } from './lib/quick.js';
+  import { provideScreenCommands } from './lib/commands.svelte.js';
   import { collectionPath, GROUPS, learningPath, lensPath, messagesOnPath, myPagePath, NEW_COLLECTION, NEW_QUERY, objectPath, queryPath, resourcePath, route } from './lib/routes.js';
   import { Router } from './lib/router.svelte.js';
   import { can, mayQuery, NO_PERMISSIONS, PERMISSION_KEYS, PERMISSION_TEXTS, reach, sees } from './lib/permissions.js';
@@ -686,6 +687,8 @@
   let unseen = $state<Record<string, boolean>>({});
   /** What each open query offers in the quick window (DEC-UX-237). */
   let queryCommands = $state<Record<string, QuickRow[]>>({});
+  /** What every other screen can do now, as it tells it (DEC-UX-240). */
+  const screenCommands = provideScreenCommands((path) => router.go(path));
   /**
    * The flagged queries opened since this browser tab loaded: each stays as the User left it while they work in another,
    * its result, its tab and a run still going, until the tab closes or reloads (OP-UX-85).
@@ -758,13 +761,17 @@
   });
   /** Where the quick window opened, which its commands belong to. */
   const quickWhere = $derived(
-    page.kind === 'query' ? (queryName?.id === page.id ? `Query · ${queryName.name}` : 'Query') : section ? sectionLabel(section) : page.kind === 'me' ? 'My page' : page.kind === 'groups' ? 'Groups' : null,
+    page.kind === 'query'
+      ? queryName?.id === page.id
+        ? `Query · ${queryName.name}`
+        : 'Query'
+      : (screenCommands.where ?? (section ? sectionLabel(section) : page.kind === 'me' ? 'My page' : page.kind === 'groups' ? 'Groups' : null)),
   );
   /** Every row of the quick window: the commands of the screen and of Data Hub, the flagged queries, the places and what the User may see (OP-UX-88). */
   const quickRows: QuickRow[] = $derived.by(() => {
     if (status.kind !== 'signedIn') return [];
     const language = currentLanguage();
-    const rows: QuickRow[] = [...(page.kind === 'query' ? (queryCommands[page.id] ?? []) : [])];
+    const rows: QuickRow[] = [...(page.kind === 'query' ? (queryCommands[page.id] ?? []) : screenCommands.rows)];
     const command = t('quick.kind.command');
     if (mayQuery(permissions) && can(permissions, 'queries.make')) {
       rows.push({ key: 'new-query', group: 'commands', icon: 'plus-circle-fill', title: t('query.new'), kind: command, words: t('quick.new.words'), does: 'do', run: () => router.go(NEW_QUERY) });
@@ -1318,7 +1325,7 @@
   </AppShell>
   {#if quickOpen}
     <!-- Cmd+Shift+P or Cmd+K, anywhere in Data Hub (DEC-UX-237). -->
-    <QuickWindow where={quickWhere} screenGroup={t('quick.group.query')} rows={quickRows} {findQueries} onclose={() => (quickOpen = false)} />
+    <QuickWindow where={quickWhere} screenGroup={page.kind === 'query' ? t('quick.group.query') : (screenCommands.group ?? t('quick.group.query'))} rows={quickRows} {findQueries} onclose={() => (quickOpen = false)} />
   {/if}
   <!-- What is dragged, and the line that says where it went (DEC-UX-157). -->
   <DragGhost item={dragging.item} />

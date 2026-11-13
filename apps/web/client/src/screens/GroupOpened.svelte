@@ -12,6 +12,8 @@
   import type { GroupActor, GroupDetail, GroupSummary, Identity } from '../lib/identity.js';
   import { PERMISSION_TEXTS } from '../lib/permissions.js';
   import { collectionPath, groupPath } from '../lib/routes.js';
+  import { command, place, useScreenCommands } from '../lib/commands.svelte.js';
+  import type { QuickRow } from '../lib/quick.js';
   import GroupMembers from './GroupMembers.svelte';
 
   /**
@@ -183,6 +185,19 @@
 
   /** How many Resources a Collection holds, when the User sees it in the list of Collections. */
   const resourcesOf = (id: string) => collections?.find((collection) => collection.id === id)?.resources.length;
+
+  // In the quick window: who manages it, and deleting it for who may change it (DEC-UX-240).
+  useScreenCommands((go) => {
+    const rows: QuickRow[] = [];
+    if (!itself) {
+      const by = group.managedBy;
+      rows.push(place('group:manager', 'users-three-fill', by.name, () => go(groupPath(by.id)), { meta: t('quick.group.manager.meta', { name: group.name }), words: t('quick.owner.words') }));
+    }
+    if (group.mayChange && owned !== undefined && !deleting) {
+      rows.push(command('group:delete', 'trash-fill', t('group.delete', { name: group.name }), () => ([deleting, deleteProblem] = [true, '']), { meta: t('quick.group.delete.meta'), words: t('quick.group.delete.words'), ...(blocked ? { why: holdsText() } : {}) }));
+    }
+    return { group: t('quick.group.group'), where: `Groups · ${group.name}`, rows };
+  });
 </script>
 
 <section class="card detail" aria-label={t('group.opened')}>

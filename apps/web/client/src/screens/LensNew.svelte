@@ -19,6 +19,8 @@
   import type { Lens, LensField, LensParameter, Parameter, Preflight, Query, QueryClient, QueryField, QueryRequest, ResultColumn, Storage } from '../lib/query.js';
   import LensDeleteSheet from './LensDeleteSheet.svelte';
   import { lensPath, queryPath } from '../lib/routes.js';
+  import { command, place, useScreenCommands } from '../lib/commands.svelte.js';
+  import type { QuickRow } from '../lib/quick.js';
 
   /**
    * Make it a lens (lens-new, DEC-UX-25): from a query of its author, still in Query. Left, the Lens: its
@@ -429,6 +431,34 @@
 
   const request = $derived(resent ?? lens?.request ?? null);
   const ready = $derived(!busy && name.trim().length > 0 && (making ? newName.trim().length > 0 && newOwner !== '' : collectionId !== ''));
+
+  let sizeBox = $state<HTMLElement | undefined>();
+  /**
+   * In the quick window (DEC-UX-240): each other step of the flow, and what its size check offers. Publishing a large
+   * Lens puts the focus on "Publish anyway", where Enter publishes it, and a very large one on the word to the Data Team,
+   * so that neither is done from the window itself (DEC-UX-239). Editing it: Save, Delete and Cancel.
+   */
+  useScreenCommands((go) => {
+    const rows: QuickRow[] = [];
+    STEPS.forEach((title, index) => {
+      if (step !== index + 1) rows.push(command(`lens-new:step:${index + 1}`, 'list-numbers', t('quick.lensNew.step', { number: index + 1, name: t(title) }), () => (step = index + 1), { meta: statusOf(index + 1), words: t('quick.lensNew.step.words') }));
+    });
+    const words = t('quick.lensNew.words');
+    if (editing) {
+      const shown = editing;
+      rows.push(command('lens-new:save', 'check-fill', t('quick.lensNew.save'), () => void save(), { words, ...(busy || name.trim() === '' ? { why: t('quick.lensNew.noName') } : {}) }));
+      rows.push(command('lens-new:delete', 'trash-fill', t('lens.delete.open'), () => (deleting = true), { words: t('quick.lensNew.delete.words') }));
+      rows.push(place('lens-new:cancel', 'x', t('collection.cancel'), () => go(lensPath(shown.id)), { meta: t('quick.lensNew.cancel.meta'), words: t('quick.cancel.words') }));
+    } else if (!frozen) {
+      const notReady = ready ? {} : { why: t('quick.lensNew.notReady') };
+      if (range === 'free') rows.push(command('lens-new:publish', 'globe-simple-fill', t('lens.size.publish'), () => void make(false), { meta: t('quick.lensNew.publish.meta'), words, ...notReady }));
+      else if (range === 'approve') rows.push(command('lens-new:publish', 'globe-simple-fill', t('lens.size.publishAnyway'), () => sizeBox?.querySelector<HTMLButtonElement>('.buttons button')?.focus(), { meta: t('quick.lensNew.approve.meta'), words, ...notReady }));
+      else if (range === 'request') rows.push(command('lens-new:publish', 'paper-plane-tilt', t('lens.size.send'), () => sizeBox?.querySelector('textarea')?.focus(), { meta: t('quick.lensNew.request.meta'), words, ...notReady }));
+      const from = query;
+      if (from) rows.push(place('lens-new:cancel', 'x', t('collection.cancel'), () => go(queryPath(from.id)), { meta: t('quick.lensNew.back.meta'), words: t('quick.cancel.words') }));
+    }
+    return { group: t('quick.group.lens'), where: editing ? `Lens · ${editing.name}` : t('quick.lensNew.where'), rows };
+  });
 </script>
 
 {#if query === null}
@@ -652,7 +682,7 @@
         {#if failed}<p class="failed" role="alert">{failed}</p>{/if}
       </aside>
     {:else}
-    <aside class="card size" aria-labelledby="size-check">
+    <aside class="card size" aria-labelledby="size-check" bind:this={sizeBox}>
       <h2 id="size-check">{t('lens.size.title')}</h2>
       <p class="meta">{t('lens.size.intro')}</p>
       {#if reads !== null}

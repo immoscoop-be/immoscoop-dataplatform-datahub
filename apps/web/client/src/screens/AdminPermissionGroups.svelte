@@ -16,6 +16,8 @@
   import { permissionsSchema } from '@datahub/contracts/permissions';
   import NewPermissionGroupSheet from './NewPermissionGroupSheet.svelte';
   import PermissionRow from './PermissionRow.svelte';
+  import { command, useScreenCommands } from '../lib/commands.svelte.js';
+  import type { QuickRow } from '../lib/quick.js';
 
   /**
    * Permission groups, a tool of Admin (FR-PL-05, FR-PL-08 to FR-PL-11): the groups on the left, each with its
@@ -178,6 +180,18 @@
       return refusal(error);
     }
   }
+
+  // In the quick window: a new Permission group, and for the one opened its copy, the default and deleting it (DEC-UX-240).
+  useScreenCommands(() => {
+    const rows: QuickRow[] = [command('permission-groups:new', 'plus', t('groups.new'), () => (making = { from: openedId ?? null, name: '', sentence: '' }), { words: t('quick.permissionGroups.new.words') })];
+    const group = opened;
+    if (group) {
+      rows.push(command('permission-groups:copy', 'copy', t('quick.permissionGroups.copy', { name: group.name }), () => (making = { from: group.id, name: t('groups.copyName', { name: group.name }), sentence: group.sentence }), { words: t('quick.permissionGroups.copy.words') }));
+      if (!group.isDefault && !group.locked) rows.push(command('permission-groups:default', 'check-circle', t('groups.default.make'), () => void makeDefault(group), { meta: group.name, words: t('quick.permissionGroups.default.words') }));
+      if (!group.locked && !deleting) rows.push(command('permission-groups:delete', 'trash-fill', t('groups.delete', { name: group.name }), startDeleting, { meta: t('quick.permissionGroups.delete.meta'), words: t('quick.permissionGroups.delete.words') }));
+    }
+    return { group: 'Permission groups', rows };
+  });
 </script>
 
 <Breadcrumb steps={[{ label: 'Admin' }]} />

@@ -14,6 +14,8 @@
   import { listOf, tileLineOf } from '../lib/groups.js';
   import type { GroupSummary, Identity, Me } from '../lib/identity.js';
   import { GROUPS, groupPath, myPagePath, NEW_GROUP, type MyPageTab } from '../lib/routes.js';
+  import { place, useScreenCommands } from '../lib/commands.svelte.js';
+  import type { QuickRow } from '../lib/quick.js';
   import { can } from '../lib/permissions.js';
   import type { Catalogue } from '../lib/catalogue.js';
   import ExcelKeys from './ExcelKeys.svelte';
@@ -74,6 +76,20 @@
           : t('me.groups.managedBy', { group: line.name });
     return `${t('group.members', { count: group.memberCount })} · ${what}`;
   }
+
+  // In the quick window: its other tabs, Groups, and a new Group for who may make one (DEC-UX-240).
+  const TABS = [
+    { id: 'profile', label: 'me.tab.profile', icon: 'user' },
+    { id: 'keys', label: 'me.tab.keys', icon: 'key' },
+    { id: 'background', label: 'me.tab.background', icon: 'sun-fill' },
+  ] as const;
+  useScreenCommands((go) => {
+    const rows: QuickRow[] = [];
+    for (const one of TABS) if (one.id !== tab) rows.push(place(`me:${one.id}`, one.icon, t('quick.show', { name: t(one.label) }), () => go(myPagePath(one.id)), { words: t('quick.tab.words') }));
+    rows.push(place('me:groups', 'users-three', 'Groups', () => go(GROUPS), { meta: t('quick.me.groups.meta'), words: t('quick.me.groups.words') }));
+    if (can(me.permissions, 'groups.manage')) rows.push(place('me:new-group', 'plus', t('group.new'), () => go(NEW_GROUP), { words: t('quick.group.new.words') }));
+    return { group: 'My page', rows };
+  });
 </script>
 
 <div class="head">

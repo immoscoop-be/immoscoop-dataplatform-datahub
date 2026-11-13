@@ -19,6 +19,9 @@
   import type { QueryClient, Storage } from '../lib/query.js';
   import type { Registry } from '../lib/registry.js';
   import { collectionPath, newQueryPath, resourcePath } from '../lib/routes.js';
+  import { command, place, useScreenCommands, view } from '../lib/commands.svelte.js';
+  import type { IconName } from '@datahub/ui/foundations/icons.js';
+  import type { QuickRow } from '../lib/quick.js';
   import { Refused } from '../lib/api.js';
   import type { requestOf } from '../lib/grain.js';
   import AddResources from './AddResources.svelte';
@@ -278,6 +281,32 @@
   /** The Learning Centre explains its Level, its grain, its model type and "Mark as seen" (FR-LR-35). */
   const learning = useLearning();
   const levelCards = $derived(learning ? cardsOf('level', learning.shown).length : 0);
+
+  /**
+   * What can be done to it from the quick window (DEC-UX-240): the buttons of its head and callouts, as they show, and
+   * its other tabs; the parts of its Overview come from the Overview.
+   */
+  const TAB_ICONS: Record<string, IconName> = { overview: 'list-numbers', columns: 'columns', lineage: 'graph', history: 'clock-counter-clockwise', preview: 'table' };
+  useScreenCommands((go) => {
+    const rows: QuickRow[] = [];
+    if (can(permissions, 'queries.make')) rows.push(place('resource:query', 'terminal-window-fill', t('quick.resource.query'), () => go(newQueryPath(resource.id)), { meta: t('quick.resource.query.meta'), words: t('quick.resource.query.words') }));
+    if (!resource.published && mayPublish) rows.push(command('resource:publish', 'globe-simple-fill', t('quick.resource.publish'), () => (sheet = 'publish'), { meta: t('quick.resource.publish.meta'), words: t('quick.resource.publish.words') }));
+    if (messages) {
+      const href = messages.href;
+      rows.push(place('resource:ask', 'chat-circle-dots-fill', t('resource.ask'), () => go(href), { meta: t('quick.messages.meta', { count: messages.count ?? 0 }), words: t('quick.messages.words') }));
+    }
+    if (resource.collectionId === null && assigns && collections) rows.push(command('resource:add', 'folder-plus-fill', t('resource.waiting.add'), () => (adding = true), { meta: t('quick.resource.add.meta'), words: t('quick.resource.add.words') }));
+    const instead = resource.deprecation?.insteadOf;
+    if (instead) rows.push(place('resource:instead', 'arrow-right', t('resource.deprecated.use', { name: instead.displayName }), () => go(resourcePath(instead.id)), { meta: t('quick.resource.instead.meta'), words: t('quick.resource.instead.words') }));
+    if (resource.changes.length > 0 && describes('description')) rows.push(command('resource:seen', 'check-circle-fill', t('quick.resource.seen'), () => void act(() => catalogue.markSeen(resource.id)), { meta: changedText, words: t('quick.resource.seen.words') }));
+    if (tab === 'columns' && (assigns || describes('entityMapping')) && resource.collectionId !== null) rows.push(command('resource:relations', 'graph-fill', t('resource.editRelations'), () => (relating = true), { meta: t('resource.editRelations.title'), words: t('quick.resource.relations.words') }));
+    for (const one of tabs) if (one.id !== tab) rows.push(view(`resource:tab:${one.id}`, TAB_ICONS[one.id] ?? 'list-numbers', t(one.label), () => (tab = one.id), { words: t('quick.tab.words') }));
+    if (collection) {
+      const into = collection;
+      rows.push(place('resource:collection', 'stack', into.name, () => go(collectionPath(into.id)), { meta: t('quick.resource.collection.meta'), words: t('quick.resource.collection.words') }));
+    }
+    return { group: t('quick.group.resource'), where: `Resource · ${resource.displayName}`, rows };
+  });
 </script>
 
 <Breadcrumb
