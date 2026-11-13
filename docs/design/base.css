@@ -2077,3 +2077,44 @@ svg.mp, svg.mp-g { display: block; width: 100%; height: auto; overflow: visible;
 .fd-pop p { margin: 8px 0 0; }
 .fd-pop .origin { display: table; margin: 0 0 3px; }
 .fd-pop .si-dbt { color: var(--text-secondary); }
+
+/* The SQL of the editor, coloured by kind of word, as BigQuery colours it (DEC-UX-223); names keep the colour of the text */
+.sql-editor .sql-kw { color: var(--code-keyword); }
+.sql-editor .sql-str { color: var(--code-string); }
+.sql-editor .sql-num { color: var(--code-number); }
+.sql-editor .sql-param:not(.undefined) { color: var(--code-param); }
+.sql-editor .sql-key:not(.outside), .sql-editor .sql-ref { color: inherit; }
+/* What a double-click explains has a dotted line under it, softer than the word; a wavy line stays an error (DEC-UX-222) */
+.sql-editor .sql-key:not(.outside):not([data-known]), .sql-editor .sql-param:not(.undefined), .sql-editor .sql-field {
+  text-decoration: underline dotted color-mix(in srgb, currentColor 50%, transparent); text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
+.sql-editor .sql-key:not(.outside):not([data-known]):hover, .sql-editor .sql-param:not(.undefined):hover, .sql-editor .sql-field:hover { text-decoration-color: currentColor; }
+
+/* Find a table, for a power user (DEC-UX-224), and the CTEs that come at the start of the SQL (DEC-UX-225) */
+.ft-sheet { width: max(540px, var(--sheet-width)); }
+.ft-filters { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin: 10px 0 0; }
+.ft-project select { font: var(--text-meta) var(--font-family); color: var(--text-primary); background: var(--surface-sub); border: 0; border-radius: var(--radius-pill); padding: 4px 8px; margin-left: 4px; }
+.ft-list { margin-top: 8px; }
+.ft-row { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 0 8px; padding: 10px; border-radius: var(--radius-md); }
+.ft-row + .ft-row { margin-top: 2px; }
+.ft-row:hover { background: var(--tint-hover); }
+.ft-row.on { background: var(--surface-sub); }
+.ft-row input { margin: 3px 0 0; accent-color: var(--text-primary); }
+.ft-open { all: unset; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; cursor: pointer; }
+.ft-open:focus-visible { outline: 2px solid var(--text-secondary); outline-offset: 2px; border-radius: 4px; }
+.ft-open .ph-caret-right { font-size: 12px; color: var(--text-muted); transition: transform var(--motion-fold) ease; }
+.ft-row.unfolded .ft-open .ph-caret-right { transform: rotate(90deg); }
+.ft-name { font-family: var(--font-mono); font-size: var(--text-small); color: var(--text-primary); }
+.ft-where { font-size: var(--text-meta); color: var(--text-muted); }
+.ft-desc { grid-column: 2; margin: 3px 0 0; font-size: var(--text-small); line-height: 1.5; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ft-row.unfolded .ft-desc { white-space: normal; }
+.ft-res { grid-column: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 5px; font-size: var(--text-meta); color: var(--text-secondary); }
+.ft-cols { grid-column: 2; margin: 8px 0 2px; display: grid; gap: 3px; font-size: var(--text-meta); }
+.ft-col { display: grid; grid-template-columns: minmax(130px, max-content) 64px minmax(0, 1fr); gap: 10px; align-items: baseline; }
+.ft-col .mono { color: var(--text-primary); }
+.ft-col .pill { margin-left: 6px; }
+.ft-ctes { margin-top: 10px; }
+.cte-preview { margin: 0; padding: 10px 12px; border-radius: var(--radius-md); background: var(--surface-sub); font: 12px/1.6 var(--font-mono); color: var(--text-secondary); white-space: pre; overflow: auto; max-height: 150px; }
+
+/* CTEs just added at the start of the SQL show where they came, for a moment (DEC-UX-225) */
+.sql-editor .ln { transition: background-color 1.2s ease; }
+.sql-editor .ln.just-added { background: color-mix(in srgb, var(--code-keyword) 12%, transparent); transition: none; }

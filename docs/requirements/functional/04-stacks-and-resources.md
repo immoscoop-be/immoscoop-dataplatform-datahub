@@ -446,9 +446,27 @@ A User whose Permission group has `queries.outside` ([DEC-PL-09](12-permissions-
 
 **Status:** Specified · **Source:** Max, 2026-11-13 ([DEC-UX-221](../../design/principles.md#dec-ux-221)) · **Screens:** [query](../../design/screens/query.html)
 
-In the editor of Query, a double-click on a word of the SQL selects it, as in any editor, and opens what it names: on a Parameter of the query, its window, where it is changed; on an `@name` that is no Parameter, the window that defines it; on the name of a Resource the User sees, its Summary ([FR-RC-19](05-resource-card.md#fr-rc-19)), with a way to its page; on a field of the Resources of the query, its type, whether it is a partition or cluster column, and its descriptions, the Business Description next to the one from dbt ([FR-RC-18](05-resource-card.md#fr-rc-18)), once for each Resource of the query that holds it. The query stays as it is, and any other word is only selected.
+In the editor of Query, a double-click on a word of the SQL selects it, as in any editor, and opens what it names: on a Parameter of the query, its window, where it is changed; on an `@name` that is no Parameter, the window that defines it; on the name of a Resource the User sees, its Summary ([FR-RC-19](05-resource-card.md#fr-rc-19)), with a way to its page; on a field of the Resources of the query, its type, whether it is a partition or cluster column, and its descriptions, the Business Description next to the one from dbt ([FR-RC-18](05-resource-card.md#fr-rc-18)), once for each Resource of the query that holds it. The query stays as it is, and any other word is only selected. Each word a double-click explains has a dotted line under it.
 
 **Makes easy:** reading what a Resource is, how to query it and what a field means, at the moment of writing SQL on it, without leaving the query. **Makes hard:** writing SQL on a field or a Resource without knowing what it means, and losing the query to look it up.
+
+<a id="fr-sr-58"></a>
+### FR-SR-58 · A power user finds a table outside Data Hub
+
+**Status:** Specified · **Source:** Max, 2026-11-13 ([DEC-UX-224](../../design/principles.md#dec-ux-224)) · **Screens:** [query](../../design/screens/query.html)
+
+On a query, a User with `queries.outside` ([FR-SR-56](#fr-sr-56)) finds a table Data Hub knows outside the Resources of the query: by its name or the words of its description, narrowed by its layer and its project. Each table shows its layer, project, dataset and description from dbt, and unfolds to its columns, each with its type and description. The tables that are no Resource are picked one or more at once and come into the SQL of the query as CTEs ([FR-SR-59](#fr-sr-59)); a Resource starts a new query with it, under its own rules ([DEC-UX-73](../../design/principles.md#dec-ux-73)). What the search covers is [OP-UX-81](../../design/principles.md#op-ux-81).
+
+**Makes easy:** a power user finding the right staging or source table, and what is in it, without leaving the query or knowing its full name by heart. **Makes hard:** reading a raw table where a Resource exists, which the search names as a Resource, and guessing at a table name that the Pre-flight then refuses.
+
+<a id="fr-sr-59"></a>
+### FR-SR-59 · What is added to a query comes in as CTEs at its start
+
+**Status:** Specified · **Source:** Max, 2026-11-13 ([DEC-UX-225](../../design/principles.md#dec-ux-225)) · **Screens:** [query](../../design/screens/query.html)
+
+Resources added to a query, which start a new query ([DEC-UX-73](../../design/principles.md#dec-ux-73)), and tables outside Data Hub a power user adds ([FR-SR-58](#fr-sr-58)) are picked one or more at once, a query keeping 1 to 10 Resources. Each comes into the SQL as a CTE at its start, named after its table and unique in the query, selecting its fields and filtering on its recent partitions, as the SQL of a new query does; the CTEs already there, and the rest of the SQL, stay as they were. Before they are added, the User sees which CTEs come.
+
+**Makes easy:** adding several sources in one step, each ready to join, read with a filter on its partitions from the start. **Makes hard:** a table named deep inside the SQL that nobody sees is read, and a first run that reads every partition of a table just added.
 
 <a id="fr-sr-35"></a>
 ### FR-SR-35 · A new Resource waits for a Collection

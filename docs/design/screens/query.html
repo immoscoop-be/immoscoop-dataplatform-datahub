@@ -36,8 +36,8 @@
   The switch "Query" shows it Broken (DEC-UX-160, FR-SR-53, DEC-UX-81): a table or column it reads no longer exists, so
   Run is off, a callout on top names what is missing, and the query has the red dot in the panel; its SQL can still be
   changed, and a change that runs makes it work again, as does the return of what it reads.
-  Requirements: FR-SR-57, FR-SR-56, FR-SR-53, FR-SR-36, FR-SR-37, FR-SR-40, FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-45, FR-SR-47, FR-SR-48, FR-SR-51, FR-LN-05, FR-LN-06, FR-LE-07, FR-LE-08, FR-LE-16, FR-RC-18
-  Decisions: DEC-UX-221, DEC-UX-220, DEC-UX-219, DEC-UX-218, DEC-UX-163, DEC-UX-17, DEC-UX-20, DEC-UX-70, DEC-UX-71, DEC-UX-72, DEC-UX-73, DEC-UX-74, DEC-UX-76, DEC-UX-77, DEC-UX-88, DEC-UX-97, DEC-UX-99, DEC-UX-115, DEC-SR-29, DEC-SR-35, DEC-LN-01.
+  Requirements: FR-SR-59, FR-SR-58, FR-SR-57, FR-SR-56, FR-SR-53, FR-SR-36, FR-SR-37, FR-SR-40, FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-45, FR-SR-47, FR-SR-48, FR-SR-51, FR-LN-05, FR-LN-06, FR-LE-07, FR-LE-08, FR-LE-16, FR-RC-18
+  Decisions: DEC-UX-225, DEC-UX-224, DEC-UX-223, DEC-UX-222, DEC-UX-221, DEC-UX-220, DEC-UX-219, DEC-UX-218, DEC-UX-163, DEC-UX-17, DEC-UX-20, DEC-UX-70, DEC-UX-71, DEC-UX-72, DEC-UX-73, DEC-UX-74, DEC-UX-76, DEC-UX-77, DEC-UX-88, DEC-UX-97, DEC-UX-99, DEC-UX-115, DEC-SR-29, DEC-SR-35, DEC-LN-01.
   Not in v1: the label "Claude" on a query in the panel (FR-SR-26, DEC-CH-02); leave it out.
   "Make it a lens" turns the query into a Lens (FR-LE-07, DEC-UX-25). The query stays, used as the Lens: then "Update the lens"
   takes its place and overwrites the Lens after a size check, and "Lenses on these resources" goes (DEC-LE-03, DEC-LE-04,
@@ -45,9 +45,18 @@
   under the question names it, with a link (DEC-UX-218, DEC-LE-22): the third place of the switch "Lens". The box of the SQL folds as the Parameters do (DEC-UX-76).
   A double-click on a word of the SQL selects it, as in any editor, and opens what it names (DEC-UX-221, FR-SR-57): on a
   Parameter its floating window, as a click on its tile; on the name of a Resource its Summary, in a floating window over
-  the query, with "Open the Resource" (OP-UX-79); on a field its type and descriptions, the Business Description next to
+  the query, with "Open the Resource" (OP-UX-79, decided: a floating window); on a field its type and descriptions, the Business Description next to
   the one from dbt, in a pop-out at the word, as the suggestions show them (DEC-UX-115); a field that more Resources of
-  the query hold shows once for each. The switch "Double-click" shows each.
+  the query hold shows once for each. The switch "Double-click" shows each. Each word a double-click explains has a dotted
+  line under it, and a hover says what a double-click opens; a wavy line stays the mark of an error (DEC-UX-222).
+  The SQL is coloured by kind of word, as BigQuery colours it: keywords, functions and types blue, text in quotes green,
+  numbers teal, Parameters magenta, comments grey; names of tables, CTEs and columns in the colour of the text (DEC-UX-223).
+  Format follows rules still open for review (OP-UX-80).
+  "Add a Resource" ticks one or more Resources at once, up to ten in all, and "Find a table", for a power user (seen as
+  the Data Team), searches the tables Data Hub knows by name, description, layer and project, unfolds one to its
+  columns, and adds the ones ticked: each comes as a CTE at the start of the SQL, after "with", named after its table,
+  selecting its fields and filtering on its recent partitions; the sheet shows which CTEs come (DEC-UX-224, DEC-UX-225,
+  FR-SR-58, FR-SR-59, OP-UX-81). A Resource found there starts a new query with it. ?find=open opens it.
   Related screens: resource-history.html (the queries on a Resource), lens-new.html (Make it a lens).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -203,6 +212,7 @@
    <span class="scope-chip new" data-res="saved_searches" hidden><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Saved searches<span class="muted">· Search</span><span class="maturity" data-level="4"></span><button class="scope-x" data-remove-res="saved_searches" aria-label="Remove Saved searches" title="Remove it: that starts a new query without it"><i class="ph ph-x"></i></button></span>
    <span id="scope-outside"></span>
    <button class="scope-add" type="button" data-add-res><i class="ph ph-plus"></i>Add a Resource</button>
+   <button class="scope-add" type="button" data-find-table data-for="datateam" title="Tables Data Hub knows from the dbt projects it follows, for a power user"><i class="ph ph-magnifying-glass"></i>Find a table</button>
   </span>
   <button class="btn-quiet outline" type="button" data-pane-group="lens" data-pane="free unpublished" hidden data-sheet-open="lenses-sheet" id="lenses-btn" title="See which Lenses already use these Resources"><i class="ph ph-aperture"></i><span>Lenses on these Resources</span><span class="count">3</span></button>
  </div>
@@ -561,12 +571,33 @@
 </section>
 </div>
 
+<!-- Find a table, for a power user: the tables Data Hub knows outside its Resources, several at once, added as CTEs at the start of the SQL (DEC-UX-224, DEC-UX-225, OP-UX-81) -->
+<div class="sheet-wrap" id="find-sheet" hidden>
+<div class="sheet-backdrop" data-sheet-close></div>
+<section class="sheet ft-sheet" role="dialog" aria-modal="true" aria-labelledby="find-title">
+ <div style="display:flex;align-items:flex-start;gap:10px">
+  <i class="ph ph-magnifying-glass" style="font-size:22px;color:var(--text-secondary);margin-top:2px" aria-hidden="true"></i>
+  <div style="flex:1;min-width:0"><div class="meta">Leads per source name · as a power user</div><h2 id="find-title">Find a table</h2></div>
+  <button class="icon-btn" data-sheet-close aria-label="Close"><i class="ph ph-x"></i></button>
+ </div>
+ <p class="newq-why" style="margin:10px 0 10px">The tables Data Hub knows from the dbt projects it follows. Tick the ones to read: each comes as a CTE at the start of the SQL of this query, as not a Resource. A table that is a Resource starts a new query with it.</p>
+ <label class="search" style="background:var(--surface-sub)"><i class="ph ph-magnifying-glass" style="font-size:15px"></i><input id="ft-q" placeholder="Search by name or description" autocomplete="off"></label>
+ <div class="ft-filters">
+  <div class="mc-chips" role="tablist" aria-label="Layer" id="ft-layers" style="margin:0"><button class="seg on" data-layer="" role="tab" aria-selected="true">All</button><button class="seg" data-layer="source" role="tab" aria-selected="false">Sources</button><button class="seg" data-layer="staging" role="tab" aria-selected="false">Staging</button><button class="seg" data-layer="intermediate" role="tab" aria-selected="false">Intermediate</button><button class="seg" data-layer="mart" role="tab" aria-selected="false">Marts</button></div>
+  <label class="ft-project meta">Project <select id="ft-project"><option value="">All projects</option><option>dbt-prod</option><option>Colleciónes</option></select></label>
+ </div>
+ <div class="sheet-list ft-list" id="ft-list"></div>
+ <div class="ft-ctes" id="ft-ctes-box" hidden><div class="label">At the start of the SQL</div><pre class="cte-preview" id="ft-ctes"></pre></div>
+ <div class="sheet-foot"><p class="meta">A query that reads a table outside Data Hub cannot become a Lens.</p><button class="btn-quiet" data-sheet-close>Cancel</button><button class="btn-primary" id="ft-add" type="button" disabled><i class="ph ph-plus"></i><span>Add tables</span></button></div>
+</section>
+</div>
+
 <div class="sheet-wrap" id="newq-sheet" hidden>
 <div class="sheet-backdrop" data-sheet-close></div>
 <section class="sheet newq-sheet" role="dialog" aria-modal="true" aria-labelledby="newq-title">
  <div style="display:flex;align-items:flex-start;gap:10px">
   <i class="ph ph-git-branch" style="font-size:22px;color:var(--text-secondary);margin-top:2px" aria-hidden="true"></i>
-  <div style="flex:1;min-width:0"><div class="meta">A new query, from Leads per source name</div><h2 id="newq-title">With one more Resource</h2></div>
+  <div style="flex:1;min-width:0"><div class="meta">A new query, from Leads per source name</div><h2 id="newq-title">With more Resources</h2></div>
   <button class="icon-btn" data-sheet-close aria-label="Close"><i class="ph ph-x"></i></button>
  </div>
  <div class="sheet-list newq-body">
@@ -574,9 +605,10 @@
   <div data-newq="add">
    <div class="label">Add</div>
    <label class="search" style="background:var(--surface-sub);margin-bottom:6px"><i class="ph ph-magnifying-glass" style="font-size:15px"></i><input placeholder="Search the Resources you may see"></label>
-   <label class="pick" data-pick="listings" data-name="listings"><input type="radio" name="newq-pick" value="listings" checked><span style="flex:1;min-width:0"><span class="item-title">Listings</span><span class="meta" style="display:block">Listings and sales · partitioned by listed_date</span></span><span class="maturity" data-level="3"></span></label>
-   <label class="pick" data-pick="partner_contracts" data-name="partner contracts"><input type="radio" name="newq-pick" value="partner_contracts"><span style="flex:1;min-width:0"><span class="item-title">Partner contracts</span><span class="meta" style="display:block">Partners · not partitioned</span></span><span class="maturity" data-level="4"></span></label>
-   <label class="pick" data-pick="saved_searches" data-name="saved searches"><input type="radio" name="newq-pick" value="saved_searches"><span style="flex:1;min-width:0"><span class="item-title">Saved searches</span><span class="meta" style="display:block">Search · partitioned by saved_date</span></span><span class="maturity" data-level="4"></span></label>
+   <p class="meta" style="margin:0 0 6px">Tick one or more; a query reads up to ten.</p>
+   <label class="pick" data-pick="listings" data-name="listings"><input type="checkbox" name="newq-pick" value="listings" checked><span style="flex:1;min-width:0"><span class="item-title">Listings</span><span class="meta" style="display:block">Listings and sales · partitioned by listed_date</span></span><span class="maturity" data-level="3"></span></label>
+   <label class="pick" data-pick="partner_contracts" data-name="partner contracts"><input type="checkbox" name="newq-pick" value="partner_contracts"><span style="flex:1;min-width:0"><span class="item-title">Partner contracts</span><span class="meta" style="display:block">Partners · not partitioned</span></span><span class="maturity" data-level="4"></span></label>
+   <label class="pick" data-pick="saved_searches" data-name="saved searches"><input type="checkbox" name="newq-pick" value="saved_searches"><span style="flex:1;min-width:0"><span class="item-title">Saved searches</span><span class="meta" style="display:block">Search · partitioned by saved_date</span></span><span class="maturity" data-level="4"></span></label>
   </div>
   <div data-newq="remove" hidden>
    <div class="newq-note"><i class="ph ph-warning"></i><span>The SQL still reads <span class="mono" id="newq-removed-table">lead_sources</span>. In the new query that is an error, until you take it out.</span></div>
@@ -586,6 +618,7 @@
   <label class="field" style="margin-top:14px"><span>Name</span><input id="newq-name" value="Weekly lead volume, lead sources and listings, 27 Oct"></label>
   <label class="field"><span>What do you want to know?</span><textarea id="newq-question" rows="2">Which sources bring our leads, week by week?</textarea></label>
   <div class="newq-lenses" id="newq-lenses"></div>
+  <div data-newq="add"><div class="label" style="margin-top:14px">At the start of the SQL</div><pre class="cte-preview" id="newq-ctes"></pre></div>
  </div>
  <div class="sheet-foot"><p class="meta">Leads per source name stays in your queries.</p><button class="btn-quiet" data-sheet-close>Cancel</button><button class="btn-primary" id="newq-start" type="button"><i class="ph ph-git-branch"></i>Start the new query</button></div>
 </section>
@@ -628,6 +661,10 @@
  <button class="seg on" data-target="ok" role="tab" aria-selected="true">As written</button>
  <button class="seg" data-target="outside" role="tab" aria-selected="false">With a table outside</button>
  <button class="seg" data-target="known" role="tab" aria-selected="false">A table Data Hub knows, as a power user</button>
+</div>
+<div class="proto-switch" data-group="find" role="tablist" aria-label="Prototype: Find a table" style="bottom:24px;top:auto;right:700px" hidden>Find
+ <button class="seg on" data-target="shut" role="tab" aria-selected="true">Shut</button>
+ <button class="seg" data-target="open" role="tab" aria-selected="false">Open</button>
 </div>
 <div class="proto-switch" data-group="dbl" role="tablist" aria-label="Prototype: a double-click in the SQL" style="bottom:24px;top:auto;right:260px">Double-click
  <button class="seg on" data-target="none" role="tab" aria-selected="true">Nothing</button>
