@@ -264,3 +264,12 @@ Its Owner Unit and the Data Team delete a Lens from its Edit: a small button und
 ## Builds on
 
 - [Workshop data agents and governance, 2026-10-22](../../workshops/2026-10-22-data-agents-and-governance.md), and its [meeting notes](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1378746422) (Confluence, Dutch)
+
+<a id="fr-le-19"></a>
+### FR-LE-19 · Every field of a Lens has a description
+
+**Status:** Specified · **Source:** Max, 2026-11-13 ([DEC-UX-227](../../design/principles.md#dec-ux-227)) · **Screens:** [lens-new](../../design/screens/lens-new.html)
+
+Making a Lens lists each field of its result with its type and a description. A field named as a field of its Resources takes that description, the Business Description first, else the one from dbt, with where it comes from; when more Resources hold that name, that of the first Resource of the query. For a field no Resource names, and to change any, its author takes the description of a field of its Resources, found by name and words, or writes one. A field without a description does not keep the Lens from being published. Users of the Lens see the descriptions with its result ([OP-UX-82](../../design/principles.md#op-ux-82)).
+
+**Makes easy:** a Lens whose figures say what they mean, mostly from descriptions already written, with a quick way to reuse one for a field that was renamed or computed. **Makes hard:** a Lens whose columns nobody can read without its author, and descriptions written twice for the same field.

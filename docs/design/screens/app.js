@@ -1643,3 +1643,50 @@ document.querySelectorAll('.metric-table .agg').forEach(a => { a.setAttribute('r
   document.body.prepend(ribbon);
   document.title = `${env} · ${document.title}`;
 })();
+
+// Making a Lens, its fields (DEC-UX-227): a field no Resource names takes the description of a field of its Resources,
+// searched by name and words, or one its author writes; Change does the same for any field
+{
+  const list = document.getElementById('lf-list');
+  if (list) {
+    const FIELDS = [
+      ['Weekly lead volume', 'week_start', 'DATE', 'The Monday of the week the lead came in.'],
+      ['Weekly lead volume', 'lead_source', 'STRING', 'Where the lead came in: the website, the app, a partner or a mailing.'],
+      ['Weekly lead volume', 'lead_channel', 'STRING', 'Channel through which the lead was submitted.'],
+      ['Weekly lead volume', 'lead_count', 'INT64', 'Number of credit leads sent to KBC in the week, for the source.'],
+      ['Lead sources', 'lead_source', 'STRING', 'Source system code; one row per code.'],
+      ['Lead sources', 'source_name', 'STRING', 'The name of the source as colleagues know it.'],
+    ];
+    const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    let row = null;
+    const pick = document.getElementById('lf-pick'), q = document.getElementById('lf-q'), options = document.getElementById('lf-options');
+    const draw = () => {
+      const words = q.value.trim().toLowerCase();
+      const found = FIELDS.filter(f => !words || `${f[1]} ${f[3]}`.toLowerCase().includes(words));
+      options.innerHTML = [...new Set(found.map(f => f[0]))].map(r => `<div class="lf-group">${r}</div>`
+        + found.filter(f => f[0] === r).map(f => `<button type="button" class="lf-option" data-r="${esc(f[0])}" data-f="${f[1]}"><span class="mono">${f[1]}</span><span class="meta">${f[2]}</span><span class="lf-text">${esc(f[3])}</span></button>`).join('')).join('')
+        || '<p class="meta" style="padding:6px 8px">No field of its Resources by these words.</p>';
+    };
+    const open = target => { row = target; target.querySelector('.lf-desc').append(pick); pick.hidden = false; draw(); q.focus(); };
+    list.addEventListener('click', e => {
+      const at = e.target.closest('.lf-row'); if (!at) return;
+      if (e.target.closest('[data-lf-pick]')) { open(at); return; }
+      if (e.target.closest('[data-lf-write]')) {
+        at.classList.remove('lf-missing');
+        at.querySelector('.lf-desc').innerHTML = `<span class="lf-from"><i class="ph ph-pencil-simple"></i>Written by you</span><textarea rows="2" aria-label="Description"></textarea>`;
+        at.querySelector('textarea').focus(); return;
+      }
+      const option = e.target.closest('.lf-option');
+      if (option && row) {
+        const f = FIELDS.find(x => x[0] === option.dataset.r && x[1] === option.dataset.f);
+        document.body.append(pick); pick.hidden = true;
+        row.classList.remove('lf-missing');
+        row.querySelector('.lf-desc').innerHTML = `<span class="lf-from"><i class="ph ph-arrow-bend-down-right"></i>Taken from ${esc(f[0])} · <span class="mono">${f[1]}</span></span><p>${esc(f[3])}</p>`;
+        if (!row.querySelector('.lf-change')) row.insertAdjacentHTML('beforeend', '<button class="text-link lf-change" type="button" data-lf-pick>Change</button>');
+        row = null;
+      }
+    });
+    q.addEventListener('input', draw);
+    if (new URLSearchParams(location.search).get('lf') === 'pick') open(document.getElementById('lf-leads'));
+  }
+}

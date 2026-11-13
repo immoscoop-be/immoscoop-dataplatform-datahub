@@ -7,8 +7,14 @@
   within range, publish; large, a warning and still publish; very large, the Data Team accepts it first.
   The switch at the bottom shows the three outcomes as scenarios. A Lens goes into a Collection its author owns (DEC-CO-20); an author who owns none makes one in the same step (?owns=none, DEC-UX-111).
   How the story of a Lens is asked: DEC-LE-10.
-  Requirements: FR-CO-12, FR-CO-15, FR-SR-40, FR-LE-04, FR-LE-05, FR-LE-06, FR-LE-07, FR-LE-08, FR-LE-09, FR-LE-10, FR-LE-13, FR-CV-08
-  Decisions: DEC-UX-25, DEC-UX-75, DEC-UX-121, DEC-LE-16, DEC-UX-111, DEC-LE-01, DEC-LE-02, DEC-CO-20, DEC-CO-24, DEC-SR-29, DEC-DH-10, DEC-DH-11. The Parameters come from the query; no "+ Parameter", no lock. Its author writes what it does, step by step (DEC-UX-121, DEC-LE-16).
+  Its fields (DEC-UX-227, FR-LE-19, OP-UX-82): each field of its result, with its type and description. A field named as
+  a field of its Resources takes that description, the Business Description first, else the one from dbt, and says
+  where from; when more Resources hold that name, the first Resource of the query, with which others hold it too. No
+  more is worked out from the SQL. For a field no Resource names, its author takes the description of any field of its
+  Resources, searched by name and words, or writes one; Change does the same for any field. Without one it still
+  publishes. Users see each description on the head of its column and under About (?lf=pick opens the search).
+  Requirements: FR-LE-19, FR-CO-12, FR-CO-15, FR-SR-40, FR-LE-04, FR-LE-05, FR-LE-06, FR-LE-07, FR-LE-08, FR-LE-09, FR-LE-10, FR-LE-13, FR-CV-08
+  Decisions: DEC-UX-227, DEC-UX-25, DEC-UX-75, DEC-UX-121, DEC-LE-16, DEC-UX-111, DEC-LE-01, DEC-LE-02, DEC-CO-20, DEC-CO-24, DEC-SR-29, DEC-DH-10, DEC-DH-11. The Parameters come from the query; no "+ Parameter", no lock. Its author writes what it does, step by step (DEC-UX-121, DEC-LE-16).
   Not in v1: the label "Claude" on a query in the panel (FR-SR-26, DEC-CH-02); leave it out.
   Related screens: query.html (the button "Make it a lens").
   Rules: ../principles.md  ·  Placeholder content only.
@@ -98,6 +104,42 @@ Adds up the leads per source and puts the largest first.</textarea></label>
    <div class="param-row" style="margin-top:6px"><span class="mono">@dateTo</span><input value="To" aria-label="Name users see"><span class="meta">Date</span><span class="param-fn" title="A function, worked out at every run"><i class="ph ph-function"></i>Today − 3 days<i class="ph ph-caret-down" style="margin-left:auto"></i></span></div>
    <div class="param-row" style="margin-top:6px"><span class="mono">@leadChannel</span><input value="Lead channel" aria-label="Name users see"><span class="meta">List</span><span class="meta" title="The default of this Parameter, from the query">Form</span></div>
    <p class="meta" style="display:block;line-height:1.5;margin:8px 0 0">From your query, with the defaults it has. Name each one as users see it; users can always change their values. To add one, add it in the query.</p>
+  </div>
+  <!-- Its fields: a field named as a field of its Resources takes that description; for another, its author takes one from its Resources or writes one (DEC-UX-227, FR-LE-19, OP-UX-82) -->
+  <div class="field lf" style="margin-top:16px"><span>Its fields, as users see them</span>
+   <p class="meta" style="display:block;line-height:1.5;margin:0 0 8px">Each field of its result. One named as a field of its Resources takes that description; for the others, take one from its Resources or write one. Users see it on the head of the column and under About.</p>
+   <div class="lf-list" id="lf-list">
+    <div class="lf-row">
+     <div class="lf-head"><span class="mono">week_start</span><span class="meta">DATE</span></div>
+     <div class="lf-desc"><span class="lf-from"><i class="ph ph-arrow-bend-down-right"></i>From Weekly lead volume · <span class="mono">week_start</span></span><p>The Monday of the week the lead came in.</p></div>
+     <button class="text-link lf-change" type="button" data-lf-pick>Change</button>
+    </div>
+    <div class="lf-row">
+     <div class="lf-head"><span class="mono">lead_source</span><span class="meta">STRING</span></div>
+     <div class="lf-desc"><span class="lf-from"><i class="ph ph-arrow-bend-down-right"></i>From Weekly lead volume · <span class="mono">lead_source</span><span class="pill" title="Lead sources holds a field of this name too: Change takes its description instead">also in Lead sources</span></span><p>Where the lead came in: the website, the app, a partner or a mailing.</p></div>
+     <button class="text-link lf-change" type="button" data-lf-pick>Change</button>
+    </div>
+    <div class="lf-row">
+     <div class="lf-head"><span class="mono">source_name</span><span class="meta">STRING</span></div>
+     <div class="lf-desc"><span class="lf-from"><i class="ph ph-arrow-bend-down-right"></i>From Lead sources · <span class="mono">source_name</span></span><p>The name of the source as colleagues know it.</p></div>
+     <button class="text-link lf-change" type="button" data-lf-pick>Change</button>
+    </div>
+    <div class="lf-row lf-missing" id="lf-leads">
+     <div class="lf-head"><span class="mono">leads</span><span class="meta">INT64</span></div>
+     <div class="lf-desc"><p class="lf-none">No field of its Resources is called <span class="mono">leads</span>.</p>
+      <div class="lf-actions"><button class="btn-quiet outline" type="button" data-lf-pick><i class="ph ph-magnifying-glass"></i>Take one from its Resources</button><button class="btn-quiet" type="button" data-lf-write>Write one</button></div>
+      <div class="lf-pick" id="lf-pick" hidden>
+       <label class="search" style="background:var(--surface-sub)"><i class="ph ph-magnifying-glass" style="font-size:14px"></i><input id="lf-q" value="lead" placeholder="Search the fields of its Resources" autocomplete="off"></label>
+       <div class="lf-options" id="lf-options"></div>
+      </div>
+     </div>
+    </div>
+    <div class="lf-row">
+     <div class="lf-head"><span class="mono">share_of_week</span><span class="meta">FLOAT64</span></div>
+     <div class="lf-desc"><span class="lf-from"><i class="ph ph-pencil-simple"></i>Written by you</span><textarea rows="2" aria-label="Description of share_of_week">The share of the leads of that week that came from this source, in percent.</textarea></div>
+     <button class="text-link lf-change" type="button" data-lf-pick>Change</button>
+    </div>
+   </div>
   </div>
   <label class="field" style="margin-top:16px" data-pane-group="owns" data-pane="some"><span>Goes into a Collection you own</span>
    <select><option selected>Credit leads · the credit team</option><option>KBC follow-up work · only you, private</option></select>

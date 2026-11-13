@@ -2118,3 +2118,25 @@ svg.mp, svg.mp-g { display: block; width: 100%; height: auto; overflow: visible;
 /* CTEs just added at the start of the SQL show where they came, for a moment (DEC-UX-225) */
 .sql-editor .ln { transition: background-color 1.2s ease; }
 .sql-editor .ln.just-added { background: color-mix(in srgb, var(--code-keyword) 12%, transparent); transition: none; }
+
+/* The fields of a Lens, each with a description: from a field of the same name of its Resources, taken from one, or
+   written by its author (DEC-UX-227) */
+.lf-list { display: grid; gap: 6px; }
+.lf-row { display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; gap: 4px 12px; align-items: start; padding: 10px 12px; border-radius: var(--radius-md); background: var(--surface-sub); font-size: var(--text-small); }
+.lf-head { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.lf-head .mono { overflow: hidden; text-overflow: ellipsis; }
+.lf-desc { min-width: 0; }
+.lf-desc p { margin: 2px 0 0; line-height: 1.5; color: var(--text-primary); }
+.lf-from { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; font-size: var(--text-meta); color: var(--text-muted); }
+.lf-from .pill { margin-left: 2px; }
+.lf-desc textarea { width: 100%; box-sizing: border-box; margin-top: 4px; font: var(--text-small)/1.5 var(--font-family); color: var(--text-primary); background: var(--surface-solid); border: 0; border-radius: 8px; padding: 6px 8px; resize: vertical; }
+.lf-none { color: var(--text-secondary) !important; }
+.lf-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.lf-change { font-size: var(--text-meta); }
+.lf-pick { margin-top: 8px; padding: 8px; border-radius: var(--radius-md); background: var(--surface-solid); outline: 1px solid var(--tint-active); }
+.lf-options { display: grid; gap: 2px; margin-top: 6px; max-height: 220px; overflow: auto; }
+.lf-group { padding: 6px 8px 2px; font-size: var(--text-meta); color: var(--text-muted); }
+.lf-option { all: unset; box-sizing: border-box; display: grid; grid-template-columns: minmax(110px, max-content) 64px minmax(0, 1fr); gap: 10px; align-items: baseline; padding: 6px 8px; border-radius: var(--radius-sm); cursor: pointer; font-size: var(--text-meta); }
+.lf-option:hover, .lf-option:focus-visible { background: var(--tint-hover); }
+.lf-option .mono { color: var(--text-primary); }
+.lf-option .lf-text { color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
