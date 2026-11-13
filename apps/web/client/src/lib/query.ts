@@ -529,6 +529,10 @@ export function createQuery(config: Config, session: Pick<Session, 'accessToken'
       return ((await (await call('/lenses')).json()) as { lenses: LensItem[] }).lenses;
     },
     /** The Lenses a new query may reuse, by its Resources and the words of its question (FR-SR-47, FR-SR-48). */
+    /** The SQL with a CTE at its start for each Resource and table added (FR-SR-59, DEC-UX-225), and those CTEs. */
+    async ctes(sql: string, added: { resources?: readonly string[]; tables?: readonly string[] }): Promise<{ sql: string; ctes: string[] }> {
+      return (await (await call('/queries/ctes', { method: 'POST', body: { sql, resources: added.resources ?? [], tables: added.tables ?? [] } })).json()) as { sql: string; ctes: string[] };
+    },
     async suggestions(resources: readonly string[], question: string): Promise<LensSuggestions> {
       const search = new URLSearchParams({ resources: resources.join(','), question });
       return (await (await call(`/lenses/suggestions?${search}`)).json()) as LensSuggestions;

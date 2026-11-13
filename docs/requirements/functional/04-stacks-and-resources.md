@@ -455,7 +455,7 @@ In the editor of Query, a double-click on a word of the SQL selects it, as in an
 <a id="fr-sr-58"></a>
 ### FR-SR-58 · A power user finds a table outside Data Hub
 
-**Status:** Specified · **Source:** Max, 2026-11-13 ([DEC-UX-224](../../design/principles.md#dec-ux-224)) · **Screens:** [query](../../design/screens/query.html)
+**Status:** Implemented · **Source:** Max, 2026-11-13 ([DEC-UX-224](../../design/principles.md#dec-ux-224)) · **Screens:** [query](../../design/screens/query.html)
 
 On a query, a User with `queries.outside` ([FR-SR-56](#fr-sr-56)) finds a table Data Hub knows outside the Resources of the query: by its name or the words of its description, narrowed by its layer and its project. Each table shows its layer, project, dataset and description from dbt, and unfolds to its columns, each with its type and description. The tables that are no Resource are picked one or more at once and come into the SQL of the query as CTEs ([FR-SR-59](#fr-sr-59)); a Resource starts a new query with it, under its own rules ([DEC-UX-73](../../design/principles.md#dec-ux-73)). What the search covers is [OP-UX-81](../../design/principles.md#op-ux-81).
 
@@ -464,11 +464,13 @@ On a query, a User with `queries.outside` ([FR-SR-56](#fr-sr-56)) finds a table 
 <a id="fr-sr-59"></a>
 ### FR-SR-59 · What is added to a query comes in as CTEs at its start
 
-**Status:** Specified · **Source:** Max, 2026-11-13 ([DEC-UX-225](../../design/principles.md#dec-ux-225)) · **Screens:** [query](../../design/screens/query.html)
+**Status:** Implemented · **Source:** Max, 2026-11-13 ([DEC-UX-225](../../design/principles.md#dec-ux-225)) · **Screens:** [query](../../design/screens/query.html)
 
 Resources added to a query, which start a new query ([DEC-UX-73](../../design/principles.md#dec-ux-73)), and tables outside Data Hub a power user adds ([FR-SR-58](#fr-sr-58)) are picked one or more at once, a query keeping 1 to 10 Resources. Each comes into the SQL as a CTE at its start, named after its table and unique in the query, selecting its fields and filtering on its recent partitions, as the SQL of a new query does; the CTEs already there, and the rest of the SQL, stay as they were. Before they are added, the User sees which CTEs come.
 
 **Makes easy:** adding several sources in one step, each ready to join, read with a filter on its partitions from the start. **Makes hard:** a table named deep inside the SQL that nobody sees is read, and a first run that reads every partition of a table just added.
+
+*Note of 2026-11-13, on building it: query writes the CTEs, and registry finds the tables it knows with their columns ([TR-SR-29](../technical/04-stacks-and-resources.md#tr-sr-29)).*
 
 <a id="fr-sr-35"></a>
 ### FR-SR-35 · A new Resource waits for a Collection

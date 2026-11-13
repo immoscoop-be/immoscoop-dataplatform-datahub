@@ -44,6 +44,7 @@ Its service account may read every table of the project ([DEC-SR-32](../../requi
 | `PUT /queries/{id}/hidden`, `DELETE /queries/{id}/hidden` | Hides a query from the panel of the User, or shows it again; for them alone ([DEC-UX-138](../../design/principles.md#dec-ux-138)) |
 | `POST /queries` | A new query: its name, question and Resources, with SQL that filters on their partition columns; or started from another, with its SQL and Parameters; without Resources only for a power user ([TR-SR-27](../../requirements/technical/04-stacks-and-resources.md#tr-sr-27)) |
 | `GET /queries/{id}`, `PATCH /queries/{id}` | A query with its Resources, its last run, its Request and where it started, for who made it and the Data Team; its name, question, SQL and Parameters changed by who made it |
+| `POST /queries/ctes` | The SQL with a CTE at its start for each Resource and, for a power user, each table outside Data Hub added, and those CTEs ([TR-SR-29](../../requirements/technical/04-stacks-and-resources.md#tr-sr-29)) |
 | `POST /queries/{id}/preflight` | The Pre-flight of the SQL and Parameters being written, which it keeps ([TR-SR-16](../../requirements/technical/04-stacks-and-resources.md#tr-sr-16)) |
 | `POST /queries/{id}/runs` | A run, with its first page, after the same checks |
 | `GET /queries/{id}/runs?before=n&limit=m` | Its history, newest first, with the SQL and values of each run ([TR-SR-17](../../requirements/technical/04-stacks-and-resources.md#tr-sr-17)) |

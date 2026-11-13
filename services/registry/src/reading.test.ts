@@ -73,6 +73,20 @@ describe.skipIf(!url)('reading the registry', () => {
     expect(await reading.knownTables([])).toEqual([]);
   });
 
+  it('finds the tables of its dbt projects for a power user by words, layer and project, with their columns (FR-SR-58)', async () => {
+    // By half a name, with its description and its columns.
+    const found = await reading.searchKnownTables('order', { limit: 10 });
+    expect(found.map((table) => table.relation)).toEqual(expect.arrayContaining(['immoscoop-dataplatform.dbt_marts.orders', 'immoscoop-dataplatform.raw_shop.orders_export']));
+    const orders = found.find((table) => table.relation === 'immoscoop-dataplatform.dbt_marts.orders');
+    expect(Array.isArray(orders?.columns)).toBe(true);
+    expect(typeof orders?.description).toBe('string');
+    // A layer narrows it: a source is of the layer source.
+    expect((await reading.searchKnownTables('order', { layer: 'source', limit: 10 })).map((table) => table.relation)).toEqual(['immoscoop-dataplatform.raw_shop.orders_export']);
+    // Without words, the tables of a layer by name; a project Data Hub does not follow has none.
+    expect((await reading.searchKnownTables('', { layer: 'source', limit: 10 })).every((table) => table.resourceType === 'source')).toBe(true);
+    expect(await reading.searchKnownTables('order', { project: '1', limit: 10 })).toEqual([]);
+  });
+
   it('tells the Current Version of each dbt project', async () => {
     expect(await reading.projects()).toMatchObject([
       { projectId: '9367', name: P, runId: '200', dbtVersion: '1.10.2', nodeCount: 7 },

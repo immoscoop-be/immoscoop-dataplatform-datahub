@@ -12,6 +12,9 @@ export interface KnownTable {
   /** An exposure with the tag `datahub` depends on it: it is a Resource, read as one (DEC-SR-46). */
   resource: boolean;
   partition: { field: string; unit: string | null } | null;
+  /** Its description from dbt, and its columns: what a CTE of it selects (FR-SR-59). */
+  description?: string;
+  columns?: { name: string; dataType: string | null; description: string }[];
 }
 
 /** registry did not answer: the query cannot be checked now, never guessed. */

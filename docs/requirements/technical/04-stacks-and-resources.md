@@ -283,6 +283,17 @@ The page of a query opens the floating window of a Parameter, a pop-out at the w
 
 Format (`formatBigQuery` in `sqlFormat.ts` of `@datahub/ui`) writes the house layout of the Data Team for dbt ([DEC-UX-228](../../design/principles.md#dec-ux-228)): sql-formatter for BigQuery with keywords, functions and types in lower case, an indent of 4 spaces and a function call on one line up to 100 characters; then, outside text in quotes, comments and names in backticks, the date parts in lower case and `interval (…)` with its space; and a top-level `with` on a line of its own followed by a blank line, its CTEs not indented, a blank line between them and before the query that reads them.
 
+<a id="tr-sr-29"></a>
+### TR-SR-29 · Find a table, and what is added comes as CTEs
+
+**Status:** Implemented · **Realises:** [FR-SR-58](../functional/04-stacks-and-resources.md#fr-sr-58), [FR-SR-59](../functional/04-stacks-and-resources.md#fr-sr-59), [DEC-UX-224](../../design/principles.md#dec-ux-224), [DEC-UX-225](../../design/principles.md#dec-ux-225), [OP-UX-81](../../design/principles.md#op-ux-81)
+
+registry answers `GET /known-tables/search?q=&layer=&project=` with the Access Token of a User with `queries.outside` (`403` otherwise; `400` for more than 200 characters, a layer that is no name or a project that is no number): at most 30 tables of the Current Versions of the dbt projects it follows, models, seeds, snapshots and sources, by their name (also half a name, or with a typo), the words of their description or a column, an exact name first; narrowed to a layer, as the start of the layer of the table shown, and to a project. Without words it lists the tables of that layer by name. Each table, and each that `GET /known-tables` gives, comes with its description and its columns, each with its type and description.
+
+query answers `POST /queries/ctes` with `{ sql, resources, tables }`, 1 to 10 in all: the Resources by their ID, which the User must see, and the tables outside Data Hub by their Key, only for a User with `queries.outside` (`403` otherwise) and only tables registry knows that are no Resource (`400` otherwise). It answers the SQL with a CTE for each at its start, after a `with` that is there, before its CTEs, or with a `with` of its own before the first statement, comments on top staying on top; and the CTEs themselves. Each is named after the last part of its Key, with `_2` when the name is taken by a CTE of the SQL, selects its fields, the columns of registry for a table, and filters on its recent partitions as the SQL of a new query does, in the house layout of the Data Team ([DEC-UX-228](../../design/principles.md#dec-ux-228)). Without SQL, the query reads the first of them.
+
+The web app ticks Resources one or more at once in the sheet of another set of Resources, up to ten in all, and shows the CTEs that come; a Resource the SQL already names gets none. "Start the new query" sends the SQL with them. "Find a table", for a User with `queries.outside`, searches registry by words, layer and project, unfolds a table to its columns, and puts the SQL with the CTEs of the tables ticked into the editor; a table that is a Resource opens the sheet of another set of Resources with it.
+
 ## Open points
 
 None yet; reading the data of Resources is [OP-SR-10](../functional/04-stacks-and-resources.md#op-sr-10).

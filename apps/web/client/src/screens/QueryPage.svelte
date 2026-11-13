@@ -28,6 +28,8 @@
   import NewSetSheet from './NewSetSheet.svelte';
   import NotFound from './NotFound.svelte';
   import FieldExplain from './FieldExplain.svelte';
+  import FindTableSheet from './FindTableSheet.svelte';
+  import type { KnownTable } from '../lib/registry.js';
   import ParameterWindow from './ParameterWindow.svelte';
   import ResourceSummaryWindow, { type SummaryData } from './ResourceSummaryWindow.svelte';
   import QueryHistory from './QueryHistory.svelte';
@@ -59,6 +61,7 @@
     hiddenChange,
     onhidden,
     summaryOf,
+    findTables,
     layout = 'horizontal',
     onlayout,
   }: {
@@ -81,6 +84,8 @@
     onhidden?: (id: string, hidden: boolean) => void;
     /** The Summary of a Resource, for a double-click on its name in the SQL (DEC-UX-221). */
     summaryOf?: (id: string) => Promise<SummaryData>;
+    /** For a power user, with `queries.outside`: the tables Data Hub knows, to find and add (FR-SR-58). */
+    findTables?: (words: string, filter: { layer?: string; project?: string }) => Promise<KnownTable[]>;
     /** The query above the result, or next to it, as the User chose it (DEC-UX-143). */
     layout?: Layout;
     onlayout?: (layout: Layout) => void;
@@ -198,6 +203,7 @@
   let fieldExplained = $state<{ fields: Suggestion[]; at: At } | null>(null);
   let windows = 0;
   let newSet = $state<{ mode: 'add' | 'remove'; resource: string | null } | null>(null);
+  let finding = $state(false);
   let requestOpen = $state(false);
   let requestText = $state('');
   let sending = $state(false);
@@ -228,6 +234,7 @@
     summaryWindow = null;
     fieldExplained = null;
     newSet = null;
+    finding = false;
     requestOpen = false;
     requestText = '';
     renaming = null;
@@ -849,6 +856,10 @@
         {#if query.mine && !preview && query.resources.length < 10}
           <button type="button" class="add" onclick={() => (newSet = { mode: 'add', resource: null })}><Icon name="plus" />{t('query.resources.add')}</button>
         {/if}
+        {#if query.mine && !preview && query.kind === 'query' && findTables}
+          <!-- A power user also finds tables Data Hub knows outside its Resources (DEC-UX-224). -->
+          <button type="button" class="add" title={t('find.button.hint')} onclick={() => (finding = true)}><Icon name="magnifying-glass" />{t('find.button')}</button>
+        {/if}
         {#each outside as table (table.name)}
           <span class="chip outside">
             <Icon name="warning-fill" />{t('query.problem.outside', { name: table.name })}
@@ -1127,6 +1138,26 @@
       onclose={() => (newSet = null)}
       onstart={startNew}
       lensesOn={(on, words) => client.suggestions(on, words)}
+      ctesOf={(text, ids) => client.ctes(text, { resources: ids })}
+    />
+  {/if}
+
+  {#if finding && findTables}
+    <FindTableSheet
+      queryName={query.name}
+      {sql}
+      find={findTables}
+      ctesOf={(text, keys) => client.ctes(text, { tables: keys })}
+      onadd={(next) => {
+        sql = next;
+        finding = false;
+      }}
+      onresource={(table) => {
+        const id = (collections ?? []).flatMap((collection) => collection.resources).find((item) => item.key === table.key)?.id;
+        finding = false;
+        if (id) newSet = { mode: 'add', resource: id };
+      }}
+      onclose={() => (finding = false)}
     />
   {/if}
 

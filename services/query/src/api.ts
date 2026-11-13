@@ -13,8 +13,8 @@ import { bind, type Parameter, parseParameters } from './parameters.js';
 import { type Preflight, preflight, type ResourceOfQuery, sound, type Thresholds } from './preflight.js';
 import { type Choice, choicesOf, chosenParameters, previewSql, type StorageReader, valuesSql, type Window, WINDOWS, windowFilter } from './preview.js';
 import { type ListOptions, type Queries, type Query, type QueryOnResource, type Run, SHOWN, type Shown, type Viewer } from './queries.js';
-import { type Registry, RegistryUnavailable } from './registry.js';
-import { inOwnCase, template } from './sql.js';
+import { type KnownTable, type Registry, RegistryUnavailable } from './registry.js';
+import { inOwnCase, template, withCtes } from './sql.js';
 import { createUpkeep, type Lost } from './upkeep.js';
 
 export interface ApiOptions {
@@ -394,6 +394,36 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
         forCollection: fields.forCollection,
       });
       return reply.code(201).send({ query: await queryView(request, query) });
+    } catch (error) {
+      return unavailable(error, reply, request);
+    }
+  });
+
+  /**
+   * The SQL with a CTE for each Resource and table added, at its start (FR-SR-59, DEC-UX-225), for the sheet to show
+   * before they are added: Resources the User sees, and for a power user tables Data Hub knows outside them (FR-SR-58).
+   */
+  app.post<{ Body: { sql?: unknown; resources?: unknown; tables?: unknown } }>('/queries/ctes', async (request, reply) => {
+    const { sql, resources = [], tables = [] } = request.body ?? {};
+    const list = (value: unknown) => Array.isArray(value) && value.length <= 10 && value.every((entry) => typeof entry === 'string' && entry.length <= 1024);
+    if (typeof sql !== 'string' || sql.length > 100_000 || !list(resources) || !list(tables) || (resources as string[]).length + (tables as string[]).length === 0) {
+      return reply.code(400).send({ error: 'invalid_request', message: 'Name the SQL, and 1 to 10 Resources by their ID or tables by their Key.' });
+    }
+    if ((tables as string[]).length > 0 && !(registry && can(permissionsOf(request), 'queries.outside'))) {
+      return reply.code(403).send({ error: 'forbidden', message: 'Only who may query tables outside Data Hub adds one.', permission: 'queries.outside' });
+    }
+    try {
+      const found = await Promise.all((resources as string[]).map((id) => catalogue.resource(id, authorization(request))));
+      if (found.some((resource) => resource === null)) return reply.code(400).send({ error: 'invalid_request', message: 'A query reads only Resources you may see.' });
+      const keys = (tables as string[]).map((key) => key.toLowerCase());
+      const known = keys.length > 0 && registry ? await registry.knownTables(keys, authorization(request)) : [];
+      const outside = keys.map((key) => known.find((table) => table.key === key && !table.resource));
+      if (outside.some((table) => table === undefined)) return reply.code(400).send({ error: 'invalid_request', message: 'Add only tables Data Hub knows that are no Resource.' });
+      const added = withCtes(sql, [
+        ...(found as QueryResource[]),
+        ...(outside as KnownTable[]).map((table) => ({ key: table.key, fullName: table.fullName, fields: (table.columns ?? []).map(({ name, dataType }) => ({ name, dataType })), partition: table.partition })),
+      ]);
+      return added;
     } catch (error) {
       return unavailable(error, reply, request);
     }

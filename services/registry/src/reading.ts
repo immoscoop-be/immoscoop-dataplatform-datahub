@@ -1,6 +1,7 @@
 import { type Kysely, sql } from 'kysely';
 import type { PartitionUnit, RegistryDatabase, SetStatus } from './database.js';
 import { DATAHUB_TAG } from './exposed.js';
+import { layerOf } from './internal.js';
 
 /** A Node in a list: enough to recognise it and find its table. */
 export interface NodeSummary {
@@ -34,6 +35,9 @@ export interface KnownTableRow {
   projectId: string;
   projectName: string | null;
   resource: boolean;
+  /** Its description from dbt, and its columns with theirs, for a power user who finds or adds it (FR-SR-58, FR-SR-59). */
+  description: string;
+  columns: { name: string; dataType: string | null; description: string }[];
 }
 
 export interface SearchHit extends NodeSummary {
@@ -223,11 +227,45 @@ export function createReading(db: Kysely<RegistryDatabase>) {
         select distinct on (n.relation)
           n.relation, n.database_name, n.schema_name, n.table_name, n.name, n.resource_type, n.layer, n.file_path,
           n.partition_field, n.partition_unit, p.project_id::text as project_id, p.name as project_name,
-          n.relation in (select relation from exposed) as resource
+          n.relation in (select relation from exposed) as resource, coalesce(n.description, '') as description,
+          (select coalesce(json_agg(json_build_object('name', c.name, 'dataType', c.data_type, 'description', c.description) order by c.position nulls last, c.name), '[]'::json)
+            from columns c where c.set_id = n.set_id and c.node_id = n.unique_id) as columns
         from nodes n join projects p on p.current_set_id = n.set_id
         where n.relation in (${sql.join(keys)})
         order by n.relation, n.resource_type = 'source', p.project_id`.execute(db);
       return result.rows;
+    },
+
+    /**
+     * The tables Data Hub knows, found by a power user (FR-SR-58): by their name, also half a name or with a typo, and
+     * by the words of their description or a column; narrowed by layer, as the start of their layer, and by project.
+     * Without words, the tables of that layer by name. One row per table, as `knownTables` gives it.
+     */
+    async searchKnownTables(query: string, options: { layer?: string; project?: string; limit: number }): Promise<KnownTableRow[]> {
+      const words = sql`websearch_to_tsquery('simple', ${query})`;
+      const escaped = query.replace(/[\\%_]/g, (character) => `\\${character}`);
+      const pattern = `%${escaped}%`;
+      const layer = options.layer ? `${options.layer.replace(/[\\%_]/g, (character) => `\\${character}`)}%` : null;
+      const found = await sql<{ relation: string }>`
+        select n.relation, max(case when lower(n.name) = lower(${query}) then 3 when n.name ilike ${`${escaped}%`} then 2 else 1 end) as first,
+          max(greatest(similarity(n.name, ${query}), word_similarity(${query}, n.name))) as close
+        from nodes n join projects p on p.current_set_id = n.set_id
+        where n.relation is not null and n.resource_type in ('model', 'seed', 'snapshot', 'source')
+          and (${options.project ?? null}::bigint is null or p.project_id = ${options.project ?? null}::bigint)
+          and (${layer}::text is null or coalesce(n.layer, substring(n.file_path from '^models/([^/]+)/'), n.resource_type) ilike ${layer})
+          and (
+            ${query} = ''
+            or n.name ilike ${pattern} or n.name % ${query} or ${query} <% n.name or n.search @@ ${words}
+            or exists (select 1 from columns c where c.set_id = n.set_id and c.node_id = n.unique_id and (c.search @@ ${words} or c.name ilike ${pattern}))
+          )
+        group by n.relation
+        order by first desc, close desc, n.relation
+        limit ${options.limit}`.execute(db);
+      const relations = found.rows.map((row) => row.relation);
+      const rows = await this.knownTables(relations);
+      // A table is of the layer of the row shown: a source of one project on a model of another is that model.
+      const wanted = options.layer?.toLowerCase();
+      return relations.flatMap((relation) => rows.filter((row) => row.relation === relation && (!wanted || layerOf(row).toLowerCase().startsWith(wanted))));
     },
 
     /** One Node of a Current Version, with its columns and tests. */

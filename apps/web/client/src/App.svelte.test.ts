@@ -994,6 +994,22 @@ function serve({
       else hiddenQueries.delete(hiding[1] as string);
       return json({ hidden: method === 'PUT' });
     }
+    // What is added to a query comes as CTEs at its start (FR-SR-59); a power user finds tables Data Hub knows (FR-SR-58).
+    if (path === '/queries/ctes' && method === 'POST') {
+      const asked = JSON.parse(init.body as string) as { sql: string; resources: string[]; tables: string[] };
+      const names = [...asked.resources.map((id) => ({ r5: 'listings', r6: 'saved_searches' })[id] ?? id), ...asked.tables.map((key) => key.split('.').at(-1) as string)];
+      const ctes = names.map((name) => `${name} as (\n    select\n        *\n    from\n        \`p.d.${name}\`\n)`);
+      return json({ sql: `with\n\n${ctes.join(',\n\n')}\n\n${asked.sql}`, ctes });
+    }
+    if (path.startsWith('/known-tables/search?')) {
+      const key = 'immoscoop-dataplatform-398214.dbt_prod_staging.stg_oltp__leads';
+      return json({
+        tables: [
+          { key, fullName: key, name: 'stg_oltp__leads', resourceType: 'model', layer: 'staging', projectId: '9367', projectName: 'dbt-prod', resource: false, partition: { field: 'created_date', unit: 'day' }, description: 'One row per lead as the OLTP database keeps it.', columns: [{ name: 'lead_id', dataType: 'STRING', description: 'Id of the lead.' }, { name: 'created_date', dataType: 'DATE', description: 'Day it came in.' }] },
+          { key: 'immoscoop-dataplatform-398214.dbt_prod_leads.weekly_lead_volume', fullName: 'x', name: 'weekly_lead_volume', resourceType: 'model', layer: 'mart', projectId: '9367', projectName: 'dbt-prod', resource: true, partition: null, description: '', columns: [] },
+        ],
+      });
+    }
     if (path === '/queries' && method === 'POST') {
       const { name, question } = JSON.parse(init.body as string) as { name: string; question: string };
       const made = { ...QUERY, name, question, id: 'q-made', lastRun: null, lastRunAt: null };
@@ -3477,6 +3493,59 @@ describe('Query', () => {
     expect(await main.findByText(/Wacht op het Data Team sinds \d\d:\d\d/)).toBeTruthy();
     expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/requests', body: { sql: `${QUERY.sql}-- every year\n`, parameters: [], text: 'For the five-year review.' } });
     expect(await within(screen.getByRole('complementary', { name: 'Query' })).findByText('Naar het Data Team')).toBeTruthy();
+  });
+
+  it('adds several Resources at once to a new query, each as a CTE at the start of its SQL (FR-SR-59, DEC-UX-225)', async () => {
+    const more = [
+      { ...CREDIT.resources[0]!, id: 'r5', key: 'immoscoop-dataplatform-398214.dbt_prod_listings.listings', displayName: 'Listings', published: true },
+      { ...CREDIT.resources[0]!, id: 'r6', key: 'immoscoop-dataplatform-398214.dbt_prod_search.saved_searches', displayName: 'Saved searches', published: true },
+    ];
+    const calls = serve({ queries: [{ ...QUERY }], creditWith: { resources: [CREDIT.resources[0]!, ...more] } });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('button', { name: 'Een Resource toevoegen' }, { timeout: 3000 }));
+    const dialog = await screen.findByRole('dialog', { name: 'Met één Resource meer' });
+    const sheet = within(dialog);
+    await fireEvent.click(await sheet.findByRole('checkbox', { name: /Listings/ }));
+    await fireEvent.click(sheet.getByRole('checkbox', { name: /Saved searches/ }));
+    expect(dialog.getAttribute('aria-label') ?? within(dialog).getByRole('heading', { level: 2 }).textContent).toMatch(/Met 2 Resources meer/);
+    // The CTEs that come at the start of the SQL, before the new query starts.
+    expect(await sheet.findByText(/listings as \(/, {}, { timeout: 3000 })).toBeTruthy();
+    await fireEvent.click(sheet.getByRole('button', { name: /De nieuwe query starten/ }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/query/q-made'));
+    expect(calls).toContainEqual({ method: 'POST', path: '/queries/ctes', body: { sql: QUERY.sql, resources: ['r5', 'r6'], tables: [] } });
+    const made = calls.find((call) => call.method === 'POST' && call.path === '/queries')?.body as { resources: string[]; sql: string };
+    expect(made.resources).toEqual(['r2', 'r5', 'r6']);
+    expect(made.sql).toMatch(/^with\n\nlistings as \([\s\S]*\),\n\nsaved_searches as \([\s\S]*\)\n\nselect week_start/);
+  });
+
+  it('lets a power user find tables Data Hub knows and add the ones ticked as CTEs at the start of the SQL (FR-SR-58, FR-SR-59)', async () => {
+    serve({ queries: [{ ...QUERY }] });
+    open('/query/q1');
+    const { unmount } = render(App, { config: CONFIG });
+    expect(await within(await screen.findByRole('main')).findByRole('button', { name: 'Een Resource toevoegen' }, { timeout: 3000 })).toBeTruthy();
+    // Nobody else has it.
+    expect(screen.queryByRole('button', { name: /Zoek een tabel/ })).toBeNull();
+    unmount();
+
+    const calls = serve({ as: 'admin', queries: [{ ...QUERY }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('button', { name: /Zoek een tabel/ }, { timeout: 3000 }));
+    const sheet = within(await screen.findByRole('dialog', { name: 'Zoek een tabel' }));
+    // A table that is a Resource cannot be ticked: it starts a new query with it.
+    expect(await sheet.findByRole('button', { name: 'Begin er een nieuwe query mee' }, { timeout: 3000 })).toBeTruthy();
+    await fireEvent.click(sheet.getByRole('button', { name: 'Kolommen van stg_oltp__leads' }));
+    expect(sheet.getByText('Day it came in.')).toBeTruthy();
+    await fireEvent.click(sheet.getByRole('checkbox', { name: 'stg_oltp__leads' }));
+    expect(await sheet.findByText(/stg_oltp__leads as \(/)).toBeTruthy();
+    await fireEvent.click(sheet.getByRole('button', { name: /Voeg 1 tabel toe/ }));
+    await vi.waitFor(() => expect(screen.queryByRole('dialog', { name: 'Zoek een tabel' })).toBeNull());
+    expect(calls).toContainEqual({ method: 'POST', path: '/queries/ctes', body: { sql: QUERY.sql, resources: [], tables: ['immoscoop-dataplatform-398214.dbt_prod_staging.stg_oltp__leads'] } });
+    expect(calls.some((call) => call.path.startsWith('/known-tables/search?q='))).toBe(true);
+    await vi.waitFor(() => expect(main.getByRole('textbox', { name: /SQL/ }).textContent).toContain('stg_oltp__leads as ('));
   });
 
   it('starts a new query without one of its Resources, taking the SQL and Parameters along (DEC-UX-73)', async () => {

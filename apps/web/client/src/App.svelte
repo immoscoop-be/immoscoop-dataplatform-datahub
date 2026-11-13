@@ -858,6 +858,7 @@
           opened={page.run}
           client={queries}
           {summaryOf}
+          findTables={can(permissions, 'queries.outside') ? (words, filter) => registry.findTables(words, filter) : undefined}
           {collections}
           nonce={config.styleNonce}
           onran={refreshQueries}

@@ -53,7 +53,8 @@ const SECRET: QueryResource = { ...SOURCES, id: '8b3e4d6a-0c3f-4e5a-9b42-3d4e5f6
 /** A Resource of An's unit that is not published yet: a query may read it, but no Lens is made of it (DEC-LE-22). */
 const DRAFT: QueryResource = { ...SOURCES, id: '9c4f5e7b-1d4a-4f6b-8c53-4e5f6a7b8c93', key: `${PROJECT}.dbt_prod_stacks.draft_leads`, fullName: `${PROJECT}.dbt_prod_stacks.draft_leads`, displayName: 'Draft leads', collectionId: AN_WORK, published: false };
 /** Tables Data Hub knows from its dbt projects, as registry answers a power user (FR-SR-56): a staging model, no Resource; and one an exposure makes a Resource. */
-const STG: KnownTable = { key: `${PROJECT}.dbt_prod_staging.stg_oltp__leads`, fullName: `${PROJECT}.dbt_prod_staging.STG_OLTP__Leads`, name: 'stg_oltp__leads', resourceType: 'model', layer: 'staging', projectId: '9367', projectName: 'dbt-prod', resource: false, partition: null };
+const STG: KnownTable = { key: `${PROJECT}.dbt_prod_staging.stg_oltp__leads`, fullName: `${PROJECT}.dbt_prod_staging.STG_OLTP__Leads`, name: 'stg_oltp__leads', resourceType: 'model', layer: 'staging', projectId: '9367', projectName: 'dbt-prod', resource: false, partition: { field: 'created_date', unit: 'day' },
+  columns: [{ name: 'lead_id', dataType: 'STRING', description: '' }, { name: 'created_date', dataType: 'DATE', description: '' }] };
 const PARTNERS: KnownTable = { ...STG, key: `${PROJECT}.dbt_prod_stacks.partner_contracts`, fullName: `${PROJECT}.dbt_prod_stacks.partner_contracts`, name: 'partner_contracts', layer: 'mart', resource: true };
 
 describe('the fields of a Lens, in a request', () => {
@@ -1409,4 +1410,29 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
       expect((await call(dataTeam, 'POST', '/lenses', { queryId: alone, collectionId: CREDIT, name: 'Only SQL' })).json()).toMatchObject({ error: 'no_resources' });
     });
   });
+
+  describe('what is added to a query comes in as CTEs at its start (FR-SR-59, DEC-UX-225)', () => {
+    const sql = '-- leads\nwith weekly as (select * from `' + WEEKLY.key + '`)\nselect * from weekly';
+
+    it('adds a CTE for each Resource, after the with that is there, named after its table', async () => {
+      const added = await call(an, 'POST', '/queries/ctes', { sql, resources: [SOURCES.id] });
+      expect(added.statusCode).toBe(200);
+      expect(added.json().ctes).toEqual([`lead_sources as (\n    select\n        ${SOURCES.fields.map((field) => field.name).join(',\n        ')}\n    from\n        \`${SOURCES.fullName}\`\n)`]);
+      expect(added.json().sql).toBe(`-- leads\nwith\n\n${added.json().ctes[0]},\n\nweekly as (select * from \`${WEEKLY.key}\`)\nselect * from weekly`);
+      // Only Resources the User sees, and at least one thing to add.
+      expect((await call(an, 'POST', '/queries/ctes', { sql, resources: [SECRET.id] })).statusCode).toBe(400);
+      expect((await call(an, 'POST', '/queries/ctes', { sql })).statusCode).toBe(400);
+    });
+
+    it('adds a table outside Data Hub only for a power user, from its columns, filtered on its recent partitions', async () => {
+      expect((await call(an, 'POST', '/queries/ctes', { sql, tables: [STG.key] })).statusCode).toBe(403);
+      const added = await call(dataTeam, 'POST', '/queries/ctes', { sql: '', tables: [STG.key] });
+      expect(added.statusCode).toBe(200);
+      expect(added.json().sql).toContain(`stg_oltp__leads as (\n    select\n        lead_id,\n        created_date\n    from\n        \`${STG.fullName}\`\n    where\n        created_date >= date_sub(current_date(), interval 28 day)\n)`);
+      expect(added.json().sql).toMatch(/select\n    \*\nfrom\n    stg_oltp__leads\n$/);
+      // A table that is a Resource is added as a Resource, not as a table.
+      expect((await call(dataTeam, 'POST', '/queries/ctes', { sql, tables: [PARTNERS.key] })).statusCode).toBe(400);
+    });
+  });
 });
+
