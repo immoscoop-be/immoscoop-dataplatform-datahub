@@ -701,8 +701,14 @@
     if (flagged.includes(id) && !kept.includes(id)) kept = [...kept, id];
     if (unseen[id]) unseen = { ...unseen, [id]: false };
   });
-  /** The query pages that live: those kept and still flagged, and the one open. */
-  const alive = $derived([...kept.filter((id) => flagged.includes(id)), ...(openId && !kept.includes(openId) ? [openId] : [])]);
+  /**
+   * The query pages that live: those kept and still flagged, and the one open, always, also when it was just unflagged:
+   * unflagging takes it off the row on top, never off the screen (DEC-UX-236).
+   */
+  const alive = $derived.by(() => {
+    const live = kept.filter((id) => flagged.includes(id));
+    return openId && !live.includes(openId) ? [...live, openId] : live;
+  });
   function statusOf(id: string, now: QueryStatus): void {
     const before = queryStatus[id];
     queryStatus = { ...queryStatus, [id]: now };

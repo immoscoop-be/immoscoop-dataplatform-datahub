@@ -3173,6 +3173,33 @@ describe('Query', () => {
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/query.flagged', body: { value: ['q1'] } }));
   });
 
+  it('keeps the open query on screen, as the User left it, when it is unflagged (DEC-UX-236)', async () => {
+    const partners = { ...QUERY, id: 'q2', name: 'Partner share per week' };
+    const calls = serve({ queries: [{ ...QUERY }, partners], settings: { 'query.flagged': ['q1', 'q2'] } });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const flags = within(await main.findByRole('navigation', { name: 'Gemarkeerde queries' }));
+    const editor = await main.findByRole('textbox', { name: /Leads per source name/ }, { timeout: 3000 });
+    await typeInEditor(editor, ' -- mine');
+    // "Flagged" in its head unflags it: it leaves the row on top, and stays open as it was.
+    await fireEvent.click(await main.findByRole('button', { name: /^Gemarkeerd/ }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/query.flagged', body: { value: ['q2'] } }));
+    await vi.waitFor(() => expect(flags.queryByRole('link', { name: /Leads per source name/ })).toBeNull());
+    expect(main.getByRole('heading', { level: 1, name: 'Leads per source name' })).toBeTruthy();
+    const still = main.getByRole('textbox', { name: /Leads per source name/ });
+    expect(still).toBe(editor);
+    expect(still.textContent).toContain('-- mine');
+    expect(await main.findByRole('button', { name: 'Markeren' })).toBeTruthy();
+    // Flagged again, and unflagged with the × on its tab: it stays open all the same.
+    await fireEvent.click(main.getByRole('button', { name: 'Markeren' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/query.flagged', body: { value: ['q2', 'q1'] } }));
+    await fireEvent.click(await flags.findByRole('button', { name: 'Leads per source name niet meer markeren' }));
+    await vi.waitFor(() => expect(flags.queryByRole('link', { name: /Leads per source name/ })).toBeNull());
+    expect(main.getByRole('textbox', { name: /Leads per source name/ })).toBe(editor);
+    expect(location.pathname).toBe('/query/q1');
+  });
+
   it('moves a flagged query by dragging its tab, and its key with it (DEC-UX-236)', async () => {
     const named = (id: string, name: string) => ({ ...QUERY, id, name });
     const calls = serve({ queries: [named('q1', 'Leads per source name'), named('q2', 'Partner share per week'), named('q3', 'Listings per postal code')], settings: { 'query.flagged': ['q1', 'q2', 'q3'] } });
