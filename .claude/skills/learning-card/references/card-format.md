@@ -148,7 +148,7 @@ Write `en.md` first, then translate it into `nl.md` (DEC-LR-24). The same in bot
 | Author | <the data colleague> |
 | Interviewed | <date>, with the learning-card skill |
 | Fact check | <who, or To name> |
-| Test reader | <a colleague outside data, or To name> |
+| Test reader | <a colleague outside data, who reads it in prod, or To name> |
 
 ## 1. The reader's question
 **Asked:** … **Answer:** … **In the card:** …
