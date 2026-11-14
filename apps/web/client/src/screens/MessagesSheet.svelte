@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import Sheet from '@datahub/ui/containers/Sheet.svelte';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
@@ -23,6 +24,7 @@
     onchanged,
     onclose,
     writes = ['question', 'remark', 'signal'],
+    start = null,
   }: {
     /** The kinds of Message the User may write (`messages.write`, DEC-PL-04); none hides the new Message. */
     writes?: readonly string[];
@@ -37,6 +39,8 @@
     /** After a Message or a reply, the page reads its Messages again. */
     onchanged: () => void;
     onclose: () => void;
+    /** The kind to write, when the quick window asked for one, such as Add a Remark (DEC-UX-257). */
+    start?: WrittenKind | null;
   } = $props();
 
   const kinds = $derived(WRITTEN_ON[subject.kind]);
@@ -44,7 +48,7 @@
   const kindName = $derived(SUBJECT_TITLES[subject.kind]);
   /** The kinds the User may write here. */
   const writable = $derived(kinds.filter((value) => writes.includes(value)));
-  let kind = $state<WrittenKind>('question');
+  let kind = $state<WrittenKind>(untrack(() => start ?? 'question'));
   $effect(() => {
     if (writable.length > 0 && !writable.includes(kind)) kind = writable[0]!;
   });
@@ -73,6 +77,7 @@
     label={t('messages.new')}
     kinds={writable.map((value) => ({ value, label: KIND_NAMES[value] }))}
     bind:kind
+    autofocus
     placeholder={t(PLACEHOLDERS[kind], { kind: kindName })}
     {notify}
     button={t('messages.post')}

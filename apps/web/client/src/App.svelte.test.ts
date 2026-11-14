@@ -2617,6 +2617,22 @@ describe('the page of a Resource', () => {
     expect(parts.getByRole('tab', { name: 'Bevragen' }).getAttribute('aria-selected')).toBe('true');
   });
 
+  it('goes straight to what its Owner Unit fills in from the quick window: a Known Gap, the intended use, a key field (DEC-UX-258)', async () => {
+    serve({ groups: ['g1'] });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('tab', { name: /^Known Gaps/ }, { timeout: 3000 });
+    await quickDo('een known gap toevoegen');
+    const adding = within(await main.findByRole('form', { name: 'Een nieuwe Known Gap' }));
+    await vi.waitFor(() => expect(document.activeElement).toBe(adding.getByRole('textbox', { name: WHY })));
+    await quickDo('het beoogde gebruik bijwerken');
+    await vi.waitFor(() => expect((document.activeElement as HTMLElement | null)?.id).toBe('intended-use'));
+    await fireEvent.click(main.getByRole('button', { name: 'Annuleren' }));
+    await quickDo('een sleutelveld toevoegen');
+    await vi.waitFor(() => expect((document.activeElement as HTMLElement | null)?.getAttribute('data-pick')).toBe('keyFields'));
+  });
+
   it('lets its Owner Unit add, change and remove a Known Gap one at a time, with who added it (FR-RC-21)', async () => {
     const calls = serve({ groups: ['g1'] });
     open('/resources/r2');
@@ -4885,6 +4901,28 @@ describe('Messages', () => {
     expect(sheet.getAllByRole('radio').map((radio) => radio.textContent?.trim())).toEqual(['Question', 'Remark', 'Signal', 'Alle 0', 'Questions 0', 'Remarks 0', 'Signals 0']);
     await fireEvent.click(sheet.getByRole('radio', { name: 'Signal' }));
     expect(sheet.getByText('Data en het Data Team krijgen een melding.')).toBeTruthy();
+    await fireEvent.input(sheet.getByRole('textbox', { name: 'Nieuw bericht' }), { target: { value: 'Zero partner leads last week.' } });
+    await fireEvent.click(sheet.getByRole('button', { name: /Plaatsen/ }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/messages', body: { subjectKind: 'resource', subjectId: 'r2', kind: 'signal', text: 'Zero partner leads last week.' } }));
+  });
+
+  it('opens the Messages of a Resource with the cursor in the text, and on a Remark or a Signal from the quick window (DEC-UX-257)', async () => {
+    serve({ groups: ['g1'] });
+    open('/resources/r2/messages');
+    const { unmount } = render(App, { config: CONFIG });
+    let sheet = within(await screen.findByRole('dialog', { name: 'Weekly lead volume' }));
+    await vi.waitFor(() => expect(document.activeElement).toBe(sheet.getByRole('textbox', { name: 'Nieuw bericht' })));
+    unmount();
+
+    const calls = serve({ groups: ['g1'] });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' }, { timeout: 3000 });
+    await quickDo('een signal toevoegen');
+    sheet = within(await screen.findByRole('dialog', { name: 'Weekly lead volume' }));
+    expect(sheet.getByRole('radio', { name: 'Signal' }).getAttribute('aria-checked')).toBe('true');
+    await vi.waitFor(() => expect(document.activeElement).toBe(sheet.getByRole('textbox', { name: 'Nieuw bericht' })));
     await fireEvent.input(sheet.getByRole('textbox', { name: 'Nieuw bericht' }), { target: { value: 'Zero partner leads last week.' } });
     await fireEvent.click(sheet.getByRole('button', { name: /Plaatsen/ }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/messages', body: { subjectKind: 'resource', subjectId: 'r2', kind: 'signal', text: 'Zero partner leads last week.' } }));

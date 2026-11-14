@@ -4,6 +4,7 @@
 </script>
 
 <script lang="ts">
+  import { tick } from 'svelte';
   import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import type { GapScope } from '@datahub/contracts/gaps';
   import type { SummarySource } from '@datahub/contracts/summary';
@@ -143,6 +144,16 @@
     editing = null;
   }
 
+  /** A part opened to edit, with the cursor in one of its fields, from the quick window (DEC-UX-258). */
+  async function editAt(which: Editable, field: string): Promise<void> {
+    open(which);
+    start(which);
+    await tick();
+    document.querySelector<HTMLElement>(field)?.focus();
+  }
+  /** Known Gaps opened on a new gap, the cursor in its text (DEC-UX-258). */
+  let addingGap = $state(false);
+
   function go(target: Exclude<SummarySource, 'messages'>) {
     if (target === 'columns') oncolumns();
     else open(target);
@@ -231,6 +242,29 @@
     const which = part === 'description' || part === 'behaviour' || part === 'querying' ? part : null;
     const label = t((PARTS.find((one) => one.id === part) ?? PARTS[0]!).label);
     if (which && mayEdit(which) && editing !== which) rows.push(command(`overview:edit`, 'pencil-simple-fill', t('quick.overview.edit', { name: label }), () => start(which), { words: t('quick.overview.edit.words') }));
+    // Straight to the field to fill in, from whichever part is on screen (DEC-UX-258).
+    if (describes('description')) {
+      rows.push(
+        command('overview:business', 'text-align-left', t(card.businessDescription ? 'quick.overview.business.update' : 'quick.overview.business.add'), () => void editAt('description', '#business-description'), {
+          words: t('quick.overview.business.words'),
+          ...(described ? {} : { why: t('resource.business.notYet') }),
+        }),
+      );
+    }
+    if (describes('behaviour')) rows.push(command('overview:use', 'check-circle-fill', t('quick.overview.use'), () => void editAt('behaviour', '#intended-use'), { words: t('quick.overview.use.words') }));
+    if (describes('pitfalls')) rows.push(command('overview:pitfalls', 'warning-fill', t('quick.overview.pitfalls'), () => void editAt('behaviour', '#pitfalls'), { words: t('quick.overview.pitfalls.words') }));
+    if (describes('keyFields')) {
+      rows.push(command('overview:keyField', 'key', t('quick.overview.keyField'), () => void editAt('querying', 'select[data-pick="keyFields"]'), { words: t('quick.overview.keyField.words') }));
+      rows.push(command('overview:parameter', 'sliders-horizontal', t('quick.overview.parameter'), () => void editAt('querying', 'select[data-pick="parameters"]'), { words: t('quick.overview.parameter.words') }));
+    }
+    if (describes('gaps')) {
+      rows.push(
+        command('overview:gap', 'circle-dashed', t('quick.overview.gap'), () => {
+          open('gaps');
+          addingGap = true;
+        }, { words: t('quick.overview.gap.words') }),
+      );
+    }
     for (const one of shown) if (one.id !== part) rows.push(view(`overview:${one.id}`, one.icon, t(one.label), () => open(one.id), { meta: t('quick.overview.meta'), words: t('quick.tab.words') }));
     return { group: t('quick.group.resource'), rows };
   });
@@ -262,6 +296,7 @@
     {/each}
     <select
       class="add"
+      data-pick={key}
       aria-label={key === 'keyFields' ? t('resource.keyFields') : t('resource.parameters')}
       value=""
       onchange={(event) => {
@@ -379,7 +414,7 @@
       {/if}
     {:else if part === 'gaps'}
       {@render head(t('resource.gaps'), t('overview.gaps.lead'))}
-      <OverviewGaps gaps={card.knownGaps} fields={resource.fields} canEdit={describes('gaps')} onadd={gaps.add} onchange={gaps.change} onremove={gaps.remove} />
+      <OverviewGaps bind:adding={addingGap} gaps={card.knownGaps} fields={resource.fields} canEdit={describes('gaps')} onadd={gaps.add} onchange={gaps.change} onremove={gaps.remove} />
     {:else if part === 'querying'}
       {@render head(t('overview.querying'), t('overview.querying.lead'), 'querying')}
       {#if editing === 'querying'}

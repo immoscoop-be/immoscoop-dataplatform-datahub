@@ -16,7 +16,7 @@
   import { dragging, type Mover } from './lib/dragging.svelte.js';
   import type { Config } from './lib/config.js';
   import { createIdentity, type GroupSummary, SignedOut, type Me } from './lib/identity.js';
-  import { type Conversation, type Counts, createMessages, type Filter, type Message, SUBJECT_TITLES, type WrittenOn } from './lib/messages.js';
+  import { type Conversation, type Counts, createMessages, type Filter, type Message, SUBJECT_TITLES, WRITTEN_ON, type WrittenKind, type WrittenOn } from './lib/messages.js';
   import { initialsOf } from './lib/initials.js';
   import { type OpenedFrom, provideLearning } from './lib/learning-context.js';
   import { type Card, cardsIn, createLearning, drawExample, LEVELS, type LevelId, type Progress, type Step, suggestedLevels, topicOf, writtenCards } from './lib/learning.js';
@@ -620,7 +620,22 @@
     refresh();
   }
   /** "Messages" in the head of the page, with their number once they are read. */
-  const messagesButton = $derived(talkedAbout ? { count: onObject?.messages?.length ?? null, href: messagesOnPath(talkedAbout) } : undefined);
+  /** The kind a Message is to be written in, when the quick window asked for one, such as Add a Remark (DEC-UX-257). */
+  let writeKind = $state<WrittenKind | null>(null);
+  const messagesButton = $derived.by(() => {
+    if (!talkedAbout) return undefined;
+    const href = messagesOnPath(talkedAbout);
+    const kinds = (onObject?.kinds ?? writes).filter((kind): kind is WrittenKind => (WRITTEN_ON[talkedAbout.kind] as readonly string[]).includes(kind));
+    return {
+      count: onObject?.messages?.length ?? null,
+      href,
+      kinds,
+      write: (kind: WrittenKind) => {
+        writeKind = kind;
+        router.go(href);
+      },
+    };
+  });
 
   /** After a Lens is deleted: the panels lose it, and its Collection opens (FR-LE-18). */
   function deleted(lens: { id: string; collectionId: string }): void {
@@ -1328,7 +1343,11 @@
             readOnObject(about);
             readUnread();
           }}
-          onclose={() => router.go(objectPath(about))}
+          onclose={() => {
+            writeKind = null;
+            router.go(objectPath(about));
+          }}
+          start={writeKind}
         />
       {/if}
     {/if}

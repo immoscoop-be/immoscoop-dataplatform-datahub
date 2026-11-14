@@ -498,6 +498,8 @@ Cmd+Shift+P or Cmd+K, Ctrl on Windows and Linux, opens the quick window anywhere
 
 *Note of 2026-11-14: the commands of Data Hub also hold Hide or Show the panel, and on Query Refresh the queries ([DEC-UX-254](../../design/principles.md#dec-ux-254)); Messages has its views, Mark all as read, Close and Reopen ([DEC-UX-255](../../design/principles.md#dec-ux-255)); and going somewhere puts the cursor in the search of the screen that opens ([DEC-UX-256](../../design/principles.md#dec-ux-256)).*
 
+*Note of 2026-11-14: on a Resource it holds Add a Remark and Add a Signal, which open its Messages on that kind with the cursor in the text ([DEC-UX-257](../../design/principles.md#dec-ux-257)), and on its Overview Add or Update the Business Description, Update the intended use, Update the pitfalls, Add a key field, Add a Parameter and Add a Known Gap ([DEC-UX-258](../../design/principles.md#dec-ux-258)).*
+
 <a id="fr-sr-62"></a>
 ### FR-SR-62 · A power user reads what Data Hub knows of a table outside it
 
