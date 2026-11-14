@@ -87,7 +87,7 @@ Text may only hold `**bold**` and `` `a name` ``: no links in running text, no t
 
 **Why now.** Opens with a quote: what a colleague says, not a definition, and it does not name the concept yet. The last line of the quote is `> — who says it`: a role and, if useful, a moment ("A colleague from sales, on a Monday"), never a name. Then the situation: one situation, one pain, three sentences at most. It ends with `Promise: …`, what the card is about; the screen shows it as "In this card:".
 
-**Core idea.** First the rule: one sentence, a decision rule, without "can", "sometimes" or "usually", with the term of the glossary in bold. Then exactly two parts under `## `: the anchor first, then the example. Their titles are free; the written cards use "Like a …" for the anchor and "For example" or "At Immoscoop" for the example.
+**Core idea.** First the rule: one sentence, a decision rule, without "can", "sometimes" or "usually", with the term of the glossary in bold. Then exactly two parts under `## `: the anchor first, then the example. Their titles are free; the written cards use "Like a …" for the anchor and "For example" or "At Immoscoop" for the example. A card whose topic the reader sees on a screen of Data Hub, such as the red dot of Broken, may leave the anchor out when the rule and its example are clear by themselves: then the example is the only part, in both languages, and the interview record says why (DEC-LR-36).
 
 **See it.** Optional, but a full card has it. A request of the Chart Server in a block ` ```chart ` … ` ``` `, as JSON, drawn as it is (DEC-LR-21, DEC-LR-26): from fixed figures in the card, never from live data. Always say in `context.reliability` what the figures are: "example figures" when they are made up or adjusted, "rounded figures" when they are real but rounded. Set `locale` to `en` or `nl-BE`, and give a title that says what is shown, not a conclusion. Then `Look at: …` (where to look) and `You see: …` (what it shows). The Chart Server cannot mark a part of a chart (OP-LR-31): `Look at` does that in words. If the Data Hub rung of the ladder is a screen and not a chart, leave See it out and say why in the interview record.
 
@@ -106,6 +106,8 @@ Text may only hold `**bold**` and `` `a name` ``: no links in running text, no t
   | `/collections` | Open Collections | The Collections with their Resources and Lenses: per Resource the descriptions, the grain, the model type, the Level, the Owner, the Known Gaps and the Messages; per Lens its page, where it runs with its Parameters |
   | `/query/new` | Open Query | A new query over the Resources the reader may see |
   | `/messages` | Open your Messages | The reader's Messages: Questions, Remarks, Signals and what Data Hub wrote itself |
+  | `/me` | Open My page | The reader's own page: their Permission group and what it allows, their Groups |
+  | `/me/keys` | Open your Excel keys | The reader's Excel keys, where each is used and when it was last used |
   | `/charts` | Open Charts | The charts of the Chart Server, each with what it answers and examples |
   | `/learning` | Open the Learning Centre | The Learning Centre, with every card |
 
@@ -195,6 +197,6 @@ A reader meets a card in the Learning Centre, and where its topic comes up. `nod
 | On a marker ⓘ of system text | A pop-out with the cards that explain the text, each with its gain; a click opens the card over the page (FR-LR-35, FR-LR-36). Markers are placed at a release (DEC-LR-22); a new place is designed first. | `packages/learning/src/markers.ts`, with the place on the screen in `MARKER_PLACES` |
 | Under Where to next of another card | `Deeper:` or `Next to it:`, written cards only, two or three choices per card (FR-LR-31) | The `en.md` and `nl.md` of that card |
 | The Learning Centre | Every topic of the plan, a card to be written without a page | `plan.json` |
-| In Claude | Only when Claude calls `explain` of the MCP server: a search on the words of the title (counted three times), the rule of Core idea, the gain and the anchor; it returns the five best written cards (FR-CL-15) | `packages/learning/src/explain.ts` |
+| In Claude | Only when Claude calls `explain` of the MCP server: a search on the stems of the words of the title (counted three times), the rule of Core idea, the gain, the anchor and the quote of Why now, in English and in Dutch, common words such as "what", "data" or "week" left out; it returns the five best written cards (FR-CL-15). So the reader's own question finds the card when its quote is the reader's sentence. | `packages/learning/src/explain.ts` |
 
 Three rules follow. The `gain` is the sentence of the card in every one of these places, so it is never written for one of them. A pop-out, a Message and `explain` offer only written cards, so a card nobody links to is found only by whoever browses the Learning Centre: propose a place on the to-do of the record. And whatever helps `explain` find the card must read well for the reader too: never add words for the search.

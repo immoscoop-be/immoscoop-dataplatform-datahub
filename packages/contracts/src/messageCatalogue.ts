@@ -38,12 +38,11 @@ const OPEN_RESOURCE: MessageButton = {
   opens: 'The page of the Resource',
 };
 
-/** What a query reads has no card of its own yet: the ranges of DEC-SR-29 are new. */
+/** What a query reads: the Pre-flight and the ranges of DEC-SR-29, explained by K5.6 (DEC-LR-35). */
 const SIZE_CARD: LearningCardFit = {
-  fit: 'toWrite',
-  topic: 'What a query reads: partitions, the Pre-flight and its three ranges',
-  nearest: { number: 'K2.3', title: 'BigQuery' },
-  why: 'The Message is about how much a query reads; no card of the master learning plan explains the three ranges of DEC-SR-29 and why a Lens waits for the Data Team.',
+  fit: 'named',
+  card: { number: 'K5.6', title: 'What a query costs' },
+  why: 'The Message is about how much a query reads: partitions, the Pre-flight and its three ranges (DEC-SR-29), and why a Lens waits for the Data Team.',
 };
 
 const SIZE: readonly MessageParameter[] = [
@@ -85,9 +84,9 @@ const CHANGE_LINE: MessageItem = {
 
 /** What a Permission group allows has no card of its own yet: Permission groups are new (DEC-PL-01). */
 const PERMISSIONS_CARD: LearningCardFit = {
-  fit: 'toWrite',
-  topic: 'Permission groups: what a User may do in Data Hub, and why something is not there for them',
-  why: 'The Message is about the Permission group of a User; no card of the master learning plan explains Permission groups yet.',
+  fit: 'named',
+  card: { number: 'K5.10', title: 'What your Permission group allows' },
+  why: 'The Message is about the Permission group of a User: what they may do in Data Hub, and why something is not there for them (DEC-LR-35).',
 };
 
 /** What a Broken Lens or query reads that no longer exists: a Resource, or a column of one (DEC-DH-67). */
@@ -117,10 +116,9 @@ const BROKEN: readonly MessageParameter[] = [
 
 /** No card explains yet what happens downstream when a Resource or a column disappears. */
 const BROKEN_CARD: LearningCardFit = {
-  fit: 'toWrite',
-  topic: 'When what you read disappears: Broken, the red dot, and how it works again',
-  nearest: { number: 'K5.1', title: 'What a resource is' },
-  why: 'The Message is about a Resource or a column that no longer exists, and what that does to everything built on it (DEC-DH-67).',
+  fit: 'named',
+  card: { number: 'K5.7', title: 'Broken: when what you read disappears' },
+  why: 'The Message is about a Resource or a column that no longer exists, what that does to everything built on it, the red dot, and how it works again (DEC-DH-67, DEC-LR-35).',
 };
 
 const BROKEN_STATES = ['broken', 'works again'];
@@ -840,8 +838,8 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     },
     learningCard: {
       fit: 'named',
-      card: { number: 'K5.1', title: 'What a resource is' },
-      why: 'An exposure makes a table a Resource, and so its absence withdraws it; confirmed on 2026-10-29 (DEC-LR-29).',
+      card: { number: 'K5.11', title: 'Deprecated or withdrawn' },
+      why: 'The Message says a Resource was withdrawn: the card explains what withdrawn means, who still sees it, what happens to what reads it, and how it comes back (DEC-LR-37).',
     },
     action: {
       asks: 'nothing',
@@ -1242,7 +1240,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
         ),
       },
     },
-    learningCard: { fit: 'toWrite', topic: 'Finding a Lens that answers your question, and when to write your own query', nearest: { number: 'K5.1', title: 'What a resource is' }, why: 'Who used the Lens needs another way to their answer.' },
+    learningCard: { fit: 'named', card: { number: 'K5.8', title: 'A Lens or your own query' }, why: 'Who used the Lens needs another way to their answer: finding a Lens that answers the question, or writing their own query (DEC-LR-35).' },
     action: {
       asks: 'nothing',
       what: 'Who used it looks for another Lens that answers their question, or writes their own query; an Excel that read it gets no data from it any more.',
@@ -1284,7 +1282,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
         ),
       },
     },
-    learningCard: { fit: 'toWrite', topic: 'The result of a Lens in Excel: an Excel key, Power Query and refreshing', why: 'The Message is about the key with which Excel gets the result of a Lens (DEC-CH-03).' },
+    learningCard: { fit: 'named', card: { number: 'K5.9', title: 'A Lens in Excel' }, why: 'The Message is about the key with which Excel gets the result of a Lens: the Excel key, Power Query and refreshing (DEC-CH-03, DEC-LR-35).' },
     action: {
       asks: 'nothing',
       what: 'Its User can make a new key on My page and put it in Excel, before this one stops.',
@@ -1323,7 +1321,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
         ),
       },
     },
-    learningCard: { fit: 'toWrite', topic: 'The result of a Lens in Excel: an Excel key, Power Query and refreshing', why: 'The Message is about the key with which Excel gets the result of a Lens (DEC-CH-03).' },
+    learningCard: { fit: 'named', card: { number: 'K5.9', title: 'A Lens in Excel' }, why: 'The Message is about the key with which Excel gets the result of a Lens: the Excel key, Power Query and refreshing (DEC-CH-03, DEC-LR-35).' },
     action: {
       asks: 'nothing',
       what: 'Its User makes a new key on My page if they still need one.',

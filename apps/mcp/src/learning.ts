@@ -1,32 +1,40 @@
 import { readdir, readFile } from 'node:fs/promises';
-import { type Card, type Explanation, explainWith, parseCard, TOPICS } from '@datahub/learning';
+import { type Card, type ExplainSource, type Explanation, explainWith, parseCard, TOPICS } from '@datahub/learning';
 
 export type { Explanation };
 
 /** The cards are files next to the package (TR-LR-01), shipped with it into the image of mcp. */
 const CARDS = new URL('../cards/', import.meta.resolve('@datahub/learning'));
 
-let loaded: Promise<Card[]> | undefined;
+const read = async (number: string, language: 'en' | 'nl'): Promise<Card | undefined> => {
+  try {
+    return parseCard(await readFile(new URL(`${number}/${language}.md`, CARDS), 'utf8'));
+  } catch {
+    return undefined;
+  }
+};
 
-/** The written cards in English, read once per process. */
-export function cards(): Promise<Card[]> {
+let loaded: Promise<ExplainSource[]> | undefined;
+
+/** The written cards, in English with their Dutch translation and their titles from the plan, read once per process. */
+export function cards(): Promise<ExplainSource[]> {
   loaded ??= (async () => {
     const numbers = await readdir(CARDS).catch(() => [] as string[]);
-    const read = await Promise.all(
-      numbers.map(async (number) => {
-        try {
-          return parseCard(await readFile(new URL(`${number}/en.md`, CARDS), 'utf8'));
-        } catch {
-          return undefined;
-        }
+    const sources = await Promise.all(
+      numbers.map(async (number): Promise<ExplainSource | undefined> => {
+        const card = await read(number, 'en');
+        if (!card) return undefined;
+        const title = TOPICS.find((topic) => topic.number === card.number)?.title;
+        const dutch = await read(number, 'nl');
+        return { card, title: title?.en ?? card.number, ...(dutch ? { translation: { card: dutch, title: title?.nl ?? card.number } } : {}) };
       }),
     );
-    return read.filter((card): card is Card => card !== undefined);
+    return sources.filter((source): source is ExplainSource => source !== undefined);
   })();
   return loaded;
 }
 
-/** The written cards that explain a term, best first (FR-CL-15), with the search the package keeps for the checks of a card. */
+/** The written cards that explain a term, in English or Dutch, best first (FR-CL-15), with the search the package keeps for the checks of a card. */
 export async function explain(term: string, limit = 5): Promise<Explanation[]> {
-  return explainWith(term, await cards(), (number) => TOPICS.find((topic) => topic.number === number)?.title.en ?? number, limit);
+  return explainWith(term, await cards(), limit);
 }
