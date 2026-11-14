@@ -43,6 +43,7 @@
     decides,
     decideLens,
     onchanged,
+    onreadall,
   }: {
     filter: Filter;
     /** The Messages of the view and its counts: undefined while they come, null when they could not be read. */
@@ -57,6 +58,8 @@
     decideLens: (lensId: string, outcome: 'accepted' | 'refused', text: string) => Promise<void>;
     /** After a reply or a decision: the Message as it is now. */
     onchanged: (message: Conversation) => void;
+    /** Marks these Messages read, those of the list shown that are unread (DEC-UX-255). */
+    onreadall?: (ids: string[]) => void;
   } = $props();
 
   const language = $derived(currentLanguage());
@@ -99,6 +102,9 @@
       rows.push(place('messages:context', 'arrow-square-out', open.label, () => go(open.href), { meta: message.subject.name, words: t('quick.messages.context.words') }));
     }
     for (const value of ['all', 'open', 'answered', 'closed'] as const) if (value !== chip) rows.push(command(`messages:chip:${value}`, 'funnel', t('quick.messages.chip', { name: t(CHIPS[value]) }), () => (chip = value), { words: t('quick.messages.chip.words') }));
+    // Every Message of the list shown, read at once; only a command, the list has no button for it (DEC-UX-255).
+    const unread = shown.filter((message) => message.unread).map((message) => message.id);
+    if (unread.length > 0 && onreadall) rows.push(command('messages:readAll', 'list-checks', t('quick.messages.readAll'), () => onreadall(unread), { meta: t('quick.messages.readAll.meta', { count: unread.length }), words: t('quick.messages.readAll.words') }));
     return { group: 'Messages', rows };
   });
 </script>

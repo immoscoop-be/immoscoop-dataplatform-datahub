@@ -22,6 +22,7 @@
     onclose,
     recent = [],
     onused,
+    onwent,
     mac = false,
   }: {
     /** Where it opened, such as "Query · Leads per source name". */
@@ -37,6 +38,8 @@
     recent?: readonly string[];
     /** A row was done: it comes first next time. */
     onused?: (key: string) => void;
+    /** It went somewhere: the screen that opens gets the cursor in its search, if it has one (DEC-UX-256). */
+    onwent?: (row: QuickRow) => void;
     /** Cmd on a Mac, Ctrl elsewhere, as the keys of the rows are written. */
     mac?: boolean;
   } = $props();
@@ -88,6 +91,7 @@
     onused?.(row.key);
     onclose();
     row.run();
+    if (row.does === 'go' || row.does === 'open') onwent?.(row);
   }
   function keydown(event: KeyboardEvent): void {
     // Cmd+1 to Cmd+9 highlight that row, by where the key is; Enter does it (DEC-UX-242).

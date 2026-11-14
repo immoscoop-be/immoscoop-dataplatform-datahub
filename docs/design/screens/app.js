@@ -1780,6 +1780,9 @@ document.addEventListener('click', e => {
   const COMMANDS = [
     { icon: 'ph-fill ph-plus-circle', title: 'New query', href: 'query-new.html', words: 'start sql' },
     { icon: 'ph ph-moon', title: 'Switch light or dark', run: () => document.getElementById('theme')?.click(), words: 'theme day night' },
+    // The panel, on every screen that has one, and on Query reading the queries again (DEC-UX-254)
+    { icon: 'ph ph-sidebar-simple', title: 'Hide the panel', run: () => document.querySelector('.panel')?.toggleAttribute('hidden'), words: 'toggle side menu sidebar collapse expand panel' },
+    ...(location.pathname.includes('query') ? [{ icon: 'ph ph-arrows-clockwise', title: 'Refresh the queries', meta: 'reads them again, such as those Claude made', run: () => {}, words: 'reload update refresh claude' }] : []),
   ];
   const ITEMS = [
     { group: 'Resources', icon: 'ph ph-table', title: 'Weekly lead volume', meta: 'Credit leads · 4 · Explored', href: 'resource-overview.html' },

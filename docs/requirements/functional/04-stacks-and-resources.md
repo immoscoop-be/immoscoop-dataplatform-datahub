@@ -496,6 +496,8 @@ Cmd+Shift+P or Cmd+K, Ctrl on Windows and Linux, opens the quick window anywhere
 
 **Makes easy:** doing what a query needs from the keyboard, and reaching a Resource, Lens or query by a few letters of its name. **Makes hard:** hunting through panels and pages for a button, approving a large run without pressing the button that says what it reads, and finding through the quick window anything the User may not see.
 
+*Note of 2026-11-14: the commands of Data Hub also hold Hide or Show the panel, and on Query Refresh the queries ([DEC-UX-254](../../design/principles.md#dec-ux-254)); Messages has its views, Mark all as read, Close and Reopen ([DEC-UX-255](../../design/principles.md#dec-ux-255)); and going somewhere puts the cursor in the search of the screen that opens ([DEC-UX-256](../../design/principles.md#dec-ux-256)).*
+
 <a id="fr-sr-62"></a>
 ### FR-SR-62 · A power user reads what Data Hub knows of a table outside it
 
