@@ -574,6 +574,39 @@
     if (status.kind === 'signedIn' && talkedId && openedMessage?.id !== talkedId) openMessage(talkedId);
   });
   /** After a reply or a decision: the Message as it is now, in the list and on the page of its object. */
+  /** Every Message of the list shown marked read at once, from the quick window (DEC-UX-255). */
+  function readAll(ids: string[]): void {
+    Promise.all(ids.map((id) => messages.read(id))).then(
+      () => {
+        readUnread();
+        readCentre();
+      },
+      (error: unknown) => {
+        console.error('The Messages could not all be marked read', error);
+        readUnread();
+        readCentre();
+      },
+    );
+  }
+  /**
+   * Gone somewhere from the quick window: the cursor goes into the search of the screen that opens, once it is there,
+   * such as that of Groups; the search of the panel only for a section, whose search lives there, such as Messages. Not
+   * when the screen put the cursor somewhere itself, or after two seconds (DEC-UX-256).
+   */
+  function searchWhereWent(row: QuickRow): void {
+    const panelToo = row.group === 'goTo';
+    const until = Date.now() + 2000;
+    const look = () => {
+      const active = document.activeElement;
+      if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement || (active instanceof HTMLElement && active.isContentEditable)) return;
+      const field =
+        document.querySelector<HTMLInputElement>('main input[type="search"]') ??
+        (panelToo ? document.querySelector<HTMLInputElement>('aside.panel:not([inert]) input[type="search"]') : null);
+      if (field) field.focus();
+      else if (Date.now() < until) setTimeout(look, 50);
+    };
+    setTimeout(look, 0);
+  }
   function changedMessage(message: Conversation): void {
     openedMessage = { id: message.id, message };
     if (centre) centre = { ...centre, messages: centre.messages.map((item) => (item.id === message.id ? { ...message, unread: false } : item)) };
@@ -787,6 +820,15 @@
       rows.push({ key: 'new-query', group: 'commands', icon: 'plus-circle-fill', title: t('query.new'), kind: command, words: t('quick.new.words'), does: 'do', run: () => router.go(NEW_QUERY) });
     }
     rows.push({ key: 'theme', group: 'commands', icon: theme === 'dark' ? 'sun-fill' : 'moon-fill', title: t('quick.theme'), kind: command, words: t('quick.theme.words'), does: 'do', run: () => themeOnScreen.switch() });
+    // The panel, on every screen that has one, as « in its head does; one key for both, as a pair (DEC-UX-254).
+    if (section) {
+      const open = panelOpen;
+      rows.push({ key: 'panel', group: 'commands', icon: open ? 'caret-double-left-fill' : 'caret-double-right', title: t(open ? 'quick.panel.hide' : 'quick.panel.show'), kind: command, words: t('quick.panel.words'), does: 'do', run: () => settings?.set('panel.open', !open) });
+    }
+    // On the screens of Query, the queries read again, as ↻ in the head of its panel does (DEC-UX-254, DEC-UX-163).
+    if (section?.id === 'query') {
+      rows.push({ key: 'refresh-queries', group: 'commands', icon: 'arrows-clockwise', title: t('quick.query.refresh'), meta: t('quick.query.refresh.meta'), kind: command, words: t('quick.query.refresh.words'), does: 'do', run: () => void refreshQueries() });
+    }
     // On a flagged query, the next and the previous one, round the row (DEC-UX-241).
     const here = openId ? flagged.indexOf(openId) : -1;
     if (here >= 0 && flagged.length > 1) {
@@ -946,6 +988,7 @@
         decides={can(permissions, 'requests.decide')}
         {decideLens}
         onchanged={changedMessage}
+        onreadall={readAll}
       />
     {:else if queryPage && !mayQuery(permissions)}
       <NotFound />
@@ -1345,7 +1388,7 @@
   </AppShell>
   {#if quickOpen}
     <!-- Cmd+Shift+P or Cmd+K, anywhere in Data Hub (DEC-UX-237). -->
-    <QuickWindow where={quickWhere} screenGroup={page.kind === 'query' ? t('quick.group.query') : (screenCommands.group ?? t('quick.group.query'))} rows={quickRows} {findQueries} onclose={() => (quickOpen = false)} recent={quickUsed} onused={(key) => (quickUsed = used(quickUsed, key))} {mac} />
+    <QuickWindow where={quickWhere} screenGroup={page.kind === 'query' ? t('quick.group.query') : (screenCommands.group ?? t('quick.group.query'))} rows={quickRows} {findQueries} onclose={() => (quickOpen = false)} recent={quickUsed} onused={(key) => (quickUsed = used(quickUsed, key))} onwent={searchWhereWent} {mac} />
   {/if}
   <!-- What is dragged, and the line that says where it went (DEC-UX-157). -->
   <DragGhost item={dragging.item} />

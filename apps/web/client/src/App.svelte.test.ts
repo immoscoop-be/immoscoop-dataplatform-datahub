@@ -2877,6 +2877,17 @@ describe('Groups, kept in Data Hub (FR-UM-12 to FR-UM-19)', () => {
   const list = () => within(screen.getByRole('region', { name: 'Groups' }));
   const fact = (label: string) => [...opened().getAllByRole('definition')].find((dd) => dd.previousElementSibling?.textContent === label)?.textContent?.replace(/\s+/g, ' ').trim();
 
+  it('puts the cursor in the search of Groups when the quick window goes there (DEC-UX-256)', async () => {
+    serve({ world: groupWorld() });
+    open('/me');
+    render(App, { config: CONFIG });
+    await screen.findByRole('heading', { level: 1 }, { timeout: 3000 });
+    await quickDo('groups');
+    await vi.waitFor(() => expect(location.pathname).toBe('/groups'));
+    await vi.waitFor(() => expect((document.activeElement as HTMLInputElement | null)?.getAttribute('type')).toBe('search'), { timeout: 3000 });
+    expect(document.activeElement?.closest('main')).toBeTruthy();
+  });
+
   it('lists the Groups the User is in or manages, each with a tag, and opens the first, which they manage (FR-UM-18)', async () => {
     const calls = serve({ world: groupWorld() });
     open('/groups');
@@ -3526,6 +3537,36 @@ describe('Query', () => {
     await vi.waitFor(() => expect(calls.filter((call) => call.path.startsWith('/queries/days?'))).toHaveLength(1));
     await fireEvent.click(panel.getByRole('button', { name: 'De lijst van queries vernieuwen' }));
     await vi.waitFor(() => expect(calls.filter((call) => call.path.startsWith('/queries/days?'))).toHaveLength(2));
+  });
+
+  it('refreshes the queries and hides or shows the panel from the quick window, as their buttons do (DEC-UX-254)', async () => {
+    const calls = serve({ queries: [{ ...QUERY }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    await screen.findByRole('complementary', { name: 'Query' });
+    await vi.waitFor(() => expect(calls.filter((call) => call.path.startsWith('/queries/days?'))).toHaveLength(1));
+    await quickDo('de queries vernieuwen');
+    await vi.waitFor(() => expect(calls.filter((call) => call.path.startsWith('/queries/days?'))).toHaveLength(2));
+    // The panel, by its other words too, such as "side menu".
+    await quickDo('side menu');
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/panel.open', body: { value: false } }));
+    expect(screen.getByRole('complementary', { hidden: true }).inert).toBe(true);
+    await quickDo('het paneel tonen');
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/panel.open', body: { value: true } }));
+  });
+
+  it('offers to refresh the queries only on the screens of Query (DEC-UX-254)', async () => {
+    serve();
+    open('/collections');
+    render(App, { config: CONFIG });
+    await screen.findByRole('complementary', { name: 'Collections' });
+    await fireEvent.keyDown(document.body, { key: 'k', code: 'KeyK', ctrlKey: true });
+    const quick = within(await screen.findByRole('dialog', { name: 'Snelvenster' }));
+    const titles = () => quick.queryAllByRole('option').map((option) => option.querySelector('.title')?.textContent);
+    await fireEvent.input(quick.getByRole('combobox'), { target: { value: 'paneel' } });
+    expect(titles()).toContain('Het paneel verbergen');
+    await fireEvent.input(quick.getByRole('combobox'), { target: { value: 'vernieuwen' } });
+    expect(titles()).not.toContain('De queries vernieuwen');
   });
 
   it('opens the last query of the User, listed in the panel by the day of its last run (FR-SR-43, DEC-UX-74)', async () => {
@@ -4737,6 +4778,37 @@ describe('Messages', () => {
     await fireEvent.click(main.getByRole('button', { name: /Heropenen/ }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/messages/m1/reopen' }));
     expect(await main.findByRole('button', { name: /Sluiten/ })).toBeTruthy();
+  });
+
+  it('does the Messages from the quick window: another view, Mark all as read, Close and Reopen (DEC-UX-255)', async () => {
+    const other = { ...QUESTION, id: 'm3', params: { ...QUESTION.params, text: 'Is the partner feed late again?' } };
+    const calls = serve({ groups: ['g1'], conversations: [{ ...QUESTION, mayClose: true }, other, DESCRIBED] });
+    open('/messages');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByRole('heading', { level: 1, name: 'Ongelezen' })).toBeTruthy();
+    // Another view of the panel, by its name.
+    await quickDo('voor jou tonen');
+    expect(await main.findByRole('heading', { level: 1, name: 'Voor jou' })).toBeTruthy();
+    // Every unread Message of the list shown, read at once.
+    await main.findByText('Is the partner feed late again?');
+    const row = await quickRow('Alles als gelezen markeren');
+    expect(row.textContent).toContain('2 ongelezen Messages in deze lijst');
+    await closeQuick();
+    await quickDo('alles als gelezen');
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/messages/m1/read' }));
+    expect(calls).toContainEqual({ method: 'POST', path: '/messages/m3/read' });
+    // On an opened Message: Close opens the field for why, with the cursor in it; then Reopen.
+    await fireEvent.click(main.getByRole('link', { name: /Will KBC follow-up/ }));
+    await main.findByRole('button', { name: /^Sluiten$/ });
+    await quickDo('deze message sluiten');
+    const why = await main.findByRole('textbox', { name: 'Deze Question sluiten' });
+    await vi.waitFor(() => expect(document.activeElement).toBe(why));
+    await fireEvent.click(main.getAllByRole('button', { name: /Sluiten/ }).at(-1)!);
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/messages/m1/close', body: { text: '' } }));
+    await main.findByRole('button', { name: /Heropenen/ });
+    await quickDo('deze message heropenen');
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/messages/m1/reopen' }));
   });
 
   it('offers no Close to whoever may not close a Question (FR-CV-16)', async () => {
