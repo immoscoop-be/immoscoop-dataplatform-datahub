@@ -3158,6 +3158,37 @@ describe('Query', () => {
     expect(within(item as HTMLElement).getByText('Claude').getAttribute('title')).toBe('Gemaakt via Claude');
   });
 
+  it('shows no row of flagged queries while none is flagged, and flags the first from the quick window (DEC-UX-253)', async () => {
+    const calls = serve({ queries: [{ ...QUERY }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('heading', { level: 1, name: 'Leads per source name' }, { timeout: 3000 });
+    expect(main.queryByRole('navigation', { name: 'Gemarkeerde queries' })).toBeNull();
+    await quickDo('markeer deze query');
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/query.flagged', body: { value: ['q1'] } }));
+    const flags = within(await main.findByRole('navigation', { name: 'Gemarkeerde queries' }));
+    expect(await flags.findByRole('link', { name: /Leads per source name/ })).toBeTruthy();
+  });
+
+  it('keeps the head of a query light: its name on one line, no New query, no line where it started from (DEC-UX-250, DEC-UX-251, DEC-UX-252)', async () => {
+    const long = 'Credit leads and e-mail addresses per window of 30 days, per partner and per source';
+    serve({ queries: [{ ...QUERY, name: long, startedFrom: { id: 'q0', name: 'Credit leads per window', afterRun: 3 } }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const title = await main.findByRole('heading', { level: 1, name: long }, { timeout: 3000 });
+    expect(title.classList.contains('one-line')).toBe(true);
+    expect(title.querySelector('button')?.getAttribute('title')).toContain(long);
+    const head = title.closest('header') as HTMLElement;
+    expect(within(head).queryByRole('link', { name: /Nieuwe query/ })).toBeNull();
+    expect(head.textContent).not.toMatch(/gestart vanuit/i);
+    // Add a Resource is a small round icon, named on a hover, after the Resources on one line (DEC-UX-249).
+    const add = main.getByRole('button', { name: 'Een Resource toevoegen' });
+    expect(add.textContent?.trim()).toBe('');
+    expect(add.getAttribute('title')).toBe('Een Resource toevoegen');
+  });
+
   it('keeps flagged queries on top of Query, flags with Flag and jumps with Ctrl+1 to Ctrl+0 (DEC-UX-236, OP-UX-84, OP-UX-86)', async () => {
     const partners = { ...QUERY, id: 'q2', name: 'Partner share per week', lastRunAt: new Date().toISOString() };
     const calls = serve({ queries: [{ ...QUERY, lastRunAt: new Date().toISOString() }, partners], settings: { 'query.flagged': ['q2'] } });
@@ -3315,6 +3346,9 @@ describe('Query', () => {
     await fireEvent.keyDown(document.body, { key: 'k', code: 'KeyK', ctrlKey: true });
     const quick = within(await screen.findByRole('dialog', { name: 'Snelvenster' }));
     const titles = () => quick.queryAllByRole('option').map((option) => option.querySelector('.title')?.textContent);
+    // Fold all and Format have no button on the page: the quick window does them (DEC-UX-248).
+    expect(main.queryByRole('button', { name: 'Alles dichtvouwen' })).toBeNull();
+    expect(main.queryByRole('button', { name: 'Opmaken' })).toBeNull();
     // A command for every button of the page that does something to it, in the order of DEC-UX-239.
     expect(titles().slice(0, 13)).toEqual([
       'Uitvoeren',

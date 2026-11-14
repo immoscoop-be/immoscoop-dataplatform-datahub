@@ -26,7 +26,7 @@
   in the SQL is grey: it is not sent. An @name in the SQL that is not a Parameter stands out, in the SQL and under it, and
   keeps the query from running; a click on it defines it, suggested from the column it is compared with.
   The editor folds every CTE to its first line, as a code editor does: the arrow in the gutter folds or unfolds
-  one, "⋯ n lines" unfolds it, "Fold all" folds them together. At the foot of the frame, and staying in view, the Pre-flight
+  one, "⋯ n lines" unfolds it, Fold all in the quick window folds them together (DEC-UX-248). At the foot of the frame, and staying in view, the Pre-flight
   and the Run button with what the query reads; red with "Approve and run" above the approval threshold, a pop-out on how to
   read less. The editor formats the SQL and suggests columns, partition and cluster columns first (a click in the SQL shows
   them here); beside the list, the selected one shows the type of its field and its descriptions (DEC-UX-115). The result is a grid like that of BigQuery: the row number, then a column per field with its
@@ -207,9 +207,10 @@
 <nav class="q-flags" id="q-flags" aria-label="Flagged queries"></nav>
 <div class="breadcrumb">Query</div>
 <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
- <h1 class="page-title" style="flex:1" id="q-title">Leads per source name</h1>
+ <!-- On one line, ending in … when longer, the whole name on a hover (DEC-UX-251) -->
+ <h1 class="page-title q-title-line" style="flex:1" id="q-title" title="Leads per source name">Leads per source name</h1>
  <span class="q-layouts" role="group" aria-label="Layout"><button aria-pressed="true" data-layout="horizontal" aria-label="The query above the result" onclick="location.search=''"><i class="ph ph-rows"></i></button><button aria-pressed="false" data-layout="side" aria-label="The query next to the result" onclick="location.search='?layout=side'"><i class="ph ph-columns"></i></button></span>
- <a class="btn-quiet outline" href="query-new.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-plus-circle"></i>New query</a>
+ <!-- No New query here: the panel has it, and the quick window (DEC-UX-252) -->
  <a class="btn-primary" data-pane-group="lens" data-pane="free" hidden href="lens-new.html" style="text-decoration:none" title="Turn this query into a Lens for everyone who may use its Resources"><i class="ph ph-aperture" style="font-size:15px"></i>Make it a Lens</a>
  <!-- Greyed, with why on a hover or on focus: each Resource not published yet with its Level, or each table outside Data Hub (DEC-UX-232) -->
  <span class="why-anchor" data-pane-group="lens" data-pane="unpublished" hidden tabindex="0" aria-describedby="why-lens"><button class="btn-primary" type="button" disabled><i class="ph ph-aperture" style="font-size:15px"></i>Make it a Lens</button>
@@ -222,7 +223,7 @@
 <p class="q-origin" id="q-known" hidden><i class="ph ph-cube"></i><span>Reads a table outside Data Hub: <span class="mono">stg_oltp__leads</span>. A Lens is made only on published Resources, so this query cannot become one.</span></p>
 <p class="q-origin" data-pane-group="lens" data-pane="unpublished" hidden><i class="ph ph-globe-simple"></i><span>Not published yet: <a href="resource-detail.html">Lead sources</a>. A Lens is made only on published Resources.</span></p>
 <p class="q-origin" data-pane-group="lens" data-pane="linked"><i class="ph ph-aperture"></i><span>Used as the Lens <a href="lens.html">Leads per source name</a>, in Credit leads, since 23 Oct. "Update the Lens" overwrites it with this query.</span></p>
-<p class="q-origin" id="q-origin" hidden><i class="ph ph-git-branch"></i><span>Started from <a href="query.html">Leads per source name</a>, after run 14. That query stays as it was.</span></p>
+<!-- Where it started from is in its History, not here (DEC-UX-250) -->
 <div class="alert urgent" data-pane-group="qstate" data-pane="broken" hidden><i class="ph-fill ph-link-break"></i><p><b>This query can't run.</b> The column <span class="mono">lead_channel</span> of Weekly lead volume no longer exists, since the dbt run of 28 Oct 2026. Change the SQL so that it no longer reads it and run it, and the query works again; it also works again by itself when the column comes back.</p></div>
 <!-- The query and its result split the height of the page, each scrolling on its own, the divider between them dragged; ?layout=side puts them next to each other (DEC-UX-143, DEC-UX-144). -->
 <div class="q-work" id="q-work">
@@ -236,9 +237,10 @@
    <span class="scope-chip new" data-res="partner_contracts" hidden><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Partner contracts<span class="muted">· Partners</span><span class="maturity" data-level="4"></span><button class="scope-x" data-remove-res="partner_contracts" aria-label="Remove Partner contracts" title="Remove it: that starts a new query without it"><i class="ph ph-x"></i></button></span>
    <span class="scope-chip new" data-res="saved_searches" hidden><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Saved searches<span class="muted">· Search</span><span class="maturity" data-level="4"></span><button class="scope-x" data-remove-res="saved_searches" aria-label="Remove Saved searches" title="Remove it: that starts a new query without it"><i class="ph ph-x"></i></button></span>
    <span id="scope-outside"></span>
-   <button class="scope-add" type="button" data-add-res><i class="ph ph-plus"></i>Add a Resource</button>
-   <button class="scope-add" type="button" data-find-table data-for="datateam" title="Tables Data Hub knows from the dbt projects it follows, for a power user"><i class="ph ph-magnifying-glass"></i>Find a table</button>
   </span>
+  <!-- On one line: the chips scroll sideways, these stay in view as small round icons, their name on a hover (DEC-UX-249) -->
+  <button class="scope-add round" type="button" data-add-res aria-label="Add a Resource" title="Add a Resource"><i class="ph ph-plus"></i></button>
+  <button class="scope-add round" type="button" data-find-table data-for="datateam" aria-label="Find a table" title="Find a table: the tables Data Hub knows from the dbt projects it follows, for a power user"><i class="ph ph-magnifying-glass"></i></button>
   <button class="btn-quiet outline" type="button" data-pane-group="lens" data-pane="free unpublished" hidden data-sheet-open="lenses-sheet" id="lenses-btn" title="See which Lenses already use these Resources"><i class="ph ph-aperture"></i><span>Lenses on these Resources</span><span class="count">3</span></button>
  </div>
  <div class="q-body">
@@ -248,8 +250,6 @@
    <span class="label" style="margin:0">BigQuery SQL</span>
    <span class="sql-summary meta">36 lines · 3 CTEs</span>
    <span style="flex:1"></span>
-   <button class="btn-quiet outline" id="fold-all" title="Fold or unfold every CTE"><i class="ph ph-arrows-in-line-vertical"></i><span>Fold all</span></button>
-   <button class="btn-quiet outline" id="format-btn" title="Format the SQL (Shift+Alt+F)"><i class="ph ph-text-align-left"></i>Format</button>
   </div>
   <div class="sql-editor" aria-label="SQL">
     <div class="ln"><span class="ln-no">1</span><span class="ln-fold"></span><span class="ln-code"><span class="sql-comment">-- Leads per week and source, from @dateFrom to @dateTo</span></span></div>
@@ -760,6 +760,8 @@
       : f.state === 'failed' ? '<span class="q-flag-mark failed" role="img" aria-label="Its run failed"></span>'
       : f.state === 'broken' ? '<i class="ph ph-link-break q-flag-broken" role="img" aria-label="Broken"></i>' : '';
     const what = { running: ', running', new: ', a result you have not seen yet', failed: ', its run failed', broken: ', Broken' };
+    // With nothing flagged, no row: the quick window flags the first (DEC-UX-253)
+    bar.hidden = flags.length === 0;
     bar.innerHTML = flags.length
       ? '<span class="q-flags-mod" title="Hold ⌘ and press the number of a query to open it">⌘</span>' + flags.map((f, i) => `<a class="q-flag${f.title === here() ? ' current' : ''}" href="query.html" draggable="true" data-i="${i}"${f.title === here() ? ' aria-current="page"' : ''} title="${esc2(f.title)} · ${keyOf(i)}${what[f.state] || ''}"><span class="kbd">${i === 9 ? 0 : i + 1}</span><span class="q-flag-name">${esc2(f.title)}</span>${mark(f)}<button class="q-flag-x" type="button" aria-label="Unflag ${esc2(f.title)}"><i class="ph ph-x"></i></button></a>`).join('')
         + '<button class="q-flags-quick" type="button" data-quick-open aria-label="Quick window" title="Quick window: every command of this query, and every place in Data Hub"><i class="ph ph-magnifying-glass"></i><span class="kbd">⌘⇧P</span></button>'
@@ -856,8 +858,9 @@
           ? { icon: 'ph-fill ph-flag', title: 'Unflag this query', meta: `takes it off the top, and ${keyOf(at)} with it`, run: () => window.toggleFlag(), words: 'flag pin remove quick list' }
           : { icon: 'ph ph-flag', title: 'Flag this query', meta: full ? '' : `keeps it on top, as ${keyOf(flags.length)}`, run: () => window.toggleFlag(), disabled: full, why: 'Ten queries are flagged. Unflag one first.', words: 'pin star keep quick list' },
         { icon: 'ph ph-pencil-simple', title: 'Rename this query', meta: 'its name and question, in place', run: () => { const h = document.getElementById('q-title'); h.contentEditable = 'true'; h.focus(); }, words: 'rename name question title' },
-        { icon: 'ph ph-arrows-in-line-vertical', title: 'Fold all', meta: 'every CTE of the SQL', click: '#fold-all', words: 'collapse cte' },
-        { icon: 'ph ph-text-align-left', title: 'Format the SQL', meta: 'in the house layout', keys: '⇧⌥F', click: '#format-btn', words: 'format layout indent pretty' },
+        // No buttons for these on the page: the quick window does them (DEC-UX-248)
+        { icon: 'ph ph-arrows-in-line-vertical', title: 'Fold all', meta: 'every CTE of the SQL', run: () => window.foldAllCtes?.(), words: 'collapse cte' },
+        { icon: 'ph ph-text-align-left', title: 'Format the SQL', meta: 'in the house layout', keys: '⇧⌥F', run: () => {}, words: 'format layout indent pretty' },
         { icon: 'ph ph-function', title: 'Add a Parameter', meta: 'a value to choose at each run, as @name', click: '#param-add', words: 'parameter variable value @' },
         { icon: 'ph ph-plus', title: 'Add a Resource', meta: 'starts a new query with it', click: '[data-add-res]', words: 'resource table join new' },
         ...removes,

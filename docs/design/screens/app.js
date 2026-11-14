@@ -861,11 +861,10 @@ if (new URLSearchParams(location.search).has('mismatch')) {
 }
 
 // The editor of Query folds every CTE to its first line, as a code editor does: the arrow in the gutter folds or unfolds
-// one, "⋯ n lines" unfolds it, and "Fold all" folds them together; the line numbers keep their count (Proposal)
+// one, "⋯ n lines" unfolds it, and Fold all in the quick window folds them together (DEC-UX-248); the line numbers keep their count
 const sqlEditor = document.querySelector('.sql-editor');
 if (sqlEditor) {
   const starts = () => [...sqlEditor.querySelectorAll('[data-fold-start]')];
-  const foldAll = document.getElementById('fold-all');
   const fold = (start, folded) => {
     const name = start.dataset.foldStart;
     start.classList.toggle('folded', folded);
@@ -874,17 +873,11 @@ if (sqlEditor) {
     start.querySelectorAll('.fold-ph, .fold-close').forEach(el => { el.hidden = !folded; });
     sqlEditor.querySelectorAll(`[data-fold-in="${name}"]`).forEach(line => { line.hidden = folded; });
   };
-  const sync = () => {
-    const anyOpen = starts().some(s => !s.classList.contains('folded'));
-    foldAll.querySelector('span').textContent = anyOpen ? 'Fold all' : 'Unfold all';
-    foldAll.querySelector('i').className = 'ph ' + (anyOpen ? 'ph-arrows-in-line-vertical' : 'ph-arrows-out-line-vertical');
-  };
   sqlEditor.addEventListener('click', e => {
     const start = e.target.closest('.ln-fold, .fold-ph')?.closest('[data-fold-start]');
-    if (start) { fold(start, !start.classList.contains('folded')); sync(); }
+    if (start) fold(start, !start.classList.contains('folded'));
   });
-  foldAll.addEventListener('click', () => { const folded = starts().some(s => !s.classList.contains('folded')); starts().forEach(s => fold(s, folded)); sync(); });
-  sync();
+  window.foldAllCtes = () => { const folded = starts().some(s => !s.classList.contains('folded')); starts().forEach(s => fold(s, folded)); };
   // The suggestions: a click in the SQL opens them where the cursor is, as typing would; a click beside them or Escape closes them
   const suggest = sqlEditor.querySelector('.suggest');
   document.addEventListener('click', e => { if (suggest) suggest.hidden = !sqlEditor.contains(e.target) || !!e.target.closest('button, .sql-param.undefined'); });
@@ -1521,10 +1514,10 @@ if (scopeBox) {
     entry.innerHTML = `<a class="list-item card q-item current" aria-current="page" href="query.html" data-name="${esc(name.toLowerCase())}"><i class="ph ph-table kind-icon" role="img" aria-label="On resources"></i>`
       + `<span><span class="item-title">${esc(name)}</span><span class="meta">from ${esc(from)} · not run yet</span></span></a>`;
     document.querySelector('[data-pane="yours"] .panel-label')?.after(entry);
-    // The page: its name, its question, where it came from, its Resources; no result and no history yet
-    $('q-title').textContent = name;
+    // The page: its name and its question, its Resources; no result and no history yet. Where it came from is in its
+    // History, not under its question (DEC-UX-250)
+    $('q-title').textContent = name; $('q-title').title = name;
     $('q-question').textContent = $('newq-question').value;
-    $('q-origin').hidden = false; $('q-origin').querySelector('a').textContent = from;
     document.querySelectorAll('#scope-chips [data-res]').forEach(c => { c.hidden = !set.includes(c.dataset.res); });
     removedRes = mode === 'remove' ? removing : null;
     const card = document.querySelector('.result-card');

@@ -1409,6 +1409,8 @@
 {/snippet}
 
 {#snippet flagsBar()}
+  <!-- With nothing flagged, no row: the quick window flags the first (DEC-UX-253). -->
+  {#if flagItems.length > 0}
   <QueryFlags
     items={flagItems}
     current={openId}
@@ -1418,6 +1420,7 @@
     onquick={() => (quickOpen = true)}
     onflag={page.kind === 'query' && !flagged.includes(page.id) && flagged.length < MOST_FLAGGED ? () => openId && setFlagged(flag(flagged, openId)) : undefined}
   />
+  {/if}
 {/snippet}
 
 {#snippet newCollection()}

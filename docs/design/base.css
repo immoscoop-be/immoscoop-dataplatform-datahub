@@ -478,10 +478,16 @@ button.ln-fold i { transition: transform 200ms ease; }
 .q-question { margin: 4px 0 0; font-size: var(--text-small); color: var(--text-secondary); }
 .q-origin { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; font-size: var(--text-meta); color: var(--text-secondary); }
 .q-origin a { color: var(--text-primary); }
-.q-scope { display: flex; align-items: flex-start; gap: 10px; padding: 2px 2px 0; }
+.q-scope { display: flex; align-items: center; gap: 8px; padding: 2px 2px 0; }
 .q-scope > .label { flex: none; line-height: 26px; }
 .q-scope > .btn-quiet { flex: none; }
-.scope-chips { flex: 1 1 0; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+/* One line: what does not fit scrolls sideways; Add a Resource and Find a table stay in view as small round icons (DEC-UX-249) */
+.scope-chips { flex: 0 1 auto; min-width: 0; display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: thin; }
+.scope-chips > * { flex: none; white-space: nowrap; }
+.scope-add.round { flex: none; width: 28px; height: 28px; padding: 0; justify-content: center; border-radius: 50%; font-size: 13px; }
+.q-scope > .btn-quiet { margin-left: auto; }
+/* The name of a query on one line, ending in … (DEC-UX-251) */
+.page-title.q-title-line { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .scope-chip { display: inline-flex; align-items: center; gap: 5px; font-size: var(--text-meta); color: var(--text-primary); background: var(--surface-sub); padding: 3px 4px 3px 10px; border-radius: var(--radius-pill); }
 .scope-chip .kind-icon { font-size: 13px; }
 .scope-chip .maturity { margin-left: 2px; }

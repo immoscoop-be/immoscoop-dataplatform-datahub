@@ -485,6 +485,8 @@ A User flags a query, theirs or one they may read, to keep it in a row on top of
 
 **Makes easy:** working on several questions at once, letting a long run go on in one query while writing another, and coming back to each as it was. **Makes hard:** losing a query among the many in the panel, and losing what was typed or run by going to another query.
 
+*Note of 2026-11-14: with no query flagged the row is not shown, and the quick window flags the first ([DEC-UX-253](../../design/principles.md#dec-ux-253)).*
+
 <a id="fr-sr-61"></a>
 ### FR-SR-61 · The quick window does the commands of a query, and goes anywhere
 
