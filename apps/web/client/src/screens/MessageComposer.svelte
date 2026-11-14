@@ -70,6 +70,7 @@
     </div>
   {/if}
   <textarea {...NO_PASSWORD_MANAGER}
+    data-autofocus={autofocus || undefined}
     bind:this={field}
     bind:value={text}
     {placeholder}
