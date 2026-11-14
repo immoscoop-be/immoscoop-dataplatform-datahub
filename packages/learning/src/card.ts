@@ -281,3 +281,8 @@ export async function versionOf(source: string): Promise<string> {
     .map((byte) => byte.toString(16).padStart(2, '0'))
     .join('');
 }
+
+/** Whether a card shows in an environment: a draft only outside prod, until the Data Team reviewed it (DEC-LR-25). */
+export function shownIn(environment: string | undefined, card: Pick<Card, 'status'>): boolean {
+  return environment !== 'prod' || card.status === 'reviewed';
+}

@@ -1,5 +1,5 @@
 import { readdir, readFile } from 'node:fs/promises';
-import { type Card, type ExplainSource, type Explanation, explainWith, parseCard, TOPICS } from '@datahub/learning';
+import { type Card, type ExplainSource, type Explanation, explainWith, parseCard, shownIn, TOPICS } from '@datahub/learning';
 
 export type { Explanation };
 
@@ -34,7 +34,11 @@ export function cards(): Promise<ExplainSource[]> {
   return loaded;
 }
 
-/** The written cards that explain a term, in English or Dutch, best first (FR-CL-15), with the search the package keeps for the checks of a card. */
-export async function explain(term: string, limit = 5): Promise<Explanation[]> {
-  return explainWith(term, await cards(), limit);
+/**
+ * The written cards that explain a term, in English or Dutch, best first (FR-CL-15), with the search the package keeps
+ * for the checks of a card. In prod only the reviewed ones, as the web app shows them, so that Claude never links to a
+ * draft that the Learning Centre of prod does not show (DEC-LR-25).
+ */
+export async function explain(term: string, limit = 5, environment?: string): Promise<Explanation[]> {
+  return explainWith(term, (await cards()).filter((source) => shownIn(environment, source.card)), limit);
 }

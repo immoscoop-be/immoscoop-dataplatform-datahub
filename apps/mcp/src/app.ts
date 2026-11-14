@@ -15,6 +15,8 @@ export interface AppOptions {
   /** catalogue, query and the web app, which the tools ask and link to as the User. */
   services: DataHubOptions;
   logger?: ServerOptions['logger'];
+  /** uat or prod (DATAHUB_ENVIRONMENT): a Learning Card still in draft is offered in uat only (DEC-LR-25). */
+  environment?: string;
 }
 
 /** The mcp application: Data Hub for Claude, over MCP. See docs/architecture/services/mcp.md. */
@@ -47,7 +49,7 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
       return reply.code(401).send({ error: 'unauthorized' });
     }
     const hub = createDataHub(options.services, request.headers.authorization ?? '');
-    const server = createMcpServer(user, { hub, viewHtml: html, serverUrl: options.resource });
+    const server = createMcpServer(user, { hub, viewHtml: html, serverUrl: options.resource, environment: options.environment });
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
     reply.hijack();
     reply.raw.on('close', () => {
