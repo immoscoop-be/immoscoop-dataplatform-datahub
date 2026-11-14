@@ -309,6 +309,8 @@ The server instructions tell Claude what Data Hub is, its concepts in a sentence
 
 *Note of 2026-11-12, after evaluating the learning-card skill: `explain` matched words as they were, in English only, so the reader's own question ("What do I need to do with this message?") found unrelated cards on "what" and "need", and "ownership" or a question in Dutch found none. It now matches word stems, leaves out common words in English and Dutch, and searches the Dutch of a card and the reader's question of its Why now too. The search lives in `packages/learning/src/explain.ts`, which `node scripts/learning-card.ts links` uses as well ([TR-LR-01](../technical/16-learning.md#tr-lr-01)).*
 
+*Note of 2026-11-14: in prod `explain` offered draft cards too, with a link to a page the Learning Centre of prod does not show. It now offers in prod only the reviewed cards, as the web app does ([DEC-LR-25](16-learning.md#dec-lr-25)); both use `shownIn` of `packages/learning`.*
+
 *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 
 <a id="fr-cl-16"></a>
