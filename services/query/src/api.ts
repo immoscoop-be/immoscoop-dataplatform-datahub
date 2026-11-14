@@ -8,12 +8,14 @@ import { missingIn, missingOf } from './broken.js';
 import { type Catalogue, CatalogueUnavailable, type QueryRequest, type QueryResource } from './catalogue.js';
 import type { NamedResource, QueryKind } from './database.js';
 import { lensRoutes } from './lens-api.js';
+import { outsideTable } from './outside.js';
 import type { Lenses } from './lenses.js';
 import { bind, type Parameter, parseParameters } from './parameters.js';
 import { type Preflight, preflight, type ResourceOfQuery, sound, type Thresholds } from './preflight.js';
 import { type Choice, choicesOf, chosenParameters, previewSql, type StorageReader, valuesSql, type Window, WINDOWS, windowFilter } from './preview.js';
 import { type ListOptions, type Queries, type Query, type QueryOnResource, type Run, SHOWN, type Shown, type Viewer } from './queries.js';
-import { inOwnCase, template } from './sql.js';
+import { type KnownTable, type Registry, RegistryUnavailable } from './registry.js';
+import { inOwnCase, template, withCtes } from './sql.js';
 import { createUpkeep, type Lost } from './upkeep.js';
 
 export interface ApiOptions {
@@ -24,8 +26,10 @@ export interface ApiOptions {
   lenses: Lenses;
   catalogue: Catalogue;
   bigquery: BigQuery;
-  /** The tables beneath a Resource, as BigQuery reads them (see createBeneath). */
-  beneath: (resource: QueryResource) => Promise<string[]>;
+  /** The tables beneath a Resource, or a table outside Data Hub, as BigQuery reads them (see createBeneath). */
+  beneath: (resource: Pick<QueryResource, 'key' | 'fullName' | 'partition'>) => Promise<string[]>;
+  /** Which tables Data Hub knows besides its Resources, for a power user's query (FR-SR-56); without it, none. */
+  registry?: Registry;
   /** The project the jobs run in: a Key in it may be written without its project. */
   project: string;
   /**
@@ -118,7 +122,8 @@ export function parseQuery(body: unknown, creating: boolean): QueryFields | stri
   }
   if (creating) {
     const ids = fields.resources;
-    if (!Array.isArray(ids) || ids.length < 1 || ids.length > 10 || !ids.every((id) => typeof id === 'string' && /^[0-9a-f-]{36}$/i.test(id)) || new Set(ids).size !== ids.length) {
+    // None only for a power user, who starts from SQL (FR-SR-56): the route checks that.
+    if (!Array.isArray(ids) || ids.length > 10 || !ids.every((id) => typeof id === 'string' && /^[0-9a-f-]{36}$/i.test(id)) || new Set(ids).size !== ids.length) {
       return 'A query reads 1 to 10 Resources, each named once by its ID.';
     }
     result.resources = ids as string[];
@@ -166,7 +171,7 @@ const same = (a: readonly Parameter[], b: readonly Parameter[]) => JSON.stringif
  * of others (DEC-LN-01, `queries.seeOthers`).
  */
 export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Promise<void> {
-  const { queries, lenses, catalogue, bigquery, beneath, project, thresholds, storage, checkers, excel } = options;
+  const { queries, lenses, catalogue, bigquery, beneath, project, thresholds, storage, checkers, excel, registry } = options;
   /** What keeps queries and Lenses Broken while what they read is missing, and working again (FR-SR-52). */
   const upkeep = createUpkeep({ queries, lenses, catalogue, bigquery });
 
@@ -240,8 +245,15 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     return Promise.all(query.resources.map(async (named) => ({ named, resource: await catalogue.resource(named.id, authorization(request)) })));
   }
 
-  const check = (sql: string, parameters: Parameter[], resources: ResourceOfQuery[], ranges: Thresholds): Promise<Preflight> =>
-    preflight(sql, resources, { bigquery, beneath, project, thresholds: ranges }, parameters);
+  /**
+   * The Pre-flight of SQL on these Resources. Given the request of a power user, who has `queries.outside`, it also
+   * reads the tables Data Hub knows that are no Resource, as registry answers them for that User (FR-SR-56).
+   */
+  const check = (sql: string, parameters: Parameter[], resources: ResourceOfQuery[], ranges: Thresholds, request?: FastifyRequest): Promise<Preflight> => {
+    const outside = request && registry && can(permissionsOf(request), 'queries.outside');
+    const known = outside ? (keys: string[]) => registry.knownTables(keys, authorization(request)) : undefined;
+    return preflight(sql, resources, { bigquery, beneath, project, thresholds: ranges, known }, parameters);
+  };
 
   /**
    * The ranges of one run (DEC-SR-29): those of the User for a query and a Preview (`runs.ranges`); for a run of a
@@ -250,9 +262,12 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
   const rangesFor = (request: FastifyRequest, kind: QueryKind): Required<Thresholds> =>
     kind === 'lens' ? { approve: thresholds.approve, request: thresholds.request, above: 'request' } : rangesOf(permissionsOf(request));
 
-  /** The SQL as BigQuery gets it: each Resource the User sees by its full name in its own case (DEC-SR-44). */
-  const ownCase = (sql: string, resources: ResourceOfQuery[]): string =>
-    inOwnCase(sql, resources.flatMap((entry) => (entry.resource ? [entry.resource] : [])), project);
+  /**
+   * The SQL as BigQuery gets it: each Resource the User sees, and each table outside Data Hub a power user reads,
+   * by its full name in its own case (DEC-SR-44, FR-SR-56).
+   */
+  const ownCase = (sql: string, resources: ResourceOfQuery[], outside: Preflight['tables'] = []): string =>
+    inOwnCase(sql, [...resources.flatMap((entry) => (entry.resource ? [entry.resource] : [])), ...outside], project);
 
   /** The Requests of who made the query on it, newest first (DEC-SR-36). */
   async function requestsOf(request: FastifyRequest, query: Query): Promise<QueryRequest[]> {
@@ -299,7 +314,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
 
   /** catalogue or BigQuery not answering is answered as 503, never guessed. */
   function unavailable(error: unknown, reply: FastifyReply, request: FastifyRequest): FastifyReply | undefined {
-    if (error instanceof CatalogueUnavailable || error instanceof BigQueryUnavailable) {
+    if (error instanceof CatalogueUnavailable || error instanceof BigQueryUnavailable || error instanceof RegistryUnavailable) {
       request.log.error({ err: error }, 'A service query depends on did not answer');
       return reply.code(503).send({ error: 'unavailable', message: 'Data Hub cannot check this query right now; try again in a moment.' });
     }
@@ -352,6 +367,10 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     if (!can(permissionsOf(request), 'queries.make')) return forbidden(reply, 'queries.make', 'Only who may make queries makes one.');
     const fields = parseQuery(request.body, true);
     if (typeof fields === 'string') return reply.code(400).send({ error: 'invalid_request', message: fields });
+    // Without Resources only for a power user, who starts from SQL and reads tables outside Data Hub (FR-SR-56).
+    if (fields.resources?.length === 0 && !can(permissionsOf(request), 'queries.outside')) {
+      return reply.code(400).send({ error: 'invalid_request', message: 'A query reads 1 to 10 Resources, each named once by its ID.' });
+    }
     const who = viewer(request);
     try {
       // Another set of Resources is a new query, started from one the User may read, after its last run (DEC-UX-73).
@@ -376,6 +395,62 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
         forCollection: fields.forCollection,
       });
       return reply.code(201).send({ query: await queryView(request, query) });
+    } catch (error) {
+      return unavailable(error, reply, request);
+    }
+  });
+
+  /**
+   * The SQL with a CTE for each Resource and table added, at its start (FR-SR-59, DEC-UX-225), for the sheet to show
+   * before they are added: Resources the User sees, and for a power user tables Data Hub knows outside them (FR-SR-58).
+   */
+  app.post<{ Body: { sql?: unknown; resources?: unknown; tables?: unknown } }>('/queries/ctes', async (request, reply) => {
+    const { sql, resources = [], tables = [] } = request.body ?? {};
+    const list = (value: unknown) => Array.isArray(value) && value.length <= 10 && value.every((entry) => typeof entry === 'string' && entry.length <= 1024);
+    if (typeof sql !== 'string' || sql.length > 100_000 || !list(resources) || !list(tables) || (resources as string[]).length + (tables as string[]).length === 0) {
+      return reply.code(400).send({ error: 'invalid_request', message: 'Name the SQL, and 1 to 10 Resources by their ID or tables by their Key.' });
+    }
+    if ((tables as string[]).length > 0 && !(registry && can(permissionsOf(request), 'queries.outside'))) {
+      return reply.code(403).send({ error: 'forbidden', message: 'Only who may query tables outside Data Hub adds one.', permission: 'queries.outside' });
+    }
+    try {
+      const found = await Promise.all((resources as string[]).map((id) => catalogue.resource(id, authorization(request))));
+      if (found.some((resource) => resource === null)) return reply.code(400).send({ error: 'invalid_request', message: 'A query reads only Resources you may see.' });
+      const keys = (tables as string[]).map((key) => key.toLowerCase());
+      const known = keys.length > 0 && registry ? await registry.knownTables(keys, authorization(request)) : [];
+      const outside = keys.map((key) => known.find((table) => table.key === key && !table.resource));
+      if (outside.some((table) => table === undefined)) return reply.code(400).send({ error: 'invalid_request', message: 'Add only tables Data Hub knows that are no Resource.' });
+      const added = withCtes(sql, [
+        ...(found as QueryResource[]),
+        ...(outside as KnownTable[]).map((table) => ({ key: table.key, fullName: table.fullName, fields: (table.columns ?? []).map(({ name, dataType }) => ({ name, dataType })), partition: table.partition })),
+      ]);
+      return added;
+    } catch (error) {
+      return unavailable(error, reply, request);
+    }
+  });
+
+  /**
+   * What Data Hub knows of a table outside it, for a power user who double-clicks its name in the SQL (FR-SR-62,
+   * DEC-UX-247): from dbt as registry answers it for this User, and from BigQuery now, its metadata only, which BigQuery
+   * does not bill. Only a table registry knows that is no Resource; without BigQuery, what dbt knew.
+   */
+  app.get<{ Querystring: { key?: string } }>('/outside-table', async (request, reply) => {
+    if (!(registry && can(permissionsOf(request), 'queries.outside'))) {
+      return reply.code(403).send({ error: 'forbidden', message: 'Only who may query tables outside Data Hub reads what Data Hub knows of one.', permission: 'queries.outside' });
+    }
+    const key = (request.query.key ?? '').trim().toLowerCase();
+    if (key.length > 1024 || !/^[^\s.,`]+\.[^\s.,`]+\.[^\s.,`]+$/.test(key)) {
+      return reply.code(400).send({ error: 'invalid_request', message: 'Name the table by its Key, project.dataset.table.' });
+    }
+    try {
+      const table = (await registry.knownTables([key], authorization(request))).find((known) => known.key === key && !known.resource);
+      if (!table) return reply.code(404).send({ error: 'not_found', message: 'Data Hub knows no such table outside its Resources.' });
+      const live = await bigquery.describe(table.fullName).catch((error: unknown) => {
+        request.log.warn({ err: error, table: table.fullName }, 'BigQuery did not describe a table outside Data Hub; what dbt knew stands instead');
+        return null;
+      });
+      return { table: outsideTable(table, live) };
     } catch (error) {
       return unavailable(error, reply, request);
     }
@@ -422,7 +497,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     // SQL that reads more than one run of this User may is still SQL that runs: it is kept, and works (runs.ranges).
     if (sound(checked)) {
       if (query.kind !== 'query') return query;
-      await queries.keepCheck(query.id, ownCase(run.sql, resources), run.parameters);
+      await queries.keepCheck(query.id, ownCase(run.sql, resources, checked.tables), run.parameters);
       return query.broken ? upkeep.query(query, null, request.log) : query;
     }
     const missing = missingIn(checked);
@@ -453,7 +528,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       const changed = body.sql !== query.sql || !same(body.parameters, query.parameters);
       const current = changed ? ((await queries.update(query.id, { sql: body.sql, parameters: body.parameters })) ?? query) : query;
       const resources = await resourcesOf(request, current);
-      const checked = await check(body.sql, body.parameters, resources, rangesFor(request, current.kind));
+      const checked = await check(body.sql, body.parameters, resources, rangesFor(request, current.kind), request);
       // Whether it is Broken now, for the callout on top of it and Run (FR-SR-53, DEC-UX-160).
       const after = await kept(request, current, body, resources, checked);
       return { preflight: checked, broken: after.broken };
@@ -483,7 +558,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     const ranges = rangesFor(request, query.kind);
     try {
       resources = await resourcesOf(request, query);
-      checked = await check(body.sql, body.parameters, resources, ranges);
+      checked = await check(body.sql, body.parameters, resources, ranges, request);
       now = await kept(request, query, body, resources, checked);
       // Above its ranges it runs once the Data Team accepted a Request of its author: every run after, also with other SQL (DEC-SR-36).
       if (checked.runnable && checked.range === 'request') accepted = (await requestsOf(request, query)).some((sent) => sent.state === 'accepted');
@@ -503,7 +578,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     const estimated = checked.bytes ?? 0;
     const run = await queries.startRun({ query, user: who, sql: body.sql, parameters: body.parameters, estimatedBytes: estimated, approved: checked.range !== 'free' });
     try {
-      const finished = await bigquery.run(ownCase(bound.sql, resources), {
+      const finished = await bigquery.run(ownCase(bound.sql, resources, checked.tables), {
         // Never more than the second threshold without an accepted Request (DEC-SR-29); with one, a little above the Pre-flight.
         maximumBytesBilled: accepted ? Math.max(ranges.request, Math.ceil(estimated * ACCEPTED_MARGIN)) : ranges.request,
         labels: { 'datahub-user': label(who.id), 'datahub-query': run.queryRef },
@@ -572,7 +647,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     const ranges = rangesFor(request, query.kind);
     if (ranges.above === 'refuse') return forbidden(reply, 'runs.ranges', 'Your Permission group sends no query to the Data Team: above its ranges, a query does not run.');
     try {
-      const checked = await check(body.sql, body.parameters, await resourcesOf(request, query), ranges);
+      const checked = await check(body.sql, body.parameters, await resourcesOf(request, query), ranges, request);
       if (!checked.runnable) return reply.code(409).send({ error: 'not_runnable', message: 'This query cannot run as it is.', preflight: checked });
       if (checked.range !== 'request') return reply.code(409).send({ error: 'not_needed', message: 'This query runs without the Data Team.', preflight: checked });
       if (body.sql !== query.sql || !same(body.parameters, query.parameters)) await queries.update(query.id, { sql: body.sql, parameters: body.parameters });

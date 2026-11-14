@@ -15,7 +15,7 @@
 
 <script lang="ts">
   import '@xyflow/svelte/dist/style.css';
-  import { Controls, type Edge, MarkerType, type Node, Position, SvelteFlow, type Viewport } from '@xyflow/svelte';
+  import { Controls, type Edge, type Node, Position, SvelteFlow, type Viewport } from '@xyflow/svelte';
   import Icon from '../foundations/Icon.svelte';
   import { t } from '../foundations/texts.svelte.js';
   import LineageCard, { type LineageCardData } from './LineageCard.svelte';
@@ -28,8 +28,8 @@
    * FR-SR-54), drawn on the canvas of Svelte Flow (DEC-UX-152). The Resource stays in the middle; the
    * models it is built on stand in a column on its left, those built on it on its right. A click on a
    * model adds its own next models a column further out and marks it; a click on another model opens that
-   * branch and closes the one that was open; a click on an open model closes it. Curves with an arrowhead
-   * join the models in the direction the data flows. The canvas pans when dragged and zooms with its
+   * branch and closes the one that was open; a click on an open model closes it. Curves without an arrowhead
+   * join the models: left and right say which way the data flows (DEC-UX-215). The canvas pans when dragged and zooms with its
    * buttons, a pinch, or Cmd or Ctrl and scrolling; each step brings what was walked into view.
    */
   let {
@@ -58,6 +58,8 @@
   const PAD = 24;
   const BUTTONS = 56;
   const SMALLEST = 0.5;
+  /** The canvas is never lower than this (DEC-UX-217). */
+  const LOWEST = 320;
   const NODE_TYPES = { model: LineageCard };
 
   let side: Side | null = $state(null);
@@ -132,7 +134,6 @@
       target,
       type: 'default',
       class: on ? 'on' : undefined,
-      markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14 },
       selectable: false,
       focusable: false,
     };
@@ -159,8 +160,7 @@
         edges.push(edge(keyOf('up', depth, id), to, open('up', depth, id)));
       });
     });
-    const rows = Math.max(1, ...left.map((column) => column.length), ...right.map((column) => column.length));
-    return { nodes, edges, rows };
+    return { nodes, edges };
   });
 
   let nodes = $state.raw<Node[]>([]);
@@ -170,11 +170,62 @@
     edges = graph.edges;
   });
 
+  // The canvas takes all the room left in the frame that scrolls the page, below it and across its whole
+  // width, so that the walk opens on the whole screen without scrolling (DEC-UX-217). It is measured when it
+  // opens, when the frame changes size, and when the way back shows above it or goes.
+  let box: HTMLDivElement | undefined = $state();
+  let fill: number | null = $state(null);
+
+  const inFlow = (node: Element) => !['absolute', 'fixed'].includes(getComputedStyle(node).position);
+
+  function frameOf(node: HTMLElement): HTMLElement {
+    for (let up = node.parentElement; up && up !== document.body; up = up.parentElement) {
+      if (/auto|scroll/.test(getComputedStyle(up).overflowY)) {
+        return up;
+      }
+    }
+    return document.documentElement;
+  }
+
+  function measure() {
+    if (!box) {
+      return;
+    }
+    const frame = frameOf(box);
+    const page = frame === document.documentElement;
+    const own = box.getBoundingClientRect();
+    // Where the canvas starts in the frame, and what stands below it there: the rest of the page and the padding.
+    const top = own.top - (page ? 0 : frame.getBoundingClientRect().top + frame.clientTop) + (page ? scrollY : frame.scrollTop);
+    const last = Math.max(own.bottom, ...[...(page ? document.body.children : frame.children)].filter(inFlow).map((child) => child.getBoundingClientRect().bottom));
+    const below = last - own.bottom + Number.parseFloat(getComputedStyle(frame).paddingBottom || '0');
+    fill = Math.max(LOWEST, Math.floor((page ? innerHeight : frame.clientHeight) - top - below));
+  }
+
+  $effect(() => {
+    if (!box) {
+      return;
+    }
+    // The frame, and what stands in it: text above the canvas that grows, once its font has come, moves it down.
+    const frame = frameOf(box);
+    const watch = new ResizeObserver(() => measure());
+    for (const node of [frame, ...frame.children]) {
+      watch.observe(node);
+    }
+    return () => watch.disconnect();
+  });
+
+  $effect(() => {
+    void (side !== null);
+    measure();
+  });
+
   // What was walked, in view: whole when it fits, shrunk down to half if need be. When even that is too
   // wide, the Resource stays in view with the columns nearest it, on the side that was walked.
   let width = $state(0);
-  let height = $state(0);
+  let measured = $state(0);
   const view: Viewport | null = $derived.by(() => {
+    // The height measured for the canvas, before the canvas itself has taken it.
+    const height = fill ?? measured;
     if (width === 0 || height === 0) {
       return null;
     }
@@ -202,7 +253,7 @@
     <button type="button" class="reset" onclick={back}><Icon name="arrow-counter-clockwise" />{backLabel}</button>
   </div>
 {/if}
-<div class="lineage" role="group" aria-label={label} style:--rows={graph.rows} bind:clientWidth={width} bind:clientHeight={height}>
+<div class="lineage" role="group" aria-label={label} style:height={fill === null ? null : `${fill}px`} bind:this={box} bind:clientWidth={width} bind:clientHeight={measured}>
   <SvelteFlow
     bind:nodes
     bind:edges
@@ -218,7 +269,6 @@
     zoomOnDoubleClick={false}
     zoomActivationKey={['Meta', 'Control']}
     preventScrolling={false}
-    defaultMarkerColor={null}
     ariaLabelConfig={{
       'controls.ariaLabel': t('lineage.controls'),
       'controls.zoomIn.ariaLabel': t('lineage.zoomIn'),
@@ -235,8 +285,8 @@
 </div>
 
 <style>
-  /* As high as its longest column, within reason; the canvas takes the colours of Data Hub (DEC-UX-152). */
-  .lineage { height: clamp(260px, calc(var(--rows) * 110px + 60px), 70vh); margin: 0 -6px; }
+  /* All the room left below it, measured above (DEC-UX-217); the canvas takes the colours of Data Hub (DEC-UX-152). */
+  .lineage { height: 320px; margin: 0 -6px; }
   .lineage :global(.svelte-flow) {
     --xy-background-color: transparent;
     --xy-edge-stroke: var(--text-muted);

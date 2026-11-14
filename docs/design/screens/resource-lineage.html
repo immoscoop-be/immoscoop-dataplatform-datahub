@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <!--
   Screen: Resource detail, the Lineage tab (DEC-UX-90)
-  The lineage is walked, never shown whole. This Resource stays in the middle, always. An arrow runs from it to each of
-  its direct downstream models on the right, and to it from each direct upstream model on the left. A click on a model
+  The lineage is walked, never shown whole. This Resource stays in the middle, always. A curved line, without an arrowhead
+  (DEC-UX-215), joins it to each of its direct downstream models on the right, and to each direct upstream model on the left. A click on a model
   adds its own next models beside it, a column further out, and marks the model clicked; a click on another model, anywhere
   in the open flow, opens that branch and closes the one that was open; a click on an open model closes it. No titles above
   the columns; every card the same height, its name on two lines at most. The switch shows the places: ?lin=down1, ?lin=down2,
   ?lin=up1, ?lin=up2; the other branches open by clicking.
   Requirements: FR-AR-08, FR-SR-54, FR-MR-10
-  Decisions: DEC-UX-90, DEC-UX-100, DEC-UX-102.
+  The canvas takes all the room left in the frame below the tabs, across its whole width (DEC-UX-217).
+  Decisions: DEC-UX-90, DEC-UX-100, DEC-UX-102, DEC-UX-215, DEC-UX-217.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="owner">
@@ -21,6 +22,13 @@
 <link rel="stylesheet" href="../tokens.css">
 <link rel="stylesheet" href="../base.css">
 <title>Data Hub — Weekly lead volume, lineage</title>
+<style>
+  /* The canvas takes all the room left in the frame below the tabs, across its whole width (DEC-UX-217). */
+  .main.fill { display: flex; flex-direction: column; }
+  .main.fill > * { flex-shrink: 0; }
+  .main.fill > .tab-content { flex: 1 0 auto; display: flex; flex-direction: column; }
+  .main.fill > .tab-content > .lin { flex: 1 0 auto; }
+</style>
 </head>
 <body>
 <div class="app panel-open">
@@ -104,7 +112,7 @@
   <p id="no-results" class="meta" style="padding:8px 4px" hidden>Nothing matches your search.</p>
  </div>
 </aside>
-<main class="main">
+<main class="main fill">
 
  <div class="breadcrumb">Collections / Credit leads</div>
  <div style="display:flex;align-items:flex-start;gap:14px;margin-top:8px">

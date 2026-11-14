@@ -39,6 +39,8 @@ In the proposal this service was called ingest, as a Cloud Run job. It became a 
 | `GET /nodes/{id}/lineage?direction=&depth=` | Lineage upstream or downstream, across both projects ([TR-AR-06](../../requirements/technical/01-artifact-registry.md#tr-ar-06)) |
 | `GET /nodes/{id}/proposal` | The grain, model type, storage and mappings Data Hub proposes for the Resource on a Node, when it is added to a Collection ([TR-AR-10](../../requirements/technical/01-artifact-registry.md#tr-ar-10)) |
 | `GET /internal/nodes/{id}/lineage?direction=` | The lineage around a Resource, for catalogue only, with a Google ID token: names, kinds, layers and projects of the models ([TR-AR-11](../../requirements/technical/01-artifact-registry.md#tr-ar-11)) |
+| `GET /known-tables?relations=` | For a power user, with their token and `queries.outside`: which of these tables a dbt project Data Hub follows has, with its full name in its own case, its layer, its cluster columns, how dbt makes it and whether it is a Resource ([TR-SR-27](../../requirements/technical/04-stacks-and-resources.md#tr-sr-27)) |
+| `GET /known-tables/search?q=&layer=&project=` | For a power user, with their token and `queries.outside`: the tables Data Hub knows by words, layer and project, with their description and columns ([TR-SR-29](../../requirements/technical/04-stacks-and-resources.md#tr-sr-29)) |
 | `GET /domain-model` | The Domain Model in use, read from the collector at that moment: its release, the relation types a field can map to, and every identity ([TR-AR-09](../../requirements/technical/01-artifact-registry.md#tr-ar-09)) |
 | `POST /runs/{id}/reprocess` | Fetch and process a run again ([TR-AR-07](../../requirements/technical/01-artifact-registry.md#tr-ar-07)) |
 | `GET /admin/source-jobs` | Per dbt project its Source Job, who set it and when, its last Artifact Set, and the address of the webhook ([TR-AR-12](../../requirements/technical/01-artifact-registry.md#tr-ar-12)) |
@@ -59,7 +61,7 @@ The dbt projects Data Hub follows with their Source Jobs, which a Data Admin set
 
 The dbt Cloud Admin API, for the artifacts of a run and the jobs and environments of a dbt project; the artifact bucket; and catalogue, with the service identity: after every new Current Version, the tables under the exposures tagged `datahub`, with their columns and the checksum of their code ([TR-AR-08](../../requirements/technical/01-artifact-registry.md#tr-ar-08)), and the Changes since the previous Current Version with the tables they reach ([TR-AR-14](../../requirements/technical/01-artifact-registry.md#tr-ar-14)).
 
-The collector of Colleciónes, `GET /domain-model` at `https://colleciones-eventos.immoscoop.be`, its public API, for the Domain Model in use, read each time it is needed ([DEC-AR-04](../../requirements/functional/01-artifact-registry.md#dec-ar-04), [TR-AR-09](../../requirements/technical/01-artifact-registry.md#tr-ar-09)). The routes are below.
+The collector of Colleciónes, `GET /domain-model/immoscoop` at `https://colleciones-eventos.immoscoop.be`, its public API, for the whole contract of the Domain Model in use, read each time it is needed ([DEC-AR-04](../../requirements/functional/01-artifact-registry.md#dec-ar-04), [TR-AR-09](../../requirements/technical/01-artifact-registry.md#tr-ar-09)). The routes are below.
 
 ### The Domain Model API
 
@@ -72,8 +74,8 @@ The collector serves the Domain Model it validates events against, read in real 
 
 | Route | What it answers |
 | --- | --- |
-| `GET /domain-model` | Which model is loaded, its version, release and npm package, counts, the domains (`domain@version`) and an index of every Entity. The release Data Hub records with a mapping comes from here |
-| `GET /domain-model/:model` | The whole contract: every Entity in detail, with the contexts, event groups, actors, the prose per domain, and the vocabulary of actions, relation types and datatypes |
+| `GET /domain-model` | Which model is loaded, its version, release and npm package, counts, the domains (`domain@version`) and an index of every Entity. Not enough for registry: it holds no identifiers |
+| `GET /domain-model/:model` | The whole contract: every Entity in detail, with the contexts, event groups, actors, the prose per domain, and the vocabulary of actions, relation types and datatypes. registry reads this one, with its release ([TR-AR-09](../../requirements/technical/01-artifact-registry.md#tr-ar-09)) |
 | `GET /domain-model/:model/entities` | The index of Entities: per Entity its domain, identifiers, actions, counts and whether it has a state schema |
 | `GET /domain-model/:model/entities/:entity` | One Entity in full, with the names of its events (`email.click`, …) |
 | `GET /domain-model/:model/entities/:entity/actions/:action` | One action, the smallest thing the model declares |

@@ -25,7 +25,8 @@ export function createCatalogueNotices(baseUrl: string, request: typeof fetch, i
 /**
  * catalogue, as identity tells it to put a Message to a User whose Permission group changed for them
  * (MSG-USR-01, FR-PL-12), or to the Data Team when Admin was given back through datahub-datateam@
- * (MSG-USR-02, EC-PL-03), with the Google ID token of identity for catalogue's own address.
+ * (MSG-USR-02, EC-PL-03) or when a new User signed in for the first time (MSG-USR-03, FR-PL-16), with the
+ * Google ID token of identity for catalogue's own address.
  */
 export function createCatalogueUserNotices(baseUrl: string, request: typeof fetch, idToken: IdTokenSource): UserNotices {
   return {

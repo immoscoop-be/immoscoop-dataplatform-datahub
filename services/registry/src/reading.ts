@@ -1,5 +1,7 @@
 import { type Kysely, sql } from 'kysely';
 import type { PartitionUnit, RegistryDatabase, SetStatus } from './database.js';
+import { DATAHUB_TAG } from './exposed.js';
+import { layerOf } from './internal.js';
 
 /** A Node in a list: enough to recognise it and find its table. */
 export interface NodeSummary {
@@ -13,6 +15,32 @@ export interface NodeSummary {
   /** The layer Colleciónes tags it with, such as `mart`; null for another model. */
   layer: string | null;
   filePath: string | null;
+}
+
+/**
+ * A table of the Current Version of a dbt project Data Hub follows, as a power user may query it (FR-SR-56): its
+ * own-case parts, and whether an exposure with the tag `datahub` depends on it, which makes it a Resource.
+ */
+export interface KnownTableRow {
+  relation: string;
+  databaseName: string | null;
+  schemaName: string | null;
+  tableName: string | null;
+  name: string;
+  resourceType: string;
+  layer: string | null;
+  filePath: string | null;
+  partitionField: string | null;
+  partitionUnit: string | null;
+  /** Its cluster columns and how dbt makes it (`table`, `view`, `incremental`…), for what a power user reads of it (FR-SR-62). */
+  clusterBy: string[];
+  materialized: string | null;
+  projectId: string;
+  projectName: string | null;
+  resource: boolean;
+  /** Its description from dbt, and its columns with theirs, for a power user who finds or adds it (FR-SR-58, FR-SR-59). */
+  description: string;
+  columns: { name: string; dataType: string | null; description: string }[];
 }
 
 export interface SearchHit extends NodeSummary {
@@ -178,6 +206,69 @@ export function createReading(db: Kysely<RegistryDatabase>) {
           n.name
         limit ${options.limit}`.execute(db);
       return result.rows;
+    },
+
+    /**
+     * Which of these tables Data Hub knows, from the Current Version of a dbt project it follows, for a power user's
+     * query (FR-SR-56): one row per table, a model before a source of the same table; `resource` when an exposure with
+     * the tag `datahub` depends on it in any dbt project, which makes it a Resource, to be read as one (DEC-SR-46).
+     */
+    async knownTables(relations: readonly string[]): Promise<KnownTableRow[]> {
+      const keys = [...new Set(relations.map((relation) => relation.toLowerCase()))];
+      if (keys.length === 0) return [];
+      const result = await sql<KnownTableRow>`
+        with current_sets as (select current_set_id as set_id from projects where current_set_id is not null),
+        exposed as (
+          select distinct t.relation
+          from nodes t
+          join edges e on e.set_id = t.set_id and e.parent_id = t.unique_id
+          join nodes x on x.set_id = e.set_id and x.unique_id = e.child_id
+          where t.set_id in (select set_id from current_sets)
+            and t.relation in (${sql.join(keys)})
+            and x.resource_type = 'exposure' and ${DATAHUB_TAG} = any(x.tags)
+        )
+        select distinct on (n.relation)
+          n.relation, n.database_name, n.schema_name, n.table_name, n.name, n.resource_type, n.layer, n.file_path,
+          n.partition_field, n.partition_unit, n.cluster_by, n.materialized, p.project_id::text as project_id, p.name as project_name,
+          n.relation in (select relation from exposed) as resource, coalesce(n.description, '') as description,
+          (select coalesce(json_agg(json_build_object('name', c.name, 'dataType', c.data_type, 'description', c.description) order by c.position nulls last, c.name), '[]'::json)
+            from columns c where c.set_id = n.set_id and c.node_id = n.unique_id) as columns
+        from nodes n join projects p on p.current_set_id = n.set_id
+        where n.relation in (${sql.join(keys)})
+        order by n.relation, n.resource_type = 'source', p.project_id`.execute(db);
+      return result.rows;
+    },
+
+    /**
+     * The tables Data Hub knows, found by a power user (FR-SR-58): by their name, also half a name or with a typo, and
+     * by the words of their description or a column; narrowed by layer, as the start of their layer, and by project.
+     * Without words, the tables of that layer by name. One row per table, as `knownTables` gives it.
+     */
+    async searchKnownTables(query: string, options: { layer?: string; project?: string; limit: number }): Promise<KnownTableRow[]> {
+      const words = sql`websearch_to_tsquery('simple', ${query})`;
+      const escaped = query.replace(/[\\%_]/g, (character) => `\\${character}`);
+      const pattern = `%${escaped}%`;
+      const layer = options.layer ? `${options.layer.replace(/[\\%_]/g, (character) => `\\${character}`)}%` : null;
+      const found = await sql<{ relation: string }>`
+        select n.relation, max(case when lower(n.name) = lower(${query}) then 3 when n.name ilike ${`${escaped}%`} then 2 else 1 end) as first,
+          max(greatest(similarity(n.name, ${query}), word_similarity(${query}, n.name))) as close
+        from nodes n join projects p on p.current_set_id = n.set_id
+        where n.relation is not null and n.resource_type in ('model', 'seed', 'snapshot', 'source')
+          and (${options.project ?? null}::bigint is null or p.project_id = ${options.project ?? null}::bigint)
+          and (${layer}::text is null or coalesce(n.layer, substring(n.file_path from '^models/([^/]+)/'), n.resource_type) ilike ${layer})
+          and (
+            ${query} = ''
+            or n.name ilike ${pattern} or n.name % ${query} or ${query} <% n.name or n.search @@ ${words}
+            or exists (select 1 from columns c where c.set_id = n.set_id and c.node_id = n.unique_id and (c.search @@ ${words} or c.name ilike ${pattern}))
+          )
+        group by n.relation
+        order by first desc, close desc, n.relation
+        limit ${options.limit}`.execute(db);
+      const relations = found.rows.map((row) => row.relation);
+      const rows = await this.knownTables(relations);
+      // A table is of the layer of the row shown: a source of one project on a model of another is that model.
+      const wanted = options.layer?.toLowerCase();
+      return relations.flatMap((relation) => rows.filter((row) => row.relation === relation && (!wanted || layerOf(row).toLowerCase().startsWith(wanted))));
     },
 
     /** One Node of a Current Version, with its columns and tests. */

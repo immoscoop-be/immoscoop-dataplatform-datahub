@@ -316,7 +316,8 @@ export function createNotifications(db: Kysely<CatalogueDatabase>, options: Noti
       permissions: team ? [dataTeam.permission] : [],
     });
     const byId = new Map(known.filter((person) => person.id !== null).map((person) => [person.id!, person]));
-    const writer = row.writerId;
+    // Who wrote it, or who caused a Message of Data Hub, such as who added a Resource (MSG-RES-08): never told of it.
+    const writer = row.writerId ?? row.params.actorId ?? null;
     const out: Delivery[] = [];
     const mailed = new Set<string>();
     const messaged = new Set<string>();

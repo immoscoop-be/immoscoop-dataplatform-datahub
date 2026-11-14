@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import Sheet from '@datahub/ui/containers/Sheet.svelte';
   import Table from '@datahub/ui/containers/Table.svelte';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
@@ -157,7 +158,7 @@
     {:else}
       <form id="new-key" onsubmit={make} novalidate>
         <Field label={t('keys.field.name')} problem={problem || undefined}>
-          <input bind:value={name} maxlength="80" placeholder={t('keys.field.placeholder')} />
+          <input {...NO_PASSWORD_MANAGER} bind:value={name} maxlength="80" placeholder={t('keys.field.placeholder')} />
         </Field>
         <p class="meta">{t('keys.field.hint')}</p>
       </form>

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { exposedTables } from './exposed.js';
 import { sampleCatalog, sampleManifest } from './fixtures.js';
-import { normalise } from './normalise.js';
+import { type NodeRow, type NormalisedSet, normalise } from './normalise.js';
 
 const P = 'immoscoop_dataplatform_sql';
 
@@ -20,6 +20,7 @@ describe('the tables exposed to Data Hub', () => {
         label: null,
         checksum: 'sum-countries',
         columns: [{ name: 'code', position: 1, dataType: 'STRING', description: '' }],
+        storage: null,
       },
       {
         key: 'immoscoop-dataplatform.dbt_marts.dim_customers',
@@ -32,6 +33,8 @@ describe('the tables exposed to Data Hub', () => {
         label: null,
         checksum: 'sum-customers',
         columns: [{ name: 'customer_key', position: 1, dataType: 'INT64', description: '' }],
+        // Partitioned and clustered on columns the table does not have: nothing promised (OP-SR-12).
+        storage: null,
       },
       {
         key: 'immoscoop-dataplatform.dbt_marts.orders',
@@ -49,10 +52,61 @@ describe('the tables exposed to Data Hub', () => {
           { name: 'CUSTOMER_ID', position: 2, dataType: 'INT64', description: 'Who ordered.' },
           { name: 'CREATED_AT', position: 3, dataType: 'TIMESTAMP', description: 'From the warehouse.' },
         ],
+        // Clustered on a column it has, by name in any case; its partition column it does not have.
+        storage: { partition: null, clusterBy: ['CUSTOMER_ID'], requirePartitionFilter: false },
       },
     ]);
     // An ephemeral model builds no table, and a metric is no Node of registry (DEC-SR-23).
     expect(empty).toEqual(['datahub_lines']);
+  });
+
+  it('hands over how a view is stored as the model beneath it says, for the columns it passes through (DEC-SR-34)', () => {
+    const node = (uniqueId: string, resourceType: string, relation: string | null, storage: Partial<NodeRow> = {}): NodeRow => ({
+      uniqueId,
+      resourceType,
+      name: uniqueId.split('.').pop()!,
+      packageName: 'colleciones',
+      databaseName: relation ? 'p' : null,
+      schemaName: relation ? 'd' : null,
+      tableName: relation ? uniqueId.split('.').pop()! : null,
+      relation,
+      description: '',
+      materialized: resourceType === 'model' ? 'view' : null,
+      tags: resourceType === 'exposure' ? ['datahub'] : [],
+      filePath: null,
+      checksum: null,
+      meta: {},
+      entity: null,
+      action: null,
+      strategy: null,
+      layer: null,
+      partitionField: null,
+      partitionUnit: null,
+      clusterBy: [],
+      requirePartitionFilter: false,
+      ...storage,
+    });
+    const set: NormalisedSet = {
+      projectName: 'colleciones',
+      dbtVersion: null,
+      generatedAt: null,
+      nodes: [
+        node('model.c.stg_events', 'model', 'p.d.stg_events', { partitionField: 'collectorDatetime', partitionUnit: 'day', clusterBy: ['entity', 'action'], requirePartitionFilter: true }),
+        node('model.c.intm_flat', 'model', 'p.d.intm_flat'),
+        node('exposure.c.datahub_flat', 'exposure', null),
+      ],
+      columns: ['eventId', 'collectorDatetime', 'entity'].map((name, index) => ({ nodeId: 'model.c.intm_flat', name, position: index + 1, dataType: 'STRING', description: '', meta: {} })),
+      edges: [
+        { parentId: 'model.c.stg_events', childId: 'model.c.intm_flat' },
+        { parentId: 'model.c.intm_flat', childId: 'exposure.c.datahub_flat' },
+      ],
+      tests: [],
+      labels: {},
+    };
+    const [table] = exposedTables(set).tables;
+    // The view has no partition of its own; the model beneath it does, and it passes collectorDatetime and entity
+    // through. BigQuery requires a filter on it, so a query on the view needs one too.
+    expect(table?.storage).toEqual({ partition: { field: 'collectorDatetime', unit: 'day' }, clusterBy: ['entity'], requirePartitionFilter: true });
   });
 
   it('finds the tag in the config of an exposure too, where dbt Fusion may keep it', () => {

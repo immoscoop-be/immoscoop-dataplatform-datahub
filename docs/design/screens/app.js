@@ -861,11 +861,10 @@ if (new URLSearchParams(location.search).has('mismatch')) {
 }
 
 // The editor of Query folds every CTE to its first line, as a code editor does: the arrow in the gutter folds or unfolds
-// one, "⋯ n lines" unfolds it, and "Fold all" folds them together; the line numbers keep their count (Proposal)
+// one, "⋯ n lines" unfolds it, and Fold all in the quick window folds them together (DEC-UX-248); the line numbers keep their count
 const sqlEditor = document.querySelector('.sql-editor');
 if (sqlEditor) {
   const starts = () => [...sqlEditor.querySelectorAll('[data-fold-start]')];
-  const foldAll = document.getElementById('fold-all');
   const fold = (start, folded) => {
     const name = start.dataset.foldStart;
     start.classList.toggle('folded', folded);
@@ -874,17 +873,11 @@ if (sqlEditor) {
     start.querySelectorAll('.fold-ph, .fold-close').forEach(el => { el.hidden = !folded; });
     sqlEditor.querySelectorAll(`[data-fold-in="${name}"]`).forEach(line => { line.hidden = folded; });
   };
-  const sync = () => {
-    const anyOpen = starts().some(s => !s.classList.contains('folded'));
-    foldAll.querySelector('span').textContent = anyOpen ? 'Fold all' : 'Unfold all';
-    foldAll.querySelector('i').className = 'ph ' + (anyOpen ? 'ph-arrows-in-line-vertical' : 'ph-arrows-out-line-vertical');
-  };
   sqlEditor.addEventListener('click', e => {
     const start = e.target.closest('.ln-fold, .fold-ph')?.closest('[data-fold-start]');
-    if (start) { fold(start, !start.classList.contains('folded')); sync(); }
+    if (start) fold(start, !start.classList.contains('folded'));
   });
-  foldAll.addEventListener('click', () => { const folded = starts().some(s => !s.classList.contains('folded')); starts().forEach(s => fold(s, folded)); sync(); });
-  sync();
+  window.foldAllCtes = () => { const folded = starts().some(s => !s.classList.contains('folded')); starts().forEach(s => fold(s, folded)); };
   // The suggestions: a click in the SQL opens them where the cursor is, as typing would; a click beside them or Escape closes them
   const suggest = sqlEditor.querySelector('.suggest');
   document.addEventListener('click', e => { if (suggest) suggest.hidden = !sqlEditor.contains(e.target) || !!e.target.closest('button, .sql-param.undefined'); });
@@ -903,14 +896,21 @@ const syncRun = () => {
   if (!btn || !editor) return;
   const live = sel => [...editor.querySelectorAll(sel)].filter(el => !el.closest('.ln.off'));
   const scope = new Set([...document.querySelectorAll('#scope-chips [data-res]:not([hidden])')].map(c => c.dataset.res));
-  live('.sql-key[data-table]').forEach(t => { const out = !scope.has(t.dataset.table); t.classList.toggle('outside', out); t.title = out ? 'Not a resource of this query' : ''; });
+  // A table Data Hub knows that is no Resource is no error for a power user (DEC-UX-220)
+  live('.sql-key[data-table]').forEach(t => { const out = !scope.has(t.dataset.table) && !t.dataset.known; t.classList.toggle('outside', out); t.title = out ? 'Not a resource of this query' : t.dataset.known ? 'Double-click for what dbt and BigQuery know of it' : 'Double-click for its Summary'; });
+  const known = [...new Set(live('.sql-key[data-known]').map(t => t.dataset.table + '|' + t.dataset.known))].map(k => k.split('|'));
   const tables = [...new Set(live('.sql-key.outside').map(t => t.dataset.table))];
   const params = [...new Set(live('.sql-param.undefined').map(t => t.dataset.param))];
   editor.querySelectorAll('[data-fold-start]').forEach(st => st.classList.toggle('has-error',
     [...editor.querySelectorAll(`[data-fold-in="${st.dataset.foldStart}"]:not(.off)`)].some(l => l.querySelector('.sql-key.outside, .sql-param.undefined'))));
   const out = document.getElementById('scope-outside');
   if (out) out.innerHTML = tables.map(t => `<span class="scope-chip outside"><i class="ph-fill ph-warning"></i><span class="mono">${t}</span> is not a resource of this query`
-    + (t === removedRes ? '' : `<button class="text-link" type="button" data-add-res="${t}">Start a new query with it</button>`) + '</span>').join('');
+    + (t === removedRes ? '' : `<button class="text-link" type="button" data-add-res="${t}">Start a new query with it</button>`) + '</span>').join('')
+    + known.map(([t, layer]) => `<span class="scope-chip known" title="${layer} · a table Data Hub knows from a dbt project it follows; no Resource, so no Owner, Level or Publication. Double-click its name in the SQL for what dbt and BigQuery know of it"><i class="ph ph-cube kind-icon" role="img" aria-label="Model"></i><span class="mono">${t}</span></span>`).join('');
+  const knownLine = document.getElementById('q-known');
+  if (knownLine) knownLine.hidden = !known.length;
+  // ...and it cannot become a Lens: "Make it a lens" is greyed (DEC-LE-22)
+  document.querySelectorAll('a.btn-primary[href="lens-new.html"]').forEach(a => { a.classList.toggle('is-off', known.length > 0); a.setAttribute('aria-disabled', String(known.length > 0)); });
   const notes = [];
   if (tables.length) notes.push(`${tables.map(t => `<span class="mono">${t}</span>`).join(', ')} ${tables.length > 1 ? 'are' : 'is'} not a resource of this query.`);
   if (params.length) notes.push(`${params.map(n => `<span class="mono">@${n}</span>`).join(', ')} ${params.length > 1 ? 'are' : 'is'} in the query, but not a parameter.`);
@@ -1088,7 +1088,8 @@ if (pbox) {
     if (kind === 'choice' || kind === 'several') p.list = values();
     const i = params.findIndex(x => x.name === current);
     if (i >= 0) params[i] = p; else params.push(p);
-    render(); open(p.name); $('pm-saved').hidden = false;
+    // Kept: the window closes (DEC-UX-219)
+    render(); pm.hidden = true;
   });
   $('pm-remove').addEventListener('click', () => { const i = params.findIndex(x => x.name === current); if (i >= 0) params.splice(i, 1); render(); pm.hidden = true; });
   $('param-add').addEventListener('click', () => open(null));
@@ -1100,7 +1101,169 @@ if (pbox) {
     else if (e.target.closest('[data-define-first]')) open(null, missing(inSql())[0]);
     else if (e.target.closest('[data-add-filter]')) { noFilter = false; syncRun(); }
   });
+  // A double-click on a Parameter in the SQL opens it, as a click on its tile does; an @name that is not one, to be
+  // defined (DEC-UX-221). The word is selected as well, as in any editor
+  document.querySelector('.sql-editor')?.addEventListener('dblclick', e => {
+    const at = e.target.closest('.sql-param[data-param]');
+    if (!at) return;
+    if (at.classList.contains('undefined')) open(null, at.dataset.param); else open(at.dataset.param);
+  });
+  document.querySelector('[data-group="dbl"] [data-target="param"]')?.addEventListener('click', () => open('dateFrom'));
   render();
+}
+
+// The SQL coloured by kind of word, as BigQuery colours it (DEC-UX-223): keywords, functions and types, text in quotes and
+// numbers; names keep the colour of the text. The fields of the Resources of the query get a dotted line, as every word a
+// double-click explains (DEC-UX-222)
+const SQL_KEYWORDS = new Set(('with as select from where and or not in is null between join left right inner outer full cross on using group by order having '
+  + 'qualify limit case when then else end distinct interval day week month year true false union all over partition rows exists like desc asc cast struct array unnest '
+  + 'date_sub date_add date_trunc date_diff current_date current_timestamp count sum avg min max coalesce ifnull if div timestamp format_date extract row_number '
+  + 'safe_divide round lower upper concat string int64 float64 numeric bool').split(' '));
+const SQL_FIELDS = new Set(['lead_source', 'week_start', 'lead_count', 'lead_channel', 'source_name', 'lead_id']);
+function colourSql(root) {
+  const SKIP = '.sql-comment, .sql-key, .sql-param, .sql-ref, .sql-kw, .sql-str, .sql-num, .sql-field, .text-cursor, .suggest';
+  root.querySelectorAll('.ln-code').forEach(code => {
+    const walker = document.createTreeWalker(code, NodeFilter.SHOW_TEXT), nodes = [];
+    while (walker.nextNode()) if (!walker.currentNode.parentElement.closest(SKIP)) nodes.push(walker.currentNode);
+    nodes.forEach(node => {
+      const text = node.textContent, re = /('[^']*')|(\b\d+(?:\.\d+)?\b)|(\b[A-Za-z_]\w*\b)/g, frag = document.createDocumentFragment();
+      let m, last = 0, changed = false;
+      while ((m = re.exec(text))) {
+        const cls = m[1] ? 'sql-str' : m[2] ? 'sql-num' : SQL_KEYWORDS.has(m[3].toLowerCase()) ? 'sql-kw' : SQL_FIELDS.has(m[3]) ? 'sql-field' : null;
+        if (!cls) continue;
+        const span = document.createElement('span');
+        span.className = cls; span.textContent = m[0];
+        if (cls === 'sql-field') { span.dataset.field = m[3]; span.title = 'Double-click for its descriptions'; }
+        frag.append(text.slice(last, m.index), span); last = m.index + m[0].length; changed = true;
+      }
+      if (changed) { frag.append(text.slice(last)); node.replaceWith(frag); }
+    });
+  });
+  root.querySelectorAll('.sql-param[data-param]:not(.undefined)').forEach(at => { at.title = 'Double-click to open it'; });
+}
+if (document.querySelector('.sql-editor')) colourSql(document.querySelector('.sql-editor'));
+
+// A double-click on the name of a Resource in the SQL opens its Summary in a floating window over the query, with "Open
+// the Resource"; on a field, its type and descriptions in a pop-out at the word, once for each Resource of the query that
+// holds it (DEC-UX-221, DEC-UX-115). Any other word is only selected, as in any editor
+{
+  const box = document.querySelector('.sql-editor'), rs = document.getElementById('rs'), pop = document.getElementById('fd-pop'), kt = document.getElementById('kt');
+  if (box && rs && pop) {
+    const RESOURCES = { weekly_lead_volume: ['Weekly lead volume', 'Credit leads'], lead_sources: ['Lead sources', 'Credit leads'] };
+    const OWNER = 'Where the lead came in: the website, the app, a partner or a mailing.';
+    const FIELDS = {
+      lead_source: [['Weekly lead volume', 'STRING', 'Cluster 1', OWNER, 'Source system code of the lead.'], ['Lead sources', 'STRING', null, null, 'Source system code; one row per code.']],
+      week_start: [['Weekly lead volume', 'DATE', 'Partition', 'The Monday of the week the lead came in.', 'Start of the ISO week (Monday).']],
+      lead_count: [['Weekly lead volume', 'INT64', null, null, 'Number of credit leads sent to KBC in the week, for the source.']],
+      lead_channel: [['Weekly lead volume', 'STRING', 'Cluster 2', null, 'Channel through which the lead was submitted.']],
+      source_name: [['Lead sources', 'STRING', null, 'The name of the source as colleagues know it.', 'Display name of the lead source.']],
+      // A field of a table outside Data Hub: no Owner, so only what dbt says of it (OP-UX-89, Proposal)
+      lead_id: [['stg_oltp__leads', 'STRING', null, null, 'Id of the lead in the OLTP database.', true]],
+    };
+    const esc = t => t.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+    const shut = () => { pop.hidden = true; };
+    const showResource = table => {
+      const [name, collection] = RESOURCES[table];
+      document.getElementById('rs-title').textContent = name;
+      document.getElementById('rs-meta').textContent = `Resource of this query · ${collection}`;
+      shut(); kt.hidden = true; rs.hidden = false;
+      if (rs.classList.contains('folded')) rs.querySelector('.float-fold').click();
+    };
+    // A table outside Data Hub, for a power user (OP-UX-89, Proposal): its description from dbt, what BigQuery says of
+    // it now, and its columns, partition and cluster columns first and marked, each with its type and description
+    const OUTSIDE = {
+      known: { name: 'stg_oltp__leads', meta: 'Not a Resource · staging · dbt-prod', full: 'immoscoop-dataplatform-398214.dbt_prod_staging.stg_oltp__leads',
+        desc: 'One row per lead as the OLTP database keeps it: renamed, typed and without test leads.',
+        facts: [['Kind', 'Table · incremental in dbt'], ['Partitioned by', '<span class="mono">created_date</span>, per day · BigQuery asks a filter on it'], ['Clustered by', '<span class="mono">lead_source</span>'],
+          ['Size', '3.1 GB · 4.8 million rows · 1,412 partitions'], ['Last changed', 'Today at 06:14']],
+        cols: [['created_date', 'DATE', 'Partition', 'Day the lead was created, Belgian time.'], ['lead_source', 'STRING', 'Cluster 1', 'Source system code of the lead.'],
+          ['lead_id', 'STRING', null, 'Id of the lead in the OLTP database.'], ['lead_type', 'STRING', null, 'Kind of lead: credit, valuation or visit.'],
+          ['email_address_id', 'STRING', null, 'Hashed id of the e-mail address; null when none was given.'], ['listing_id', 'STRING', null, 'Id of the listing the lead is about; null for a credit lead.'],
+          ['partner_id', 'STRING', null, 'Partner that sent the lead.', 'bq'], ['consent_marketing', 'BOOL', null, 'Whether the person agreed to marketing e-mails.'],
+          ['utm', 'STRUCT', null, 'The UTM parameters of the visit the lead came from.'], ['utm.source', 'STRING', null, ''], ['utm.medium', 'STRING', null, ''], ['utm.campaign', 'STRING', null, ''],
+          ['created_at', 'TIMESTAMP', null, 'When the lead was created, in UTC.'], ['loaded_at', 'TIMESTAMP', null, '']] },
+      view: { name: 'intm_leads__latest_status', meta: 'Not a Resource · intermediate · dbt-prod', full: 'immoscoop-dataplatform-398214.dbt_prod_intermediate.intm_leads__latest_status',
+        desc: 'Each lead with its latest status, from the changes of its status.',
+        facts: [['Kind', 'View · a view in dbt: it stores nothing, a query on it reads the tables beneath it, as the Pre-flight measures'], ['Partitioned by', 'A view has no partitions of its own'], ['Last changed', 'Its definition, on 12 Nov 2026']],
+        cols: [['lead_id', 'STRING', null, 'Id of the lead.'], ['status', 'STRING', null, 'The latest status of the lead.'], ['status_changed_at', 'TIMESTAMP', null, 'When it got that status.'], ['days_open', 'INT64', null, '']] },
+    };
+    let outside = OUTSIDE.known;
+    const ktCols = () => {
+      const q = document.getElementById('kt-q').value.trim().toLowerCase();
+      const shown = outside.cols.filter(([c, , , d]) => !q || `${c} ${d}`.toLowerCase().includes(q));
+      document.getElementById('kt-count').textContent = outside.cols.filter(([c]) => !c.includes('.')).length;
+      document.getElementById('kt-cols').innerHTML = shown.map(([c, type, role, d, from]) => `<div class="ft-col${c.includes('.') ? ' nested' : ''}"><span><span class="mono">${c}</span>${role ? `<span class="pill pill-strong">${role}</span>` : ''}</span>`
+        + `<span class="meta">${type}</span><span class="${d ? 'muted' : 'muted kt-none'}">${d ? esc(d) : 'No description'}${from === 'bq' ? ' <span class="kt-from">BigQuery</span>' : ''}</span></div>`).join('')
+        || '<p class="meta" style="margin:4px 0">No column has these words.</p>';
+    };
+    document.getElementById('kt-q')?.addEventListener('input', ktCols);
+    document.getElementById('kt-copy')?.addEventListener('click', e => { const b = e.currentTarget; b.lastChild.textContent = 'Copied'; setTimeout(() => { b.lastChild.textContent = 'Copy the full name'; }, 1500); });
+    const showKnown = which => {
+      outside = OUTSIDE[which];
+      document.getElementById('kt-title').textContent = outside.name;
+      document.getElementById('kt-meta').textContent = outside.meta;
+      document.getElementById('kt-desc').textContent = outside.desc;
+      document.getElementById('kt-facts').innerHTML = outside.facts.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('') + `<dt>Full name</dt><dd><span class="mono">${outside.full}</span></dd>`;
+      document.getElementById('kt-q').value = '';
+      ktCols();
+      shut(); rs.hidden = true; kt.hidden = false;
+      if (kt.classList.contains('folded')) kt.querySelector('.float-fold').click();
+    };
+    const showField = (word, rect) => {
+      pop.innerHTML = FIELDS[word].map(([resource, type, role, owner, dbt, outside]) => `<div class="fd-block"><div class="si-head"><span class="mono">${word}</span><span class="muted">${type} · ${outside ? `<span class="mono">${resource}</span>` : resource}</span>`
+        + (role ? `<span class="pill pill-strong">${role}</span>` : '') + '</div>'
+        + (outside ? '' : owner ? `<p><span class="origin">From the Owner</span>${esc(owner)}</p>` : '<p class="muted">No Business Description yet.</p>')
+        + `<p class="si-dbt"><span class="origin">From dbt</span>${esc(dbt)}</p></div>`).join('');
+      pop.hidden = false;
+      const width = pop.offsetWidth, left = Math.min(Math.max(12, rect.left + rect.width / 2 - 28), innerWidth - width - 12);
+      const below = rect.bottom + 10 + pop.offsetHeight < innerHeight;
+      pop.dataset.side = below ? 'below' : 'above';
+      pop.style.left = left + 'px';
+      pop.style.top = (below ? rect.bottom + 10 : rect.top - 10 - pop.offsetHeight) + 'px';
+      pop.style.setProperty('--arrow-x', Math.max(14, rect.left + rect.width / 2 - left) + 'px');
+    };
+    box.addEventListener('dblclick', e => {
+      const key = e.target.closest('.sql-key[data-table]');
+      if (key) { if (key.dataset.known) showKnown('known'); else if (RESOURCES[key.dataset.table] && !key.classList.contains('outside')) showResource(key.dataset.table); return; }
+      if (e.target.closest('.sql-param')) return;
+      const field = e.target.closest('.sql-field');
+      if (field && FIELDS[field.dataset.field]) { showField(field.dataset.field, field.getBoundingClientRect()); return; }
+      const sel = getSelection(), word = sel.toString().trim();
+      if (FIELDS[word] && sel.rangeCount) showField(word, sel.getRangeAt(0).getBoundingClientRect());
+    });
+    // The pop-out goes with a click elsewhere, Escape or typing; the window stays until it is closed
+    document.addEventListener('mousedown', e => { if (!pop.contains(e.target)) shut(); });
+    document.addEventListener('keydown', e => { if (!pop.hidden && (e.key === 'Escape' || e.key.length === 1)) shut(); });
+    box.closest('.main, main')?.addEventListener('scroll', shut, true);
+    // The switch "Double-click", for the prototype: each case at once
+    const dbl = target => document.querySelector(`[data-group="dbl"] [data-target="${target}"]`);
+    dbl('none')?.addEventListener('click', () => { shut(); rs.hidden = true; kt.hidden = true; document.getElementById('pm').hidden = true; });
+    dbl('resource')?.addEventListener('click', () => { document.getElementById('pm').hidden = true; showResource('weekly_lead_volume'); });
+    dbl('field')?.addEventListener('click', () => {
+      rs.hidden = true; kt.hidden = true; document.getElementById('pm').hidden = true;
+      const word = [...box.querySelectorAll('.ln:not([hidden]):not(.off) .sql-field[data-field="lead_source"]')][0];
+      if (!word) return;
+      const range = document.createRange(); range.selectNodeContents(word);
+      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(range);
+      setTimeout(() => showField('lead_source', word.getBoundingClientRect()));
+    });
+    dbl('param')?.addEventListener('click', () => { shut(); rs.hidden = true; kt.hidden = true; });
+    // A table outside Data Hub is in the SQL of a power user's query: the switch SQL shows it first
+    const knownSql = () => document.querySelector('[data-group="sqlstate"] [data-target="known"]')?.click();
+    dbl('known')?.addEventListener('click', () => { document.getElementById('pm').hidden = true; knownSql(); showKnown('known'); });
+    dbl('view')?.addEventListener('click', () => { document.getElementById('pm').hidden = true; knownSql(); showKnown('view'); });
+    dbl('knownfield')?.addEventListener('click', () => {
+      rs.hidden = true; kt.hidden = true; document.getElementById('pm').hidden = true; knownSql();
+      const word = box.querySelector('.ln[data-variant="known"] .sql-field[data-field="lead_id"]');
+      if (!word) return;
+      const range = document.createRange(); range.selectNodeContents(word);
+      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(range);
+      setTimeout(() => showField('lead_id', word.getBoundingClientRect()));
+    });
+    // ?dbl= in the address was clicked before these listeners were there
+    const asked = new URLSearchParams(location.search).get('dbl');
+    if (asked && asked !== 'none') dbl(asked)?.click();
+  }
 }
 
 // The result of a query, as a grid like that of BigQuery (Proposal): the row number, then a column per field with its
@@ -1137,7 +1300,7 @@ if (grid) {
     cols.forEach((c, i) => { c.style.width = widths[i] + 'px'; });
     table.style.width = ROW_W + widths.reduce((a, b) => a + b, 0) + 'px';
   };
-  thead.innerHTML = `<tr><th class="rn" scope="col">Row</th>${COLS.map((c, i) => `<th scope="col" data-col="${i}"><span class="rh"><span class="rh-text"><span class="rh-name"><span>${c.name}</span><i class="ph rh-sorted" hidden></i></span><span class="rh-type">${c.type}</span></span>`
+  thead.innerHTML = `<tr><th class="rn" scope="col">Row</th>${COLS.map((c, i) => `<th scope="col" data-col="${i}"><span class="rh"><span class="rh-text"><span class="rh-name"><span${c.description ? ` class="rh-described" title="${esc(c.description)}"` : ''}>${c.name}</span><i class="ph rh-sorted" hidden></i></span><span class="rh-type">${c.type}</span></span>`
     + `<button class="icon-btn rh-menu" aria-label="Menu of ${c.name}" aria-haspopup="menu"><i class="ph ph-caret-down"></i></button></span><span class="rh-resize" title="Drag to resize, double-click to fit"></span></th>`).join('')}</tr>`;
 
   const draw = () => {
@@ -1247,20 +1410,59 @@ if (scopeBox) {
   };
 
   // Prototype: the SQL as written, or with a table outside the Resources of the query
+  // ...or, for a power user, with a table Data Hub knows that is no Resource (DEC-UX-220)
   document.querySelectorAll('[data-group="sqlstate"] [data-target]').forEach(b => b.addEventListener('click', () => {
-    const outside = b.dataset.target === 'outside';
-    document.querySelectorAll('.ln[data-variant]').forEach(l => l.classList.toggle('off', (l.dataset.variant === 'outside') !== outside));
+    document.querySelectorAll('.ln[data-variant]').forEach(l => l.classList.toggle('off', l.dataset.variant !== b.dataset.target));
     syncRun();
   }));
 
   // A new query, with one more Resource or one less
   const sheet = $('newq-sheet');
   let mode = 'add', removing = null;
+  const picks = () => [...sheet.querySelectorAll('input[name="newq-pick"]:checked')].map(i => i.value);
   const newSet = () => {
     const cur = scopeNow();
     if (mode === 'remove') return cur.filter(r => r !== removing);
-    const pick = sheet.querySelector('input[name="newq-pick"]:checked').value;
-    return cur.includes(pick) ? cur : [...cur, pick];
+    if (mode === 'same') return cur;
+    // One or more at once, a query reading up to ten (DEC-UX-225)
+    return [...new Set([...cur, ...picks()])].slice(0, 10);
+  };
+  // What a Resource or a table outside Data Hub comes in as: a CTE at the start of the SQL, named after its table,
+  // selecting its fields, filtering on its recent partitions (DEC-UX-225)
+  const SOURCES = {
+    listings: { name: 'listings', full: 'immoscoop-dataplatform-398214.dbt_prod_listings.listings', fields: ['listing_id', 'listed_date', 'postal_code', 'price'], partition: 'listed_date' },
+    partner_contracts: { name: 'partner_contracts', full: 'immoscoop-dataplatform-398214.dbt_prod_stacks.partner_contracts', fields: ['partner_id', 'lead_source', 'contract_start'], partition: null },
+    saved_searches: { name: 'saved_searches', full: 'immoscoop-dataplatform-398214.dbt_prod_search.saved_searches', fields: ['search_id', 'saved_date', 'user_id'], partition: 'saved_date' },
+  };
+  const cteText = t => `${t.name} as (\n  select ${t.fields.join(',\n         ')}\n  from \`${t.full}\`${t.partition ? `\n  where ${t.partition} >= date_sub(current_date(), interval 28 day)` : ''}\n)`;
+  const addCtes = list => {
+    const editor = document.querySelector('.sql-editor');
+    const lines = [...editor.querySelectorAll('.ln')].filter(l => !l.classList.contains('off') && !l.hidden);
+    const first = lines.find(l => /^\s*with\s/i.test(l.querySelector('.ln-code').textContent));
+    if (!first || !list.length) return;
+    const taken = new Set([...editor.querySelectorAll('.ln-code')].map(c => (/^\s*(?:with\s+)?(\w+)\s+as\s*\(/i.exec(c.textContent) || [])[1]).filter(Boolean));
+    const html = [];
+    list.forEach((t, i) => {
+      let name = t.name, n = 2;
+      while (taken.has(name)) name = `${t.name}_${n++}`;
+      taken.add(name);
+      const key = `<span class="sql-key" data-table="${t.key || t.name}"${t.layer ? ` data-known="${t.layer}"` : ''}>\`${t.full}\`</span>`;
+      html.push(`${i === 0 ? 'with ' : ''}${name} as (`, `  select ${t.fields[0]}${t.fields.length > 1 ? ',' : ''}`,
+        ...t.fields.slice(1).map((f, j) => `         ${f}${j < t.fields.length - 2 ? ',' : ''}`),
+        `  from ${key}`, ...(t.partition ? [`  where ${t.partition} >= date_sub(current_date(), interval 28 day)`] : []), '),', '');
+    });
+    const start = +first.querySelector('.ln-no').textContent;
+    const made = html.map((code, i) => { const l = document.createElement('div'); l.className = 'ln just-added'; l.innerHTML = `<span class="ln-no">${start + i}</span><span class="ln-fold"></span><span class="ln-code">${code}</span>`; return l; });
+    // The CTEs already there follow them: "with" moves up to the first one that comes
+    const text = [...first.querySelector('.ln-code').childNodes].find(c => c.nodeType === 3 && /\bwith\s/i.test(c.textContent));
+    if (text) text.textContent = text.textContent.replace(/\bwith\s+/i, '');
+    else first.querySelector('.ln-code .sql-kw')?.remove();
+    let after = false;
+    editor.querySelectorAll('.ln').forEach(l => { if (l === first) after = true; if (after) { const no = l.querySelector('.ln-no'); if (no && no.textContent) no.textContent = +no.textContent + made.length; } });
+    made.forEach(l => first.before(l));
+    made.forEach(l => colourSql(l));
+    setTimeout(() => made.forEach(l => l.classList.remove('just-added')), 1600);
+    syncRun();
   };
   // Its name is suggested from its Resources and the date, as for every new query (DEC-UX-21, DEC-UX-23)
   const nameFor = set => { const n = set.map((r, i) => i ? NAMES[r].toLowerCase() : NAMES[r]); return (n.length > 1 ? n.slice(0, -1).join(', ') + ' and ' + n.at(-1) : n[0]) + ', 27 Oct'; };
@@ -1268,6 +1470,13 @@ if (scopeBox) {
     const set = newSet(), cur = scopeNow(), n = set.length, these = n === 1 ? 'this resource' : `these ${n} resources`;
     $('newq-set').innerHTML = [...new Set([...cur, ...set])].map(r => `<span class="use-chip on${set.includes(r) ? '' : ' removed'}"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>${cur.includes(r) ? '' : '+ '}${NAMES[r]}</span>`).join('');
     $('newq-name').value = nameFor(set);
+    const added = set.filter(r => !cur.includes(r));
+    if (mode === 'add') {
+      $('newq-ctes').textContent = added.map(r => cteText(SOURCES[r])).join(',\n\n') || 'Tick a Resource to add.';
+      $('newq-title').textContent = added.length > 1 ? `With ${added.length} more resources` : 'With one more resource';
+      $('newq-start').disabled = !added.length;
+      sheet.querySelectorAll('.pick').forEach(p => p.classList.toggle('on', p.querySelector('input').checked));
+    }
     const l = LENSES(set), list = l.names.length ? `<ul>${l.names.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '';
     $('newq-lenses').innerHTML = '<i class="ph ph-aperture"></i><div>' + (l.exact
       ? `<b>${l.exact} lens${l.exact > 1 ? 'es' : ''}</b> use${l.exact > 1 ? '' : 's'} exactly ${these}${l.more ? `, ${l.more} use ${n === 1 ? 'it' : 'them'} and more` : ''}.`
@@ -1277,15 +1486,18 @@ if (scopeBox) {
   };
   const openNew = (m, res) => {
     mode = m; removing = m === 'remove' ? res : null;
-    $('newq-title').textContent = m === 'add' ? 'With one more resource' : `Without ${NAMES[res]}`;
-    $('newq-why-what').textContent = m === 'add' ? 'Adding one' : 'Removing one';
+    // "New query from this one", in the quick window (DEC-UX-237): the same Resources, the SQL and Parameters along
+    $('newq-title').textContent = m === 'add' ? 'With more resources' : m === 'same' ? 'With the same resources' : `Without ${NAMES[res]}`;
+    $('newq-why-what').textContent = m === 'add' ? 'Adding Resources' : m === 'same' ? 'Starting from this one' : 'Removing one';
+    $('newq-start').disabled = false;
     sheet.querySelector('[data-newq="add"]').hidden = m !== 'add';
     sheet.querySelector('[data-newq="remove"]').hidden = m !== 'remove';
-    if (m === 'add' && res) sheet.querySelector(`input[name="newq-pick"][value="${res}"]`).checked = true;
+    if (m === 'add') sheet.querySelectorAll('input[name="newq-pick"]').forEach(i => { i.checked = res ? i.value === res : i.value === 'listings'; });
     if (m === 'remove') $('newq-removed-table').textContent = res;
     update(); sheet.hidden = false;
   };
   sheet.querySelectorAll('input[name="newq-pick"]').forEach(i => i.addEventListener('change', update));
+  window.quickNewSame = () => openNew('same');
   document.addEventListener('click', e => {
     const add = e.target.closest('[data-add-res]'), remove = e.target.closest('[data-remove-res]');
     if (add) openNew('add', add.dataset.addRes || null);
@@ -1293,7 +1505,7 @@ if (scopeBox) {
     if (e.target.closest('#lenses-btn')) lensButton();
   });
   $('newq-start').addEventListener('click', () => {
-    const set = newSet(), name = $('newq-name').value.trim() || nameFor(set), from = $('q-title').textContent;
+    const set = newSet(), name = $('newq-name').value.trim() || nameFor(set), from = $('q-title').textContent, added = set.filter(r => !scopeNow().includes(r));
     // The panel: the new query on top, open; the old one stays, folded
     const old = document.querySelector('.q-item.current');
     old.classList.remove('current'); old.removeAttribute('aria-current'); old.closest('.q-entry').classList.remove('open');
@@ -1301,11 +1513,11 @@ if (scopeBox) {
     entry.className = 'q-entry new-q';
     entry.innerHTML = `<a class="list-item card q-item current" aria-current="page" href="query.html" data-name="${esc(name.toLowerCase())}"><i class="ph ph-table kind-icon" role="img" aria-label="On resources"></i>`
       + `<span><span class="item-title">${esc(name)}</span><span class="meta">from ${esc(from)} · not run yet</span></span></a>`;
-    document.querySelector('[data-pane="yours"] .panel-label').after(entry);
-    // The page: its name, its question, where it came from, its Resources; no result and no history yet
-    $('q-title').textContent = name;
+    document.querySelector('[data-pane="yours"] .panel-label')?.after(entry);
+    // The page: its name and its question, its Resources; no result and no history yet. Where it came from is in its
+    // History, not under its question (DEC-UX-250)
+    $('q-title').textContent = name; $('q-title').title = name;
     $('q-question').textContent = $('newq-question').value;
-    $('q-origin').hidden = false; $('q-origin').querySelector('a').textContent = from;
     document.querySelectorAll('#scope-chips [data-res]').forEach(c => { c.hidden = !set.includes(c.dataset.res); });
     removedRes = mode === 'remove' ? removing : null;
     const card = document.querySelector('.result-card');
@@ -1315,8 +1527,74 @@ if (scopeBox) {
     $('not-run').hidden = !document.querySelector('[data-group="rtab"] [data-target="result"]').classList.contains('on');
     $('no-history').hidden = false;
     sheet.hidden = true;
+    // Each Resource added comes as a CTE at the start of its SQL (DEC-UX-225)
+    if (mode === 'add') addCtes(added.map(r => ({ ...SOURCES[r], key: r })));
     lensButton(); syncRun();
   });
+
+  // Find a table, for a power user (DEC-UX-224): the tables Data Hub knows from the dbt projects it follows, ticked one
+  // or more at once and added as CTEs at the start of the SQL of this query; a Resource starts a new query with it
+  const find = $('find-sheet');
+  if (find) {
+    const TABLES = [
+      { name: 'stg_oltp__leads', layer: 'staging', project: 'dbt-prod', dataset: 'dbt_prod_staging', partition: 'created_date', desc: 'One row per lead as the OLTP database keeps it: renamed, typed and without test leads.',
+        cols: [['lead_id', 'STRING', null, 'Id of the lead in the OLTP database.'], ['created_date', 'DATE', 'Partition', 'Day the lead was created, Belgian time.'], ['lead_source', 'STRING', 'Cluster 1', 'Source system code of the lead.'], ['email_address_id', 'STRING', null, 'Hashed id of the e-mail address; null when none was given.']] },
+      { name: 'stg_oltp__lead_status_changes', layer: 'staging', project: 'dbt-prod', dataset: 'dbt_prod_staging', partition: 'changed_date', desc: 'One row per change of the status of a lead, with when it changed.',
+        cols: [['lead_id', 'STRING', null, 'Id of the lead.'], ['changed_date', 'DATE', 'Partition', 'Day of the change.'], ['status', 'STRING', null, 'The status after the change.']] },
+      { name: 'src_oltp__leads', layer: 'source', project: 'dbt-prod', dataset: 'raw_oltp', partition: null, desc: 'The leads table of the OLTP database, as it is loaded each night, unchanged.',
+        cols: [['id', 'INT64', null, 'Primary key.'], ['created_at', 'TIMESTAMP', null, 'When the row was created.'], ['payload', 'JSON', null, 'The lead as the website sent it.']] },
+      { name: 'intm_creditlead__attributed', layer: 'intermediate', project: 'Colleciónes', dataset: 'colleciones_dbt', partition: 'collector_date', desc: 'Each credit lead event with the session, source and campaign it is attributed to.',
+        cols: [['event_id', 'STRING', null, 'Id of the event.'], ['collector_date', 'DATE', 'Partition', 'Day the collector received the event.'], ['email_address_id', 'STRING', null, 'Hashed id of the e-mail address.']] },
+      { name: 'partner_contracts', layer: 'mart', project: 'dbt-prod', dataset: 'dbt_prod_stacks', partition: null, desc: 'One row per contract with a lead partner.', resource: { collection: 'Partners', level: '4 · Explored' },
+        cols: [['partner_id', 'STRING', null, 'Id of the partner.'], ['lead_source', 'STRING', null, 'The lead source of the partner.'], ['contract_start', 'DATE', null, 'First day of the contract.']] },
+    ];
+    const LAYER = { source: 'source', staging: 'staging', intermediate: 'intermediate', mart: 'mart' };
+    const picked = new Set(), unfolded = new Set();
+    let layer = '';
+    const fullOf = t => `${t.project === 'Colleciónes' ? 'immoscoop-dataplatform-398214' : 'immoscoop-dataplatform-398214'}.${t.dataset}.${t.name}`;
+    const asSource = t => ({ name: t.name, full: fullOf(t), fields: t.cols.map(c => c[0]), partition: t.partition, layer: t.layer });
+    const render = () => {
+      const q = $('ft-q').value.trim().toLowerCase(), project = $('ft-project').value;
+      const shown = TABLES.filter(t => (!layer || t.layer === layer) && (!project || t.project === project) && (!q || `${t.name} ${t.desc}`.toLowerCase().includes(q)));
+      $('ft-list').innerHTML = shown.map(t => `<div class="ft-row${picked.has(t.name) ? ' on' : ''}${unfolded.has(t.name) ? ' unfolded' : ''}" data-ft="${t.name}">`
+        + (t.resource ? '<i class="ph ph-table" style="margin-top:3px;color:var(--text-secondary)" aria-label="Resource"></i>' : `<input type="checkbox" aria-label="Add ${t.name}"${picked.has(t.name) ? ' checked' : ''}>`)
+        + `<button type="button" class="ft-open" aria-expanded="${unfolded.has(t.name)}"><i class="ph ph-caret-right"></i><span class="ft-name">${t.name}</span><span class="pill">${LAYER[t.layer]}</span><span class="ft-where">${t.project} · ${t.dataset}</span></button>`
+        + `<p class="ft-desc">${esc(t.desc)}</p>`
+        + (t.resource ? `<div class="ft-res"><span class="pill pill-strong">Resource</span>${t.resource.collection} · Level ${t.resource.level}<button class="text-link" type="button" data-add-res="${t.name}">Start a new query with it</button></div>` : '')
+        + (unfolded.has(t.name) ? `<div class="ft-cols">${t.cols.map(([c, type, role, d]) => `<div class="ft-col"><span><span class="mono">${c}</span>${role ? `<span class="pill pill-strong">${role}</span>` : ''}</span><span class="meta">${type}</span><span class="muted">${esc(d)}</span></div>`).join('')}</div>` : '')
+        + '</div>').join('') || '<p class="meta" style="padding:10px">No table Data Hub knows by these words.</p>';
+      const list = TABLES.filter(t => picked.has(t.name));
+      $('ft-ctes-box').hidden = !list.length;
+      $('ft-ctes').textContent = list.map(t => cteText(asSource(t))).join(',\n\n');
+      $('ft-add').disabled = !list.length;
+      $('ft-add').querySelector('span').textContent = list.length > 1 ? `Add ${list.length} tables` : list.length ? 'Add 1 table' : 'Add tables';
+    };
+    $('ft-q').addEventListener('input', render);
+    $('ft-project').addEventListener('change', render);
+    $('ft-layers').addEventListener('click', e => {
+      const b = e.target.closest('[data-layer]'); if (!b) return;
+      layer = b.dataset.layer;
+      $('ft-layers').querySelectorAll('.seg').forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-selected', String(x === b)); });
+      render();
+    });
+    $('ft-list').addEventListener('click', e => {
+      const row = e.target.closest('[data-ft]'); if (!row) return;
+      if (e.target.closest('[data-add-res]')) { find.hidden = true; return; }
+      if (e.target.matches('input[type="checkbox"]')) { if (e.target.checked) picked.add(row.dataset.ft); else picked.delete(row.dataset.ft); render(); return; }
+      if (e.target.closest('.ft-open')) { if (unfolded.has(row.dataset.ft)) unfolded.delete(row.dataset.ft); else unfolded.add(row.dataset.ft); render(); }
+    });
+    $('ft-add').addEventListener('click', () => {
+      addCtes(TABLES.filter(t => picked.has(t.name)).map(asSource));
+      picked.clear(); find.hidden = true; render();
+    });
+    const openFind = () => { render(); find.hidden = false; $('ft-q').focus(); };
+    document.addEventListener('click', e => { if (e.target.closest('[data-find-table]')) openFind(); });
+    if (new URLSearchParams(location.search).get('find') === 'open') {
+      document.documentElement.dataset.role = 'datateam';
+      document.querySelector('.role-switch [data-target="datateam"]')?.click();
+      picked.add('stg_oltp__leads'); unfolded.add('stg_oltp__leads'); openFind();
+    }
+  }
 
   // The panel: a query unfolds to its last runs; a run opens in its history
   document.querySelector('.panel').addEventListener('click', e => {
@@ -1342,7 +1620,7 @@ const drawLineage = () => document.querySelectorAll('.lin').forEach(lin => {
   let svg = lin.querySelector(':scope > svg.lin-edges');
   if (!svg) {
     svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.classList.add('lin-edges'); svg.setAttribute('aria-hidden', 'true');
-    svg.innerHTML = '<defs><marker id="lin-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="currentColor"/></marker></defs><g></g>';
+    svg.innerHTML = '<g></g>';
     lin.prepend(svg);
   }
   const box = lin.getBoundingClientRect(), g = svg.querySelector('g');
@@ -1352,7 +1630,7 @@ const drawLineage = () => document.querySelectorAll('.lin').forEach(lin => {
   const curve = (from, to, on) => {
     if (!shown(from) || !shown(to)) return '';
     const [x1, y1] = at(from, 'right'), [x2, y2] = at(to, 'left'), dx = Math.max(18, (x2 - x1) / 2);
-    return `<path class="edge${on ? ' on' : ''}" d="M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2 - 2},${y2}" marker-end="url(#lin-arrow)"/>`;
+    return `<path class="edge${on ? ' on' : ''}" d="M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}"/>`;
   };
   const center = lin.querySelector('.lin-center .lin-node');
   const fans = side => [...lin.querySelectorAll(`.lin-wing.${side} .lin-fan`)];
@@ -1414,4 +1692,225 @@ document.querySelectorAll('.metric-table .agg').forEach(a => { a.setAttribute('r
   ribbon.innerHTML = `<span>${env.replace(/[^a-z0-9-]/gi, '')}</span>`;
   document.body.prepend(ribbon);
   document.title = `${env} · ${document.title}`;
+})();
+
+// Making a Lens, its fields (DEC-UX-227): a field no Resource names takes the description of a field of its Resources,
+// searched by name and words, or one its author writes; Change does the same for any field
+{
+  const list = document.getElementById('lf-list');
+  if (list) {
+    const FIELDS = [
+      ['Weekly lead volume', 'week_start', 'DATE', 'The Monday of the week the lead came in.'],
+      ['Weekly lead volume', 'lead_source', 'STRING', 'Where the lead came in: the website, the app, a partner or a mailing.'],
+      ['Weekly lead volume', 'lead_channel', 'STRING', 'Channel through which the lead was submitted.'],
+      ['Weekly lead volume', 'lead_count', 'INT64', 'Number of credit leads sent to KBC in the week, for the source.'],
+      ['Lead sources', 'lead_source', 'STRING', 'Source system code; one row per code.'],
+      ['Lead sources', 'source_name', 'STRING', 'The name of the source as colleagues know it.'],
+    ];
+    const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+    let row = null;
+    const pick = document.getElementById('lf-pick'), q = document.getElementById('lf-q'), options = document.getElementById('lf-options');
+    const draw = () => {
+      const words = q.value.trim().toLowerCase();
+      const found = FIELDS.filter(f => !words || `${f[1]} ${f[3]}`.toLowerCase().includes(words));
+      options.innerHTML = [...new Set(found.map(f => f[0]))].map(r => `<div class="lf-group">${r}</div>`
+        + found.filter(f => f[0] === r).map(f => `<button type="button" class="lf-option" data-r="${esc(f[0])}" data-f="${f[1]}"><span class="mono">${f[1]}</span><span class="meta">${f[2]}</span><span class="lf-text">${esc(f[3])}</span></button>`).join('')).join('')
+        || '<p class="meta" style="padding:6px 8px">No field of its Resources by these words.</p>';
+    };
+    const open = target => { row = target; target.querySelector('.lf-desc').append(pick); pick.hidden = false; draw(); q.focus(); };
+    list.addEventListener('click', e => {
+      const at = e.target.closest('.lf-row'); if (!at) return;
+      if (e.target.closest('[data-lf-pick]')) { open(at); return; }
+      if (e.target.closest('[data-lf-write]')) {
+        at.classList.remove('lf-missing');
+        at.querySelector('.lf-desc').innerHTML = `<span class="lf-from"><i class="ph ph-pencil-simple"></i>Written by you</span><textarea rows="2" aria-label="Description"></textarea>`;
+        at.querySelector('textarea').focus(); return;
+      }
+      const option = e.target.closest('.lf-option');
+      if (option && row) {
+        const f = FIELDS.find(x => x[0] === option.dataset.r && x[1] === option.dataset.f);
+        document.body.append(pick); pick.hidden = true;
+        row.classList.remove('lf-missing');
+        row.querySelector('.lf-desc').innerHTML = `<span class="lf-from"><i class="ph ph-arrow-bend-down-right"></i>Taken from ${esc(f[0])} · <span class="mono">${f[1]}</span></span><p>${esc(f[3])}</p>`;
+        if (!row.querySelector('.lf-change')) row.insertAdjacentHTML('beforeend', '<button class="text-link lf-change" type="button" data-lf-pick>Change</button>');
+        row = null;
+      }
+    });
+    q.addEventListener('input', draw);
+    if (new URLSearchParams(location.search).get('lf') === 'pick') { document.querySelector('[data-group="step"] [data-target="4"]')?.click(); open(document.getElementById('lf-leads')); }
+  }
+}
+
+// Making a Lens as a flow (DEC-UX-229): Back and Next open the step before or after, as a click on it on the right does
+document.addEventListener('click', e => {
+  const go = e.target.closest('[data-step-go]');
+  if (go) { document.querySelector(`[data-group="step"] [data-target="${go.dataset.stepGo}"]`)?.click(); document.querySelector('.nq-left')?.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
+});
+
+// The quick window (DEC-UX-237): Cmd+Shift+P or Cmd+K (Ctrl on Windows), anywhere in Data Hub, also while typing in the SQL
+// editor. Empty, it lists the commands of the screen it opened on (a page declares them in window.QUICK), the flagged
+// queries with their keys, and Go to: every section. Typed, it searches those and everything the User may see,
+// Resources, Collections, Lenses, their queries and Learning Cards, grouped by kind, each with its kind on the right.
+// Up and Down move, Enter does what the row says, Escape, the shortcut again or a click beside it closes it.
+// Empty, it lists first what the User did from it in this session, most recent first, five at most (DEC-UX-242). The
+// first nine rows that can be done carry ⌘1 to ⌘9: that key highlights the row, and Enter then does it; while the window
+// is open, ⌘1 to ⌘9 no longer open a flagged query, whose key shows in its name line.
+// What the User may never do is not listed; what they cannot do right now is greyed, with why (DEC-UX-207).
+// Prototype: ?quick=open opens it, ?quick=open&q=lead with a search typed.
+(() => {
+  const role = () => document.documentElement.dataset.role || 'colleague';
+  const FLAGGED = [
+    { title: 'Leads per source name', meta: '⌘1', href: 'query.html' },
+    { title: 'Partner share per week', meta: '⌘2', href: 'query.html' },
+    { title: 'Listings per postal code, last 28 days', meta: '⌘3', href: 'query.html' },
+    { title: 'Saved searches by price band', meta: '⌘4', href: 'query.html' },
+  ];
+  const GO = [
+    { icon: 'ph-fill ph-stack', title: 'Collections', href: 'collections-start.html', words: 'home start' },
+    { icon: 'ph-fill ph-terminal-window', title: 'Query', href: 'query-new.html', words: 'sql' },
+    { icon: 'ph-fill ph-chart-bar', title: 'Charts', href: 'charts.html', words: 'semgraph gallery' },
+    { icon: 'ph-fill ph-chat-circle-text', title: 'Messages', href: 'messages.html', meta: '3 unread', words: 'message centre inbox' },
+    { icon: 'ph-fill ph-graduation-cap', title: 'Learning Centre', href: 'learning-start.html', words: 'cards learn' },
+    { icon: 'ph ph-user-circle', title: 'My page', href: 'my-page.html', words: 'profile background language slack' },
+    { icon: 'ph ph-users-three', title: 'Groups', href: 'groups.html', words: 'team owner unit' },
+    { icon: 'ph-fill ph-toolbox', title: 'Admin · Webhooks', href: 'admin-webhooks.html', for: 'datateam', words: 'dbt' },
+    { icon: 'ph-fill ph-toolbox', title: 'Admin · Users', href: 'admin-users.html', for: 'datateam' },
+    { icon: 'ph-fill ph-toolbox', title: 'Admin · Permission groups', href: 'admin-permission-groups.html', for: 'datateam' },
+  ];
+  const COMMANDS = [
+    { icon: 'ph-fill ph-plus-circle', title: 'New query', href: 'query-new.html', words: 'start sql' },
+    { icon: 'ph ph-moon', title: 'Switch light or dark', run: () => document.getElementById('theme')?.click(), words: 'theme day night' },
+    // The panel, on every screen that has one, and on Query reading the queries again (DEC-UX-254)
+    { icon: 'ph ph-sidebar-simple', title: 'Hide the panel', run: () => document.querySelector('.panel')?.toggleAttribute('hidden'), words: 'toggle side menu sidebar collapse expand panel' },
+    ...(location.pathname.includes('query') ? [{ icon: 'ph ph-arrows-clockwise', title: 'Refresh the queries', meta: 'reads them again, such as those Claude made', run: () => {}, words: 'reload update refresh claude' }] : []),
+  ];
+  const ITEMS = [
+    { group: 'Resources', icon: 'ph ph-table', title: 'Weekly lead volume', meta: 'Credit leads · 4 · Explored', href: 'resource-overview.html' },
+    { group: 'Resources', icon: 'ph ph-table', title: 'Lead sources', meta: 'Credit leads · 2 · Described', href: 'resource-overview.html' },
+    { group: 'Resources', icon: 'ph ph-table', title: 'Listings', meta: 'Listings and sales · 3 · Confirmed', href: 'resource-overview.html' },
+    { group: 'Resources', icon: 'ph ph-table', title: 'Leads per day', meta: 'Credit leads · 1 · Available', href: 'resource-overview.html' },
+    { group: 'Resources', icon: 'ph ph-table', title: 'Partner contracts', meta: 'Partners · 4 · Explored', href: 'resource-overview.html' },
+    { group: 'Collections', icon: 'ph ph-coins', title: 'Credit leads', meta: '12 Resources · 4 Lenses', href: 'collection-overview.html' },
+    { group: 'Collections', icon: 'ph ph-house-line', title: 'Listings and sales', meta: '9 Resources', href: 'collection-overview.html' },
+    { group: 'Lenses', icon: 'ph ph-aperture', title: 'Leads per source name', meta: 'Credit leads', href: 'lens.html' },
+    { group: 'Lenses', icon: 'ph ph-aperture', title: 'Lead quality by partner', meta: 'Credit leads', href: 'lens.html' },
+    { group: 'Your queries', icon: 'ph ph-table', title: 'Lead volume per province', meta: 'Mon 26 Oct', href: 'query.html' },
+    { group: 'Your queries', icon: 'ph ph-table', title: 'Leads that came back within a week', meta: 'yesterday', href: 'query.html' },
+    { group: 'Learning Cards', icon: 'ph ph-graduation-cap', title: 'What one row stands for', meta: '2.1.3 · grain', href: 'learning-card.html' },
+    { group: 'Learning Cards', icon: 'ph ph-graduation-cap', title: 'When a figure is final', meta: 'K5.4', href: 'learning-card.html' },
+  ];
+  const KIND = { Resources: 'Resource', Collections: 'Collection', Lenses: 'Lens', 'Your queries': 'Query', 'Learning Cards': 'Learning Card' };
+  const ORDER = ['Commands', 'Flagged queries', 'Resources', 'Collections', 'Lenses', 'Your queries', 'Learning Cards', 'Go to'];
+  const back = document.createElement('div');
+  back.className = 'quick-backdrop'; back.hidden = true;
+  const win = document.createElement('section');
+  win.className = 'quick'; win.hidden = true;
+  win.setAttribute('role', 'dialog'); win.setAttribute('aria-modal', 'true'); win.setAttribute('aria-label', 'Quick window');
+  win.innerHTML = `<div class="quick-head"><i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+    <input id="quick-q" placeholder="Search commands, Resources, Lenses, queries…" role="combobox" aria-expanded="true" aria-controls="quick-list" autocomplete="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-bwignore data-form-type="other">
+    <span class="quick-where" id="quick-where" hidden></span></div>
+    <div class="quick-list" id="quick-list" role="listbox" aria-label="Commands and places"></div>
+    <div class="quick-foot"><svg class="logo" width="24" height="16" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+    <span class="meta">↑↓ to move</span><span class="quick-act" id="quick-act">Open</span><span class="kbd">↵</span><span class="sep"></span><span>Close</span><span class="kbd">esc</span></div>`;
+  document.body.append(back, win);
+  const input = win.querySelector('#quick-q'), list = win.querySelector('#quick-list');
+  let rows = [], on = 0;
+  // What the User did from the window in this session, most recent first (DEC-UX-242)
+  const recent = [];
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const bold = (text, q) => { const i = q ? text.toLowerCase().indexOf(q) : -1; return i < 0 ? esc(text) : esc(text.slice(0, i)) + '<b>' + esc(text.slice(i, i + q.length)) + '</b>' + esc(text.slice(i + q.length)); };
+  const score = (row, q) => { const t = row.title.toLowerCase(), w = `${t} ${(row.words || '').toLowerCase()} ${(row.meta || '').toLowerCase()}`; return t.startsWith(q) ? 3 : new RegExp(`\\b${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`).test(w) ? 2 : w.includes(q) ? 1 : 0; };
+  const visible = r => !r.for || r.for.split(' ').includes(role());
+  function draw() {
+    const q = input.value.trim().toLowerCase(), ctx = window.QUICK || {};
+    const here = (ctx.commands || []).filter(visible).map(r => ({ ...r, group: ctx.group || 'This screen', kind: 'Command' }));
+    const all = [
+      ...here,
+      ...COMMANDS.map(r => ({ ...r, group: 'Commands', kind: 'Command' })),
+      // On a flagged query, the next and the previous one, round the row (DEC-UX-241)
+      ...(document.querySelector('.q-flag.current') ? [
+        { icon: 'ph ph-arrow-right', title: 'Next flagged query', meta: 'Partner share per week · ⌘2', href: 'query.html', group: 'Flagged queries', kind: 'Command', words: 'next flagged tab switch' },
+        { icon: 'ph ph-arrow-left', title: 'Previous flagged query', meta: 'Saved searches by price band · ⌘4', href: 'query.html', group: 'Flagged queries', kind: 'Command', words: 'previous flagged tab switch back' },
+      ] : []),
+      ...FLAGGED.map(r => ({ ...r, icon: 'ph-fill ph-flag', group: 'Flagged queries', kind: 'Query' })),
+      ...ITEMS.map(r => ({ ...r, kind: KIND[r.group] })),
+      ...GO.filter(visible).map(r => ({ ...r, group: 'Go to', kind: 'Section' })),
+    ];
+    let shown;
+    if (!q) {
+      const usual = [...here, ...all.filter(r => r.group === 'Flagged queries'), ...all.filter(r => r.group === 'Go to')];
+      const used = recent.map(title => usual.find(r => r.title === title)).filter(Boolean).slice(0, 5);
+      shown = [...used.map(r => ({ ...r, group: 'Recently used' })), ...usual.filter(r => !used.includes(r))];
+    }
+    else {
+      const groups = [ctx.group || 'This screen', ...ORDER];
+      shown = groups.flatMap(g => all.filter(r => r.group === g).map(r => ({ r, s: score(r, q) })).filter(x => x.s).sort((a, b) => b.s - a.s).slice(0, g === (ctx.group || 'This screen') ? 9 : 4).map(x => x.r));
+    }
+    // A greyed row is never the one Enter does; with nothing to do, the foot says nothing about Enter
+    rows = shown; on = shown.findIndex(r => !r.disabled);
+    // ⌘1 to ⌘9 on the first nine rows that can be done
+    let picks = 0;
+    const pickOf = shown.map(r => (!r.disabled && picks < 9 ? ++picks : null));
+    let last = null, html = '';
+    shown.forEach((r, i) => {
+      if (r.group !== last) { html += `<div class="quick-group" role="presentation">${esc(r.group)}</div>`; last = r.group; }
+      html += `<div class="quick-row${i === on ? ' on' : ''}" role="option" id="quick-${i}" data-i="${i}" aria-selected="${i === on}"${r.disabled ? ' aria-disabled="true"' : ''}>`
+        + `<i class="${r.icon || 'ph ph-arrow-right'}" aria-hidden="true"></i><span class="quick-title">${bold(r.title, q)}</span>`
+        + `<span class="quick-meta">${r.meta ? esc(r.meta) : ''}</span>${r.keys ? `<span class="kbd">${esc(r.keys)}</span>` : ''}<span class="quick-kind">${esc(r.kind)}</span>${pickOf[i] ? `<span class="quick-pick">⌘${pickOf[i]}</span>` : ''}</div>`
+        + (r.disabled && r.why ? `<div class="quick-why">${esc(r.why)}</div>` : '');
+    });
+    list.innerHTML = html || `<div class="quick-none">Nothing found for “${esc(input.value.trim())}”. Data Hub only finds what you may see.</div>`;
+    act();
+  }
+  function act() {
+    list.querySelectorAll('.quick-row').forEach(el => { const i = +el.dataset.i; el.classList.toggle('on', i === on); el.setAttribute('aria-selected', String(i === on)); });
+    const r = rows[on], label = win.querySelector('#quick-act');
+    label.textContent = !r ? '' : r.action || (r.kind === 'Command' ? 'Do it' : r.kind === 'Section' ? 'Go there' : 'Open');
+    label.hidden = label.nextElementSibling.hidden = !r;
+    input.setAttribute('aria-activedescendant', r ? `quick-${on}` : '');
+    list.querySelector(`#quick-${on}`)?.scrollIntoView({ block: 'nearest' });
+  }
+  function doRow(r) {
+    if (!r || r.disabled) return;
+    const at = recent.indexOf(r.title);
+    if (at >= 0) recent.splice(at, 1);
+    recent.unshift(r.title);
+    close();
+    if (r.href) location.href = r.href;
+    else if (r.click) document.querySelector(r.click)?.click();
+    else if (r.run) r.run();
+  }
+  function open() {
+    const ctx = window.QUICK || {};
+    const where = win.querySelector('#quick-where');
+    where.hidden = !ctx.where; where.textContent = ctx.where || '';
+    back.hidden = win.hidden = false; input.value = ''; draw(); input.focus();
+  }
+  function close() { back.hidden = win.hidden = true; }
+  window.quickOpen = open;
+  document.addEventListener('keydown', e => {
+    // Cmd+Shift+P, or Cmd+K, which Firefox leaves to the page (OP-UX-87)
+    if ((e.metaKey || e.ctrlKey) && ((e.shiftKey && e.key.toLowerCase() === 'p') || (!e.shiftKey && e.key.toLowerCase() === 'k'))) { e.preventDefault(); e.stopPropagation(); win.hidden ? open() : close(); return; }
+    if (win.hidden) return;
+    // ⌘1 to ⌘9 highlight that row; Enter does it (DEC-UX-242)
+    const pick = /^Digit([1-9])$/.exec(e.code);
+    if ((e.metaKey || e.ctrlKey) && !e.shiftKey && pick) {
+      e.preventDefault(); e.stopPropagation();
+      const at = list.querySelectorAll('.quick-pick')[+pick[1] - 1]?.closest('.quick-row');
+      if (at) { on = +at.dataset.i; act(); }
+      return;
+    }
+    const move = d => { if (on < 0) return; let i = on; do { i = (i + d + rows.length) % rows.length; } while (rows[i].disabled && i !== on); on = i; act(); };
+    if (e.key === 'Escape') { e.preventDefault(); close(); }
+    else if (e.key === 'ArrowDown') { e.preventDefault(); move(1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); move(-1); }
+    else if (e.key === 'Enter') { e.preventDefault(); doRow(rows[on]); }
+  }, true);
+  input.addEventListener('input', draw);
+  list.addEventListener('mousemove', e => { const el = e.target.closest('.quick-row'); if (el && !rows[+el.dataset.i].disabled && +el.dataset.i !== on) { on = +el.dataset.i; act(); } });
+  list.addEventListener('click', e => { const el = e.target.closest('.quick-row'); if (el) doRow(rows[+el.dataset.i]); });
+  back.addEventListener('click', close);
+  document.addEventListener('click', e => { if (e.target.closest('[data-quick-open]')) open(); });
+  const params = new URLSearchParams(location.search);
+  if (params.get('quick') === 'open') { open(); if (params.get('q')) { input.value = params.get('q'); draw(); } }
 })();

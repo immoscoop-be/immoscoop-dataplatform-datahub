@@ -1,10 +1,15 @@
 <script lang="ts">
+  import { tick, untrack } from 'svelte';
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import DataGrid from '@datahub/ui/components/DataGrid.svelte';
   import Pager from '@datahub/ui/components/Pager.svelte';
   import RunButton from '@datahub/ui/components/RunButton.svelte';
-  import SqlEditor, { CTE_LINE, type ErrorMark, type ParameterSuggestion, type Suggestion, type TableSuggestion } from '@datahub/ui/components/SqlEditor.svelte';
+  import SqlEditor, { type At, type AtCursor, CTE_LINE, type ErrorMark, type Explained, type ParameterSuggestion, type Suggestion, type TableSuggestion } from '@datahub/ui/components/SqlEditor.svelte';
   import { formatBytes } from '@datahub/ui/foundations/bytes.js';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
+  import type { IconName } from '@datahub/ui/foundations/icons.js';
+  import { levelName } from '@datahub/ui/foundations/levels.js';
+  import { formatBigQuery } from '@datahub/ui/components/sqlFormat.js';
   import { currentLanguage, t, tParts } from '@datahub/ui/foundations/texts.svelte.js';
   import { ago } from '@datahub/ui/foundations/when.js';
   import KindIcon from '@datahub/ui/marks/KindIcon.svelte';
@@ -23,10 +28,17 @@
   import { clock, when as whenIn } from '../lib/moment.js';
   import { dayOf, describe, formatDay, isFunction, kindOf, lineOf, namesOf } from '../lib/parameters.js';
   import type { Lens, LensSuggestions as Found, Missing as Lost, NewQuery, Page, Parameter, Preflight, Problem, Query, QueryClient, Run, Warning } from '../lib/query.js';
-  import { lensPath, NEW_QUERY, newLensPath, queryPath, resourcePath } from '../lib/routes.js';
+  import { lensPath, newLensPath, resourcePath } from '../lib/routes.js';
   import NewSetSheet from './NewSetSheet.svelte';
   import NotFound from './NotFound.svelte';
+  import FieldExplain from './FieldExplain.svelte';
+  import FindTableSheet from './FindTableSheet.svelte';
+  import type { KnownTable } from '../lib/registry.js';
+  import { digitOf, modLabel, type QueryStatus } from '../lib/flags.js';
+  import type { QuickRow } from '../lib/quick.js';
   import ParameterWindow from './ParameterWindow.svelte';
+  import OutsideTableWindow from './OutsideTableWindow.svelte';
+  import ResourceSummaryWindow, { type SummaryData } from './ResourceSummaryWindow.svelte';
   import QueryHistory from './QueryHistory.svelte';
   import QueryParameters, { type Missing as MissingParameter } from './QueryParameters.svelte';
   import LensSuggestions from './LensSuggestions.svelte';
@@ -55,8 +67,17 @@
     onlens,
     hiddenChange,
     onhidden,
+    summaryOf,
+    findTables,
     layout = 'horizontal',
     onlayout,
+    flagAt = null,
+    flagsFull = false,
+    onflag,
+    onstatus,
+    oncommands,
+    go,
+    mac = false,
   }: {
     id: string;
     /** Its history opened from the panel, at one of its runs or at all of them. */
@@ -75,10 +96,30 @@
     hiddenChange?: { id: string; hidden: boolean };
     /** It was hidden or shown again here. */
     onhidden?: (id: string, hidden: boolean) => void;
+    /** The Summary of a Resource, for a double-click on its name in the SQL (DEC-UX-221). */
+    summaryOf?: (id: string) => Promise<SummaryData>;
+    /** For a power user, with `queries.outside`: the tables Data Hub knows, to find and add (FR-SR-58). */
+    findTables?: (words: string, filter: { layer?: string; project?: string }) => Promise<KnownTable[]>;
     /** The query above the result, or next to it, as the User chose it (DEC-UX-143). */
     layout?: Layout;
     onlayout?: (layout: Layout) => void;
+    /** Its place among the flagged queries, or null when it is not flagged (DEC-UX-236). */
+    flagAt?: number | null;
+    /** Ten queries are flagged: Flag is greyed, with why (OP-UX-84). */
+    flagsFull?: boolean;
+    /** Flags or unflags it; without it, the page has no Flag. */
+    onflag?: (on: boolean) => void;
+    /** What it tells on its tab while the User is in another query: a run going, a failure, Broken (DEC-UX-236). */
+    onstatus?: (id: string, status: QueryStatus) => void;
+    /** What can be done to it now, for the quick window (DEC-UX-237). */
+    oncommands?: (id: string, commands: QuickRow[]) => void;
+    /** Goes to another page of Data Hub, for a command of the quick window such as Make it a Lens. */
+    go?: (path: string) => void;
+    /** Cmd on a Mac, Ctrl elsewhere, as its keys are written. */
+    mac?: boolean;
   } = $props();
+  /** Several queries stay open at once (OP-UX-85): what one names by an id is its own. */
+  const uid = $props.id();
 
   /** How much room the query takes, in percent, at first and at least and at most, per layout (DEC-UX-144). */
   const SPLIT = { horizontal: 55, sideBySide: 45 } as const;
@@ -143,6 +184,8 @@
   const PAUSE = 2000;
 
   let query = $state<Query | null | undefined>();
+  /** Its Resources not published yet: they grey "Make it a lens", with why (DEC-LE-22, DEC-UX-218). */
+  const unpublished = $derived((query?.resources ?? []).flatMap((resource) => (resource.visible && resource.published === false ? [resource] : [])));
   /** Whether the User hid it from their panel: as it was read, or as changed since (DEC-UX-138). */
   const hidden = $derived(hiddenChange?.id === id ? hiddenChange.hidden : (query?.hidden ?? false));
   let hiding = $state(false);
@@ -185,8 +228,16 @@
   /** A run of its history, shown read only, with its result while BigQuery keeps it (OP-UX-27, DEC-UX-99). */
   let preview = $state<{ run: Run; page: Page | null; expired: boolean } | null>(null);
   let parameterWindow = $state<{ key: number; parameter: Parameter | null; defines: MissingParameter | null } | null>(null);
+  /** What a double-click in the SQL opened (DEC-UX-221): the Summary of a Resource, or the descriptions of a field. */
+  let summaryWindow = $state<TableSuggestion | null>(null);
+  /** A table outside Data Hub double-clicked in the SQL, by a power user (FR-SR-62). */
+  let outsideWindow = $state<TableSuggestion | null>(null);
+  let fieldExplained = $state<{ fields: Suggestion[]; at: At } | null>(null);
+  /** The word under the cursor that a double-click explains: "Show info" in the quick window opens it (DEC-UX-238). */
+  let atCursor = $state<AtCursor | null>(null);
   let windows = 0;
-  let newSet = $state<{ mode: 'add' | 'remove'; resource: string | null } | null>(null);
+  let newSet = $state<{ mode: 'add' | 'remove' | 'same'; resource: string | null } | null>(null);
+  let finding = $state(false);
   let requestOpen = $state(false);
   let requestText = $state('');
   let sending = $state(false);
@@ -194,12 +245,24 @@
   /** Its name and question while they are changed in place (DEC-UX-119). */
   let renaming = $state<{ name: string; question: string } | null>(null);
   let renameSaving = $state(false);
+  let renameField = $state<HTMLInputElement | undefined>();
+  let requestField = $state<HTMLTextAreaElement | undefined>();
   let renameFailed = $state(false);
   let updating = $state(false);
   /** The Lenses on its Resources, to reuse while writing (DEC-UX-73); not for a query used as a Lens (DEC-UX-77). */
   let lensesOn = $state<Found | undefined>();
   let lensesOpen = $state(false);
   let loadedId: string | undefined;
+
+  /** The SQL of a query as it opens: in the house layout, as Format writes it (DEC-UX-233); SQL Format cannot read stays as it is. */
+  function formatted(text: string): string {
+    if (text.trim() === '') return text;
+    try {
+      return formatBigQuery(text);
+    } catch {
+      return text;
+    }
+  }
 
   $effect(() => {
     if (id === loadedId) return;
@@ -214,7 +277,11 @@
     history = undefined;
     preview = null;
     parameterWindow = null;
+    summaryWindow = null;
+    outsideWindow = null;
+    fieldExplained = null;
     newSet = null;
+    finding = false;
     requestOpen = false;
     requestText = '';
     renaming = null;
@@ -228,7 +295,8 @@
         query = found;
         broken = found.broken ?? null;
         atOnce = true;
-        sql = found.sql;
+        // It opens formatted, as a click on Format writes it; their own query keeps it through its Pre-flight (DEC-UX-233).
+        sql = formatted(found.sql);
         parameters = found.parameters;
         run = found.lastRun;
         failure = found.lastRun?.state === 'failed' ? found.lastRun.error : null;
@@ -397,6 +465,184 @@
   }
 
   const start = () => runWith(sql, parameters, current?.range !== 'free');
+
+  // What its tab tells while the User is in another query: a run going, its last run failed, Broken (DEC-UX-236).
+  $effect(() => {
+    const now = { running, failed: failure !== null, broken: broken !== null };
+    // What the page that listens reads is its own: this effect follows only the query.
+    untrack(() => onstatus?.(id, now));
+  });
+
+  /** Its name and question opened in place, the name ready to type (DEC-UX-119), as a click on them does. */
+  async function startRename(): Promise<void> {
+    if (!query) return;
+    renaming = { name: query.name, question: query.question };
+    renameFailed = false;
+    await tick();
+    renameField?.focus();
+  }
+
+  /** The Request to the Data Team opened on its button, ready for a word (DEC-UX-116). */
+  async function openRequest(): Promise<void> {
+    requestOpen = true;
+    await tick();
+    requestField?.focus();
+  }
+
+  /** The Query ID of the result shown, on the clipboard, as its copy button does (DEC-UX-72). */
+  async function copyRef(ref: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(ref);
+    } catch (error) {
+      // A browser that refuses the clipboard leaves the Query ID to be selected under the result.
+      console.error('The Query ID could not be copied', error);
+    }
+  }
+
+  /**
+   * What can be done to it now, for the quick window (DEC-UX-237, DEC-UX-239): a command for every button of the page
+   * that does something to it, of each pair only the one that applies, under one key, so that Recently used keeps it
+   * (DEC-UX-242), and what may not be done now greyed, with why
+   * (DEC-UX-207). Writing and running it is for who made it, as on the page.
+   */
+  $effect(() => {
+    if (!oncommands) return;
+    const found = query;
+    const tell = oncommands;
+    if (!found) {
+      untrack(() => tell(id, []));
+      return;
+    }
+    const own = found.mine && found.kind === 'query' && !preview;
+    /** Its maker, on the query itself rather than on a past run: they write and run it. */
+    const writes = found.mine && !preview;
+    const command = (key: string, icon: IconName, title: string, run: () => void, more: Partial<QuickRow> = {}): QuickRow => ({
+      key: `query:${key}`,
+      group: 'screen',
+      icon,
+      title,
+      kind: t('quick.kind.command'),
+      does: 'do',
+      run,
+      ...more,
+    });
+    const rows: QuickRow[] = [];
+    // What the cursor is on comes first: a field, a Parameter or a Resource, explained as a double-click does (DEC-UX-238).
+    if (atCursor && !preview) {
+      const word = atCursor;
+      const about = { parameter: 'quick.query.info.parameter', table: 'quick.query.info.table', field: 'quick.query.info.field' } as const;
+      const meta = t(word.kind === 'table' && word.outside ? 'quick.query.info.outside' : about[word.kind], { name: word.name });
+      rows.push(command('info', 'info', t('quick.query.info'), () => editor?.explainAtCursor(), { meta, words: t('quick.query.info.words') }));
+    }
+    if (writes) {
+      rows.push(runCommand(found, command));
+      // The filter the Pre-flight asks for, as "Add the filter" next to it adds it.
+      const note = [...(current?.problems ?? []), ...(current?.warnings ?? [])].find((one) => (one.kind === 'filterRequired' || one.kind === 'noPartitionFilter') && one.fix);
+      if (note && (note.kind === 'filterRequired' || note.kind === 'noPartitionFilter') && note.fix) {
+        const fix = note.fix;
+        const less = note.kind === 'noPartitionFilter' && note.bytesWithFilter !== null ? bytes(note.bytesWithFilter) : null;
+        rows.push(
+          command('filter', 'funnel', t('quick.query.filter'), () => ((atOnce = true), (sql = fix)), {
+            meta: t(less ? 'quick.query.filter.less' : 'quick.query.filter.meta', { column: note.column, name: note.resource.displayName, bytes: less ?? '' }),
+            words: t('quick.query.filter.words'),
+          }),
+        );
+      }
+    }
+    if (found.mine && found.kind === 'query') {
+      const lens = found.lens;
+      if (lens) {
+        // Its Lens, overwritten after a size check, greyed as its button is (DEC-UX-77, DEC-UX-232).
+        const why = noLens && lens.state !== 'waiting' ? t(noLens) : lens.state === 'waiting' ? t('lens.update.waiting') : undefined;
+        rows.push(command('lens', 'arrows-clockwise', t('lens.update.button'), () => (updating = true), { meta: t('quick.query.update.meta', { name: lens.name }), words: t('quick.query.update.words'), ...(why ? { why } : {}) }));
+      } else if (go) {
+        const open = go;
+        const why = noLens ? t(noLens) : unpublished.length > 0 ? t('quick.query.lens.unpublished', { names: unpublished.map((resource) => resource.displayName).join(', ') }) : undefined;
+        rows.push(command('lens', 'aperture', t('quick.query.lens'), () => open(newLensPath(found.id)), { meta: t('quick.query.lens.meta'), words: t('quick.query.lens.words'), ...(why ? { why } : {}) }));
+      }
+    }
+    if (onflag) {
+      const flag = onflag;
+      rows.push(
+        flagAt === null
+          ? command('flag', 'flag', t('quick.query.flag'), () => flag(true), flagsFull ? { why: t('flags.full.short'), words: t('quick.query.flag.words') } : { meta: t('quick.query.flag.meta'), words: t('quick.query.flag.words') })
+          : command('flag', 'flag-fill', t('quick.query.unflag'), () => flag(false), { meta: t('quick.query.unflag.meta', { key: `${modLabel(mac)}${digitOf(flagAt)}` }), words: t('quick.query.flag.words') }),
+      );
+    }
+    if (found.mine) rows.push(command('rename', 'pencil-simple', t('quick.query.rename'), () => void startRename(), { meta: t('quick.query.rename.meta'), words: t('quick.query.rename.words') }));
+    rows.push(command('fold', 'arrows-in-line-vertical', t('quick.query.fold'), () => editor?.foldAll(), { meta: t('quick.query.fold.meta'), words: t('quick.query.fold.words') }));
+    if (own) rows.push(command('format', 'text-align-left', t('quick.query.format'), () => editor?.formatSql(), { meta: t('quick.query.format.meta'), keys: mac ? '⇧⌥F' : 'Shift+Alt+F', words: t('quick.query.format.words') }));
+    if (writes) rows.push(command('parameter', 'function', t('quick.query.parameter'), () => openParameter(null), { meta: t('quick.query.parameter.meta'), words: t('quick.query.parameter.words') }));
+    if (own && found.resources.length < 10) rows.push(command('resource', 'plus', t('quick.query.resource'), () => (newSet = { mode: 'add', resource: null }), { meta: t('quick.query.resource.meta'), words: t('quick.query.resource.words') }));
+    // One for each of its Resources, as the × on its chip: it starts a new query without it (DEC-UX-73).
+    if (writes && found.resources.length > 1) {
+      for (const resource of found.resources) {
+        rows.push(command(`remove:${resource.id}`, 'minus-circle', t('quick.query.remove', { name: resource.displayName }), () => (newSet = { mode: 'remove', resource: resource.id }), { meta: t('quick.query.remove.meta'), words: t('quick.query.remove.words') }));
+      }
+    }
+    if (own && findTables) rows.push(command('table', 'magnifying-glass', t('quick.query.table'), () => (finding = true), { meta: t('quick.query.table.meta'), words: t('quick.query.table.words') }));
+    if (own && found.resources.length > 0) rows.push(command('copy', 'git-branch', t('quick.query.copy'), () => (newSet = { mode: 'same', resource: null }), { meta: t('quick.query.copy.meta'), words: t('quick.query.copy.words') }));
+    // The Lenses on its Resources, to reuse one (DEC-UX-73); not on a query used as a Lens (DEC-UX-77).
+    if (!found.lens && found.kind === 'query' && visible.length > 0) {
+      const lenses = lensesOn;
+      rows.push(
+        command('lenses', 'aperture', t('quick.query.lenses'), () => (lensesOpen = true), {
+          words: t('quick.query.lenses.words'),
+          ...(lenses ? { meta: t('quick.query.lenses.meta', { count: lenses.exact.length + lenses.more.length }) } : { why: t('quick.query.lenses.looking') }),
+        }),
+      );
+    }
+    rows.push(
+      tab === 'history'
+        ? command('tab', 'table', t('quick.query.result'), () => (tab = 'result'), { ...(shownRun ? { meta: t('quick.query.result.meta', { number: shownRun.number }) } : {}), words: t('quick.query.result.words') })
+        : command('tab', 'clock-counter-clockwise', t('quick.query.history'), () => (tab = 'history'), { meta: t('quick.query.history.meta', { count: found.runs }), words: t('quick.query.history.words') }),
+    );
+    if (shownRun) {
+      const ref = shownRun.ref;
+      rows.push(command('ref', 'copy', t('query.copyRef'), () => void copyRef(ref), { meta: t('quick.query.ref.meta', { ref, number: shownRun.number }), words: t('quick.query.ref.words') }));
+    }
+    rows.push(
+      hidden
+        ? command('hidden', 'eye', t('quick.query.show'), () => void toggleHidden(), { meta: t('quick.query.show.meta'), words: t('quick.query.show.words') })
+        : command('hidden', 'eye-slash-fill', t('quick.query.hide'), () => void toggleHidden(), { meta: t('quick.query.hide.meta'), words: t('quick.query.hide.words') }),
+    );
+    if (onlayout) {
+      const choose = onlayout;
+      rows.push(
+        layout === 'horizontal'
+          ? command('view', 'columns', t('quick.query.side'), () => choose('sideBySide'), { meta: t('quick.query.view.meta'), words: t('quick.query.view.words') })
+          : command('view', 'rows', t('quick.query.above'), () => choose('horizontal'), { meta: t('quick.query.view.meta'), words: t('quick.query.view.words') }),
+      );
+    }
+    untrack(() => tell(id, rows));
+  });
+
+  /**
+   * Run in the quick window does what Cmd+Enter does (DEC-UX-142, DEC-UX-239): up to 100 MB it runs; above, as Approve
+   * and run, it puts the focus on the red button, where Enter approves it; above 1 GB, as Send to the Data Team, it
+   * opens the Request on its button. Greyed, with why, while it runs, when the Pre-flight stops it, when it is Broken or
+   * when its Request waits.
+   */
+  function runCommand(found: Query, command: (key: string, icon: IconName, title: string, run: () => void, more?: Partial<QuickRow>) => QuickRow): QuickRow {
+    const reads = current?.bytes !== null && current?.bytes !== undefined ? bytes(current.bytes) : null;
+    const words = t('quick.query.run.words');
+    const request = found.request;
+    if (current?.range === 'request' && request?.state === 'waiting') {
+      return command('run', 'paper-plane-tilt', t('query.request.send'), () => undefined, { words, why: t('query.request.waiting', { time: since(request.sentAt) }) });
+    }
+    if (current?.range === 'request' && !current.problems.some((problem) => problem.kind === 'tooLarge') && request?.state !== 'accepted') {
+      return command('run', 'paper-plane-tilt', t('query.request.send'), () => void openRequest(), {
+        words,
+        ...(reads ? { meta: t('quick.query.run.request.meta', { bytes: reads }) } : {}),
+        ...(current.runnable && !checking ? {} : { why: t('query.cannotRun') }),
+      });
+    }
+    const approve = current?.range === 'approve' || current?.range === 'request';
+    // While the Pre-flight reads it, Run waits for it and then does what it says, as Cmd+Enter does (DEC-UX-154).
+    const why = broken !== null ? t('query.broken.run') : running ? t('quick.query.run.running') : checking ? null : !current ? t('quick.query.run.unchecked') : !current.runnable ? t('query.cannotRun') : null;
+    const meta = checking ? t('quick.query.run.checking') : reads ? t(approve ? 'quick.query.run.approve.meta' : 'quick.query.run.meta', { bytes: reads }) : null;
+    return command('run', 'play-fill', t(approve ? 'run.approve' : 'run.run'), runFromKeys, { keys: mac ? '⌘↵' : 'Ctrl+Enter', words, ...(meta ? { meta } : {}), ...(why ? { why } : {}) });
+  }
   let runBar = $state<HTMLElement | undefined>();
 
   /**
@@ -484,8 +730,10 @@
     }
   }
 
+  /** Keeps a Parameter, and closes its window: the work in it is done (DEC-UX-219). */
   function saveParameter(next: Parameter, before: string | null): void {
     parameters = before === null ? [...parameters, next] : parameters.map((parameter) => (parameter.name === before ? next : parameter));
+    parameterWindow = null;
   }
 
   /** Saves its name and question, changed in place; a name stays required (DEC-UX-119, FR-SR-45). */
@@ -515,6 +763,26 @@
   }
 
   const openParameter = (parameter: Parameter | null, defines: MissingParameter | null = null) => (parameterWindow = { key: ++windows, parameter, defines });
+
+  function explain(what: Explained): void {
+    fieldExplained = null;
+    if (what.kind === 'parameter') {
+      const parameter = parameters.find((candidate) => namesOf(candidate).includes(what.name));
+      if (parameter) openParameter(parameter);
+    } else if (what.kind === 'table') {
+      // A table outside Data Hub has no Summary: what dbt and BigQuery know of it (FR-SR-62).
+      if (what.table.outside) {
+        summaryWindow = null;
+        outsideWindow = what.table;
+      } else if (summaryOf) {
+        outsideWindow = null;
+        summaryWindow = what.table;
+      }
+    } else {
+      const fields = [...suggestions, ...outsideFields].filter((field) => field.name.toLowerCase() === what.name.toLowerCase());
+      if (fields.length > 0) fieldExplained = { fields, at: what.at };
+    }
+  }
 
   const language = $derived(currentLanguage());
   const bytes = (value: number) => formatBytes(value, language);
@@ -550,9 +818,17 @@
   /** The problems and warnings of the Pre-flight of the SQL and Parameters as they are now. */
   const current = $derived(preflight && checked === key ? preflight : null);
   const problems = $derived(current?.problems ?? []);
+  /**
+   * The tables outside Data Hub a power user's query reads, from the last Pre-flight, so that they stay while the
+   * SQL changes (FR-SR-56, DEC-UX-220). A query that reads one, or no Resource at all, cannot become a Lens.
+   */
+  const known = $derived(preflight?.tables ?? []);
+  const noLens = $derived(known.length > 0 ? 'query.known.hint' : query && query.resources.length === 0 ? 'query.noResources.hint' : null);
   const marks: ErrorMark[] = $derived(
     problems.flatMap((problem): ErrorMark[] => {
-      if (problem.kind === 'outside' && problem.start !== null && problem.end !== null) return [{ from: problem.start, to: problem.end, message: t('query.problem.outside', { name: problem.name }), kind: 'outside' }];
+      if ((problem.kind === 'outside' || problem.kind === 'unknown') && problem.start !== null && problem.end !== null) {
+        return [{ from: problem.start, to: problem.end, message: said(problem), kind: 'outside' }];
+      }
       if (problem.kind === 'undefinedParameter') return [{ from: problem.start, to: problem.end, message: t('query.problem.undefinedParameter', { name: problem.name }), kind: 'undefined' }];
       return [];
     }),
@@ -582,6 +858,8 @@
         return t('query.problem.notVisible', { name: problem.resource.displayName });
       case 'outside':
         return t('query.problem.outside', { name: problem.name });
+      case 'unknown':
+        return t('query.problem.unknown', { name: problem.name });
       case 'undefinedParameter':
         return t('query.problem.undefinedParameter', { name: problem.name });
       case 'notSelect':
@@ -605,7 +883,7 @@
   const tables: TableSuggestion[] = $derived.by(() => {
     if (!query) return [];
     const own = query.resources.flatMap((resource) => (resource.visible ? [{ id: resource.id, name: resource.displayName, fullName: resource.fullName ?? resource.key }] : []));
-    if (!query.mine || query.resources.length >= 10) return own;
+    if (!query.mine || query.resources.length >= 10) return [...own, ...outsideTables];
     const taken = new Set(query.resources.map((resource) => resource.id));
     const others = (collections ?? [])
       .flatMap((collection) => collection.resources)
@@ -616,8 +894,24 @@
         return true;
       })
       .map((item) => ({ id: item.id, name: item.displayName, fullName: item.key, other: true }));
-    return [...own, ...others];
+    return [...own, ...others, ...outsideTables];
   });
+  /** The tables outside Data Hub the query reads: a double-click explains them, the editor never suggests them (FR-SR-62). */
+  const outsideTables: TableSuggestion[] = $derived(known.map((table) => ({ id: table.key, name: table.name, fullName: table.fullName, outside: true })));
+  /** Their columns from dbt, which a double-click explains as it does a field of a Resource, without a Business Description. */
+  const outsideFields: Suggestion[] = $derived(
+    known.flatMap((table) =>
+      (table.columns ?? []).map((column) => ({
+        name: column.name,
+        type: column.dataType,
+        resource: table.name,
+        role: table.partition?.field === column.name ? { kind: 'partition' as const } : null,
+        description: column.description,
+        businessDescription: '',
+        outside: true,
+      })),
+    ),
+  );
 
   /** Each problem once: an @name is named once, however often it is in the SQL. */
   const once = <T extends Problem | Warning>(notes: readonly T[]): T[] =>
@@ -680,7 +974,6 @@
 {#if query === null}
   <NotFound />
 {:else if query}
-  {@const from = query.startedFrom}
   <!-- The page fills the height of the screen; the query and the result each scroll on their own (DEC-UX-144). -->
   <div class="page">
   <header class="head">
@@ -688,8 +981,8 @@
       <div class="meta">Query</div>
       {#if renaming}
         <form class="rename" onsubmit={rename}>
-          <Field label={t('query.name')}><input type="text" bind:value={renaming.name} maxlength="120" required /></Field>
-          <Field label={t('query.question')}><textarea bind:value={renaming.question} rows="2" maxlength="500"></textarea></Field>
+          <Field label={t('query.name')}><input {...NO_PASSWORD_MANAGER} bind:this={renameField} type="text" bind:value={renaming.name} maxlength="120" required /></Field>
+          <Field label={t('query.question')}><textarea {...NO_PASSWORD_MANAGER} bind:value={renaming.question} rows="2" maxlength="500"></textarea></Field>
           <span class="rename-actions">
             <Button type="submit" disabled={renameSaving || renaming.name.trim() === ''}>{t('query.save')}</Button>
             <Button variant="quiet" onclick={() => (renaming = null)}>{t('query.cancel')}</Button>
@@ -698,21 +991,14 @@
         </form>
       {:else if query.mine}
         {@const start = () => query && ((renaming = { name: query.name, question: query.question }), (renameFailed = false))}
-        <h1 class="page-title"><button type="button" class="in-place" title={t('query.rename')} onclick={start}>{query.name}</button></h1>
+        <!-- On one line, ending in … when longer; the whole name on a hover (DEC-UX-251). -->
+        <h1 class="page-title one-line"><button type="button" class="in-place" title={`${query.name}\n${t('query.rename')}`} onclick={start}>{query.name}</button></h1>
         {#if query.question}<p class="question"><button type="button" class="in-place" title={t('query.rename')} onclick={start}>{query.question}</button></p>{/if}
       {:else}
-        <h1 class="page-title">{query.name}</h1>
+        <h1 class="page-title one-line" title={query.name}>{query.name}</h1>
         {#if query.question}<p class="question">{query.question}</p>{/if}
       {/if}
-      {#if from}
-        <p class="meta origin">
-          <Icon name="git-branch" /><span
-            >{#each tParts(from.afterRun === null ? 'query.startedFrom' : 'query.startedFrom.after', { run: from.afterRun ?? 0 }, { name: from.name }) as part, index (index)}{#if 'name' in part}<a
-                  href={queryPath(from.id)}>{part.name}</a
-                >{:else}{part.text}{/if}{/each}</span
-          >
-        </p>
-      {/if}
+      <!-- Where it started from is in its History, not here (DEC-UX-250). -->
       {#if query.lens}
         {@const lens = query.lens}
         <!-- A query used as a Lens says so, with a link to it (DEC-LE-03). -->
@@ -724,6 +1010,26 @@
           >
         </p>
       {/if}
+      {#if query.mine && query.kind === 'query' && !query.lens && unpublished.length > 0}
+        <!-- A Lens is made only on published Resources: which ones are not yet, with a link to each (DEC-UX-218). -->
+        <p class="meta origin unpublished">
+          <Icon name="globe-simple" /><span
+            >{#each tParts('query.unpublished', {}, { names: '' }) as part, index (index)}{#if 'name' in part}{#each unpublished as resource, at (resource.id)}{#if at > 0}, {/if}<a
+                    href={resourcePath(resource.id)}>{resource.displayName}</a
+                  >{/each}{:else}{part.text}{/if}{/each}</span
+          >
+        </p>
+      {/if}
+      {#if query.mine && query.kind === 'query' && !query.lens && known.length > 0}
+        <!-- A query that reads a table outside Data Hub cannot become a Lens, and says so (DEC-UX-220). -->
+        <p class="meta origin known">
+          <Icon name="cube" /><span
+            >{#each tParts('query.known.line', { count: known.length }, { names: '' }) as part, index (index)}{#if 'name' in part}{#each known as table, at (table.key)}{#if at > 0}, {/if}<span
+                    class="mono">{table.name}</span
+                  >{/each}{:else}{part.text}{/if}{/each}</span
+          >
+        </p>
+      {/if}
       {#if !query.mine}<p class="meta">{t('query.of', { name: query.ownerName })}</p>{/if}
     </div>
     <div class="actions">
@@ -732,21 +1038,57 @@
           <button type="button" aria-pressed={layout === option} aria-label={name} title={name} onclick={() => onlayout?.(option)}><Icon name={icon} /></button>
         {/each}
       </span>
-      <Button variant="outline" href={NEW_QUERY}><Icon name="plus-circle-fill" />{t('query.new')}</Button>
-      <Button variant="outline" disabled={hiding} title={t(hidden ? 'query.unhide.hint' : 'query.hide.hint')} onclick={toggleHidden}
-        ><Icon name={hidden ? 'eye' : 'eye-slash-fill'} />{t(hidden ? 'query.page.unhide' : 'query.page.hide')}</Button
-      >
+      <!-- No New query here: the panel has it, and the quick window (DEC-UX-252). -->
+      <!-- No Hide here: the eye in the panel and the quick window hide a query (DEC-UX-246). -->
       {#if query.mine && query.kind === 'query' && query.lens}
-        <!-- A query used as a Lens overwrites it, after its size check (DEC-UX-77). -->
-        <Button disabled={query.lens.state === 'waiting'} title={t(query.lens.state === 'waiting' ? 'lens.update.waiting' : 'lens.update.hint')} onclick={() => (updating = true)}
-          ><Icon name="arrows-clockwise" />{t('lens.update.button')}</Button
-        >
+        <!-- A query used as a Lens overwrites it, after its size check (DEC-UX-77); greyed, it says why (DEC-UX-232). -->
+        {#if noLens && query.lens.state !== 'waiting'}
+          {@render whyNot(t('lens.update.button'), 'arrows-clockwise')}
+        {:else}
+          <Button disabled={query.lens.state === 'waiting'} title={t(query.lens.state === 'waiting' ? 'lens.update.waiting' : 'lens.update.hint')} onclick={() => (updating = true)}
+            ><Icon name="arrows-clockwise" />{t('lens.update.button')}</Button
+          >
+        {/if}
       {:else if query.mine && query.kind === 'query'}
-        <!-- The logical next step once a query answers a question that comes back (DEC-UX-25). -->
-        <Button href={newLensPath(query.id)}>{t('query.makeLens')}</Button>
+        <!-- The logical next step once a query answers a question that comes back (DEC-UX-25); greyed on a Resource not published, it says why (DEC-UX-218, DEC-UX-232). -->
+        {#if noLens || unpublished.length > 0}
+          {@render whyNot(t('query.makeLens'), null)}
+        {:else}
+          <Button href={newLensPath(query.id)}>{t('query.makeLens')}</Button>
+        {/if}
       {/if}
     </div>
   </header>
+
+  <!--
+    A greyed "Make it a lens" or "Update the lens" says why on a hover or on keyboard focus (DEC-UX-232): each Resource
+    not published yet with its Level, or each table outside Data Hub it reads, and what makes the button work.
+  -->
+  {#snippet whyNot(label: string, icon: IconName | null)}
+    <!-- Focusable, so that the keyboard reaches why as a hover does; the button itself is disabled. -->
+    <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+    <span class="why-anchor" tabindex="0" role="group" aria-label={label} aria-describedby={`${uid}-why-lens`}>
+      <Button disabled>{#if icon}<Icon name={icon} />{/if}{label}</Button>
+      <span class="why-pop" id={`${uid}-why-lens`} role="tooltip">
+        <b class="why-title">{t('query.why.title')}</b>
+        {#if known.length > 0}
+          {t('query.why.known', { count: known.length })}
+          <span class="why-list">
+            {#each known as table (table.key)}<span class="why-item"><Icon name="cube" /><span class="mono">{table.name}</span><span class="meta">{table.layer}</span></span>{/each}
+          </span>
+          {t('query.why.known.then')}
+        {:else if unpublished.length > 0}
+          {t('query.why.unpublished')}
+          <span class="why-list">
+            {#each unpublished as resource (resource.id)}<span class="why-item"><KindIcon kind="resource" />{resource.displayName}<span class="meta">{levelName(resource.level)}</span><MaturityIcon level={resource.level} small /></span>{/each}
+          </span>
+          {t('query.why.unpublished.then', { count: unpublished.length })}
+        {:else}
+          {t('query.why.none')}
+        {/if}
+      </span>
+    </span>
+  {/snippet}
 
   {#if broken}
     <!-- A Broken query: Run is off and this names what it misses, and since when (FR-SR-53, DEC-UX-160). -->
@@ -778,9 +1120,11 @@
             {/if}
           </span>
         {/each}
-        {#if query.mine && !preview && query.resources.length < 10}
-          <button type="button" class="add" onclick={() => (newSet = { mode: 'add', resource: null })}><Icon name="plus" />{t('query.resources.add')}</button>
-        {/if}
+        {#each known as table (table.key)}
+          <!-- A table outside Data Hub: quiet, dashed, without Level, Owner or Publication (DEC-UX-220). -->
+          <!-- Only its name; its layer and that it is no Resource on a hover (DEC-UX-243). -->
+          <span class="chip known" title={t('query.known.title', { layer: table.layer })}><Icon name="cube" /><span class="mono">{table.name}</span></span>
+        {/each}
         {#each outside as table (table.name)}
           <span class="chip outside">
             <Icon name="warning-fill" />{t('query.problem.outside', { name: table.name })}
@@ -791,11 +1135,21 @@
           </span>
         {/each}
       </span>
+      <!-- On one line: the chips scroll sideways, these stay in view, as icons with their name on a hover (DEC-UX-249). -->
+      {#if query.mine && !preview && query.resources.length < 10}
+        <button type="button" class="add" aria-label={t('query.resources.add')} title={t('query.resources.add')} onclick={() => (newSet = { mode: 'add', resource: null })}><Icon name="plus" /></button>
+      {/if}
+      {#if query.mine && !preview && query.kind === 'query' && findTables}
+        <!-- A power user also finds tables Data Hub knows outside its Resources (DEC-UX-224). -->
+        <button type="button" class="add" aria-label={t('find.button')} title={`${t('find.button')}\n${t('find.button.hint')}`} onclick={() => (finding = true)}><Icon name="magnifying-glass" /></button>
+      {/if}
       <!-- A query used as a Lens already is one (DEC-UX-77). -->
       {#if !query.lens && query.kind === 'query'}
-        <Button variant="quiet" disabled={!lensesOn} title={t('lenses.sheet.hint')} onclick={() => (lensesOpen = true)}
-          ><Icon name="aperture" />{t('query.lensesOn', { count: lensesOn ? lensesOn.exact.length + lensesOn.more.length : 0 })}</Button
-        >
+        <span class="end">
+          <Button variant="quiet" disabled={!lensesOn} title={t('lenses.sheet.hint')} onclick={() => (lensesOpen = true)}
+            ><Icon name="aperture" />{t('query.lensesOn', { count: lensesOn ? lensesOn.exact.length + lensesOn.more.length : 0 })}</Button
+          >
+        </span>
       {/if}
     </div>
 
@@ -806,11 +1160,8 @@
         <button type="button" class="toggle" aria-expanded={boxOpen} aria-label={t(boxOpen ? 'editor.fold' : 'editor.unfold')} onclick={() => (boxOpen = !boxOpen)}><Icon name="caret-down" /></button>
         <span class="label">BigQuery SQL</span>
         {#if !boxOpen}<span class="meta">{summary}</span>{/if}
+        <!-- Fold all and Format the SQL are in the quick window, not here (DEC-UX-248). -->
         <span class="grow"></span>
-        {#if boxOpen && query.mine && !preview}
-          <Button variant="outline" onclick={() => editor?.foldAll()}>{t('query.foldAll')}</Button>
-          <Button variant="outline" title="Shift+Alt+F" onclick={() => editor?.formatSql()}>{t('query.format')}</Button>
-        {/if}
       </div>
       <div class="sql" hidden={!boxOpen}>
         {#if preview}
@@ -824,6 +1175,7 @@
             {suggestions}
             parameters={parameterSuggestions}
             {tables}
+            {outsideFields}
             onnewtable={query.mine && query.resources.length < 10 ? () => (newSet = { mode: 'add', resource: null }) : undefined}
             onothertable={(table) => (newSet = { mode: 'add', resource: table.id })}
             {marks}
@@ -832,6 +1184,8 @@
               if (entry) openParameter(null, entry);
             }}
             onrun={runFromKeys}
+            onexplain={explain}
+            oncursor={(word) => (atCursor = word)}
             label={t('query.sql', { name: query.name })}
             readonly={!query.mine}
             {nonce}
@@ -914,7 +1268,7 @@
             {#snippet popout()}
               <span class="request">
                 <span><b>{t('query.request.large')}</b> {t('query.request.why', { request: bytes(current?.thresholds.request ?? 0) })}</span>
-                <label class="word"><span>{t('query.request.word')}</span><textarea rows="2" maxlength="500" bind:value={requestText}></textarea></label>
+                <label class="word"><span>{t('query.request.word')}</span><textarea {...NO_PASSWORD_MANAGER} bind:this={requestField} rows="2" maxlength="500" bind:value={requestText}></textarea></label>
                 <Button wide disabled={sending} onclick={send}><Icon name="paper-plane-tilt" />{t('query.request.sendIt')}</Button>
                 <span class="after" class:failed={requestFailed} role={requestFailed ? 'alert' : undefined}>{t(requestFailed ? 'query.request.failed' : 'query.request.after')}</span>
               </span>
@@ -1022,6 +1376,20 @@
   </div>
   </div>
 
+  {#if summaryWindow && summaryOf}
+    {#key summaryWindow.id}
+      <ResourceSummaryWindow table={summaryWindow} load={summaryOf} onclose={() => (summaryWindow = null)} />
+    {/key}
+  {/if}
+  {#if outsideWindow}
+    {#key outsideWindow.id}
+      <OutsideTableWindow table={outsideWindow} load={(key) => client.outsideTable(key)} onclose={() => (outsideWindow = null)} />
+    {/key}
+  {/if}
+  {#if fieldExplained}
+    <FieldExplain fields={fieldExplained.fields} at={fieldExplained.at} onclose={() => (fieldExplained = null)} />
+  {/if}
+
   {#if parameterWindow}
     {#key parameterWindow.key}
       <ParameterWindow
@@ -1049,6 +1417,26 @@
       onclose={() => (newSet = null)}
       onstart={startNew}
       lensesOn={(on, words) => client.suggestions(on, words)}
+      ctesOf={(text, ids) => client.ctes(text, { resources: ids })}
+    />
+  {/if}
+
+  {#if finding && findTables}
+    <FindTableSheet
+      queryName={query.name}
+      {sql}
+      find={findTables}
+      ctesOf={(text, keys) => client.ctes(text, { tables: keys })}
+      onadd={(next) => {
+        sql = next;
+        finding = false;
+      }}
+      onresource={(table) => {
+        const id = (collections ?? []).flatMap((collection) => collection.resources).find((item) => item.key === table.key)?.id;
+        finding = false;
+        if (id) newSet = { mode: 'add', resource: id };
+      }}
+      onclose={() => (finding = false)}
     />
   {/if}
 
@@ -1080,7 +1468,7 @@
 {/if}
 
 {#snippet grid(of: Run, rows: Page)}
-  <DataGrid columns={rows.columns} rows={rows.rows} first={(rows.number - 1) * rows.size + 1} label={t('query.resultOf', { number: of.number })} />
+  <DataGrid columns={rows.columns} rows={rows.rows} first={(rows.number - 1) * rows.size + 1} label={t('query.resultOf', { number: of.number })} fill />
   <div class="foot">
     <span>{t('query.rows', { count: rows.totalRows })}</span>
     {#if of.processedBytes !== null}<span class="dot">·</span><span>{t('query.read', { bytes: bytes(of.processedBytes) })}</span>{/if}
@@ -1103,7 +1491,20 @@
   .rename-failed { font-size: var(--text-small); color: var(--signal-urgent); }
   .origin { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; }
   .origin a { color: var(--text-secondary); }
+  .one-line, .one-line .in-place { display: block; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  /* Why the button is greyed, on a hover or on focus (DEC-UX-232) */
+  .kbd { font-size: var(--text-meta); background: var(--card); border-radius: var(--radius-mark); padding: 1px 5px; }
+  .why-anchor { position: relative; display: inline-flex; border-radius: var(--radius-pill); }
+  .why-anchor :global(button:disabled) { pointer-events: none; }
+  .why-anchor:focus-visible { outline: 2px solid var(--text-secondary); outline-offset: 2px; }
+  .why-pop { display: none; position: absolute; right: 0; top: calc(100% + 10px); z-index: 20; width: 300px; padding: 12px 14px; border-radius: var(--radius-md);
+    background: var(--surface-solid); box-shadow: var(--sheet-shadow); outline: 1px solid var(--tint-active); font-size: var(--text-small); line-height: 1.5; color: var(--text-secondary); white-space: normal; text-align: left; }
+  .why-anchor:hover .why-pop, .why-anchor:focus-within .why-pop { display: block; }
+  .why-title { display: block; margin-bottom: 4px; font-weight: var(--weight-medium); color: var(--text-primary); }
+  .why-list { display: grid; gap: 4px; margin: 6px 0 8px; }
+  .why-item { display: flex; align-items: center; gap: 6px; color: var(--text-primary); }
+  .why-item .meta { margin-left: auto; }
   /* The page fills the height of the screen: the query and the result split it, each scrolling on its own (DEC-UX-144). */
   .page { height: 100%; min-height: 0; display: flex; flex-direction: column; }
   .head { flex: none; }
@@ -1138,20 +1539,25 @@
   .sheet-over { display: block; margin: 0 0 2px; }
   .sheet-intro { display: block; line-height: 1.5; margin: 8px 0 0; }
   .sheet-lenses { flex: 1; overflow: auto; margin: 4px -4px 0; padding: 0 4px; }
-  .scope { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px; padding: 2px 2px 0; }
+  .scope { display: flex; align-items: center; gap: 8px; padding: 2px 2px 0; }
   .scope > .label { flex: none; line-height: 26px; margin: 0; }
-  /* In a narrow query, next to its result, the Lenses on its Resources move to a line of their own (DEC-UX-143). */
-  .chips { flex: 1 1 260px; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  /* One line: what does not fit scrolls sideways (DEC-UX-249). */
+  .chips { flex: 0 1 auto; min-width: 0; display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: thin; }
+  .chips > * { flex: none; }
+  .scope > .end { margin-left: auto; flex: none; }
   .chip { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; font-size: var(--text-meta); color: var(--text-primary); background: var(--surface-sub); padding: 4px 6px 4px 10px; border-radius: var(--radius-pill); }
   .chip > a, .chip > span { display: inline-flex; align-items: center; gap: 5px; color: inherit; text-decoration: none; padding-right: 4px; }
   .chip:hover { background: var(--tint-active); }
   .chip .meta { white-space: nowrap; }
   .chip.gone { color: var(--text-muted); }
+  .chip.known { color: var(--text-secondary); background: transparent; outline: 1.5px dashed var(--text-muted); outline-offset: -1.5px; padding-right: 10px; }
+  .chip.known:hover { background: transparent; }
   .chip.outside { color: var(--signal-warn); background: color-mix(in srgb, var(--signal-warn) 12%, var(--surface-solid)); padding-right: 10px; }
   .chip.outside .text-link { color: var(--signal-warn); font-weight: var(--weight-medium); }
   .x { width: 20px; height: 20px; border: 0; border-radius: 50%; background: none; color: var(--text-muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 11px; }
   .x:hover { background: var(--tint-active); color: var(--text-primary); }
-  .add { display: inline-flex; align-items: center; gap: 5px; font: var(--text-meta) var(--font-family); color: var(--text-secondary); background: none; border: 1px dashed var(--tint-active); border-radius: var(--radius-pill); padding: 4px 10px; cursor: pointer; }
+  .add { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; box-sizing: border-box; font-size: 13px; color: var(--text-secondary); background: none; border: 1px dashed var(--tint-active); border-radius: 50%; cursor: pointer; }
+  .add:focus-visible { outline: 2px solid var(--text-secondary); outline-offset: 2px; }
   .add:hover { color: var(--text-primary); }
   .box { border-radius: var(--radius-lg); background: var(--surface-sub); padding: 10px 14px 14px; }
   .box-head { display: flex; align-items: center; gap: 8px; min-height: 34px; margin-bottom: 6px; flex-wrap: wrap; }
@@ -1187,7 +1593,10 @@
   .word textarea:focus-visible { outline: 2px solid var(--text-secondary); }
   .after { font-size: var(--text-meta); color: var(--text-muted); }
   .after.failed { color: var(--signal-urgent); }
-  .result { min-height: 0; overflow: auto; border-radius: var(--radius-xl); padding: 16px; }
+  /* The grid of a result takes all the height of its pane; its head and foot keep theirs (DEC-UX-226). */
+  .result { min-height: 0; overflow: auto; border-radius: var(--radius-xl); padding: 16px; display: flex; flex-direction: column; }
+  .result > :global(*) { flex: none; }
+  .result > :global(.wrap.fill) { flex: 1 1 auto; }
   .result-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
   .preview-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 10px; padding: 12px 14px; border-radius: var(--radius-md);
     background: color-mix(in srgb, var(--signal-warn) 10%, var(--surface-solid)); font-size: var(--text-small); line-height: 1.5; }

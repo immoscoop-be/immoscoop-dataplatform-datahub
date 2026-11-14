@@ -7,11 +7,12 @@ import type { FastifyInstance } from 'fastify';
 import { sql } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { label, parseQuery, parseRun } from './api.js';
-import { parseLens, valuesFor } from './lens-api.js';
+import { lensFields, parseLens, valuesFor } from './lens-api.js';
 import { createLenses } from './lenses.js';
 import { buildApp } from './app.js';
-import { type BigQuery, BigQueryRefused, type DryRun, type RunOptions, ResultExpired } from './bigquery.js';
+import { type BigQuery, BigQueryRefused, BigQueryUnavailable, type DryRun, type RunOptions, ResultExpired } from './bigquery.js';
 import { type BrokenMessage, type Catalogue, CatalogueUnavailable, type QueryRequest, type QueryResource, type SeenCollection } from './catalogue.js';
+import type { KnownTable } from './registry.js';
 import type { QueryDatabase } from './database.js';
 import { migrations } from './migrations/index.js';
 import { createBeneath } from './preflight.js';
@@ -37,6 +38,7 @@ const WEEKLY: QueryResource = {
   collectionId: CREDIT,
   level: 3,
   deprecated: false,
+  published: true,
   partition: { field: 'week_start', unit: 'day' },
   clusterBy: ['lead_source'],
   partitionFilter: 'none',
@@ -48,6 +50,12 @@ const WEEKLY: QueryResource = {
 };
 const SOURCES: QueryResource = { ...WEEKLY, id: '7a2d3c5f-9b2e-4d4f-8a31-2c3d4e5f6a71', key: `${PROJECT}.dbt_prod_stacks.lead_sources`, fullName: `${PROJECT}.dbt_prod_stacks.lead_sources`, displayName: 'Lead sources', partition: null, clusterBy: [] };
 const SECRET: QueryResource = { ...SOURCES, id: '8b3e4d6a-0c3f-4e5a-9b42-3d4e5f6a7b82', key: `${PROJECT}.dbt_prod_stacks.salaries`, fullName: `${PROJECT}.dbt_prod_stacks.salaries`, displayName: 'Salaries' };
+/** A Resource of An's unit that is not published yet: a query may read it, but no Lens is made of it (DEC-LE-22). */
+const DRAFT: QueryResource = { ...SOURCES, id: '9c4f5e7b-1d4a-4f6b-8c53-4e5f6a7b8c93', key: `${PROJECT}.dbt_prod_stacks.draft_leads`, fullName: `${PROJECT}.dbt_prod_stacks.draft_leads`, displayName: 'Draft leads', collectionId: AN_WORK, published: false };
+/** Tables Data Hub knows from its dbt projects, as registry answers a power user (FR-SR-56): a staging model, no Resource; and one an exposure makes a Resource. */
+const STG: KnownTable = { key: `${PROJECT}.dbt_prod_staging.stg_oltp__leads`, fullName: `${PROJECT}.dbt_prod_staging.STG_OLTP__Leads`, name: 'stg_oltp__leads', resourceType: 'model', layer: 'staging', projectId: '9367', projectName: 'dbt-prod', resource: false, partition: { field: 'created_date', unit: 'day' },
+  columns: [{ name: 'lead_id', dataType: 'STRING', description: '' }, { name: 'created_date', dataType: 'DATE', description: '' }] };
+const PARTNERS: KnownTable = { ...STG, key: `${PROJECT}.dbt_prod_stacks.partner_contracts`, fullName: `${PROJECT}.dbt_prod_stacks.partner_contracts`, name: 'partner_contracts', layer: 'mart', resource: true };
 
 describe('the fields of a Lens, in a request', () => {
   const fields = { queryId: '2b1f3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d', collectionId: CREDIT, name: ' Leads per source ' };
@@ -63,12 +71,43 @@ describe('the fields of a Lens, in a request', () => {
       labels: { dateFrom: 'From' },
       approve: false,
       text: '',
+      fields: [],
     });
     expect(parseLens({ ...fields, name: '' })).toBe('The name has 1 to 120 characters.');
     expect(parseLens({ ...fields, collectionId: 'c-credit' })).toBe('A Lens goes into a Collection, named by its ID.');
     expect(parseLens({ ...fields, tags: ['two words'] })).toMatch(/each a word/);
     expect(parseLens({ ...fields, labels: { dateFrom: '' } })).toMatch(/name Users see/);
     expect(parseLens({ ...fields, sql: 'select 1' })).toBe('A Lens has no field sql.');
+  });
+
+  it('with the description of each field, from a field of one of its Resources or written by its author (FR-LE-19)', () => {
+    const from = { resourceId: WEEKLY.id.toUpperCase(), field: 'lead_count' };
+    expect((parseLens({ ...fields, fields: [{ name: ' leads ', description: ' How many leads. ', from }, { name: 'share', description: '', from: null }] }) as { fields: unknown }).fields).toEqual([
+      { name: 'leads', description: 'How many leads.', from: { resourceId: WEEKLY.id, field: 'lead_count' } },
+      { name: 'share', description: '', from: null },
+    ]);
+    expect(parseLens({ ...fields, fields: [{ name: 'leads', description: 'x' }, { name: 'leads', description: 'y' }] })).toBe('The field leads is named twice.');
+    expect(parseLens({ ...fields, fields: [{ name: 'leads', description: 'x'.repeat(1001) }] })).toMatch(/at most 1000 characters/);
+    expect(parseLens({ ...fields, fields: [{ name: 'leads', description: 'x', from: { resourceId: 'weekly', field: 'leads' } }] })).toMatch(/Its fields are/);
+    expect(parseLens({ ...fields, fields: [{ name: 'leads', description: 'x', type: 'INT64' }] })).toMatch(/Its fields are/);
+  });
+
+  it('as its result has them: in its order, with its type, a description only from a Resource it reads (FR-LE-19)', () => {
+    const given = [
+      { name: 'leads', description: 'How many leads.', from: { resourceId: WEEKLY.id, field: 'lead_count' } },
+      { name: 'share', description: 'The share of the week.', from: null },
+      { name: 'secret', description: 'From elsewhere.', from: { resourceId: SECRET.id, field: 'secret' } },
+      { name: 'gone', description: 'No longer in the result.', from: null },
+    ];
+    const columns = [{ name: 'week_start', type: 'DATE' }, { name: 'leads', type: 'INT64' }, { name: 'share', type: 'FLOAT64' }, { name: 'secret', type: 'STRING' }];
+    expect(lensFields(given, columns, [WEEKLY, SOURCES])).toEqual([
+      { name: 'week_start', type: 'DATE', description: '', from: null },
+      { name: 'leads', type: 'INT64', description: 'How many leads.', from: { resourceId: WEEKLY.id, field: 'lead_count' } },
+      { name: 'share', type: 'FLOAT64', description: 'The share of the week.', from: null },
+      { name: 'secret', type: 'STRING', description: '', from: null },
+    ]);
+    // Without the columns of a dry run, what its author sent.
+    expect(lensFields(given.slice(0, 1), [], [WEEKLY])).toEqual([{ name: 'leads', type: '', description: 'How many leads.', from: { resourceId: WEEKLY.id, field: 'lead_count' } }]);
   });
 
   it('to run, change only the values of its Parameters, never their kind or list (DEC-LE-01)', () => {
@@ -95,7 +134,9 @@ describe('the fields of a query, in a request', () => {
   it('need a name and its Resources to make one (FR-SR-45)', () => {
     expect(parseQuery({ name: ' Leads per source ', question: ' Which? ', resources: [WEEKLY.id] }, true)).toEqual({ name: 'Leads per source', question: 'Which?', resources: [WEEKLY.id] });
     expect(parseQuery({ resources: [WEEKLY.id] }, true)).toBe('The name has 1 to 120 characters.');
-    expect(parseQuery({ name: 'x', resources: [] }, true)).toMatch(/1 to 10 Resources/);
+    // None passes here: only a power user may make one without Resources, which the route decides (FR-SR-56).
+    expect(parseQuery({ name: 'x', resources: [] }, true)).toEqual({ name: 'x', resources: [] });
+    expect(parseQuery({ name: 'x', resources: Array.from({ length: 11 }, (_, i) => `${i}`) }, true)).toMatch(/1 to 10 Resources/);
     expect(parseQuery({ name: 'x', resources: [WEEKLY.id, WEEKLY.id] }, true)).toMatch(/each named once/);
     expect(parseQuery({ name: 'x', resources: [WEEKLY.id], owner: '101' }, true)).toBe('A query has no field owner here.');
   });
@@ -144,12 +185,14 @@ function fakeBigQuery() {
   /** What every dry run reads instead, as data grows; and what BigQuery no longer finds, in its words. */
   let size: number | null = null;
   let gone: { text: string; message: string } | null = null;
+  /** BigQuery does not describe a table now (FR-SR-62). */
+  let silent = false;
   const bigquery: BigQuery = {
     async dryRun(text): Promise<DryRun> {
       if (gone && text.includes(gone.text)) throw new BigQueryRefused(gone.message);
       const bytes = size ?? Number(/-- reads (\d+)/.exec(text)?.[1] ?? 80_000_000);
       const referencedTables = [WEEKLY, SOURCES, SECRET].filter((resource) => text.includes(resource.key)).map((resource) => resource.key);
-      return { statementType: 'SELECT', bytes, referencedTables, partitions: 42 };
+      return { statementType: 'SELECT', bytes, referencedTables, partitions: 42, columns: [{ name: 'week_start', type: 'DATE' }, { name: 'lead_source', type: 'STRING' }, { name: 'leads', type: 'INT64' }] };
     },
     async run(text, options) {
       runs.push({ sql: text, options });
@@ -187,11 +230,30 @@ function fakeBigQuery() {
     async partitions(_key, limit) {
       return ['20261019', '20261012', '20261005', '20260928', '20260921'].slice(0, limit);
     },
+    // The staging table of the leads, as BigQuery keeps it: by its full name in its own case (FR-SR-62).
+    async describe(key) {
+      if (silent) throw new BigQueryUnavailable('BigQuery did not answer');
+      if (key !== STG.fullName) throw new BigQueryRefused(`Not found: Table ${key}`);
+      return {
+        type: 'TABLE', bytes: 3_100_000_000, rows: 4_800_000, partitions: 1412, partitionField: 'created_date', modifiedAt: '2026-11-14T06:14:00.000Z',
+        description: 'One row per lead, from BigQuery.',
+        partition: { field: 'created_date', unit: 'day', required: true },
+        clusterBy: ['lead_source'],
+        columns: [
+          { name: 'lead_id', type: 'STRING', description: '' },
+          { name: 'lead_source', type: 'STRING', description: 'Source system code.' },
+          { name: 'created_date', type: 'DATE', description: '' },
+        ],
+      };
+    },
   };
   return {
     bigquery,
     runs,
     pages,
+    quiet: (on = true) => {
+      silent = on;
+    },
     refuse: (message: string) => {
       refuseNext = message;
     },
@@ -228,6 +290,8 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
   /** What query told catalogue became Broken, and works again (MSG-QRY-02, MSG-LEN-05). */
   const brokenTold: { subject: { kind: string; id: string; name?: string; ownerId?: string }; fields: BrokenMessage }[] = [];
   const worksTold: { kind: string; id: string }[] = [];
+  /** What query asked registry about the tables outside Data Hub, and for whom (FR-SR-56). */
+  const knownAsked: { keys: string[]; authorization: string }[] = [];
   /** The Lenses query told catalogue were deleted (FR-LE-18); while catalogueDown, catalogue does not answer. */
   const deletedTold: { lensId: string; name: string; actor: { id: string; name: string }; reason: string; users: string[] }[] = [];
   let catalogueDown = false;
@@ -245,7 +309,7 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     async resource(id, authorization) {
       const ids = visible.get(authorization);
       if (ids === null) throw new CatalogueUnavailable('down');
-      return ids?.includes(id) ? ([WEEKLY, SOURCES, SECRET].find((resource) => resource.id === id) ?? null) : null;
+      return ids?.includes(id) ? ([WEEKLY, SOURCES, SECRET, DRAFT].find((resource) => resource.id === id) ?? null) : null;
     },
     async requests(queryId, authorization, subjectKind = 'query') {
       if (visible.get(authorization) === null) throw new CatalogueUnavailable('down');
@@ -334,7 +398,7 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     writers.set(mia, '104');
     deciders.add(dataTeam);
     visible.set(mia, [WEEKLY.id, SOURCES.id]);
-    visible.set(an, [WEEKLY.id, SOURCES.id]);
+    visible.set(an, [WEEKLY.id, SOURCES.id, DRAFT.id]);
     visible.set(karel, [WEEKLY.id]);
     visible.set(dataTeam, [WEEKLY.id, SOURCES.id, SECRET.id]);
     app = await buildApp({
@@ -347,6 +411,13 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
         bigquery: fake.bigquery,
         beneath: createBeneath(fake.bigquery),
         project: PROJECT,
+        // registry, which answers only who may query tables outside Data Hub, as the registry route itself does.
+        registry: {
+          async knownTables(keys, authorization) {
+            knownAsked.push({ keys: [...keys], authorization });
+            return [STG, PARTNERS].filter((table) => keys.includes(table.key));
+          },
+        },
         thresholds: { approve: 100_000_000, request: 1_000_000_000 },
         storage: createStorage(fake.bigquery, createBeneath(fake.bigquery)),
         // The scheduler, by its Google ID token for query's own address (DEC-LE-20).
@@ -619,6 +690,24 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
   let hugeLens: string;
   let hugeQuery: string;
 
+  it('makes no Lens of a query that reads a Resource not published yet, and says which (DEC-LE-22)', async () => {
+    const made = await call(an, 'POST', '/queries', { name: 'Leads per source, draft', resources: [WEEKLY.id, DRAFT.id], sql: withParameters, parameters: [dateFrom, channel] });
+    const draftQuery = made.json().query;
+    // The query passes on whether each of its Resources is published, so that the web app greys "Make it a lens" (DEC-UX-218).
+    expect(draftQuery.resources.map((resource: { displayName: string; published: boolean }) => [resource.displayName, resource.published])).toEqual([
+      ['Weekly lead volume', true],
+      ['Draft leads', false],
+    ]);
+    const refused = await call(an, 'POST', '/lenses', { queryId: draftQuery.id, collectionId: AN_WORK, name: 'Leads per source, draft' });
+    expect(refused.statusCode).toBe(409);
+    expect(refused.json()).toEqual({
+      error: 'not_published',
+      message: 'A Lens is made only on published Resources: Draft leads is not published yet.',
+      resources: [{ id: DRAFT.id, displayName: 'Draft leads' }],
+    });
+    expect((await call(an, 'GET', `/queries/${draftQuery.id}`)).json().query.lens).toBeNull();
+  });
+
   it('makes a Lens of a query of its author, into a Collection they own, measured now (FR-LE-07, FR-LE-08, DEC-CO-20)', async () => {
     const made = await call(an, 'POST', '/queries', { name: 'Leads per source, week by week', resources: [WEEKLY.id, SOURCES.id], sql: withParameters, parameters: [dateFrom, channel], forCollection: AN_WORK });
     lensQuery = made.json().query.id;
@@ -633,6 +722,11 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
       steps: ['Takes the weekly lead volume from From.', 'Keeps one lead channel.'],
       tags: ['#leads', 'source'],
       labels: { dateFrom: 'From', leadChannel: 'Lead channel' },
+      // A field named as one of its Resources takes that description; another, one its author takes or writes (FR-LE-19).
+      fields: [
+        { name: 'week_start', description: 'The Monday of the week.', from: { resourceId: WEEKLY.id, field: 'week_start' } },
+        { name: 'leads', description: 'How many leads came in.', from: null },
+      ],
     };
     expect((await call(an, 'POST', '/lenses', { ...fields, collectionId: CREDIT })).json()).toMatchObject({ error: 'invalid_request', message: 'A Lens goes into a Collection you own.' });
     expect((await call(karel, 'POST', '/lenses', fields)).statusCode).toBe(404);
@@ -656,6 +750,12 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
       parameters: [
         { ...dateFrom, label: 'From' },
         { ...channel, label: 'Lead channel' },
+      ],
+      // Each field of its result, in its order and with its type, as the Pre-flight says them (DEC-UX-230).
+      fields: [
+        { name: 'week_start', type: 'DATE', description: 'The Monday of the week.', from: { resourceId: WEEKLY.id, field: 'week_start' } },
+        { name: 'lead_source', type: 'STRING', description: '', from: null },
+        { name: 'leads', type: 'INT64', description: 'How many leads came in.', from: null },
       ],
     });
     // No page shows the SQL of a Lens (FR-LE-14).
@@ -763,6 +863,33 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     // Karel sees Mia's Lens in Credit leads, but is not of its Owner Unit.
     expect((await call(karel, 'PATCH', `/lenses/${largeLens}`, { name: 'Mine now' })).json()).toMatchObject({ error: 'forbidden', permission: 'lenses.manage' });
     expect((await call(karel, 'PATCH', `/lenses/${lensId}`, { name: 'Mine now' })).statusCode).toBe(404);
+  });
+
+  it('lets its Owner Unit change the descriptions of its fields, also of a Lens made before it had them (DEC-UX-231)', async () => {
+    // A Lens made before its fields had descriptions: its columns come from a dry run of its SQL.
+    await database.db.updateTable('lenses').set({ fields: '[]' }).where('id', '=', largeLens).execute();
+    const described = await call(mia, 'PATCH', `/lenses/${largeLens}`, {
+      fields: [
+        { name: 'leads', description: 'How many leads came in.', from: { resourceId: WEEKLY.id, field: 'lead_count' } },
+        { name: 'lead_source', description: 'Its source code.', from: { resourceId: SOURCES.id, field: 'lead_source' } },
+        { name: 'gone', description: 'No longer in its result.', from: null },
+      ],
+    });
+    expect(described.statusCode).toBe(200);
+    // In the order of its result, with its type; a description from a Resource it does not read, or of a field it no longer has, is not kept.
+    expect(described.json().lens.fields).toEqual([
+      { name: 'week_start', type: 'DATE', description: '', from: null },
+      { name: 'lead_source', type: 'STRING', description: '', from: null },
+      { name: 'leads', type: 'INT64', description: 'How many leads came in.', from: { resourceId: WEEKLY.id, field: 'lead_count' } },
+    ]);
+    // Once it has them, a change keeps their types without a dry run.
+    const again = await call(mia, 'PATCH', `/lenses/${largeLens}`, { fields: [{ name: 'week_start', description: 'The Monday of the week.', from: null }] });
+    expect(again.json().lens.fields.map((field: { name: string; type: string; description: string }) => [field.name, field.type, field.description])).toEqual([
+      ['week_start', 'DATE', 'The Monday of the week.'],
+      ['lead_source', 'STRING', ''],
+      ['leads', 'INT64', ''],
+    ]);
+    expect((await call(mia, 'PATCH', `/lenses/${largeLens}`, { fields: [{ name: 'x', description: 'y', type: 'INT64' }] })).statusCode).toBe(400);
   });
 
   it('updates a Lens from a query used as it, measured again, as its next version (FR-LE-16)', async () => {
@@ -969,6 +1096,12 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     expect(found.exact[0]).toMatchObject({ shared: 1, marked: { name: [{ text: 'All weeks per ', shared: false }, { text: 'source', shared: true }] }, sharedTags: [] });
     // Its name, its question and its tags share "sources", "bring" and "leads", by their stem; "the" does not count.
     expect(found.more[0]).toMatchObject({ shared: 3, sharedTags: ['leads', 'source'] });
+    // Claude gets what each field of a Lens holds with it (DEC-UX-230).
+    expect(found.more[0].fields).toEqual([
+      { name: 'week_start', type: 'DATE', description: 'The Monday of the week.' },
+      { name: 'lead_source', type: 'STRING', description: '' },
+      { name: 'leads', type: 'INT64', description: 'How many leads came in.' },
+    ]);
     expect(found.more[0].marked.question).toEqual([
       { text: 'Which ', shared: false },
       { text: 'sources', shared: true },
@@ -1322,4 +1455,127 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     const miaNoLenses = await userOf('104', 'Mia Peeters', 'businessAnalyst', (permissions) => (permissions['lenses.make'].on = false), [CREDIT_UNIT]);
     expect((await call(miaNoLenses, 'POST', `/lenses/${waiting.id}/requests`, {})).json()).toMatchObject({ error: 'forbidden', permission: 'lenses.make' });
   });
+
+  describe('a power user, with tables outside Data Hub (FR-SR-56, DEC-SR-46)', () => {
+    const raw = `select lead_id, created_date from \`${STG.key}\``;
+
+    it('starts a query from SQL alone, and reads a table Data Hub knows that is no Resource, in its own case', async () => {
+      // Without Resources only for a power user: Dirk, in Admin, has queries.outside; An does not.
+      expect((await call(an, 'POST', '/queries', { name: 'Raw leads', resources: [] })).statusCode).toBe(400);
+      const made = await call(dataTeam, 'POST', '/queries', { name: 'Raw leads', resources: [] });
+      expect(made.statusCode).toBe(201);
+      const raws = made.json().query.id as string;
+      expect(made.json().query.resources).toEqual([]);
+
+      const checked = (await call(dataTeam, 'POST', `/queries/${raws}/preflight`, { sql: raw })).json().preflight;
+      expect(checked).toMatchObject({ runnable: true, problems: [], tables: [{ key: STG.key, fullName: STG.fullName, name: 'stg_oltp__leads', layer: 'staging' }] });
+      expect(knownAsked.at(-1)).toEqual({ keys: [STG.key], authorization: dataTeam });
+      // BigQuery gets it by its full name in its own case, as it would a Resource (DEC-SR-44).
+      const ran = await call(dataTeam, 'POST', `/queries/${raws}/runs`, { sql: raw });
+      expect(ran.statusCode).toBe(201);
+      expect(fake.runs.at(-1)?.sql).toContain(`\`${STG.fullName}\``);
+    });
+
+    it('keeps a Resource a Resource, and a table Data Hub does not know an error', async () => {
+      const raws = (await call(dataTeam, 'POST', '/queries', { name: 'Raw leads, again', resources: [] })).json().query.id as string;
+      const resource = (await call(dataTeam, 'POST', `/queries/${raws}/preflight`, { sql: `select * from \`${PARTNERS.key}\`` })).json().preflight;
+      expect(resource).toMatchObject({ runnable: false, tables: [], problems: [{ kind: 'outside', name: PARTNERS.key }] });
+      const unknown = (await call(dataTeam, 'POST', `/queries/${raws}/preflight`, { sql: 'select * from `other-project.somewhere.something`' })).json().preflight;
+      expect(unknown).toMatchObject({ runnable: false, problems: [{ kind: 'unknown', name: 'other-project.somewhere.something' }] });
+      // The table it may read still shows next to the Resources while another one keeps it from running.
+      const both = (await call(dataTeam, 'POST', `/queries/${raws}/preflight`, { sql: `${raw} join \`other-project.somewhere.something\` using (lead_id)` })).json().preflight;
+      expect(both).toMatchObject({ runnable: false, tables: [{ key: STG.key }], problems: [{ kind: 'unknown' }] });
+    });
+
+    it('never reads one for a colleague without the Permission, and asks registry nothing for them', async () => {
+      const theirs = (await call(an, 'POST', '/queries', { name: 'Weekly and raw', resources: [WEEKLY.id] })).json().query.id as string;
+      const asked = knownAsked.length;
+      const checked = (await call(an, 'POST', `/queries/${theirs}/preflight`, { sql: raw })).json().preflight;
+      expect(checked).toMatchObject({ runnable: false, tables: [], problems: [{ kind: 'outside', name: STG.key }] });
+      expect(knownAsked).toHaveLength(asked);
+    });
+
+    it('makes no Lens of a query that reads one, nor of a query without Resources (DEC-LE-22)', async () => {
+      const mixed = (
+        await call(dataTeam, 'POST', '/queries', { name: 'Weekly and raw', resources: [WEEKLY.id], sql: `select * from \`${WEEKLY.key}\` join \`${STG.key}\` using (lead_id) where week_start > '2026-01-01'` })
+      ).json().query.id as string;
+      const refused = await call(dataTeam, 'POST', '/lenses', { queryId: mixed, collectionId: CREDIT, name: 'Weekly and raw' });
+      expect(refused.statusCode).toBe(409);
+      expect(refused.json()).toMatchObject({ error: 'reads_outside', message: 'A Lens is made only on published Resources: this query reads a table outside Data Hub, stg_oltp__leads.', tables: [{ name: 'stg_oltp__leads' }] });
+      const alone = (await call(dataTeam, 'POST', '/queries', { name: 'Only SQL', resources: [], sql: 'select 1 as one' })).json().query.id as string;
+      expect((await call(dataTeam, 'POST', '/lenses', { queryId: alone, collectionId: CREDIT, name: 'Only SQL' })).json()).toMatchObject({ error: 'no_resources' });
+    });
+  });
+
+  describe('what is added to a query comes in as CTEs at its start (FR-SR-59, DEC-UX-225)', () => {
+    const sql = '-- leads\nwith weekly as (select * from `' + WEEKLY.key + '`)\nselect * from weekly';
+
+    it('adds a CTE for each Resource, after the with that is there, named after its table', async () => {
+      const added = await call(an, 'POST', '/queries/ctes', { sql, resources: [SOURCES.id] });
+      expect(added.statusCode).toBe(200);
+      expect(added.json().ctes).toEqual([`lead_sources as (\n    select\n        ${SOURCES.fields.map((field) => field.name).join(',\n        ')}\n    from\n        \`${SOURCES.fullName}\`\n)`]);
+      expect(added.json().sql).toBe(`-- leads\nwith\n\n${added.json().ctes[0]},\n\nweekly as (select * from \`${WEEKLY.key}\`)\nselect * from weekly`);
+      // Only Resources the User sees, and at least one thing to add.
+      expect((await call(an, 'POST', '/queries/ctes', { sql, resources: [SECRET.id] })).statusCode).toBe(400);
+      expect((await call(an, 'POST', '/queries/ctes', { sql })).statusCode).toBe(400);
+    });
+
+    it('adds a table outside Data Hub only for a power user, from its columns, filtered on its recent partitions', async () => {
+      expect((await call(an, 'POST', '/queries/ctes', { sql, tables: [STG.key] })).statusCode).toBe(403);
+      const added = await call(dataTeam, 'POST', '/queries/ctes', { sql: '', tables: [STG.key] });
+      expect(added.statusCode).toBe(200);
+      expect(added.json().sql).toContain(`stg_oltp__leads as (\n    select\n        lead_id,\n        created_date\n    from\n        \`${STG.fullName}\`\n    where\n        created_date >= date_sub(current_date(), interval 28 day)\n)`);
+      expect(added.json().sql).toMatch(/select\n    \*\nfrom\n    stg_oltp__leads\n$/);
+      // A table that is a Resource is added as a Resource, not as a table.
+      expect((await call(dataTeam, 'POST', '/queries/ctes', { sql, tables: [PARTNERS.key] })).statusCode).toBe(400);
+    });
+
+    it('tells a power user what dbt and BigQuery know of a table outside Data Hub (FR-SR-62, DEC-UX-247)', async () => {
+      const path = `/outside-table?key=${encodeURIComponent(STG.key.toUpperCase())}`;
+      expect((await call(an, 'GET', path)).statusCode).toBe(403);
+      const found = await call(dataTeam, 'GET', path);
+      expect(found.statusCode).toBe(200);
+      expect(found.json().table).toEqual({
+        key: STG.key,
+        fullName: STG.fullName,
+        name: 'stg_oltp__leads',
+        layer: 'staging',
+        resourceType: 'model',
+        projectName: 'dbt-prod',
+        materialized: null,
+        // Its description from dbt, or from BigQuery where dbt has none.
+        description: 'One row per lead, from BigQuery.',
+        bigquery: { type: 'TABLE', bytes: 3_100_000_000, rows: 4_800_000, partitions: 1412, modifiedAt: '2026-11-14T06:14:00.000Z' },
+        partition: { field: 'created_date', unit: 'day', required: true },
+        clusterBy: ['lead_source'],
+        // The partition column first, then the cluster columns; the types from BigQuery.
+        columns: [
+          { name: 'created_date', type: 'DATE', description: '', from: null, partition: true, cluster: null },
+          { name: 'lead_source', type: 'STRING', description: 'Source system code.', from: 'bigquery', partition: false, cluster: 1 },
+          { name: 'lead_id', type: 'STRING', description: '', from: null, partition: false, cluster: null },
+        ],
+      });
+      // registry is asked with the token of the User, by the Key in lower case.
+      expect(knownAsked.at(-1)).toMatchObject({ keys: [STG.key] });
+
+      // Without BigQuery, what dbt knew at its last run.
+      fake.quiet();
+      const dbt = await call(dataTeam, 'GET', path);
+      fake.quiet(false);
+      expect(dbt.json().table).toMatchObject({
+        bigquery: null,
+        partition: { field: 'created_date', unit: 'day', required: false },
+        columns: [
+          { name: 'created_date', type: 'DATE', partition: true },
+          { name: 'lead_id', type: 'STRING', partition: false },
+        ],
+      });
+
+      // A Resource, a table registry does not know and a name that is no Key are not read here.
+      expect((await call(dataTeam, 'GET', `/outside-table?key=${encodeURIComponent(PARTNERS.key)}`)).statusCode).toBe(404);
+      expect((await call(dataTeam, 'GET', `/outside-table?key=${PROJECT}.nowhere.nothing`)).statusCode).toBe(404);
+      expect((await call(dataTeam, 'GET', '/outside-table?key=dbt_prod_staging.stg_oltp__leads')).statusCode).toBe(400);
+    });
+  });
 });
+

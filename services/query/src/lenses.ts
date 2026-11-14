@@ -1,6 +1,6 @@
 import { askedWords, HEADLINE, type Marked, marked } from '@datahub/db';
 import { type Kysely, type Selectable, sql } from 'kysely';
-import type { LensLogId, LensParameterRow, LensRange, LensState, Missing, NamedResource, QueryDatabase } from './database.js';
+import type { LensField, LensLogId, LensParameterRow, LensRange, LensState, Missing, NamedResource, QueryDatabase } from './database.js';
 import type { Query, Viewer } from './queries.js';
 
 /** A Parameter of a Lens: one of its query, with the name Users see and its value as the default (DEC-LE-01). */
@@ -22,6 +22,8 @@ export interface Lens {
   sql: string;
   parameters: LensParameter[];
   resources: NamedResource[];
+  /** Its fields, each with its description, as its author set them (FR-LE-19). */
+  fields: LensField[];
   version: number;
   state: LensState;
   range: LensRange;
@@ -72,6 +74,8 @@ export interface LensEdit {
   tags?: string[];
   /** The name Users see, per Parameter. */
   labels?: Record<string, string>;
+  /** Its fields, each with its description (FR-LE-19, DEC-UX-231). */
+  fields?: LensField[];
 }
 
 /** What makes the next version of a Lens: a query used as it, measured now (FR-LE-16). */
@@ -79,6 +83,8 @@ export interface NewVersion {
   by: Viewer;
   query: Query;
   parameters: LensParameter[];
+  /** Its fields in the new version, each keeping the description it had by name (FR-LE-19). */
+  fields: LensField[];
   range: LensRange;
   reads: number;
 }
@@ -94,11 +100,13 @@ export interface NewLens {
   steps: string[];
   tags: string[];
   parameters: LensParameter[];
+  /** Its fields, each with its description (FR-LE-19). */
+  fields: LensField[];
   range: LensRange;
   reads: number;
 }
 
-export type { Marked };
+export type { LensField, Marked };
 
 /** What a Lens shares with the words of a question: how many, and where they are (FR-SR-48, DEC-SR-42). */
 export interface SharedWords {
@@ -160,7 +168,7 @@ const missingText = (missing: Omit<Missing, 'since'>) => missing.name;
 
 export function createLenses(db: Kysely<QueryDatabase>): Lenses {
   return {
-    async create({ author, query, collectionId, name, question, shows, steps, tags, parameters, range, reads }) {
+    async create({ author, query, collectionId, name, question, shows, steps, tags, parameters, fields, range, reads }) {
       const state: LensState = range === 'request' ? 'waiting' : 'published';
       return db.transaction().execute(async (trx) => {
         const row = await trx
@@ -178,6 +186,7 @@ export function createLenses(db: Kysely<QueryDatabase>): Lenses {
             sql: query.sql,
             parameters: JSON.stringify(parameters),
             resources: JSON.stringify(query.resources),
+            fields: JSON.stringify(fields),
             state,
             range,
             reads,
@@ -234,7 +243,7 @@ export function createLenses(db: Kysely<QueryDatabase>): Lenses {
       });
     },
 
-    async edit(id, { labels, steps, tags, ...fields }) {
+    async edit(id, { labels, steps, tags, fields: described, ...fields }) {
       return db.transaction().execute(async (trx) => {
         const row = await trx.selectFrom('lenses').selectAll().where('id', '=', id).forUpdate().executeTakeFirstOrThrow();
         const parameters = labels ? row.parameters.map((parameter) => ({ ...parameter, label: labels[parameter.name] ?? parameter.label })) : undefined;
@@ -245,6 +254,7 @@ export function createLenses(db: Kysely<QueryDatabase>): Lenses {
             ...(steps ? { steps: JSON.stringify(steps) } : {}),
             ...(tags ? { tags: JSON.stringify(tags) } : {}),
             ...(parameters ? { parameters: JSON.stringify(parameters) } : {}),
+            ...(described ? { fields: JSON.stringify(described) } : {}),
             updatedAt: new Date(),
           })
           .where('id', '=', id)
@@ -254,7 +264,7 @@ export function createLenses(db: Kysely<QueryDatabase>): Lenses {
       });
     },
 
-    async version(id, { by, query, parameters, range, reads }) {
+    async version(id, { by, query, parameters, fields, range, reads }) {
       const state: LensState = range === 'request' ? 'waiting' : 'published';
       return db.transaction().execute(async (trx) => {
         const row = await trx.selectFrom('lenses').selectAll().where('id', '=', id).forUpdate().executeTakeFirstOrThrow();
@@ -265,6 +275,7 @@ export function createLenses(db: Kysely<QueryDatabase>): Lenses {
             sql: query.sql,
             parameters: JSON.stringify(parameters),
             resources: JSON.stringify(query.resources),
+            fields: JSON.stringify(fields),
             version,
             state,
             range,

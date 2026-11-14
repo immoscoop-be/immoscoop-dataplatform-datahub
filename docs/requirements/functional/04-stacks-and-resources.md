@@ -55,6 +55,7 @@ In library terms: a book is only in the library once the librarian registers it.
 - <a id="dec-sr-43"></a>**DEC-SR-43** · A new query offers only Lenses that run now: published, not stopped and not Broken. A Lens that waits for the Data Team, has stopped or is Broken is not offered to reuse ([FR-SR-47](#fr-sr-47)). *Decided on 2026-10-29, by Max.*
 - <a id="dec-sr-44"></a>**DEC-SR-44** · A Resource keeps the full name of its table twice: as its Key, in lower case, and in its own case, as dbt writes the database, schema and table name of its Node. The Key knows the table again, also in the SQL of a query, whatever the case it is written in. What asks BigQuery for the table, shows the name or copies it takes the name in its own case, since BigQuery names are case-sensitive: `mrt_leadSources` is not `mrt_leadsources`. Until the next run of its Source Job brings it, a Resource has its Key as both. It refines [DEC-SR-04](#dec-sr-04). *Decided on 2026-10-30, by Max (a Preview asked BigQuery for a table in lower case that exists only in camel case).*
 - <a id="dec-sr-45"></a>**DEC-SR-45** · A withdrawn Resource without a Collection is not in the list of Resources without a Collection ([FR-SR-35](#fr-sr-35)): it waits for nothing, as no exposure depends on it. It is held as [DEC-SR-26](#dec-sr-26) says, and the Data Team still opens it by its link; it is back in the list when an exposure with the tag `datahub` depends on it again. A withdrawn Resource in a Collection stays in its Collection, marked as withdrawn. It refines [DEC-SR-26](#dec-sr-26). *Decided on 2026-11-11, by Max (the nested models of the credits stopped being exposed in favour of their flat models, and would otherwise have waited for good).*
+- <a id="dec-sr-46"></a>**DEC-SR-46** · A power user may query tables outside Data Hub: whose Permission group has `queries.outside` ([DEC-PL-09](12-permissions-and-library-cards.md#dec-pl-09)) reads in a query, besides its Resources, every table Data Hub knows that is no Resource, the models, seeds, snapshots and sources of the dbt projects it follows through their Source Jobs, and may start a query from SQL, without Resources. A table that is a Resource is read as that Resource, with its rules: Data Hub prefers the Resource to the table typed by hand, and a Resource the User may not see stays refused. A table of no dbt project Data Hub follows stays an error. A query that reads a table outside Data Hub cannot become a Lens ([DEC-LE-22](09-lenses.md#dec-le-22)). In Claude the same holds as in the web app. Only Admin has it to start; a group of power users is made in Admin. *Decided on 2026-11-13, by Max.*
 
 Further decisions on using a Resource are under [Using a Resource](#using-a-resource).
 
@@ -420,6 +421,96 @@ The Display Name is the `label` of an exposure that depends on that table alone,
 
 When the Current Version of its dbt project has no exposure with the tag `datahub` on the table any more, the Resource is withdrawn: only the Data Team and the Owner Unit of its Collection still see it, marked as withdrawn. It keeps its Collection and its Log, and comes back as it was when an exposure depends on it again. Both go into its Log.
 
+<a id="fr-sr-55"></a>
+### FR-SR-55 · The Data Team sees every withdrawn Resource in Admin
+
+**Status:** Implemented · **Source:** Max, 2026-11-12 ([DEC-UX-213](../../design/principles.md#dec-ux-213)) · **Screens:** [admin-withdrawn](../../design/screens/admin-withdrawn.html), [admin-permission-groups](../../design/screens/admin-permission-groups.html)
+
+Admin has a tool Withdrawn, for whose Permission group opens it ([FR-PL-15](12-permissions-and-library-cards.md#fr-pl-15)): every Resource of the environment that no exposure with the tag `datahub` depends on any more ([FR-SR-34](#fr-sr-34)), also one without a Collection, which shows nowhere else ([DEC-SR-45](#dec-sr-45)). Each with its Display Name and Key, its dbt project, its Collection or none, its Level, and when and in which run it was withdrawn, the newest first; a search by name or Key and a filter by whether it is in a Collection. A row opens the Resource, where it can be taken out of its Collection.
+
+**Makes easy:** finding back a Resource that a refactoring in dbt withdrew, and cleaning up the Collections it still sits in. **Makes hard:** losing track of what Data Hub still keeps once it shows nowhere else.
+
+<a id="fr-sr-56"></a>
+### FR-SR-56 · A power user queries tables outside Data Hub
+
+**Status:** Implemented · **Source:** Max, 2026-11-13 ([DEC-SR-46](#dec-sr-46)) · **Screens:** [query](../../design/screens/query.html), [query-new](../../design/screens/query-new.html)
+
+A User whose Permission group has `queries.outside` ([DEC-PL-09](12-permissions-and-library-cards.md#dec-pl-09)) may read in a query, besides its Resources, a table that Data Hub knows but that is no Resource: a model, seed, snapshot or source of a dbt project it follows through its Source Jobs, as the registry keeps it in its Current Version. They may also start a query from SQL, without Resources. Such a table shows next to the Resources of the query as "not a Resource", without Level, Owner or Publication; the Pre-flight measures it and the run reads it as any other, within the ranges of the User ([FR-SR-37](#fr-sr-37)), and the Query Log keeps which tables it read. A table that is a Resource is read as that Resource, with its rules ([DEC-UX-73](../../design/principles.md#dec-ux-73)), and a table of no dbt project Data Hub follows stays an error. A query that reads a table outside Data Hub cannot become a Lens ([DEC-LE-22](09-lenses.md#dec-le-22)). Claude, through the MCP server, does the same for such a User ([FR-CL-18](17-claude.md#fr-cl-18)).
+
+**Makes easy:** a power user exploring raw and staging data, such as event tables, in Data Hub itself, measured and logged as every query, before it becomes a Resource. **Makes hard:** reading around a Resource, its Publication or its Owner, sharing a figure from unconfirmed data as a Lens, and reading tables of projects Data Hub does not follow.
+
+*Note of 2026-11-13, on building it: registry tells query which tables it knows, with the token of the User ([TR-SR-27](../technical/04-stacks-and-resources.md#tr-sr-27)).*
+
+*Note of 2026-11-14: the chip shows only the name of the table, its layer and that it is no Resource on a hover ([DEC-UX-243](../../design/principles.md#dec-ux-243)); a double-click on its name shows what dbt and BigQuery know of it ([FR-SR-62](#fr-sr-62)).*
+
+<a id="fr-sr-57"></a>
+### FR-SR-57 · A double-click in the SQL explains what a word names
+
+**Status:** Implemented · **Source:** Max, 2026-11-13 ([DEC-UX-221](../../design/principles.md#dec-ux-221)) · **Screens:** [query](../../design/screens/query.html)
+
+In the editor of Query, a double-click on a word of the SQL selects it, as in any editor, and opens what it names: on a Parameter of the query, its window, where it is changed; on an `@name` that is no Parameter, the window that defines it; on the name of a Resource the User sees, its Summary ([FR-RC-19](05-resource-card.md#fr-rc-19)), with a way to its page; on a field of the Resources of the query, its type, whether it is a partition or cluster column, and its descriptions, the Business Description next to the one from dbt ([FR-RC-18](05-resource-card.md#fr-rc-18)), once for each Resource of the query that holds it. The query stays as it is, and any other word is only selected. Each word a double-click explains has a dotted line under it.
+
+**Makes easy:** reading what a Resource is, how to query it and what a field means, at the moment of writing SQL on it, without leaving the query. **Makes hard:** writing SQL on a field or a Resource without knowing what it means, and losing the query to look it up.
+
+*Note of 2026-11-13, on building it: the editor finds these words in the syntax of the SQL, and the window of a Resource reads its Summary as its page does ([TR-SR-28](../technical/04-stacks-and-resources.md#tr-sr-28)).*
+
+*Note of 2026-11-14: for a power user, the name of a table outside Data Hub and its columns are explained too ([FR-SR-62](#fr-sr-62)).*
+
+<a id="fr-sr-58"></a>
+### FR-SR-58 · A power user finds a table outside Data Hub
+
+**Status:** Implemented · **Source:** Max, 2026-11-13 ([DEC-UX-224](../../design/principles.md#dec-ux-224)) · **Screens:** [query](../../design/screens/query.html)
+
+On a query, a User with `queries.outside` ([FR-SR-56](#fr-sr-56)) finds a table Data Hub knows outside the Resources of the query: by its name or the words of its description, narrowed by its layer and its project. Each table shows its layer, project, dataset and description from dbt, and unfolds to its columns, each with its type and description. The tables that are no Resource are picked one or more at once and come into the SQL of the query as CTEs ([FR-SR-59](#fr-sr-59)); a Resource starts a new query with it, under its own rules ([DEC-UX-73](../../design/principles.md#dec-ux-73)). What the search covers is [OP-UX-81](../../design/principles.md#op-ux-81).
+
+**Makes easy:** a power user finding the right staging or source table, and what is in it, without leaving the query or knowing its full name by heart. **Makes hard:** reading a raw table where a Resource exists, which the search names as a Resource, and guessing at a table name that the Pre-flight then refuses.
+
+<a id="fr-sr-59"></a>
+### FR-SR-59 · What is added to a query comes in as CTEs at its start
+
+**Status:** Implemented · **Source:** Max, 2026-11-13 ([DEC-UX-225](../../design/principles.md#dec-ux-225)) · **Screens:** [query](../../design/screens/query.html)
+
+Resources added to a query, which start a new query ([DEC-UX-73](../../design/principles.md#dec-ux-73)), and tables outside Data Hub a power user adds ([FR-SR-58](#fr-sr-58)) are picked one or more at once, a query keeping 1 to 10 Resources. Each comes into the SQL as a CTE at its start, named after its table and unique in the query, selecting its fields and filtering on its recent partitions, as the SQL of a new query does; the CTEs already there, and the rest of the SQL, stay as they were. Before they are added, the User sees which CTEs come.
+
+**Makes easy:** adding several sources in one step, each ready to join, read with a filter on its partitions from the start. **Makes hard:** a table named deep inside the SQL that nobody sees is read, and a first run that reads every partition of a table just added.
+
+*Note of 2026-11-13, on building it: query writes the CTEs, and registry finds the tables it knows with their columns ([TR-SR-29](../technical/04-stacks-and-resources.md#tr-sr-29)).*
+
+<a id="fr-sr-60"></a>
+### FR-SR-60 · A User flags queries to work on several side by side
+
+**Status:** Implemented · **Source:** Max, 2026-11-13 ([DEC-UX-236](../../design/principles.md#dec-ux-236), [DEC-UX-241](../../design/principles.md#dec-ux-241)) · **Screens:** [query](../../design/screens/query.html), [query-new](../../design/screens/query-new.html)
+
+A User flags a query, theirs or one they may read, to keep it in a row on top of every screen of Query: at most ten, in the order they were flagged, which dragging a tab changes ([OP-UX-84](../../design/principles.md#op-ux-84)). "Flag this query" is in that row itself, while fewer than ten are flagged; the × on a tab unflags it, and the query stays open as it is ([DEC-UX-241](../../design/principles.md#dec-ux-241)). Cmd+1 to Cmd+0, Ctrl on Windows and Linux, open the first to the tenth on those screens, and elsewhere stay the browser's ([OP-UX-86](../../design/principles.md#op-ux-86)). A flagged query stays as the User left it while they work in another, a run still going included, until the browser tab closes or reloads; its tab shows a run going, a result or a failure not seen yet, and Broken ([OP-UX-85](../../design/principles.md#op-ux-85)). The flags follow the User to every computer they sign in on. On a flagged query, the quick window goes to the next and the previous one, round the row.
+
+**Makes easy:** working on several questions at once, letting a long run go on in one query while writing another, and coming back to each as it was. **Makes hard:** losing a query among the many in the panel, and losing what was typed or run by going to another query.
+
+*Note of 2026-11-14: with no query flagged the row is not shown, and the quick window flags the first ([DEC-UX-253](../../design/principles.md#dec-ux-253)).*
+
+<a id="fr-sr-61"></a>
+### FR-SR-61 · The quick window does the commands of a query, and goes anywhere
+
+**Status:** Implemented · **Source:** Max, 2026-11-13 ([DEC-UX-237](../../design/principles.md#dec-ux-237), [DEC-UX-239](../../design/principles.md#dec-ux-239), [DEC-UX-240](../../design/principles.md#dec-ux-240)) · **Screens:** [query](../../design/screens/query.html)
+
+Cmd+Shift+P or Cmd+K, Ctrl on Windows and Linux, opens the quick window anywhere in Data Hub ([OP-UX-87](../../design/principles.md#op-ux-87)). On a query it lists first what can be done to it now, a command for every button of the page that does something to it ([DEC-UX-239](../../design/principles.md#dec-ux-239)): Show info, when the cursor in the SQL is on a field, a Parameter or the name of a Resource, which opens what a double-click on it opens ([DEC-UX-238](../../design/principles.md#dec-ux-238)); Run, with what it reads, as Cmd+Enter does: above 100 MB it puts the focus on the button that approves it, and above 1 GB it opens the Request to the Data Team; Add the partition filter when the Pre-flight misses one; Make it a Lens or Update the Lens; Flag or Unflag; Rename this query; Fold all; Format the SQL; Add a Parameter; Add a Resource; Remove a Resource, which starts a new query without it; Add a table for a User with `queries.outside`; New query from this one; Lenses on these Resources; Show the history or the result; Copy the Query ID; Hide or Show again; and the view; then the flagged queries and Go to. Every other screen lists its commands first in the same way, from the buttons, tabs and parts it shows, such as Query this Resource, Show its Columns or Add a Lens to a Collection ([DEC-UX-240](../../design/principles.md#dec-ux-240)). Typed, it searches those and the Resources, Collections, Lenses, the User's own queries and the Learning Cards that the User may see ([OP-UX-88](../../design/principles.md#op-ux-88)). Empty, it lists first what the User did from it in this session; Cmd+1 to Cmd+9 highlight the first nine rows, and Enter does the one highlighted ([DEC-UX-242](../../design/principles.md#dec-ux-242)). What the User may never do is not listed; what they cannot do right now is greyed, with why.
+
+**Makes easy:** doing what a query needs from the keyboard, and reaching a Resource, Lens or query by a few letters of its name. **Makes hard:** hunting through panels and pages for a button, approving a large run without pressing the button that says what it reads, and finding through the quick window anything the User may not see.
+
+*Note of 2026-11-14: the commands of Data Hub also hold Hide or Show the panel, and on Query Refresh the queries ([DEC-UX-254](../../design/principles.md#dec-ux-254)); Messages has its views, Mark all as read, Close and Reopen ([DEC-UX-255](../../design/principles.md#dec-ux-255)); and going somewhere puts the cursor in the search of the screen that opens ([DEC-UX-256](../../design/principles.md#dec-ux-256)).*
+
+*Note of 2026-11-14: on a Resource it holds Add a Remark and Add a Signal, which open its Messages on that kind with the cursor in the text ([DEC-UX-257](../../design/principles.md#dec-ux-257)), and on its Overview Add or Update the Business Description, Update the intended use, Update the pitfalls, Add a key field, Add a Parameter and Add a Known Gap ([DEC-UX-258](../../design/principles.md#dec-ux-258)).*
+
+<a id="fr-sr-62"></a>
+### FR-SR-62 · A power user reads what Data Hub knows of a table outside it
+
+**Status:** Implemented · **Source:** Max, 2026-11-14 ([DEC-UX-247](../../design/principles.md#dec-ux-247), [OP-UX-89](../../design/principles.md#op-ux-89)) · **Screens:** [query](../../design/screens/query.html)
+
+In the SQL of a query, a User with `queries.outside` ([FR-SR-56](#fr-sr-56)) double-clicks the name of a table outside Data Hub that the query reads, or asks Show info with the cursor on it, and sees what Data Hub knows of it, without leaving the query: its description, layer and project from dbt; from BigQuery at that moment, whether it is a table, a view, a materialized view or an external table, how it is partitioned and whether BigQuery requires a filter on its partition column, its cluster columns, its size, rows, partitions and last change, and its full name to copy; and its columns, partition and cluster columns first, nested fields under their parent, each with its type from BigQuery and its description from dbt, or from BigQuery where dbt has none. A double-click on a field of such a table shows its type and description at the word. When BigQuery does not answer, the User sees what dbt knew at its last run, said as such. Only a table Data Hub knows, and only for such a User; Data Hub reads its metadata, never its rows, and BigQuery bills nothing for it. Such a table has no page in Data Hub, no Owner and no Level ([DEC-UX-220](../../design/principles.md#dec-ux-220)).
+
+**Makes easy:** a power user knowing how to read a staging or source table, its partition column first, what its columns hold and whether it is a view over something larger, at the moment of writing SQL on it. **Makes hard:** a full scan of a table whose partitioning nobody looked up, guessing at what a raw column means, and learning through Data Hub about tables of projects it does not follow.
+
+*Note of 2026-11-14, on building it: query reads it from registry and from BigQuery by its metadata ([TR-SR-31](../technical/04-stacks-and-resources.md#tr-sr-31)).*
+
 <a id="fr-sr-35"></a>
 ### FR-SR-35 · A new Resource waits for a Collection
 
@@ -500,6 +591,8 @@ The Pre-flight ([FR-SR-36](#fr-sr-36)) says, per Resource, how many of its parti
 Data Hub has a section Query, next to Collections, in which a User writes SQL over every Resource they may see, and later Lenses. A query that touches a Resource they cannot see is refused, as through Claude ([FR-SR-26](#fr-sr-26)). Every query passes the Pre-flight, with its thresholds ([FR-SR-36](#fr-sr-36), [FR-SR-37](#fr-sr-37)), gets a byte limit and a label ([FR-SR-27](#fr-sr-27)), and its result carries its Query ID ([FR-LN-06](07-log-and-notifications.md#fr-ln-06)). From the page of a Resource, "Query this resource" opens Query with it.
 
 *Note of 2026-10-27: a query reads only its own Resources; a table outside them is an error, and another set of Resources is another query ([DEC-UX-73](../../design/principles.md#dec-ux-73)).*
+
+*Note of 2026-11-13: a power user may also read tables Data Hub knows that are no Resource ([FR-SR-56](#fr-sr-56), [DEC-SR-46](#dec-sr-46)).*
 
 *Note of 2026-10-29, on building it: Query, its panel, a new query and the page of a query, reading only its own Resources ([TR-SR-15](../technical/04-stacks-and-resources.md#tr-sr-15) to [TR-SR-17](../technical/04-stacks-and-resources.md#tr-sr-17)); Lenses come with part 6 of the [build order](../../design/build-order.md), Claude in version 2.*
 

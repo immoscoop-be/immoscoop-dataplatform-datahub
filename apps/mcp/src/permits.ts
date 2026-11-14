@@ -32,6 +32,8 @@ export interface Permits {
   results: Results;
   /** `queries.make`: make, check, run and change queries of their own. */
   query: boolean;
+  /** `queries.outside`: a power user also reads the tables Data Hub knows that are no Resource, also without Resources (FR-SR-56). */
+  outside: boolean;
   /** Read queries: their own, with `queries.make`, or those of others, with `queries.seeOthers`. */
   readQueries: boolean;
   /** `queries.seeOthers` on every query: list_queries with everyone (DEC-CL-12). */
@@ -90,6 +92,7 @@ export function permitsOf(permissions: Permissions): Permits {
     claude,
     results: resultsOf(permissions),
     query: can(permissions, 'queries.make'),
+    outside: can(permissions, 'queries.make') && can(permissions, 'queries.outside'),
     readQueries: can(permissions, 'queries.make') || can(permissions, 'queries.seeOthers'),
     everyQuery: reach(permissions, 'queries.seeOthers') === 'every',
     queriesOnResource: can(permissions, 'queries.seeOthers'),

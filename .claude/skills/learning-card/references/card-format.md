@@ -103,12 +103,13 @@ Text may only hold `**bold**` and `` `a name` ``: no links in running text, no t
 
   | Path | Label | What the reader finds there |
   | --- | --- | --- |
-  | `/collections` | Open Collections | The Collections and their Resources: per Resource the descriptions, the grain, the model type, the Level, the Owner, the Known Gaps and the Messages |
+  | `/collections` | Open Collections | The Collections with their Resources and Lenses: per Resource the descriptions, the grain, the model type, the Level, the Owner, the Known Gaps and the Messages; per Lens its page, where it runs with its Parameters |
   | `/query/new` | Open Query | A new query over the Resources the reader may see |
-  | `/lenses` | Open Lenses | Lenses: questions that come back, with Parameters, on a page of their own |
   | `/messages` | Open your Messages | The reader's Messages: Questions, Remarks, Signals and what Data Hub wrote itself |
   | `/charts` | Open Charts | The charts of the Chart Server, each with what it answers and examples |
   | `/learning` | Open the Learning Centre | The Learning Centre, with every card |
+
+  There is no `/lenses`: Lenses have no section of their own and live in their Collections (DEC-UX-66), so a card on a Lens applies with `/collections` and says to open the Lens there.
 
 ## 3. From interview to card
 

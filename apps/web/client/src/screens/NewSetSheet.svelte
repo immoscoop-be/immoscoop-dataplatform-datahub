@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import Sheet from '@datahub/ui/containers/Sheet.svelte';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
@@ -15,7 +16,9 @@
    * Resources the User may see; to remove, a warning when the SQL still reads it. Then the new set, its
    * name suggested from its Resources and the date (DEC-UX-21), the question carried along, and the Lenses
    * on the new set, which can be a very different list (DEC-UX-114). "Start the new query" takes the SQL and
-   * its Parameters along; the old query stays as it was, with its history.
+   * its Parameters along; the old query stays as it was, with its history. Resources are ticked one or more at once,
+   * up to ten in all, and each comes as a CTE at the start of the SQL, shown before (DEC-UX-225, FR-SR-59). "New query
+   * from this one", in the quick window, starts one with the same Resources (DEC-UX-237).
    */
   let {
     query,
@@ -27,20 +30,26 @@
     onclose,
     onstart,
     lensesOn,
+    ctesOf,
   }: {
     query: Query;
     /** The SQL and Parameters as they are now, which the new query takes along. */
     sql: string;
     parameters: readonly Parameter[];
     collections: readonly Collection[] | undefined;
-    mode: 'add' | 'remove';
+    mode: 'add' | 'remove' | 'same';
     /** The Resource to add, chosen already, or the one to remove. */
     resource: string | null;
     onclose: () => void;
     onstart: (fields: NewQuery) => Promise<boolean>;
     /** The Lenses on a set of Resources, by the words of the question (FR-SR-47). */
     lensesOn: (resources: readonly string[], question: string) => Promise<LensSuggestions>;
+    /** The SQL with a CTE at its start for each Resource added, and those CTEs (FR-SR-59). */
+    ctesOf: (sql: string, resources: readonly string[]) => Promise<{ sql: string; ctes: string[] }>;
   } = $props();
+
+  /** A query reads 1 to 10 Resources (FR-SR-45). */
+  const MOST = 10;
 
   const current = $derived(query.resources.map((entry) => entry.id));
   /** Every Resource the User sees that the query does not read yet, with its Collection. */
@@ -49,8 +58,8 @@
       collection.resources.filter((item) => !item.withdrawn && !current.includes(item.id)).map((item) => ({ ...item, collection: collection.name })),
     ),
   );
-  const initialPick = () => (mode === 'add' ? resource : null);
-  let pick = $state<string | null>(initialPick());
+  const initialPicks = () => (mode === 'add' && resource ? [resource] : []);
+  let picks = $state<string[]>(initialPicks());
   let search = $state('');
   let named = $state(false);
   let name = $state('');
@@ -60,9 +69,36 @@
   let failed = $state(false);
 
   const found = $derived(
-    choices.filter((choice) => choice.id === pick || !search.trim() || `${choice.displayName} ${choice.collection}`.toLowerCase().includes(search.trim().toLowerCase())).slice(0, 12),
+    choices.filter((choice) => picks.includes(choice.id) || !search.trim() || `${choice.displayName} ${choice.collection}`.toLowerCase().includes(search.trim().toLowerCase())).slice(0, 12),
   );
-  const set = $derived(mode === 'remove' ? current.filter((id) => id !== resource) : pick ? [...current, pick] : current);
+  const set = $derived(mode === 'remove' ? current.filter((id) => id !== resource) : [...current, ...picks]);
+  const full = $derived(current.length + picks.length >= MOST);
+  function toggle(id: string, on: boolean): void {
+    picks = on ? [...picks, id] : picks.filter((picked) => picked !== id);
+  }
+
+  /** A Resource the SQL already names, such as one picked among the suggestions, needs no CTE of its own. */
+  const inSql = (id: string) => {
+    const key = choices.find((choice) => choice.id === id)?.key ?? '';
+    const text = sql.toLowerCase();
+    return key !== '' && (text.includes(key) || text.includes(key.split('.').slice(1).join('.')));
+  };
+  // The CTEs that come at the start of the SQL, once the ticks pause (DEC-UX-225).
+  let added = $state<{ sql: string; ctes: string[] } | null>(null);
+  let adding = 0;
+  $effect(() => {
+    const ids = picks.filter((id) => !inSql(id));
+    const asked = ++adding;
+    added = null;
+    if (mode !== 'add' || ids.length === 0) return;
+    const timer = setTimeout(() => {
+      ctesOf(sql, ids).then(
+        (found) => asked === adding && (added = found),
+        (error: unknown) => console.error('The CTEs of the Resources added could not be written', error),
+      );
+    }, 250);
+    return () => clearTimeout(timer);
+  });
   const nameOf = (id: string) => query.resources.find((entry) => entry.id === id)?.displayName ?? choices.find((choice) => choice.id === id)?.displayName ?? '';
   const removed = $derived(mode === 'remove' ? query.resources.find((entry) => entry.id === resource) : undefined);
   /** The table of the removed Resource, if the SQL still names it: in the new query, an error. */
@@ -110,22 +146,34 @@
 
   async function start(): Promise<void> {
     busy = true;
-    failed = !(await onstart({ name: name.trim(), question: question.trim(), resources: set, sql, parameters, startedFrom: query.id }));
+    try {
+      const ids = mode === 'add' ? picks.filter((id) => !inSql(id)) : [];
+      const withThem = ids.length === 0 ? sql : (added?.sql ?? (await ctesOf(sql, ids)).sql);
+      failed = !(await onstart({ name: name.trim(), question: question.trim(), resources: set, sql: withThem, parameters, startedFrom: query.id }));
+    } catch (error) {
+      console.error('The new query could not be started', error);
+      failed = true;
+    }
     busy = false;
   }
 </script>
 
-<Sheet title={mode === 'add' ? t('newSet.addTitle') : t('newSet.removeTitle', { name: removed?.displayName ?? '' })} {onclose}>
+<Sheet
+  title={mode === 'add' ? t('newSet.addMany', { count: Math.max(1, picks.length) }) : mode === 'same' ? t('newSet.sameTitle') : t('newSet.removeTitle', { name: removed?.displayName ?? '' })}
+  {onclose}
+>
   {#snippet top()}<div class="meta from"><Icon name="git-branch" />{t('newSet.from', { name: query.name })}</div>{/snippet}
   <div class="body">
-    <p class="why">{t(mode === 'add' ? 'newSet.why.add' : 'newSet.why.remove', { name: query.name })}</p>
+    <p class="why">{t(mode === 'add' ? 'newSet.why.add' : mode === 'same' ? 'newSet.why.same' : 'newSet.why.remove', { name: query.name })}</p>
     {#if mode === 'add'}
       <div class="label">{t('newSet.add')}</div>
-      <input type="search" class="search" bind:value={search} placeholder={t('query.resources.search')} aria-label={t('query.resources.search')} />
-      <div class="picks" role="radiogroup" aria-label={t('newSet.add')}>
+      <input {...NO_PASSWORD_MANAGER} type="search" data-autofocus class="search" bind:value={search} placeholder={t('query.resources.search')} aria-label={t('query.resources.search')} />
+      <p class="meta tick">{t('newSet.tickMany')}</p>
+      <div class="picks" role="group" aria-label={t('newSet.add')}>
         {#each found as choice (choice.id)}
-          <label class="pick" class:on={pick === choice.id}>
-            <input type="radio" name="new-set-pick" value={choice.id} bind:group={pick} />
+          {@const on = picks.includes(choice.id)}
+          <label class="pick" class:on>
+            <input type="checkbox" value={choice.id} checked={on} disabled={!on && full} onchange={(event) => toggle(choice.id, event.currentTarget.checked)} />
             <span class="what"><span class="name">{choice.displayName}</span><span class="meta">{choice.collection}</span></span>
             <MaturityIcon level={choice.level} small />
           </label>
@@ -137,6 +185,11 @@
       <p class="note"><Icon name="warning" /><span>{t('newSet.stillReads', { table: stillRead })}</span></p>
     {/if}
 
+    {#if mode === 'add'}
+      <div class="label set-label">{t('newSet.ctes')}</div>
+      <pre class="ctes">{added ? added.ctes.join(',\n\n') : picks.some((id) => !inSql(id)) ? '…' : t('newSet.ctes.none')}</pre>
+    {/if}
+
     <div class="label set-label">{t('newSet.set')}</div>
     <div class="set">
       {#each [...new Set([...current, ...set])] as id (id)}
@@ -146,10 +199,10 @@
 
     <div class="fields">
       <Field label={t('query.name')} hint={named ? undefined : t('query.name.hint')}>
-        <input type="text" bind:value={() => name, (value) => ((name = value), (named = true))} maxlength="120" required />
+        <input {...NO_PASSWORD_MANAGER} type="text" bind:value={() => name, (value) => ((name = value), (named = true))} maxlength="120" required />
       </Field>
       <Field label={t('query.question')}>
-        <textarea bind:value={question} rows="2" maxlength="500"></textarea>
+        <textarea {...NO_PASSWORD_MANAGER} bind:value={question} rows="2" maxlength="500"></textarea>
       </Field>
     </div>
     {#if lensLine}
@@ -169,7 +222,7 @@
     {#if failed}<p class="failed" role="alert">{t('newSet.failed')}</p>{/if}
     <span class="meta stays">{t('newSet.stays', { name: query.name })}</span>
     <Button variant="quiet" onclick={onclose}>{t('newSet.cancel')}</Button>
-    <Button disabled={busy || !name.trim() || set.length === 0 || (mode === 'add' && !pick)} onclick={start}><Icon name="git-branch" />{t('newSet.start')}</Button>
+    <Button disabled={busy || !name.trim() || set.length === 0 || (mode === 'add' && picks.length === 0)} onclick={start}><Icon name="git-branch" />{t('newSet.start')}</Button>
   {/snippet}
 </Sheet>
 
@@ -182,6 +235,8 @@
   .search { width: 100%; box-sizing: border-box; font: var(--text-small) var(--font-family); color: var(--text-primary); background: var(--surface-sub); border: 0; border-radius: var(--radius-field); padding: 8px 10px; margin-bottom: 6px; }
   .search:focus-visible { outline: 2px solid var(--text-secondary); }
   .picks { display: grid; gap: 2px; }
+  .tick { margin: 0 0 6px; }
+  .ctes { margin: 0; padding: 10px 12px; border-radius: var(--radius-md); background: var(--surface-sub); font: 12px/1.6 var(--font-mono); color: var(--text-secondary); white-space: pre; overflow: auto; max-height: 180px; }
   .pick { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: var(--radius-md); cursor: pointer; }
   .pick:hover { background: var(--tint-hover); }
   .pick.on { background: var(--surface-sub); outline: 1.5px solid var(--text-muted); }

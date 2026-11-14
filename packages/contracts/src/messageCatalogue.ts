@@ -38,10 +38,10 @@ const OPEN_RESOURCE: MessageButton = {
   opens: 'The page of the Resource',
 };
 
-/** What a query reads: the ranges of DEC-SR-29, a card Data Hub added to the plan (DEC-LR-35). */
+/** What a query reads: the Pre-flight and the ranges of DEC-SR-29, explained by K5.6 (DEC-LR-35). */
 const SIZE_CARD: LearningCardFit = {
   fit: 'named',
-  card: { number: 'K5.3', title: 'What a query reads' },
+  card: { number: 'K5.6', title: 'What a query costs' },
   why: 'The Message is about how much a query reads: partitions, the Pre-flight and its three ranges (DEC-SR-29), and why a Lens waits for the Data Team.',
 };
 
@@ -85,7 +85,7 @@ const CHANGE_LINE: MessageItem = {
 /** What a Permission group allows has no card of its own yet: Permission groups are new (DEC-PL-01). */
 const PERMISSIONS_CARD: LearningCardFit = {
   fit: 'named',
-  card: { number: 'K5.7', title: 'What your Permission group allows' },
+  card: { number: 'K5.10', title: 'What your Permission group allows' },
   why: 'The Message is about the Permission group of a User: what they may do in Data Hub, and why something is not there for them (DEC-LR-35).',
 };
 
@@ -117,7 +117,7 @@ const BROKEN: readonly MessageParameter[] = [
 /** No card explains yet what happens downstream when a Resource or a column disappears. */
 const BROKEN_CARD: LearningCardFit = {
   fit: 'named',
-  card: { number: 'K5.4', title: 'Broken: when what you read disappears' },
+  card: { number: 'K5.7', title: 'Broken: when what you read disappears' },
   why: 'The Message is about a Resource or a column that no longer exists, what that does to everything built on it, the red dot, and how it works again (DEC-DH-67, DEC-LR-35).',
 };
 
@@ -915,7 +915,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     subjects: ['resource'],
     from: 'dataHub',
     to: ['owner'],
-    when: 'The Data Team adds a Resource to a Collection (FR-CO-14).',
+    when: 'The Data Team adds a Resource to a Collection (FR-CO-14). Who added it is not told, also when they are in the Owner Unit (TR-LN-02).',
     status: 'Implemented',
     sources: ['DEC-SR-27', 'FR-CO-14', 'DEC-SR-07', 'DEC-CV-11'],
     parameters: [
@@ -1240,7 +1240,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
         ),
       },
     },
-    learningCard: { fit: 'named', card: { number: 'K5.5', title: 'A Lens or your own query' }, why: 'Who used the Lens needs another way to their answer: finding a Lens that answers the question, or writing their own query (DEC-LR-35).' },
+    learningCard: { fit: 'named', card: { number: 'K5.8', title: 'A Lens or your own query' }, why: 'Who used the Lens needs another way to their answer: finding a Lens that answers the question, or writing their own query (DEC-LR-35).' },
     action: {
       asks: 'nothing',
       what: 'Who used it looks for another Lens that answers their question, or writes their own query; an Excel that read it gets no data from it any more.',
@@ -1282,7 +1282,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
         ),
       },
     },
-    learningCard: { fit: 'named', card: { number: 'K5.6', title: 'A Lens in Excel' }, why: 'The Message is about the key with which Excel gets the result of a Lens: the Excel key, Power Query and refreshing (DEC-CH-03, DEC-LR-35).' },
+    learningCard: { fit: 'named', card: { number: 'K5.9', title: 'A Lens in Excel' }, why: 'The Message is about the key with which Excel gets the result of a Lens: the Excel key, Power Query and refreshing (DEC-CH-03, DEC-LR-35).' },
     action: {
       asks: 'nothing',
       what: 'Its User can make a new key on My page and put it in Excel, before this one stops.',
@@ -1321,7 +1321,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
         ),
       },
     },
-    learningCard: { fit: 'named', card: { number: 'K5.6', title: 'A Lens in Excel' }, why: 'The Message is about the key with which Excel gets the result of a Lens: the Excel key, Power Query and refreshing (DEC-CH-03, DEC-LR-35).' },
+    learningCard: { fit: 'named', card: { number: 'K5.9', title: 'A Lens in Excel' }, why: 'The Message is about the key with which Excel gets the result of a Lens: the Excel key, Power Query and refreshing (DEC-CH-03, DEC-LR-35).' },
     action: {
       asks: 'nothing',
       what: 'Its User makes a new key on My page if they still need one.',
@@ -1330,7 +1330,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     },
     example: { subject: 'Sales dashboard, shared drive', actor: 'Dirk Vos' },
   },
-  // A User: what Data Hub tells about their Permission group (FR-PL-12, EC-PL-03).
+  // A User: what Data Hub tells about their Permission group (FR-PL-12, EC-PL-03), and the Data Team of a new User (FR-PL-16).
   {
     id: 'MSG-USR-01',
     title: 'A User was moved to another Permission group',
@@ -1445,6 +1445,48 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
       done: 'When it is read.',
     },
     example: { subject: 'Dirk Vos' },
+  },
+  {
+    id: 'MSG-USR-03',
+    title: 'A new User signed in for the first time',
+    kind: 'dataHub',
+    subjects: ['user'],
+    from: 'dataHub',
+    to: ['dataTeam'],
+    when: 'Someone signs in to Data Hub for the first time, in the web app, through Claude or for Excel: Data Hub makes them a User, in the default Permission group (FR-PL-04).',
+    per: 'One per new User. The new User does not see it: it is for who manages Users.',
+    status: 'Implemented',
+    sources: ['FR-PL-16', 'FR-PL-04'],
+    parameters: [
+      { name: 'email', type: 'name', about: 'Their Google address' },
+      { name: 'group', type: 'name', about: 'The Permission group they got: the default when they signed in' },
+    ],
+    text: {
+      nl: {
+        plain: '{subject} ({email}) meldde voor het eerst aan bij Data Hub en kreeg de Permission group {group}.',
+        rich: lines(
+          '**{subject} meldde voor het eerst aan bij Data Hub**',
+          '',
+          '{subject} ({email}) is nu een User, in {group}, de standaard Permission group. Kijk op Users, in Admin, of die past, en kies er een andere als {subject} meer of minder nodig heeft.',
+        ),
+      },
+      en: {
+        plain: '{subject} ({email}) signed in to Data Hub for the first time and got the Permission group {group}.',
+        rich: lines(
+          '**{subject} signed in to Data Hub for the first time**',
+          '',
+          '{subject} ({email}) is now a User, in {group}, the default Permission group. Check on Users, in Admin, whether it fits, and choose another if {subject} needs more or less.',
+        ),
+      },
+    },
+    learningCard: PERMISSIONS_CARD,
+    action: {
+      asks: 'nothing',
+      what: 'The Data Team checks on Users, in Admin, whether the default Permission group fits the new User, and moves them if not (FR-PL-07).',
+      buttons: [{ label: { nl: 'Users openen', en: 'Open Users' }, opens: 'Users, in Admin, with the User opened', for: ['dataTeam'] }],
+      done: 'When it is read.',
+    },
+    example: { subject: 'An Claes', email: 'an.claes@immoscoop.be', group: 'Lens user' },
   },
   {
     id: 'MSG-QRY-01',

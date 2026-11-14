@@ -202,7 +202,7 @@ describe('mcp', () => {
     const text = (await tool('how_to_use', {}, token)).content[0]?.text ?? '';
     expect(text).toContain('your Permission group, Admin');
     expect(text).toContain('"What did everyone query this week?"');
-    expect(text).toContain('- Open Admin: webhooks, Excel keys, users and Permission groups');
+    expect(text).toContain('- Open Admin: webhooks, Excel keys, users, Permission groups and the withdrawn Resources');
 
     // A Business analyst sees only the queries on the Resources of their Owner Units; a Lens user makes none.
     const analyst = (await tool('how_to_use', {}, await issuer.sign())).content[0]?.text ?? '';
@@ -480,6 +480,24 @@ describe('the Permissions of the User in Claude (TR-PL-09)', () => {
     expect(refused.isError).toBe(true);
     expect(refused.content[0]?.text).toContain('does not allow it (queries.make)');
   });
+
+  it('lets a power user make a query on SQL alone and says what it reads outside Data Hub, as the web app does (FR-SR-56)', async () => {
+    let made: unknown;
+    answers[`POST ${QUERY}/queries`] = (body) => ((made = body), [201, { query: { id: QUERY_ID, name: 'Raw leads', resources: [] } }]);
+    const tables = [{ key: 'immoscoop-dataplatform.dbt_prod_staging.stg_oltp__leads', fullName: 'immoscoop-dataplatform.dbt_prod_staging.stg_oltp__leads', name: 'stg_oltp__leads', layer: 'staging' }];
+    answers[`POST ${QUERY}/queries/${QUERY_ID}/preflight`] = () => [200, { preflight: { runnable: true, bytes: 1_000_000, range: 'free', partitions: null, problems: [], warnings: [], tables }, broken: null }];
+    // Without the Permission, a query needs a Resource.
+    expect((await tool('create_query', { name: 'Raw leads', resources: [] }, await issuer.sign())).isError).toBe(true);
+    expect(made).toBeUndefined();
+
+    const admin = await issuer.sign({ as: 'admin' });
+    expect((await tool('create_query', { name: 'Raw leads', resources: [] }, admin)).isError).toBeFalsy();
+    expect(made).toMatchObject({ name: 'Raw leads', resources: [] });
+    const checked = await tool('check_query', { id: QUERY_ID, sql: 'select lead_id from `dbt_prod_staging.stg_oltp__leads`' }, admin);
+    expect(checked.content[0]?.text).toContain('It reads stg_oltp__leads (staging) outside Data Hub: no Resource, so no Level, Owner or Publication, and this query cannot become a Lens.');
+    const me = (await tool('who_am_i', {}, admin)).structuredContent as { mayDo: string[] };
+    expect(me.mayDo).toContain('Query tables outside Data Hub: every table Data Hub knows from the dbt projects it follows, also without Resources; such a query never becomes a Lens');
+  });
 });
 
 describe('results in Claude, in a card only, or not in Claude (FR-CL-28)', () => {
@@ -675,5 +693,12 @@ describe('the MCP App', () => {
       expect(ours.size).toBeGreaterThan(5);
       for (const [name, value] of ours) expect([name, value]).toEqual([name, theirs.get(name)]);
     }
+  });
+
+  it('tells the browser its theme, so no white shows behind the rounded card in dark mode', () => {
+    // A frame whose colour scheme differs from the page around it is painted white behind it by the browser.
+    expect(VIEW_PAGE).toContain(':root { color-scheme: light; }');
+    expect(VIEW_PAGE).toContain('[data-theme="dark"] { color-scheme: dark; }');
+    expect(VIEW_PAGE).toMatch(/html, body \{[^}]*background: transparent;/);
   });
 });

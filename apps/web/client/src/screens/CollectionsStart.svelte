@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import { renderLog } from '@datahub/contracts/log';
   import Intro from '@datahub/ui/containers/Intro.svelte';
   import Callout from '@datahub/ui/containers/Callout.svelte';
@@ -22,6 +23,8 @@
   import { initialsOf } from '../lib/initials.js';
   import type { LensItem, LensSuggestion } from '../lib/query.js';
   import { collectionPath, lensPath, NEW_COLLECTION, NEW_QUERY, resourcePath } from '../lib/routes.js';
+  import { command, place, useScreenCommands } from '../lib/commands.svelte.js';
+  import type { QuickRow } from '../lib/quick.js';
   import LensCard from './LensCard.svelte';
   import MarkedText from './MarkedText.svelte';
 
@@ -129,6 +132,16 @@
       .toSorted((a, b) => (b.publishedAt ?? '').localeCompare(a.publishedAt ?? ''))
       .slice(0, RECENT);
   });
+
+  let searchField = $state<HTMLInputElement | undefined>();
+  // In the quick window: a new Collection, for who may make one, the search by a question, and the intro (DEC-UX-240).
+  useScreenCommands((go) => {
+    const rows: QuickRow[] = [];
+    if (makes) rows.push(place('collections:new', 'plus-circle-fill', t('collections.new'), () => go(NEW_COLLECTION), { meta: t('quick.collections.new.meta'), words: t('quick.collections.new.words') }));
+    rows.push(command('collections:search', 'magnifying-glass', t('quick.collections.search'), () => searchField?.focus(), { meta: t('quick.collections.search.meta'), words: t('quick.collections.search.words') }));
+    rows.push(intro ? command('collections:intro', 'info-fill', t('quick.intro.hide'), ondismiss, { words: t('quick.intro.words') }) : command('collections:intro', 'info-fill', t('collections.intro.show'), onshow, { words: t('quick.intro.words') }));
+    return { group: 'Collections', rows };
+  });
 </script>
 
 {#if intro}
@@ -157,7 +170,7 @@
 
 <form class="find card" role="search" aria-label={t('collections.search.label')} onsubmit={search}>
   <Icon name="magnifying-glass" />
-  <input type="search" bind:value={question} placeholder={t('collections.search.placeholder')} aria-label={t('collections.search.label')} onkeydown={(event) => event.key === 'Escape' && clear()} />
+  <input {...NO_PASSWORD_MANAGER} bind:this={searchField} type="search" bind:value={question} placeholder={t('collections.search.placeholder')} aria-label={t('collections.search.label')} onkeydown={(event) => event.key === 'Escape' && clear()} />
 </form>
 
 {#if asked !== null}

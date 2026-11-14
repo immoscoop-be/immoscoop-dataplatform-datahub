@@ -30,7 +30,7 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | User | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-04](#msg-cnv-04), [MSG-CNV-07](#msg-cnv-07) | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-03](#msg-cnv-03), [MSG-LRN-01](#msg-lrn-01) | [MSG-CNV-03](#msg-cnv-03), [MSG-LEN-01](#msg-len-01), [MSG-QRY-01](#msg-qry-01) |
 | Owner | [MSG-RES-07](#msg-res-07) | – | – |
 | Data Team | [MSG-CNV-05](#msg-cnv-05) | – | – |
-| Data Hub | [MSG-CNV-06](#msg-cnv-06), [MSG-LEN-02](#msg-len-02), [MSG-LEN-06](#msg-len-06), [MSG-KEY-01](#msg-key-01), [MSG-KEY-02](#msg-key-02), [MSG-USR-01](#msg-usr-01) | [MSG-RES-02](#msg-res-02), [MSG-RES-03](#msg-res-03), [MSG-RES-04](#msg-res-04), [MSG-RES-05](#msg-res-05), [MSG-RES-06](#msg-res-06), [MSG-RES-08](#msg-res-08), [MSG-LEN-03](#msg-len-03), [MSG-LEN-04](#msg-len-04), [MSG-LEN-05](#msg-len-05), [MSG-QRY-02](#msg-qry-02), [MSG-RPT-01](#msg-rpt-01) | [MSG-COL-01](#msg-col-01), [MSG-RES-01](#msg-res-01), [MSG-LEN-03](#msg-len-03), [MSG-USR-02](#msg-usr-02) |
+| Data Hub | [MSG-CNV-06](#msg-cnv-06), [MSG-LEN-02](#msg-len-02), [MSG-LEN-06](#msg-len-06), [MSG-KEY-01](#msg-key-01), [MSG-KEY-02](#msg-key-02), [MSG-USR-01](#msg-usr-01) | [MSG-RES-02](#msg-res-02), [MSG-RES-03](#msg-res-03), [MSG-RES-04](#msg-res-04), [MSG-RES-05](#msg-res-05), [MSG-RES-06](#msg-res-06), [MSG-RES-08](#msg-res-08), [MSG-LEN-03](#msg-len-03), [MSG-LEN-04](#msg-len-04), [MSG-LEN-05](#msg-len-05), [MSG-QRY-02](#msg-qry-02), [MSG-RPT-01](#msg-rpt-01) | [MSG-COL-01](#msg-col-01), [MSG-RES-01](#msg-res-01), [MSG-LEN-03](#msg-len-03), [MSG-USR-02](#msg-usr-02), [MSG-USR-03](#msg-usr-03) |
 
 ## Overview
 
@@ -41,7 +41,7 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | [MSG-CNV-03](#msg-cnv-03) | Signal | Resource or Lens | User → Owner and Data Team | Something to do | By the writer | Implemented |
 | [MSG-CNV-04](#msg-cnv-04) | Reply | Collection, Resource, Lens, query or Learning Card | User → its writer and who wrote in the conversation | Nothing | By the writer | Implemented |
 | [MSG-CNV-05](#msg-cnv-05) | Decision on a Request | Lens or query | Data Team → its writer and its author | Nothing | By the writer | Implemented |
-| [MSG-CNV-06](#msg-cnv-06) | A Request lapsed | Lens or query | Data Hub → its writer and its author | Something to do | Named: K5.3 | Withdrawn |
+| [MSG-CNV-06](#msg-cnv-06) | A Request lapsed | Lens or query | Data Hub → its writer and its author | Something to do | Named: K5.6 | Withdrawn |
 | [MSG-CNV-07](#msg-cnv-07) | A Question or Signal closed | Collection, Resource, Lens, query or Learning Card | User → its writer | Nothing | By the writer | Implemented |
 | [MSG-COL-01](#msg-col-01) | A Collection has no Owner any more | Collection | Data Hub → Data Team | Something to do | Proposed: K3.2 | Withdrawn |
 | [MSG-RES-01](#msg-res-01) | A new Resource waits for a Collection | Resource | Data Hub → Data Team | Something to do | Named: K5.1 | Implemented |
@@ -53,18 +53,19 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | [MSG-RES-07](#msg-res-07) | The Owner tells the Consumers about a change | Resource | Owner → Consumers | Nothing | By the writer | Proposed |
 | [MSG-RES-08](#msg-res-08) | A Resource arrived in your Collection | Resource | Data Hub → Owner | Something to do | Named: 4.7.1 | Implemented |
 | [MSG-LEN-01](#msg-len-01) | Request to accept a very large Lens | Lens | User → Data Team | A decision | By the writer | Implemented |
-| [MSG-LEN-02](#msg-len-02) | A Lens grew into large | Lens | Data Hub → its author | Nothing | Named: K5.3 | Implemented |
-| [MSG-LEN-03](#msg-len-03) | A Lens grew into very large | Lens | Data Hub → Data Team and Owner | A decision | Named: K5.3 | Implemented |
+| [MSG-LEN-02](#msg-len-02) | A Lens grew into large | Lens | Data Hub → its author | Nothing | Named: K5.6 | Implemented |
+| [MSG-LEN-03](#msg-len-03) | A Lens grew into very large | Lens | Data Hub → Data Team and Owner | A decision | Named: K5.6 | Implemented |
 | [MSG-LEN-04](#msg-len-04) | A Lens on your Resource became public | Lens | Data Hub → Owners of its Resources | Nothing | Proposed: 4.5.1 | Proposed |
-| [MSG-LEN-05](#msg-len-05) | A Lens is Broken | Lens | Data Hub → Owner | Something to do | Named: K5.4 | Implemented |
-| [MSG-LEN-06](#msg-len-06) | A Lens was deleted | Lens | Data Hub → who used the Lens lately | Nothing | Named: K5.5 | Implemented |
-| [MSG-KEY-01](#msg-key-01) | An Excel key expires within a month | Excel key | Data Hub → its author | Nothing | Named: K5.6 | Implemented |
-| [MSG-KEY-02](#msg-key-02) | The Data Team revoked an Excel key | Excel key | Data Hub → its author | Nothing | Named: K5.6 | Implemented |
-| [MSG-USR-01](#msg-usr-01) | A User was moved to another Permission group | User | Data Hub → its author | Nothing | Named: K5.7 | Implemented |
-| [MSG-USR-02](#msg-usr-02) | A member of the Data Team got Admin back | User | Data Hub → Data Team | Nothing | Named: K5.7 | Implemented |
+| [MSG-LEN-05](#msg-len-05) | A Lens is Broken | Lens | Data Hub → Owner | Something to do | Named: K5.7 | Implemented |
+| [MSG-LEN-06](#msg-len-06) | A Lens was deleted | Lens | Data Hub → who used the Lens lately | Nothing | Named: K5.8 | Implemented |
+| [MSG-KEY-01](#msg-key-01) | An Excel key expires within a month | Excel key | Data Hub → its author | Nothing | Named: K5.9 | Implemented |
+| [MSG-KEY-02](#msg-key-02) | The Data Team revoked an Excel key | Excel key | Data Hub → its author | Nothing | Named: K5.9 | Implemented |
+| [MSG-USR-01](#msg-usr-01) | A User was moved to another Permission group | User | Data Hub → its author | Nothing | Named: K5.10 | Implemented |
+| [MSG-USR-02](#msg-usr-02) | A member of the Data Team got Admin back | User | Data Hub → Data Team | Nothing | Named: K5.10 | Implemented |
+| [MSG-USR-03](#msg-usr-03) | A new User signed in for the first time | User | Data Hub → Data Team | Nothing | Named: K5.10 | Implemented |
 | [MSG-QRY-01](#msg-qry-01) | Request to run a very large query | query | User → Data Team | A decision | By the writer | Implemented |
-| [MSG-QRY-02](#msg-qry-02) | A query is Broken | query | Data Hub → Owner | Something to do | Named: K5.4 | Implemented |
-| [MSG-RPT-01](#msg-rpt-01) | A Report is Broken | Report | Data Hub → Owner | Something to do | Named: K5.4 | Proposed |
+| [MSG-QRY-02](#msg-qry-02) | A query is Broken | query | Data Hub → Owner | Something to do | Named: K5.7 | Implemented |
+| [MSG-RPT-01](#msg-rpt-01) | A Report is Broken | Report | Data Hub → Owner | Something to do | Named: K5.7 | Proposed |
 | [MSG-LRN-01](#msg-lrn-01) | A colleague wants a card | Learning Card | User → Owner | An answer | By the writer | Proposed |
 
 ## Messages a person writes
@@ -1052,7 +1053,7 @@ System text with placeholders, in Dutch and English, each with its Learning Card
 | --- | --- | --- |
 | Open in context · *Openen in context* | The page of its object as it is, with the Message in a floating window over it ([FR-CV-09](14-conversations.md#fr-cv-09)) | every recipient |
 
-**Learning Card:** Named: **K5.3 What a query reads**. The Message is about how much a query reads: partitions, the Pre-flight and its three ranges ([DEC-SR-29](04-stacks-and-resources.md#dec-sr-29)), and why a Lens waits for the Data Team.
+**Learning Card:** Named: **K5.6 What a query costs**. The Message is about how much a query reads: partitions, the Pre-flight and its three ranges ([DEC-SR-29](04-stacks-and-resources.md#dec-sr-29)), and why a Lens waits for the Data Team.
 
 **Dutch, laid out**, with the example:
 
@@ -1856,7 +1857,7 @@ If that was not intended, ask the data team.
 | Kind | Data Hub |
 | About | Resource |
 | From → to | Data Hub → Owner |
-| When | The Data Team adds a Resource to a Collection ([FR-CO-14](03-collections.md#fr-co-14)). |
+| When | The Data Team adds a Resource to a Collection ([FR-CO-14](03-collections.md#fr-co-14)). Who added it is not told, also when they are in the Owner Unit ([TR-LN-02](../technical/07-log-and-notifications.md#tr-ln-02)). |
 | Status | Implemented |
 | Comes from | [DEC-SR-27](04-stacks-and-resources.md#dec-sr-27), [FR-CO-14](03-collections.md#fr-co-14), [DEC-SR-07](04-stacks-and-resources.md#dec-sr-07), [DEC-CV-11](14-conversations.md#dec-cv-11) |
 
@@ -1955,7 +1956,7 @@ Template, English, laid out:
 | --- | --- | --- |
 | Open the lens · *Lens openen* | The page of the Lens, where its Owner Unit edits it | every recipient |
 
-**Learning Card:** Named: **K5.3 What a query reads**. The Message is about how much a query reads: partitions, the Pre-flight and its three ranges ([DEC-SR-29](04-stacks-and-resources.md#dec-sr-29)), and why a Lens waits for the Data Team.
+**Learning Card:** Named: **K5.6 What a query costs**. The Message is about how much a query reads: partitions, the Pre-flight and its three ranges ([DEC-SR-29](04-stacks-and-resources.md#dec-sr-29)), and why a Lens waits for the Data Team.
 
 **Dutch, laid out**, with the example:
 
@@ -2051,7 +2052,7 @@ A filter on `{column}`, the partition column, would make it read less.
 | Accept · *Aanvaarden* | Decides in the floating window: the Lens is published, or the query may run | Data Team |
 | Refuse · *Weigeren* | Decides in the floating window, after a reason, which is needed for a refusal | Data Team |
 
-**Learning Card:** Named: **K5.3 What a query reads**. The Message is about how much a query reads: partitions, the Pre-flight and its three ranges ([DEC-SR-29](04-stacks-and-resources.md#dec-sr-29)), and why a Lens waits for the Data Team.
+**Learning Card:** Named: **K5.6 What a query costs**. The Message is about how much a query reads: partitions, the Pre-flight and its three ranges ([DEC-SR-29](04-stacks-and-resources.md#dec-sr-29)), and why a Lens waits for the Data Team.
 
 **Dutch, laid out**, with the example:
 
@@ -2233,7 +2234,7 @@ It builds on {resource}, which your team owns: everyone who may see the lens now
 | Open the lens · *Lens openen* | The page of the Lens, with what is missing on top | every recipient |
 | Open its query · *Query openen* | Query, with the query the Lens is made from | Owner |
 
-**Learning Card:** Named: **K5.4 Broken: when what you read disappears**. The Message is about a Resource or a column that no longer exists, what that does to everything built on it, the red dot, and how it works again ([DEC-DH-67](../../overview/data-hub.md#dec-dh-67), [DEC-LR-35](16-learning.md#dec-lr-35)).
+**Learning Card:** Named: **K5.7 Broken: when what you read disappears**. The Message is about a Resource or a column that no longer exists, what that does to everything built on it, the red dot, and how it works again ([DEC-DH-67](../../overview/data-hub.md#dec-dh-67), [DEC-LR-35](16-learning.md#dec-lr-35)).
 
 **Dutch, laid out**, with the example:
 
@@ -2363,7 +2364,7 @@ One item of `missing`, English, laid out:
 | --- | --- | --- |
 | Open the collection · *Collectie openen* | The Collection the Lens was in | every recipient |
 
-**Learning Card:** Named: **K5.5 A Lens or your own query**. Who used the Lens needs another way to their answer: finding a Lens that answers the question, or writing their own query ([DEC-LR-35](16-learning.md#dec-lr-35)).
+**Learning Card:** Named: **K5.8 A Lens or your own query**. Who used the Lens needs another way to their answer: finding a Lens that answers the question, or writing their own query ([DEC-LR-35](16-learning.md#dec-lr-35)).
 
 **Dutch, laid out**, with the example:
 
@@ -2461,7 +2462,7 @@ It no longer runs, also not in Excel, and is listed nowhere. Its runs and the me
 | --- | --- | --- |
 | Open My page · *My page openen* | My page, at its Excel keys | every recipient |
 
-**Learning Card:** Named: **K5.6 A Lens in Excel**. The Message is about the key with which Excel gets the result of a Lens: the Excel key, Power Query and refreshing ([DEC-CH-03](13-channels.md#dec-ch-03), [DEC-LR-35](16-learning.md#dec-lr-35)).
+**Learning Card:** Named: **K5.9 A Lens in Excel**. The Message is about the key with which Excel gets the result of a Lens: the Excel key, Power Query and refreshing ([DEC-CH-03](13-channels.md#dec-ch-03), [DEC-LR-35](16-learning.md#dec-lr-35)).
 
 **Dutch, laid out**, with the example:
 
@@ -2546,7 +2547,7 @@ After that, Excel no longer gets data with it. Make a new key on My page and put
 | --- | --- | --- |
 | Open My page · *My page openen* | My page, at its Excel keys | every recipient |
 
-**Learning Card:** Named: **K5.6 A Lens in Excel**. The Message is about the key with which Excel gets the result of a Lens: the Excel key, Power Query and refreshing ([DEC-CH-03](13-channels.md#dec-ch-03), [DEC-LR-35](16-learning.md#dec-lr-35)).
+**Learning Card:** Named: **K5.9 A Lens in Excel**. The Message is about the key with which Excel gets the result of a Lens: the Excel key, Power Query and refreshing ([DEC-CH-03](13-channels.md#dec-ch-03), [DEC-LR-35](16-learning.md#dec-lr-35)).
 
 **Dutch, laid out**, with the example:
 
@@ -2631,7 +2632,7 @@ From now on, Excel gets no data with it. If you still need it, make a new one on
 | --- | --- | --- |
 | Open My page · *My page openen* | My page | every recipient |
 
-**Learning Card:** Named: **K5.7 What your Permission group allows**. The Message is about the Permission group of a User: what they may do in Data Hub, and why something is not there for them ([DEC-LR-35](16-learning.md#dec-lr-35)).
+**Learning Card:** Named: **K5.10 What your Permission group allows**. The Message is about the Permission group of a User: what they may do in Data Hub, and why something is not there for them ([DEC-LR-35](16-learning.md#dec-lr-35)).
 
 **Dutch, laid out**, with the example:
 
@@ -2799,7 +2800,7 @@ One item of `losses`, English, laid out:
 | --- | --- | --- |
 | Open Users · *Users openen* | Users, in Admin, with the User opened | Data Team |
 
-**Learning Card:** Named: **K5.7 What your Permission group allows**. The Message is about the Permission group of a User: what they may do in Data Hub, and why something is not there for them ([DEC-LR-35](16-learning.md#dec-lr-35)).
+**Learning Card:** Named: **K5.10 What your Permission group allows**. The Message is about the Permission group of a User: what they may do in Data Hub, and why something is not there for them ([DEC-LR-35](16-learning.md#dec-lr-35)).
 
 **Dutch, laid out**, with the example:
 
@@ -2860,6 +2861,92 @@ No User of Admin could still sign in, for example after leaving. When {subject},
 
 </details>
 
+<a id="msg-usr-03"></a>
+
+### MSG-USR-03 · A new User signed in for the first time
+
+| | |
+| --- | --- |
+| Kind | Data Hub |
+| About | User |
+| From → to | Data Hub → Data Team |
+| When | Someone signs in to Data Hub for the first time, in the web app, through Claude or for Excel: Data Hub makes them a User, in the default Permission group ([FR-PL-04](12-permissions-and-library-cards.md#fr-pl-04)). |
+| How many | One per new User. The new User does not see it: it is for who manages Users. |
+| Status | Implemented |
+| Comes from | [FR-PL-16](12-permissions-and-library-cards.md#fr-pl-16), [FR-PL-04](12-permissions-and-library-cards.md#fr-pl-04) |
+
+**What it asks:** Nothing. The Data Team checks on Users, in Admin, whether the default Permission group fits the new User, and moves them if not ([FR-PL-07](12-permissions-and-library-cards.md#fr-pl-07)).
+
+**How it ends:** When it is read.
+
+| Button | Opens | For |
+| --- | --- | --- |
+| Open Users · *Users openen* | Users, in Admin, with the User opened | Data Team |
+
+**Learning Card:** Named: **K5.10 What your Permission group allows**. The Message is about the Permission group of a User: what they may do in Data Hub, and why something is not there for them ([DEC-LR-35](16-learning.md#dec-lr-35)).
+
+**Dutch, laid out**, with the example:
+
+> **An Claes meldde voor het eerst aan bij Data Hub**
+>
+> An Claes (an.claes@immoscoop.be) is nu een User, in Lens user, de standaard Permission group. Kijk op Users, in Admin, of die past, en kies er een andere als An Claes meer of minder nodig heeft.
+
+**Dutch, plain:**
+
+```text
+An Claes (an.claes@immoscoop.be) meldde voor het eerst aan bij Data Hub en kreeg de Permission group Lens user.
+```
+
+**English, laid out**, with the example:
+
+> **An Claes signed in to Data Hub for the first time**
+>
+> An Claes (an.claes@immoscoop.be) is now a User, in Lens user, the default Permission group. Check on Users, in Admin, whether it fits, and choose another if An Claes needs more or less.
+
+**English, plain:**
+
+```text
+An Claes (an.claes@immoscoop.be) signed in to Data Hub for the first time and got the Permission group Lens user.
+```
+
+<details>
+<summary>Parameters and templates</summary>
+
+| Parameter | Type | Holds |
+| --- | --- | --- |
+| `email` | name | Their Google address |
+| `group` | name | The Permission group they got: the default when they signed in |
+
+Template, Dutch, plain:
+
+```text
+{subject} ({email}) meldde voor het eerst aan bij Data Hub en kreeg de Permission group {group}.
+```
+
+Template, Dutch, laid out:
+
+```markdown
+**{subject} meldde voor het eerst aan bij Data Hub**
+
+{subject} ({email}) is nu een User, in {group}, de standaard Permission group. Kijk op Users, in Admin, of die past, en kies er een andere als {subject} meer of minder nodig heeft.
+```
+
+Template, English, plain:
+
+```text
+{subject} ({email}) signed in to Data Hub for the first time and got the Permission group {group}.
+```
+
+Template, English, laid out:
+
+```markdown
+**{subject} signed in to Data Hub for the first time**
+
+{subject} ({email}) is now a User, in {group}, the default Permission group. Check on Users, in Admin, whether it fits, and choose another if {subject} needs more or less.
+```
+
+</details>
+
 <a id="msg-qry-02"></a>
 
 ### MSG-QRY-02 · A query is Broken
@@ -2882,7 +2969,7 @@ No User of Admin could still sign in, for example after leaving. When {subject},
 | --- | --- | --- |
 | Open the query · *Query openen* | Query, with the query and what is missing on top | every recipient |
 
-**Learning Card:** Named: **K5.4 Broken: when what you read disappears**. The Message is about a Resource or a column that no longer exists, what that does to everything built on it, the red dot, and how it works again ([DEC-DH-67](../../overview/data-hub.md#dec-dh-67), [DEC-LR-35](16-learning.md#dec-lr-35)).
+**Learning Card:** Named: **K5.7 Broken: when what you read disappears**. The Message is about a Resource or a column that no longer exists, what that does to everything built on it, the red dot, and how it works again ([DEC-DH-67](../../overview/data-hub.md#dec-dh-67), [DEC-LR-35](16-learning.md#dec-lr-35)).
 
 **Dutch, laid out**, with the example:
 
@@ -3014,7 +3101,7 @@ One item of `missing`, English, laid out:
 | --- | --- | --- |
 | Open the report · *Rapport openen* | The page of the Report, with its Broken Lenses marked | every recipient |
 
-**Learning Card:** Named: **K5.4 Broken: when what you read disappears**. The Message is about a Resource or a column that no longer exists, what that does to everything built on it, the red dot, and how it works again ([DEC-DH-67](../../overview/data-hub.md#dec-dh-67), [DEC-LR-35](16-learning.md#dec-lr-35)).
+**Learning Card:** Named: **K5.7 Broken: when what you read disappears**. The Message is about a Resource or a column that no longer exists, what that does to everything built on it, the red dot, and how it works again ([DEC-DH-67](../../overview/data-hub.md#dec-dh-67), [DEC-LR-35](16-learning.md#dec-lr-35)).
 
 **Dutch, laid out**, with the example:
 

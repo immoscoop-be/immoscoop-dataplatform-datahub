@@ -14,11 +14,14 @@
   import { cardsOf } from '../lib/learning.js';
   import { useLearning } from '../lib/learning-context.js';
   import type { CardChanges, Catalogue, Collection, DescribeAttribute, KnownGap, LogEntry, Related, ResourceDetail } from '../lib/catalogue.js';
-  import { can, canWith, reach, type Permissions } from '../lib/permissions.js';
-  import type { Conversation } from '../lib/messages.js';
+  import { can, canWith, reach, removable, type Permissions } from '../lib/permissions.js';
+  import type { Conversation, WrittenKind } from '../lib/messages.js';
   import type { QueryClient, Storage } from '../lib/query.js';
   import type { Registry } from '../lib/registry.js';
   import { collectionPath, newQueryPath, resourcePath } from '../lib/routes.js';
+  import { command, place, useScreenCommands, view } from '../lib/commands.svelte.js';
+  import type { IconName } from '@datahub/ui/foundations/icons.js';
+  import type { QuickRow } from '../lib/quick.js';
   import { Refused } from '../lib/api.js';
   import type { requestOf } from '../lib/grain.js';
   import AddResources from './AddResources.svelte';
@@ -76,7 +79,8 @@
     /** After a run of its Preview, for the panel of Query. */
     onrun?: () => void;
     /** "Messages" with their number, which opens the slide-in (FR-CV-07); left out while they are read. */
-    messages?: { count: number | null; href: string };
+    /** Its Messages: how many, where, the kinds the User may write on it, and writing one of a kind (DEC-UX-257). */
+    messages?: { count: number | null; href: string; kinds?: readonly WrittenKind[]; write?: (kind: WrittenKind) => void };
     /** The Questions, Remarks and Signals on it, the newest first, for its Summary; undefined while they are read. */
     threads?: readonly Conversation[];
   } = $props();
@@ -150,6 +154,10 @@
   const mayPublish = $derived(resource.canPublish ?? (isOwner && can(permissions, 'resources.publish')));
   /** Adding it to a Collection, and its grain and model type, are the work of a Data Admin (`resources.assign`). */
   const assigns = $derived(resource.canAssign ?? can(permissions, 'resources.assign'));
+  /** Taking it out of its Collection (`resources.remove`, DEC-PL-08): every one, or one of their Owner Units while not published. */
+  const canRemove = $derived(resource.collectionId !== null && (resource.canRemove ?? removable(reach(permissions, 'resources.remove'), isOwner, resource.published)));
+  /** Its Owner Unit may no longer take it out once it is published: the Danger zone says who does now (DEC-UX-214). */
+  const removedByTeam = $derived(!canRemove && resource.published && isOwner && reach(permissions, 'resources.remove') === 'theirs');
   /** The published Resources the User sees, to use instead of this one. */
   const others = $derived(
     (collections ?? []).flatMap((one) => one.resources.filter((item) => item.published && item.id !== resource.id).map((item) => ({ ...item, collection: one.name }))),
@@ -157,7 +165,8 @@
 
   /**
    * Adds it to the Collection chosen in the sheet, with its grain and relations (FR-CO-31, DEC-UX-131),
-   * then reads it again, now with its Owner. A Resource added meanwhile elsewhere is told so.
+   * then reads it again, now with its Owner, and with its Log and the Entities it now relates to (FR-RC-09).
+   * A Resource added meanwhile elsewhere is told so.
    */
   async function addTo(items: ReturnType<typeof requestOf>[], into?: string): Promise<{ outcome: 'added' | 'elsewhere' | 'refused' | 'failed'; message?: string }> {
     if (!into) {
@@ -174,7 +183,7 @@
     }
     adding = false;
     const id = resource.id;
-    onchange(await catalogue.resource(id).catch(() => ({ ...resource, collectionId: into })));
+    await changed(await catalogue.resource(id).catch(() => ({ ...resource, collectionId: into })));
     return { outcome: 'added' };
   }
 
@@ -273,6 +282,36 @@
   /** The Learning Centre explains its Level, its grain, its model type and "Mark as seen" (FR-LR-35). */
   const learning = useLearning();
   const levelCards = $derived(learning ? cardsOf('level', learning.shown).length : 0);
+
+  /**
+   * What can be done to it from the quick window (DEC-UX-240): the buttons of its head and callouts, as they show, and
+   * its other tabs; the parts of its Overview come from the Overview.
+   */
+  const TAB_ICONS: Record<string, IconName> = { overview: 'list-numbers', columns: 'columns', lineage: 'graph', history: 'clock-counter-clockwise', preview: 'table' };
+  useScreenCommands((go) => {
+    const rows: QuickRow[] = [];
+    if (can(permissions, 'queries.make')) rows.push(place('resource:query', 'terminal-window-fill', t('quick.resource.query'), () => go(newQueryPath(resource.id)), { meta: t('quick.resource.query.meta'), words: t('quick.resource.query.words') }));
+    if (!resource.published && mayPublish) rows.push(command('resource:publish', 'globe-simple-fill', t('quick.resource.publish'), () => (sheet = 'publish'), { meta: t('quick.resource.publish.meta'), words: t('quick.resource.publish.words') }));
+    if (messages) {
+      const href = messages.href;
+      rows.push(place('resource:ask', 'chat-circle-dots-fill', t('resource.ask'), () => go(href), { meta: t('quick.messages.meta', { count: messages.count ?? 0 }), words: t('quick.messages.words') }));
+      // A Remark or a Signal straight away: the Messages open on that kind, the cursor in its text (DEC-UX-257).
+      const write = messages.write;
+      if (write && messages.kinds?.includes('remark')) rows.push(command('resource:remark', 'chat-text', t('quick.resource.remark'), () => write('remark'), { words: t('quick.resource.remark.words') }));
+      if (write && messages.kinds?.includes('signal')) rows.push(command('resource:signal', 'warning-diamond', t('quick.resource.signal'), () => write('signal'), { meta: t('quick.resource.signal.meta'), words: t('quick.resource.signal.words') }));
+    }
+    if (resource.collectionId === null && assigns && collections) rows.push(command('resource:add', 'folder-plus-fill', t('resource.waiting.add'), () => (adding = true), { meta: t('quick.resource.add.meta'), words: t('quick.resource.add.words') }));
+    const instead = resource.deprecation?.insteadOf;
+    if (instead) rows.push(place('resource:instead', 'arrow-right', t('resource.deprecated.use', { name: instead.displayName }), () => go(resourcePath(instead.id)), { meta: t('quick.resource.instead.meta'), words: t('quick.resource.instead.words') }));
+    if (resource.changes.length > 0 && describes('description')) rows.push(command('resource:seen', 'check-circle-fill', t('quick.resource.seen'), () => void act(() => catalogue.markSeen(resource.id)), { meta: changedText, words: t('quick.resource.seen.words') }));
+    if (tab === 'columns' && (assigns || describes('entityMapping')) && resource.collectionId !== null) rows.push(command('resource:relations', 'graph-fill', t('resource.editRelations'), () => (relating = true), { meta: t('resource.editRelations.title'), words: t('quick.resource.relations.words') }));
+    for (const one of tabs) if (one.id !== tab) rows.push(view(`resource:tab:${one.id}`, TAB_ICONS[one.id] ?? 'list-numbers', t(one.label), () => (tab = one.id), { words: t('quick.tab.words') }));
+    if (collection) {
+      const into = collection;
+      rows.push(place('resource:collection', 'stack', into.name, () => go(collectionPath(into.id)), { meta: t('quick.resource.collection.meta'), words: t('quick.resource.collection.words') }));
+    }
+    return { group: t('quick.group.resource'), where: `Resource · ${resource.displayName}`, rows };
+  });
 </script>
 
 <Breadcrumb
@@ -382,6 +421,9 @@
       {others}
       ondeprecate={(why, instead) => mark(() => catalogue.deprecate(resource.id, why, instead))}
       onundeprecate={() => mark(() => catalogue.undeprecate(resource.id))}
+      removeFrom={canRemove ? (collection?.name ?? null) : null}
+      removeLater={removedByTeam ? (collection?.name ?? null) : null}
+      onremove={() => mark(async () => (await catalogue.removeResource(resource.id), catalogue.resource(resource.id)))}
       bind:part
     />
   {:else if tab === 'columns'}

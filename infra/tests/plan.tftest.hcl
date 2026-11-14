@@ -663,6 +663,14 @@ run "query_runs_jobs_reads_the_tables_and_asks_catalogue" {
     ])
     error_message = "query asks catalogue what the User may see, and runs its jobs in the project and location of Data Hub."
   }
+
+  assert {
+    condition = contains(
+      [for env in google_cloud_run_v2_service.service["query"].template[0].containers[0].env : env.value if env.name == "DATAHUB_REGISTRY_URL"],
+      "https://datahub-registry-123456789.europe-west1.run.app"
+    )
+    error_message = "query asks registry which tables outside Data Hub a power user may read (FR-SR-56)."
+  }
 }
 
 run "no_service_keeps_an_instance_running_and_none_is_kept_warm_unless_the_environment_says_so" {

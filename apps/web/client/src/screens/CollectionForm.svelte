@@ -4,6 +4,7 @@
 </script>
 
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import IconPicker from '@datahub/ui/components/IconPicker.svelte';
   import MarkdownEditor from '@datahub/ui/components/MarkdownEditor.svelte';
   import EditBar from '@datahub/ui/containers/EditBar.svelte';
@@ -117,10 +118,10 @@
   <div class="tiles">
     <div class="sub">
       <Field label={t('collection.field.name')} problem={tried || taken ? problems.name : undefined}>
-        <input bind:value={name} maxlength="80" />
+        <input {...NO_PASSWORD_MANAGER} bind:value={name} maxlength="80" />
       </Field>
       <Field label={t('collection.field.description')} problem={tried ? problems.description : undefined}>
-        <textarea bind:value={description} rows="3" maxlength="500"></textarea>
+        <textarea {...NO_PASSWORD_MANAGER} bind:value={description} rows="3" maxlength="500"></textarea>
       </Field>
       <!-- The intro, in Markdown, shown on the page of the Collection (DEC-UX-158). -->
       <Field label={t('collection.field.intro')} group>

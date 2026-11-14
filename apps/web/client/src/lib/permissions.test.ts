@@ -36,7 +36,7 @@ describe('the Permissions in the web app (FR-PL-05, FR-PL-14)', () => {
     expect([mayQuery(lensUser), mayQuery(analyst)]).toEqual([false, true]);
     expect([sectionFor(query, lensUser), sectionFor(query, analyst)]).toEqual([false, true]);
     expect([sectionFor(adminSection, analyst), sectionFor(adminSection, admin)]).toEqual([false, true]);
-    expect(toolsFor(admin)).toEqual(['webhooks', 'keys', 'users', 'permissionGroups']);
+    expect(toolsFor(admin)).toEqual(['webhooks', 'keys', 'users', 'permissionGroups', 'withdrawn']);
     analyst['admin.open'] = { on: true, values: { tools: ['permissionGroups', 'excelKeys'] } };
     expect(toolsFor(analyst)).toEqual(['keys', 'permissionGroups']);
     expect(route('/admin', toolsFor(analyst))).toEqual({ kind: 'redirect', to: '/admin/keys' });

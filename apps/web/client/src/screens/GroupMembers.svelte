@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import { ago, day } from '@datahub/ui/foundations/when.js';
@@ -118,7 +119,7 @@
   <div class="adding" onfocusout={(event) => !event.currentTarget.contains(event.relatedTarget as Node | null) && (suggesting = false)}>
     <label class="add">
       <span class="glyph"><Icon name="user-plus" /></span>
-      <input type="text" bind:value={typed} placeholder={t('group.add')} aria-label={t('group.add')} autocomplete="off" disabled={busy} onkeydown={keydown} onfocus={() => (suggesting = true)} />
+      <input {...NO_PASSWORD_MANAGER} type="text" bind:value={typed} placeholder={t('group.add')} aria-label={t('group.add')} autocomplete="off" disabled={busy} onkeydown={keydown} onfocus={() => (suggesting = true)} />
     </label>
     {#if suggesting && wanted.length >= 2}
       <!-- Suggestions while typing (FR-UM-15). -->

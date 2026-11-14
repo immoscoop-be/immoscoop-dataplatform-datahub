@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '../foundations/fields.js';
   import Icon from '../foundations/Icon.svelte';
 
   /**
@@ -14,7 +15,7 @@
 
 <label class="search {surface}">
   <span class="glass"><Icon name="magnifying-glass-fill" /></span>
-  <input type="search" bind:value {placeholder} aria-label={placeholder} />
+  <input {...NO_PASSWORD_MANAGER} type="search" bind:value {placeholder} aria-label={placeholder} />
 </label>
 
 <style>

@@ -159,7 +159,8 @@ export function summaryParts(given: SummaryFacts): SummaryBlock[] {
     ],
     joins: facts.related
       .filter((entry) => entry.resources.length > 0)
-      .map((entry) => item(`${entry.identity} on ${entry.field}: ${entry.resources.map((resource) => resource.displayName).join(', ')}`)),
+      // A Resource that carries the identity in two fields is named once (FR-RC-09).
+      .map((entry) => item(`${entry.identity} on ${entry.field}: ${[...new Set(entry.resources.map((resource) => resource.displayName))].join(', ')}`)),
     fields: facts.fields.length ? [plain(`${facts.fields.length} fields, each in \`fields\` with its type, its Business Description and its description from dbt.`)] : [],
     watchOut: [
       ...(card.pitfalls ? [{ kind: 'label', text: 'Pitfalls, from the Owner, in Markdown:' } as SummaryLine, { kind: 'markdown', text: card.pitfalls } as SummaryLine, gap] : []),

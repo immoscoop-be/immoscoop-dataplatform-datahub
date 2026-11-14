@@ -17,6 +17,8 @@ export interface QueryResource {
   collectionId: string | null;
   level: number;
   deprecated: boolean;
+  /** Whether its Owner published it: a Lens is made only on published Resources (DEC-LE-22). */
+  published: boolean;
   partition: { field: string; unit: string | null } | null;
   clusterBy: string[];
   /** Who requires a filter on its partition column in every query: nobody, Data Hub or BigQuery (DEC-SR-35). */
@@ -243,6 +245,7 @@ export function createCatalogue(baseUrl: string, request: typeof fetch = fetch, 
         collectionId: resource.collectionId,
         level: resource.level,
         deprecated: resource.deprecated,
+        published: resource.published === true,
         partition: resource.details?.partition ?? null,
         clusterBy: resource.details?.clusterBy ?? [],
         partitionFilter: resource.details?.partition ? (resource.details.partitionFilter ?? 'none') : 'none',

@@ -21,6 +21,7 @@
     onadd,
     onchange,
     onremove,
+    adding = $bindable(false),
   }: {
     gaps: readonly KnownGap[];
     /** The fields of the Resource, to narrow a gap down by. */
@@ -30,9 +31,10 @@
     onadd: (text: string, scope: GapScope | null) => Promise<boolean>;
     onchange: (gap: KnownGap, text: string, scope: GapScope | null) => Promise<boolean>;
     onremove: (gap: KnownGap) => Promise<boolean>;
+    /** A new gap being written; the quick window opens it too (DEC-UX-258). */
+    adding?: boolean;
   } = $props();
 
-  let adding = $state(false);
   let changing: string | undefined = $state();
   let busy = $state(false);
   let failed = $state(false);

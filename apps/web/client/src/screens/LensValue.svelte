@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import { dayOf, formatDay, isDay, SUGGESTED, suggestedOf } from '../lib/parameters.js';
@@ -56,7 +57,7 @@
     {#if open}
       <div class="list" role="listbox" aria-label={label} tabindex="-1" onkeydown={(event) => event.key === 'Escape' && (open = false)}>
         <div class="group">{t('lens.value.date')}</div>
-        <input type="date" aria-label={t('lens.value.date')} value={typeof value === 'string' && isDay(value) ? value : ''} onchange={(event) => event.currentTarget.value && choose(event.currentTarget.value)} />
+        <input {...NO_PASSWORD_MANAGER} type="date" aria-label={t('lens.value.date')} value={typeof value === 'string' && isDay(value) ? value : ''} onchange={(event) => event.currentTarget.value && choose(event.currentTarget.value)} />
         <div class="group">{t('lens.value.function')}</div>
         {#each SUGGESTED as suggested (suggested.key)}
           {@const day = dayOf(suggested.sql)}
@@ -90,7 +91,7 @@
     <option value="no">{t('param.no')}</option>
   </select>
 {:else}
-  <input type="text" class="typed" aria-label={t('lens.value', { name: label })} value={String(value)} maxlength="1000" onchange={(event) => onchange(event.currentTarget.value.trim())} />
+  <input {...NO_PASSWORD_MANAGER} type="text" class="typed" aria-label={t('lens.value', { name: label })} value={String(value)} maxlength="1000" onchange={(event) => onchange(event.currentTarget.value.trim())} />
 {/if}
 
 <style>

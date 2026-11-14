@@ -20,8 +20,11 @@
   import type { Catalogue, Collection, CollectionResource, Folder } from '../lib/catalogue.js';
   import { dragging, dragOf, dropOf, isOver, type Mover } from '../lib/dragging.svelte.js';
   import { contents, counted, holdsText, pathTo } from '../lib/folders.js';
+  import { removable } from '../lib/permissions.js';
   import type { LensItem } from '../lib/query.js';
   import { collectionPath, folderPath, lensPath, resourcePath } from '../lib/routes.js';
+  import { command, place, useScreenCommands } from '../lib/commands.svelte.js';
+  import type { QuickRow } from '../lib/quick.js';
   import { rowOf } from '../lib/rows.js';
   import NewFolderRow from './NewFolderRow.svelte';
   import NotFound from './NotFound.svelte';
@@ -31,13 +34,16 @@
    * what it holds, its folders first, then its Resources and Lenses, each A to Z. A whole row opens what it is
    * with a click; the Owner Unit and the Data Team drag it onto a folder, here, in the panel or in the path, to
    * move it (DEC-UX-157), make and delete folders, and change the name and description of this one in place (DEC-UX-162). Delete stays on: on a folder that holds
-   * something, it says so and deletes nothing.
+   * something, it says so and deletes nothing. A Data Admin takes a Resource out of the Collection at the end of its row,
+   * as on the page of the Collection (DEC-UX-212).
    */
   let {
     collection,
     folderId,
     lenses,
     catalogue,
+    removes = null,
+    own = [],
     go,
     onchanged,
     onmove,
@@ -47,6 +53,10 @@
     folderId: string;
     lenses: readonly LensItem[] | undefined;
     catalogue: Catalogue;
+    /** How far the User takes Resources out of a Collection (`resources.remove`, DEC-UX-212, DEC-PL-08): every one, or theirs while not published. */
+    removes?: 'theirs' | 'every' | null;
+    /** The fixed IDs of the groups of the User, for a Collection that does not say whose it is. */
+    own?: readonly string[];
     go: (path: string) => void;
     /** The folders changed: the Collections are read again. */
     onchanged: () => Promise<void>;
@@ -54,6 +64,10 @@
   } = $props();
 
   const folder = $derived(collection?.folders.find((candidate) => candidate.id === folderId));
+  /** The Collection is of one of the User's Owner Units. */
+  const owned = $derived(collection !== undefined && collection !== null && (collection.owned ?? own.includes(collection.ownerUnit.id)));
+  /** A column for ⊖ when the User takes out any of them: every one, or, of their own Collection, those not published (DEC-UX-214). */
+  const assigns = $derived(removes === 'every' || (removes === 'theirs' && owned));
   const inside = $derived(collection && folder ? contents(collection, lenses ?? [], folder.id) : undefined);
   const manage = $derived(collection?.canManage ?? false);
 
@@ -108,6 +122,16 @@
     return undefined;
   }
 
+  /** Takes a Resource out of the Collection: it leaves this folder too, back to Without a Collection (DEC-UX-212). */
+  async function takeOut(item: { id: string; displayName: string }) {
+    try {
+      await catalogue.removeResource(item.id);
+      await onchanged();
+    } catch (error) {
+      console.error(`${item.displayName} could not be removed from the Collection`, error);
+    }
+  }
+
   async function remove() {
     if (!collection || !folder || !inside) return;
     if (counted(inside) > 0) {
@@ -126,6 +150,20 @@
       }
     }
   }
+
+  // In the quick window: a folder in it and deleting it, for who manages its Collection, and back to the Collection (DEC-UX-240).
+  useScreenCommands(() => {
+    const here = folder;
+    const into = collection;
+    if (!here || !into) return null;
+    const rows: QuickRow[] = [];
+    if (manage) {
+      rows.push(command('folder:new', 'folder-simple-plus-fill', t('folder.new'), () => (making = true), { meta: t('quick.folder.new.meta', { name: here.name }), words: t('quick.folder.words') }));
+      rows.push(command('folder:delete', 'trash', t('quick.folder.delete'), () => void remove(), { meta: t('quick.folder.delete.meta'), words: t('quick.folder.delete.words') }));
+    }
+    rows.push(place('folder:collection', 'stack', into.name, () => go(collectionPath(into.id)), { meta: t('quick.folder.collection.meta'), words: t('quick.resource.collection.words') }));
+    return { group: t('quick.group.folder'), where: `${into.name} · ${here.name}`, rows };
+  });
 </script>
 
 {#if collection === null || (collection && !folder)}
@@ -188,9 +226,10 @@
           <th>{t('collection.column.name')}</th>
           <th>{t('folder.level')}</th>
           <th>{t('collection.column.change')}</th>
+          {#if assigns}<th><span class="hidden">{t('collection.column.remove')}</span></th>{/if}
         </tr>
       {/snippet}
-      {#if making}<NewFolderRow columns={3} onmake={make} oncancel={() => (making = false)} />{/if}
+      {#if making}<NewFolderRow columns={assigns ? 4 : 3} onmake={make} oncancel={() => (making = false)} />{/if}
       {#each inside.folders as sub (sub.id)}
         <tr
           class="row"
@@ -205,6 +244,7 @@
           </td>
           <td class="muted">—</td>
           <td class="muted">{t('folder.made', { name: sub.createdBy, time: ago(sub.createdAt, currentLanguage()) })}</td>
+          {#if assigns}<td></td>{/if}
         </tr>
       {/each}
       {#each inside.resources as item (item.id)}
@@ -227,6 +267,11 @@
               <span class="change"><span class="change-text" title={text}>{text}</span><span class="when">&nbsp;· {ago(change.at, currentLanguage())}</span></span>
             {/if}
           </td>
+          {#if assigns}
+            <td class="remove">
+              {#if removable(removes, owned, item.published)}<IconButton icon="minus-circle" label={t('collection.remove', { name: item.displayName })} onclick={() => takeOut(item)} />{/if}
+            </td>
+          {/if}
         </tr>
       {/each}
       {#each inside.lenses as lens (lens.id)}
@@ -240,6 +285,7 @@
           <td><span class="name"><KindIcon kind="lens" broken={brokenText(lens.broken)} /><span>{lens.name}</span></span></td>
           <td><span class="level"><MaturityIcon level={lens.level} tooltip={false} />{levelName(lens.level)}</span></td>
           <td class="muted">{t('folder.made', { name: lens.authorName, time: ago(lens.createdAt, currentLanguage()) })}</td>
+          {#if assigns}<td></td>{/if}
         </tr>
       {/each}
       {#snippet after()}<p class="meta foot">{t('folder.order')}</p>{/snippet}
@@ -250,6 +296,8 @@
 {/if}
 
 <style>
+  .remove { width: 1%; }
+  .hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .head { display: flex; align-items: flex-start; gap: 14px; margin-top: 10px; }
   .what { flex: 1; min-width: 0; }
   .actions { display: flex; gap: 8px; align-items: center; flex: none; }

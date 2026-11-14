@@ -37,6 +37,13 @@ type Json = Record<string, unknown>;
 export const COLLECTOR_URL = 'https://colleciones-eventos.immoscoop.be';
 
 /**
+ * Where the collector serves the whole runtime contract of the model it runs, `immoscoop`: every Entity with its
+ * identifiers, references and actions, the vocabulary of relation types, and the release. `GET /domain-model` itself
+ * answers with a summary and an index of the Entities only, which holds no identifiers (TR-AR-09).
+ */
+export const CONTRACT_PATH = '/domain-model/immoscoop';
+
+/**
  * Reads the Domain Model from the collector, every time it is needed: Data Hub keeps no copy that could
  * fall behind (DEC-AR-05).
  */
@@ -44,7 +51,7 @@ export function createDomainModelSource(baseUrl: string = COLLECTOR_URL, request
   return async () => {
     let response: Response;
     try {
-      response = await request(new URL('/domain-model', baseUrl), { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(10_000) });
+      response = await request(new URL(CONTRACT_PATH, baseUrl), { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(10_000) });
     } catch (error) {
       throw new DomainModelUnavailable('The collector of Colleciónes did not answer', { cause: error });
     }
@@ -70,8 +77,12 @@ export function parseDomainModel(input: unknown): DomainModel {
   if (!isObject(model.entities)) {
     throw new Error('No Entities in the Domain Model');
   }
-  const meta = object(model.meta);
-  const release = object(meta.release);
+  // Its domain, version and release: in `meta` next to its Entities, as the contract had them, or on what wraps them, or
+  // at the top; a release as an object with its version or tag, or as text. Without them it still serves its Entities.
+  const sources = [object(model.meta), object(wrapped.meta), model, wrapped];
+  const first = (key: string): unknown => sources.map((source) => source[key]).find((value) => value !== undefined && value !== null && value !== '');
+  const releaseOf = (value: unknown): string | null =>
+    typeof value === 'string' ? value.replace(/^v/, '') : (string(object(value).version) ?? string(object(value).tag)?.replace(/^v/, '') ?? null);
   const references = (value: unknown): Reference[] =>
     (Array.isArray(value) ? value : []).filter(isObject).flatMap((reference) => {
       const type = string(reference.type);
@@ -91,6 +102,10 @@ export function parseDomainModel(input: unknown): DomainModel {
     }
     entities[name] = { identifiers: Object.keys(object(entity.identifiers)), references: references(entity.references), actions };
   }
+  // A summary or an index of the Entities is no contract: without a single identifier, no field could map to it.
+  if (!Object.values(entities).some((entity) => entity.identifiers.length > 0)) {
+    throw new Error('No identifiers in the Domain Model');
+  }
   const relationTypes: DomainModel['relationTypes'] = {};
   for (const [name, type] of Object.entries(object(object(model.vocabulary).relationTypes))) {
     const cardinality = (Array.isArray(object(type).cardinality) ? (object(type).cardinality as unknown[]) : []).filter(
@@ -98,10 +113,12 @@ export function parseDomainModel(input: unknown): DomainModel {
     );
     relationTypes[name] = { cardinality, inverse: string(object(type).inverse), description: string(object(type).description) ?? '' };
   }
+  const version = string(first('version'));
   return {
-    domain: string(meta.domain) ?? '',
-    version: string(meta.version) ?? '',
-    release: string(release.version) ?? string(release.tag)?.replace(/^v/, '') ?? string(meta.version) ?? '',
+    // The collector names its domain `model`, as text, next to its version and release.
+    domain: string(first('domain')) ?? (typeof wrapped.model === 'string' ? wrapped.model : null) ?? '',
+    version: version ?? '',
+    release: releaseOf(first('release')) ?? version ?? '',
     entities,
     relationTypes,
   };

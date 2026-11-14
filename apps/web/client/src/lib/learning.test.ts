@@ -30,8 +30,14 @@ describe('the Learning Centre in the web app', () => {
   it('suggests the written cards of those Levels that are required, or of the Compass, until the User understands them', () => {
     const shown = writtenCards('uat');
     const levels = suggestedLevels({ dataAdmin: false, owner: false });
-    expect(suggestedCards(levels, shown, []).map((topic) => topic.number)).toEqual(['K3.4', 'K5.1', 'K5.2', '1.2.1', '1.2.2']);
-    expect(suggestedCards(levels, shown, [seen('K3.4', '2026-10-29T08:00:00Z', '2026-10-29T08:05:00Z')]).map((topic) => topic.number)).toEqual(['K5.1', 'K5.2', '1.2.1', '1.2.2']);
+    // The written cards grow with every card the Data Team adds: hold the rule to known cards, not the whole list.
+    const suggested = suggestedCards(levels, shown, []).map((topic) => topic.number);
+    expect(suggested).toEqual(expect.arrayContaining(['K3.4', 'K5.1', 'K5.2', '1.2.1', '1.2.2']));
+    expect(suggested.every((number) => shown.has(number))).toBe(true);
+    expect(suggested).not.toContain('2.3.5'); // required, but of Learning Level 2
+    expect(suggested).not.toContain('4.3.1'); // required, but of Learning Level 4
+    expect(suggested.indexOf('K5.2')).toBeLessThan(suggested.indexOf('1.2.1')); // in the order of the plan, the Compass first
+    expect(suggestedCards(levels, shown, [seen('K3.4', '2026-10-29T08:00:00Z', '2026-10-29T08:05:00Z')]).map((topic) => topic.number)).toEqual(suggested.filter((number) => number !== 'K3.4'));
   });
 
   it('counts the cards seen, silently, and continues the one read last and not understood yet (FR-LR-32)', () => {

@@ -24,6 +24,16 @@ function fakeReading(asked: unknown[]): Reading {
       return [{ ...node, matchedColumns: [] }];
     },
     node: async (id) => (id === 'model.p.orders' ? { ...node, packageName: 'p', databaseName: null, schemaName: null, tableName: null, materialized: 'view', tags: [], filePath: null, meta: {}, entity: null, action: null, strategy: null, layer: null, partitionField: null, partitionUnit: null, clusterBy: [], requirePartitionFilter: false, columns: [{ name: 'listingId', position: 1, dataType: 'STRING', description: '', meta: {} }], tests: [] } : undefined),
+    knownTables: async (relations) => {
+      asked.push({ knownTables: relations });
+      return relations.includes('immoscoop-dataplatform.dbt_staging.stg_leads')
+        ? [{ relation: 'immoscoop-dataplatform.dbt_staging.stg_leads', databaseName: 'immoscoop-dataplatform', schemaName: 'dbt_staging', tableName: 'STG_Leads', name: 'stg_leads', resourceType: 'model', layer: null, filePath: 'models/staging/stg_leads.sql', partitionField: 'created_date', partitionUnit: 'day', clusterBy: ['lead_source'], materialized: 'incremental', projectId: '9367', projectName: 'p', resource: false, description: 'One row per lead.', columns: [{ name: 'lead_id', dataType: 'STRING', description: 'Id of the lead.' }] }]
+        : [];
+    },
+    async searchKnownTables(query, options) {
+      asked.push({ searchKnownTables: query, ...options });
+      return this.knownTables(['immoscoop-dataplatform.dbt_staging.stg_leads']);
+    },
     lineage: async (id, direction, depth) => {
       asked.push({ lineage: id, direction, depth });
       return id === 'model.p.orders' ? { direction, nodes: [{ ...node, distance: 0 }], edges: [], truncated: false } : undefined;
@@ -163,6 +173,53 @@ describe('the registry API', () => {
     await call('GET', '/runs?limit=5');
     await call('GET', '/runs?limit=nonsense');
     expect(asked).toEqual([{ runs: 5 }, { runs: 20 }]);
+  });
+
+  describe('the tables Data Hub knows, for a power user (FR-SR-56)', () => {
+    const url = '/known-tables?relations=immoscoop-dataplatform.dbt_staging.stg_leads,immoscoop-dataplatform.x.y';
+
+    it('names them in their own case, with their layer and partition, for who may query them', async () => {
+      const response = await call('GET', url);
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual({
+        tables: [
+          {
+            key: 'immoscoop-dataplatform.dbt_staging.stg_leads',
+            fullName: 'immoscoop-dataplatform.dbt_staging.STG_Leads',
+            name: 'stg_leads',
+            resourceType: 'model',
+            layer: 'staging',
+            projectId: '9367',
+            projectName: 'p',
+            resource: false,
+            partition: { field: 'created_date', unit: 'day' },
+            clusterBy: ['lead_source'],
+            materialized: 'incremental',
+            description: 'One row per lead.',
+            columns: [{ name: 'lead_id', dataType: 'STRING', description: 'Id of the lead.' }],
+          },
+        ],
+      });
+      expect(asked).toContainEqual({ knownTables: ['immoscoop-dataplatform.dbt_staging.stg_leads', 'immoscoop-dataplatform.x.y'] });
+    });
+
+    it('finds them by words, layer and project, for who may query them (FR-SR-58)', async () => {
+      const found = await call('GET', '/known-tables/search?q=leads&layer=staging&project=9367');
+      expect(found.statusCode).toBe(200);
+      expect(found.json().tables).toMatchObject([{ key: 'immoscoop-dataplatform.dbt_staging.stg_leads', layer: 'staging', columns: [{ name: 'lead_id' }] }]);
+      expect(asked).toContainEqual({ searchKnownTables: 'leads', layer: 'staging', project: '9367', limit: 30 });
+      expect((await call('GET', '/known-tables/search?q=leads', { as: 'businessAnalyst' })).statusCode).toBe(403);
+      expect((await call('GET', '/known-tables/search?layer=st%20aging')).statusCode).toBe(400);
+    });
+
+    it('answers only who has queries.outside, and only for tables named project.dataset.table', async () => {
+      const refused = await call('GET', url, { as: 'businessAnalyst' });
+      expect(refused.statusCode).toBe(403);
+      expect(refused.json()).toMatchObject({ permission: 'queries.outside' });
+      expect((await call('GET', url, analystWith((permissions) => (permissions['queries.outside'] = { on: true, values: {} })))).statusCode).toBe(200);
+      expect((await call('GET', '/known-tables?relations=orders')).statusCode).toBe(400);
+      expect((await call('GET', '/known-tables')).statusCode).toBe(400);
+    });
   });
 
   describe('processing a run again', () => {

@@ -43,6 +43,7 @@ export const ADMIN_TOOLS = [
   { id: 'keys', path: '/admin/keys', icon: 'key', name: 'Excel keys', option: 'excelKeys' },
   { id: 'users', path: '/admin/users', icon: 'users', name: 'Users', option: 'users' },
   { id: 'permissionGroups', path: '/admin/permission-groups', icon: 'shield-check', name: 'Permission groups', option: 'permissionGroups' },
+  { id: 'withdrawn', path: '/admin/withdrawn', icon: 'archive', name: 'Withdrawn', option: 'withdrawn' },
 ] as const satisfies readonly {
   id: string;
   path: string;

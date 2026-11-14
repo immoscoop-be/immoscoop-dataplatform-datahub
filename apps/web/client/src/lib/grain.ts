@@ -85,7 +85,8 @@ export function draftOf(resource: ResourceDetail, proposal: Proposal | null): Dr
       };
     }),
     leftOut: resource.leftOut,
-    release: proposal?.domainModel?.release ?? null,
+    // A Domain Model without a version records none, rather than an empty one catalogue refuses.
+    release: proposal?.domainModel?.release || null,
   };
 }
 
@@ -145,6 +146,14 @@ export function subjectOf(draft: Draft, field: FieldDraft): FieldDraft | undefin
 export function nounOf(identity: string): string {
   const [entity = identity, part = ''] = identity.split('.');
   return part.endsWith('Id') ? entity : identity;
+}
+
+/**
+ * The Display Names of the other Resources that carry an identity, each once, in their order: a Resource that carries
+ * it in two fields, such as `identifier_subjectId` and `actorIdentifier_subjectId`, is named once (FR-RC-09).
+ */
+export function carriersOf(mapping: { resources: readonly { id: string; displayName: string }[] }): string[] {
+  return [...new Map(mapping.resources.map((other) => [other.id, other.displayName])).values()];
 }
 
 /** The cardinality of a mapping, shown and never chosen (DEC-RC-08): a badge, when it is known, and words. */
@@ -213,7 +222,7 @@ export function requestOf(draft: Draft, identities: ReadonlySet<string>) {
       ...draft.origins,
       ...(draft.grainSentence.trim() && !draft.origins.grainSentence ? { grainSentence: 'here' as const } : {}),
     },
-    release: draft.release,
+    release: draft.release || null,
     mappings: draft.fields
       .filter((field) => field.kind !== 'none')
       .map((field) => ({

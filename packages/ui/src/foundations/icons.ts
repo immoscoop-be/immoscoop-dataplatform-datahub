@@ -2,6 +2,7 @@
 // regular line where the prototypes draw one. Each is imported by name, so the page holds only the
 // icons it shows. A new icon of the interface is added here.
 import archiveFill from '@phosphor-icons/core/assets/fill/archive-fill.svg?raw';
+import archive from '@phosphor-icons/core/assets/regular/archive.svg?raw';
 import arrowBendUpLeftFill from '@phosphor-icons/core/assets/fill/arrow-bend-up-left-fill.svg?raw';
 import bellSimpleFill from '@phosphor-icons/core/assets/fill/bell-simple-fill.svg?raw';
 import calendarBlankFill from '@phosphor-icons/core/assets/fill/calendar-blank-fill.svg?raw';
@@ -67,6 +68,7 @@ import textH from '@phosphor-icons/core/assets/regular/text-h.svg?raw';
 import textItalic from '@phosphor-icons/core/assets/regular/text-italic.svg?raw';
 import userFocus from '@phosphor-icons/core/assets/regular/user-focus.svg?raw';
 import userGear from '@phosphor-icons/core/assets/regular/user-gear.svg?raw';
+import arrowBendDownRight from '@phosphor-icons/core/assets/regular/arrow-bend-down-right.svg?raw';
 import arrowCounterClockwise from '@phosphor-icons/core/assets/regular/arrow-counter-clockwise.svg?raw';
 import arrowDownRight from '@phosphor-icons/core/assets/regular/arrow-down-right.svg?raw';
 import arrowLeft from '@phosphor-icons/core/assets/regular/arrow-left.svg?raw';
@@ -92,6 +94,7 @@ import chatText from '@phosphor-icons/core/assets/regular/chat-text.svg?raw';
 import check from '@phosphor-icons/core/assets/regular/check.svg?raw';
 import checkCircle from '@phosphor-icons/core/assets/regular/check-circle.svg?raw';
 import circle from '@phosphor-icons/core/assets/regular/circle.svg?raw';
+import code from '@phosphor-icons/core/assets/regular/code.svg?raw';
 import columns from '@phosphor-icons/core/assets/regular/columns.svg?raw';
 import rows from '@phosphor-icons/core/assets/regular/rows.svg?raw';
 import cube from '@phosphor-icons/core/assets/regular/cube.svg?raw';
@@ -160,9 +163,15 @@ import plugsConnected from '@phosphor-icons/core/assets/regular/plugs-connected.
 import shieldCheck from '@phosphor-icons/core/assets/regular/shield-check.svg?raw';
 import userPlus from '@phosphor-icons/core/assets/regular/user-plus.svg?raw';
 import users from '@phosphor-icons/core/assets/regular/users.svg?raw';
+// Flagged queries and the quick window (DEC-UX-236, DEC-UX-237).
+import flagFill from '@phosphor-icons/core/assets/fill/flag-fill.svg?raw';
+import arrowsInLineVertical from '@phosphor-icons/core/assets/regular/arrows-in-line-vertical.svg?raw';
+import circleNotch from '@phosphor-icons/core/assets/regular/circle-notch.svg?raw';
+import linkBreak from '@phosphor-icons/core/assets/regular/link-break.svg?raw';
 
 export const ICONS = {
   'archive-fill': archiveFill,
+  archive,
   'arrow-bend-up-left-fill': arrowBendUpLeftFill,
   'bell-simple-fill': bellSimpleFill,
   'calendar-blank-fill': calendarBlankFill,
@@ -228,6 +237,7 @@ export const ICONS = {
   'text-italic': textItalic,
   'user-focus': userFocus,
   'user-gear': userGear,
+  'arrow-bend-down-right': arrowBendDownRight,
   'arrow-counter-clockwise': arrowCounterClockwise,
   'arrow-down-right': arrowDownRight,
   'arrow-left': arrowLeft,
@@ -253,6 +263,7 @@ export const ICONS = {
   check,
   'check-circle': checkCircle,
   circle,
+  code,
   columns,
   rows,
   cube,
@@ -320,6 +331,10 @@ export const ICONS = {
   'shield-check': shieldCheck,
   'user-plus': userPlus,
   users: users,
+  'flag-fill': flagFill,
+  'arrows-in-line-vertical': arrowsInLineVertical,
+  'circle-notch': circleNotch,
+  'link-break': linkBreak,
 } as const;
 
 export type IconName = keyof typeof ICONS;

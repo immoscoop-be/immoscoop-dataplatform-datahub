@@ -59,6 +59,7 @@
   --delay-tooltip: 150ms;
   --delay-focus: 120ms;             /* a passing mouse must not trigger focus */
   --motion-loading: 1s ease-in-out;  /* the three dots going back and forth while something is read (DEC-UX-165) */
+  --motion-spin: 1s linear;          /* the circle turning on the tab of a flagged query while it runs (DEC-UX-236) */
   --delay-loading: 300ms;           /* before the dots show: a quick answer shows none */
   --delay-loading-step: 160ms;      /* each dot a little after the one before it */
   --opacity-out-of-focus: .68;      /* the window out of focus, its text and all, softer (DEC-UX-146) */
@@ -74,6 +75,12 @@
   --col-ochre: #B07A28;
   --col-slate: #4A7698;
   --col-olive: #6E7C34;
+  /* The colours of SQL in the editor, by kind of word, as BigQuery colours it (DEC-UX-223): each 4.5 : 1 or more on
+     the editor (--surface-sub); names of tables, CTEs and columns keep the colour of the text, comments are muted */
+  --code-keyword: #3F6A8C;       /* keywords, functions and types: 5.3 : 1 */
+  --code-string: #5B6820;        /* text in quotes: 5.6 : 1 */
+  --code-number: #1F7A75;        /* numbers: 4.7 : 1 */
+  --code-param: #C21F75;         /* @Parameters: 5.2 : 1 */
   /* The values of a monitor's picture (DEC-UX-197): three shades of olive that stand for several values, never one each;
      the strongest is the one judged first. Not a Tone: a Tone colours a judgement, these only tell values apart. */
   --seg-1: #C2CB8E;
@@ -150,6 +157,8 @@
   --sheet-backdrop: rgba(40,34,30,.5);
   --sheet-width: 50vw;
   --sheet-shadow: 0 20px 60px rgba(0,0,0,.18);
+  /* The quick window, Cmd+Shift+P: the page behind it only lightly dimmed, as it is a moment (DEC-UX-237) */
+  --quick-backdrop: rgba(40,34,30,.18);
 }
 
 [data-theme="dark"] {
@@ -176,10 +185,15 @@
   --text-muted: #8F877F;
   --signal-warn: #D9A453;
   --signal-urgent: #E2725E;
+  --code-keyword: #8DB6DA;       /* 5.6 : 1 on the editor */
+  --code-string: #B4C46C;        /* 6.3 : 1 */
+  --code-number: #5CCBC4;        /* 6.2 : 1 */
+  --code-param: #F27BB8;         /* 4.7 : 1 */
   --glass: rgba(40,36,32,.5);
   --glass-solid: rgba(40,36,32,.92);
   --glass-edge: rgba(255,255,255,.12);
   --glass-shadow: 0 30px 80px rgba(0,0,0,.3);
   --sheet-backdrop: rgba(0,0,0,.62);
   --sheet-shadow: 0 20px 60px rgba(0,0,0,.4);
+  --quick-backdrop: rgba(0,0,0,.3);
 }

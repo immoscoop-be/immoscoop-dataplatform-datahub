@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import Callout from '@datahub/ui/containers/Callout.svelte';
   import SubTile from '@datahub/ui/containers/SubTile.svelte';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
@@ -150,7 +151,7 @@
         <p class="meta text sent">{t('me.slack.sent', { name })}</p>
         <div class="code">
           <Field label={t('me.slack.code')}>
-            <input class="mono" bind:value={code} inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder={t('me.slack.codePlaceholder')} />
+            <input {...NO_PASSWORD_MANAGER} class="mono" bind:value={code} inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder={t('me.slack.codePlaceholder')} />
           </Field>
         </div>
         {#if wrong === 'expired'}
@@ -191,7 +192,7 @@
           </div>
         {/if}
         <Field label={t('me.slack.field')}>
-          <input type="email" bind:value={email} oninput={retype} placeholder={t('me.slack.placeholder')} autocomplete="off" />
+          <input {...NO_PASSWORD_MANAGER} type="email" bind:value={email} oninput={retype} placeholder={t('me.slack.placeholder')} autocomplete="off" />
         </Field>
         {#if mode === 'found'}
           <div class="row">

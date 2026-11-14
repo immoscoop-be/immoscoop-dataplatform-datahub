@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import Breadcrumb from '@datahub/ui/components/Breadcrumb.svelte';
   import Sheet from '@datahub/ui/containers/Sheet.svelte';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
@@ -11,6 +12,7 @@
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import { Refused } from '../lib/api.js';
   import type { DbtJob, DbtProject, Delivery, DeliveryReason, JobKind, NotChoosable, Registry, SetStatus, SourceJobTile } from '../lib/registry.js';
+  import { command, useScreenCommands } from '../lib/commands.svelte.js';
 
   /**
    * Webhooks, the first tool of Admin (FR-AR-18, FR-AR-19, DEC-UX-130): per dbt project Data Hub follows its
@@ -236,6 +238,9 @@
     signature: 'admin.todo.signature',
   };
   const NOT_CHOOSABLE: Record<NotChoosable, string> = { ci: 'admin.notChoosable.ci', otherEnvironment: 'admin.notChoosable.otherEnvironment', noDocs: 'admin.notChoosable.noDocs' };
+
+  // In the quick window: following another dbt project (DEC-UX-240).
+  useScreenCommands(() => (tiles !== null ? { group: 'Webhooks', rows: [command('webhooks:follow', 'plus', t('admin.webhooks.follow'), () => void startFollowing(), { words: t('quick.webhooks.follow.words') })] } : null));
 </script>
 
 <Breadcrumb steps={[{ label: 'Admin' }]} />
@@ -431,7 +436,7 @@
     {:else if offered === null}
       <p class="meta">{t('admin.webhooks.dbtCloudDown')}</p>
     {:else}
-      <input class="search" type="search" bind:value={search} placeholder={t('admin.webhooks.pick.search')} aria-label={t('admin.webhooks.pick.search')} />
+      <input {...NO_PASSWORD_MANAGER} class="search" type="search" bind:value={search} placeholder={t('admin.webhooks.pick.search')} aria-label={t('admin.webhooks.pick.search')} />
       <div class="options" role="radiogroup" aria-label={t('admin.webhooks.pick.jobs')}>
         {#each groups as group (group.name)}
           <div class="group">{group.name}</div>

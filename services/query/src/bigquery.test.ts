@@ -37,6 +37,8 @@ describe('a dry run', () => {
               statementType: 'SELECT',
               totalBytesProcessed: '84000000',
               referencedTables: [{ projectId: 'immoscoop-dataplatform', datasetId: 'dbt_prod_stacks', tableId: 'weekly_lead_volume' }],
+              // The columns of its result, with their types as GoogleSQL names them (FR-LE-19).
+              schema: { fields: [{ name: 'week_start', type: 'DATE' }, { name: 'leads', type: 'INTEGER' }, { name: 'sources', type: 'STRING', mode: 'REPEATED' }] },
             },
           },
         },
@@ -47,6 +49,7 @@ describe('a dry run', () => {
       bytes: 84_000_000,
       referencedTables: ['immoscoop-dataplatform.dbt_prod_stacks.weekly_lead_volume'],
       partitions: null,
+      columns: [{ name: 'week_start', type: 'DATE' }, { name: 'leads', type: 'INT64' }, { name: 'sources', type: 'ARRAY<STRING>' }],
     });
     expect(calls).toEqual([
       {
@@ -206,6 +209,42 @@ describe('what BigQuery keeps about a table (FR-SR-39)', () => {
     });
     expect(calls[0]?.url).toBe('https://bigquery.googleapis.com/bigquery/v2/projects/immoscoop-dataplatform-398214/datasets/dbt_prod/tables/weekly_lead_volume');
     await expect(bigquery.table('dbt_prod.weekly_lead_volume')).rejects.toBeInstanceOf(BigQueryRefused);
+  });
+
+  it('describes a table with its partitioning, cluster columns and columns, a STRUCT with its fields (FR-SR-62)', async () => {
+    const { bigquery, calls } = fakeApi([
+      {
+        body: {
+          type: 'TABLE', description: 'Leads.', numBytes: '3100000000', numRows: '4800000', numPartitions: '1412', lastModifiedTime: '1793260800000', requirePartitionFilter: true,
+          timePartitioning: { type: 'DAY', field: 'created_date' }, clustering: { fields: ['lead_source'] },
+          schema: { fields: [
+            { name: 'created_date', type: 'DATE', description: 'Day it was created.' },
+            { name: 'utm', type: 'RECORD', fields: [{ name: 'source', type: 'STRING' }, { name: 'tags', type: 'STRING', mode: 'REPEATED' }] },
+            { name: 'is_test', type: 'BOOLEAN' },
+          ] },
+        },
+      },
+      { body: { type: 'VIEW', schema: { fields: [{ name: 'lead_id', type: 'STRING' }] } } },
+      { body: { type: 'TABLE', rangePartitioning: { field: 'customer_id', range: { start: '0', end: '100', interval: '10' } } } },
+    ]);
+    expect(await bigquery.describe('immoscoop-dataplatform-398214.dbt_prod_staging.STG_Leads')).toEqual({
+      type: 'TABLE', bytes: 3_100_000_000, rows: 4_800_000, partitions: 1412, partitionField: 'created_date', modifiedAt: new Date(1793260800000).toISOString(),
+      description: 'Leads.',
+      partition: { field: 'created_date', unit: 'day', required: true },
+      clusterBy: ['lead_source'],
+      columns: [
+        { name: 'created_date', type: 'DATE', description: 'Day it was created.' },
+        { name: 'utm', type: 'STRUCT', description: '' },
+        { name: 'utm.source', type: 'STRING', description: '' },
+        { name: 'utm.tags', type: 'ARRAY<STRING>', description: '' },
+        { name: 'is_test', type: 'BOOL', description: '' },
+      ],
+    });
+    // In the project of the table, by its name in its own case.
+    expect(calls[0]?.url).toBe('https://bigquery.googleapis.com/bigquery/v2/projects/immoscoop-dataplatform-398214/datasets/dbt_prod_staging/tables/STG_Leads');
+    // A view stores nothing and has no partitions of its own; a range is partitioned without a unit of time.
+    expect(await bigquery.describe('p.d.v')).toMatchObject({ type: 'VIEW', bytes: null, partition: null, clusterBy: [] });
+    expect((await bigquery.describe('p.d.t')).partition).toEqual({ field: 'customer_id', unit: 'range', required: false });
   });
 
   it('lists its newest partitions that hold rows, from INFORMATION_SCHEMA, as Data Hub (DEC-SR-39)', async () => {

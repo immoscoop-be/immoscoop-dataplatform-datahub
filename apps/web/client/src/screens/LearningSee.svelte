@@ -8,6 +8,8 @@
   import { learningPath } from '../lib/routes.js';
   import LearningExample from './LearningExample.svelte';
   import LearningText from './LearningText.svelte';
+  import { command, place, useScreenCommands } from '../lib/commands.svelte.js';
+  import type { QuickRow } from '../lib/quick.js';
 
   /**
    * See it of a Learning Card on a page of its own (FR-LR-29, learning-see), for whoever comes from a page of
@@ -42,6 +44,25 @@
   const language = $derived(currentLanguage());
   const level = $derived(LEVELS.find((one) => one.id === topic.level)!);
   onMount(() => onopen());
+
+  // In the quick window: back to where they were, the whole card, and understood or not (DEC-UX-240).
+  useScreenCommands((go) => {
+    const rows: QuickRow[] = [
+      command('see:back', 'arrow-left', t('learning.see.back'), onback, { words: t('quick.see.back.words') }),
+      place('see:whole', 'arrow-right', t('learning.see.whole'), () => {
+        onwhole('see');
+        go(learningPath(topic.number));
+      }, { words: t('quick.see.whole.words') }),
+      understood
+        ? command('see:understood', 'check-circle-fill', t('quick.card.undo'), () => onunderstand(false), { words: t('quick.card.words') })
+        : place('see:understood', 'check-circle-fill', t('learning.understand'), () => {
+            onunderstand(true);
+            onwhole('can');
+            go(learningPath(topic.number));
+          }, { words: t('quick.card.words') }),
+    ];
+    return { group: t('quick.group.card'), where: `${topic.number} ${topic.title[language]}`, rows };
+  });
 </script>
 
 <div class="flow">

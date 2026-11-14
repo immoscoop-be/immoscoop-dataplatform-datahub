@@ -4,6 +4,8 @@
 </script>
 
 <script lang="ts">
+  import { tick } from 'svelte';
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import type { GapScope } from '@datahub/contracts/gaps';
   import type { SummarySource } from '@datahub/contracts/summary';
   import FactsList from '@datahub/ui/components/FactsList.svelte';
@@ -13,7 +15,6 @@
   import EditBar from '@datahub/ui/containers/EditBar.svelte';
   import Grid from '@datahub/ui/containers/Grid.svelte';
   import SubTile from '@datahub/ui/containers/SubTile.svelte';
-  import { formatBytes } from '@datahub/ui/foundations/bytes.js';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import type { IconName } from '@datahub/ui/foundations/icons.js';
   import { levelName } from '@datahub/ui/foundations/levels.js';
@@ -23,9 +24,12 @@
   import Field from '@datahub/ui/primitives/Field.svelte';
   import Loading from '@datahub/ui/primitives/Loading.svelte';
   import type { CardChanges, DescribeAttribute, KnownGap, LogEntry, Related, ResourceDetail } from '../lib/catalogue.js';
-  import { nounOf } from '../lib/grain.js';
+  import { carriersOf, nounOf } from '../lib/grain.js';
   import type { Conversation } from '../lib/messages.js';
   import type { Storage } from '../lib/query.js';
+  import { sizeText } from '../lib/size.js';
+  import { command, useScreenCommands, view } from '../lib/commands.svelte.js';
+  import type { QuickRow } from '../lib/quick.js';
   import LearningRef from './LearningRef.svelte';
   import OverviewDanger from './OverviewDanger.svelte';
   import OverviewGaps from './OverviewGaps.svelte';
@@ -59,6 +63,9 @@
     others,
     ondeprecate,
     onundeprecate,
+    removeFrom = null,
+    removeLater = null,
+    onremove,
     part = $bindable('summary'),
   }: {
     resource: ResourceDetail;
@@ -89,6 +96,12 @@
     others: readonly { id: string; displayName: string; collection: string }[];
     ondeprecate: (reason: string, insteadOf: string | null) => Promise<boolean>;
     onundeprecate: () => Promise<boolean>;
+    /** The name of its Collection, when the User may take it out of it (`resources.remove`, DEC-UX-212, DEC-PL-08); null otherwise. */
+    removeFrom?: string | null;
+    /** The name of its Collection, when only the Data Team takes it out now that it is published (DEC-UX-214); null otherwise. */
+    removeLater?: string | null;
+    /** Takes it out of its Collection; answers whether it worked. */
+    onremove?: () => Promise<boolean>;
     /** The part on screen, which the page can open, such as the Danger zone from a deprecation. */
     part?: Part;
   } = $props();
@@ -108,7 +121,9 @@
     { id: 'danger', icon: 'warning-octagon', label: 'overview.danger' },
   ];
   /** The Danger zone is for who may deprecate it only. */
-  const shown = $derived(PARTS.filter((one) => one.id !== 'danger' || canDeprecate));
+  /** The Danger zone shows for whoever may deprecate it, or take it out of its Collection (DEC-UX-176, DEC-UX-212). */
+  const dangers = $derived(canDeprecate || (removeFrom !== null && onremove !== undefined) || removeLater !== null);
+  const shown = $derived(PARTS.filter((one) => one.id !== 'danger' || dangers));
   /** Which attributes each part edits: Known Behaviour holds the intended use, the pitfalls and since when it is reliable. */
   const EDITS: Record<Editable, readonly DescribeAttribute[]> = { description: ['description'], behaviour: ['behaviour', 'pitfalls', 'availableSince'], querying: ['keyFields'] };
   const mayEdit = (which: Editable) => EDITS[which].some((attribute) => describes(attribute));
@@ -128,6 +143,16 @@
     part = next;
     editing = null;
   }
+
+  /** A part opened to edit, with the cursor in one of its fields, from the quick window (DEC-UX-258). */
+  async function editAt(which: Editable, field: string): Promise<void> {
+    open(which);
+    start(which);
+    await tick();
+    document.querySelector<HTMLElement>(field)?.focus();
+  }
+  /** Known Gaps opened on a new gap, the cursor in its text (DEC-UX-258). */
+  let addingGap = $state(false);
 
   function go(target: Exclude<SummarySource, 'messages'>) {
     if (target === 'columns') oncolumns();
@@ -150,13 +175,7 @@
   const list = (names: readonly string[]) => new Intl.ListFormat(LOCALES[currentLanguage()], { type: 'conjunction' }).format(names);
   const day = (value: string) => new Intl.DateTimeFormat(LOCALES[currentLanguage()], { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(value));
   /** Its size in all, and about how much a partition holds where it has them (FR-SR-39). */
-  const size = $derived.by(() => {
-    if (!storage || storage.bytes === null) return null;
-    const language = currentLanguage();
-    const bytes = formatBytes(storage.bytes, language);
-    const unit = details.partition?.unit;
-    return storage.partitions && unit ? t('resource.sizePer', { bytes, per: formatBytes(storage.bytes / storage.partitions, language), unit: t(UNIT_KEYS[unit]) }) : t('resource.sizeOf', { bytes });
-  });
+  const size = $derived(sizeText(storage, details.partition?.unit));
 
   // Editing in place, one part at a time.
   let saving = $state(false);
@@ -216,6 +235,39 @@
     return { rows, height, identities, middle: height / 2 };
   });
   const clip = (text: string, length: number) => (text.length > length ? `${text.slice(0, length - 1)}…` : text);
+
+  // In the quick window: editing the part on screen, for who may, and its other parts (DEC-UX-240).
+  useScreenCommands(() => {
+    const rows: QuickRow[] = [];
+    const which = part === 'description' || part === 'behaviour' || part === 'querying' ? part : null;
+    const label = t((PARTS.find((one) => one.id === part) ?? PARTS[0]!).label);
+    if (which && mayEdit(which) && editing !== which) rows.push(command(`overview:edit`, 'pencil-simple-fill', t('quick.overview.edit', { name: label }), () => start(which), { words: t('quick.overview.edit.words') }));
+    // Straight to the field to fill in, from whichever part is on screen (DEC-UX-258).
+    if (describes('description')) {
+      rows.push(
+        command('overview:business', 'text-align-left', t(card.businessDescription ? 'quick.overview.business.update' : 'quick.overview.business.add'), () => void editAt('description', '#business-description'), {
+          words: t('quick.overview.business.words'),
+          ...(described ? {} : { why: t('resource.business.notYet') }),
+        }),
+      );
+    }
+    if (describes('behaviour')) rows.push(command('overview:use', 'check-circle-fill', t('quick.overview.use'), () => void editAt('behaviour', '#intended-use'), { words: t('quick.overview.use.words') }));
+    if (describes('pitfalls')) rows.push(command('overview:pitfalls', 'warning-fill', t('quick.overview.pitfalls'), () => void editAt('behaviour', '#pitfalls'), { words: t('quick.overview.pitfalls.words') }));
+    if (describes('keyFields')) {
+      rows.push(command('overview:keyField', 'key', t('quick.overview.keyField'), () => void editAt('querying', 'select[data-pick="keyFields"]'), { words: t('quick.overview.keyField.words') }));
+      rows.push(command('overview:parameter', 'sliders-horizontal', t('quick.overview.parameter'), () => void editAt('querying', 'select[data-pick="parameters"]'), { words: t('quick.overview.parameter.words') }));
+    }
+    if (describes('gaps')) {
+      rows.push(
+        command('overview:gap', 'circle-dashed', t('quick.overview.gap'), () => {
+          open('gaps');
+          addingGap = true;
+        }, { words: t('quick.overview.gap.words') }),
+      );
+    }
+    for (const one of shown) if (one.id !== part) rows.push(view(`overview:${one.id}`, one.icon, t(one.label), () => open(one.id), { meta: t('quick.overview.meta'), words: t('quick.tab.words') }));
+    return { group: t('quick.group.resource'), rows };
+  });
 </script>
 
 {#snippet head(title: string, lead: string, which?: Editable)}
@@ -244,6 +296,7 @@
     {/each}
     <select
       class="add"
+      data-pick={key}
       aria-label={key === 'keyFields' ? t('resource.keyFields') : t('resource.parameters')}
       value=""
       onchange={(event) => {
@@ -341,7 +394,7 @@
             {#if describes('behaviour')}<div><div class="label">{t('resource.intendedUse')}</div><MarkdownEditor id="intended-use" bind:value={draft.intendedUse} label={t('resource.intendedUse')} maxlength={2000} /></div>{/if}
             {#if describes('pitfalls')}<div><div class="label">{t('resource.pitfalls')}</div><MarkdownEditor id="pitfalls" bind:value={draft.pitfalls} label={t('resource.pitfalls')} maxlength={2000} /></div>{/if}
           </div>
-          {#if describes('availableSince')}<div class="reliable"><Field label={t('resource.reliableSince')}><input type="date" bind:value={draft.reliableSince} /></Field></div>{/if}
+          {#if describes('availableSince')}<div class="reliable"><Field label={t('resource.reliableSince')}><input {...NO_PASSWORD_MANAGER} type="date" bind:value={draft.reliableSince} /></Field></div>{/if}
         </form>
       {:else}
         <Grid min="var(--tile-min)" tight>
@@ -361,7 +414,7 @@
       {/if}
     {:else if part === 'gaps'}
       {@render head(t('resource.gaps'), t('overview.gaps.lead'))}
-      <OverviewGaps gaps={card.knownGaps} fields={resource.fields} canEdit={describes('gaps')} onadd={gaps.add} onchange={gaps.change} onremove={gaps.remove} />
+      <OverviewGaps bind:adding={addingGap} gaps={card.knownGaps} fields={resource.fields} canEdit={describes('gaps')} onadd={gaps.add} onchange={gaps.change} onremove={gaps.remove} />
     {:else if part === 'querying'}
       {@render head(t('overview.querying'), t('overview.querying.lead'), 'querying')}
       {#if editing === 'querying'}
@@ -425,9 +478,9 @@
           <div class="entities" class:drawn={picture.rows.length > 0}>
             <div>
               {#each shownRelated as mapping (mapping.field)}
-                <div class="entity"><span class="code">{nounOf(mapping.identity)}</span>{t('resource.entity.on', { field: mapping.field })}</div>
+                <div class="entity"><span class="code">{mapping.identity}</span>{t('resource.entity.on', { field: mapping.field })}</div>
                 <p class="empty">
-                  {#if mapping.resources.length > 0}{t('resource.entity.joins', { names: list(mapping.resources.map((other) => other.displayName)) })}
+                  {#if mapping.resources.length > 0}{t('resource.entity.joins', { names: list(carriersOf(mapping)) })}
                   {:else}{t('resource.entity.alone')}{/if}
                   {#if !mapping.inDomainModel}{t('resource.entity.stranger')}{/if}
                 </p>
@@ -462,9 +515,9 @@
       <SubTile>
         {#if log}{#if log.length > 0}<LogList entries={log.slice(0, 20)} />{:else}<p class="empty">{t('resource.nothingYet')}</p>{/if}{:else}<Loading />{/if}
       </SubTile>
-    {:else if part === 'danger' && canDeprecate}
+    {:else if part === 'danger' && dangers}
       {@render head(t('overview.danger'), t('overview.danger.lead', { name: resource.displayName }))}
-      <OverviewDanger {resource} {others} {ondeprecate} {onundeprecate} />
+      <OverviewDanger {resource} {others} deprecates={canDeprecate} collection={removeFrom} later={removeLater} {ondeprecate} {onundeprecate} {onremove} />
     {/if}
   </div>
 </div>

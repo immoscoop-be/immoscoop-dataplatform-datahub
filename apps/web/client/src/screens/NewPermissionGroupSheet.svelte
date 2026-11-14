@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import Sheet from '@datahub/ui/containers/Sheet.svelte';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
@@ -51,8 +52,8 @@
 <Sheet title={t('groups.new')} {onclose}>
   {#snippet lead()}<span class="sign"><Icon name="shield-check-fill" /></span>{/snippet}
   <form id="new-permission-group" class="body" onsubmit={make}>
-    <Field label={t('groups.new.name')}><input type="text" bind:value={name} maxlength="60" required /></Field>
-    <Field label={t('groups.new.sentence')}><input type="text" bind:value={sentence} maxlength="200" /></Field>
+    <Field label={t('groups.new.name')}><input {...NO_PASSWORD_MANAGER} type="text" bind:value={name} maxlength="60" required /></Field>
+    <Field label={t('groups.new.sentence')}><input {...NO_PASSWORD_MANAGER} type="text" bind:value={sentence} maxlength="200" /></Field>
     <div class="label">{t('groups.new.from')}</div>
     <div class="options" role="radiogroup" aria-label={t('groups.new.from')}>
       {#each groups as group (group.id)}

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import { day } from '@datahub/ui/foundations/when.js';
@@ -8,6 +9,8 @@
   import type { Catalogue, Collection, ResourceDetail } from '../lib/catalogue.js';
   import type { LensSuggestions as Found } from '../lib/query.js';
   import LensSuggestions from './LensSuggestions.svelte';
+  import { command, useScreenCommands } from '../lib/commands.svelte.js';
+  import type { QuickRow } from '../lib/quick.js';
 
   /**
    * A new query (query-new, DEC-UX-22), in two halves. Left, the query: its name, required and suggested
@@ -24,6 +27,7 @@
     ondraft,
     onstart,
     lensesOn,
+    outside = false,
   }: {
     /** The Resource it starts on, from "Query" on its page (FR-SR-46). */
     initial: string | null;
@@ -34,6 +38,8 @@
     onstart: (fields: { name: string; question: string; resources: string[] }) => Promise<boolean>;
     /** The Lenses on these Resources, by the words of the question (FR-SR-47, FR-SR-48). */
     lensesOn: (resources: readonly string[], question: string) => Promise<Found>;
+    /** A power user may start from SQL, without Resources (FR-SR-56, DEC-UX-220). */
+    outside?: boolean;
   } = $props();
 
   /** How long typing the question pauses before the Lenses are looked up again. */
@@ -111,6 +117,23 @@
     failed = !(await onstart({ name: name.trim(), question: question.trim(), resources: chosen }));
     busy = false;
   }
+
+  /** A power user's query from SQL alone: the name they typed, or "SQL" with the date (FR-SR-56). */
+  async function startFromSql(): Promise<void> {
+    busy = true;
+    const own = named && name.trim() ? name.trim() : t('query.name.suggested', { names: 'SQL', date: day(new Date(), currentLanguage()) });
+    failed = !(await onstart({ name: own, question: question.trim(), resources: [] }));
+    busy = false;
+  }
+
+  // In the quick window: a Resource to read, starting from SQL for a power user, and starting the query (DEC-UX-240).
+  useScreenCommands(() => {
+    const rows: QuickRow[] = [];
+    if (!picking) rows.push(command('new-query:add', 'plus', t('query.resources.add'), () => (picking = true), { meta: t('quick.newQuery.add.meta'), words: t('quick.query.resource.words') }));
+    if (outside) rows.push(command('new-query:sql', 'code', t('quick.newQuery.sql'), () => void startFromSql(), { meta: t('query.fromSql.about'), words: t('quick.newQuery.sql.words'), ...(busy ? { why: t('quick.newQuery.busy') } : {}) }));
+    rows.push(command('new-query:start', 'play-fill', t('query.startOwn'), () => void start(), { meta: t('quick.newQuery.start.meta'), words: t('quick.newQuery.start.words'), ...(busy || !name.trim() || chosen.length === 0 ? { why: t('quick.newQuery.start.why') } : {}) }));
+    return { group: t('quick.group.newQuery'), rows };
+  });
 </script>
 
 <header class="head">
@@ -122,10 +145,10 @@
   <section class="card own" aria-label={t('query.yourQuery')}>
     <h2>{t('query.yourQuery')}</h2>
     <Field label={t('query.name')} hint={named ? undefined : t('query.name.hint')}>
-      <input type="text" bind:value={() => name, (value) => ((name = value), (named = true))} maxlength="120" required />
+      <input {...NO_PASSWORD_MANAGER} type="text" bind:value={() => name, (value) => ((name = value), (named = true))} maxlength="120" required />
     </Field>
     <Field label={t('query.question')} hint={t('query.question.hint')}>
-      <textarea bind:value={question} rows="3" maxlength="500"></textarea>
+      <textarea {...NO_PASSWORD_MANAGER} bind:value={question} rows="3" maxlength="500"></textarea>
     </Field>
     <div class="label">{t('query.resources')}</div>
     <ul class="resources">
@@ -147,7 +170,7 @@
         {#if picking}
           <div class="picker">
             <!-- svelte-ignore a11y_autofocus -->
-            <input type="search" bind:value={search} placeholder={t('query.resources.search')} aria-label={t('query.resources.search')} autofocus onkeydown={(event) => event.key === 'Escape' && (picking = false)} />
+            <input {...NO_PASSWORD_MANAGER} type="search" bind:value={search} placeholder={t('query.resources.search')} aria-label={t('query.resources.search')} autofocus onkeydown={(event) => event.key === 'Escape' && (picking = false)} />
             <ul class="found">
               {#each found as choice (choice.id)}
                 <li><button type="button" onclick={() => add(choice.id)}><span class="name">{choice.displayName}</span><span class="meta">{choice.collection}</span><MaturityIcon level={choice.level} small /></button></li>
@@ -162,6 +185,14 @@
       </li>
     </ul>
     <p class="meta hint">{t('query.resources.hint')}</p>
+    {#if outside}
+      <!-- A power user also reads tables outside Data Hub, so may start from SQL alone (DEC-UX-220). -->
+      <p class="meta hint sql"
+        ><Icon name="code" /><span
+          ><button type="button" class="text-link" disabled={busy} onclick={startFromSql}>{t('query.fromSql')}</button>{t('query.fromSql.about')}</span
+        ></p
+      >
+    {/if}
   </section>
 
   <section class="card lenses" aria-label={t('query.lenses.title')}>
@@ -204,6 +235,10 @@
   .found .name { flex: 1; }
   .found .none { padding: 7px 8px; }
   .hint { margin: 12px 0 0; line-height: 1.5; }
+  .hint.sql { display: flex; gap: 6px; align-items: flex-start; }
+  .hint.sql :global(svg) { flex: none; margin-top: 3px; }
+  .text-link { all: unset; cursor: pointer; color: var(--text-primary); text-decoration: underline; text-underline-offset: 3px; }
+  .text-link:focus-visible { outline: 2px solid var(--text-secondary); }
   .intro { margin: -4px 0 16px; line-height: 1.5; }
   .none { margin: 0; padding: 14px 16px; border-radius: var(--radius-md); background: var(--surface-sub); font-size: var(--text-small); color: var(--text-secondary); }
   .foot { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 14px; flex-wrap: wrap; }

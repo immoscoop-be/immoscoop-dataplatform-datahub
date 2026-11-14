@@ -1,4 +1,5 @@
 <script lang="ts" generics="K extends string">
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import type { IconName } from '@datahub/ui/foundations/icons.js';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
@@ -68,7 +69,8 @@
       {#if kinds && kind !== undefined}<Segmented options={kinds} bind:value={kind} label={label ?? ''} />{/if}
     </div>
   {/if}
-  <textarea
+  <textarea {...NO_PASSWORD_MANAGER}
+    data-autofocus={autofocus || undefined}
     bind:this={field}
     bind:value={text}
     {placeholder}

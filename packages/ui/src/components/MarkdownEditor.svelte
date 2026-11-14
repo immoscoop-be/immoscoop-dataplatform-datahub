@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '../foundations/fields.js';
   import { tick } from 'svelte';
   import type { IconName } from '../foundations/icons.js';
   import { t } from '../foundations/texts.svelte.js';
@@ -93,7 +94,7 @@
     />
   </div>
   {#if view === 'write'}
-    <textarea {id} bind:this={area} bind:value rows="9" {maxlength} aria-label={label} spellcheck="true"></textarea>
+    <textarea {...NO_PASSWORD_MANAGER} {id} bind:this={area} bind:value rows="9" {maxlength} aria-label={label} spellcheck="true"></textarea>
   {:else}
     <div class="preview">
       {#if value.trim()}<MarkdownText source={value} />{:else}<p class="empty">{t('markdown.nothing')}</p>{/if}

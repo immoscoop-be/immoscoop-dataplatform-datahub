@@ -50,6 +50,10 @@ export const VIEW_PAGE = String.raw`<!doctype html>
   --signal-warn: #D9A453;
   --signal-urgent: #E2725E;
 }
+/* The theme the page is in, told to the browser too: a frame whose scheme differs from Claude's is painted white
+   behind the page, and shows in the rounded corners of the card in dark mode. */
+:root { color-scheme: light; }
+[data-theme="dark"] { color-scheme: dark; }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html, body { margin: 0; background: transparent; }
@@ -295,7 +299,7 @@ function approvePanel(reads, request, preflight) {
 function requestPanel(reads, request, preflight) {
   if (request?.state === 'waiting') return '<div class="tile">Waiting for the Data Team since ' + esc(day(request.sentAt || request.createdAt)) + '. Their answer comes in your Message Centre.</div>';
   return '<div class="tile"><b>Very large: one run reads ' + esc(reads) + ', more than ' + esc(largeOf(preflight)) + '.</b><p class="meta" style="margin:4px 0 10px">Someone of the Data Team accepts it first; you send the Request yourself, Claude does not. Their answer comes in your Message Centre.</p>' +
-    '<label class="meta">A word for the Data Team (optional)<textarea id="word" rows="2"></textarea></label><button class="primary" data-act="request" style="margin-top:8px">Send to the Data Team</button></div>';
+    '<label class="meta">A word for the Data Team (optional)<textarea id="word" rows="2" data-1p-ignore data-lpignore="true" data-bwignore data-form-type="other"></textarea></label><button class="primary" data-act="request" style="margin-top:8px">Send to the Data Team</button></div>';
 }
 
 function renderResource(r, parts) {
@@ -327,7 +331,7 @@ function renderPreview(v) {
     const chosen = v.values?.[c.field] ?? '';
     const input = Array.isArray(c.values)
       ? '<select data-choice="' + esc(c.field) + '"><option value="">All</option>' + c.values.map((value) => '<option' + (value === chosen ? ' selected' : '') + '>' + esc(value) + '</option>').join('') + '</select>'
-      : '<input data-choice="' + esc(c.field) + '" value="' + esc(chosen) + '" size="10">';
+      : '<input data-choice="' + esc(c.field) + '" value="' + esc(chosen) + '" size="10" data-1p-ignore data-lpignore="true" data-bwignore data-form-type="other">';
     return '<label>' + esc(c.field) + ' ' + input + '</label>';
   }).join('');
   const pf = v.preflight ? '<span class="preflight">' + (v.outcome === 'ran' ? 'Scanned ' : 'Reads ') + esc(v.reads ?? '?') + (v.preflight.partitions !== null && v.preflight.partitions !== undefined ? ' · ' + esc(v.preflight.partitions) + ' partitions' : '') + '</span>' : '';

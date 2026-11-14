@@ -5,6 +5,7 @@
   import type { IconName } from '@datahub/ui/foundations/icons.js';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
   import Loading from '@datahub/ui/primitives/Loading.svelte';
+  import { command, useScreenCommands } from '../lib/commands.svelte.js';
   import { type Counts, type Filter, type FilterKind, type FilterOn, type View, VIEW_TEXTS } from '../lib/messages.js';
 
   /**
@@ -47,6 +48,16 @@
     { kind: 'request', icon: 'seal-question', name: 'Requests' },
     { kind: 'dataHub', icon: 'bell-simple' },
   ];
+  // In the quick window: each other view, with how many it holds, as a click on it in the panel (DEC-UX-255).
+  useScreenCommands(() => ({
+    group: 'Messages',
+    rows: VIEWS.filter((item) => item.view !== filter.view).map((item) =>
+      command(`messages:view:${item.view}`, item.icon, t('quick.messages.view', { name: t(VIEW_TEXTS[item.view].name) }), () => onfilter({ ...filter, view: item.view }), {
+        ...(item.count && counts ? { meta: String(counts[item.count]) } : {}),
+        words: t('quick.messages.view.words'),
+      }),
+    ),
+  }));
   const OBJECTS: readonly { on: FilterOn; icon: IconName; name?: string }[] = [
     { on: 'collection', icon: 'stack', name: 'Collections' },
     { on: 'resource', icon: 'table', name: 'Resources' },
