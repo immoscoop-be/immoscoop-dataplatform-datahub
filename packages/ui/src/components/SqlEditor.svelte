@@ -62,6 +62,12 @@
     | { kind: 'table'; table: TableSuggestion; at: At }
     | { kind: 'field'; name: string; at: At };
 
+  /** The word the cursor is on that a double-click explains, by its kind and the name it is shown by (DEC-UX-238). */
+  export interface AtCursor {
+    kind: Explained['kind'];
+    name: string;
+  }
+
   /** Whether a table as written in the SQL is this one: in full, or as `dataset.table` (Keys are in lower case, BigQuery reads names in any). */
   export function writtenAs(written: string, table: Pick<TableSuggestion, 'fullName'>): boolean {
     const name = written.replace(/`/g, '').toLowerCase();
@@ -128,6 +134,7 @@
     onnewtable,
     onothertable,
     onexplain,
+    oncursor,
     label,
     readonly = false,
     nonce,
@@ -148,6 +155,8 @@
     onothertable?: (table: TableSuggestion) => void;
     /** A double-click on a word the editor explains: a Parameter, a Resource or a field (DEC-UX-221). */
     onexplain?: (explained: Explained) => void;
+    /** The cursor came on, or left, a word a double-click explains: for "Show info" in the quick window (DEC-UX-238). */
+    oncursor?: (word: AtCursor | null) => void;
     label: string;
     readonly?: boolean;
     /** The nonce of the page: CodeMirror adds its own styles, which the Content Security Policy allows by it. */
@@ -156,6 +165,8 @@
 
   let host: HTMLDivElement;
   let view: EditorView | undefined;
+  /** The word under the cursor last told, to tell only a change. */
+  let cursorKey = '';
 
   /** BigQuery as a dialect of SQL: its keywords, functions and types, backtick names, double-quoted strings, `#` comments and `@` Parameters. */
   const BIGQUERY = SQLDialect.define({
@@ -403,6 +414,31 @@
     return { from: word?.from ?? context.pos, options: [...options, ...templates], validFor: /^\w*$/ };
   }
 
+  /** The word a double-click explains that the cursor is on, or at the end of. */
+  function itemAtCursor(editorView: EditorView): Item | undefined {
+    const { head } = editorView.state.selection.main;
+    return editorView.plugin(explained)?.items.find((candidate) => candidate.from <= head && head <= candidate.to);
+  }
+
+  /** Opens what a word names beside it, as a double-click does (DEC-UX-221): its place on screen, or else the editor's. */
+  function explain(editorView: EditorView, item: Item, fallback?: At): void {
+    if (!onexplain) return;
+    const start = editorView.coordsAtPos(item.from, 1);
+    const end = editorView.coordsAtPos(item.to, -1);
+    const box = editorView.dom.getBoundingClientRect();
+    const where: At = start && end ? { left: start.left, right: end.right, top: start.top, bottom: start.bottom } : (fallback ?? { left: box.left, right: box.left, top: box.top, bottom: box.top });
+    if (item.kind === 'table') onexplain({ kind: 'table', table: item.table, at: where });
+    else onexplain({ kind: item.kind, name: item.name, at: where });
+  }
+
+  /** "Show info" in the quick window: opens what the word at the cursor names, as a double-click on it does (DEC-UX-238). */
+  export function explainAtCursor(): boolean {
+    const item = view && itemAtCursor(view);
+    if (!view || !item || !onexplain) return false;
+    explain(view, item);
+    return true;
+  }
+
   /** Writes the SQL in the house layout of the Data Team (DEC-UX-228); SQL it cannot read stays as it is. */
   export function formatSql(): boolean {
     if (!view || readonly) return false;
@@ -498,16 +534,22 @@
               const at = editorView.posAtCoords({ x: event.clientX, y: event.clientY });
               const item = at === null ? undefined : editorView.plugin(explained)?.items.find((candidate) => candidate.from <= at && at <= candidate.to);
               if (!item || !onexplain) return false;
-              const start = editorView.coordsAtPos(item.from, 1);
-              const end = editorView.coordsAtPos(item.to, -1);
-              const where: At = start && end ? { left: start.left, right: end.right, top: start.top, bottom: start.bottom } : { left: event.clientX, right: event.clientX, top: event.clientY, bottom: event.clientY };
-              if (item.kind === 'table') onexplain({ kind: 'table', table: item.table, at: where });
-              else onexplain({ kind: item.kind, name: item.name, at: where });
+              explain(editorView, item, { left: event.clientX, right: event.clientX, top: event.clientY, bottom: event.clientY });
               return false;
             },
           }),
           EditorView.updateListener.of((update) => {
             if (update.docChanged) value = update.state.doc.toString();
+            // The word under the cursor, told only when it changes (DEC-UX-238).
+            if (oncursor) {
+              const item = itemAtCursor(update.view);
+              const word: AtCursor | null = item ? { kind: item.kind, name: item.kind === 'table' ? item.table.name : item.name } : null;
+              const key = word ? `${word.kind}:${word.name}:${item?.from}` : '';
+              if (key !== cursorKey) {
+                cursorKey = key;
+                oncursor(word);
+              }
+            }
           }),
         ],
       }),

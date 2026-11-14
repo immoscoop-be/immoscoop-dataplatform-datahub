@@ -8,6 +8,8 @@
   import { type Card, type ChartRequest, type Depth, LEVELS, nextStep, SECTIONS, type Step, stepsOf, type Topic } from '../lib/learning.js';
   import LearningNext from './LearningNext.svelte';
   import LearningSteps from './LearningSteps.svelte';
+  import { command, place, useScreenCommands } from '../lib/commands.svelte.js';
+  import type { QuickRow } from '../lib/quick.js';
 
   /**
    * The page of a Learning Card in five steps (FR-LR-27, DEC-LR-10): the way to it, its number and title, "I
@@ -66,6 +68,21 @@
     onunderstand(true);
     go('can');
   }
+
+  // In the quick window: understood or not, the next step and every other, quick or full, and its Messages (DEC-UX-240).
+  const STEP_NAMES = { why: 'learning.step.why', core: 'learning.step.core', see: 'learning.step.see', check: 'learning.step.check', can: 'learning.step.can' } as const;
+  useScreenCommands((goTo) => {
+    const rows: QuickRow[] = [];
+    rows.push(understood ? command('card:understood', 'check-circle-fill', t('quick.card.undo'), () => onunderstand(false), { words: t('quick.card.words') }) : command('card:understood', 'check-circle-fill', t('learning.understand'), understand, { words: t('quick.card.words') }));
+    if (next) {
+      const to = next;
+      rows.push(command('card:next', 'arrow-right', t('quick.card.next', { name: t(STEP_NAMES[to]) }), () => go(to), { words: t('quick.card.step.words') }));
+    }
+    for (const one of steps) if (one !== step && one !== next) rows.push(command(`card:step:${one}`, 'list-numbers', t('quick.card.step', { name: t(STEP_NAMES[one]) }), () => go(one), { words: t('quick.card.step.words') }));
+    rows.push(depth === 'full' ? command('card:depth', 'arrows-in-line-vertical', t('quick.card.quick'), () => (depth = 'quick'), { meta: t('learning.depth.quick.about'), words: t('quick.card.depth.words') }) : command('card:depth', 'arrows-out-simple', t('quick.card.full'), () => (depth = 'full'), { meta: t('learning.depth.full.about'), words: t('quick.card.depth.words') }));
+    rows.push(place('card:messages', 'chat-circle-text', 'Messages', () => goTo(messages.href), { meta: t('quick.messages.meta', { count: messages.count ?? 0 }), words: t('quick.messages.words') }));
+    return { group: t('quick.group.card'), where: `${topic.number} ${topic.title[language]}`, rows };
+  });
 </script>
 
 <div class="flow" bind:this={top}>

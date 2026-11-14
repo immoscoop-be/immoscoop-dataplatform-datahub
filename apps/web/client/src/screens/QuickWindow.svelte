@@ -2,14 +2,17 @@
   import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
-  import { firstActive, type QuickGroup, type QuickRow, rowsFor, stepFrom } from '../lib/quick.js';
+  import { modLabel, withMod } from '../lib/flags.js';
+  import { firstActive, picksOf, type QuickGroup, type QuickRow, rowsFor, stepFrom } from '../lib/quick.js';
 
   /**
    * The quick window (DEC-UX-237): Cmd+Shift+P or Cmd+K anywhere in Data Hub. It floats over the upper part of the
    * window, the page lightly dimmed. On top the search, with where it opened on its right. Empty, it lists the commands
    * of the screen, the flagged queries and Go to; typed, it searches those and everything the User may see, grouped by
    * kind, four at most a kind (OP-UX-88). Up and Down move, Enter does the row, Escape or a click beside it closes it.
-   * What cannot be done right now is greyed, with why under it, and Enter never does it (DEC-UX-207).
+   * What cannot be done right now is greyed, with why under it, and Enter never does it (DEC-UX-207). Empty, what the
+   * User did from it in this session comes first; Cmd+1 to Cmd+9 (Ctrl elsewhere) highlight the first nine rows that can
+   * be done, each marked with its key, and Enter does the one highlighted (DEC-UX-242).
    */
   let {
     where,
@@ -17,6 +20,9 @@
     rows,
     findQueries,
     onclose,
+    recent = [],
+    onused,
+    mac = false,
   }: {
     /** Where it opened, such as "Query · Leads per source name". */
     where: string | null;
@@ -27,9 +33,16 @@
     /** The User's own queries matching words, read from query as they type. */
     findQueries?: (words: string) => Promise<QuickRow[]>;
     onclose: () => void;
+    /** The keys of what the User did from the window in this session, most recent first (DEC-UX-242). */
+    recent?: readonly string[];
+    /** A row was done: it comes first next time. */
+    onused?: (key: string) => void;
+    /** Cmd on a Mac, Ctrl elsewhere, as the keys of the rows are written. */
+    mac?: boolean;
   } = $props();
 
   const GROUPS: Record<Exclude<QuickGroup, 'screen'>, string> = {
+    recent: 'quick.group.recent',
     commands: 'quick.group.commands',
     flagged: 'quick.group.flagged',
     resources: 'quick.group.resources',
@@ -45,7 +58,8 @@
   let input = $state<HTMLInputElement | undefined>();
   /** The queries found for the words typed last, once query answered. */
   let queries = $state<{ words: string; rows: QuickRow[] } | null>(null);
-  const shown = $derived(rowsFor([...rows, ...(queries && queries.words === typed.trim() ? queries.rows : [])], typed));
+  const shown = $derived(rowsFor([...rows, ...(queries && queries.words === typed.trim() ? queries.rows : [])], typed, recent));
+  const picks = $derived(picksOf(shown));
   let on = $state(-1);
   $effect(() => {
     on = firstActive(shown);
@@ -71,14 +85,26 @@
 
   function run(row: QuickRow | undefined): void {
     if (!row || row.why) return;
+    onused?.(row.key);
     onclose();
     row.run();
   }
   function keydown(event: KeyboardEvent): void {
+    // Cmd+1 to Cmd+9 highlight that row, by where the key is; Enter does it (DEC-UX-242).
+    const pick = /^Digit([1-9])$/.exec(event.code)?.[1];
+    if (pick && withMod(event, mac) && !event.shiftKey && !event.altKey) {
+      event.preventDefault();
+      const at = picks.indexOf(Number(pick));
+      if (at >= 0) {
+        on = at;
+        document.getElementById(`quick-row-${on}`)?.scrollIntoView?.({ block: 'nearest' });
+      }
+      return;
+    }
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault();
       on = stepFrom(shown, on, event.key === 'ArrowDown' ? 1 : -1);
-      document.getElementById(`quick-row-${on}`)?.scrollIntoView({ block: 'nearest' });
+      document.getElementById(`quick-row-${on}`)?.scrollIntoView?.({ block: 'nearest' });
     } else if (event.key === 'Enter') {
       event.preventDefault();
       run(active);
@@ -131,6 +157,7 @@
         <span class="meta">{row.meta ?? ''}</span>
         {#if row.keys}<span class="kbd">{row.keys}</span>{/if}
         <span class="kind">{row.kind}</span>
+        {#if picks[at]}<span class="pick">{modLabel(mac)}{picks[at]}</span>{/if}
       </div>
       {#if row.why}<div class="why">{row.why}</div>{/if}
     {:else}
@@ -163,6 +190,7 @@
   .meta { color: var(--text-muted); font-size: var(--text-small); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
   .kind { color: var(--text-muted); font-size: var(--text-small); white-space: nowrap; flex: none; }
   .kbd { font-size: var(--text-meta); font-weight: var(--weight-medium); color: var(--text-muted); background: var(--tint-hover); border-radius: var(--radius-mark); padding: 1px 5px; white-space: nowrap; flex: none; }
+  .pick { font-size: var(--text-meta); font-weight: var(--weight-medium); color: var(--text-muted); min-width: 34px; text-align: right; white-space: nowrap; flex: none; }
   .why { font-size: var(--text-small); color: var(--text-muted); padding: 0 12px 6px 44px; }
   .none { padding: 22px 12px; margin: 0; color: var(--text-muted); text-align: center; }
   .foot { display: flex; align-items: center; gap: 10px; padding: 9px 14px 9px 20px; border-top: 1px solid var(--tint-active); font-size: var(--text-small); color: var(--text-secondary); }

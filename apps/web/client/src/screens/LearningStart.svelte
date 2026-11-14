@@ -23,6 +23,8 @@
     TOPICS,
   } from '../lib/learning.js';
   import { learningPath } from '../lib/routes.js';
+  import { command, place, useScreenCommands } from '../lib/commands.svelte.js';
+  import type { QuickRow } from '../lib/quick.js';
 
   /**
    * The start screen of the Learning Centre (learning-start): the intro, until the User dismisses it; the card to
@@ -69,6 +71,24 @@
   const kindIcon = (topic: Topic): IconName => (topic.level === 'compass' ? 'compass' : topic.level === 'reading' ? 'chart-line' : 'book-open-text');
   const facts = (...parts: (string | false | null | undefined)[]) => parts.filter(Boolean).join(' · ');
   const thinking = (topic: Topic) => (topic.thinking ? t(THINKING_TEXTS[topic.thinking]) : null);
+
+  // In the quick window: where they left off, the start of the Compass, each path and the intro (DEC-UX-240).
+  useScreenCommands((go) => {
+    const rows: QuickRow[] = [];
+    if (lastTopic) {
+      const topic = lastTopic;
+      rows.push(place('learning:continue', 'arrow-right', t('quick.learning.continue'), () => go(learningPath(topic.number)), { meta: `${topic.number} ${topic.title[language]}`, words: t('quick.learning.continue.words') }));
+    }
+    if (firstCompass) {
+      const topic = firstCompass;
+      rows.push(place('learning:compass', 'compass', t('learning.intro.start'), () => go(learningPath(topic.number)), { meta: `${topic.number} ${topic.title[language]}`, words: t('quick.learning.compass.words') }));
+    }
+    for (const level of LEVELS.filter((one) => one.id !== 'reading')) {
+      rows.push(command(`learning:level:${level.id}`, level.icon as IconName, t('quick.learning.level', { name: level.name }), () => onlevel(level.id), { meta: level.step[language], words: t('quick.learning.level.words') }));
+    }
+    rows.push(intro ? command('learning:intro', 'info-fill', t('quick.intro.hide'), ondismiss, { words: t('quick.intro.words') }) : command('learning:intro', 'info-fill', t('learning.intro.show'), onshow, { words: t('quick.intro.words') }));
+    return { group: t('quick.group.learning'), rows };
+  });
 </script>
 
 {#snippet cardTile(topic: Topic, meta: string)}

@@ -23,7 +23,8 @@
   import { createQuery, type DeletedLens, type Lens, LensDeleted, type LensItem, type Run } from './lib/query.js';
   import { createRegistry } from './lib/registry.js';
   import { digitOf, flag, markOf, modLabel, MOST_FLAGGED, moveFlag, onMac, placeOf, type QueryStatus, unflag, withMod } from './lib/flags.js';
-  import type { QuickRow } from './lib/quick.js';
+  import { type QuickRow, used } from './lib/quick.js';
+  import { provideScreenCommands } from './lib/commands.svelte.js';
   import { collectionPath, GROUPS, learningPath, lensPath, messagesOnPath, myPagePath, NEW_COLLECTION, NEW_QUERY, objectPath, queryPath, resourcePath, route } from './lib/routes.js';
   import { Router } from './lib/router.svelte.js';
   import { can, mayQuery, NO_PERMISSIONS, PERMISSION_KEYS, PERMISSION_TEXTS, reach, sees } from './lib/permissions.js';
@@ -686,6 +687,8 @@
   let unseen = $state<Record<string, boolean>>({});
   /** What each open query offers in the quick window (DEC-UX-237). */
   let queryCommands = $state<Record<string, QuickRow[]>>({});
+  /** What every other screen can do now, as it tells it (DEC-UX-240). */
+  const screenCommands = provideScreenCommands((path) => router.go(path));
   /**
    * The flagged queries opened since this browser tab loaded: each stays as the User left it while they work in another,
    * its result, its tab and a run still going, until the tab closes or reloads (OP-UX-85).
@@ -698,8 +701,14 @@
     if (flagged.includes(id) && !kept.includes(id)) kept = [...kept, id];
     if (unseen[id]) unseen = { ...unseen, [id]: false };
   });
-  /** The query pages that live: those kept and still flagged, and the one open. */
-  const alive = $derived([...kept.filter((id) => flagged.includes(id)), ...(openId && !kept.includes(openId) ? [openId] : [])]);
+  /**
+   * The query pages that live: those kept and still flagged, and the one open, always, also when it was just unflagged:
+   * unflagging takes it off the row on top, never off the screen (DEC-UX-236).
+   */
+  const alive = $derived.by(() => {
+    const live = kept.filter((id) => flagged.includes(id));
+    return openId && !live.includes(openId) ? [...live, openId] : live;
+  });
   function statusOf(id: string, now: QueryStatus): void {
     const before = queryStatus[id];
     queryStatus = { ...queryStatus, [id]: now };
@@ -730,6 +739,8 @@
 
   /** The quick window, Cmd+Shift+P or Cmd+K anywhere in Data Hub (DEC-UX-237, OP-UX-87). */
   let quickOpen = $state(false);
+  /** What the User did from the quick window in this session, most recent first (DEC-UX-242). */
+  let quickUsed = $state<string[]>([]);
   $effect(() => {
     if (status.kind !== 'signedIn') return;
     const keys = (event: KeyboardEvent) => {
@@ -741,6 +752,8 @@
         quickOpen = !quickOpen;
         return;
       }
+      // While the quick window is open, Cmd+1 to Cmd+9 are its own: they highlight a row there (DEC-UX-242).
+      if (quickOpen) return;
       // By where the key is, so that a keyboard that needs Shift for its digits, such as AZERTY, works too.
       const digit = /^Digit([0-9])$/.exec(event.code)?.[1] ?? (/^[0-9]$/.test(event.key) ? event.key : undefined);
       if (!event.shiftKey && digit !== undefined && inQuery) {
@@ -758,20 +771,34 @@
   });
   /** Where the quick window opened, which its commands belong to. */
   const quickWhere = $derived(
-    page.kind === 'query' ? (queryName?.id === page.id ? `Query · ${queryName.name}` : 'Query') : section ? sectionLabel(section) : page.kind === 'me' ? 'My page' : page.kind === 'groups' ? 'Groups' : null,
+    page.kind === 'query'
+      ? queryName?.id === page.id
+        ? `Query · ${queryName.name}`
+        : 'Query'
+      : (screenCommands.where ?? (section ? sectionLabel(section) : page.kind === 'me' ? 'My page' : page.kind === 'groups' ? 'Groups' : null)),
   );
   /** Every row of the quick window: the commands of the screen and of Data Hub, the flagged queries, the places and what the User may see (OP-UX-88). */
   const quickRows: QuickRow[] = $derived.by(() => {
     if (status.kind !== 'signedIn') return [];
     const language = currentLanguage();
-    const rows: QuickRow[] = [...(page.kind === 'query' ? (queryCommands[page.id] ?? []) : [])];
+    const rows: QuickRow[] = [...(page.kind === 'query' ? (queryCommands[page.id] ?? []) : screenCommands.rows)];
     const command = t('quick.kind.command');
     if (mayQuery(permissions) && can(permissions, 'queries.make')) {
       rows.push({ key: 'new-query', group: 'commands', icon: 'plus-circle-fill', title: t('query.new'), kind: command, words: t('quick.new.words'), does: 'do', run: () => router.go(NEW_QUERY) });
     }
     rows.push({ key: 'theme', group: 'commands', icon: theme === 'dark' ? 'sun-fill' : 'moon-fill', title: t('quick.theme'), kind: command, words: t('quick.theme.words'), does: 'do', run: () => themeOnScreen.switch() });
+    // On a flagged query, the next and the previous one, round the row (DEC-UX-241).
+    const here = openId ? flagged.indexOf(openId) : -1;
+    if (here >= 0 && flagged.length > 1) {
+      const step = (by: 1 | -1) => (here + by + flagged.length) % flagged.length;
+      for (const [by, key, icon] of [[1, 'quick.flags.next', 'arrow-right'], [-1, 'quick.flags.previous', 'arrow-left']] as const) {
+        const at = step(by);
+        const id = flagged[at];
+        if (id) rows.push({ key: `flags:${by > 0 ? 'next' : 'previous'}`, group: 'flagged', icon, title: t(key), meta: `${flagNames[id] || '…'} · ${modLabel(mac)}${digitOf(at)}`, kind: command, words: t('quick.flags.words'), does: 'go', run: () => router.go(queryPath(id)) });
+      }
+    }
     flagged.forEach((id, at) =>
-      rows.push({ key: `flag:${id}`, group: 'flagged', icon: 'flag-fill', title: flagNames[id] || '…', keys: `${modLabel(mac)}${digitOf(at)}`, kind: t('quick.kind.query'), does: 'open', run: () => router.go(queryPath(id)) }),
+      rows.push({ key: `flag:${id}`, group: 'flagged', icon: 'flag-fill', title: flagNames[id] || '…', meta: `${modLabel(mac)}${digitOf(at)}`, kind: t('quick.kind.query'), does: 'open', run: () => router.go(queryPath(id)) }),
     );
     for (const collection of collections ?? []) {
       rows.push({ key: `collection:${collection.id}`, group: 'collections', icon: 'stack', title: collection.name, meta: t('quick.collection.meta', { count: collection.resources.filter((item) => !item.withdrawn).length }), kind: 'Collection', does: 'open', run: () => router.go(collectionPath(collection.id)) });
@@ -1230,6 +1257,7 @@
                   onflag={(on) => setFlagged(on ? flag(flagged, id) : unflag(flagged, id))}
                   onstatus={statusOf}
                   oncommands={(of, rows) => (queryCommands = { ...queryCommands, [of]: rows })}
+                  go={(path) => router.go(path)}
                   {mac}
                 />
               </div>
@@ -1317,7 +1345,7 @@
   </AppShell>
   {#if quickOpen}
     <!-- Cmd+Shift+P or Cmd+K, anywhere in Data Hub (DEC-UX-237). -->
-    <QuickWindow where={quickWhere} screenGroup={t('quick.group.query')} rows={quickRows} {findQueries} onclose={() => (quickOpen = false)} />
+    <QuickWindow where={quickWhere} screenGroup={page.kind === 'query' ? t('quick.group.query') : (screenCommands.group ?? t('quick.group.query'))} rows={quickRows} {findQueries} onclose={() => (quickOpen = false)} recent={quickUsed} onused={(key) => (quickUsed = used(quickUsed, key))} {mac} />
   {/if}
   <!-- What is dragged, and the line that says where it went (DEC-UX-157). -->
   <DragGhost item={dragging.item} />
@@ -1388,6 +1416,7 @@
     onunflag={(id) => setFlagged(unflag(flagged, id))}
     onmove={(from, to) => setFlagged(moveFlag(flagged, from, to))}
     onquick={() => (quickOpen = true)}
+    onflag={page.kind === 'query' && !flagged.includes(page.id) && flagged.length < MOST_FLAGGED ? () => openId && setFlagged(flag(flagged, openId)) : undefined}
   />
 {/snippet}
 

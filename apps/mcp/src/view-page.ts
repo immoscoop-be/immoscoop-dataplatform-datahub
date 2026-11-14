@@ -50,6 +50,10 @@ export const VIEW_PAGE = String.raw`<!doctype html>
   --signal-warn: #D9A453;
   --signal-urgent: #E2725E;
 }
+/* The theme the page is in, told to the browser too: a frame whose scheme differs from Claude's is painted white
+   behind the page, and shows in the rounded corners of the card in dark mode. */
+:root { color-scheme: light; }
+[data-theme="dark"] { color-scheme: dark; }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html, body { margin: 0; background: transparent; }
