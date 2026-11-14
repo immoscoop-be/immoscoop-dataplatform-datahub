@@ -49,7 +49,7 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | [MSG-RES-03](#msg-res-03) | The schema changed since the last Confirmation | Resource | Data Hub → Owner | Something to do | Named: 4.3.2 | Implemented |
 | [MSG-RES-04](#msg-res-04) | The logic changed | Resource | Data Hub → Owner | Nothing | Proposed: 4.3.1 | Implemented |
 | [MSG-RES-05](#msg-res-05) | The Level dropped | Resource | Data Hub → Owner | Something to do | Named: K5.2 | Implemented |
-| [MSG-RES-06](#msg-res-06) | A Resource was withdrawn | Resource | Data Hub → Owner | Nothing | Named: K5.1 | Implemented |
+| [MSG-RES-06](#msg-res-06) | A Resource was withdrawn | Resource | Data Hub → Owner | Nothing | Named: K5.11 | Implemented |
 | [MSG-RES-07](#msg-res-07) | The Owner tells the Consumers about a change | Resource | Owner → Consumers | Nothing | By the writer | Proposed |
 | [MSG-RES-08](#msg-res-08) | A Resource arrived in your Collection | Resource | Data Hub → Owner | Something to do | Named: 4.7.1 | Implemented |
 | [MSG-LEN-01](#msg-len-01) | Request to accept a very large Lens | Lens | User → Data Team | A decision | By the writer | Implemented |
@@ -1777,7 +1777,7 @@ Template, English, laid out:
 | --- | --- | --- |
 | Open the resource · *Resource openen* | The page of the Resource | every recipient |
 
-**Learning Card:** Named: **K5.1 What a resource is**. An exposure makes a table a Resource, and so its absence withdraws it; confirmed on 2026-10-29 ([DEC-LR-29](16-learning.md#dec-lr-29)).
+**Learning Card:** Named: **K5.11 Deprecated or withdrawn**. The Message says a Resource was withdrawn: the card explains what withdrawn means, who still sees it, what happens to what reads it, and how it comes back ([DEC-LR-37](16-learning.md#dec-lr-37)).
 
 **Dutch, laid out**, with the example:
 

@@ -106,6 +106,8 @@ Text may only hold `**bold**` and `` `a name` ``: no links in running text, no t
   | `/collections` | Open Collections | The Collections with their Resources and Lenses: per Resource the descriptions, the grain, the model type, the Level, the Owner, the Known Gaps and the Messages; per Lens its page, where it runs with its Parameters |
   | `/query/new` | Open Query | A new query over the Resources the reader may see |
   | `/messages` | Open your Messages | The reader's Messages: Questions, Remarks, Signals and what Data Hub wrote itself |
+  | `/me` | Open My page | The reader's own page: their Permission group and what it allows, their Groups |
+  | `/me/keys` | Open your Excel keys | The reader's Excel keys, where each is used and when it was last used |
   | `/charts` | Open Charts | The charts of the Chart Server, each with what it answers and examples |
   | `/learning` | Open the Learning Centre | The Learning Centre, with every card |
 

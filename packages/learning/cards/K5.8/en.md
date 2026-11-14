@@ -20,10 +20,6 @@ Promise: when a Lens is the better answer, and when your own query is.
 
 Look for a **Lens** before you write a query: a Lens is a question a colleague already answered and keeps working, with Parameters you set yourself; your own query is for the question no Lens answers.
 
-## Like the menu of a restaurant
-
-When the dish you want is on the menu, you order it: the kitchen has made it a hundred times, and you only choose the side and how it is cooked. You ask for something off the menu only when nothing on it is what you want, and then what comes out is yours to judge.
-
 ## At Immoscoop
 
 Mia Peeters deleted the lens Leads per source name, with "Replaced by the lens Leads per source, week by week". Instead of writing its SQL again, the colleague opens the new Lens, sets the week as its Parameter, and has their Monday figure. When they later also need the leads per region, which no Lens shows, they start a new query on Weekly lead volume: Data Hub first shows the Lenses on that Resource, and only then the empty query.

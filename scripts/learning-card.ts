@@ -70,6 +70,7 @@ if (command === 'list') {
   const want = (number: string, place: string): void => void wantedBy.set(number, [...(wantedBy.get(number) ?? []), place]);
   const notInPlan = new Map<string, string[]>();
   for (const type of MESSAGE_CATALOGUE) {
+    if (type.status === 'Withdrawn') continue;
     const fit = type.learningCard;
     if (fit.fit === 'named') want(fit.card.number, type.id);
     if (fit.fit === 'proposed') want(fit.card.number, `${type.id} (proposed)`);
@@ -128,6 +129,7 @@ if (command === 'links' && target) {
   console.log(card ? 'In the web app' : 'In the web app, once it is written');
   const messages = MESSAGE_CATALOGUE.flatMap((type): { type: (typeof MESSAGE_CATALOGUE)[number]; fit: 'named' | 'proposed' | 'nearest'; why: string }[] => {
     const fit = type.learningCard;
+    if (type.status === 'Withdrawn') return [];
     if ((fit.fit === 'named' || fit.fit === 'proposed') && fit.card.number === number) return [{ type, fit: fit.fit, why: fit.why }];
     if (fit.fit === 'toWrite' && fit.nearest?.number === number) return [{ type, fit: 'nearest', why: `${fit.why} The card it asks for: ${fit.topic}.` }];
     return [];

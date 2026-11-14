@@ -14,7 +14,7 @@ The input of the card as the interview gave it: what the author said, what Claud
 
 **Asked:** Not asked: the author asked for the next card in the same way as K5.7, drafted by Claude to react to.
 
-**Answer:** Claude's suggestion, from the Message that names the card, "A Lens was deleted" (MSG-LEN-06), which tells who used it to look for another Lens or write their own query: "The lens I use every Monday was deleted. Do I have to write the SQL myself now?", from a colleague from marketing. To confirm by the author, and by the test reader.
+**Answer:** Claude's suggestion, from the Message that names the card, "A Lens was deleted" (MSG-LEN-06), which tells who used it to look for another Lens or write their own query: "The lens I use every Monday was deleted. Do I have to write the SQL myself now?", from a colleague from marketing. The author approved it; whether colleagues say it this way is for the test reader.
 
 **In the card:** Why now, the quote and the situation.
 
@@ -30,7 +30,7 @@ The input of the card as the interview gave it: what the author said, what Claud
 
 **Asked:** Not asked: drafted by Claude.
 
-**Answer:** Claude's suggestion: a Lens is a question a colleague already answered and keeps working, with Parameters you set yourself; your own query is for the question no Lens answers. It is the rule Data Hub follows itself: a new query shows the Lenses first (FR-SR-47), and Claude offers a Lens before it writes a query (DEC-CL-10). To confirm by the author.
+**Answer:** Claude's suggestion: a Lens is a question a colleague already answered and keeps working, with Parameters you set yourself; your own query is for the question no Lens answers. It is the rule Data Hub follows itself: a new query shows the Lenses first (FR-SR-47), and Claude offers a Lens before it writes a query (DEC-CL-10). The author approved the draft ("Great").
 
 **In the card:** Core idea, the rule.
 
@@ -38,9 +38,9 @@ The input of the card as the interview gave it: what the author said, what Claud
 
 **Asked:** Not asked: drafted by Claude.
 
-**Answer:** Claude's suggestion: the menu of a restaurant. Tested out loud: a dish on the menu is made many times and stands for the kitchen (a Lens kept working by its Owner Unit); you choose the side and how it is cooked (the Parameters); something off the menu is yours to judge (your own query). The card is partly about a screen, the new query that shows the Lenses first, so DEC-LR-36 would allow going without; the author decides.
+**Answer:** Claude's suggestion: the menu of a restaurant. Tested out loud: a dish on the menu is made many times and stands for the kitchen (a Lens kept working by its Owner Unit); you choose the side and how it is cooked (the Parameters); something off the menu is yours to judge (your own query). The author: "leave the analogy out, not much value here". The card is about what the reader meets on a screen, the new query that shows the Lenses first, so it goes without an anchor (DEC-LR-36).
 
-**In the card:** Core idea, "Like the menu of a restaurant".
+**In the card:** nothing: Core idea holds the rule and the example only.
 
 ## 5. Never again, ask first
 
@@ -76,11 +76,9 @@ The card has no See it: the third rung is a screen of Data Hub, not a chart. App
 
 ## Who brought what
 
-The author chose to have Claude draft the card, as for K5.7. Claude brought everything in it, from the rules of Data Hub and the Message that names the card: the quote, the situation, the rule, the anchor, the example, the three questions, the first question and the neighbours. It waits for the author's reactions, the fact check and the test reader.
+The author chose to have Claude draft the card, as for K5.7. Claude brought everything in it, from the rules of Data Hub and the Message that names the card: the quote, the situation, the rule, the example, the three questions, the first question and the neighbours. The author approved the draft without the anchor (DEC-LR-36). A "yes" to a suggestion weighs less than the author's own words, so the fact check and the test reader carry more weight here than usual.
 
 ## To do
 
-- [ ] The author reacts to the quote, the rule, the anchor (keep, or leave out under DEC-LR-36) and the first question
-- [ ] Translate into nl.md once the English is settled
 - [ ] Fact check: the example against MSG-LEN-06 and FR-SR-47, and whether every User may make a Lens of their own query
 - [ ] Follow-up cards on Lenses: making a Lens of your own query; K5.9 A Lens in Excel
