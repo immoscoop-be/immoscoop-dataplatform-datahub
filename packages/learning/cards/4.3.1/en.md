@@ -1,9 +1,9 @@
 ---
 number: 4.3.1
-status: draft
+status: reviewed
 minutes: 5
 added: 2026-10-29
-changed: 2026-10-29
+changed: 2026-11-14
 gain: You change a definition without losing the trust of whoever relies on it.
 ---
 
@@ -26,7 +26,7 @@ When football changed its offside rule, nobody doubted the scores: the change wa
 
 ## For example
 
-From 1 October a credit lead counts only after the visitor confirmed it. The Owner changes it in dbt, writes it in the description of the field, tells those who use the Resource, and the chart of the year shows a line at 1 October: "new definition".
+From 1 October a credit lead counts only after the visitor confirmed it. The Owner has the Data Team change it in dbt, writes it in the Business Description of the field, tells those who use the Resource, and the chart of the year shows a line at 1 October: "new definition".
 
 # See it
 
@@ -60,7 +60,7 @@ You see: about 160 fewer leads a week from the week the new definition started. 
 ## You find that the count of active offices includes offices without any listing. How do you change it?
 
 - [ ] Fix it in the dashboard that shows it
-- [x] Change the definition in dbt, announce the day it starts, and mark the break
+- [x] Have the definition changed in dbt, announce the day it starts, and mark the break
 - [ ] Wait until nobody uses the figure any more
 
 Why: a definition lives in one place. Changing it there and telling whoever relies on it keeps their trust; a quiet fix in one dashboard makes two truths.

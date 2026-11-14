@@ -1,9 +1,9 @@
 ---
 number: 2.3.6
-status: draft
+status: reviewed
 minutes: 6
 added: 2026-10-29
-changed: 2026-10-29
+changed: 2026-11-14
 gain: You see from the model type of a Resource what you may add up, and what never.
 ---
 
@@ -12,13 +12,13 @@ gain: You see from the model type of a Resource what you may add up, and what ne
 > We had 52,000 listings online every day last week, so 364,000 listings that week?
 > — A colleague, preparing a slide
 
-Some tables you may add up over days, others never. The difference is not in the numbers but in what one row means, and every Resource says it with its model type.
+Some tables you may add up over days, others never. The difference is not in the numbers but in what one row means, and a Resource says it with its model type, once the Data Admin chose one.
 
 Promise: the five model types, and what each means for counting.
 
 # Core idea
 
-The **model type** says what one row is, and with it what you may count: an `event` and a `fact` you add up, a `state` you count at a moment, a `dimension` describes others, and an `aggregate` you never add up again.
+The **model type** says what one row is, and with it what you may count: an `event` and a `fact` you add up, a `state` you count at a moment, a `dimension` describes others, and an `aggregate` holds counts made already, of which you add up the sums and never the unique counts.
 
 ## Like a shop
 
@@ -55,7 +55,7 @@ An `event` is one row per thing that happened, at a moment, and never changes af
 
 Look at: seven bars of about 52,000, one for each day.
 
-You see: mostly the same listings, counted again every day. Listings online is a state: the week has about 52,000 listings online, not seven times as many.
+You see: mostly the same listings, counted again every day. Listings online is a state: about 52,000 listings are online on any day of the week, not seven times as many.
 
 # Check your understanding
 
@@ -83,7 +83,7 @@ Try it: [Open Collections](/collections)
 - [ ] Its number of rows
 - [ ] The name of its dbt project
 
-Why: every Resource in a Collection names its model type, next to its grain, so that you know what you may count before you open it in Query.
+Why: a Resource whose model type the Data Admin chose shows it on its Overview, next to its grain, so that you know what you may count before you open it in Query.
 
 # You can now
 

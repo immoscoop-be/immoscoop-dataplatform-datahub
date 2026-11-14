@@ -7,8 +7,8 @@ The input of the card as the interview gave it: what the author said, what Claud
 | Card | K5.9 A Lens in Excel (Compass, section K5 Data Hub) |
 | Author | Max |
 | Interviewed | 2026-11-14, with the learning-card skill |
-| Fact check | To name |
-| Test reader | To name |
+| Fact check | Claude, an independent check against the requirements and the code on 2026-11-14, reviewed by Max |
+| Test reader | To name, in prod (DEC-LR-38) |
 
 ## 1. The reader's question
 
@@ -80,6 +80,7 @@ The author asked Claude to write out all the cards on the states of Data Hub, wi
 
 The author reviewed the cards together: "All good", and asked Claude to check the open facts itself. Checked by Claude in the code on 2026-11-14, at the author's request: My page lists every key with its columns Last used and Expires (the texts of the web app); a key signs in in the name of its User (the Excel key in docs/definitions.md), and a change of Permission group holds in Excel too (MSG-USR-01). The card says both.
 
-## To do
+The fact check, by an independent pass of Claude on 2026-11-14, read the card against the requirements, the Message Catalogue and the code. Nothing to change; it noted that a year is the default lifetime of a key, set per Permission group.
 
-- [ ] Fact check: the example against DEC-DH-79, DEC-CH-03 and MSG-KEY-01
+## To do
+- [ ] Test reader: a colleague outside data reads the card in prod and says in their own words what they learned (DEC-LR-38)

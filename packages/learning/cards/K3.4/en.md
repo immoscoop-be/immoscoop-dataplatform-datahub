@@ -1,9 +1,9 @@
 ---
 number: K3.4
-status: draft
+status: reviewed
 minutes: 4
 added: 2026-10-29
-changed: 2026-10-29
+changed: 2026-11-14
 gain: You know where to look up what a term means, and where to record a definition so that everyone counts the same.
 ---
 
@@ -73,11 +73,11 @@ Why: a definition recorded in one place is the same for everyone. Every copy dri
 
 Try it: [Open Collections](/collections)
 
-- [x] The one from dbt says how it is built; the business description what it means for the business
+- [x] The one from dbt is how the Data Team describes it in dbt; the business description says what it is in the words of the business, from its owner
 - [ ] They are always the same text
 - [ ] The business description replaces the one from dbt
 
-Why: both stand side by side on purpose: the description from dbt follows the definition, the business description explains it in the words of its owner.
+Why: both stand side by side on purpose, and neither replaces the other: the Data Team writes the one in dbt, the owner explains in the business description what it is.
 
 # You can now
 

@@ -1,9 +1,9 @@
 ---
 number: K5.2
-status: draft
+status: reviewed
 minutes: 4
 added: 2026-10-29
-changed: 2026-10-29
+changed: 2026-11-14
 gain: You know how far you may build on a Resource from its Level, and who to ask when it drops.
 ---
 
@@ -12,7 +12,7 @@ gain: You know how far you may build on a Resource from its Level, and who to as
 > The table says 2 · Described. Can I put it in my report for the management team?
 > — A colleague from marketing
 
-Every Resource in Data Hub carries a Level, from 0 to 5. It does not grade the data: it says how far the Resource has come, and who stands for it.
+Every Resource in Data Hub carries a Level, from 1 to 5. It does not grade the data: it says how far the Resource has come, and who stands for it.
 
 Promise: what each Level promises, who lifts a Resource to it, and why it drops.
 
@@ -26,7 +26,7 @@ A library marks which edition is checked and annotated. You may read every editi
 
 ## For example
 
-Weekly lead volume is 4 · Explored: the Data Team described it, the Credit team confirmed it and linked an EDA document. When its description goes missing in dbt, it drops to 1 · Available, and its Owner is told.
+Weekly lead volume is 3 · Confirmed: the Data Team described it and the credit team confirmed it. When its description goes missing in dbt, it drops to 1 · Available, and its Owner is told.
 
 # See it
 
@@ -44,8 +44,8 @@ Weekly lead volume is 4 · Explored: the Data Team described it, the Credit team
   "points": [
     { "category": "1 · Available", "sum": 12 },
     { "category": "2 · Described", "sum": 8 },
-    { "category": "3 · Confirmed", "sum": 5 },
-    { "category": "4 · Explored", "sum": 2 },
+    { "category": "3 · Confirmed", "sum": 7 },
+    { "category": "4 · Explored", "sum": 0 },
     { "category": "5 · Monitored", "sum": 0 }
   ]
 }

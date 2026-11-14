@@ -1,19 +1,19 @@
 ---
 number: K5.7
-status: draft
+status: reviewed
 minutes: 4
 added: 2026-11-14
 changed: 2026-11-14
 gain: Je weet wat een rode stip betekent, wie het herstelt, en dat het vaak vanzelf weer werkt.
-translatedFrom: cdfe4b3f8371
+translatedFrom: eaf72b0ab91e
 ---
 
 # Why now
 
-> Mijn rapport heeft vanochtend een rode stip. Heb ik iets kapotgemaakt?
+> De lens achter mijn wekelijkse cijfers heeft vanochtend een rode stip. Heb ik iets kapotgemaakt?
 > — Een collega van marketing, op een maandagochtend
 
-Vannacht verdween een kolom die het rapport leest uit de data, omdat ze in dbt een andere naam kreeg. Het rapport toonde geen foute cijfers: het stopte.
+Vannacht verdween een kolom die de Lens leest uit de data, omdat ze in dbt een andere naam kreeg. De Lens toonde geen foute cijfers: hij stopte.
 
 Promise: wat de rode stip betekent, wie het herstelt, en waarom het vaak vanzelf weer werkt.
 
@@ -23,17 +23,17 @@ Wat iets leest dat niet meer bestaat, is **Broken**: het stopt liever dan cijfer
 
 ## Bij Immoscoop
 
-Het Data Team geeft de kolom `lead_channel` van Weekly lead volume in dbt een andere naam. Na de volgende run is de Lens Leads per source name, die `lead_channel` leest, Broken: niemand kan hem nog laten draaien, hij draagt overal waar hij staat een rode stip, en de rapporten waar hij in zit, zijn ook Broken. Het credit-team, zijn Owner Unit, krijgt het bericht "De lens Leads per source name werkt niet meer", dat de kolom noemt die niet meer bestaat. Het team past de query van de Lens aan naar de nieuwe naam, en de rode stip verdwijnt. Was de kolom teruggekomen, dan had de Lens vanzelf weer gewerkt.
+Het Data Team geeft de kolom `lead_channel` van Weekly lead volume in dbt een andere naam. Na de volgende run is de Lens Leads per source name, die `lead_channel` leest, Broken: niemand kan hem nog laten draaien, en hij draagt overal waar hij staat een rode stip. Het credit-team, zijn Owner Unit, krijgt het bericht "De lens Leads per source name werkt niet meer", dat de kolom noemt die niet meer bestaat. Het team past de query van de Lens aan naar de nieuwe naam, en de rode stip verdwijnt. Was de kolom teruggekomen, dan had de Lens vanzelf weer gewerkt.
 
 # Check your understanding
 
-## Een rapport dat je gebruikt, heeft sinds vanochtend een rode stip. Wat is er gebeurd?
+## Een Lens die je gebruikt, heeft sinds vanochtend een rode stip. Wat is er gebeurd?
 
-- [ ] De cijfers erin kloppen nu niet meer
-- [ ] Jij hebt het kapotgemaakt door gisteren een filter te wijzigen
-- [x] Iets wat het leest, bestaat niet meer, dus het draait niet tot dat terug is of zijn query aangepast is
+- [ ] Zijn cijfers kloppen nu niet meer
+- [ ] Jij hebt hem kapotgemaakt door gisteren een Parameter te wijzigen
+- [x] Iets wat hij leest, bestaat niet meer, dus hij draait niet tot dat terug is of zijn query aangepast is
 
-Why: een rapport dat Broken is, toont helemaal geen cijfers in plaats van foute. Houd je de aanwijzer op de rode stip, dan zie je wat niet meer bestaat; niets wat jij aan het rapport deed, heeft het veroorzaakt.
+Why: een Lens die Broken is, toont helemaal geen cijfers in plaats van foute. Houd je de aanwijzer op de rode stip, dan zie je wat niet meer bestaat; niets wat jij aan de Lens deed, heeft het veroorzaakt.
 
 ## Het Data Team gaf een kolom die je eigen query leest een andere naam. Wat doet Data Hub?
 
@@ -51,13 +51,13 @@ Why: een kolom met een nieuwe naam is voor Data Hub een kolom die verdwenen is, 
 
 Why: de Owner Unit staat in voor de Lens, dus zij krijgt het bericht en past de query aan; komt wat ontbreekt terug, dan herstelt Data Hub niets, de Lens draait gewoon weer.
 
-## Eén Lens van een rapport met vijf is Broken. Wat met het rapport?
+## Een Resource die je eigen query leest, werd deze week ingetrokken. Wat zie je als je de query opent?
 
-- [ ] De andere vier Lenses tonen nog, zonder de kapotte
-- [x] Het rapport is Broken tot die Lens weer werkt, of tot zijn Owner de Lens eruit haalt
-- [ ] Het rapport houdt de laatste cijfers van die Lens
+- [ ] Zijn laatste resultaat, zoals voorheen
+- [ ] Data Hub koos er een andere Resource voor
+- [x] De query is Broken: Run staat uit, en hij zegt wat niet meer bestaat; hij werkt weer als de Resource terugkomt
 
-Why: een rapport lees je als geheel, dus een ontbrekend deel doet alles stoppen in plaats van een half verhaal te vertellen.
+Why: een query leest alleen zijn eigen Resources, dus als er een weg is, stopt hij in plaats van te antwoorden met de helft ervan. Jij past zijn SQL aan, of wacht tot wat ontbreekt terug is; Data Hub laat het je hoe dan ook weten met een bericht.
 
 # You can now
 

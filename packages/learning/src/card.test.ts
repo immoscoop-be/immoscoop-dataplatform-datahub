@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CardError, parseCard, versionOf } from './card.js';
+import { CardError, parseCard, shownIn, versionOf } from './card.js';
 
 const CARD = `---
 number: 1.2.2
@@ -135,5 +135,14 @@ describe('a Learning Card as a file (DEC-LR-24)', () => {
     expect(version).toMatch(/^[0-9a-f]{12}$/);
     expect(await versionOf(CARD.replace('status: draft', 'status: reviewed'))).toBe(version);
     expect(await versionOf(CARD.replace('Like a guest list', 'Like a list of guests'))).not.toBe(version);
+  });
+});
+
+describe('where a card shows (DEC-LR-25, DEC-LR-38)', () => {
+  it('shows a draft outside prod only, and a reviewed card everywhere', () => {
+    expect(shownIn('uat', { status: 'draft' })).toBe(true);
+    expect(shownIn('prod', { status: 'draft' })).toBe(false);
+    expect(shownIn('prod', { status: 'reviewed' })).toBe(true);
+    expect(shownIn(undefined, { status: 'draft' })).toBe(true);
   });
 });

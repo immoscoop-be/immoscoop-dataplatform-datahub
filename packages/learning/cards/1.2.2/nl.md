@@ -1,11 +1,11 @@
 ---
 number: 1.2.2
-status: draft
+status: reviewed
 minutes: 5
 added: 2026-10-29
-changed: 2026-10-29
+changed: 2026-11-14
 gain: Je beantwoordt "waarom tellen de weken niet op tot de maand?" zelf, in een minuut, in plaats van het aan het Data Team te vragen.
-translatedFrom: fa5fc8014626
+translatedFrom: 42a818b79e41
 ---
 
 # Why now
@@ -15,11 +15,11 @@ translatedFrom: fa5fc8014626
 
 Die vraag hoor je opnieuw, telkens een maand naast haar weken of dagen staat. Beide cijfers kloppen, en een dashboard dat de dagen voor je optelt, doet het fout zonder het te zeggen.
 
-Promise: waarom de weken van een unieke telling nooit optellen tot de maand.
+Promise: waarom je de weken van een unieke telling nooit optelt om de maand te krijgen.
 
 # Core idea
 
-Een **unieke telling** telt iedereen één keer per periode, dus de tellingen van kortere periodes tellen nooit op tot die van de langere.
+Een **unieke telling** telt iedereen één keer per periode, dus je telt de tellingen van kortere periodes nooit op om die van de langere te krijgen.
 
 ## Zoals een gastenlijst
 
@@ -51,7 +51,7 @@ Op maandag komen 4.000 mensen, op dinsdag 3.000. Samen zijn dat er minstens 4.00
 
 Look at: de twee staven van dezelfde week: de dagen opgeteld, en de bezoekers geteld over de hele week.
 
-You see: 3.700 meer in de eerste staaf. Dat zijn mensen die op meer dan één dag kwamen: de dagen optellen telt hen opnieuw, dus de week is lager, en juist.
+You see: 3.700 meer in de eerste staaf. Dat zijn de extra dagen van mensen die op meer dan één dag kwamen: de dagen optellen telt elk van hen opnieuw voor elke extra dag, dus de week is lager, en juist.
 
 # Check your understanding
 
@@ -89,7 +89,7 @@ Why: "distinct" en "uniek" betekenen dat elk één keer telt. Sessies en paginaw
 
 # You can now
 
-een unieke telling herkennen aan haar label, en uitleggen waarom haar dagen, weken of maanden nooit optellen.
+een unieke telling herkennen aan haar label, en uitleggen waarom je haar dagen, weken of maanden niet optelt.
 
 ## Where to next
 

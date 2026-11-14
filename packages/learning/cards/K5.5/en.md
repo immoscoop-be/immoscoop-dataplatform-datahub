@@ -1,9 +1,9 @@
 ---
 number: K5.5
-status: draft
+status: reviewed
 minutes: 5
 added: 2026-11-12
-changed: 2026-11-12
+changed: 2026-11-14
 gain: You look for the difference between two figures where it starts: when and from which data each was made, and whom to ask about it.
 ---
 
@@ -18,7 +18,7 @@ Promise: how to find where a figure comes from, and whom to ask about it.
 
 # Core idea
 
-Before you ask anyone to explain a figure, know when and from which data it was made; in Data Hub the **Query ID** under its result leads to both.
+Before you ask anyone to explain a figure, know when and from which data it was made; in Data Hub the **Query ID** under its result names the run that records both.
 
 ## Like a photo of a street
 
@@ -26,7 +26,7 @@ Someone shows you a photo of a street and asks which city it is. You study the h
 
 ## At Immoscoop
 
-A colleague puts bar charts from a print screen next to a number from an email, and asks the Data Team for the difference. Without when and from which data each was made, the Data Team sees the word "the" and has to guess which sentence it stood in. In Data Hub every result carries its Query ID under it, which leads to when its query ran, its SQL and the Resources it read. A query belongs to whoever ran it, so you ask them; a Lens is found in its Collection, with the Resources it is built on, and each Resource names its Owner. A figure that carries no Query ID goes back to whoever sent it, with the same question: when, and from which data?
+A colleague puts bar charts from a print screen next to a number from an email, and asks the Data Team for the difference. Without when and from which data each was made, the Data Team sees the word "the" and has to guess which sentence it stood in. In Data Hub every result carries its Query ID under it, which names the run: when its query ran, its SQL and the Resources it read. A query belongs to whoever ran it, so you ask them; a Lens is found in its Collection, with who made it and the Resources it is built on. A figure that carries no Query ID goes back to whoever sent it, with the same question: when, and from which data?
 
 # Check your understanding
 
@@ -46,7 +46,7 @@ Why: two figures differ for a reason that sits in where they come from: another 
 
 Why: a Query ID names one run of one query. It says where the figure comes from, not whether it is right, and the same query run on another day can give another figure.
 
-## A colleague sends you a figure from Data Hub with its Query ID. Who can show you the query behind it?
+## A colleague sends you a figure from a query of their own, with its Query ID. Who can show you the query behind it?
 
 - [x] The colleague who ran it, as a query belongs to whoever ran it
 - [ ] Anyone: every query in Data Hub is public
@@ -59,10 +59,10 @@ Why: every query is its User's own, in their panel of Query, and Data Hub keeps 
 Try it: [Open Collections](/collections)
 
 - [ ] The Data Team, which makes every Lens
-- [x] The Owner of the Resources it is built on
+- [x] Whoever made it, named on its page, or its Owner Unit, with a Question on the Lens
 - [ ] Nobody: a Lens has no owner
 
-Why: colleagues across Immoscoop make Lenses, and the page of a Lens names the Resources it is built on, each with the Owner that stands for its data. That is where a question about its figures starts.
+Why: colleagues across Immoscoop make Lenses: the page of a Lens names who made it and the Resources it is built on, and a Question on the Lens goes to its Owner Unit. That is where a question about its figures starts.
 
 # You can now
 

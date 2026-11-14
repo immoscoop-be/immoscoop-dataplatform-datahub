@@ -7,8 +7,8 @@ The input of the card as the interview gave it: what the author said, what Claud
 | Card | K5.5 The query behind a figure (Compass, section K5 Data Hub); proposed in the interview, added to the plan in the same pull request |
 | Author | Max Passenier |
 | Interviewed | 2026-11-12, by voice in Claude chat, along the learning-card recipe; card written on 2026-11-12 with the learning-card skill |
-| Fact check | To name |
-| Test reader | To name |
+| Fact check | Claude, an independent check against the requirements and the code on 2026-11-14, reviewed by Max |
+| Test reader | To name, in prod (DEC-LR-38) |
 
 ## 1. The reader's question
 
@@ -78,6 +78,8 @@ The card has no See it: the third rung is a screen of Data Hub, not a chart, and
 
 The author brought the case, the aha with the word "the", the photo of the street, the ban and the first question. Claude brought the back of the photo (left out of the card), the neighbours, the wording of the quote from the author's report, the decision rule as one sentence, the gain (first written around "a figure", then around "the difference between two figures", the reader's own words, after `links` showed Claude missed the card on them), the four questions of Check your understanding with all their wrong answers (none of them heard from a colleague yet), and the facts of Data Hub behind "At Immoscoop": every result in Data Hub carries its Query ID under it (FR-LN-06), which leads to when its query ran, its SQL and its Resources (FR-LN-05); a query belongs to whoever ran it, and only they and the Data Team read its run in the Query Log (DEC-LN-01); Data Hub keeps every run for as long as it exists (TR-SR-17); a Lens has a page of its own in its Collection that names the Resources it is built on (FR-LE-11, DEC-UX-66); the Owner of a Resource is the Owner Unit of its Collection.
 
+The fact check, by an independent pass of Claude on 2026-11-14, read the card against the requirements, the Message Catalogue and the code. Fixed: the Lens page names who made it, not the Owners of its Resources, so the first to ask about a Lens is its maker or its Owner Unit, with a Question on the Lens (fourth question); the third question is about a query of your own, as the runs of a Lens are read by the Data Team; the rule and the example say that the Query ID names the run, as no screen looks a Query ID up.
+
 ## To do
 
 - [ ] Check with the author whether the back of the photo may stay in the anchor: left out for now; without it the street carries "which data" but not "at which time"
@@ -89,3 +91,4 @@ The author brought the case, the aha with the word "the", the photo of the stree
 - [ ] Claude finds the card for 5 of 6 phrases of the reader; it misses "print screen", which stands only in the quote. Left as it is: no words are added for the search
 - [ ] Quality gate: the wrong answers are Claude's; ask the author which are misconceptions really heard, especially "Keep your own figure", "That it is the figure of today" and "Nobody: a Lens has no owner"
 - [ ] `references/card-format.md` of the skill lists `/lenses` (Open Lenses) as a path for Apply, but the web app has no such page: a Lens is reached through its Collection (DEC-UX-66), and `/lenses` shows the page for what does not exist. This card uses `/collections`; the table of the skill is to correct
+- [ ] Test reader: a colleague outside data reads the card in prod and says in their own words what they learned (DEC-LR-38)

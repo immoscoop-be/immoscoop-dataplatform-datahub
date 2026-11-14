@@ -1,9 +1,9 @@
 ---
 number: K5.1
-status: draft
+status: reviewed
 minutes: 5
 added: 2026-10-29
-changed: 2026-10-29
+changed: 2026-11-14
 gain: You know what a Resource tells you, how far you can trust it, and whom to ask about it.
 ---
 
@@ -26,7 +26,7 @@ The library does not write the book, but its card tells you what the book is abo
 
 ## For example
 
-Weekly lead volume is in the Collection Credit leads, whose Owner Unit is the credit team: the number of credit leads per week and per lead source, at Level 4 Explored. A question about it goes as a Message on its page, to the credit team.
+Weekly lead volume is in the Collection Credit leads, whose Owner Unit is the credit team: the number of credit leads per week and per lead source, at Level 3 · Confirmed. A question about it goes as a Message on its page, to the credit team.
 
 # See it
 

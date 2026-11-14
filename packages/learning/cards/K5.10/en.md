@@ -1,6 +1,6 @@
 ---
 number: K5.10
-status: draft
+status: reviewed
 minutes: 4
 added: 2026-11-14
 changed: 2026-11-14
@@ -14,15 +14,15 @@ gain: You know why a button is there for a colleague and not for you, and whom t
 
 Their colleague is in another Permission group. What a User may do in Data Hub comes from the group the Data Team gives them, not from their team; nothing is broken.
 
-Promise: what your Permission group decides, where you see it, and how to get another.
+Promise: what your Permission group decides, how you learn which one you are in, and how to get another.
 
 # Core idea
 
-What you may do in Data Hub comes from your **Permission group**, which the Data Team gives you, and which data is yours from your Owner Units: a button that is not there is a Permission you do not have, never a fault.
+What you may do in Data Hub comes from your **Permission group**, which the Data Team gives you, and which data is yours from the Groups you are in: a button that is not there is a Permission you do not have, never a fault.
 
 ## At Immoscoop
 
-A new colleague signs in for the first time and lands in Lens user, the default Permission group: they run Lenses, but make no queries. On My page they read their group and what it allows. Their team lead asks the Data Team, who move them to Business analyst. Within 15 minutes the new group holds in the web app, in Claude and in Excel; they make and run queries, and a Message from Data Hub tells them what they can do now.
+A new colleague signs in for the first time and lands in Lens user, the default Permission group: they run Lenses, but make no queries. Their team lead asks the Data Team, who move them to Business analyst. Within 15 minutes the new group holds in the web app, in Claude and in Excel; they make and run queries, and a Message from Data Hub tells them which group they are in now and what they can do.
 
 # Check your understanding
 
@@ -32,15 +32,15 @@ A new colleague signs in for the first time and lands in Lens user, the default 
 - [ ] You need to refresh the page
 - [x] Your Permission group does not let you write that kind of Message
 
-Why: which Messages a User writes is set by kind in their Permission group; your colleague is in another one. My page shows yours.
+Why: which Messages a User writes is set by kind in their Permission group; your colleague is in another one. The Data Team tells you yours.
 
-## You move to another team. What changes in Data Hub?
+## You are added to another Group in Data Hub. What changes?
 
-- [ ] Your Permission group follows your new team
+- [ ] Your Permission group follows the new Group
 - [ ] Nothing at all
-- [x] The Collections that are yours follow your Owner Units; what you may do stays your Permission group until the Data Team changes it
+- [x] The Collections that Group owns become yours too; what you may do stays your Permission group until the Data Team changes it
 
-Why: which data is yours and what you may do with it are two separate things: the first comes from the teams you are in, the second from the Permission group the Data Team gives you.
+Why: which data is yours and what you may do with it are two separate things: the first comes from the Groups you are in, the second from the Permission group the Data Team gives you.
 
 ## Claude tells you the columns and the number of rows of your result, but nothing about the figures in it, while a colleague's Claude does. Why?
 
@@ -52,10 +52,10 @@ Why: how a result reaches Claude is a Permission of its own: in Claude, in a car
 
 # You can now
 
-find your Permission group on My page, and ask "is this a Permission I do not have?" before you report a missing button as a fault.
+ask "is this a Permission I do not have?" before you report a missing button as a fault, and ask the Data Team for another group when you need one.
 
 ## Where to next
 
 - Next to it: K5.1
 - Next to it: K5.9
-- Apply: [Open My page](/me) See your Permission group and what it allows.
+- Apply: [Open your Messages](/messages) Read what Data Hub told you when your Permission group changed.

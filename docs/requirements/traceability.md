@@ -28,7 +28,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Channels](functional/13-channels.md) | 6 (5 proposed, 1 implemented) | – | 6 | 4 (2 open, 2 done) |
 | [Conversations](functional/14-conversations.md) | 16 (16 implemented) | 2 (2 implemented) | 13 | 9 (9 done) |
 | [EDA](functional/15-eda.md) | – | – | – | – |
-| [Learning](functional/16-learning.md) | 43 (14 proposed, 13 implemented, 16 withdrawn) | – | 38 | 38 (7 open, 31 done) |
+| [Learning](functional/16-learning.md) | 43 (14 proposed, 13 implemented, 16 withdrawn) | – | 38 | 39 (8 open, 31 done) |
 | [Claude](functional/17-claude.md) | 29 (1 proposed, 28 implemented) | 5 (5 implemented) | 16 | 11 (7 open, 4 done) |
 | [Localisation](non-functional/localisation.md) | 12 (8 specified, 3 implemented, 1 withdrawn) | – | – | – |
 | [Security](non-functional/security.md) | 4 (4 implemented) | – | – | – |

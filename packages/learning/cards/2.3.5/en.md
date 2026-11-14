@@ -1,9 +1,9 @@
 ---
 number: 2.3.5
-status: draft
+status: reviewed
 minutes: 6
 added: 2026-10-29
-changed: 2026-10-29
+changed: 2026-11-14
 gain: You explain why two counts of "the same" differ before anyone calls one of them wrong.
 ---
 
@@ -18,15 +18,15 @@ Promise: what to ask before you count, so that two figures can be compared.
 
 # Core idea
 
-Every count stands on a **grain**, what one row is, and a **key** you count along; when the two do not match one to one, a row is counted more than once or drops out, and the figure answers another question.
+Every count stands on a **grain**, what one row is, and a **key** you count along; when a row does not belong to exactly one value of the key, it is counted more than once or drops out, and the figure answers another question.
 
 ## Like a parcel and its addresses
 
-A parcel goes to one house, but a street can run through two towns. Count parcels per town and per street, and the streets add up to more: the parcels on the street through both towns count in both.
+A parcel goes to one house, but a street can run through two towns. Count the parcels of each town through its streets, and the towns add up to more than there are parcels: the street through both towns brings all its parcels into both.
 
 ## For example
 
-A listing lies in one municipality, but a postal code can span several municipalities. Counted per municipality, the region has 1,240 listings; counted per postal code, 1,310. The 70 more are listings in postal codes that cross a border, counted once in each.
+A listing lies in one municipality, but a postal code can span several municipalities. Counted along the municipality of each listing, the region has 1,240 listings; found through the postal codes of each municipality, 1,310. The 70 more are listings in postal codes that cross a border: such a postal code belongs to every municipality it spans, so its listings are counted once in each of them.
 
 # See it
 
@@ -49,7 +49,7 @@ A listing lies in one municipality, but a postal code can span several municipal
 
 Look at: the two bars of the same listings in the same month, added up per municipality and per postal code.
 
-You see: 70 more along the postal code. Neither is wrong: a postal code that spans two municipalities brings its listings into the total twice.
+You see: 70 more through the postal codes. Neither is wrong, but they answer different questions: a postal code that spans two municipalities brings its listings into the total twice.
 
 # Check your understanding
 
@@ -77,7 +77,7 @@ Try it: [Open Collections](/collections)
 - [ ] You can only tell from its SQL
 - [ ] Every Resource has one row per day
 
-Why: the grain of a Resource is written on its page, in a sentence and with its key fields, so that you know what you count before you count.
+Why: the grain of a Resource is written on its page, in a sentence and with the fields that identify each row, so that you know what you count before you count.
 
 # You can now
 

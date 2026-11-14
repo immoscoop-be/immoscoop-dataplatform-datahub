@@ -1,11 +1,11 @@
 ---
 number: 3.3.3
-status: draft
+status: reviewed
 minutes: 4
 added: 2026-10-29
-changed: 2026-10-29
+changed: 2026-11-14
 gain: Je beoordeelt of data goed genoeg is voor je beslissing, zonder op perfecte data te wachten.
-translatedFrom: 73a99246874e
+translatedFrom: 25e60018a953
 ---
 
 # Why now
@@ -58,7 +58,7 @@ You see: elke week is met ongeveer hetzelfde deel te laag, dus de stijging is ec
 
 # Check your understanding
 
-## De leads per week zijn bevestigd door hun Owner, maar de laatste week is nog onvolledig. Waarvoor zijn ze vandaag goed genoeg?
+## De leads per week komen uit een Resource op 3 · Confirmed, maar de laatste week is nog onvolledig. Waarvoor zijn ze vandaag goed genoeg?
 
 - [x] De weken voor de laatste vergelijken
 - [ ] Het totaal van vorige week aan KBC rapporteren
@@ -82,4 +82,4 @@ beoordelen of data goed genoeg is voor wat je ermee wil doen, in plaats van te v
 
 - Next to it: K5.2
 - Next to it: 1.2.1
-- Apply: [Open Collections](/collections) Lees het gekende gedrag van een Resource voor je haar voor een beslissing gebruikt.
+- Apply: [Open Collections](/collections) Lees de Known Behaviour van een Resource voor je haar voor een beslissing gebruikt.
