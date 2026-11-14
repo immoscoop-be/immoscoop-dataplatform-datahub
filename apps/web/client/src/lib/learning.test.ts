@@ -1,5 +1,6 @@
+import { MESSAGE_CATALOGUE } from '@datahub/contracts/message-catalogue';
 import { describe, expect, it } from 'vitest';
-import { cardIn, continued, createLearning, drawExample, newAndChanged, type Progress, seenOf, suggestedCards, suggestedLevels, TOPICS, writtenCards } from './learning.js';
+import { cardIn, continued, createLearning, drawExample, newAndChanged, type Progress, seenOf, suggestedCards, suggestedLevels, TOPICS, topicOf, writtenCards } from './learning.js';
 
 const config = { identityUrl: 'https://identity.test', catalogueUrl: 'https://catalogue.test', registryUrl: 'https://registry.test', queryUrl: 'https://query.test', semgraphUrl: 'https://semgraph.test' };
 
@@ -81,5 +82,17 @@ describe('the Learning Centre in the web app', () => {
     expect(drawn).toBe('data:image/svg+xml;charset=utf-8,%3Csvg%2F%3E');
     expect(sent).toEqual([{ semgraph: 'categoryComparison', theme: 'dark', size: 'default' }]);
     expect(await drawExample(config, { semgraph: 'x' }, 'light', (async () => new Response('', { status: 422 })) as typeof fetch)).toBeNull();
+  });
+});
+
+describe('the cards the Message Catalogue points to (FR-LR-38, DEC-LR-29)', () => {
+  it('are topics of the plan, under the title the plan gives them, so that a renamed topic is renamed there too', () => {
+    for (const type of MESSAGE_CATALOGUE.filter((one) => one.status !== 'Withdrawn')) {
+      const fit = type.learningCard;
+      const card = fit.fit === 'named' || fit.fit === 'proposed' ? fit.card : fit.fit === 'toWrite' ? fit.nearest : undefined;
+      if (!card) continue;
+      expect(topicOf(card.number), `${type.id} points to ${card.number}`).toBeDefined();
+      expect(card.title, `${type.id}: the title of ${card.number} in the plan`).toBe(topicOf(card.number)?.title.en);
+    }
   });
 });
