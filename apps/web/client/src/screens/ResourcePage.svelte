@@ -15,7 +15,7 @@
   import { useLearning } from '../lib/learning-context.js';
   import type { CardChanges, Catalogue, Collection, DescribeAttribute, KnownGap, LogEntry, Related, ResourceDetail } from '../lib/catalogue.js';
   import { can, canWith, reach, removable, type Permissions } from '../lib/permissions.js';
-  import type { Conversation } from '../lib/messages.js';
+  import type { Conversation, WrittenKind } from '../lib/messages.js';
   import type { QueryClient, Storage } from '../lib/query.js';
   import type { Registry } from '../lib/registry.js';
   import { collectionPath, newQueryPath, resourcePath } from '../lib/routes.js';
@@ -79,7 +79,8 @@
     /** After a run of its Preview, for the panel of Query. */
     onrun?: () => void;
     /** "Messages" with their number, which opens the slide-in (FR-CV-07); left out while they are read. */
-    messages?: { count: number | null; href: string };
+    /** Its Messages: how many, where, the kinds the User may write on it, and writing one of a kind (DEC-UX-257). */
+    messages?: { count: number | null; href: string; kinds?: readonly WrittenKind[]; write?: (kind: WrittenKind) => void };
     /** The Questions, Remarks and Signals on it, the newest first, for its Summary; undefined while they are read. */
     threads?: readonly Conversation[];
   } = $props();
@@ -294,6 +295,10 @@
     if (messages) {
       const href = messages.href;
       rows.push(place('resource:ask', 'chat-circle-dots-fill', t('resource.ask'), () => go(href), { meta: t('quick.messages.meta', { count: messages.count ?? 0 }), words: t('quick.messages.words') }));
+      // A Remark or a Signal straight away: the Messages open on that kind, the cursor in its text (DEC-UX-257).
+      const write = messages.write;
+      if (write && messages.kinds?.includes('remark')) rows.push(command('resource:remark', 'chat-text', t('quick.resource.remark'), () => write('remark'), { words: t('quick.resource.remark.words') }));
+      if (write && messages.kinds?.includes('signal')) rows.push(command('resource:signal', 'warning-diamond', t('quick.resource.signal'), () => write('signal'), { meta: t('quick.resource.signal.meta'), words: t('quick.resource.signal.words') }));
     }
     if (resource.collectionId === null && assigns && collections) rows.push(command('resource:add', 'folder-plus-fill', t('resource.waiting.add'), () => (adding = true), { meta: t('quick.resource.add.meta'), words: t('quick.resource.add.words') }));
     const instead = resource.deprecation?.insteadOf;
