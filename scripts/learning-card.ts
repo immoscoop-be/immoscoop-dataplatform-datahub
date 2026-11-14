@@ -27,6 +27,7 @@
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { MESSAGE_CATALOGUE } from '../packages/contracts/src/messageCatalogue.ts';
+import { renderMessage } from '../packages/contracts/src/messages.ts';
 import { type Card, parseCard, versionOf } from '../packages/learning/src/card.ts';
 import { type ExplainSource, explainWith } from '../packages/learning/src/explain.ts';
 import { interviewMisfits } from '../packages/learning/src/interview.ts';
@@ -138,7 +139,11 @@ if (command === 'links' && target) {
     if (fit === 'named') places += 1;
     const shows = fit === 'named' ? 'named: shows under the Message, "Understand what is happening here"' : fit === 'proposed' ? 'proposed: does not show; only a card the Message Catalogue names shows (FR-LR-38)' : 'the nearest card to one still to write: does not show';
     console.log(`  ${pad('Message')}${type.id} ${type.title} · ${shows}`);
+    console.log(`  ${pad('')}to: ${type.to.join(', ')} · the reader reads, for example: "${renderMessage(type, 'en', 'plain', type.example).replace(/\s+/g, ' ')}"`);
     console.log(`  ${pad('')}what it expects: ${why}`);
+    const catalogued = type.learningCard;
+    const kept = catalogued.fit === 'named' || catalogued.fit === 'proposed' ? catalogued.card.title : undefined;
+    if (kept && topic && kept !== topic.title.en) console.log(`  ${pad('')}PROBLEM: the Message Catalogue calls the card "${kept}", the plan "${topic.title.en}": change it in packages/contracts/src/messageCatalogue.ts and run pnpm docs:build`);
   }
   if (messages.length === 0) console.log(`  ${pad('Message')}none: no Message Data Hub writes names it (packages/contracts/src/messageCatalogue.ts)`);
   const markers = (Object.entries(MARKERS) as [MarkerPlace, readonly string[]][]).filter(([, numbers]) => numbers.includes(number));

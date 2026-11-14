@@ -38,8 +38,9 @@ Every card is a topic of the plan of the Learning Centre, `packages/learning/car
 2. If the Data Hub MCP is available, call `explain` with the concept and with two or three related terms. It returns only cards that are written, in English or Dutch, and it matches word stems, not meaning: a card that shares a word comes back too. Read the core idea of each hit; only a card whose core idea explains the concept exists. If one does, say so and ask whether the author wants to rework it or make a neighbouring card; if none does, say that no card explains it yet.
 3. Find the topic in `plan.json`; a topic is written when `cards/<number>/` exists. Name its number, title, Learning Level (the level of its section) and whether it is written. The Learning Level says whom you write for: Level 1 for everyone who opens a dashboard, Level 4 for whoever is responsible for data. When the author comes with a place in Data Hub instead of a concept ("the Message that a Resource arrived"), the place names its card: a Message in `packages/contracts/src/messageCatalogue.ts`, a marker in `packages/learning/src/markers.ts`.
 4. If no topic of the plan covers the concept, look it up in `docs/definitions.md`. A Defined Term of Data Hub that no card explains, such as Stability, is a card Data Hub will need, usually in K5 Data Hub; a term of the Glossary on Confluence belongs where its readers are.
-5. Run `node scripts/learning-card.ts links <number>`: who already links to the topic, or wants to, and what each place expects of it. A Message says it under "what it expects": the card answers the reader who arrives from there, and its `gain` is the one sentence they see in every place. Tell the author.
+5. Run `node scripts/learning-card.ts links <number>`: who already links to the topic, or wants to, what the reader reads there (the text of each Message, with its example) and what each place expects of it. Show the author that moment before question 1: the card answers the reader who arrives from there, and its `gain` is the one sentence they see in every place.
 6. If no topic fits, name the sections it could go in, but fix its number only after question 2: the reader of question 1 and the situation of question 2 decide the Learning Level, and with it the section. Then propose the number and a title. The topic goes into `plan.json` in the same pull request as the card, with a `note` on why Data Hub added it; the Data Team approves it there.
+7. If the author renames a topic (as "Owner and steward" became "Owning a Resource"), change its title in `plan.json` and give it a `note`: why, and that the master learning plan on Confluence still has the old title, which is recorded, not silently fixed. The Message Catalogue keeps the title of every card a Message names: `links` and the tests of the web app say which to change in `packages/contracts/src/messageCatalogue.ts`; then run `pnpm docs:build`.
 
 ## Steps 1 to 7: the interview
 
@@ -58,6 +59,15 @@ An author who knows the subject often answers ahead: the whole procedure at ques
 | 7 | **Next to which existing cards, and which term of the glossary, does this one belong?** | Resource keys or queries creep into the answer. Neighbours and a glossary term are enough. Only **written** cards can be a choice under Where to next; the rest goes on the to-do. | Where to next, the term in bold |
 
 After the interview, say in one sentence what you brought yourself and what came from the author, so that the fact check knows where to look. That sentence goes into the record too.
+
+## When the author asks you to draft
+
+Sometimes nobody has asked yet and the author does not know where the card shows, as with a card about a state of Data Hub (K5), and the author asks you to suggest the card. Then draft it, but keep the author in it:
+
+- Show the reader's moment first: the output of `links`, with what each Message says, and the screen where the state shows.
+- Write the whole card from the requirements, `docs/definitions.md` and the Messages, and check what they leave open in the code: the Permission groups in `packages/contracts/src/permissions.ts`, the texts of the web app in `apps/web/client/src/texts/`, what a requirement says comes "when it is built".
+- Ask the author to react per part: the quote, the rule, the anchor (keep it, or leave it out for a card about a screen, DEC-LR-36) and the first question. Several cards on the states of Data Hub may go to the author in one batch to review together.
+- Record every part as yours in the interview record, with the author's reactions. A "yes" to a suggestion weighs less than the author's own words, so the fact check is someone of the Data Team other than the author, and the test reader carries more weight than usual.
 
 ## Step 8: writing the card
 
@@ -96,7 +106,7 @@ Rungs 1 and 2 are pictures, Figma work; a card in Data Hub has no place for them
 Close with three concrete questions to the author:
 
 - Are the **wrong answers** of the questions right: are they misconceptions they really heard, or ones they expect (the record says which)?
-- Who does the **fact check** (the data colleague themselves, or someone else from the Data Team)? They read the card against the record.
+- Who does the **fact check** (the data colleague themselves, or someone else from the Data Team; someone else when you drafted the card)? They read the card against the record.
 - Which **colleague outside data** reads the card in five minutes and tells in their own words what they learned? If that fails, the anchor is wrong, not the reader.
 
 Write the names into the table on top of the record. The card stays `status: draft` until the Data Team has reviewed it (DEC-LR-25); after the gate it becomes `reviewed`, in both languages (that needs no new translation).
@@ -105,10 +115,10 @@ Write the names into the table on top of the record. The card stays `status: dra
 
 The card reaches Data Hub only through a pull request into `uat`, never directly onto `uat` or `main`.
 
-1. **A branch of its own**, from the latest `uat`: `git fetch origin uat && git switch -c learning/<number>-<a-few-words> origin/uat`.
-2. **The files:** `packages/learning/cards/<number>/en.md`, `nl.md` and `interview.md`, and `packages/learning/cards/plan.json` when the topic is new.
-3. **The checks**, both clean: `node scripts/learning-card.ts stamp <number>` and `pnpm vitest run packages/learning services/semgraph/test/learning-cards.test.ts`; then `node scripts/learning-card.ts links <number>` for the description.
-4. **One commit**, `Learning Card <number>: <title from the plan>`, ending with the trailer `Refs: DEC-LR-31`.
+1. **A branch of its own**, from the latest `uat`: `git fetch origin uat && git switch -c learning/<number>-<a-few-words> origin/uat`. A Claude Code session on the web comes with a branch of its own: work on that one, started from `uat`, and give the pull request the name of the card.
+2. **The files:** `packages/learning/cards/<number>/en.md`, `nl.md` and `interview.md`, and `packages/learning/cards/plan.json` when the topic is new or renamed; `packages/contracts/src/messageCatalogue.ts` and the pages `pnpm docs:build` writes, when a Message names the card or its title changed.
+3. **The checks**, both clean, after `pnpm install` in a fresh session: `node scripts/learning-card.ts stamp <number>` and `pnpm vitest run packages/learning services/semgraph/test/learning-cards.test.ts`; then `node scripts/learning-card.ts links <number>` for the description.
+4. **One commit**, `Learning Card <number>: <title from the plan>`, ending with the trailer `Refs: DEC-LR-31`. A session on the web holds a shallow clone: before `pnpm docs:build`, run `git fetch --unshallow`, or the traceability matrix it writes loses its commit links.
 5. **The pull request into `uat`**, with the same title. Its description holds the reader's question, the core idea, who was interviewed, what Claude brought, who does the fact check and who the test reader is, the output of `links`, and the to-do of the record. Ask a member of the Data Team to review it.
 6. **Do not merge it yourself.** The Data Team merges after the fact check; the card then shows in uat as a draft.
 7. **Reviewed:** once the fact check and the test reader have passed, a small pull request sets `status: reviewed` in both languages. Only then does the card show in prod.
