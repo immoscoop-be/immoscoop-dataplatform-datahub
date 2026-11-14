@@ -167,7 +167,7 @@
     <p class="why">{t(mode === 'add' ? 'newSet.why.add' : mode === 'same' ? 'newSet.why.same' : 'newSet.why.remove', { name: query.name })}</p>
     {#if mode === 'add'}
       <div class="label">{t('newSet.add')}</div>
-      <input {...NO_PASSWORD_MANAGER} type="search" class="search" bind:value={search} placeholder={t('query.resources.search')} aria-label={t('query.resources.search')} />
+      <input {...NO_PASSWORD_MANAGER} type="search" data-autofocus class="search" bind:value={search} placeholder={t('query.resources.search')} aria-label={t('query.resources.search')} />
       <p class="meta tick">{t('newSet.tickMany')}</p>
       <div class="picks" role="group" aria-label={t('newSet.add')}>
         {#each found as choice (choice.id)}

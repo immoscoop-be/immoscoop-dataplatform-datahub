@@ -478,10 +478,16 @@ button.ln-fold i { transition: transform 200ms ease; }
 .q-question { margin: 4px 0 0; font-size: var(--text-small); color: var(--text-secondary); }
 .q-origin { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; font-size: var(--text-meta); color: var(--text-secondary); }
 .q-origin a { color: var(--text-primary); }
-.q-scope { display: flex; align-items: flex-start; gap: 10px; padding: 2px 2px 0; }
+.q-scope { display: flex; align-items: center; gap: 8px; padding: 2px 2px 0; }
 .q-scope > .label { flex: none; line-height: 26px; }
 .q-scope > .btn-quiet { flex: none; }
-.scope-chips { flex: 1 1 0; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+/* One line: what does not fit scrolls sideways; Add a Resource and Find a table stay in view as small round icons (DEC-UX-249) */
+.scope-chips { flex: 0 1 auto; min-width: 0; display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: thin; }
+.scope-chips > * { flex: none; white-space: nowrap; }
+.scope-add.round { flex: none; width: 28px; height: 28px; padding: 0; justify-content: center; border-radius: 50%; font-size: 13px; }
+.q-scope > .btn-quiet { margin-left: auto; }
+/* The name of a query on one line, ending in … (DEC-UX-251) */
+.page-title.q-title-line { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .scope-chip { display: inline-flex; align-items: center; gap: 5px; font-size: var(--text-meta); color: var(--text-primary); background: var(--surface-sub); padding: 3px 4px 3px 10px; border-radius: var(--radius-pill); }
 .scope-chip .kind-icon { font-size: 13px; }
 .scope-chip .maturity { margin-left: 2px; }
@@ -2080,6 +2086,23 @@ svg.mp, svg.mp-g { display: block; width: 100%; height: auto; overflow: visible;
 .fd-pop p { margin: 8px 0 0; }
 .fd-pop .origin { display: table; margin: 0 0 3px; }
 .fd-pop .si-dbt { color: var(--text-secondary); }
+/* A table outside Data Hub, double-clicked by a power user (OP-UX-89, Proposal): what dbt and BigQuery know of it */
+.float-win.kt-win { width: 540px; }
+.kt-desc { margin: 0 0 12px; font-size: var(--text-small); line-height: 1.5; }
+.kt-desc .origin, .kt-facts .origin { display: table; margin: 0 0 6px; }
+.kt-facts { padding: 10px 12px; border-radius: var(--radius-md); background: var(--surface-sub); margin-bottom: 14px; }
+.kt-facts .facts { font-size: var(--text-meta); line-height: 1.5; }
+.kt-facts .facts .mono { overflow-wrap: anywhere; }
+.kt-cols-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.kt-cols-head .label { margin: 0; }
+.kt-filter { margin-left: auto; width: 180px; padding: 4px 10px; background: var(--surface-sub); }
+.kt-filter input { font-size: var(--text-meta); }
+.kt-cols { margin: 0; }
+.kt-cols .ft-col { grid-template-columns: minmax(130px, max-content) minmax(64px, max-content) minmax(0, 1fr); }
+.kt-cols .ft-col.nested .mono { padding-left: 14px; color: var(--text-secondary); }
+.kt-cols .kt-none { font-style: italic; }
+.kt-from { font-size: 10px; color: var(--text-muted); border: 1px solid var(--tint-active); padding: 0 6px; border-radius: var(--radius-pill); margin-left: 4px; }
+.kt-note { display: block; margin: 10px 0 0; }
 
 /* The SQL of the editor, coloured by kind of word, as BigQuery colours it (DEC-UX-223); names keep the colour of the text */
 .sql-editor .sql-kw { color: var(--code-keyword); }
@@ -2088,9 +2111,9 @@ svg.mp, svg.mp-g { display: block; width: 100%; height: auto; overflow: visible;
 .sql-editor .sql-param:not(.undefined) { color: var(--code-param); }
 .sql-editor .sql-key:not(.outside), .sql-editor .sql-ref { color: inherit; }
 /* What a double-click explains has a dotted line under it, softer than the word; a wavy line stays an error (DEC-UX-222) */
-.sql-editor .sql-key:not(.outside):not([data-known]), .sql-editor .sql-param:not(.undefined), .sql-editor .sql-field {
+.sql-editor .sql-key:not(.outside), .sql-editor .sql-param:not(.undefined), .sql-editor .sql-field {
   text-decoration: underline dotted color-mix(in srgb, currentColor 50%, transparent); text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
-.sql-editor .sql-key:not(.outside):not([data-known]):hover, .sql-editor .sql-param:not(.undefined):hover, .sql-editor .sql-field:hover { text-decoration-color: currentColor; }
+.sql-editor .sql-key:not(.outside):hover, .sql-editor .sql-param:not(.undefined):hover, .sql-editor .sql-field:hover { text-decoration-color: currentColor; }
 
 /* Find a table, for a power user (DEC-UX-224), and the CTEs that come at the start of the SQL (DEC-UX-225) */
 .ft-sheet { width: max(540px, var(--sheet-width)); }

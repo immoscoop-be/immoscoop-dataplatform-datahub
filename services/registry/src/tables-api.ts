@@ -27,6 +27,9 @@ export interface KnownTable {
   /** An exposure with the tag `datahub` depends on it: it is a Resource, read as one (DEC-SR-46). */
   resource: boolean;
   partition: { field: string; unit: string | null } | null;
+  /** Its cluster columns, and how dbt makes it: `table`, `view`, `incremental`, `materialized_view`, or null for a source. */
+  clusterBy: string[];
+  materialized: string | null;
   /** Its description from dbt, and its columns with their type and description. */
   description: string;
   columns: { name: string; dataType: string | null; description: string }[];
@@ -42,6 +45,8 @@ const tableOf = (row: KnownTableRow): KnownTable => ({
   projectName: row.projectName,
   resource: row.resource,
   partition: row.partitionField ? { field: row.partitionField, unit: row.partitionUnit } : null,
+  clusterBy: row.clusterBy ?? [],
+  materialized: row.materialized,
   description: row.description,
   columns: row.columns,
 });

@@ -108,7 +108,7 @@
   {#snippet top()}<div class="meta over"><Icon name="magnifying-glass" />{t('find.over', { name: queryName })}</div>{/snippet}
   <div class="body">
     <p class="why">{t('find.why')}</p>
-    <input {...NO_PASSWORD_MANAGER} type="search" class="search" bind:value={words} placeholder={t('find.search')} aria-label={t('find.search')} />
+    <input {...NO_PASSWORD_MANAGER} type="search" data-autofocus class="search" bind:value={words} placeholder={t('find.search')} aria-label={t('find.search')} />
     <div class="filters">
       <div class="layers" role="group" aria-label={t('find.layers')}>
         {#each LAYERS as option (option)}

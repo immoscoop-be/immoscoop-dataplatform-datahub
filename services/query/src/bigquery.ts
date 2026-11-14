@@ -66,10 +66,25 @@ export interface TableFacts {
   modifiedAt: string | null;
 }
 
+/**
+ * What BigQuery keeps about a table and its columns, without reading it: for a power user who looks at a table outside
+ * Data Hub (FR-SR-62). A read of its metadata, which BigQuery does not bill.
+ */
+export interface TableInfo extends TableFacts {
+  description: string;
+  /** By a column per a unit of time (`day`…), by ranges of a whole number (`range`), or by when rows came (`_PARTITIONTIME`). */
+  partition: { field: string; unit: string | null; required: boolean } | null;
+  clusterBy: string[];
+  /** Its columns in their order, the fields of a STRUCT right after it as `parent.child`. */
+  columns: { name: string; type: string; description: string }[];
+}
+
 export interface BigQuery {
   dryRun(sql: string, parameters?: QueryParameter[]): Promise<DryRun>;
   /** What BigQuery keeps about a table, `project.dataset.table`. */
   table(key: string): Promise<TableFacts>;
+  /** The same, with its description, partitioning, cluster columns and columns (FR-SR-62). */
+  describe(key: string): Promise<TableInfo>;
   /** The IDs of its newest partitions that hold rows, newest first, such as `20261019` (DEC-SR-39). */
   partitions(key: string, limit: number): Promise<string[]>;
   run(sql: string, options: RunOptions): Promise<Finished>;
@@ -89,6 +104,7 @@ interface SchemaField {
   type: string;
   mode?: string;
   fields?: SchemaField[];
+  description?: string;
 }
 
 interface Cell {
@@ -112,6 +128,42 @@ const typeOf = (field: SchemaField) => {
   const type = TYPE_NAMES[field.type] ?? field.type;
   return field.mode === 'REPEATED' ? `ARRAY<${type}>` : type;
 };
+
+/** A table as `tables.get` gives it, the parts Data Hub reads. */
+interface TableResource {
+  type?: string;
+  description?: string;
+  numBytes?: string;
+  numRows?: string;
+  numPartitions?: string;
+  lastModifiedTime?: string;
+  requirePartitionFilter?: boolean;
+  timePartitioning?: { type?: string; field?: string; requirePartitionFilter?: boolean };
+  rangePartitioning?: { field?: string };
+  clustering?: { fields?: string[] };
+  schema?: { fields?: SchemaField[] };
+}
+
+function factsOf(found: TableResource): TableFacts {
+  const number = (value: string | undefined) => (value === undefined ? null : Number(value));
+  return {
+    type: found.type ?? 'TABLE',
+    bytes: number(found.numBytes),
+    rows: number(found.numRows),
+    partitions: number(found.numPartitions),
+    // Partitioned by the time of loading, a table has no column of its own for it.
+    partitionField: found.timePartitioning ? (found.timePartitioning.field ?? '_PARTITIONTIME') : null,
+    modifiedAt: found.lastModifiedTime ? new Date(Number(found.lastModifiedTime)).toISOString() : null,
+  };
+}
+
+/** The columns of a schema in their order, the fields of a STRUCT right after it, named `parent.child`. */
+function flatten(fields: SchemaField[], prefix = ''): TableInfo['columns'] {
+  return fields.flatMap((field) => [
+    { name: `${prefix}${field.name}`, type: typeOf(field), description: field.description ?? '' },
+    ...(field.type === 'RECORD' || field.type === 'STRUCT' ? flatten(field.fields ?? [], `${prefix}${field.name}.`) : []),
+  ]);
+}
 
 /** A timestamp, given in microseconds since 1970, as BigQuery writes it: `2026-10-29 08:12:00 UTC`. */
 function timestamp(micros: string): string {
@@ -177,6 +229,12 @@ export function createBigQuery(options: { project: string; location: string; tok
     }
     throw new BigQueryUnavailable(`BigQuery answered ${response.status}: ${message}`);
   }
+
+  /** The table as BigQuery keeps it: its metadata, never its rows. */
+  const tableResource = (key: string) => {
+    const [tableProject, dataset, table] = parts(key);
+    return call<TableResource>('GET', `/datasets/${encodeURIComponent(dataset)}/tables/${encodeURIComponent(table)}`, undefined, 20_000, tableProject);
+  };
 
   // Only a query with values for its @names says they are named; without, BigQuery refuses any @name.
   const named = (parameters: QueryParameter[] = []) => (parameters.length > 0 ? { parameterMode: 'NAMED', queryParameters: parameters } : {});
@@ -247,24 +305,21 @@ export function createBigQuery(options: { project: string; location: string; tok
     },
 
     async table(key) {
-      const [tableProject, dataset, table] = parts(key);
-      const found = await call<{
-        type?: string;
-        numBytes?: string;
-        numRows?: string;
-        numPartitions?: string;
-        lastModifiedTime?: string;
-        timePartitioning?: { field?: string };
-      }>('GET', `/datasets/${encodeURIComponent(dataset)}/tables/${encodeURIComponent(table)}`, undefined, 20_000, tableProject);
-      const number = (value: string | undefined) => (value === undefined ? null : Number(value));
+      return factsOf(await tableResource(key));
+    },
+
+    async describe(key) {
+      const found = await tableResource(key);
+      const time = found.timePartitioning;
+      const field = time ? (time.field ?? '_PARTITIONTIME') : (found.rangePartitioning?.field ?? null);
       return {
-        type: found.type ?? 'TABLE',
-        bytes: number(found.numBytes),
-        rows: number(found.numRows),
-        partitions: number(found.numPartitions),
-        // Partitioned by the time of loading, a table has no column of its own for it.
-        partitionField: found.timePartitioning ? (found.timePartitioning.field ?? '_PARTITIONTIME') : null,
-        modifiedAt: found.lastModifiedTime ? new Date(Number(found.lastModifiedTime)).toISOString() : null,
+        ...factsOf(found),
+        description: found.description ?? '',
+        partition: field
+          ? { field, unit: time ? (time.type ?? 'DAY').toLowerCase() : 'range', required: found.requirePartitionFilter ?? time?.requirePartitionFilter ?? false }
+          : null,
+        clusterBy: found.clustering?.fields ?? [],
+        columns: flatten(found.schema?.fields ?? []),
       };
     },
 

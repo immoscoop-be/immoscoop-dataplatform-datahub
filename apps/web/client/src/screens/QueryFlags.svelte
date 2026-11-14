@@ -103,8 +103,6 @@
       </div>
     {/each}
     </div>
-  {:else}
-    <span class="empty"><Icon name="flag" /><span>{t('flags.empty', { first: `${mod}1`, last: `${mod}0` })}</span></span>
   {/if}
   {#if onflag}
     <button type="button" class="add" title={t('flags.add.hint')} onclick={onflag}
@@ -142,7 +140,6 @@
   .tab:hover .x, .tab:focus-within .x { display: inline-flex; }
   .tab:hover .dot, .tab:focus-within .dot { display: none; }
   .x:hover { background: var(--tint-active); color: var(--text-primary); }
-  .empty { display: flex; align-items: center; gap: 8px; padding: 4px 8px; color: var(--text-muted); font-size: var(--text-small); }
   .add { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; color: var(--text-secondary); font: var(--text-small) var(--font-family); padding: 6px 8px; border-radius: var(--radius-sm); cursor: pointer; flex: none; white-space: nowrap; }
   .add:hover { background: var(--tint-hover); color: var(--text-primary); }
   .add .kbd { font-size: var(--text-meta); }

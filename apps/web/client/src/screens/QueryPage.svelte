@@ -28,7 +28,7 @@
   import { clock, when as whenIn } from '../lib/moment.js';
   import { dayOf, describe, formatDay, isFunction, kindOf, lineOf, namesOf } from '../lib/parameters.js';
   import type { Lens, LensSuggestions as Found, Missing as Lost, NewQuery, Page, Parameter, Preflight, Problem, Query, QueryClient, Run, Warning } from '../lib/query.js';
-  import { lensPath, NEW_QUERY, newLensPath, queryPath, resourcePath } from '../lib/routes.js';
+  import { lensPath, newLensPath, resourcePath } from '../lib/routes.js';
   import NewSetSheet from './NewSetSheet.svelte';
   import NotFound from './NotFound.svelte';
   import FieldExplain from './FieldExplain.svelte';
@@ -37,6 +37,7 @@
   import { digitOf, modLabel, type QueryStatus } from '../lib/flags.js';
   import type { QuickRow } from '../lib/quick.js';
   import ParameterWindow from './ParameterWindow.svelte';
+  import OutsideTableWindow from './OutsideTableWindow.svelte';
   import ResourceSummaryWindow, { type SummaryData } from './ResourceSummaryWindow.svelte';
   import QueryHistory from './QueryHistory.svelte';
   import QueryParameters, { type Missing as MissingParameter } from './QueryParameters.svelte';
@@ -229,6 +230,8 @@
   let parameterWindow = $state<{ key: number; parameter: Parameter | null; defines: MissingParameter | null } | null>(null);
   /** What a double-click in the SQL opened (DEC-UX-221): the Summary of a Resource, or the descriptions of a field. */
   let summaryWindow = $state<TableSuggestion | null>(null);
+  /** A table outside Data Hub double-clicked in the SQL, by a power user (FR-SR-62). */
+  let outsideWindow = $state<TableSuggestion | null>(null);
   let fieldExplained = $state<{ fields: Suggestion[]; at: At } | null>(null);
   /** The word under the cursor that a double-click explains: "Show info" in the quick window opens it (DEC-UX-238). */
   let atCursor = $state<AtCursor | null>(null);
@@ -275,6 +278,7 @@
     preview = null;
     parameterWindow = null;
     summaryWindow = null;
+    outsideWindow = null;
     fieldExplained = null;
     newSet = null;
     finding = false;
@@ -527,7 +531,8 @@
     if (atCursor && !preview) {
       const word = atCursor;
       const about = { parameter: 'quick.query.info.parameter', table: 'quick.query.info.table', field: 'quick.query.info.field' } as const;
-      rows.push(command('info', 'info', t('quick.query.info'), () => editor?.explainAtCursor(), { meta: t(about[word.kind], { name: word.name }), words: t('quick.query.info.words') }));
+      const meta = t(word.kind === 'table' && word.outside ? 'quick.query.info.outside' : about[word.kind], { name: word.name });
+      rows.push(command('info', 'info', t('quick.query.info'), () => editor?.explainAtCursor(), { meta, words: t('quick.query.info.words') }));
     }
     if (writes) {
       rows.push(runCommand(found, command));
@@ -765,9 +770,16 @@
       const parameter = parameters.find((candidate) => namesOf(candidate).includes(what.name));
       if (parameter) openParameter(parameter);
     } else if (what.kind === 'table') {
-      if (summaryOf) summaryWindow = what.table;
+      // A table outside Data Hub has no Summary: what dbt and BigQuery know of it (FR-SR-62).
+      if (what.table.outside) {
+        summaryWindow = null;
+        outsideWindow = what.table;
+      } else if (summaryOf) {
+        outsideWindow = null;
+        summaryWindow = what.table;
+      }
     } else {
-      const fields = suggestions.filter((field) => field.name.toLowerCase() === what.name.toLowerCase());
+      const fields = [...suggestions, ...outsideFields].filter((field) => field.name.toLowerCase() === what.name.toLowerCase());
       if (fields.length > 0) fieldExplained = { fields, at: what.at };
     }
   }
@@ -871,7 +883,7 @@
   const tables: TableSuggestion[] = $derived.by(() => {
     if (!query) return [];
     const own = query.resources.flatMap((resource) => (resource.visible ? [{ id: resource.id, name: resource.displayName, fullName: resource.fullName ?? resource.key }] : []));
-    if (!query.mine || query.resources.length >= 10) return own;
+    if (!query.mine || query.resources.length >= 10) return [...own, ...outsideTables];
     const taken = new Set(query.resources.map((resource) => resource.id));
     const others = (collections ?? [])
       .flatMap((collection) => collection.resources)
@@ -882,8 +894,24 @@
         return true;
       })
       .map((item) => ({ id: item.id, name: item.displayName, fullName: item.key, other: true }));
-    return [...own, ...others];
+    return [...own, ...others, ...outsideTables];
   });
+  /** The tables outside Data Hub the query reads: a double-click explains them, the editor never suggests them (FR-SR-62). */
+  const outsideTables: TableSuggestion[] = $derived(known.map((table) => ({ id: table.key, name: table.name, fullName: table.fullName, outside: true })));
+  /** Their columns from dbt, which a double-click explains as it does a field of a Resource, without a Business Description. */
+  const outsideFields: Suggestion[] = $derived(
+    known.flatMap((table) =>
+      (table.columns ?? []).map((column) => ({
+        name: column.name,
+        type: column.dataType,
+        resource: table.name,
+        role: table.partition?.field === column.name ? { kind: 'partition' as const } : null,
+        description: column.description,
+        businessDescription: '',
+        outside: true,
+      })),
+    ),
+  );
 
   /** Each problem once: an @name is named once, however often it is in the SQL. */
   const once = <T extends Problem | Warning>(notes: readonly T[]): T[] =>
@@ -946,7 +974,6 @@
 {#if query === null}
   <NotFound />
 {:else if query}
-  {@const from = query.startedFrom}
   <!-- The page fills the height of the screen; the query and the result each scroll on their own (DEC-UX-144). -->
   <div class="page">
   <header class="head">
@@ -964,21 +991,14 @@
         </form>
       {:else if query.mine}
         {@const start = () => query && ((renaming = { name: query.name, question: query.question }), (renameFailed = false))}
-        <h1 class="page-title"><button type="button" class="in-place" title={t('query.rename')} onclick={start}>{query.name}</button></h1>
+        <!-- On one line, ending in … when longer; the whole name on a hover (DEC-UX-251). -->
+        <h1 class="page-title one-line"><button type="button" class="in-place" title={`${query.name}\n${t('query.rename')}`} onclick={start}>{query.name}</button></h1>
         {#if query.question}<p class="question"><button type="button" class="in-place" title={t('query.rename')} onclick={start}>{query.question}</button></p>{/if}
       {:else}
-        <h1 class="page-title">{query.name}</h1>
+        <h1 class="page-title one-line" title={query.name}>{query.name}</h1>
         {#if query.question}<p class="question">{query.question}</p>{/if}
       {/if}
-      {#if from}
-        <p class="meta origin">
-          <Icon name="git-branch" /><span
-            >{#each tParts(from.afterRun === null ? 'query.startedFrom' : 'query.startedFrom.after', { run: from.afterRun ?? 0 }, { name: from.name }) as part, index (index)}{#if 'name' in part}<a
-                  href={queryPath(from.id)}>{part.name}</a
-                >{:else}{part.text}{/if}{/each}</span
-          >
-        </p>
-      {/if}
+      <!-- Where it started from is in its History, not here (DEC-UX-250). -->
       {#if query.lens}
         {@const lens = query.lens}
         <!-- A query used as a Lens says so, with a link to it (DEC-LE-03). -->
@@ -1018,10 +1038,8 @@
           <button type="button" aria-pressed={layout === option} aria-label={name} title={name} onclick={() => onlayout?.(option)}><Icon name={icon} /></button>
         {/each}
       </span>
-      <Button variant="outline" href={NEW_QUERY}><Icon name="plus-circle-fill" />{t('query.new')}</Button>
-      <Button variant="outline" disabled={hiding} title={t(hidden ? 'query.unhide.hint' : 'query.hide.hint')} onclick={toggleHidden}
-        ><Icon name={hidden ? 'eye' : 'eye-slash-fill'} />{t(hidden ? 'query.page.unhide' : 'query.page.hide')}</Button
-      >
+      <!-- No New query here: the panel has it, and the quick window (DEC-UX-252). -->
+      <!-- No Hide here: the eye in the panel and the quick window hide a query (DEC-UX-246). -->
       {#if query.mine && query.kind === 'query' && query.lens}
         <!-- A query used as a Lens overwrites it, after its size check (DEC-UX-77); greyed, it says why (DEC-UX-232). -->
         {#if noLens && query.lens.state !== 'waiting'}
@@ -1104,15 +1122,9 @@
         {/each}
         {#each known as table (table.key)}
           <!-- A table outside Data Hub: quiet, dashed, without Level, Owner or Publication (DEC-UX-220). -->
-          <span class="chip known" title={t('query.known.title')}><Icon name="cube" /><span class="mono">{table.name}</span><span class="meta">· {t('query.known', { layer: table.layer })}</span></span>
+          <!-- Only its name; its layer and that it is no Resource on a hover (DEC-UX-243). -->
+          <span class="chip known" title={t('query.known.title', { layer: table.layer })}><Icon name="cube" /><span class="mono">{table.name}</span></span>
         {/each}
-        {#if query.mine && !preview && query.resources.length < 10}
-          <button type="button" class="add" onclick={() => (newSet = { mode: 'add', resource: null })}><Icon name="plus" />{t('query.resources.add')}</button>
-        {/if}
-        {#if query.mine && !preview && query.kind === 'query' && findTables}
-          <!-- A power user also finds tables Data Hub knows outside its Resources (DEC-UX-224). -->
-          <button type="button" class="add" title={t('find.button.hint')} onclick={() => (finding = true)}><Icon name="magnifying-glass" />{t('find.button')}</button>
-        {/if}
         {#each outside as table (table.name)}
           <span class="chip outside">
             <Icon name="warning-fill" />{t('query.problem.outside', { name: table.name })}
@@ -1123,11 +1135,21 @@
           </span>
         {/each}
       </span>
+      <!-- On one line: the chips scroll sideways, these stay in view, as icons with their name on a hover (DEC-UX-249). -->
+      {#if query.mine && !preview && query.resources.length < 10}
+        <button type="button" class="add" aria-label={t('query.resources.add')} title={t('query.resources.add')} onclick={() => (newSet = { mode: 'add', resource: null })}><Icon name="plus" /></button>
+      {/if}
+      {#if query.mine && !preview && query.kind === 'query' && findTables}
+        <!-- A power user also finds tables Data Hub knows outside its Resources (DEC-UX-224). -->
+        <button type="button" class="add" aria-label={t('find.button')} title={`${t('find.button')}\n${t('find.button.hint')}`} onclick={() => (finding = true)}><Icon name="magnifying-glass" /></button>
+      {/if}
       <!-- A query used as a Lens already is one (DEC-UX-77). -->
       {#if !query.lens && query.kind === 'query'}
-        <Button variant="quiet" disabled={!lensesOn} title={t('lenses.sheet.hint')} onclick={() => (lensesOpen = true)}
-          ><Icon name="aperture" />{t('query.lensesOn', { count: lensesOn ? lensesOn.exact.length + lensesOn.more.length : 0 })}</Button
-        >
+        <span class="end">
+          <Button variant="quiet" disabled={!lensesOn} title={t('lenses.sheet.hint')} onclick={() => (lensesOpen = true)}
+            ><Icon name="aperture" />{t('query.lensesOn', { count: lensesOn ? lensesOn.exact.length + lensesOn.more.length : 0 })}</Button
+          >
+        </span>
       {/if}
     </div>
 
@@ -1138,11 +1160,8 @@
         <button type="button" class="toggle" aria-expanded={boxOpen} aria-label={t(boxOpen ? 'editor.fold' : 'editor.unfold')} onclick={() => (boxOpen = !boxOpen)}><Icon name="caret-down" /></button>
         <span class="label">BigQuery SQL</span>
         {#if !boxOpen}<span class="meta">{summary}</span>{/if}
+        <!-- Fold all and Format the SQL are in the quick window, not here (DEC-UX-248). -->
         <span class="grow"></span>
-        {#if boxOpen && query.mine && !preview}
-          <Button variant="outline" onclick={() => editor?.foldAll()}>{t('query.foldAll')}</Button>
-          <Button variant="outline" title="Shift+Alt+F" onclick={() => editor?.formatSql()}>{t('query.format')}</Button>
-        {/if}
       </div>
       <div class="sql" hidden={!boxOpen}>
         {#if preview}
@@ -1156,6 +1175,7 @@
             {suggestions}
             parameters={parameterSuggestions}
             {tables}
+            {outsideFields}
             onnewtable={query.mine && query.resources.length < 10 ? () => (newSet = { mode: 'add', resource: null }) : undefined}
             onothertable={(table) => (newSet = { mode: 'add', resource: table.id })}
             {marks}
@@ -1361,6 +1381,11 @@
       <ResourceSummaryWindow table={summaryWindow} load={summaryOf} onclose={() => (summaryWindow = null)} />
     {/key}
   {/if}
+  {#if outsideWindow}
+    {#key outsideWindow.id}
+      <OutsideTableWindow table={outsideWindow} load={(key) => client.outsideTable(key)} onclose={() => (outsideWindow = null)} />
+    {/key}
+  {/if}
   {#if fieldExplained}
     <FieldExplain fields={fieldExplained.fields} at={fieldExplained.at} onclose={() => (fieldExplained = null)} />
   {/if}
@@ -1466,6 +1491,7 @@
   .rename-failed { font-size: var(--text-small); color: var(--signal-urgent); }
   .origin { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; }
   .origin a { color: var(--text-secondary); }
+  .one-line, .one-line .in-place { display: block; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
   /* Why the button is greyed, on a hover or on focus (DEC-UX-232) */
   .kbd { font-size: var(--text-meta); background: var(--card); border-radius: var(--radius-mark); padding: 1px 5px; }
@@ -1513,10 +1539,12 @@
   .sheet-over { display: block; margin: 0 0 2px; }
   .sheet-intro { display: block; line-height: 1.5; margin: 8px 0 0; }
   .sheet-lenses { flex: 1; overflow: auto; margin: 4px -4px 0; padding: 0 4px; }
-  .scope { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px; padding: 2px 2px 0; }
+  .scope { display: flex; align-items: center; gap: 8px; padding: 2px 2px 0; }
   .scope > .label { flex: none; line-height: 26px; margin: 0; }
-  /* In a narrow query, next to its result, the Lenses on its Resources move to a line of their own (DEC-UX-143). */
-  .chips { flex: 1 1 260px; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  /* One line: what does not fit scrolls sideways (DEC-UX-249). */
+  .chips { flex: 0 1 auto; min-width: 0; display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: thin; }
+  .chips > * { flex: none; }
+  .scope > .end { margin-left: auto; flex: none; }
   .chip { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; font-size: var(--text-meta); color: var(--text-primary); background: var(--surface-sub); padding: 4px 6px 4px 10px; border-radius: var(--radius-pill); }
   .chip > a, .chip > span { display: inline-flex; align-items: center; gap: 5px; color: inherit; text-decoration: none; padding-right: 4px; }
   .chip:hover { background: var(--tint-active); }
@@ -1528,7 +1556,8 @@
   .chip.outside .text-link { color: var(--signal-warn); font-weight: var(--weight-medium); }
   .x { width: 20px; height: 20px; border: 0; border-radius: 50%; background: none; color: var(--text-muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 11px; }
   .x:hover { background: var(--tint-active); color: var(--text-primary); }
-  .add { display: inline-flex; align-items: center; gap: 5px; font: var(--text-meta) var(--font-family); color: var(--text-secondary); background: none; border: 1px dashed var(--tint-active); border-radius: var(--radius-pill); padding: 4px 10px; cursor: pointer; }
+  .add { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; box-sizing: border-box; font-size: 13px; color: var(--text-secondary); background: none; border: 1px dashed var(--tint-active); border-radius: 50%; cursor: pointer; }
+  .add:focus-visible { outline: 2px solid var(--text-secondary); outline-offset: 2px; }
   .add:hover { color: var(--text-primary); }
   .box { border-radius: var(--radius-lg); background: var(--surface-sub); padding: 10px 14px 14px; }
   .box-head { display: flex; align-items: center; gap: 8px; min-height: 34px; margin-bottom: 6px; flex-wrap: wrap; }

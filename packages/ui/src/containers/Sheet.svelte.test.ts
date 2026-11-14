@@ -14,6 +14,12 @@ describe('a sheet (Sheet, Lay over)', () => {
     expect(screen.getByText('2 selected')).toBeTruthy();
   });
 
+  it('puts the focus in its search when it opens to find something (DEC-UX-245)', () => {
+    const search = createRawSnippet(() => ({ render: () => '<label>Search <input type="search" data-autofocus></label>' }));
+    render(Sheet, { title: 'Find a table', onclose: () => {}, children: search, foot });
+    expect(document.activeElement).toBe(screen.getByRole('searchbox', { name: 'Search' }));
+  });
+
   it('closes on Close, on Escape and on a click beside it', async () => {
     const onclose = vi.fn();
     render(Sheet, { title: 'Add', onclose, children, foot });

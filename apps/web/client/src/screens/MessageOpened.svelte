@@ -76,6 +76,10 @@
   );
 
   let replyBox = $state<HTMLElement | undefined>();
+  /** Its thread, which Close and Reopen in the quick window act on as their buttons do (DEC-UX-255). */
+  let thread = $state<{ startClose: () => void; reopen: () => Promise<void> } | undefined>();
+  const closable = $derived(message.mayClose && message.state === 'open');
+  const reopenable = $derived(message.mayClose && message.state === 'closed');
   let decisionBox = $state<HTMLElement | undefined>();
   /**
    * In the quick window (DEC-UX-240): Reply puts the cursor in the reply; on a Request that waits, Accept puts the focus
@@ -85,6 +89,8 @@
   useScreenCommands(() => {
     const rows: QuickRow[] = [];
     if (repliable) rows.push(command('message:reply', 'arrow-bend-up-left-fill', t('messages.reply'), () => replyBox?.querySelector('textarea')?.focus(), { meta: t('quick.message.reply.meta'), words: t('quick.message.reply.words') }));
+    if (closable) rows.push(command('message:close', 'minus-circle', t('quick.message.close'), () => thread?.startClose(), { meta: t('quick.message.close.meta'), words: t('quick.message.close.words') }));
+    if (reopenable) rows.push(command('message:close', 'arrow-counter-clockwise', t('quick.message.reopen'), () => void thread?.reopen(), { words: t('quick.message.close.words') }));
     if (waiting && decides) {
       rows.push(command('message:accept', 'check-fill', label('Accept'), () => decisionBox?.querySelector<HTMLButtonElement>('.buttons button:last-child')?.focus(), { meta: t('quick.message.accept.meta'), words: t('quick.message.decide.words') }));
       rows.push(command('message:refuse', 'x', label('Refuse'), () => decisionBox?.querySelector('textarea')?.focus(), { meta: t('quick.message.refuse.meta'), words: t('quick.message.decide.words') }));
@@ -94,6 +100,7 @@
 </script>
 
 <MessageThread
+  bind:this={thread}
   {message}
   onclose={async (text) => {
     try {

@@ -441,6 +441,8 @@ A User whose Permission group has `queries.outside` ([DEC-PL-09](12-permissions-
 
 *Note of 2026-11-13, on building it: registry tells query which tables it knows, with the token of the User ([TR-SR-27](../technical/04-stacks-and-resources.md#tr-sr-27)).*
 
+*Note of 2026-11-14: the chip shows only the name of the table, its layer and that it is no Resource on a hover ([DEC-UX-243](../../design/principles.md#dec-ux-243)); a double-click on its name shows what dbt and BigQuery know of it ([FR-SR-62](#fr-sr-62)).*
+
 <a id="fr-sr-57"></a>
 ### FR-SR-57 · A double-click in the SQL explains what a word names
 
@@ -451,6 +453,8 @@ In the editor of Query, a double-click on a word of the SQL selects it, as in an
 **Makes easy:** reading what a Resource is, how to query it and what a field means, at the moment of writing SQL on it, without leaving the query. **Makes hard:** writing SQL on a field or a Resource without knowing what it means, and losing the query to look it up.
 
 *Note of 2026-11-13, on building it: the editor finds these words in the syntax of the SQL, and the window of a Resource reads its Summary as its page does ([TR-SR-28](../technical/04-stacks-and-resources.md#tr-sr-28)).*
+
+*Note of 2026-11-14: for a power user, the name of a table outside Data Hub and its columns are explained too ([FR-SR-62](#fr-sr-62)).*
 
 <a id="fr-sr-58"></a>
 ### FR-SR-58 · A power user finds a table outside Data Hub
@@ -481,6 +485,8 @@ A User flags a query, theirs or one they may read, to keep it in a row on top of
 
 **Makes easy:** working on several questions at once, letting a long run go on in one query while writing another, and coming back to each as it was. **Makes hard:** losing a query among the many in the panel, and losing what was typed or run by going to another query.
 
+*Note of 2026-11-14: with no query flagged the row is not shown, and the quick window flags the first ([DEC-UX-253](../../design/principles.md#dec-ux-253)).*
+
 <a id="fr-sr-61"></a>
 ### FR-SR-61 · The quick window does the commands of a query, and goes anywhere
 
@@ -489,6 +495,19 @@ A User flags a query, theirs or one they may read, to keep it in a row on top of
 Cmd+Shift+P or Cmd+K, Ctrl on Windows and Linux, opens the quick window anywhere in Data Hub ([OP-UX-87](../../design/principles.md#op-ux-87)). On a query it lists first what can be done to it now, a command for every button of the page that does something to it ([DEC-UX-239](../../design/principles.md#dec-ux-239)): Show info, when the cursor in the SQL is on a field, a Parameter or the name of a Resource, which opens what a double-click on it opens ([DEC-UX-238](../../design/principles.md#dec-ux-238)); Run, with what it reads, as Cmd+Enter does: above 100 MB it puts the focus on the button that approves it, and above 1 GB it opens the Request to the Data Team; Add the partition filter when the Pre-flight misses one; Make it a Lens or Update the Lens; Flag or Unflag; Rename this query; Fold all; Format the SQL; Add a Parameter; Add a Resource; Remove a Resource, which starts a new query without it; Add a table for a User with `queries.outside`; New query from this one; Lenses on these Resources; Show the history or the result; Copy the Query ID; Hide or Show again; and the view; then the flagged queries and Go to. Every other screen lists its commands first in the same way, from the buttons, tabs and parts it shows, such as Query this Resource, Show its Columns or Add a Lens to a Collection ([DEC-UX-240](../../design/principles.md#dec-ux-240)). Typed, it searches those and the Resources, Collections, Lenses, the User's own queries and the Learning Cards that the User may see ([OP-UX-88](../../design/principles.md#op-ux-88)). Empty, it lists first what the User did from it in this session; Cmd+1 to Cmd+9 highlight the first nine rows, and Enter does the one highlighted ([DEC-UX-242](../../design/principles.md#dec-ux-242)). What the User may never do is not listed; what they cannot do right now is greyed, with why.
 
 **Makes easy:** doing what a query needs from the keyboard, and reaching a Resource, Lens or query by a few letters of its name. **Makes hard:** hunting through panels and pages for a button, approving a large run without pressing the button that says what it reads, and finding through the quick window anything the User may not see.
+
+*Note of 2026-11-14: the commands of Data Hub also hold Hide or Show the panel, and on Query Refresh the queries ([DEC-UX-254](../../design/principles.md#dec-ux-254)); Messages has its views, Mark all as read, Close and Reopen ([DEC-UX-255](../../design/principles.md#dec-ux-255)); and going somewhere puts the cursor in the search of the screen that opens ([DEC-UX-256](../../design/principles.md#dec-ux-256)).*
+
+<a id="fr-sr-62"></a>
+### FR-SR-62 · A power user reads what Data Hub knows of a table outside it
+
+**Status:** Implemented · **Source:** Max, 2026-11-14 ([DEC-UX-247](../../design/principles.md#dec-ux-247), [OP-UX-89](../../design/principles.md#op-ux-89)) · **Screens:** [query](../../design/screens/query.html)
+
+In the SQL of a query, a User with `queries.outside` ([FR-SR-56](#fr-sr-56)) double-clicks the name of a table outside Data Hub that the query reads, or asks Show info with the cursor on it, and sees what Data Hub knows of it, without leaving the query: its description, layer and project from dbt; from BigQuery at that moment, whether it is a table, a view, a materialized view or an external table, how it is partitioned and whether BigQuery requires a filter on its partition column, its cluster columns, its size, rows, partitions and last change, and its full name to copy; and its columns, partition and cluster columns first, nested fields under their parent, each with its type from BigQuery and its description from dbt, or from BigQuery where dbt has none. A double-click on a field of such a table shows its type and description at the word. When BigQuery does not answer, the User sees what dbt knew at its last run, said as such. Only a table Data Hub knows, and only for such a User; Data Hub reads its metadata, never its rows, and BigQuery bills nothing for it. Such a table has no page in Data Hub, no Owner and no Level ([DEC-UX-220](../../design/principles.md#dec-ux-220)).
+
+**Makes easy:** a power user knowing how to read a staging or source table, its partition column first, what its columns hold and whether it is a view over something larger, at the moment of writing SQL on it. **Makes hard:** a full scan of a table whose partitioning nobody looked up, guessing at what a raw column means, and learning through Data Hub about tables of projects it does not follow.
+
+*Note of 2026-11-14, on building it: query reads it from registry and from BigQuery by its metadata ([TR-SR-31](../technical/04-stacks-and-resources.md#tr-sr-31)).*
 
 <a id="fr-sr-35"></a>
 ### FR-SR-35 · A new Resource waits for a Collection

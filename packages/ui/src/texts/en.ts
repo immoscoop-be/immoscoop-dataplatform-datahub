@@ -63,6 +63,7 @@ export default {
   'editor.lines': '⋯ {count} lines',
   'editor.explain.parameter': 'Double-click to open this Parameter',
   'editor.explain.table': 'Double-click for its Summary',
+  'editor.explain.outside': 'Double-click for what dbt and BigQuery know of it',
   'editor.explain.field': 'Double-click for its descriptions',
   'editor.fold': 'Fold',
   'editor.unfold': 'Unfold',

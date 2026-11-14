@@ -83,7 +83,12 @@
   const closable = $derived(message.mayClose && message.state === 'open' && onclose !== undefined);
   const reopenable = $derived(message.mayClose && message.state === 'closed' && onreopen !== undefined);
 
-  async function reopen(): Promise<void> {
+  /** Close, as its button: the field for why opens, with the cursor in it; the quick window does it too (DEC-UX-255). */
+  export function startClose(): void {
+    if (closable) closing = true;
+  }
+  /** Reopen, as its button. */
+  export async function reopen(): Promise<void> {
     if (!onreopen) return;
     reopening = true;
     reopenFailed = !(await onreopen().catch(() => false));
