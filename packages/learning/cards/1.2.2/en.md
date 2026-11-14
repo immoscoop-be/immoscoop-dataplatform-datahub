@@ -1,9 +1,9 @@
 ---
 number: 1.2.2
-status: draft
+status: reviewed
 minutes: 5
 added: 2026-10-29
-changed: 2026-10-29
+changed: 2026-11-14
 gain: You answer "why don't the weeks add up to the month?" yourself, in a minute, instead of asking the Data Team.
 ---
 
@@ -14,11 +14,11 @@ gain: You answer "why don't the weeks add up to the month?" yourself, in a minut
 
 You will hear this question again, every time a month is put next to its weeks or its days. Both figures are right, and a dashboard that adds the days up for you gets it wrong without telling you.
 
-Promise: why the weeks of a unique count never add up to the month.
+Promise: why you never add up the weeks of a unique count to get the month.
 
 # Core idea
 
-A **unique count** counts everyone once per period, so the counts of shorter periods never add up to the count of the longer one.
+A **unique count** counts everyone once per period, so you never add up the counts of shorter periods to get the count of the longer one.
 
 ## Like a guest list
 
@@ -50,7 +50,7 @@ Someone who comes on Friday and on Saturday is on the list of both evenings, but
 
 Look at: the two bars of the same week: the days added up, and the visitors counted over the whole week.
 
-You see: 3,700 more in the first bar. Those are people who came on more than one day: adding the days up counts them again, so the week is lower, and right.
+You see: 3,700 more in the first bar. Those are the extra days of people who came on more than one day: adding the days up counts each of them again for every extra day, so the week is lower, and right.
 
 # Check your understanding
 
@@ -88,7 +88,7 @@ Why: "distinct" and "unique" mean that each one counts once. Sessions and page v
 
 # You can now
 
-recognise a unique count by its label, and explain why its days, weeks or months never add up.
+recognise a unique count by its label, and explain why you do not add up its days, weeks or months.
 
 ## Where to next
 

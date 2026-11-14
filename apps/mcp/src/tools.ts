@@ -19,6 +19,8 @@ export interface ServerOptions {
   viewHtml: string;
   /** The address of /mcp as Users enter it in Claude, from which Claude derives the origin of the MCP App. */
   serverUrl: string;
+  /** uat or prod (DATAHUB_ENVIRONMENT): a Learning Card still in draft is offered in uat only (DEC-LR-25). */
+  environment?: string;
 }
 
 /** The first page of Data Hub, where a User goes for what Claude may not do for them. */
@@ -97,7 +99,7 @@ export function createMcpServer(user: AccessTokenClaims, options: ServerOptions)
       annotations: READ,
     },
     async ({ term }) => {
-      const found = await explain(term);
+      const found = await explain(term, 5, options.environment);
       return answer(
         { cards: found.map(({ score: _score, ...card }) => ({ ...card, page: options.hub.page(pages.learningCard(card.number)) })) },
         found.length === 0 ? 'No written Learning Card explains it yet: answer from the concepts in your instructions, and say there is no card for it.' : undefined,

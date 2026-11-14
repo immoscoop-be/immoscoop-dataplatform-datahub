@@ -7,8 +7,8 @@ The input of the card as the interview gave it: what the author said, what Claud
 | Card | K5.4 When a figure is final (Compass, section K5 Data Hub); a new topic, added to `plan.json` with this card |
 | Author | Max Passenier |
 | Interviewed | 2026-11-12, by voice in Claude chat, along the learning-card recipe; written into the card in a Claude Code session the same day |
-| Fact check | To name |
-| Test reader | To name |
+| Fact check | Claude, an independent check against the requirements and the code on 2026-11-14, reviewed by Max |
+| Test reader | To name, in prod (DEC-LR-38) |
 
 ## 1. The reader's question
 
@@ -78,12 +78,14 @@ See it draws the third rung as a `movingWindowAverage` with a window of 1 (the d
 
 The author brought the reader's remark, the case of Google Ads, the aha, the elections and the ban. Claude brought "ripening time", the details of the election night (municipalities, big cities) and the first question. When writing the card Claude brought: the gain, which takes the reader's "odd" and the author's "data was still coming in" of question 1; the term **Stability** and where to look for it today (Watch out, the pitfalls its Owner writes, or its Owner); the reading that the paid sessions of the last seven days look low; the example figures of See it; and the three questions of Check your understanding, with their wrong answers. Those wrong answers are Claude's: "Raise a Signal" stands for the author's ban; "the real trend, one day behind" and "late data is counted twice" in the spreadsheet question, and the two readings of Reliable since in the third question, are misconceptions Claude expects, not heard. The third question comes from the interview itself, where Claude first called the delay "stability, or reliable since". The author still checks them at the quality gate.
 
+The fact check, by an independent pass of Claude on 2026-11-14, read the card against the requirements, the Message Catalogue and the code. Nothing to change.
+
 ## To do
 
 - [ ] The term. Checked while writing the card: `reliableSince`, shown as Reliable since and set through the attribute "available since" (FR-RC-13, Implemented), is a start date, since when the data of a Resource is reliable, not a delay; the card says so in its third question. The delay is **Stability** in `docs/definitions.md` (FR-RC-06, Proposed): "whether the data of a Resource is still settling or can change by nature, and from when it is final, for example stable = D-3". Data Hub has no field for it yet: the catalogue refuses one, and Stability comes in with monitoring (DEC-CM-15, FR-CM-11). Its term is still open (OP-RC-04). The card bolds Stability and sends the reader to Watch out on the Summary, where the Owner and the Data Team write the pitfalls (DEC-RC-17, FR-RC-23; the designs show "The current week is incomplete" there), or to the Owner. When OP-RC-04 chooses another term, or the field comes to the Resource Card, update the rule, "At Immoscoop", the questions, You can now and Apply, in both languages
 - [ ] Ask the author for the figures (paid sessions on day 1 against day 8), for See it; until then they are example figures
-- [ ] Fact check: confirm that the late data of Google Ads moves sessions into paid, so that the paid sessions of the last seven days look low first, and not the other way round
 - [ ] Possible second card: data that can change by its nature (an account name), the other half of Stability
 - [x] Add K5.4 to `plan.json`, with a note: done in this branch
 - [ ] Data Team: keep K5.4 in K5, or place it in 1.4 Reading charts: time or 1.8 Reading charts: what is missing
 - [ ] Where it is met, as `links` gave it on 2026-11-12: Claude finds the card through `explain` on its title, on Stability, on "data still coming in" and on "final", but misses it on "the numbers are odd": the card says figure, as the plan does, and the search also counts "the" and "are". No word was added for the search. No Message or marker names this card yet. Proposals: a marker on Watch out and on Reliable since in the Summary of a Resource, and on writing a Signal, whose placeholder asks "What seems odd about the data of this Resource?" (to design first, DEC-LR-22); and offer K5.4 under Where to next of K5.2, which has three choices today (the Data Team chooses what it replaces)
+- [ ] Test reader: a colleague outside data reads the card in prod and says in their own words what they learned (DEC-LR-38)

@@ -1,4 +1,4 @@
-import { type Card, type ChartRequest, LEVELS, type LevelId, MARKERS, type MarkerPlace, parseCard, SECTIONS, type Thinking, type Topic, TOPICS, topicOf } from '@datahub/learning';
+import { type Card, type ChartRequest, LEVELS, shownIn, type LevelId, MARKERS, type MarkerPlace, parseCard, SECTIONS, type Thinking, type Topic, TOPICS, topicOf } from '@datahub/learning';
 import { createCall } from './api.js';
 import type { Config } from './config.js';
 import type { Session } from './session.js';
@@ -59,7 +59,7 @@ for (const [path, source] of Object.entries(ENGLISH)) {
  * Every other topic of the plan is a card to be written.
  */
 export function writtenCards(environment: string | undefined): ReadonlyMap<string, Card> {
-  return environment === 'prod' ? new Map([...written].filter(([, card]) => card.status === 'reviewed')) : written;
+  return environment === 'prod' ? new Map([...written].filter(([, card]) => shownIn(environment, card))) : written;
 }
 
 const translated = new Map<string, Promise<Card | null>>();

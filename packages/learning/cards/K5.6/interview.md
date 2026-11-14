@@ -7,8 +7,8 @@ The input of the card as the interview gave it: what the author said, what Claud
 | Card | K5.6 What a query costs (Compass, section K5 Data Hub); a new topic, added to `plan.json` with a note in the same change |
 | Author | Max Passenier |
 | Interviewed | 2026-11-12, by voice in Claude chat, along the learning-card recipe; written with the learning-card skill the same day |
-| Fact check | To name |
-| Test reader | To name |
+| Fact check | Claude, an independent check against the requirements and the code on 2026-11-14, reviewed by Max |
+| Test reader | To name, in prod (DEC-LR-38) |
 
 ## 1. The reader's question
 
@@ -78,6 +78,8 @@ The first two rungs are pictures (Figma work); the card has no place for them ye
 
 The author brought the worry, the case of the raw event data and the aha. Claude brought the prepaid phone card, the ban and the first question, and the neighbours. Writing the card, Claude also brought: the quote in one colleague's voice and its role; the second sentence of the anchor; the rule that ties the aha to the Pre-flight; the facts of Data Hub behind "At Immoscoop", checked in the docs (the Pre-flight shows what a query reads, in MB or GB, not a price, FR-SR-36; up to 100 MB it runs, from 100 MB to 1 GB its User approves it, above 1 GB the Data Team accepts a Request first, DEC-SR-29 and FR-SR-37, as the default of every Permission group in `runs.ranges`, `packages/contracts/src/permissions.ts`, where a group can set other thresholds, or refuse above the second instead of a Request; the Pre-flight is a dry run that reads nothing and costs nothing; a pop-out on Run says what reads less; an accepted Request lets that User run that query, DEC-SR-36; the answer comes back in the Message Centre, DEC-UX-116); and the four questions of Check your understanding, with their wrong answers. Claude wrote "by default" wherever the card names a threshold, because the thresholds come from the Permission group of the reader.
 
+The fact check, by an independent pass of Claude on 2026-11-14, read the card against the requirements, the Message Catalogue and the code. Nothing to change.
+
 ## To do
 
 - [ ] Confirm the ban and the first question of question 5 with the author
@@ -88,9 +90,9 @@ The author brought the worry, the case of the raw event data and the aha. Claude
 - [ ] The weight of a Lens (light or heavy), proposed by Claude as a neighbour, is no topic and no longer a concept of Data Hub (DEC-UX-24): drop it, or ask the author what he meant
 - [ ] Put to the author: the second sentence of the anchor, "Until then, you just call.", is Claude's; and the phone card's balance runs down over many calls, while the Pre-flight weighs each run on its own and has a third zone the card does not carry. Does the anchor still hold, or does it need another sentence from the author?
 - [ ] Questions: the four questions and their wrong answers are Claude's. The author confirms that the wrong answers are misconceptions heard from colleagues (the cost only shows afterwards; ask the Data Team to be safe; a red button means you did something wrong; the bill comes later; every check costs a query)
-- [ ] Fact check: "reading costs money" in Why now, that what a query reads is what it costs at Immoscoop; the card gives no price, as the docs give none
 - [ ] Where it is met: no place in the web app links to the card yet (`links`, 2026-11-12). The Messages MSG-LEN-02 A Lens grew into large and MSG-LEN-03 A Lens grew into very large propose a card still to write, "What a query reads: partitions, the Pre-flight and its three ranges" (`SIZE_CARD` in `packages/contracts/src/messageCatalogue.ts`, nearest K2.3 BigQuery); once this card is reviewed, propose that they name K5.6, a change of the Message Catalogue. This card does not explain partitions or why a Lens waits for the Data Team: say so in that change, or leave those to K2.3
 - [ ] A marker ⓘ on the Pre-flight bar of Query and on the Run button of a Lens, listing this card: to design first (DEC-LR-22)
 - [ ] Offer this card under Where to next of K5.1, which has three choices today (Deeper 4.3.2, Next to it K3.4, Apply): the Data Team chooses what it replaces
 - [ ] `explain` misses the card on "throwing money out of the door" and ranks it fifth on "am I consuming too much data" (`links`, 2026-11-12): it counts every "the" and "out", so cards with long rules win. Not fixed in the card, as words are never added for the search; a note for whoever looks after `packages/learning/src/explain.ts`
 - [ ] Lens user, the default Permission group for new Users, does not make queries, so the Apply to Query does not open for them; they meet the Pre-flight in the Run button of a Lens. Decide whether the card or its Apply should say so
+- [ ] Test reader: a colleague outside data reads the card in prod and says in their own words what they learned (DEC-LR-38)

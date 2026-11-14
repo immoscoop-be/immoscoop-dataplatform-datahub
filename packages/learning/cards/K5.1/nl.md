@@ -1,11 +1,11 @@
 ---
 number: K5.1
-status: draft
+status: reviewed
 minutes: 5
 added: 2026-10-29
-changed: 2026-10-29
+changed: 2026-11-14
 gain: Je weet wat een Resource je vertelt, hoe ver je hem kan vertrouwen, en wie je erover vraagt.
-translatedFrom: e3e5d40f966c
+translatedFrom: 3f9f7b5bd750
 ---
 
 # Why now
@@ -27,7 +27,7 @@ De bibliotheek schrijft het boek niet, maar haar fiche zegt waar het boek over g
 
 ## Bijvoorbeeld
 
-Weekly lead volume zit in de Collection Credit leads, met het credit-team als Owner Unit: het aantal credit leads per week en per leadbron, op Level 4 · Explored. Een vraag erover gaat als bericht op zijn pagina naar het credit-team.
+Weekly lead volume zit in de Collection Credit leads, met het credit-team als Owner Unit: het aantal credit leads per week en per leadbron, op Level 3 · Confirmed. Een vraag erover gaat als bericht op zijn pagina naar het credit-team.
 
 # See it
 

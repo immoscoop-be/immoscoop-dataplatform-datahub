@@ -1,11 +1,11 @@
 ---
 number: 2.3.6
-status: draft
+status: reviewed
 minutes: 6
 added: 2026-10-29
-changed: 2026-10-29
+changed: 2026-11-14
 gain: Je ziet aan het model type van een Resource wat je mag optellen, en wat nooit.
-translatedFrom: 18ae05450c5e
+translatedFrom: d0e4a6e12de9
 ---
 
 # Why now
@@ -13,13 +13,13 @@ translatedFrom: 18ae05450c5e
 > Vorige week stonden er elke dag 52.000 panden online, dus 364.000 panden die week?
 > — Een collega, bij het maken van een slide
 
-Sommige tabellen mag je over de dagen optellen, andere nooit. Het verschil zit niet in de cijfers maar in wat één rij betekent, en elke Resource zegt het met zijn model type.
+Sommige tabellen mag je over de dagen optellen, andere nooit. Het verschil zit niet in de cijfers maar in wat één rij betekent, en een Resource zegt het met zijn model type, zodra de Data Admin er een koos.
 
 Promise: de vijf model types, en wat elk betekent voor tellen.
 
 # Core idea
 
-Het **model type** zegt wat één rij is, en daarmee wat je mag tellen: een `event` en een `fact` tel je op, een `state` tel je op een moment, een `dimension` beschrijft andere, en een `aggregate` tel je nooit opnieuw op.
+Het **model type** zegt wat één rij is, en daarmee wat je mag tellen: een `event` en een `fact` tel je op, een `state` tel je op een moment, een `dimension` beschrijft andere, en een `aggregate` bevat tellingen die al gemaakt zijn, waarvan je de sommen optelt en nooit de unieke tellingen.
 
 ## Zoals een winkel
 
@@ -56,7 +56,7 @@ Een `event` is één rij per iets dat gebeurde, op een moment, en verandert daar
 
 Look at: zeven staven van ongeveer 52.000, één per dag.
 
-You see: grotendeels dezelfde panden, elke dag opnieuw geteld. Panden online is een state: de week heeft ongeveer 52.000 panden online, niet zeven keer zoveel.
+You see: grotendeels dezelfde panden, elke dag opnieuw geteld. Panden online is een state: op elke dag van de week staan er ongeveer 52.000 panden online, niet zeven keer zoveel.
 
 # Check your understanding
 
@@ -84,7 +84,7 @@ Try it: [Open Collections](/collections)
 - [ ] Zijn aantal rijen
 - [ ] De naam van zijn dbt-project
 
-Why: elke Resource in een Collection noemt zijn model type, naast zijn grain, zodat je weet wat je mag tellen voor je hem opent in Query.
+Why: een Resource waarvan de Data Admin het model type koos, toont het op zijn overzicht, naast zijn grain, zodat je weet wat je mag tellen voor je hem opent in Query.
 
 # You can now
 

@@ -1,11 +1,11 @@
 ---
 number: 4.3.1
-status: draft
+status: reviewed
 minutes: 5
 added: 2026-10-29
-changed: 2026-10-29
+changed: 2026-11-14
 gain: Je wijzigt een definitie zonder het vertrouwen te verliezen van wie erop steunt.
-translatedFrom: 6688487d51f4
+translatedFrom: 977b7615460b
 ---
 
 # Why now
@@ -27,7 +27,7 @@ Toen het voetbal de buitenspelregel wijzigde, twijfelde niemand aan de uitslagen
 
 ## Bijvoorbeeld
 
-Vanaf 1 oktober telt een credit lead pas nadat de bezoeker hem bevestigde. De Owner wijzigt het in dbt, schrijft het in de beschrijving van het veld, verwittigt wie de Resource gebruikt, en de grafiek van het jaar toont een lijn op 1 oktober: "nieuwe definitie".
+Vanaf 1 oktober telt een credit lead pas nadat de bezoeker hem bevestigde. De Owner laat het Data Team het in dbt wijzigen, schrijft het in de Business Description van het veld, verwittigt wie de Resource gebruikt, en de grafiek van het jaar toont een lijn op 1 oktober: "nieuwe definitie".
 
 # See it
 
@@ -61,7 +61,7 @@ You see: ongeveer 160 leads per week minder vanaf de week waarin de nieuwe defin
 ## Je merkt dat de telling van actieve kantoren ook kantoren zonder enig pand meetelt. Hoe wijzig je het?
 
 - [ ] Het rechtzetten in het dashboard dat het toont
-- [x] De definitie wijzigen in dbt, de dag aankondigen waarop ze ingaat, en de breuk markeren
+- [x] De definitie in dbt laten wijzigen, de dag aankondigen waarop ze ingaat, en de breuk markeren
 - [ ] Wachten tot niemand het cijfer nog gebruikt
 
 Why: een definitie leeft op één plek. Ze daar wijzigen en wie erop steunt verwittigen, houdt hun vertrouwen; een stille correctie in één dashboard maakt twee waarheden.

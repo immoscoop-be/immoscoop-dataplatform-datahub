@@ -1,11 +1,11 @@
 ---
 number: K5.5
-status: draft
+status: reviewed
 minutes: 5
 added: 2026-11-12
-changed: 2026-11-12
+changed: 2026-11-14
 gain: Je zoekt het verschil tussen twee cijfers waar het begint: wanneer en uit welke data elk gemaakt is, en wie je erover vraagt.
-translatedFrom: ceaa64e40d43
+translatedFrom: 7e7751ab3501
 ---
 
 # Why now
@@ -19,7 +19,7 @@ Promise: hoe je vindt waar een cijfer vandaan komt, en wie je erover vraagt.
 
 # Core idea
 
-Voor je iemand vraagt een cijfer te verklaren, weet je wanneer en uit welke data het gemaakt is; in Data Hub leidt de **Query ID** onder het resultaat naar allebei.
+Voor je iemand vraagt een cijfer te verklaren, weet je wanneer en uit welke data het gemaakt is; in Data Hub noemt de **Query ID** onder het resultaat de run die allebei bewaart.
 
 ## Zoals een foto van een straat
 
@@ -27,7 +27,7 @@ Iemand toont je een foto van een straat en vraagt welke stad het is. Je bestudee
 
 ## Bij Immoscoop
 
-Een collega legt staafgrafieken van een printscreen naast een getal uit een mail, en vraagt het Data Team naar het verschil. Zonder te weten wanneer en uit welke data elk gemaakt is, ziet het Data Team het woord "de" en moet het raden in welke zin het stond. In Data Hub draagt elk resultaat zijn Query ID eronder, en die leidt naar wanneer de query liep, zijn SQL en de Resources die hij las. Een query hoort bij wie hem uitvoerde, dus vraag je het die collega; een Lens vind je in zijn Collection, met de Resources waarop hij gebouwd is, en elke Resource noemt haar Owner. Een cijfer zonder Query ID gaat terug naar wie het stuurde, met dezelfde vraag: wanneer, en uit welke data?
+Een collega legt staafgrafieken van een printscreen naast een getal uit een mail, en vraagt het Data Team naar het verschil. Zonder te weten wanneer en uit welke data elk gemaakt is, ziet het Data Team het woord "de" en moet het raden in welke zin het stond. In Data Hub draagt elk resultaat zijn Query ID eronder, en die noemt de run: wanneer de query liep, zijn SQL en de Resources die hij las. Een query hoort bij wie hem uitvoerde, dus vraag je het die collega; een Lens vind je in zijn Collection, met wie hem maakte en de Resources waarop hij gebouwd is. Een cijfer zonder Query ID gaat terug naar wie het stuurde, met dezelfde vraag: wanneer, en uit welke data?
 
 # Check your understanding
 
@@ -47,7 +47,7 @@ Why: twee cijfers verschillen om een reden die zit in waar ze vandaan komen: een
 
 Why: een Query ID benoemt één run van één query. Die zegt waar het cijfer vandaan komt, niet of het klopt, en dezelfde query op een andere dag kan een ander cijfer geven.
 
-## Een collega stuurt je een cijfer uit Data Hub met zijn Query ID. Wie kan je de query erachter tonen?
+## Een collega stuurt je een cijfer uit een eigen query, met zijn Query ID. Wie kan je de query erachter tonen?
 
 - [x] De collega die hem uitvoerde, want een query hoort bij wie hem uitvoerde
 - [ ] Iedereen: elke query in Data Hub is openbaar
@@ -60,10 +60,10 @@ Why: elke query is van zijn User, in diens paneel van Query, en Data Hub bewaart
 Try it: [Open Collections](/collections)
 
 - [ ] Het Data Team, dat elke Lens maakt
-- [x] De Owner van de Resources waarop hij gebouwd is
+- [x] Wie hem maakte, op zijn pagina vermeld, of zijn Owner Unit, met een vraag op de Lens
 - [ ] Niemand: een Lens heeft geen eigenaar
 
-Why: collega's in heel Immoscoop maken Lenses, en de pagina van een Lens noemt de Resources waarop hij gebouwd is, elk met de Owner die voor haar data instaat. Daar begint een vraag over zijn cijfers.
+Why: collega's in heel Immoscoop maken Lenses: de pagina van een Lens noemt wie hem maakte en de Resources waarop hij gebouwd is, en een vraag op de Lens gaat naar zijn Owner Unit. Daar begint een vraag over zijn cijfers.
 
 # You can now
 

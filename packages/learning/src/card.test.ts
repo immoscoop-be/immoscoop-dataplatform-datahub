@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CardError, parseCard, versionOf } from './card.js';
+import { CardError, parseCard, shownIn, versionOf } from './card.js';
 
 const CARD = `---
 number: 1.2.2
@@ -105,11 +105,19 @@ describe('a Learning Card as a file (DEC-LR-24)', () => {
     expect(card.questions).toEqual([]);
   });
 
+  it('takes a card about a screen without the metaphor of its Core idea (DEC-LR-36)', () => {
+    const card = parseCard(CARD.replace(/## Like a guest list\n\n.*\n\n/, ''));
+    expect(card.core.metaphor).toBeNull();
+    expect(card.core.example).toEqual({ title: 'For example', text: '4,000 people on Monday and 3,000 on Tuesday are at most 7,000 people.' });
+  });
+
   it.each([
     ['without its facts', CARD.replace(/^---\n/, ''), /starts with its facts/],
     ['a fact it does not know', CARD.replace('minutes: 5', 'minutes: 5\nscore: 10'), /"score" is no fact/],
     ['a wrong status', CARD.replace('status: draft', 'status: done'), /no valid status/],
     ['a step out of order', CARD.replace('# Core idea', '# Core-idea'), /no step/],
+    ['a Core idea with three parts', CARD.replace('## For example', '## Also\n\nMore.\n\n## For example'), /two parts/],
+    ['a Core idea without its example', CARD.replace(/## Like a guest list[\s\S]*?(?=# See it)/, ''), /two parts/],
     ['no promise', CARD.replace('Promise:', 'In this card:'), /Promise/],
     ['no right answer', CARD.replace('- [x] At least', '- [ ] At least'), /exactly one answer/],
     ['no why', CARD.replace('Why: whoever', 'Because whoever'), /"Why: …"/],
@@ -127,5 +135,14 @@ describe('a Learning Card as a file (DEC-LR-24)', () => {
     expect(version).toMatch(/^[0-9a-f]{12}$/);
     expect(await versionOf(CARD.replace('status: draft', 'status: reviewed'))).toBe(version);
     expect(await versionOf(CARD.replace('Like a guest list', 'Like a list of guests'))).not.toBe(version);
+  });
+});
+
+describe('where a card shows (DEC-LR-25, DEC-LR-38)', () => {
+  it('shows a draft outside prod only, and a reviewed card everywhere', () => {
+    expect(shownIn('uat', { status: 'draft' })).toBe(true);
+    expect(shownIn('prod', { status: 'draft' })).toBe(false);
+    expect(shownIn('prod', { status: 'reviewed' })).toBe(true);
+    expect(shownIn(undefined, { status: 'draft' })).toBe(true);
   });
 });

@@ -1,15 +1,16 @@
+import { MESSAGE_CATALOGUE } from '@datahub/contracts/message-catalogue';
 import { describe, expect, it } from 'vitest';
-import { cardIn, continued, createLearning, drawExample, newAndChanged, type Progress, seenOf, suggestedCards, suggestedLevels, TOPICS, writtenCards } from './learning.js';
+import { cardIn, continued, createLearning, drawExample, newAndChanged, type Progress, seenOf, suggestedCards, suggestedLevels, TOPICS, topicOf, writtenCards } from './learning.js';
 
 const config = { identityUrl: 'https://identity.test', catalogueUrl: 'https://catalogue.test', registryUrl: 'https://registry.test', queryUrl: 'https://query.test', semgraphUrl: 'https://semgraph.test' };
 
 const seen = (card: string, lastAt: string, understoodAt: string | null = null): Progress => ({ card, seenAt: lastAt, lastAt, step: 'see', understoodAt });
 
 describe('the Learning Centre in the web app', () => {
-  it('shows a draft outside prod only (DEC-LR-25)', () => {
-    expect(writtenCards('uat').has('K3.4')).toBe(true);
-    expect([...writtenCards('prod').values()].every((card) => card.status === 'reviewed')).toBe(true);
-    expect(writtenCards('prod').has('K3.4')).toBe(false);
+  it('shows a draft outside prod only (DEC-LR-25): every written card in uat, the reviewed ones in prod', () => {
+    const all = writtenCards('uat');
+    expect(all.has('K3.4')).toBe(true);
+    expect([...writtenCards('prod').keys()]).toEqual([...all].filter(([, card]) => card.status === 'reviewed').map(([number]) => number));
   });
 
   it('reads a card in Dutch, and in English what has no translation', async () => {
@@ -50,7 +51,8 @@ describe('the Learning Centre in the web app', () => {
 
   it('names the cards new or changed in the last 30 days', () => {
     const shown = writtenCards('uat');
-    expect(newAndChanged(shown, new Date('2026-10-30T12:00:00Z')).map((item) => [item.topic.number, item.added])).toContainEqual(['K3.4', true]);
+    expect(newAndChanged(shown, new Date('2026-10-30T12:00:00Z')).map((item) => [item.topic.number, item.added])).toContainEqual(['1.2.1', true]);
+    expect(newAndChanged(shown, new Date('2026-11-20T12:00:00Z')).map((item) => [item.topic.number, item.added])).toContainEqual(['K3.4', false]);
     expect(newAndChanged(shown, new Date('2027-01-30T12:00:00Z'))).toEqual([]);
   });
 
@@ -81,5 +83,17 @@ describe('the Learning Centre in the web app', () => {
     expect(drawn).toBe('data:image/svg+xml;charset=utf-8,%3Csvg%2F%3E');
     expect(sent).toEqual([{ semgraph: 'categoryComparison', theme: 'dark', size: 'default' }]);
     expect(await drawExample(config, { semgraph: 'x' }, 'light', (async () => new Response('', { status: 422 })) as typeof fetch)).toBeNull();
+  });
+});
+
+describe('the cards the Message Catalogue points to (FR-LR-38, DEC-LR-29)', () => {
+  it('are topics of the plan, under the title the plan gives them, so that a renamed topic is renamed there too', () => {
+    for (const type of MESSAGE_CATALOGUE.filter((one) => one.status !== 'Withdrawn')) {
+      const fit = type.learningCard;
+      const card = fit.fit === 'named' || fit.fit === 'proposed' ? fit.card : fit.fit === 'toWrite' ? fit.nearest : undefined;
+      if (!card) continue;
+      expect(topicOf(card.number), `${type.id} points to ${card.number}`).toBeDefined();
+      expect(card.title, `${type.id}: the title of ${card.number} in the plan`).toBe(topicOf(card.number)?.title.en);
+    }
   });
 });

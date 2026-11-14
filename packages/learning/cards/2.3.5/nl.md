@@ -1,11 +1,11 @@
 ---
 number: 2.3.5
-status: draft
+status: reviewed
 minutes: 6
 added: 2026-10-29
-changed: 2026-10-29
+changed: 2026-11-14
 gain: Je legt uit waarom twee tellingen van "hetzelfde" verschillen, voor iemand een van beide fout noemt.
-translatedFrom: 65ffec7e9785
+translatedFrom: 2a7a30611c5a
 ---
 
 # Why now
@@ -19,15 +19,15 @@ Promise: wat je vraagt voor je telt, zodat twee cijfers vergelijkbaar worden.
 
 # Core idea
 
-Elke telling staat op een **grain**, wat één rij is, en een **sleutel** waarlangs je telt; als die twee niet één-op-één overeenkomen, telt een rij meer dan eens of valt ze weg, en beantwoordt het cijfer een andere vraag.
+Elke telling staat op een **grain**, wat één rij is, en een **sleutel** waarlangs je telt; als een rij niet bij precies één waarde van de sleutel hoort, telt ze meer dan eens of valt ze weg, en beantwoordt het cijfer een andere vraag.
 
 ## Zoals een pakje en zijn adressen
 
-Een pakje gaat naar één huis, maar een straat kan door twee gemeenten lopen. Tel je pakjes per gemeente en per straat, dan tellen de straten op tot meer: de pakjes in de straat door beide gemeenten tellen in beide.
+Een pakje gaat naar één huis, maar een straat kan door twee gemeenten lopen. Tel je de pakjes van elke gemeente via haar straten, dan tellen de gemeenten op tot meer dan er pakjes zijn: de straat door beide gemeenten brengt al haar pakjes in beide.
 
 ## Bijvoorbeeld
 
-Een pand ligt in één gemeente, maar een postcode kan over meerdere gemeenten lopen. Per gemeente telt de regio 1.240 panden; per postcode 1.310. De 70 meer zijn panden in postcodes die over een grens lopen, één keer per gemeente geteld.
+Een pand ligt in één gemeente, maar een postcode kan over meerdere gemeenten lopen. Geteld langs de gemeente van elk pand telt de regio 1.240 panden; gevonden via de postcodes van elke gemeente 1.310. De 70 meer zijn panden in postcodes die over een grens lopen: zo'n postcode hoort bij elke gemeente waarover ze loopt, dus haar panden worden één keer per gemeente geteld.
 
 # See it
 
@@ -50,7 +50,7 @@ Een pand ligt in één gemeente, maar een postcode kan over meerdere gemeenten l
 
 Look at: de twee staven van dezelfde panden in dezelfde maand, opgeteld per gemeente en per postcode.
 
-You see: 70 meer langs de postcode. Geen van beide is fout: een postcode die over twee gemeenten loopt, brengt haar panden twee keer in het totaal.
+You see: 70 meer via de postcodes. Geen van beide is fout, maar ze beantwoorden een andere vraag: een postcode die over twee gemeenten loopt, brengt haar panden twee keer in het totaal.
 
 # Check your understanding
 
@@ -78,7 +78,7 @@ Try it: [Open Collections](/collections)
 - [ ] Dat zie je enkel aan zijn SQL
 - [ ] Elke Resource heeft één rij per dag
 
-Why: de grain van een Resource staat op zijn pagina, in een zin en met zijn sleutelvelden, zodat je weet wat je telt voor je telt.
+Why: de grain van een Resource staat op zijn pagina, in een zin en met de velden die elke rij identificeren, zodat je weet wat je telt voor je telt.
 
 # You can now
 

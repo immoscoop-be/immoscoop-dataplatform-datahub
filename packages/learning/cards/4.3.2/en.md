@@ -1,9 +1,9 @@
 ---
 number: 4.3.2
-status: draft
+status: reviewed
 minutes: 5
 added: 2026-10-29
-changed: 2026-10-29
+changed: 2026-11-14
 gain: You change a Resource without breaking the reports of people you have never met.
 ---
 
@@ -79,7 +79,7 @@ Why: a change of meaning is breaking even when nothing goes empty. That is the m
 - [x] It shows a warning until you, or the Data Team, mark it as seen
 - [ ] It is withdrawn
 
-Why: a changed field leaves the Level as it is, but the Resource warns whoever reads it until its owner looked at the change and confirmed what it now holds.
+Why: a changed field leaves the Level as it is, but the Resource warns whoever reads it until its Owner or the Data Team has looked at the change and marked it seen; no new Confirmation is needed.
 
 # You can now
 
