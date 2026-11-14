@@ -9,6 +9,8 @@
     role: { kind: 'partition' } | { kind: 'cluster'; place: number } | null;
     description: string;
     businessDescription: string;
+    /** A column of a table outside Data Hub: it has no Owner, so no Business Description (FR-SR-62). */
+    outside?: boolean;
   }
 
   /**
@@ -22,6 +24,8 @@
     fullName: string;
     /** Not one of the query's: picking it starts a new query with it (DEC-UX-73). */
     other?: boolean;
+    /** A table outside Data Hub that a power user's query reads: a double-click explains it, never suggested (FR-SR-62). */
+    outside?: boolean;
   }
 
   /** Whether the text before a word asks for a table: it follows `from` or `join` (DEC-UX-148). */
@@ -66,6 +70,8 @@
   export interface AtCursor {
     kind: Explained['kind'];
     name: string;
+    /** The name of a table outside Data Hub, which has no Summary (FR-SR-62). */
+    outside?: boolean;
   }
 
   /** Whether a table as written in the SQL is this one: in full, or as `dataset.table` (Keys are in lower case, BigQuery reads names in any). */
@@ -83,7 +89,8 @@
    * Tab to the next one.
    */
   export const TEMPLATES: readonly { label: string; template: string }[] = [
-    { label: 'select … from', template: 'select\n    ${}\nfrom\n    ${}' },
+    // It ends on `where true`, so that every condition after it starts with `and` (DEC-UX-244).
+    { label: 'select … from … where true', template: 'select\n    ${}\nfrom\n    ${}\nwhere\n    true${}' },
     { label: 'where true and', template: 'where\n    true\n    and ${}' },
     { label: 'where false or', template: 'where\n    false\n    or ${}' },
     { label: 'with … as', template: 'with ${} as (\n    ${}\n)\n' },
@@ -128,6 +135,7 @@
     suggestions,
     parameters = [],
     tables = [],
+    outsideFields = [],
     marks = [],
     onmark,
     onrun,
@@ -144,6 +152,8 @@
     parameters?: readonly ParameterSuggestion[];
     /** The Resources of the query, then the others the User may use, suggested after `from` and `join` (DEC-UX-148, DEC-UX-155). */
     tables?: readonly TableSuggestion[];
+    /** The columns of the tables outside Data Hub the query reads: a double-click explains them; never suggested (FR-SR-62). */
+    outsideFields?: readonly Suggestion[];
     marks?: readonly ErrorMark[];
     /** A click on an `@name` that is not a Parameter. */
     onmark?: (mark: ErrorMark) => void;
@@ -290,7 +300,8 @@
       }
       build(state: EditorState) {
         this.items = explainables(state);
-        this.decorations = Decoration.set(this.items.map((item) => Decoration.mark({ class: 'cm-explain', attributes: { title: t(TITLES[item.kind]) } }).range(item.from, item.to)), true);
+        const title = (item: Item) => t(item.kind === 'table' && item.table.outside ? 'editor.explain.outside' : TITLES[item.kind]);
+        this.decorations = Decoration.set(this.items.map((item) => Decoration.mark({ class: 'cm-explain', attributes: { title: title(item) } }).range(item.from, item.to)), true);
       }
     },
     { decorations: (plugin) => plugin.decorations },
@@ -379,8 +390,9 @@
     // After `from` or `join`: the Resources of the query, written as BigQuery knows them, then every other
     // the User may use, which starts a new query, and a way to choose one (DEC-UX-148, DEC-UX-155).
     const before = context.state.sliceDoc(context.state.doc.lineAt(context.pos).from, word?.from ?? context.pos);
-    if (AFTER_TABLE.test(before) && (tables.length > 0 || onnewtable)) {
-      const options: Completion[] = tables.map((table): Completion => {
+    const suggested = tables.filter((table) => !table.outside);
+    if (AFTER_TABLE.test(before) && (suggested.length > 0 || onnewtable)) {
+      const options: Completion[] = suggested.map((table): Completion => {
         const written = `\`${table.fullName}\``;
         if (!table.other) return { label: table.name, detail: t('editor.resource'), apply: written, boost: 50 };
         const picked = onothertable;
@@ -543,7 +555,7 @@
             // The word under the cursor, told only when it changes (DEC-UX-238).
             if (oncursor) {
               const item = itemAtCursor(update.view);
-              const word: AtCursor | null = item ? { kind: item.kind, name: item.kind === 'table' ? item.table.name : item.name } : null;
+              const word: AtCursor | null = item ? (item.kind === 'table' ? { kind: 'table', name: item.table.name, ...(item.table.outside ? { outside: true } : {}) } : { kind: item.kind, name: item.name }) : null;
               const key = word ? `${word.kind}:${word.name}:${item?.from}` : '';
               if (key !== cursorKey) {
                 cursorKey = key;
@@ -569,7 +581,7 @@
   });
   const explainingNow = (): Explaining => ({
     parameters: new Set(parameters.map((parameter) => parameter.name)),
-    fields: new Set(suggestions.map((suggestion) => suggestion.name.toLowerCase())),
+    fields: new Set([...suggestions, ...outsideFields].map((suggestion) => suggestion.name.toLowerCase())),
     tables: [...tables],
   });
   $effect(() => {

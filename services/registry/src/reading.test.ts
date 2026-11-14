@@ -70,6 +70,12 @@ describe.skipIf(!url)('reading the registry', () => {
       // A source keeps its own case: BigQuery names are case-sensitive.
       ['immoscoop-dataplatform.raw_shop.orders_export', 'source', false, 'Immoscoop-Dataplatform.raw_shop.orders_export'],
     ]);
+    // How dbt makes it, and its cluster columns, for what a power user reads of it (FR-SR-62); a source has no materialization.
+    expect(tables.map((table) => [table.relation.split('.')[2], table.materialized, table.clusterBy])).toEqual([
+      ['dim_customers', 'table', ['country', 'customer_id']],
+      ['orders', 'table', ['customer_id']],
+      ['orders_export', null, []],
+    ]);
     expect(await reading.knownTables([])).toEqual([]);
   });
 

@@ -31,4 +31,16 @@ describe('a field explained from the SQL (DEC-UX-221)', () => {
     await fireEvent.keyDown(document, { key: 'Escape' });
     expect(onclose).toHaveBeenCalled();
   });
+
+  it('shows a field of a table outside Data Hub with its type and its description from dbt, without missing an Owner (FR-SR-62)', () => {
+    render(FieldExplain, {
+      fields: [{ name: 'lead_id', type: 'STRING', resource: 'stg_oltp__leads', role: null, description: 'Id of the lead.', businessDescription: '', outside: true }],
+      at: { left: 100, right: 160, top: 100, bottom: 118 },
+      onclose: () => {},
+    });
+    const pop = screen.getByRole('dialog', { name: 'lead_id' });
+    expect(pop.textContent).toContain('STRING · stg_oltp__leads');
+    expect(pop.textContent).toContain('Id of the lead.');
+    expect(pop.textContent).not.toContain('Nog geen Business Description.');
+  });
 });

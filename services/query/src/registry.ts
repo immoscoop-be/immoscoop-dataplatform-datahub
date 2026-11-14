@@ -12,6 +12,9 @@ export interface KnownTable {
   /** An exposure with the tag `datahub` depends on it: it is a Resource, read as one (DEC-SR-46). */
   resource: boolean;
   partition: { field: string; unit: string | null } | null;
+  /** Its cluster columns, and how dbt makes it (`table`, `view`, `incremental`…), null for a source (FR-SR-62). */
+  clusterBy?: string[];
+  materialized?: string | null;
   /** Its description from dbt, and its columns: what a CTE of it selects (FR-SR-59). */
   description?: string;
   columns?: { name: string; dataType: string | null; description: string }[];

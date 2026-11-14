@@ -861,11 +861,10 @@ if (new URLSearchParams(location.search).has('mismatch')) {
 }
 
 // The editor of Query folds every CTE to its first line, as a code editor does: the arrow in the gutter folds or unfolds
-// one, "⋯ n lines" unfolds it, and "Fold all" folds them together; the line numbers keep their count (Proposal)
+// one, "⋯ n lines" unfolds it, and Fold all in the quick window folds them together (DEC-UX-248); the line numbers keep their count
 const sqlEditor = document.querySelector('.sql-editor');
 if (sqlEditor) {
   const starts = () => [...sqlEditor.querySelectorAll('[data-fold-start]')];
-  const foldAll = document.getElementById('fold-all');
   const fold = (start, folded) => {
     const name = start.dataset.foldStart;
     start.classList.toggle('folded', folded);
@@ -874,17 +873,11 @@ if (sqlEditor) {
     start.querySelectorAll('.fold-ph, .fold-close').forEach(el => { el.hidden = !folded; });
     sqlEditor.querySelectorAll(`[data-fold-in="${name}"]`).forEach(line => { line.hidden = folded; });
   };
-  const sync = () => {
-    const anyOpen = starts().some(s => !s.classList.contains('folded'));
-    foldAll.querySelector('span').textContent = anyOpen ? 'Fold all' : 'Unfold all';
-    foldAll.querySelector('i').className = 'ph ' + (anyOpen ? 'ph-arrows-in-line-vertical' : 'ph-arrows-out-line-vertical');
-  };
   sqlEditor.addEventListener('click', e => {
     const start = e.target.closest('.ln-fold, .fold-ph')?.closest('[data-fold-start]');
-    if (start) { fold(start, !start.classList.contains('folded')); sync(); }
+    if (start) fold(start, !start.classList.contains('folded'));
   });
-  foldAll.addEventListener('click', () => { const folded = starts().some(s => !s.classList.contains('folded')); starts().forEach(s => fold(s, folded)); sync(); });
-  sync();
+  window.foldAllCtes = () => { const folded = starts().some(s => !s.classList.contains('folded')); starts().forEach(s => fold(s, folded)); };
   // The suggestions: a click in the SQL opens them where the cursor is, as typing would; a click beside them or Escape closes them
   const suggest = sqlEditor.querySelector('.suggest');
   document.addEventListener('click', e => { if (suggest) suggest.hidden = !sqlEditor.contains(e.target) || !!e.target.closest('button, .sql-param.undefined'); });
@@ -904,7 +897,7 @@ const syncRun = () => {
   const live = sel => [...editor.querySelectorAll(sel)].filter(el => !el.closest('.ln.off'));
   const scope = new Set([...document.querySelectorAll('#scope-chips [data-res]:not([hidden])')].map(c => c.dataset.res));
   // A table Data Hub knows that is no Resource is no error for a power user (DEC-UX-220)
-  live('.sql-key[data-table]').forEach(t => { const out = !scope.has(t.dataset.table) && !t.dataset.known; t.classList.toggle('outside', out); t.title = out ? 'Not a resource of this query' : t.dataset.known ? 'A table Data Hub knows, not a Resource' : 'Double-click for its Summary'; });
+  live('.sql-key[data-table]').forEach(t => { const out = !scope.has(t.dataset.table) && !t.dataset.known; t.classList.toggle('outside', out); t.title = out ? 'Not a resource of this query' : t.dataset.known ? 'Double-click for what dbt and BigQuery know of it' : 'Double-click for its Summary'; });
   const known = [...new Set(live('.sql-key[data-known]').map(t => t.dataset.table + '|' + t.dataset.known))].map(k => k.split('|'));
   const tables = [...new Set(live('.sql-key.outside').map(t => t.dataset.table))];
   const params = [...new Set(live('.sql-param.undefined').map(t => t.dataset.param))];
@@ -913,7 +906,7 @@ const syncRun = () => {
   const out = document.getElementById('scope-outside');
   if (out) out.innerHTML = tables.map(t => `<span class="scope-chip outside"><i class="ph-fill ph-warning"></i><span class="mono">${t}</span> is not a resource of this query`
     + (t === removedRes ? '' : `<button class="text-link" type="button" data-add-res="${t}">Start a new query with it</button>`) + '</span>').join('')
-    + known.map(([t, layer]) => `<span class="scope-chip known" title="A table Data Hub knows from a dbt project it follows; no Resource, so no Owner, Level or Publication"><i class="ph ph-cube kind-icon" role="img" aria-label="Model"></i><span class="mono">${t}</span><span class="muted">· ${layer}, not a Resource</span></span>`).join('');
+    + known.map(([t, layer]) => `<span class="scope-chip known" title="${layer} · a table Data Hub knows from a dbt project it follows; no Resource, so no Owner, Level or Publication. Double-click its name in the SQL for what dbt and BigQuery know of it"><i class="ph ph-cube kind-icon" role="img" aria-label="Model"></i><span class="mono">${t}</span></span>`).join('');
   const knownLine = document.getElementById('q-known');
   if (knownLine) knownLine.hidden = !known.length;
   // ...and it cannot become a Lens: "Make it a lens" is greyed (DEC-LE-22)
@@ -1126,7 +1119,7 @@ const SQL_KEYWORDS = new Set(('with as select from where and or not in is null b
   + 'qualify limit case when then else end distinct interval day week month year true false union all over partition rows exists like desc asc cast struct array unnest '
   + 'date_sub date_add date_trunc date_diff current_date current_timestamp count sum avg min max coalesce ifnull if div timestamp format_date extract row_number '
   + 'safe_divide round lower upper concat string int64 float64 numeric bool').split(' '));
-const SQL_FIELDS = new Set(['lead_source', 'week_start', 'lead_count', 'lead_channel', 'source_name']);
+const SQL_FIELDS = new Set(['lead_source', 'week_start', 'lead_count', 'lead_channel', 'source_name', 'lead_id']);
 function colourSql(root) {
   const SKIP = '.sql-comment, .sql-key, .sql-param, .sql-ref, .sql-kw, .sql-str, .sql-num, .sql-field, .text-cursor, .suggest';
   root.querySelectorAll('.ln-code').forEach(code => {
@@ -1154,7 +1147,7 @@ if (document.querySelector('.sql-editor')) colourSql(document.querySelector('.sq
 // the Resource"; on a field, its type and descriptions in a pop-out at the word, once for each Resource of the query that
 // holds it (DEC-UX-221, DEC-UX-115). Any other word is only selected, as in any editor
 {
-  const box = document.querySelector('.sql-editor'), rs = document.getElementById('rs'), pop = document.getElementById('fd-pop');
+  const box = document.querySelector('.sql-editor'), rs = document.getElementById('rs'), pop = document.getElementById('fd-pop'), kt = document.getElementById('kt');
   if (box && rs && pop) {
     const RESOURCES = { weekly_lead_volume: ['Weekly lead volume', 'Credit leads'], lead_sources: ['Lead sources', 'Credit leads'] };
     const OWNER = 'Where the lead came in: the website, the app, a partner or a mailing.';
@@ -1164,6 +1157,8 @@ if (document.querySelector('.sql-editor')) colourSql(document.querySelector('.sq
       lead_count: [['Weekly lead volume', 'INT64', null, null, 'Number of credit leads sent to KBC in the week, for the source.']],
       lead_channel: [['Weekly lead volume', 'STRING', 'Cluster 2', null, 'Channel through which the lead was submitted.']],
       source_name: [['Lead sources', 'STRING', null, 'The name of the source as colleagues know it.', 'Display name of the lead source.']],
+      // A field of a table outside Data Hub: no Owner, so only what dbt says of it (OP-UX-89, Proposal)
+      lead_id: [['stg_oltp__leads', 'STRING', null, null, 'Id of the lead in the OLTP database.', true]],
     };
     const esc = t => t.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
     const shut = () => { pop.hidden = true; };
@@ -1171,13 +1166,53 @@ if (document.querySelector('.sql-editor')) colourSql(document.querySelector('.sq
       const [name, collection] = RESOURCES[table];
       document.getElementById('rs-title').textContent = name;
       document.getElementById('rs-meta').textContent = `Resource of this query · ${collection}`;
-      shut(); rs.hidden = false;
+      shut(); kt.hidden = true; rs.hidden = false;
       if (rs.classList.contains('folded')) rs.querySelector('.float-fold').click();
     };
+    // A table outside Data Hub, for a power user (OP-UX-89, Proposal): its description from dbt, what BigQuery says of
+    // it now, and its columns, partition and cluster columns first and marked, each with its type and description
+    const OUTSIDE = {
+      known: { name: 'stg_oltp__leads', meta: 'Not a Resource · staging · dbt-prod', full: 'immoscoop-dataplatform-398214.dbt_prod_staging.stg_oltp__leads',
+        desc: 'One row per lead as the OLTP database keeps it: renamed, typed and without test leads.',
+        facts: [['Kind', 'Table · incremental in dbt'], ['Partitioned by', '<span class="mono">created_date</span>, per day · BigQuery asks a filter on it'], ['Clustered by', '<span class="mono">lead_source</span>'],
+          ['Size', '3.1 GB · 4.8 million rows · 1,412 partitions'], ['Last changed', 'Today at 06:14']],
+        cols: [['created_date', 'DATE', 'Partition', 'Day the lead was created, Belgian time.'], ['lead_source', 'STRING', 'Cluster 1', 'Source system code of the lead.'],
+          ['lead_id', 'STRING', null, 'Id of the lead in the OLTP database.'], ['lead_type', 'STRING', null, 'Kind of lead: credit, valuation or visit.'],
+          ['email_address_id', 'STRING', null, 'Hashed id of the e-mail address; null when none was given.'], ['listing_id', 'STRING', null, 'Id of the listing the lead is about; null for a credit lead.'],
+          ['partner_id', 'STRING', null, 'Partner that sent the lead.', 'bq'], ['consent_marketing', 'BOOL', null, 'Whether the person agreed to marketing e-mails.'],
+          ['utm', 'STRUCT', null, 'The UTM parameters of the visit the lead came from.'], ['utm.source', 'STRING', null, ''], ['utm.medium', 'STRING', null, ''], ['utm.campaign', 'STRING', null, ''],
+          ['created_at', 'TIMESTAMP', null, 'When the lead was created, in UTC.'], ['loaded_at', 'TIMESTAMP', null, '']] },
+      view: { name: 'intm_leads__latest_status', meta: 'Not a Resource · intermediate · dbt-prod', full: 'immoscoop-dataplatform-398214.dbt_prod_intermediate.intm_leads__latest_status',
+        desc: 'Each lead with its latest status, from the changes of its status.',
+        facts: [['Kind', 'View · a view in dbt: it stores nothing, a query on it reads the tables beneath it, as the Pre-flight measures'], ['Partitioned by', 'A view has no partitions of its own'], ['Last changed', 'Its definition, on 12 Nov 2026']],
+        cols: [['lead_id', 'STRING', null, 'Id of the lead.'], ['status', 'STRING', null, 'The latest status of the lead.'], ['status_changed_at', 'TIMESTAMP', null, 'When it got that status.'], ['days_open', 'INT64', null, '']] },
+    };
+    let outside = OUTSIDE.known;
+    const ktCols = () => {
+      const q = document.getElementById('kt-q').value.trim().toLowerCase();
+      const shown = outside.cols.filter(([c, , , d]) => !q || `${c} ${d}`.toLowerCase().includes(q));
+      document.getElementById('kt-count').textContent = outside.cols.filter(([c]) => !c.includes('.')).length;
+      document.getElementById('kt-cols').innerHTML = shown.map(([c, type, role, d, from]) => `<div class="ft-col${c.includes('.') ? ' nested' : ''}"><span><span class="mono">${c}</span>${role ? `<span class="pill pill-strong">${role}</span>` : ''}</span>`
+        + `<span class="meta">${type}</span><span class="${d ? 'muted' : 'muted kt-none'}">${d ? esc(d) : 'No description'}${from === 'bq' ? ' <span class="kt-from">BigQuery</span>' : ''}</span></div>`).join('')
+        || '<p class="meta" style="margin:4px 0">No column has these words.</p>';
+    };
+    document.getElementById('kt-q')?.addEventListener('input', ktCols);
+    document.getElementById('kt-copy')?.addEventListener('click', e => { const b = e.currentTarget; b.lastChild.textContent = 'Copied'; setTimeout(() => { b.lastChild.textContent = 'Copy the full name'; }, 1500); });
+    const showKnown = which => {
+      outside = OUTSIDE[which];
+      document.getElementById('kt-title').textContent = outside.name;
+      document.getElementById('kt-meta').textContent = outside.meta;
+      document.getElementById('kt-desc').textContent = outside.desc;
+      document.getElementById('kt-facts').innerHTML = outside.facts.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('') + `<dt>Full name</dt><dd><span class="mono">${outside.full}</span></dd>`;
+      document.getElementById('kt-q').value = '';
+      ktCols();
+      shut(); rs.hidden = true; kt.hidden = false;
+      if (kt.classList.contains('folded')) kt.querySelector('.float-fold').click();
+    };
     const showField = (word, rect) => {
-      pop.innerHTML = FIELDS[word].map(([resource, type, role, owner, dbt]) => `<div class="fd-block"><div class="si-head"><span class="mono">${word}</span><span class="muted">${type} · ${resource}</span>`
+      pop.innerHTML = FIELDS[word].map(([resource, type, role, owner, dbt, outside]) => `<div class="fd-block"><div class="si-head"><span class="mono">${word}</span><span class="muted">${type} · ${outside ? `<span class="mono">${resource}</span>` : resource}</span>`
         + (role ? `<span class="pill pill-strong">${role}</span>` : '') + '</div>'
-        + (owner ? `<p><span class="origin">From the Owner</span>${esc(owner)}</p>` : '<p class="muted">No Business Description yet.</p>')
+        + (outside ? '' : owner ? `<p><span class="origin">From the Owner</span>${esc(owner)}</p>` : '<p class="muted">No Business Description yet.</p>')
         + `<p class="si-dbt"><span class="origin">From dbt</span>${esc(dbt)}</p></div>`).join('');
       pop.hidden = false;
       const width = pop.offsetWidth, left = Math.min(Math.max(12, rect.left + rect.width / 2 - 28), innerWidth - width - 12);
@@ -1189,7 +1224,7 @@ if (document.querySelector('.sql-editor')) colourSql(document.querySelector('.sq
     };
     box.addEventListener('dblclick', e => {
       const key = e.target.closest('.sql-key[data-table]');
-      if (key) { if (RESOURCES[key.dataset.table] && !key.classList.contains('outside')) showResource(key.dataset.table); return; }
+      if (key) { if (key.dataset.known) showKnown('known'); else if (RESOURCES[key.dataset.table] && !key.classList.contains('outside')) showResource(key.dataset.table); return; }
       if (e.target.closest('.sql-param')) return;
       const field = e.target.closest('.sql-field');
       if (field && FIELDS[field.dataset.field]) { showField(field.dataset.field, field.getBoundingClientRect()); return; }
@@ -1202,17 +1237,29 @@ if (document.querySelector('.sql-editor')) colourSql(document.querySelector('.sq
     box.closest('.main, main')?.addEventListener('scroll', shut, true);
     // The switch "Double-click", for the prototype: each case at once
     const dbl = target => document.querySelector(`[data-group="dbl"] [data-target="${target}"]`);
-    dbl('none')?.addEventListener('click', () => { shut(); rs.hidden = true; document.getElementById('pm').hidden = true; });
+    dbl('none')?.addEventListener('click', () => { shut(); rs.hidden = true; kt.hidden = true; document.getElementById('pm').hidden = true; });
     dbl('resource')?.addEventListener('click', () => { document.getElementById('pm').hidden = true; showResource('weekly_lead_volume'); });
     dbl('field')?.addEventListener('click', () => {
-      rs.hidden = true; document.getElementById('pm').hidden = true;
+      rs.hidden = true; kt.hidden = true; document.getElementById('pm').hidden = true;
       const word = [...box.querySelectorAll('.ln:not([hidden]):not(.off) .sql-field[data-field="lead_source"]')][0];
       if (!word) return;
       const range = document.createRange(); range.selectNodeContents(word);
       const sel = getSelection(); sel.removeAllRanges(); sel.addRange(range);
       setTimeout(() => showField('lead_source', word.getBoundingClientRect()));
     });
-    dbl('param')?.addEventListener('click', () => { shut(); rs.hidden = true; });
+    dbl('param')?.addEventListener('click', () => { shut(); rs.hidden = true; kt.hidden = true; });
+    // A table outside Data Hub is in the SQL of a power user's query: the switch SQL shows it first
+    const knownSql = () => document.querySelector('[data-group="sqlstate"] [data-target="known"]')?.click();
+    dbl('known')?.addEventListener('click', () => { document.getElementById('pm').hidden = true; knownSql(); showKnown('known'); });
+    dbl('view')?.addEventListener('click', () => { document.getElementById('pm').hidden = true; knownSql(); showKnown('view'); });
+    dbl('knownfield')?.addEventListener('click', () => {
+      rs.hidden = true; kt.hidden = true; document.getElementById('pm').hidden = true; knownSql();
+      const word = box.querySelector('.ln[data-variant="known"] .sql-field[data-field="lead_id"]');
+      if (!word) return;
+      const range = document.createRange(); range.selectNodeContents(word);
+      const sel = getSelection(); sel.removeAllRanges(); sel.addRange(range);
+      setTimeout(() => showField('lead_id', word.getBoundingClientRect()));
+    });
     // ?dbl= in the address was clicked before these listeners were there
     const asked = new URLSearchParams(location.search).get('dbl');
     if (asked && asked !== 'none') dbl(asked)?.click();
@@ -1467,10 +1514,10 @@ if (scopeBox) {
     entry.innerHTML = `<a class="list-item card q-item current" aria-current="page" href="query.html" data-name="${esc(name.toLowerCase())}"><i class="ph ph-table kind-icon" role="img" aria-label="On resources"></i>`
       + `<span><span class="item-title">${esc(name)}</span><span class="meta">from ${esc(from)} · not run yet</span></span></a>`;
     document.querySelector('[data-pane="yours"] .panel-label')?.after(entry);
-    // The page: its name, its question, where it came from, its Resources; no result and no history yet
-    $('q-title').textContent = name;
+    // The page: its name and its question, its Resources; no result and no history yet. Where it came from is in its
+    // History, not under its question (DEC-UX-250)
+    $('q-title').textContent = name; $('q-title').title = name;
     $('q-question').textContent = $('newq-question').value;
-    $('q-origin').hidden = false; $('q-origin').querySelector('a').textContent = from;
     document.querySelectorAll('#scope-chips [data-res]').forEach(c => { c.hidden = !set.includes(c.dataset.res); });
     removedRes = mode === 'remove' ? removing : null;
     const card = document.querySelector('.result-card');

@@ -32,6 +32,9 @@ export interface KnownTableRow {
   filePath: string | null;
   partitionField: string | null;
   partitionUnit: string | null;
+  /** Its cluster columns and how dbt makes it (`table`, `view`, `incremental`…), for what a power user reads of it (FR-SR-62). */
+  clusterBy: string[];
+  materialized: string | null;
   projectId: string;
   projectName: string | null;
   resource: boolean;
@@ -226,7 +229,7 @@ export function createReading(db: Kysely<RegistryDatabase>) {
         )
         select distinct on (n.relation)
           n.relation, n.database_name, n.schema_name, n.table_name, n.name, n.resource_type, n.layer, n.file_path,
-          n.partition_field, n.partition_unit, p.project_id::text as project_id, p.name as project_name,
+          n.partition_field, n.partition_unit, n.cluster_by, n.materialized, p.project_id::text as project_id, p.name as project_name,
           n.relation in (select relation from exposed) as resource, coalesce(n.description, '') as description,
           (select coalesce(json_agg(json_build_object('name', c.name, 'dataType', c.data_type, 'description', c.description) order by c.position nulls last, c.name), '[]'::json)
             from columns c where c.set_id = n.set_id and c.node_id = n.unique_id) as columns

@@ -355,6 +355,27 @@ export interface OutsideTable {
   fullName: string;
   name: string;
   layer: string;
+  /** Its columns from dbt: a double-click on one explains it (FR-SR-62); older answers may lack them. */
+  columns?: { name: string; dataType: string | null; description: string }[];
+  partition?: { field: string; unit: string | null } | null;
+}
+
+/** What Data Hub knows of a table outside it, from dbt and from BigQuery now (FR-SR-62, DEC-UX-247). */
+export interface OutsideTableInfo {
+  key: string;
+  fullName: string;
+  name: string;
+  layer: string;
+  resourceType: string;
+  projectName: string | null;
+  /** How dbt makes it: `table`, `view`, `incremental`…; null for a source. */
+  materialized: string | null;
+  description: string;
+  /** What BigQuery says of it now; null when it did not answer, and what dbt knew stands instead. */
+  bigquery: { type: string; bytes: number | null; rows: number | null; partitions: number | null; modifiedAt: string | null } | null;
+  partition: { field: string; unit: string | null; required: boolean } | null;
+  clusterBy: string[];
+  columns: { name: string; type: string | null; description: string; from: 'dbt' | 'bigquery' | null; partition: boolean; cluster: number | null }[];
 }
 
 /** What a run came to: its result, or why it did not run. */
@@ -547,6 +568,10 @@ export function createQuery(config: Config, session: Pick<Session, 'accessToken'
     },
     /** The Lenses a new query may reuse, by its Resources and the words of its question (FR-SR-47, FR-SR-48). */
     /** The SQL with a CTE at its start for each Resource and table added (FR-SR-59, DEC-UX-225), and those CTEs. */
+    /** What dbt and BigQuery know of a table outside Data Hub, for a power user (FR-SR-62). */
+    async outsideTable(key: string): Promise<OutsideTableInfo> {
+      return ((await (await call(`/outside-table?key=${encodeURIComponent(key)}`)).json()) as { table: OutsideTableInfo }).table;
+    },
     async ctes(sql: string, added: { resources?: readonly string[]; tables?: readonly string[] }): Promise<{ sql: string; ctes: string[] }> {
       return (await (await call('/queries/ctes', { method: 'POST', body: { sql, resources: added.resources ?? [], tables: added.tables ?? [] } })).json()) as { sql: string; ctes: string[] };
     },

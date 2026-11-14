@@ -39,9 +39,10 @@
 
   let sheet: HTMLElement | undefined = $state();
   $effect(() => {
-    // The focus goes into the sheet, and back to where it came from when it closes.
+    // The focus goes into the sheet, or into its search when it opens to find something (DEC-UX-245), and back to where
+    // it came from when it closes.
     const before = document.activeElement as HTMLElement | null;
-    sheet?.focus();
+    (sheet?.querySelector<HTMLElement>('[data-autofocus]') ?? sheet)?.focus();
     return () => before?.focus?.();
   });
 </script>

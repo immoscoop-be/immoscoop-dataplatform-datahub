@@ -10,7 +10,7 @@ import { label, parseQuery, parseRun } from './api.js';
 import { lensFields, parseLens, valuesFor } from './lens-api.js';
 import { createLenses } from './lenses.js';
 import { buildApp } from './app.js';
-import { type BigQuery, BigQueryRefused, type DryRun, type RunOptions, ResultExpired } from './bigquery.js';
+import { type BigQuery, BigQueryRefused, BigQueryUnavailable, type DryRun, type RunOptions, ResultExpired } from './bigquery.js';
 import { type BrokenMessage, type Catalogue, CatalogueUnavailable, type QueryRequest, type QueryResource, type SeenCollection } from './catalogue.js';
 import type { KnownTable } from './registry.js';
 import type { QueryDatabase } from './database.js';
@@ -185,6 +185,8 @@ function fakeBigQuery() {
   /** What every dry run reads instead, as data grows; and what BigQuery no longer finds, in its words. */
   let size: number | null = null;
   let gone: { text: string; message: string } | null = null;
+  /** BigQuery does not describe a table now (FR-SR-62). */
+  let silent = false;
   const bigquery: BigQuery = {
     async dryRun(text): Promise<DryRun> {
       if (gone && text.includes(gone.text)) throw new BigQueryRefused(gone.message);
@@ -228,11 +230,30 @@ function fakeBigQuery() {
     async partitions(_key, limit) {
       return ['20261019', '20261012', '20261005', '20260928', '20260921'].slice(0, limit);
     },
+    // The staging table of the leads, as BigQuery keeps it: by its full name in its own case (FR-SR-62).
+    async describe(key) {
+      if (silent) throw new BigQueryUnavailable('BigQuery did not answer');
+      if (key !== STG.fullName) throw new BigQueryRefused(`Not found: Table ${key}`);
+      return {
+        type: 'TABLE', bytes: 3_100_000_000, rows: 4_800_000, partitions: 1412, partitionField: 'created_date', modifiedAt: '2026-11-14T06:14:00.000Z',
+        description: 'One row per lead, from BigQuery.',
+        partition: { field: 'created_date', unit: 'day', required: true },
+        clusterBy: ['lead_source'],
+        columns: [
+          { name: 'lead_id', type: 'STRING', description: '' },
+          { name: 'lead_source', type: 'STRING', description: 'Source system code.' },
+          { name: 'created_date', type: 'DATE', description: '' },
+        ],
+      };
+    },
   };
   return {
     bigquery,
     runs,
     pages,
+    quiet: (on = true) => {
+      silent = on;
+    },
     refuse: (message: string) => {
       refuseNext = message;
     },
@@ -1507,6 +1528,53 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
       expect(added.json().sql).toMatch(/select\n    \*\nfrom\n    stg_oltp__leads\n$/);
       // A table that is a Resource is added as a Resource, not as a table.
       expect((await call(dataTeam, 'POST', '/queries/ctes', { sql, tables: [PARTNERS.key] })).statusCode).toBe(400);
+    });
+
+    it('tells a power user what dbt and BigQuery know of a table outside Data Hub (FR-SR-62, DEC-UX-247)', async () => {
+      const path = `/outside-table?key=${encodeURIComponent(STG.key.toUpperCase())}`;
+      expect((await call(an, 'GET', path)).statusCode).toBe(403);
+      const found = await call(dataTeam, 'GET', path);
+      expect(found.statusCode).toBe(200);
+      expect(found.json().table).toEqual({
+        key: STG.key,
+        fullName: STG.fullName,
+        name: 'stg_oltp__leads',
+        layer: 'staging',
+        resourceType: 'model',
+        projectName: 'dbt-prod',
+        materialized: null,
+        // Its description from dbt, or from BigQuery where dbt has none.
+        description: 'One row per lead, from BigQuery.',
+        bigquery: { type: 'TABLE', bytes: 3_100_000_000, rows: 4_800_000, partitions: 1412, modifiedAt: '2026-11-14T06:14:00.000Z' },
+        partition: { field: 'created_date', unit: 'day', required: true },
+        clusterBy: ['lead_source'],
+        // The partition column first, then the cluster columns; the types from BigQuery.
+        columns: [
+          { name: 'created_date', type: 'DATE', description: '', from: null, partition: true, cluster: null },
+          { name: 'lead_source', type: 'STRING', description: 'Source system code.', from: 'bigquery', partition: false, cluster: 1 },
+          { name: 'lead_id', type: 'STRING', description: '', from: null, partition: false, cluster: null },
+        ],
+      });
+      // registry is asked with the token of the User, by the Key in lower case.
+      expect(knownAsked.at(-1)).toMatchObject({ keys: [STG.key] });
+
+      // Without BigQuery, what dbt knew at its last run.
+      fake.quiet();
+      const dbt = await call(dataTeam, 'GET', path);
+      fake.quiet(false);
+      expect(dbt.json().table).toMatchObject({
+        bigquery: null,
+        partition: { field: 'created_date', unit: 'day', required: false },
+        columns: [
+          { name: 'created_date', type: 'DATE', partition: true },
+          { name: 'lead_id', type: 'STRING', partition: false },
+        ],
+      });
+
+      // A Resource, a table registry does not know and a name that is no Key are not read here.
+      expect((await call(dataTeam, 'GET', `/outside-table?key=${encodeURIComponent(PARTNERS.key)}`)).statusCode).toBe(404);
+      expect((await call(dataTeam, 'GET', `/outside-table?key=${PROJECT}.nowhere.nothing`)).statusCode).toBe(404);
+      expect((await call(dataTeam, 'GET', '/outside-table?key=dbt_prod_staging.stg_oltp__leads')).statusCode).toBe(400);
     });
   });
 });

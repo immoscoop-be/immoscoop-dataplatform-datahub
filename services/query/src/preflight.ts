@@ -69,7 +69,11 @@ export interface Preflight {
 }
 
 /** A table outside Data Hub a power user's query reads, as the query shows it next to its Resources (DEC-UX-220). */
-export type OutsideTable = Pick<KnownTable, 'key' | 'fullName' | 'name' | 'layer'>;
+export type OutsideTable = Pick<KnownTable, 'key' | 'fullName' | 'name' | 'layer'> & {
+  /** Its columns from dbt, each with its type and description: the editor explains them on a double-click (FR-SR-62). */
+  columns: { name: string; dataType: string | null; description: string }[];
+  partition: KnownTable['partition'];
+};
 
 /** A table as written in SQL, as a Key: `project.dataset.table` in lowercase, the project of Data Hub when it names none. */
 export function keyOf(written: string, project: string): string {
@@ -154,7 +158,7 @@ export async function preflight(
       range: null,
       partitions: null,
       warnings: [],
-      tables: [...outside.values()].map(({ key, fullName, name, layer }) => ({ key, fullName, name, layer })),
+      tables: [...outside.values()].map(({ key, fullName, name, layer, columns = [], partition }) => ({ key, fullName, name, layer, columns, partition })),
       columns: [],
       ...fields,
       problems,

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
-import SqlEditor, { writtenAs } from './SqlEditor.svelte';
+import SqlEditor, { TEMPLATES, writtenAs } from './SqlEditor.svelte';
 
 const content = () => screen.getByRole('textbox', { name: 'SQL' });
 
@@ -23,7 +23,9 @@ describe('the SQL editor', () => {
       expect(options.some((option) => option.startsWith('where true and'))).toBe(true);
       return options;
     });
-    expect(listed.filter((option) => option.endsWith('Sjabloon')).map((option) => option.replace('Sjabloon', ''))).toEqual(['count(*) as …Count', 'final as … order by', 'select … from', 'where false or', 'where true and', 'with … as']);
+    expect(listed.filter((option) => option.endsWith('Sjabloon')).map((option) => option.replace('Sjabloon', ''))).toEqual(['count(*) as …Count', 'final as … order by', 'select … from … where true', 'where false or', 'where true and', 'with … as']);
+    // "select … from" ends on where true, so that every condition after it starts with and (DEC-UX-244).
+    expect(TEMPLATES.find((template) => template.label.startsWith('select'))?.template).toBe('select\n    ${}\nfrom\n    ${}\nwhere\n    true${}');
   });
 
   it('proposes count(*) as …Count on count(*, with the name before Count to type (DEC-UX-235)', async () => {
@@ -79,7 +81,9 @@ describe('the SQL editor', () => {
 
   it('suggests the Resources of the query after from, and a new Resource that starts a new query (DEC-UX-148)', async () => {
     const onnewtable = vi.fn();
-    render(SqlEditor, { value: 'select *\nfrom ', suggestions: [], label: 'SQL', tables: [{ id: 'r2', name: 'Weekly lead volume', fullName: 'p.dbt.weekly_lead_Volume' }], onnewtable });
+    // A table outside Data Hub that the query reads is explained, never suggested (FR-SR-62).
+    const outside = { id: 'p.staging.stg_leads', name: 'stg_leads', fullName: 'p.staging.stg_leads', outside: true };
+    render(SqlEditor, { value: 'select *\nfrom ', suggestions: [], label: 'SQL', tables: [{ id: 'r2', name: 'Weekly lead volume', fullName: 'p.dbt.weekly_lead_Volume' }, outside], onnewtable });
     const editor = content();
     editor.focus();
     await fireEvent.keyDown(editor, { key: 'End', code: 'End', ctrlKey: true });
@@ -139,6 +143,25 @@ describe('the SQL editor', () => {
     expect(words('cm-kw')).toEqual(expect.arrayContaining(['select', 'count', 'as', 'from', 'where', 'and']));
     expect(words('cm-num')).toEqual(['1']);
     expect(words('cm-string')).toEqual(["'web'"]);
+  });
+
+  it('explains a table outside Data Hub and its columns, for what dbt and BigQuery know of them (FR-SR-62)', async () => {
+    render(SqlEditor, {
+      value: 'select lead_id\nfrom `p.staging.stg_leads`',
+      suggestions: [],
+      outsideFields: [{ name: 'lead_id', type: 'STRING', resource: 'stg_leads', role: null, description: 'Id of the lead.', businessDescription: '', outside: true }],
+      tables: [{ id: 'p.staging.stg_leads', name: 'stg_leads', fullName: 'p.staging.stg_leads', outside: true }],
+      label: 'SQL',
+    });
+    const explained = await vi.waitFor(() => {
+      const found = [...document.querySelectorAll('.cm-explain')].map((element) => [element.textContent, element.getAttribute('title')]);
+      expect(found.length).toBe(2);
+      return found;
+    });
+    expect(explained).toEqual([
+      ['lead_id', 'Dubbelklik voor de beschrijvingen'],
+      ['`p.staging.stg_leads`', 'Dubbelklik voor wat dbt en BigQuery ervan weten'],
+    ]);
   });
 
   it('knows a table as written in the SQL, in full or by its dataset, in any case', () => {
