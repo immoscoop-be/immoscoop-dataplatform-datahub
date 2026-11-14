@@ -55,7 +55,7 @@ export function stems(text: string): string[] {
 /** How well one language of a card answers: a stem in the title counts three times, in its text once. */
 function scoreOf(asked: ReadonlySet<string>, card: Card, title: string): number {
   const inTitle = stems(title).filter((one) => asked.has(one)).length;
-  const inText = stems(`${card.core.rule} ${card.gain} ${card.core.metaphor.title} ${card.core.metaphor.text} ${card.why.quote}`).filter((one) => asked.has(one)).length;
+  const inText = stems(`${card.core.rule} ${card.gain} ${card.core.metaphor?.title ?? ''} ${card.core.metaphor?.text ?? ''} ${card.why.quote}`).filter((one) => asked.has(one)).length;
   return inTitle * 3 + inText;
 }
 

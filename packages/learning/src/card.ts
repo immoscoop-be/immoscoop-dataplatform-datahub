@@ -24,7 +24,7 @@
  *     # Core idea
  *     The decision rule, in one sentence.
  *
- *     ## <the metaphor, as its title>
+ *     ## <the metaphor, as its title>      left out for a card whose topic the reader sees on a screen (DEC-LR-36)
  *     The metaphor.
  *
  *     ## <the example, as its title>
@@ -82,7 +82,8 @@ export interface Card {
   /** In a translation, the version of the English it was made from (DEC-LR-24). */
   readonly translatedFrom: string | null;
   readonly why: { readonly quote: string; readonly by: string; readonly situation: string; readonly promise: string };
-  readonly core: { readonly rule: string; readonly metaphor: { readonly title: string; readonly text: string }; readonly example: { readonly title: string; readonly text: string } };
+  /** The rule, its metaphor (null for a card whose topic the reader sees on a screen of Data Hub, DEC-LR-36) and its example. */
+  readonly core: { readonly rule: string; readonly metaphor: { readonly title: string; readonly text: string } | null; readonly example: { readonly title: string; readonly text: string } };
   readonly see: { readonly chart: ChartRequest; readonly lookAt: string; readonly youSee: string } | null;
   readonly questions: readonly Question[];
   readonly can: { readonly now: string; readonly choices: readonly Choice[] };
@@ -180,12 +181,12 @@ export function parseCard(source: string): Card {
   const situation = whyRest.filter((entry) => entry !== promise).map((entry) => entry.text).join(' ');
   if (!situation) fail(whyBlock.line, 'Why now tells the situation after its quote');
 
-  // Core idea: the rule, then the metaphor and the example under their own titles.
+  // Core idea: the rule, then the metaphor and the example under their own titles, or the example alone (DEC-LR-36).
   const coreBlock = required('Core idea');
   const core = blocks(coreBlock.lines, 2);
   const rule = paragraphs(core.before).map((entry) => entry.text).join(' ');
   if (!rule) fail(coreBlock.line, 'Core idea opens with its rule');
-  if (core.blocks.length !== 2) fail(coreBlock.line, 'Core idea has two parts under "## ": the metaphor and the example');
+  if (core.blocks.length !== 1 && core.blocks.length !== 2) fail(coreBlock.line, 'Core idea has two parts under "## ": the metaphor and the example, or only the example for a card about a screen (DEC-LR-36)');
   const part = (index: number) => ({ title: core.blocks[index]!.heading, text: paragraphs(core.blocks[index]!.lines).map((entry) => entry.text).join(' ') });
 
   // See it: the request of the Chart Server, "Look at:" and "You see:".
@@ -261,7 +262,7 @@ export function parseCard(source: string): Card {
     gain: fact('gain'),
     translatedFrom: facts.get('translatedFrom')?.value || null,
     why: { quote, by: by.slice(2).trim(), situation, promise: promise!.text.slice(8).trim() },
-    core: { rule, metaphor: part(0), example: part(1) },
+    core: { rule, metaphor: core.blocks.length === 2 ? part(0) : null, example: part(core.blocks.length - 1) },
     see,
     questions,
     can: { now, choices },

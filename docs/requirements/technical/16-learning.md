@@ -25,7 +25,7 @@ A written card is a folder `cards/<number>/` with `en.md`, the card, `nl.md`, it
 
 - its facts between `---` lines: `number`, `status` (`draft` or `reviewed`), `minutes`, `added`, `changed`, `gain`, and in a translation `translatedFrom`;
 - `# Why now`, with the quote, who says it, the situation and `Promise: …`;
-- `# Core idea`, with the rule and two parts under `##`, the metaphor and the example;
+- `# Core idea`, with the rule and two parts under `##`, the metaphor and the example, or the example alone for a card whose topic the reader sees on a screen of Data Hub ([DEC-LR-36](../functional/16-learning.md#dec-lr-36));
 - `# See it`, optional, with the example as a request of the Chart Server in a fenced block `chart`, then `Look at: …` and `You see: …`;
 - `# Check your understanding`, optional, with a question under each `##`, an optional `Try it: [label](/path)`, the answers as `- [ ]` and `- [x]`, exactly one right, and `Why: …`;
 - `# You can now`, with what the User can now do, and under `## Where to next` two or three of `- Deeper: <number>`, `- Next to it: <number>` and `- Apply: [label](/path) text`.

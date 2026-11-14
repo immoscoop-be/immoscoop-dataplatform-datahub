@@ -113,7 +113,7 @@
     {:else if step === 'core'}
       <p class="rule"><LearningText text={card.core.rule} /></p>
       <div class="two">
-        <div class="point card"><h3><Icon name="ticket" />{card.core.metaphor.title}</h3><p><LearningText text={card.core.metaphor.text} /></p></div>
+        {#if card.core.metaphor}<div class="point card"><h3><Icon name="ticket" />{card.core.metaphor.title}</h3><p><LearningText text={card.core.metaphor.text} /></p></div>{/if}
         <div class="point card"><h3><Icon name="calculator" />{card.core.example.title}</h3><p><LearningText text={card.core.example.text} /></p></div>
       </div>
     {:else if step === 'see' && card.see}

@@ -14,7 +14,7 @@ The input of the card as the interview gave it: what the author said, what Claud
 
 **Asked:** Who asked you this recently, and how did they put it? Side entrance: nobody asked yet; what do you want them to ask when they see the red dot?
 
-**Answer:** "No one, not even sure in what context this is shown." The author asked Claude to fill in the card and suggest all of it. Claude showed where a reader meets Broken (the red dot on the kind icon wherever a Lens, Report or query is listed, the red chip "Broken" and the callout on its page, DEC-UX-81; the Messages MSG-LEN-05, MSG-QRY-02 and MSG-RPT-01) and suggested the quote "My report has a red dot this morning. Did I break something?", from a colleague from marketing. To confirm: whether colleagues will say it this way.
+**Answer:** "No one, not even sure in what context this is shown." The author asked Claude to fill in the card and suggest all of it. Claude showed where a reader meets Broken (the red dot on the kind icon wherever a Lens, Report or query is listed, the red chip "Broken" and the callout on its page, DEC-UX-81; the Messages MSG-LEN-05, MSG-QRY-02 and MSG-RPT-01) and suggested the quote "My report has a red dot this morning. Did I break something?", from a colleague from marketing. The author approved the draft ("Good one"); whether colleagues will say it this way is for the test reader.
 
 **In the card:** Why now, the quote and the situation.
 
@@ -30,7 +30,7 @@ The input of the card as the interview gave it: what the author said, what Claud
 
 **Asked:** Not asked: the author asked for a suggestion instead.
 
-**Answer:** Claude's suggestion: Broken is not damage but Data Hub refusing to show figures it no longer stands for; it stops instead of guessing, and it comes back by itself, or once the query reads what replaced what is gone. To confirm by the author.
+**Answer:** Claude's suggestion: Broken is not damage but Data Hub refusing to show figures it no longer stands for; it stops instead of guessing, and it comes back by itself, or once the query reads what replaced what is gone. The author approved the draft ("Good one").
 
 **In the card:** Core idea, the rule.
 
@@ -38,9 +38,9 @@ The input of the card as the interview gave it: what the author said, what Claud
 
 **Asked:** Not asked: the author asked for a suggestion instead.
 
-**Answer:** Claude's suggestion: a recipe whose brand of stock cubes the shop stops selling. Tested out loud: it carries what you read disappearing (the cubes), stopping rather than serving something off, coming back when the cubes are back, and rewriting the recipe for their replacement (changing the query); the recipe is not wrong and the kitchen is not broken (nothing the reader did). It echoes the recipe of 4.7.1 Owning a Resource. To confirm by the author.
+**Answer:** Claude suggested a recipe whose brand of stock cubes the shop stops selling. The author: "the recipe analogy is not required here, this is clear enough by just its explanation." The reader sees Broken on a screen, the red dot, the chip and the callout, so the screen is the physical part; the card goes without an anchor, which DEC-LR-36 allows for a card whose topic the reader sees on a screen of Data Hub.
 
-**In the card:** Core idea, "Like a recipe whose ingredient is gone".
+**In the card:** nothing: Core idea holds the rule and the example only.
 
 ## 5. Never again, ask first
 
@@ -76,12 +76,10 @@ The card has no See it: the third rung is a screen of Data Hub, not a chart. App
 
 ## Who brought what
 
-The author chose the card and asked Claude to suggest all of it, as nobody has asked about Broken yet and the author did not know where it shows. Claude brought everything in the card, from the rules of Data Hub and the examples of its Messages: the quote, the situation, the rule, the anchor, the example, the four questions, the first question and the neighbours. Everything waits for the author's reactions, and for the fact check.
+The author chose the card and asked Claude to suggest all of it, as nobody has asked about Broken yet and the author did not know where it shows. Claude brought everything in the card, from the rules of Data Hub and the examples of its Messages: the quote, the situation, the rule, the example, the four questions, the first question and the neighbours. The author approved the draft with one change: no anchor, as the explanation is clear by itself (DEC-LR-36). A "yes" to a suggestion weighs less than the author's own words, so the fact check and the test reader carry more weight here than usual.
 
 ## To do
 
-- [ ] The author reacts to the quote, the rule, the anchor and the first question: keep, sharpen or replace
 - [ ] Fact check: the example and the four questions against DEC-DH-67, DEC-UX-81 and MSG-LEN-05, MSG-QRY-02, MSG-RPT-01
-- [ ] Translate into nl.md once the English is settled
 - [ ] A card for the Owner Unit on repairing a Broken Lens from its query: a new topic, or part of K5.8
 - [ ] A marker on the red chip "Broken" listing this card: to design first (DEC-LR-22)

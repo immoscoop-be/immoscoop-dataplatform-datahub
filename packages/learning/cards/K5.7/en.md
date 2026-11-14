@@ -20,10 +20,6 @@ Promise: what the red dot means, who repairs it, and why it often repairs itself
 
 What reads something that no longer exists is **Broken**: it stops rather than show figures it no longer stands for, and it works again once what it reads is back, or once its query reads what replaced it.
 
-## Like a recipe whose ingredient is gone
-
-Your favourite recipe calls for one brand of stock cubes, and the shop stops selling them. The recipe is not wrong and your kitchen is not broken. You cannot cook it until the cubes are back on the shelf, or until you rewrite the recipe for the cubes that replaced them. What you do not do is cook it without, and serve something that tastes off.
-
 ## At Immoscoop
 
 The Data Team renames the column `lead_channel` of Weekly lead volume in dbt. After the next run, the Lens Leads per source name, which reads `lead_channel`, is Broken: nobody can run it, it carries a red dot wherever it is listed, and the reports that hold it are Broken too. The credit team, its Owner Unit, gets the Message "The lens Leads per source name is broken", which names the column that no longer exists. They change the query of the Lens to the new name, and the red dot goes. Had the column come back, the Lens would have worked again by itself.

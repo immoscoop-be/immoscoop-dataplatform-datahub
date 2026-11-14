@@ -242,6 +242,7 @@ if (en) {
   if (situation > 3) notes.push(`the situation of Why now has ${situation} sentences; keep it to three at most (FR-LR-27)`);
   if (en.questions.length === 0) notes.push('no questions: only a minimal card for a name goes without (DEC-LR-23)');
   if (!en.see) notes.push('no See it: fine for a minimal card, or when the example is a screen and not a chart; say why in the interview record');
+  if (!en.core.metaphor) notes.push('no metaphor in Core idea: only for a card whose topic the reader sees on a screen of Data Hub (DEC-LR-36); say why in the interview record');
   for (const question of en.questions) {
     if (/^(right|wrong|correct|incorrect|not quite|exactly|indeed|yes|no)\b/i.test(question.why)) notes.push(`the Why of "${question.text}" sounds like a verdict (DEC-LR-19)`);
   }
@@ -254,6 +255,7 @@ if (en && nl) {
   if (nl.status !== en.status) problems.push(`nl.md has status ${nl.status}, en.md ${en.status}`);
   if (nl.translatedFrom !== version) problems.push(`nl.md follows ${nl.translatedFrom ?? 'no version'}, the English is ${version}: translate what changed, then stamp`);
   if ((nl.see === null) !== (en.see === null)) problems.push('See it is in one language and not in the other');
+  if ((nl.core.metaphor === null) !== (en.core.metaphor === null)) problems.push('the metaphor of Core idea is in one language and not in the other');
   const rights = (card: Card) => JSON.stringify(card.questions.map((question) => question.options.map((option) => option.right)));
   if (rights(nl) !== rights(en)) problems.push('the questions differ: the same questions and answers, the same right one, in the same order');
   const targets = (card: Card) => JSON.stringify(card.can.choices.map((choice) => (choice.kind === 'apply' ? choice.href : choice.card)));
