@@ -1,11 +1,11 @@
 ---
 number: 4.3.2
-status: draft
+status: reviewed
 minutes: 5
 added: 2026-10-29
-changed: 2026-10-29
+changed: 2026-11-14
 gain: Je wijzigt een Resource zonder de rapporten te breken van mensen die je nooit ontmoette.
-translatedFrom: 539b32685dad
+translatedFrom: e7c456b4b8cb
 ---
 
 # Why now
@@ -80,7 +80,7 @@ Why: een wijziging van betekenis is brekend, ook als niets leeg valt. Dat is de 
 - [x] Hij toont een waarschuwing tot jij, of het Data Team, die als gezien markeert
 - [ ] Hij is ingetrokken
 
-Why: een gewijzigd veld laat het Level zoals het is, maar de Resource waarschuwt wie hem leest, tot zijn Owner naar de wijziging keek en bevestigde wat hij nu bevat.
+Why: een gewijzigd veld laat het Level zoals het is, maar de Resource waarschuwt wie hem leest, tot zijn Owner of het Data Team naar de wijziging keek en ze als gezien markeerde; een nieuwe bekrachtiging is niet nodig.
 
 # You can now
 

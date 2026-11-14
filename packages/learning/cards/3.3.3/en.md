@@ -1,9 +1,9 @@
 ---
 number: 3.3.3
-status: draft
+status: reviewed
 minutes: 4
 added: 2026-10-29
-changed: 2026-10-29
+changed: 2026-11-14
 gain: You judge whether data is good enough for your decision, without waiting for perfect data.
 ---
 
@@ -57,7 +57,7 @@ You see: each week is too low by about the same share, so the rise is real. Thes
 
 # Check your understanding
 
-## The weekly lead counts are confirmed by their Owner, but the last week is still incomplete. What are they good enough for today?
+## The weekly lead counts come from a Resource at 3 · Confirmed, but the last week is still incomplete. What are they good enough for today?
 
 - [x] Comparing the weeks before the last one
 - [ ] Reporting last week's total to KBC

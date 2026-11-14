@@ -107,9 +107,9 @@ Close with three concrete questions to the author:
 
 - Are the **wrong answers** of the questions right: are they misconceptions they really heard, or ones they expect (the record says which)?
 - Who does the **fact check** (the data colleague themselves, or someone else from the Data Team; someone else when you drafted the card)? They read the card against the record.
-- Which **colleague outside data** reads the card in five minutes and tells in their own words what they learned? If that fails, the anchor is wrong, not the reader.
+- Which **colleague outside data** reads the card in prod, once it is released, and tells in their own words what they learned? If that fails, the anchor or the example is wrong, not the reader.
 
-Write the names into the table on top of the record. The card stays `status: draft` until the Data Team has reviewed it (DEC-LR-25); after the gate it becomes `reviewed`, in both languages (that needs no new translation).
+Write the names into the table on top of the record. The card stays `status: draft` until the Data Team has reviewed it (DEC-LR-25): once its fact check has passed, it becomes `reviewed`, in both languages (that needs no new translation). The test reader reads it in prod, after the release (DEC-LR-38); what they misread comes back as a change of the card.
 
 ## Step 10: delivering the pull request
 
@@ -121,7 +121,8 @@ The card reaches Data Hub only through a pull request into `uat`, never directly
 4. **One commit**, `Learning Card <number>: <title from the plan>`, ending with the trailer `Refs: DEC-LR-31`. A session on the web holds a shallow clone: before `pnpm docs:build`, run `git fetch --unshallow`, or the traceability matrix it writes loses its commit links.
 5. **The pull request into `uat`**, with the same title. Its description holds the reader's question, the core idea, who was interviewed, what Claude brought, who does the fact check and who the test reader is, the output of `links`, and the to-do of the record. Ask a member of the Data Team to review it.
 6. **Do not merge it yourself.** The Data Team merges after the fact check; the card then shows in uat as a draft.
-7. **Reviewed:** once the fact check and the test reader have passed, a small pull request sets `status: reviewed` in both languages. Only then does the card show in prod.
+7. **Reviewed:** once the fact check has passed, a small pull request sets `status: reviewed` in both languages. Only then does the card show in prod, after the next release.
+8. **The test reader** reads the card in prod (DEC-LR-38). What they did not understand, or understood wrongly, becomes a pull request of its own that changes the card, with a new `changed` date and the Dutch stamped again; their words go into the record.
 
 ## Tone
 

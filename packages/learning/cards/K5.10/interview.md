@@ -7,8 +7,8 @@ The input of the card as the interview gave it: what the author said, what Claud
 | Card | K5.10 What your Permission group allows (Compass, section K5 Data Hub) |
 | Author | Max |
 | Interviewed | 2026-11-14, with the learning-card skill |
-| Fact check | To name |
-| Test reader | To name |
+| Fact check | Claude, an independent check against the requirements and the code on 2026-11-14, reviewed by Max |
+| Test reader | To name, in prod (DEC-LR-38) |
 
 ## 1. The reader's question
 
@@ -80,6 +80,7 @@ The author asked Claude to write out all the cards on the states of Data Hub, wi
 
 The author reviewed the cards together: "All good", and asked Claude to check the open facts itself. Checked by Claude in the code on 2026-11-14, at the author's request (packages/contracts/src/permissions.ts): Lens user and Business analyst are the starting groups; Lens user, the default, makes no queries and writes Questions and Signals but no Remarks, so the first question asks about "Add a Remark" instead of "Add a Signal"; Lens user shows results of Claude in a card only, Business analyst in Claude. MSG-USR-03 goes to the Data Team, so the User reads the card from MSG-USR-01. Excel runs no queries, so the example says the new group holds in Excel, not that queries run there.
 
-## To do
+The fact check, by an independent pass of Claude on 2026-11-14, read the card against the requirements, the Message Catalogue and the code. Fixed: My page does not show the Permission group yet (FR-PL-13 is Proposed), so the User learns it from the Message when it changes, or from the Data Team, and Apply leads to the Messages; Groups are kept in Data Hub (DEC-UM-10), so the second question is about being added to a Group, not about moving teams.
 
-- [ ] Fact check: the example against MSG-USR-01 and DEC-PL-01
+## To do
+- [ ] Test reader: a colleague outside data reads the card in prod and says in their own words what they learned (DEC-LR-38)

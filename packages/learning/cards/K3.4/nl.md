@@ -1,11 +1,11 @@
 ---
 number: K3.4
-status: draft
+status: reviewed
 minutes: 4
 added: 2026-10-29
-changed: 2026-10-29
+changed: 2026-11-14
 gain: Je weet waar je opzoekt wat een begrip betekent, en waar je een definitie vastlegt zodat iedereen hetzelfde telt.
-translatedFrom: 4102a501bb4d
+translatedFrom: 56616f27c867
 ---
 
 # Why now
@@ -74,11 +74,11 @@ Why: een definitie op één plek is voor iedereen dezelfde. Elke kopie drijft er
 
 Try it: [Open Collections](/collections)
 
-- [x] Die uit dbt zegt hoe hij gebouwd is; de Business Description wat hij betekent voor het bedrijf
+- [x] Die uit dbt is hoe het Data Team hem in dbt beschrijft; de Business Description zegt wat hij is in de woorden van de business, van zijn Owner
 - [ ] Het is altijd dezelfde tekst
 - [ ] De Business Description vervangt die uit dbt
 
-Why: beide staan bewust naast elkaar: de beschrijving uit dbt volgt de definitie, de Business Description legt ze uit in de woorden van zijn Owner.
+Why: beide staan bewust naast elkaar, en geen van beide vervangt de andere: het Data Team schrijft die in dbt, de Owner legt in de Business Description uit wat hij is.
 
 # You can now
 

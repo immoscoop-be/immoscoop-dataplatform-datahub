@@ -1,11 +1,11 @@
 ---
 number: K5.2
-status: draft
+status: reviewed
 minutes: 4
 added: 2026-10-29
-changed: 2026-10-29
+changed: 2026-11-14
 gain: Je weet aan het Level van een Resource hoe ver je erop mag bouwen, en wie je vraagt als het zakt.
-translatedFrom: e60857ca45bd
+translatedFrom: 642a164ae086
 ---
 
 # Why now
@@ -13,7 +13,7 @@ translatedFrom: e60857ca45bd
 > De tabel zegt 2 · Described. Mag ik ze in mijn rapport voor het managementteam zetten?
 > — Een collega van marketing
 
-Elke Resource in Data Hub draagt een Level, van 0 tot 5. Het geeft de data geen punten: het zegt hoe ver de Resource gekomen is, en wie ervoor instaat.
+Elke Resource in Data Hub draagt een Level, van 1 tot 5. Het geeft de data geen punten: het zegt hoe ver de Resource gekomen is, en wie ervoor instaat.
 
 Promise: wat elk Level belooft, wie een Resource erheen tilt, en waarom ze zakt.
 
@@ -27,7 +27,7 @@ Een bibliotheek geeft aan welke uitgave gecontroleerd en geannoteerd is. Je mag 
 
 ## Bijvoorbeeld
 
-Weekly lead volume staat op 4 · Explored: het Data Team beschreef ze, het credit-team bevestigde ze en koppelde een EDA-document. Valt haar beschrijving weg in dbt, dan zakt ze naar 1 · Available, en haar Owner krijgt een melding.
+Weekly lead volume staat op 3 · Confirmed: het Data Team beschreef ze en het credit-team bevestigde ze. Valt haar beschrijving weg in dbt, dan zakt ze naar 1 · Available, en haar Owner krijgt een melding.
 
 # See it
 
@@ -45,8 +45,8 @@ Weekly lead volume staat op 4 · Explored: het Data Team beschreef ze, het credi
   "points": [
     { "category": "1 · Available", "sum": 12 },
     { "category": "2 · Described", "sum": 8 },
-    { "category": "3 · Confirmed", "sum": 5 },
-    { "category": "4 · Explored", "sum": 2 },
+    { "category": "3 · Confirmed", "sum": 7 },
+    { "category": "4 · Explored", "sum": 0 },
     { "category": "5 · Monitored", "sum": 0 }
   ]
 }

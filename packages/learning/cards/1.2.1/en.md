@@ -1,6 +1,6 @@
 ---
 number: 1.2.1
-status: draft
+status: reviewed
 minutes: 4
 added: 2026-10-29
 changed: 2026-10-29

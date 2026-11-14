@@ -106,7 +106,7 @@ Text may only hold `**bold**` and `` `a name` ``: no links in running text, no t
   | `/collections` | Open Collections | The Collections with their Resources and Lenses: per Resource the descriptions, the grain, the model type, the Level, the Owner, the Known Gaps and the Messages; per Lens its page, where it runs with its Parameters |
   | `/query/new` | Open Query | A new query over the Resources the reader may see |
   | `/messages` | Open your Messages | The reader's Messages: Questions, Remarks, Signals and what Data Hub wrote itself |
-  | `/me` | Open My page | The reader's own page: their Permission group and what it allows, their Groups |
+  | `/me` | Open My page | The reader's own page: their language, their Slack address, what they own and their Groups (their Permission group comes with FR-PL-13) |
   | `/me/keys` | Open your Excel keys | The reader's Excel keys, where each is used and when it was last used |
   | `/charts` | Open Charts | The charts of the Chart Server, each with what it answers and examples |
   | `/learning` | Open the Learning Centre | The Learning Centre, with every card |
@@ -148,7 +148,7 @@ Write `en.md` first, then translate it into `nl.md` (DEC-LR-24). The same in bot
 | Author | <the data colleague> |
 | Interviewed | <date>, with the learning-card skill |
 | Fact check | <who, or To name> |
-| Test reader | <a colleague outside data, or To name> |
+| Test reader | <a colleague outside data, who reads it in prod, or To name> |
 
 ## 1. The reader's question
 **Asked:** … **Answer:** … **In the card:** …

@@ -7,8 +7,8 @@ The input of the card as the interview gave it: what the author said, what Claud
 | Card | K5.11 Deprecated or withdrawn (Compass, section K5 Data Hub) |
 | Author | Max |
 | Interviewed | 2026-11-14, with the learning-card skill |
-| Fact check | To name |
-| Test reader | To name |
+| Fact check | Claude, an independent check against the requirements and the code on 2026-11-14, reviewed by Max |
+| Test reader | To name, in prod (DEC-LR-38) |
 
 ## 1. The reader's question
 
@@ -80,8 +80,10 @@ The author asked Claude to write out all the cards on the states of Data Hub, wi
 
 The author reviewed the cards together: "All good", and asked Claude to check the open facts itself. Checked by Claude in the code on 2026-11-14, at the author's request: the mark deprecated shows on the page of the Resource, on the page of its Collection, in its folder and in the panel, and Claude names it, but not yet on the Lenses and Reports built on it (FR-SR-50 says they show it when they are built); the card says so. The author approved naming this card under "A Resource was withdrawn" (DEC-LR-37), so it is linked from the web app.
 
+The fact check, by an independent pass of Claude on 2026-11-14, read the card against the requirements, the Message Catalogue and the code. Fixed: a Lens is not moved to another Resource, its replacement is a new query that can become a Lens of its own (DEC-LE-04); the mark deprecated shows on the page of the Resource, in its Collection and in the panel, and Claude names it, not wherever the Resource is listed; deprecated changes nothing in the figures, its reason says why; "marked withdrawn" went, as the web app shows no such mark.
+
 ## To do
 
 - [ ] When the Lenses and Reports show the mark deprecated (FR-SR-50), say so in the card
 - [ ] A marker on the mark deprecated listing this card: to design first (DEC-LR-22)
-- [ ] Fact check: the example against FR-SR-50, DEC-SR-26 and MSG-RES-06
+- [ ] Test reader: a colleague outside data reads the card in prod and says in their own words what they learned (DEC-LR-38)

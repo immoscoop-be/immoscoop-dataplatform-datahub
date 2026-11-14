@@ -7,8 +7,8 @@ The input of the card as the interview gave it: what the author said, what Claud
 | Card | K5.8 A Lens or your own query (Compass, section K5 Data Hub) |
 | Author | Max |
 | Interviewed | 2026-11-14, with the learning-card skill |
-| Fact check | To name |
-| Test reader | To name |
+| Fact check | Claude, an independent check against the requirements and the code on 2026-11-14, reviewed by Max |
+| Test reader | To name, in prod (DEC-LR-38) |
 
 ## 1. The reader's question
 
@@ -78,7 +78,9 @@ The card has no See it: the third rung is a screen of Data Hub, not a chart. App
 
 The author chose to have Claude draft the card, as for K5.7. Claude brought everything in it, from the rules of Data Hub and the Message that names the card: the quote, the situation, the rule, the example, the three questions, the first question and the neighbours. The author approved the draft without the anchor (DEC-LR-36). A "yes" to a suggestion weighs less than the author's own words, so the fact check and the test reader carry more weight here than usual.
 
+The fact check, by an independent pass of Claude on 2026-11-14, read the card against the requirements, the Message Catalogue and the code. Nothing to change; it noted that the default group Lens user makes no queries of its own.
+
 ## To do
 
-- [ ] Fact check: the example against MSG-LEN-06 and FR-SR-47, and whether every User may make a Lens of their own query
 - [ ] Follow-up cards on Lenses: making a Lens of your own query; K5.9 A Lens in Excel
+- [ ] Test reader: a colleague outside data reads the card in prod and says in their own words what they learned (DEC-LR-38)

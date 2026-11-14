@@ -7,8 +7,8 @@ The input of the card as the interview gave it: what the author said, what Claud
 | Card | K5.7 Broken: when what you read disappears (Compass, section K5 Data Hub) |
 | Author | Max |
 | Interviewed | 2026-11-14, with the learning-card skill |
-| Fact check | To name |
-| Test reader | To name |
+| Fact check | Claude, an independent check against the requirements and the code on 2026-11-14, reviewed by Max |
+| Test reader | To name, in prod (DEC-LR-38) |
 
 ## 1. The reader's question
 
@@ -78,8 +78,10 @@ The card has no See it: the third rung is a screen of Data Hub, not a chart. App
 
 The author chose the card and asked Claude to suggest all of it, as nobody has asked about Broken yet and the author did not know where it shows. Claude brought everything in the card, from the rules of Data Hub and the examples of its Messages: the quote, the situation, the rule, the example, the four questions, the first question and the neighbours. The author approved the draft with one change: no anchor, as the explanation is clear by itself (DEC-LR-36). A "yes" to a suggestion weighs less than the author's own words, so the fact check and the test reader carry more weight here than usual.
 
+The fact check, by an independent pass of Claude on 2026-11-14, read the card against the requirements, the Message Catalogue and the code. Fixed: Reports are not built yet (10-reports.md is to be specified), so the quote, the situation and the first question are about a Lens, and the fourth question about a query of your own whose Resource was withdrawn, instead of a report.
+
 ## To do
 
-- [ ] Fact check: the example and the four questions against DEC-DH-67, DEC-UX-81 and MSG-LEN-05, MSG-QRY-02, MSG-RPT-01
 - [ ] A card for the Owner Unit on repairing a Broken Lens from its query: a new topic, or part of K5.8
 - [ ] A marker on the red chip "Broken" listing this card: to design first (DEC-LR-22)
+- [ ] Test reader: a colleague outside data reads the card in prod and says in their own words what they learned (DEC-LR-38)

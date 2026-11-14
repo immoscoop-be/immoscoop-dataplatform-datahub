@@ -7,8 +7,8 @@ The input of the card as the interview gave it: what the author said, what Claud
 | Card | K5.3 The Known Gaps of a Resource (Compass, section K5 Data Hub) |
 | Author | Max Passenier |
 | Interviewed | 2026-11-12, by voice in Claude chat, along the learning-card recipe; written into the card the same day with the learning-card skill |
-| Fact check | To name |
-| Test reader | To name |
+| Fact check | Claude, an independent check against the requirements and the code on 2026-11-14, reviewed by Max |
+| Test reader | To name, in prod (DEC-LR-38) |
 
 ## 1. The reader's question
 
@@ -80,6 +80,8 @@ The author brought the repeated question, the case of the lead source, the two s
 
 Writing the card, Claude also brought: the wording of the quote of Why now and of who says it; the example figures and the kind of chart of See it, and the period of the example gap; the gain; the four questions of Check your understanding, all Claude's, with their wrong answers taken from the two sides of question 2 and the ban of question 5, except "The Resource is unreliable, so you look for another one" (third question) and "When the Data Team will fix it" and "How many colleagues ran into it" (fourth question), which are Claude's own traps; the choice of the neighbours under Where to next; and the facts of Data Hub behind the example and the questions, checked in `docs/requirements/functional/05-resource-card.md`: a Known Gap is an item of its own on the Overview of a Resource, in plain text, with who added it and when (FR-RC-21); the Owner and the Data Team add, change and remove one (FR-RC-21; per attribute through `resources.describe`, DEC-PL-03); it may be narrowed down by a period, fields and rows (FR-RC-24); Claude reads that scope (FR-RC-25). The card does not mention the warning on a query that reads a Known Gap (FR-RC-27), which is proposed and not in v1.
 
+The fact check, by an independent pass of Claude on 2026-11-14, read the card against the requirements, the Message Catalogue and the code. Nothing to change.
+
 ## To do
 
 - [ ] Ask the author for the figures and the period of the missing lead source, for See it, and replace the example figures and the example gap (mid-March to mid-April 2026) by them; keep "example figures" until then, or "rounded figures" once real
@@ -90,3 +92,4 @@ Writing the card, Claude also brought: the wording of the quote of Why now and o
 - [x] Add K5.3 to `plan.json`, with a note (in the plan, in the same change as the card)
 - [ ] Offer K4.4 Reporting an error or a doubt under Where to next, once it is written
 - [ ] Nobody meets this card where its topic comes up (`links`, 2026-11-12): offer it under Where to next of 4.7.1, which names Known Gaps as an Owner's next step and has three choices today (the Data Team chooses what it replaces); and a marker ⓘ on the Known Gaps of a Resource on its Overview, and on the mark "Known Gap" of a field on Columns, listing this card: a new place, to design first (DEC-LR-22)
+- [ ] Test reader: a colleague outside data reads the card in prod and says in their own words what they learned (DEC-LR-38)

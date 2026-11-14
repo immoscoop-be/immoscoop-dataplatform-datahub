@@ -7,10 +7,10 @@ const config = { identityUrl: 'https://identity.test', catalogueUrl: 'https://ca
 const seen = (card: string, lastAt: string, understoodAt: string | null = null): Progress => ({ card, seenAt: lastAt, lastAt, step: 'see', understoodAt });
 
 describe('the Learning Centre in the web app', () => {
-  it('shows a draft outside prod only (DEC-LR-25)', () => {
-    expect(writtenCards('uat').has('K3.4')).toBe(true);
-    expect([...writtenCards('prod').values()].every((card) => card.status === 'reviewed')).toBe(true);
-    expect(writtenCards('prod').has('K3.4')).toBe(false);
+  it('shows a draft outside prod only (DEC-LR-25): every written card in uat, the reviewed ones in prod', () => {
+    const all = writtenCards('uat');
+    expect(all.has('K3.4')).toBe(true);
+    expect([...writtenCards('prod').keys()]).toEqual([...all].filter(([, card]) => card.status === 'reviewed').map(([number]) => number));
   });
 
   it('reads a card in Dutch, and in English what has no translation', async () => {
@@ -51,7 +51,8 @@ describe('the Learning Centre in the web app', () => {
 
   it('names the cards new or changed in the last 30 days', () => {
     const shown = writtenCards('uat');
-    expect(newAndChanged(shown, new Date('2026-10-30T12:00:00Z')).map((item) => [item.topic.number, item.added])).toContainEqual(['K3.4', true]);
+    expect(newAndChanged(shown, new Date('2026-10-30T12:00:00Z')).map((item) => [item.topic.number, item.added])).toContainEqual(['1.2.1', true]);
+    expect(newAndChanged(shown, new Date('2026-11-20T12:00:00Z')).map((item) => [item.topic.number, item.added])).toContainEqual(['K3.4', false]);
     expect(newAndChanged(shown, new Date('2027-01-30T12:00:00Z'))).toEqual([]);
   });
 

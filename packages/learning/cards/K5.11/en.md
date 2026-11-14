@@ -1,6 +1,6 @@
 ---
 number: K5.11
-status: draft
+status: reviewed
 minutes: 4
 added: 2026-11-14
 changed: 2026-11-14
@@ -12,17 +12,17 @@ gain: You know whether you may still build on a Resource marked deprecated or wi
 > This Resource says deprecated. Are the figures in my report wrong now?
 > — A colleague from credit, while building a report
 
-Its Owner marked it deprecated, with a reason and a Resource to use instead. The figures are not wrong: it still works, but nobody should start building on it.
+Its Owner marked it deprecated, with a reason and a Resource to use instead. Deprecated changes nothing in its figures: it still works as before, and its reason says why nobody should start building on it.
 
 Promise: what deprecated and withdrawn tell you, and what to do with each.
 
 # Core idea
 
-A **deprecated** Resource still works but should no longer be built on, so move to what its mark says to use instead; a withdrawn one is gone for everyone but its Owner Unit and the Data Team, and what reads it stops until it comes back.
+A **deprecated** Resource still works but should no longer be built on, so build what is new on the Resource its mark names; a withdrawn one is gone for everyone but its Owner Unit and the Data Team, and what reads it stops until it comes back.
 
 ## At Immoscoop
 
-The credit team marks Weekly lead volume deprecated: "a lead shared by two sources counts twice here", with Leads per week as the Resource to use instead. The Resource shows the mark wherever it is listed, and Claude names it; the Lenses on it keep working, and their makers move them to Leads per week. A month later the Data Team stops offering Weekly lead volume to Data Hub in dbt: it is withdrawn. Only the credit team and the Data Team still see it, marked withdrawn, with its Collection, its Confirmations and its history; a Lens that still read it is Broken. Had it been a mistake, it would have come back as it was.
+The credit team marks Weekly lead volume deprecated: "a lead shared by two sources counts twice here", with Leads per week as the Resource to use instead. The Resource shows the mark on its page, in its Collection and in the panel, and Claude names it; the Lenses on it keep working, and the credit team builds their replacements on Leads per week, as new queries that become Lenses of their own. A month later the Data Team stops offering Weekly lead volume to Data Hub in dbt: it is withdrawn. Only the credit team and the Data Team still see it, with its Collection, its Confirmations and its history; a Lens that still read it is Broken. Had it been a mistake, it would have come back as it was.
 
 # Check your understanding
 
@@ -30,9 +30,9 @@ The credit team marks Weekly lead volume deprecated: "a lead shared by two sourc
 
 - [ ] It stops working
 - [ ] Data Hub moves it to the Resource to use instead
-- [x] It keeps working; move it to the Resource the mark names while it still works
+- [x] It keeps working; build its replacement on the Resource the mark names while it still works
 
-Why: deprecated hides nothing and blocks nothing: it warns. Nobody moves your Lens for you; the mark says where to.
+Why: deprecated hides nothing and blocks nothing: it warns. A Lens keeps its Resources; one on another Resource is a new query, which can become a Lens of its own.
 
 ## A Resource a colleague used last month is nowhere to be found. What may have happened?
 

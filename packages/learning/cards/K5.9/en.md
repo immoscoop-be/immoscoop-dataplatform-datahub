@@ -1,6 +1,6 @@
 ---
 number: K5.9
-status: draft
+status: reviewed
 minutes: 4
 added: 2026-11-14
 changed: 2026-11-14
