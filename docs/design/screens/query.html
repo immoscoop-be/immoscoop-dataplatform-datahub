@@ -13,7 +13,8 @@
   values, its SQL or both. The switch "SQL" shows a table outside the Resources.
   A power user, who has the Permission "Query tables outside Data Hub" (Admin only to start), may also read a table that
   Data Hub knows but that is no Resource: a model, seed, snapshot or source of a dbt project it follows through its Source
-  Jobs. Such a table is a quiet chip next to the Resources, "not a Resource", and the query runs; a table that is a
+  Jobs. Such a table is a quiet chip next to the Resources, its table name in a dashed outline (DEC-UX-243), and the
+  query runs; a double-click on its name opens what dbt and BigQuery know of it (OP-UX-89, Proposal); a table that is a
   Resource stays one, to start a new query with, and a table Data Hub does not know stays an error. A query that reads one
   cannot become a Lens (DEC-LE-22): a line under its question says so. The switch "SQL" shows it (DEC-UX-220, DEC-SR-46).
   One white frame holds two dark boxes: the editor, at the full width, and under it the Parameters, which fold open and
@@ -36,7 +37,7 @@
   The switch "Query" shows it Broken (DEC-UX-160, FR-SR-53, DEC-UX-81): a table or column it reads no longer exists, so
   Run is off, a callout on top names what is missing, and the query has the red dot in the panel; its SQL can still be
   changed, and a change that runs makes it work again, as does the return of what it reads.
-  Requirements: FR-SR-61, FR-SR-60, FR-SR-59, FR-SR-58, FR-SR-57, FR-SR-56, FR-SR-53, FR-SR-36, FR-SR-37, FR-SR-40, FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-45, FR-SR-47, FR-SR-48, FR-SR-51, FR-LN-05, FR-LN-06, FR-LE-07, FR-LE-08, FR-LE-16, FR-RC-18
+  Requirements: FR-SR-62, FR-SR-61, FR-SR-60, FR-SR-59, FR-SR-58, FR-SR-57, FR-SR-56, FR-SR-53, FR-SR-36, FR-SR-37, FR-SR-40, FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-45, FR-SR-47, FR-SR-48, FR-SR-51, FR-LN-05, FR-LN-06, FR-LE-07, FR-LE-08, FR-LE-16, FR-RC-18
   Decisions: DEC-UX-238, DEC-UX-237, DEC-UX-236, DEC-UX-235, DEC-UX-234, DEC-UX-225, DEC-UX-224, DEC-UX-223, DEC-UX-222, DEC-UX-221, DEC-UX-220, DEC-UX-219, DEC-UX-218, DEC-UX-163, DEC-UX-17, DEC-UX-20, DEC-UX-70, DEC-UX-71, DEC-UX-72, DEC-UX-73, DEC-UX-74, DEC-UX-76, DEC-UX-77, DEC-UX-88, DEC-UX-97, DEC-UX-99, DEC-UX-115, DEC-SR-29, DEC-SR-35, DEC-LN-01.
   Not in v1: the label "Claude" on a query in the panel (FR-SR-26, DEC-CH-02); leave it out.
   "Make it a lens" turns the query into a Lens (FR-LE-07, DEC-UX-25). The query stays, used as the Lens: then "Update the lens"
@@ -209,7 +210,6 @@
  <h1 class="page-title" style="flex:1" id="q-title">Leads per source name</h1>
  <span class="q-layouts" role="group" aria-label="Layout"><button aria-pressed="true" data-layout="horizontal" aria-label="The query above the result" onclick="location.search=''"><i class="ph ph-rows"></i></button><button aria-pressed="false" data-layout="side" aria-label="The query next to the result" onclick="location.search='?layout=side'"><i class="ph ph-columns"></i></button></span>
  <a class="btn-quiet outline" href="query-new.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-plus-circle"></i>New query</a>
- <button class="btn-quiet outline" id="hide-btn" type="button" title="Hide this query from your panel; Hidden in the panel shows it again" style="display:inline-flex;align-items:center;gap:6px"><i class="ph ph-eye-slash"></i><span>Hide</span></button>
  <a class="btn-primary" data-pane-group="lens" data-pane="free" hidden href="lens-new.html" style="text-decoration:none" title="Turn this query into a Lens for everyone who may use its Resources"><i class="ph ph-aperture" style="font-size:15px"></i>Make it a Lens</a>
  <!-- Greyed, with why on a hover or on focus: each Resource not published yet with its Level, or each table outside Data Hub (DEC-UX-232) -->
  <span class="why-anchor" data-pane-group="lens" data-pane="unpublished" hidden tabindex="0" aria-describedby="why-lens"><button class="btn-primary" type="button" disabled><i class="ph ph-aperture" style="font-size:15px"></i>Make it a Lens</button>
@@ -497,6 +497,33 @@
   <a class="btn-primary" href="resource-overview.html"><i class="ph ph-arrow-square-out"></i>Open the Resource</a>
  </div>
 </section>
+<!-- Double-click on a table outside Data Hub, for a power user (OP-UX-89, Proposal): what dbt and BigQuery know of it,
+     in a floating window over the query as the Summary of a Resource; it has no page in Data Hub to open -->
+<section class="float-win rs-win kt-win" id="kt" role="dialog" aria-modal="false" aria-labelledby="kt-title" hidden>
+ <div class="float-head" title="Drag to move">
+  <i class="ph ph-dots-six-vertical float-grip" aria-hidden="true"></i>
+  <i class="ph ph-cube" style="font-size:17px;color:var(--text-secondary)" aria-hidden="true"></i>
+  <div style="flex:1;min-width:0"><div class="meta" id="kt-meta">Not a Resource · staging · dbt-prod</div><div class="float-title"><span class="mono" id="kt-title">stg_oltp__leads</span></div></div>
+  <button class="icon-btn float-fold" aria-label="Fold" aria-expanded="true"><i class="ph ph-minus"></i></button>
+  <button class="icon-btn" data-float-close aria-label="Close"><i class="ph ph-x"></i></button>
+ </div>
+ <div class="float-body">
+  <p class="meta rs-lead">A table Data Hub knows from a dbt project it follows. It is no Resource: no Owner, Level or Publication.</p>
+  <p class="kt-desc"><span class="origin">From dbt</span><span id="kt-desc">One row per lead as the OLTP database keeps it: renamed, typed and without test leads.</span></p>
+  <div class="kt-facts">
+   <div class="kt-facts-head"><span class="origin">From BigQuery, now</span></div>
+   <dl class="facts" id="kt-facts"></dl>
+  </div>
+  <div class="kt-cols-head"><span class="label">Its columns</span><span class="count" id="kt-count">14</span>
+   <label class="search kt-filter"><i class="ph ph-magnifying-glass" style="font-size:13px"></i><input id="kt-q" placeholder="Filter the columns" autocomplete="off"></label></div>
+  <div class="ft-cols kt-cols" id="kt-cols"></div>
+  <p class="meta kt-note">Types from BigQuery; descriptions from dbt, or from BigQuery where dbt has none.</p>
+ </div>
+ <div class="float-foot">
+  <span class="meta" style="flex:1">Your query stays as it is.</span>
+  <button class="btn-quiet" type="button" id="kt-copy"><i class="ph ph-copy"></i>Copy the full name</button>
+ </div>
+</section>
 <!-- Double-click on a field in the SQL: its type and descriptions, in a pop-out at the word (DEC-UX-221, as DEC-UX-115) -->
 <div class="lc-pop fd-pop" id="fd-pop" role="dialog" aria-label="Field" data-side="below" hidden>
  <div class="fd-block">
@@ -696,6 +723,9 @@
  <button class="seg" data-target="param" role="tab" aria-selected="false">A Parameter</button>
  <button class="seg" data-target="resource" role="tab" aria-selected="false">A Resource</button>
  <button class="seg" data-target="field" role="tab" aria-selected="false">A field</button>
+ <button class="seg" data-target="known" role="tab" aria-selected="false">A table outside</button>
+ <button class="seg" data-target="view" role="tab" aria-selected="false">A view outside</button>
+ <button class="seg" data-target="knownfield" role="tab" aria-selected="false">Its field</button>
 </div>
 <div class="role-switch" data-group="role" role="tablist" aria-label="Prototype: seen as" style="top:auto;bottom:68px;right:500px">Seen as
  <button class="seg on" data-target="colleague" role="tab" aria-selected="true">Colleague</button>
@@ -756,11 +786,9 @@
     if (at >= 0) flags.splice(at, 1); else if (flags.length < 10) flags.push({ title: here(), state: '' });
     drawFlags();
   };
-  document.getElementById('hide-btn').addEventListener('click', e => {
-    const b = e.currentTarget, hidden = b.getAttribute('aria-pressed') !== 'true';
-    b.setAttribute('aria-pressed', String(hidden));
-    b.innerHTML = hidden ? '<i class="ph ph-eye"></i><span>Show again</span>' : '<i class="ph ph-eye-slash"></i><span>Hide</span>';
-  });
+  // No Hide in the head of the page (DEC-UX-246): the eye in the panel and the quick window hide it
+  window.queryHidden = false;
+  window.toggleHidden = () => { window.queryHidden = !window.queryHidden; };
   document.getElementById('q-flags').addEventListener('click', e => {
     if (e.target.closest('[data-flag-add]')) { window.toggleFlag(); return; }
     const x = e.target.closest('.q-flag-x'), tab = e.target.closest('.q-flag');
@@ -804,7 +832,7 @@
     get where() { return 'Query · ' + here(); },
     get commands() {
       const at = flags.findIndex(f => f.title === here()), full = at < 0 && flags.length >= 10;
-      const hidden = document.getElementById('hide-btn').getAttribute('aria-pressed') === 'true';
+      const hidden = !!window.queryHidden;
       const side = new URLSearchParams(location.search).get('layout') === 'side';
       const state = g => document.querySelector(`[data-group="${g}"] .seg.on`)?.dataset.target;
       const lens = state('lens'), broken = state('qstate') === 'broken';
@@ -841,8 +869,8 @@
           : { icon: 'ph ph-clock-counter-clockwise', title: 'Show the history', meta: '14 runs, each a variation', click: '#hist-tab', words: 'history runs earlier tab' },
         { icon: 'ph ph-copy', title: 'Copy the Query ID', meta: 'q-20261027-4c2e1a, of run 14', click: '.query-id .icon-btn', words: 'copy id reference ref share' },
         hidden
-          ? { icon: 'ph ph-eye', title: 'Show this query again', meta: 'in your panel', click: '#hide-btn', words: 'unhide show' }
-          : { icon: 'ph ph-eye-slash', title: 'Hide this query', meta: 'from your panel; Hidden shows it again', click: '#hide-btn', words: 'hide remove' },
+          ? { icon: 'ph ph-eye', title: 'Show this query again', meta: 'in your panel', run: () => window.toggleHidden(), words: 'unhide show' }
+          : { icon: 'ph ph-eye-slash', title: 'Hide this query', meta: 'from your panel; Hidden shows it again', run: () => window.toggleHidden(), words: 'hide remove' },
         side
           ? { icon: 'ph ph-rows', title: 'Put the query above the result', meta: 'the view, kept for you', run: () => { location.search = ''; }, words: 'view layout portrait orientation above stacked' }
           : { icon: 'ph ph-columns', title: 'Put the query next to the result', meta: 'the view, kept for you', run: () => { location.search = '?layout=side'; }, words: 'view layout landscape orientation side by side' },

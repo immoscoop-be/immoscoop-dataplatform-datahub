@@ -8,6 +8,7 @@ import { missingIn, missingOf } from './broken.js';
 import { type Catalogue, CatalogueUnavailable, type QueryRequest, type QueryResource } from './catalogue.js';
 import type { NamedResource, QueryKind } from './database.js';
 import { lensRoutes } from './lens-api.js';
+import { outsideTable } from './outside.js';
 import type { Lenses } from './lenses.js';
 import { bind, type Parameter, parseParameters } from './parameters.js';
 import { type Preflight, preflight, type ResourceOfQuery, sound, type Thresholds } from './preflight.js';
@@ -424,6 +425,32 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
         ...(outside as KnownTable[]).map((table) => ({ key: table.key, fullName: table.fullName, fields: (table.columns ?? []).map(({ name, dataType }) => ({ name, dataType })), partition: table.partition })),
       ]);
       return added;
+    } catch (error) {
+      return unavailable(error, reply, request);
+    }
+  });
+
+  /**
+   * What Data Hub knows of a table outside it, for a power user who double-clicks its name in the SQL (FR-SR-62,
+   * DEC-UX-247): from dbt as registry answers it for this User, and from BigQuery now, its metadata only, which BigQuery
+   * does not bill. Only a table registry knows that is no Resource; without BigQuery, what dbt knew.
+   */
+  app.get<{ Querystring: { key?: string } }>('/outside-table', async (request, reply) => {
+    if (!(registry && can(permissionsOf(request), 'queries.outside'))) {
+      return reply.code(403).send({ error: 'forbidden', message: 'Only who may query tables outside Data Hub reads what Data Hub knows of one.', permission: 'queries.outside' });
+    }
+    const key = (request.query.key ?? '').trim().toLowerCase();
+    if (key.length > 1024 || !/^[^\s.,`]+\.[^\s.,`]+\.[^\s.,`]+$/.test(key)) {
+      return reply.code(400).send({ error: 'invalid_request', message: 'Name the table by its Key, project.dataset.table.' });
+    }
+    try {
+      const table = (await registry.knownTables([key], authorization(request))).find((known) => known.key === key && !known.resource);
+      if (!table) return reply.code(404).send({ error: 'not_found', message: 'Data Hub knows no such table outside its Resources.' });
+      const live = await bigquery.describe(table.fullName).catch((error: unknown) => {
+        request.log.warn({ err: error, table: table.fullName }, 'BigQuery did not describe a table outside Data Hub; what dbt knew stands instead');
+        return null;
+      });
+      return { table: outsideTable(table, live) };
     } catch (error) {
       return unavailable(error, reply, request);
     }

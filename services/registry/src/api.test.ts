@@ -27,7 +27,7 @@ function fakeReading(asked: unknown[]): Reading {
     knownTables: async (relations) => {
       asked.push({ knownTables: relations });
       return relations.includes('immoscoop-dataplatform.dbt_staging.stg_leads')
-        ? [{ relation: 'immoscoop-dataplatform.dbt_staging.stg_leads', databaseName: 'immoscoop-dataplatform', schemaName: 'dbt_staging', tableName: 'STG_Leads', name: 'stg_leads', resourceType: 'model', layer: null, filePath: 'models/staging/stg_leads.sql', partitionField: 'created_date', partitionUnit: 'day', projectId: '9367', projectName: 'p', resource: false, description: 'One row per lead.', columns: [{ name: 'lead_id', dataType: 'STRING', description: 'Id of the lead.' }] }]
+        ? [{ relation: 'immoscoop-dataplatform.dbt_staging.stg_leads', databaseName: 'immoscoop-dataplatform', schemaName: 'dbt_staging', tableName: 'STG_Leads', name: 'stg_leads', resourceType: 'model', layer: null, filePath: 'models/staging/stg_leads.sql', partitionField: 'created_date', partitionUnit: 'day', clusterBy: ['lead_source'], materialized: 'incremental', projectId: '9367', projectName: 'p', resource: false, description: 'One row per lead.', columns: [{ name: 'lead_id', dataType: 'STRING', description: 'Id of the lead.' }] }]
         : [];
     },
     async searchKnownTables(query, options) {
@@ -193,6 +193,8 @@ describe('the registry API', () => {
             projectName: 'p',
             resource: false,
             partition: { field: 'created_date', unit: 'day' },
+            clusterBy: ['lead_source'],
+            materialized: 'incremental',
             description: 'One row per lead.',
             columns: [{ name: 'lead_id', dataType: 'STRING', description: 'Id of the lead.' }],
           },

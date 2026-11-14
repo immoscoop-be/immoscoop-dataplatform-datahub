@@ -61,6 +61,7 @@ export default {
   'editor.lines': '⋯ {count} regels',
   'editor.explain.parameter': 'Dubbelklik om deze Parameter te openen',
   'editor.explain.table': 'Dubbelklik voor de samenvatting',
+  'editor.explain.outside': 'Dubbelklik voor wat dbt en BigQuery ervan weten',
   'editor.explain.field': 'Dubbelklik voor de beschrijvingen',
   'editor.fold': 'Dichtvouwen',
   'editor.unfold': 'Openvouwen',

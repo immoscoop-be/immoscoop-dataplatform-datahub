@@ -37,6 +37,7 @@
   import { digitOf, modLabel, type QueryStatus } from '../lib/flags.js';
   import type { QuickRow } from '../lib/quick.js';
   import ParameterWindow from './ParameterWindow.svelte';
+  import OutsideTableWindow from './OutsideTableWindow.svelte';
   import ResourceSummaryWindow, { type SummaryData } from './ResourceSummaryWindow.svelte';
   import QueryHistory from './QueryHistory.svelte';
   import QueryParameters, { type Missing as MissingParameter } from './QueryParameters.svelte';
@@ -229,6 +230,8 @@
   let parameterWindow = $state<{ key: number; parameter: Parameter | null; defines: MissingParameter | null } | null>(null);
   /** What a double-click in the SQL opened (DEC-UX-221): the Summary of a Resource, or the descriptions of a field. */
   let summaryWindow = $state<TableSuggestion | null>(null);
+  /** A table outside Data Hub double-clicked in the SQL, by a power user (FR-SR-62). */
+  let outsideWindow = $state<TableSuggestion | null>(null);
   let fieldExplained = $state<{ fields: Suggestion[]; at: At } | null>(null);
   /** The word under the cursor that a double-click explains: "Show info" in the quick window opens it (DEC-UX-238). */
   let atCursor = $state<AtCursor | null>(null);
@@ -275,6 +278,7 @@
     preview = null;
     parameterWindow = null;
     summaryWindow = null;
+    outsideWindow = null;
     fieldExplained = null;
     newSet = null;
     finding = false;
@@ -527,7 +531,8 @@
     if (atCursor && !preview) {
       const word = atCursor;
       const about = { parameter: 'quick.query.info.parameter', table: 'quick.query.info.table', field: 'quick.query.info.field' } as const;
-      rows.push(command('info', 'info', t('quick.query.info'), () => editor?.explainAtCursor(), { meta: t(about[word.kind], { name: word.name }), words: t('quick.query.info.words') }));
+      const meta = t(word.kind === 'table' && word.outside ? 'quick.query.info.outside' : about[word.kind], { name: word.name });
+      rows.push(command('info', 'info', t('quick.query.info'), () => editor?.explainAtCursor(), { meta, words: t('quick.query.info.words') }));
     }
     if (writes) {
       rows.push(runCommand(found, command));
@@ -765,9 +770,16 @@
       const parameter = parameters.find((candidate) => namesOf(candidate).includes(what.name));
       if (parameter) openParameter(parameter);
     } else if (what.kind === 'table') {
-      if (summaryOf) summaryWindow = what.table;
+      // A table outside Data Hub has no Summary: what dbt and BigQuery know of it (FR-SR-62).
+      if (what.table.outside) {
+        summaryWindow = null;
+        outsideWindow = what.table;
+      } else if (summaryOf) {
+        outsideWindow = null;
+        summaryWindow = what.table;
+      }
     } else {
-      const fields = suggestions.filter((field) => field.name.toLowerCase() === what.name.toLowerCase());
+      const fields = [...suggestions, ...outsideFields].filter((field) => field.name.toLowerCase() === what.name.toLowerCase());
       if (fields.length > 0) fieldExplained = { fields, at: what.at };
     }
   }
@@ -871,7 +883,7 @@
   const tables: TableSuggestion[] = $derived.by(() => {
     if (!query) return [];
     const own = query.resources.flatMap((resource) => (resource.visible ? [{ id: resource.id, name: resource.displayName, fullName: resource.fullName ?? resource.key }] : []));
-    if (!query.mine || query.resources.length >= 10) return own;
+    if (!query.mine || query.resources.length >= 10) return [...own, ...outsideTables];
     const taken = new Set(query.resources.map((resource) => resource.id));
     const others = (collections ?? [])
       .flatMap((collection) => collection.resources)
@@ -882,8 +894,24 @@
         return true;
       })
       .map((item) => ({ id: item.id, name: item.displayName, fullName: item.key, other: true }));
-    return [...own, ...others];
+    return [...own, ...others, ...outsideTables];
   });
+  /** The tables outside Data Hub the query reads: a double-click explains them, the editor never suggests them (FR-SR-62). */
+  const outsideTables: TableSuggestion[] = $derived(known.map((table) => ({ id: table.key, name: table.name, fullName: table.fullName, outside: true })));
+  /** Their columns from dbt, which a double-click explains as it does a field of a Resource, without a Business Description. */
+  const outsideFields: Suggestion[] = $derived(
+    known.flatMap((table) =>
+      (table.columns ?? []).map((column) => ({
+        name: column.name,
+        type: column.dataType,
+        resource: table.name,
+        role: table.partition?.field === column.name ? { kind: 'partition' as const } : null,
+        description: column.description,
+        businessDescription: '',
+        outside: true,
+      })),
+    ),
+  );
 
   /** Each problem once: an @name is named once, however often it is in the SQL. */
   const once = <T extends Problem | Warning>(notes: readonly T[]): T[] =>
@@ -1019,9 +1047,7 @@
         {/each}
       </span>
       <Button variant="outline" href={NEW_QUERY}><Icon name="plus-circle-fill" />{t('query.new')}</Button>
-      <Button variant="outline" disabled={hiding} title={t(hidden ? 'query.unhide.hint' : 'query.hide.hint')} onclick={toggleHidden}
-        ><Icon name={hidden ? 'eye' : 'eye-slash-fill'} />{t(hidden ? 'query.page.unhide' : 'query.page.hide')}</Button
-      >
+      <!-- No Hide here: the eye in the panel and the quick window hide a query (DEC-UX-246). -->
       {#if query.mine && query.kind === 'query' && query.lens}
         <!-- A query used as a Lens overwrites it, after its size check (DEC-UX-77); greyed, it says why (DEC-UX-232). -->
         {#if noLens && query.lens.state !== 'waiting'}
@@ -1104,7 +1130,8 @@
         {/each}
         {#each known as table (table.key)}
           <!-- A table outside Data Hub: quiet, dashed, without Level, Owner or Publication (DEC-UX-220). -->
-          <span class="chip known" title={t('query.known.title')}><Icon name="cube" /><span class="mono">{table.name}</span><span class="meta">· {t('query.known', { layer: table.layer })}</span></span>
+          <!-- Only its name; its layer and that it is no Resource on a hover (DEC-UX-243). -->
+          <span class="chip known" title={t('query.known.title', { layer: table.layer })}><Icon name="cube" /><span class="mono">{table.name}</span></span>
         {/each}
         {#if query.mine && !preview && query.resources.length < 10}
           <button type="button" class="add" onclick={() => (newSet = { mode: 'add', resource: null })}><Icon name="plus" />{t('query.resources.add')}</button>
@@ -1156,6 +1183,7 @@
             {suggestions}
             parameters={parameterSuggestions}
             {tables}
+            {outsideFields}
             onnewtable={query.mine && query.resources.length < 10 ? () => (newSet = { mode: 'add', resource: null }) : undefined}
             onothertable={(table) => (newSet = { mode: 'add', resource: table.id })}
             {marks}
@@ -1359,6 +1387,11 @@
   {#if summaryWindow && summaryOf}
     {#key summaryWindow.id}
       <ResourceSummaryWindow table={summaryWindow} load={summaryOf} onclose={() => (summaryWindow = null)} />
+    {/key}
+  {/if}
+  {#if outsideWindow}
+    {#key outsideWindow.id}
+      <OutsideTableWindow table={outsideWindow} load={(key) => client.outsideTable(key)} onclose={() => (outsideWindow = null)} />
     {/key}
   {/if}
   {#if fieldExplained}

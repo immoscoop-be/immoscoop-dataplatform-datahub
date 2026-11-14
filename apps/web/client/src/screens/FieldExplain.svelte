@@ -7,7 +7,7 @@
   /**
    * A field named in the SQL, in a pop-out at the word (DEC-UX-221): its type, its role as partition or cluster column,
    * and its descriptions, the Business Description next to the one from dbt, as the suggestions show them (DEC-UX-115);
-   * once for each Resource of the query that holds it. A click elsewhere, Escape, typing or scrolling closes it.
+   * once for each Resource of the query that holds it, and each table outside Data Hub it reads (FR-SR-62). A click elsewhere, Escape, typing or scrolling closes it.
    */
   let { fields, at, onclose }: { fields: readonly Suggestion[]; at: At; onclose: () => void } = $props();
 
@@ -64,12 +64,13 @@
     <div class="block">
       <div class="head">
         <span class="name">{field.name}</span>
-        <span class="meta">{[field.type, field.resource].filter(Boolean).join(' · ')}</span>
+        <span class="meta">{field.type ? `${field.type} · ` : ''}<span class:mono={field.outside}>{field.resource}</span></span>
         {#if role(field)}<span class="role">{role(field)}</span>{/if}
       </div>
+      <!-- A table outside Data Hub has no Owner, so no Business Description to miss (FR-SR-62). -->
       {#if field.businessDescription}
         <p><OriginTag origin="owner" /><span>{field.businessDescription}</span></p>
-      {:else}
+      {:else if !field.outside}
         <p class="none">{t('field.noBusiness')}</p>
       {/if}
       <p class="dbt"><OriginTag origin="dbt" /><span>{field.description || '–'}</span></p>
@@ -85,7 +86,7 @@
   .pop.above::before { top: auto; bottom: -7px; border: 0; border-right: 1px solid var(--tint-active); border-bottom: 1px solid var(--tint-active); }
   .block + .block { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--tint-hover); }
   .head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; }
-  .name { font-family: var(--font-mono); }
+  .name, .mono { font-family: var(--font-mono); }
   .meta { color: var(--text-muted); }
   .role { font-size: 10px; background: var(--tint-active); padding: 1px 7px; border-radius: var(--radius-pill); }
   p { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; margin: 8px 0 0; }

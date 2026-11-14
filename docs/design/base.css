@@ -2080,6 +2080,23 @@ svg.mp, svg.mp-g { display: block; width: 100%; height: auto; overflow: visible;
 .fd-pop p { margin: 8px 0 0; }
 .fd-pop .origin { display: table; margin: 0 0 3px; }
 .fd-pop .si-dbt { color: var(--text-secondary); }
+/* A table outside Data Hub, double-clicked by a power user (OP-UX-89, Proposal): what dbt and BigQuery know of it */
+.float-win.kt-win { width: 540px; }
+.kt-desc { margin: 0 0 12px; font-size: var(--text-small); line-height: 1.5; }
+.kt-desc .origin, .kt-facts .origin { display: table; margin: 0 0 6px; }
+.kt-facts { padding: 10px 12px; border-radius: var(--radius-md); background: var(--surface-sub); margin-bottom: 14px; }
+.kt-facts .facts { font-size: var(--text-meta); line-height: 1.5; }
+.kt-facts .facts .mono { overflow-wrap: anywhere; }
+.kt-cols-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.kt-cols-head .label { margin: 0; }
+.kt-filter { margin-left: auto; width: 180px; padding: 4px 10px; background: var(--surface-sub); }
+.kt-filter input { font-size: var(--text-meta); }
+.kt-cols { margin: 0; }
+.kt-cols .ft-col { grid-template-columns: minmax(130px, max-content) minmax(64px, max-content) minmax(0, 1fr); }
+.kt-cols .ft-col.nested .mono { padding-left: 14px; color: var(--text-secondary); }
+.kt-cols .kt-none { font-style: italic; }
+.kt-from { font-size: 10px; color: var(--text-muted); border: 1px solid var(--tint-active); padding: 0 6px; border-radius: var(--radius-pill); margin-left: 4px; }
+.kt-note { display: block; margin: 10px 0 0; }
 
 /* The SQL of the editor, coloured by kind of word, as BigQuery colours it (DEC-UX-223); names keep the colour of the text */
 .sql-editor .sql-kw { color: var(--code-keyword); }
@@ -2088,9 +2105,9 @@ svg.mp, svg.mp-g { display: block; width: 100%; height: auto; overflow: visible;
 .sql-editor .sql-param:not(.undefined) { color: var(--code-param); }
 .sql-editor .sql-key:not(.outside), .sql-editor .sql-ref { color: inherit; }
 /* What a double-click explains has a dotted line under it, softer than the word; a wavy line stays an error (DEC-UX-222) */
-.sql-editor .sql-key:not(.outside):not([data-known]), .sql-editor .sql-param:not(.undefined), .sql-editor .sql-field {
+.sql-editor .sql-key:not(.outside), .sql-editor .sql-param:not(.undefined), .sql-editor .sql-field {
   text-decoration: underline dotted color-mix(in srgb, currentColor 50%, transparent); text-decoration-thickness: 1.5px; text-underline-offset: 3px; }
-.sql-editor .sql-key:not(.outside):not([data-known]):hover, .sql-editor .sql-param:not(.undefined):hover, .sql-editor .sql-field:hover { text-decoration-color: currentColor; }
+.sql-editor .sql-key:not(.outside):hover, .sql-editor .sql-param:not(.undefined):hover, .sql-editor .sql-field:hover { text-decoration-color: currentColor; }
 
 /* Find a table, for a power user (DEC-UX-224), and the CTEs that come at the start of the SQL (DEC-UX-225) */
 .ft-sheet { width: max(540px, var(--sheet-width)); }

@@ -393,7 +393,8 @@ function preflightOf(sql: string, parameters: { name: string }[] = []) {
   // A power user's query reads a table Data Hub knows that is no Resource (FR-SR-56).
   if (sql.includes('stg_oltp__leads')) {
     const key = 'immoscoop-dataplatform-398214.dbt_prod_staging.stg_oltp__leads';
-    return { ...base, runnable: true, bytes: 80_000_000, range: 'free', tables: [{ key, fullName: key, name: 'stg_oltp__leads', layer: 'staging' }] };
+    const columns = [{ name: 'lead_id', dataType: 'STRING', description: 'Id of the lead.' }, { name: 'created_date', dataType: 'DATE', description: 'Day it came in.' }];
+    return { ...base, runnable: true, bytes: 80_000_000, range: 'free', tables: [{ key, fullName: key, name: 'stg_oltp__leads', layer: 'staging', columns, partition: { field: 'created_date', unit: 'day' } }] };
   }
   if (sql.includes('partner_contracts')) {
     const start = sql.indexOf('`immoscoop-dataplatform-398214.dbt_prod_stacks.partner_contracts`');
@@ -1020,6 +1021,24 @@ function serve({
       const names = [...asked.resources.map((id) => ({ r5: 'listings', r6: 'saved_searches' })[id] ?? id), ...asked.tables.map((key) => key.split('.').at(-1) as string)];
       const ctes = names.map((name) => `${name} as (\n    select\n        *\n    from\n        \`p.d.${name}\`\n)`);
       return json({ sql: `with\n\n${ctes.join(',\n\n')}\n\n${asked.sql}`, ctes });
+    }
+    // What dbt and BigQuery know of a table outside Data Hub (FR-SR-62).
+    if (path.startsWith('/outside-table?key=')) {
+      const key = 'immoscoop-dataplatform-398214.dbt_prod_staging.stg_oltp__leads';
+      return json({
+        table: {
+          key, fullName: key, name: 'stg_oltp__leads', layer: 'staging', resourceType: 'model', projectName: 'dbt-prod', materialized: 'incremental',
+          description: 'One row per lead as the OLTP database keeps it.',
+          bigquery: { type: 'TABLE', bytes: 3_100_000_000, rows: 4_800_000, partitions: 1412, modifiedAt: '2026-11-14T06:14:00.000Z' },
+          partition: { field: 'created_date', unit: 'day', required: true },
+          clusterBy: ['lead_source'],
+          columns: [
+            { name: 'created_date', type: 'DATE', description: 'Day it came in.', from: 'dbt', partition: true, cluster: null },
+            { name: 'lead_source', type: 'STRING', description: 'Source system code.', from: 'bigquery', partition: false, cluster: 1 },
+            { name: 'lead_id', type: 'STRING', description: '', from: null, partition: false, cluster: null },
+          ],
+        },
+      });
     }
     if (path.startsWith('/known-tables/search?')) {
       const key = 'immoscoop-dataplatform-398214.dbt_prod_staging.stg_oltp__leads';
@@ -3520,10 +3539,10 @@ describe('Query', () => {
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    // Next to its Resources: the table, its layer and that it is not a Resource.
+    // Next to its Resources: only the name of the table; its layer and that it is not a Resource on a hover (DEC-UX-243).
     const chip = (await main.findByText('stg_oltp__leads', { selector: '.chip .mono' }, { timeout: 3000 })).closest('.chip') as HTMLElement;
-    expect(within(chip).getByText('· staging, geen Resource')).toBeTruthy();
-    expect(chip.title).toMatch(/^Een tabel die Data Hub kent uit een dbt-project dat het volgt/);
+    expect(chip.textContent?.trim()).toBe('stg_oltp__leads');
+    expect(chip.title).toMatch(/^staging · een tabel die Data Hub kent uit een dbt-project dat het volgt/);
     // It runs, but cannot become a Lens: greyed, with why, and a line under the question.
     expect(await main.findByRole('button', { name: /Uitvoeren\s*80 MB/ })).toBeTruthy();
     const button = main.getByRole('button', { name: 'Maak er een Lens van' }) as HTMLButtonElement;
@@ -3681,15 +3700,48 @@ describe('Query', () => {
     await vi.waitFor(() => expect(calls.some((call) => call.path.includes('q=since+2024'))).toBe(true));
   });
 
-  it('hides the query that is open from its own page, and shows it again (DEC-UX-138)', async () => {
+  it('hides the query that is open from the quick window, as its page has no button for it, and shows it again (DEC-UX-138, DEC-UX-246)', async () => {
     const calls = serve({ queries: [{ ...QUERY, createdAt: new Date().toISOString() }] });
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    await fireEvent.click(await main.findByRole('button', { name: /^Verbergen$/ }, { timeout: 3000 }));
+    await main.findByRole('button', { name: /Uitvoeren/ }, { timeout: 3000 });
+    expect(main.queryByRole('button', { name: /^Verbergen$/ })).toBeNull();
+    await quickDo('deze query verbergen');
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/queries/q1/hidden' }));
-    await fireEvent.click(await main.findByRole('button', { name: /^Weer tonen$/ }));
+    await quickDo('deze query weer tonen');
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/queries/q1/hidden' }));
+  });
+
+  it('shows a power user what dbt and BigQuery know of a table outside Data Hub, from Show info as a double-click does (FR-SR-62, DEC-UX-247)', async () => {
+    const table = '`immoscoop-dataplatform-398214.dbt_prod_staging.stg_oltp__leads`';
+    const calls = serve({ as: 'admin', queries: [{ ...QUERY, sql: `${QUERY.sql}\n-- reads\n    , ${table}` }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const editor = await main.findByRole('textbox', { name: /Leads per source name/ }, { timeout: 3000 });
+    // Its name has the dotted line of a word a double-click explains, and says what it opens.
+    await vi.waitFor(() => expect([...editor.querySelectorAll('.cm-explain')].some((word) => word.getAttribute('title') === 'Dubbelklik voor wat dbt en BigQuery ervan weten')).toBe(true), { timeout: 3000 });
+    editor.focus();
+    await fireEvent.keyDown(editor, { key: 'End', code: 'End', ctrlKey: true });
+    const row = await quickRow('Info tonen');
+    expect(row.textContent).toContain('de tabel stg_oltp__leads, waar de cursor staat');
+    await fireEvent.keyDown(screen.getByRole('combobox', { name: 'Snelvenster' }), { key: 'Enter' });
+    const window = within(await screen.findByRole('dialog', { name: 'stg_oltp__leads' }));
+    await window.findByText('One row per lead as the OLTP database keeps it.');
+    expect(calls).toContainEqual({ method: 'GET', path: '/outside-table?key=immoscoop-dataplatform-398214.dbt_prod_staging.stg_oltp__leads' });
+    const facts = (window.getByText('Uit BigQuery, nu').closest('div') as HTMLElement).textContent?.replace(/\s+/g, ' ') ?? '';
+    expect(facts).toContain('Tabel · incremental in dbt');
+    expect(facts).toContain('created_date, per dag · BigQuery vraagt er een filter op');
+    expect(facts).toContain('lead_source');
+    expect(facts).toContain('immoscoop-dataplatform-398214.dbt_prod_staging.stg_oltp__leads');
+    // Its columns, the partition column first and marked; a description from BigQuery says so; filtered by words.
+    const columns = () => [...document.querySelectorAll('.columns .column .mono')].map((name) => name.textContent);
+    expect(columns()).toEqual(['created_date', 'lead_source', 'lead_id']);
+    expect(window.getByText('Source system code.').closest('.text')?.textContent).toContain('BigQuery');
+    await fireEvent.input(window.getByRole('searchbox', { name: 'Filter de kolommen' }), { target: { value: 'source' } });
+    expect(columns()).toEqual(['lead_source']);
+    expect(window.getByRole('button', { name: /Volledige naam kopiëren/ })).toBeTruthy();
   });
 
   it('checks what is typed once it pauses two seconds, a query that opens at once (DEC-UX-154)', async () => {
@@ -3897,6 +3949,8 @@ describe('Query', () => {
     await fireEvent.click(await main.findByRole('button', { name: 'Een Resource toevoegen' }, { timeout: 3000 }));
     const dialog = await screen.findByRole('dialog', { name: 'Met één Resource meer' });
     const sheet = within(dialog);
+    // It opens to find: the focus is in its search at once (DEC-UX-245).
+    expect(document.activeElement).toBe(sheet.getByRole('searchbox'));
     await fireEvent.click(await sheet.findByRole('checkbox', { name: /Listings/ }));
     await fireEvent.click(sheet.getByRole('checkbox', { name: /Saved searches/ }));
     expect(dialog.getAttribute('aria-label') ?? within(dialog).getByRole('heading', { level: 2 }).textContent).toMatch(/Met 2 Resources meer/);
@@ -3925,6 +3979,8 @@ describe('Query', () => {
     const main = within(await screen.findByRole('main'));
     await fireEvent.click(await main.findByRole('button', { name: /Zoek een tabel/ }, { timeout: 3000 }));
     const sheet = within(await screen.findByRole('dialog', { name: 'Zoek een tabel' }));
+    // It opens to find: the focus is in its search at once (DEC-UX-245).
+    expect(document.activeElement).toBe(sheet.getByRole('searchbox'));
     // A table that is a Resource cannot be ticked: it starts a new query with it.
     expect(await sheet.findByRole('button', { name: 'Begin er een nieuwe query mee' }, { timeout: 3000 })).toBeTruthy();
     await fireEvent.click(sheet.getByRole('button', { name: 'Kolommen van stg_oltp__leads' }));
