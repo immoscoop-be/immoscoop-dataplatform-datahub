@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { journeyOf } from '@datahub/contracts/journey';
 import { createTestIssuer, type TestIssuer } from '@datahub/auth/testing';
 import { type Permissions, type StartingGroup, startingPermissions } from '@datahub/contracts';
 import type { FastifyInstance } from 'fastify';
@@ -152,6 +153,9 @@ describe('mcp', () => {
     // Claude analyses the rows it gets, in SQL; no exports keeps whole tables from leaving, not Claude from reading (DEC-CL-14).
     expect(result.instructions).toContain('Analyse the rows you get');
     expect(result.instructions).toContain('never whole tables to copy elsewhere');
+    // Whoever wants to publish is led into the Owner Journey, and the Owner stands for every text (DEC-CL-17, OP-CL-12).
+    expect(result.instructions).toContain('call guide_owner_journey first and follow it, one step at a time');
+    expect(result.instructions).toContain('The Owner is the reference of the truth');
   });
 
   it('offers who_am_i, which answers as the User of the token, with their Permission group and what it lets them do (TR-PL-09)', async () => {
@@ -202,6 +206,7 @@ describe('mcp', () => {
     const text = (await tool('how_to_use', {}, token)).content[0]?.text ?? '';
     expect(text).toContain('your Permission group, Admin');
     expect(text).toContain('"What did everyone query this week?"');
+    expect(text).toContain('"Help me publish it": Claude takes you through the Owner Journey, one step at a time');
     expect(text).toContain('- Open Admin: webhooks, Excel keys, users, Permission groups and the withdrawn Resources');
 
     // A Business analyst sees only the queries on the Resources of their Owner Units; a Lens user makes none.
@@ -335,6 +340,67 @@ describe('Resources through Claude', () => {
     expect(result.content[0]?.text).toContain('could not answer just now');
   });
 
+  it('guides the Owner Journey from the journey Data Hub gives: the next step, what is open, its Learning Cards, and who goes no further (OP-CL-12, DEC-CL-17)', async () => {
+    const journey = journeyOf({
+      level: 2,
+      inCollection: true,
+      published: false,
+      businessDescription: '',
+      keyFields: [],
+      fields: [{ name: 'week_start', businessDescription: '' }],
+      intendedUse: 'Weekly trends.',
+      pitfalls: '',
+      knownGaps: 0,
+      reliableSince: null,
+      parameters: [],
+      modelType: null,
+      grain: [],
+      mappings: 0,
+      openMessages: 0,
+      records: [{ step: 'data', answer: 'goneThrough', by: 'An', at: '2026-11-15T09:00:00Z' }],
+    });
+    answers[`GET ${CATALOGUE}/resources/${RESOURCE_ID}`] = () => [200, detail({ level: 2, published: false, journey })];
+    answers[`GET ${CATALOGUE}/collections/c-1`] = () => [200, collection];
+    answers[`GET ${QUERY}/resources/${RESOURCE_ID}/storage`] = () => [200, { storage: null }];
+    const owner = await issuer.sign({ groups: ['g-credit'] });
+    const guided = await tool('guide_owner_journey', { id: RESOURCE_ID }, owner);
+    expect(guided.structuredContent).toMatchObject({
+      ready: false,
+      open: ['businessDescription', 'keyFields', 'fields', 'pitfalls', 'gaps'],
+      you: { mayPublish: true, mayDescribe: true },
+      next: { number: 2, step: 'businessDescription', mark: 'required to publish', writes: 'update_resource_card' },
+    });
+    // A card not written yet goes by its number, so that Claude never makes one up (FR-CL-15).
+    expect(guided.structuredContent.next.cards).toEqual([{ number: 'K5.14', written: false }]);
+    expect(guided.content[0]?.text).toContain('Step 2 of 12 is next: Business Description, required to publish.');
+    expect(guided.content[0]?.text).toContain('Still open before it can be published: Business Description, Key Fields, Fields, Pitfalls, Known Gaps and reliable since.');
+
+    // The publication shows what is open, and sends Claude back to the journey: no declaration to tick yet (DEC-MR-15).
+    const publish = await tool('publish_resource', { id: RESOURCE_ID }, owner);
+    expect(publish.structuredContent).toMatchObject({ view: 'publish', ready: false, checks: { ready: false, done: ['Intended use'] } });
+    expect(publish.content[0]?.text).toContain('take them through these steps with guide_owner_journey first');
+
+    // Outside the Owner Unit, and without describing it: who publishes it, and no further (FR-CL-03).
+    const outside = await tool('guide_owner_journey', { id: RESOURCE_ID }, await issuer.sign({ as: 'lensUser' }));
+    expect(outside.content[0]?.text).toContain('Only Credit team, the Owner Unit of Credit leads, describes and publishes Weekly lead volume.');
+
+    // "Nothing to add", kept by Data Hub with the name of the User; only where none is an answer (DEC-MR-16).
+    answers[`POST ${CATALOGUE}/resources/${RESOURCE_ID}/journey/pitfalls`] = () => [200, { journey }];
+    expect((await tool('record_journey_step', { id: RESOURCE_ID, step: 'pitfalls', answer: 'nothing' }, owner)).isError).toBeUndefined();
+    expect(asked.find((call) => call.method === 'POST')?.body).toEqual({ answer: 'nothing' });
+    expect((await tool('record_journey_step', { id: RESOURCE_ID, step: 'pitfalls', answer: 'goneThrough' }, owner)).isError).toBe(true);
+  });
+
+  it('keeps the declaration the User ticked with the Confirmation (DEC-MR-17)', async () => {
+    answers[`POST ${CATALOGUE}/resources/${RESOURCE_ID}/publication`] = () => [200, detail()];
+    answers[`GET ${CATALOGUE}/resources/${RESOURCE_ID}`] = () => [200, detail()];
+    answers[`GET ${CATALOGUE}/collections/c-1`] = () => [200, collection];
+    answers[`GET ${QUERY}/resources/${RESOURCE_ID}/storage`] = () => [200, { storage: null }];
+    const declaration = 'For Credit team, I have read this card and confirm that this Resource is correct.';
+    await tool('confirm_publication', { id: RESOURCE_ID, declaration }, await issuer.sign({ groups: ['g-credit'] }));
+    expect(asked.find((call) => call.method === 'POST')?.body).toEqual({ declaration });
+  });
+
   it('does not overwrite a description a colleague changed since Claude showed it (EC-CL-03)', async () => {
     answers[`GET ${CATALOGUE}/resources/${RESOURCE_ID}`] = () => [200, detail()];
     answers[`PATCH ${CATALOGUE}/resources/${RESOURCE_ID}`] = () => [200, detail()];
@@ -407,10 +473,10 @@ describe('queries through Claude', () => {
 });
 
 describe('the Permissions of the User in Claude (TR-PL-09)', () => {
-  const READS = ['explain', 'get_messages', 'get_related_resources', 'get_resource', 'get_resource_lineage', 'get_resource_log', 'how_to_use', 'list_resources', 'search', 'show_resource', 'suggest_lenses', 'who_am_i'];
+  const READS = ['explain', 'get_messages', 'get_related_resources', 'get_resource', 'get_resource_lineage', 'get_resource_log', 'guide_owner_journey', 'how_to_use', 'list_resources', 'search', 'show_resource', 'suggest_lenses', 'who_am_i'];
   const QUERY_TOOLS = ['check_query', 'create_query', 'get_query', 'get_result_page', 'list_queries', 'run_query', 'run_query_approved', 'send_query_request', 'show_query', 'update_query'];
   const PREVIEW_TOOLS = ['preview_resource', 'run_preview_approved', 'send_preview_request'];
-  const WRITES = ['deprecate_resource', 'describe_fields', 'mark_changes_seen', 'reply_to_message', 'undeprecate_resource', 'update_resource_card', 'write_message'];
+  const WRITES = ['deprecate_resource', 'describe_fields', 'mark_changes_seen', 'record_journey_step', 'reply_to_message', 'undeprecate_resource', 'update_resource_card', 'write_message'];
 
   it('offers an Admin every tool, the queries of others included', async () => {
     const tools = names(await toolsOf(await issuer.sign({ as: 'admin' })));
@@ -434,7 +500,7 @@ describe('the Permissions of the User in Claude (TR-PL-09)', () => {
     const messagesOnly = permissionsOf('businessAnalyst', (permissions) => (permissions['claude.use'].values = { writes: ['messages'], note: '' }));
     const tools = names(await toolsOf(await issuer.sign({ permissions: messagesOnly })));
     expect(tools).toEqual(expect.arrayContaining(['write_message', 'reply_to_message', 'publish_resource', 'create_query', 'preview_resource']));
-    for (const name of ['update_resource_card', 'describe_fields', 'mark_changes_seen', 'deprecate_resource', 'undeprecate_resource']) expect(tools).not.toContain(name);
+    for (const name of ['update_resource_card', 'describe_fields', 'mark_changes_seen', 'deprecate_resource', 'undeprecate_resource', 'record_journey_step']) expect(tools).not.toContain(name);
 
     // Only the attributes they may describe: pitfalls, so no Business Descriptions of fields and no changes marked seen.
     const pitfalls = permissionsOf('businessAnalyst', (permissions) => (permissions['resources.describe'].values = { reach: 'theirs', attributes: ['pitfalls'] }));

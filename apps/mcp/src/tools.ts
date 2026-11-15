@@ -34,7 +34,7 @@ const HOME = '/collections';
 export function createMcpServer(user: AccessTokenClaims, options: ServerOptions): McpServer {
   const permits = permitsOf(user.permissions);
   const server = new McpServer({ name: 'datahub', title: 'Data Hub', version: '0.2.0' }, { instructions: instructionsFor(user, permits) });
-  const context: Context = { server, hub: options.hub, user, permits };
+  const context: Context = { server, hub: options.hub, user, permits, environment: options.environment };
 
   server.registerTool(
     'who_am_i',

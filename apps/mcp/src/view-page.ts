@@ -350,12 +350,32 @@ function renderPublish(v) {
   }
   const who = r.collection?.visibility === 'public' ? 'the whole company, as the Collection is public' : 'everyone who sees the Collection';
   const may = r.mayPublish;
+  const c = v.checks || { done: [], open: [], advised: [], eda: [] };
+  const described = r.level >= 2;
+  // What Data Hub checked: the one list of what makes it ready to publish, as in Data Hub (DEC-MR-15, DEC-MR-16)
+  const checks = '<div class="checks"><div>' + (may ? '✓ Owned by ' + esc(owner) + ': you may publish it.' : '⚠ Only a member of ' + esc(owner) + ' publishes it.') + '</div>' +
+    '<div>' + (described ? '✓ <b>Described in dbt:</b> the table and at least one field have a description.' : '⚠ <b>Not described in dbt yet:</b> it is published from 2 · Described.') + '</div>' +
+    (described && c.open.length === 0 ? '<div>✓ <b>Required to publish, all done:</b> ' + esc(c.done.join('; ')) + '.</div>' : '') +
+    (described && c.open.length > 0 && c.done.length > 0 ? '<div>✓ <b>Done:</b> ' + esc(c.done.join('; ')) + '.</div>' : '') +
+    (described ? c.open.map((step) => '<div>⚠ <b>' + esc(step.name) + ':</b> ' + esc(step.what) + '.</div>').join('') : '') +
+    (described && c.advised.length > 0 ? '<div>○ <b>Advised:</b> ' + esc(c.advised.map((step) => step.what).join('; ')) + '. They hold nothing up.</div>' : '') +
+    (described && c.eda.length > 0 ? '<div>◆ <b>For the EDA, later:</b> ' + esc(c.eda.map((step) => step.what).join('; ')) + '.</div>' : '') +
+    (described && c.open.length > 0 ? '<p class="meta">Claude takes you through the open steps, one at a time.</p>' : '') + '</div>';
+  // What you confirm: the whole card, read back as a colleague will see it (DEC-MR-17)
+  const card = r.card || {};
+  const part = (label, text) => (text ? '<span class="label">' + esc(label) + '</span><p style="margin:2px 0 8px">' + esc(text) + '</p>' : '');
+  const gaps = (card.knownGaps || []).map((gap) => gap.text).join(' ');
+  const read = '<div><div class="label">What you confirm · the card, read back</div><p class="meta">Publishing is also the first Confirmation: for ' + esc(owner) + ', you confirm what this Resource is and what it stands for, in every text on it; not the figures in it.</p><div class="tile">' +
+    part('Business Description', card.businessDescription) + '<span class="label">Description</span><span class="origin">From dbt</span><p style="margin:2px 0 8px">' + esc(r.description) + '</p>' +
+    part('Intended use', card.intendedUse) + part('Pitfalls', card.pitfalls) +
+    part('Known Gaps' + (card.reliableSince ? ' · reliable since ' + card.reliableSince : ''), gaps || (card.reliableSince ? 'None known.' : '')) +
+    part('Key Fields · Parameters', (card.keyFields || []).join(', ') + ' · ' + ((card.parameters || []).join(', ') || 'none')) + '</div></div>';
+  const declaration = 'For ' + owner + ', I have read this card and confirm that this Resource is correct: what it is and what it stands for, in every text on it.';
   root.innerHTML = head('Publish · Resource', r.displayName, null, level(r.levelName), r.collection) +
     '<div><div class="label">Who will see it</div><div class="checks"><div><b>Everyone who sees ' + esc(r.collection?.name ?? 'its Collection') + ':</b> ' + esc(who) + '. Now only ' + esc(owner) + ' and the Data Team see it.</div></div></div>' +
-    '<div><div class="label">What Data Hub checked</div><div class="checks"><div>' + (may ? '✓ Owned by ' + esc(owner) + ': you may publish it.' : '⚠ Only a member of ' + esc(owner) + ' publishes it.') + '</div><div>' + (v.ready ? '✓ <b>Described in dbt:</b> the table and at least one field have a description.' : '⚠ <b>Not described in dbt yet:</b> it is published from 2 · Described.') + '</div></div></div>' +
-    (v.ready ? '<div><div class="label">What you confirm</div><p class="meta">Publishing is also the first Confirmation: for ' + esc(owner) + ', you confirm what this Resource is and what it stands for, as its descriptions say; not the figures in it.</p><div class="tile">' +
-      ((r.card?.businessDescription) ? '<span class="label">Business Description</span><span class="origin">From the Owner</span><p style="margin:2px 0 8px">' + esc(r.card.businessDescription) + '</p>' : '') + '<span class="label">Description</span><span class="origin">From dbt</span><p style="margin:2px 0 0">' + esc(r.description) + '</p></div></div>' : '') +
-    '<div class="declare"><label><input type="checkbox" id="declare"' + (may && v.ready ? '' : ' disabled') + '><span>For ' + esc(owner) + ', I confirm that this Resource is correct: what it is and what it stands for.</span></label><button class="primary" data-act="publish" disabled>Publish and confirm</button></div>' +
+    '<div><div class="label">What Data Hub checked</div>' + checks + '</div>' +
+    (v.ready ? read : '') +
+    '<div class="declare"><label><input type="checkbox" id="declare"' + (may && v.ready ? '' : ' disabled') + '><span>' + esc(declaration) + '</span></label><button class="primary" data-act="publish" data-declaration="' + esc(declaration) + '" disabled>Publish and confirm</button></div>' +
     foot('Only you can publish it; Claude cannot.', r.page);
   const box = document.getElementById('declare');
   const button = root.querySelector('[data-act="publish"]');
@@ -484,7 +504,7 @@ root.addEventListener('click', (event) => {
     if (act === 'approve') call('run_query_approved', queryArgs(), 'The User approved and ran the query in Data Hub.');
     if (act === 'request') call('send_query_request', { ...queryArgs(), text: word() }, 'The User sent the query to the Data Team as a Request.');
   } else if (view.view === 'publish' && act === 'publish') {
-    call('confirm_publication', { id: view.resource.id }, 'The User published and confirmed the Resource in Data Hub.');
+    call('confirm_publication', { id: view.resource.id, declaration: target.dataset.declaration || undefined }, 'The User published and confirmed the Resource in Data Hub.');
   }
 });
 

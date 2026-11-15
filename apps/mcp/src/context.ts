@@ -12,6 +12,8 @@ export interface Context {
   hub: DataHub;
   user: AccessTokenClaims;
   permits: Permits;
+  /** The environment it runs in, such as uat or prod: prod shows only the reviewed Learning Cards (DEC-LR-25). */
+  environment?: string;
 }
 
 /** The MCP App of Data Hub, one page that shows a Resource, a Preview, a publication or the result of a query (FR-CL-01). */
