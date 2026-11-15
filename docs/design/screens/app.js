@@ -860,6 +860,37 @@ if (new URLSearchParams(location.search).has('mismatch')) {
   if (demo) { demo.value = 'placedIn'; demo.dispatchEvent(new Event('change')); }
 }
 
+// Adding a Resource, step 2: the model type chosen goes on to step 3 as ?type=, and the foot says what it asks for
+// (DEC-UX-261)
+document.querySelectorAll('input[name="model-type"]').forEach(i => i.addEventListener('change', () => {
+  const foot = document.getElementById('type-foot'), next = document.getElementById('type-next');
+  if (foot) foot.innerHTML = `<code>${i.value}</code> · asks for ${i.dataset.asks}`;
+  if (next) next.href = `collection-add-relations.html?type=${i.value}`;
+}));
+
+// Adding a Resource, step 3: only the fields of the model type chosen show, event by default. "Add Resource" stays greyed
+// until every required field is chosen, and the foot says which one is missing (FR-CO-44)
+(() => {
+  const sets = document.querySelectorAll('.type-needs-set');
+  if (!sets.length) return;
+  const asked = new URLSearchParams(location.search).get('type');
+  const type = [...sets].some(s => s.dataset.type === asked) ? asked : 'event';
+  sets.forEach(s => { s.hidden = s.dataset.type !== type; });
+  const set = document.querySelector(`.type-needs-set[data-type="${type}"]`);
+  const add = document.getElementById('add-resource'), why = document.getElementById('add-why');
+  const ready = why ? why.innerHTML : '';
+  const check = () => {
+    const fields = [...set.querySelectorAll('[data-required]')];
+    fields.forEach(f => f.parentElement.querySelector('.req')?.classList.toggle('missing', !f.value.trim()));
+    const missing = fields.find(f => !f.value.trim());
+    add?.classList.toggle('is-disabled', !!missing);
+    add?.setAttribute('aria-disabled', missing ? 'true' : 'false');
+    if (why) why.innerHTML = missing ? `Choose ${missing.dataset.required} first: a <code>${type}</code> needs it` : ready;
+  };
+  set.querySelectorAll('[data-required]').forEach(f => { f.addEventListener('change', check); f.addEventListener('input', check); });
+  check();
+})();
+
 // The editor of Query folds every CTE to its first line, as a code editor does: the arrow in the gutter folds or unfolds
 // one, "⋯ n lines" unfolds it, and Fold all in the quick window folds them together (DEC-UX-248); the line numbers keep their count
 const sqlEditor = document.querySelector('.sql-editor');

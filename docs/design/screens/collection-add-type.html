@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<!--
+  Screen: the page of a Collection, adding Resources, step 2: the model type
+  After choosing a Resource (collection-add-resources.html), the Data Admin chooses what one row of it is: its model type.
+  A card per model type says what one row is, why the type exists, what may be added up, the fields it asks for in step 3
+  (collection-add-relations.html) and an example. Data Hub suggests one where it can, here from the strategy of the
+  Colleciónes model; the Data Admin confirms it. `other` is proposed beside the five, for a Resource that fits none
+  (OP-RC-28). The choice goes on to step 3 as ?type=, which shows the fields of that model type.
+  Requirements: FR-CO-44
+  Decisions: DEC-UX-261, DEC-UX-58, DEC-RC-10. Open points: OP-RC-28. Learning Card: 2.3.6 (FR-LR-39).
+  Related screens: collection-add-resources.html, collection-add-relations.html, learning-card.html.
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="datateam">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Add a Resource to Credit leads: its model type</title>
+</head>
+<body>
+<div class="app panel-open">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <button class="nav-btn active" data-label="Collections" aria-label="Collections" aria-current="page"><i class="ph-fill ph-stack"></i><span class="flare top"></span><span class="flare bottom"></span></button>
+  <a class="nav-btn" href="query.html" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></a>
+  <a class="nav-btn" href="#" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <a class="nav-btn nav-admin" href="admin-webhooks.html" data-label="Admin" aria-label="Admin, for the Data Team" data-for="datateam"><i class="ph-fill ph-toolbox"></i></a>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">DV</a>
+</nav>
+<aside class="panel" aria-label="Collections">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:4px">
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Collections</h1>
+   <button class="icon-btn" aria-label="New Collection"><i class="ph-fill ph-plus-circle"></i></button>
+   <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
+  </div>
+  <label class="search card" style="margin:16px 0 4px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search Resources and Lenses"></label>
+  <div style="height:14px" data-for="datateam"></div>
+  <div class="tree-group card unassigned" data-for="datateam">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-tray"></i></span><span class="tree-name"><span class="item-title">Without a Collection</span><span class="meta"><b class="count-badge">3</b> waiting · Data Team only</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Without a Collection holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="resource-unassigned.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Saved searches">Saved searches</span></span><span class="maturity" data-level="1"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Agency reviews">Agency reviews</span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Credit simulations">Credit simulations</span></span><span class="maturity" data-level="1"></span></a>
+   </div>
+  </div>
+  <div class="tree-group card open current">
+   <div class="tree-head"><a class="tree-link" href="collection-overview.html" aria-current="page"><span class="item-icon"><i class="ph ph-coins"></i></span><span class="tree-name"><span class="item-title">Credit leads</span><span class="meta"><span data-for="owner datateam">6</span><span data-for="colleague">4</span> Resources · <i class="ph-fill ph-globe-simple"></i>Public</span></span></a><button class="tree-toggle" aria-expanded="true" aria-label="Show what Credit leads holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="resource-detail.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Weekly lead volume">Weekly lead volume</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Credit lead funnel">Credit lead funnel</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead sources">Lead sources</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead response time">Lead response time</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res unpublished" data-for="owner datateam" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Rejected leads · not published">Rejected leads<span class="hidden-label">, not published</span></span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res unpublished" data-for="owner datateam" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="KBC follow-up · not published">KBC follow-up<span class="hidden-label">, not published</span></span></span><span class="maturity" data-level="1"></span></a>
+     <a class="tree-res" href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span class="tree-res-name"><span class="clip" title="Leads per source name">Leads per source name</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span class="tree-res-name"><span class="clip" title="Leads per source, week by week">Leads per source, week by week</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span class="tree-res-name"><span class="clip" title="From request to KBC">From request to KBC</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span class="tree-res-name"><span class="clip" title="Response time and conversion">Response time and conversion</span></span><span class="maturity" data-level="3"></span></a>
+   </div>
+  </div>
+  <div class="tree-group card" data-pane-group="collfilter" data-pane="all">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-house-line"></i></span><span class="tree-name"><span class="item-title">Listing leads</span><span class="meta">15 Resources</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Listing leads holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Contact requests per listing and per broker">Contact requests per listing and per broker</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead quality score">Lead quality score</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Visit requests">Visit requests</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Leads per broker">Leads per broker</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Response by broker">Response by broker</span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead sources for listings">Lead sources for listings</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res unpublished" data-for="owner datateam" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Duplicate requests · not published">Duplicate requests<span class="hidden-label">, not published</span></span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead to visit">Lead to visit</span></span><span class="maturity" data-level="1"></span></a>
+     <a class="tree-more" href="#">Show all 15</a>
+   </div>
+  </div>
+  <div class="tree-group card" data-pane-group="collfilter" data-pane="all">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-buildings"></i></span><span class="tree-name"><span class="item-title">Listings</span><span class="meta">22 Resources</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Listings holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Active listings per day">Active listings per day</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Listing views per day">Listing views per day</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Price changes">Price changes</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Listings by region">Listings by region</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Time on market">Time on market</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="New listings per week">New listings per week</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Listing quality">Listing quality</span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res unpublished" data-for="owner datateam" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Withdrawn listings · not published">Withdrawn listings<span class="hidden-label">, not published</span></span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-more" href="#">Show all 22</a>
+   </div>
+  </div>
+  <div class="tree-group card">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-briefcase"></i></span><span class="tree-name"><span class="item-title">Brokers</span><span class="meta">11 Resources · <i class="ph-fill ph-lock-simple"></i>Private</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Brokers holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Active brokers">Active brokers</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Service packs per broker">Service packs per broker</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Broker churn">Broker churn</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Broker portal logins">Broker portal logins</span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Listings per broker">Listings per broker</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Broker regions">Broker regions</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Pack upgrades">Pack upgrades</span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res unpublished" data-for="owner datateam" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Broker contacts · not published">Broker contacts<span class="hidden-label">, not published</span></span></span><span class="maturity" data-level="1"></span></a>
+     <a class="tree-more" href="#">Show all 11</a>
+   </div>
+  </div>
+  <p id="no-results" class="meta" style="padding:8px 4px" hidden>Nothing matches your search.</p>
+ </div>
+</aside>
+<main class="main">
+<div class="breadcrumb">Collections</div>
+<div class="coll-head">
+ <span class="item-icon large"><i class="ph ph-coins"></i></span>
+ <div style="flex:1;min-width:0">
+  <h1 class="page-title">Credit leads</h1>
+  <p class="prose">The credit leads Immoscoop sends to KBC: how many come in, where they come from, and what happens to them after.</p>
+ </div>
+ <div class="coll-actions">
+  <a class="btn-quiet outline" href="collection-messages.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" title="Messages on this, and start one"><i class="ph-fill ph-chat-circle-text"></i>Messages<span class="count">2</span></a>
+  <a class="btn-quiet outline" href="collection-edit.html" data-for="owner datateam" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-pencil-simple"></i>Edit</a>
+  <a class="btn-quiet outline" href="collection-add-resources.html" data-for="datateam" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-plus-circle"></i>Add Resources</a>
+ </div>
+</div>
+<div class="status-row">
+ <span class="status"><i class="ph-fill ph-users-three"></i>Owner: Credit team</span>
+ <span class="status"><i class="ph-fill ph-globe-simple"></i>Public</span>
+</div>
+<div class="section-head"><h2>Resources</h2><a class="text-link" href="collection-add-resources.html" data-for="datateam"><i class="ph-fill ph-plus-circle"></i><span>Add Resources</span></a></div>
+<div class="table-card card"><table>
+ <thead><tr><th>Name</th><th>Level</th><th>Publication</th><th>Signals</th><th>Last change</th><th data-for="datateam"></th></tr></thead>
+ <tbody>
+  <tr><td><a class="name-cell" href="resource-detail.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span>Weekly lead volume</span></a></td><td><span class="level-cell"><span class="maturity" data-level="4"></span>4 · Explored</span></td><td>Published</td><td><span class="warn">1 open</span></td><td class="muted">Field added · 2 days ago</td><td data-for="datateam" style="width:1%"><button class="icon-btn" aria-label="Remove Weekly lead volume from the Collection" title="Remove from the Collection"><i class="ph ph-minus-circle"></i></button></td></tr>
+  <tr><td><a class="name-cell" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span>Credit lead funnel</span></a></td><td><span class="level-cell"><span class="maturity" data-level="4"></span>4 · Explored</span></td><td>Published</td><td><span class="muted">—</span></td><td class="muted">Check passed · today</td><td data-for="datateam" style="width:1%"><button class="icon-btn" aria-label="Remove Credit lead funnel from the Collection" title="Remove from the Collection"><i class="ph ph-minus-circle"></i></button></td></tr>
+  <tr><td><a class="name-cell" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span>Lead sources</span></a></td><td><span class="level-cell"><span class="maturity" data-level="4"></span>4 · Explored</span></td><td>Published</td><td><span class="muted">—</span></td><td class="muted">EDA linked · 1 week ago</td><td data-for="datateam" style="width:1%"><button class="icon-btn" aria-label="Remove Lead sources from the Collection" title="Remove from the Collection"><i class="ph ph-minus-circle"></i></button></td></tr>
+  <tr><td><a class="name-cell" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span>Lead response time</span></a></td><td><span class="level-cell"><span class="maturity" data-level="3"></span>3 · Confirmed</span></td><td>Published</td><td><span class="muted">—</span></td><td class="muted">Confirmed · 3 weeks ago</td><td data-for="datateam" style="width:1%"><button class="icon-btn" aria-label="Remove Lead response time from the Collection" title="Remove from the Collection"><i class="ph ph-minus-circle"></i></button></td></tr>
+  <tr class="unpublished" data-for="owner datateam"><td><a class="name-cell" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span>Rejected leads</span></a></td><td><span class="level-cell"><span class="maturity" data-level="2"></span>2 · Described</span></td><td><span class="muted">Not published</span></td><td><span class="muted">—</span></td><td class="muted">Added · 5 days ago</td><td data-for="datateam" style="width:1%"><button class="icon-btn" aria-label="Remove Rejected leads from the Collection" title="Remove from the Collection"><i class="ph ph-minus-circle"></i></button></td></tr>
+  <tr class="unpublished" data-for="owner datateam"><td><a class="name-cell" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span>KBC follow-up</span></a></td><td><span class="level-cell"><span class="maturity" data-level="1"></span>1 · Available</span></td><td><span class="muted">Not published</span></td><td><span class="muted">—</span></td><td class="muted">Added · 2 days ago</td><td data-for="datateam" style="width:1%"><button class="icon-btn" aria-label="Remove KBC follow-up from the Collection" title="Remove from the Collection"><i class="ph ph-minus-circle"></i></button></td></tr>
+ </tbody></table></div>
+<div class="section-head"><h2>Lenses</h2><a class="text-link" href="#" data-for="owner"><i class="ph-fill ph-plus-circle"></i><span>Add a Lens: start a query</span></a></div>
+<div class="table-card card"><table>
+ <thead><tr><th>Name</th><th>Built on</th><th>Level</th><th>Made by</th></tr></thead>
+ <tbody>
+  <tr><td><a class="name-cell" href="lens.html"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span>Leads per source name</span></a></td><td style="color:var(--text-secondary)">Weekly lead volume, Lead sources</td><td><span class="level-cell"><span class="maturity" data-level="4"></span>4 · Explored</span></td><td class="muted nowrap">Mia Peeters</td></tr>
+  <tr><td><a class="name-cell" href="lens.html"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span>Leads per source, week by week</span></a></td><td style="color:var(--text-secondary)">Weekly lead volume</td><td><span class="level-cell"><span class="maturity" data-level="4"></span>4 · Explored</span></td><td class="muted nowrap">An Claes</td></tr>
+  <tr><td><a class="name-cell" href="lens.html"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span>From request to KBC</span></a></td><td style="color:var(--text-secondary)">Credit lead funnel, Lead sources</td><td><span class="level-cell"><span class="maturity" data-level="4"></span>4 · Explored</span></td><td class="muted nowrap">Mia Peeters</td></tr>
+  <tr><td><a class="name-cell" href="lens.html"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span>Response time and conversion</span></a></td><td style="color:var(--text-secondary)">Lead response time, Credit lead funnel</td><td><span class="level-cell"><span class="maturity" data-level="3"></span>3 · Confirmed</span></td><td class="muted nowrap">An Claes</td></tr>
+ </tbody></table>
+ <p class="meta" style="padding:8px 10px 2px">The Lenses the credit team added to this Collection. Only the Owner Unit adds and changes them. A Lens takes the lowest Level of what it is built on.</p></div>
+</main>
+</div>
+
+<div class="sheet-backdrop" onclick="location.href='collection-overview.html'"></div>
+<section class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+ <div class="sheet-steps" aria-label="Steps"><a class="done" href="collection-add-resources.html"><b><i class="ph ph-check"></i></b>Choose a Resource</a><i class="ph ph-arrow-right" aria-hidden="true"></i><span class="on"><b>2</b>Model type</span><i class="ph ph-arrow-right" aria-hidden="true"></i><a href="collection-add-relations.html"><b>3</b>Fields and relations</a></div>
+ <div style="display:flex;align-items:flex-start;gap:8px"><div style="flex:1"><h2 id="sheet-title">What is one row of Credit simulations?</h2><p class="meta" style="margin-top:6px;display:block;line-height:1.5">Choose its model type. It decides what may be added up, which fields the next step asks for, and which EDA-Probes its EDA runs. Everyone who reads the Resource sees it.</p></div><a class="icon-btn" href="collection-overview.html" aria-label="Close"><i class="ph ph-x"></i></a></div>
+ <p class="check-line" style="margin-top:10px"><i class="ph ph-graph"></i><span><b>Suggested: event.</b> Credit simulations is built on the Colleciónes event <code>homeLoanSimulation.generate</code>, whose strategy is an event. Check it, and choose another when it is wrong.</span></p>
+ <div class="sheet-list type-list" role="radiogroup" aria-label="Model type" style="margin-top:10px">
+  <label class="pick type-pick"><input type="radio" name="model-type" value="event" data-asks="when it happened" checked>
+   <span style="flex:1;min-width:0">
+    <span class="type-head"><span class="type-name lc-ref" title="Explained in Learning Card 2.3.6, Five model types">event<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (explained in the Learning Centre)</span></span><span class="rel-src"><i class="ph ph-graph"></i>Suggested by the Domain Model</span></span>
+    <span class="type-def">One row per thing that happened, at one moment. A row never changes after; new rows only add on.</span>
+    <dl class="type-facts"><dt>Why</dt><dd>The most faithful record of behaviour: what happened, when, and in which order.</dd><dt>Counting</dt><dd>Add its rows up over any period.</dd><dt>Asks for</dt><dd>When it happened <span class="req">· required</span></dd><dt>For example</dt><dd>A property view, a lead sent, a simulation generated.</dd></dl>
+   </span></label>
+  <label class="pick type-pick"><input type="radio" name="model-type" value="state" data-asks="what it is about">
+   <span style="flex:1;min-width:0">
+    <span class="type-head"><span class="type-name lc-ref" title="Explained in Learning Card 2.3.6, Five model types">state<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (explained in the Learning Centre)</span></span></span>
+    <span class="type-def">One row per thing as it is now, or as it was at a moment. The same thing comes back, with values that may have changed.</span>
+    <dl class="type-facts"><dt>Why</dt><dd>To answer how things stand, without rebuilding it from the events each time.</dd><dt>Counting</dt><dd>Count at one moment; never add up over periods.</dd><dt>Asks for</dt><dd>What it is about <span class="req">· required</span>; as of when <span class="req">· when it keeps its history</span></dd><dt>For example</dt><dd>A listing as it is now; the listings online on each day.</dd></dl>
+   </span></label>
+  <label class="pick type-pick"><input type="radio" name="model-type" value="fact" data-asks="when it occurred, and its measures">
+   <span style="flex:1;min-width:0">
+    <span class="type-head"><span class="type-name lc-ref" title="Explained in Learning Card 2.3.6, Five model types">fact<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (explained in the Learning Centre)</span></span></span>
+    <span class="type-def">One row per business occurrence, at a declared grain, with measures to add up. It may still be completed or corrected after it first appears.</span>
+    <dl class="type-facts"><dt>Why</dt><dd>The unit of account of the business, linked to what describes it.</dd><dt>Counting</dt><dd>Add up its measures; count its rows as occurrences.</dd><dt>Asks for</dt><dd>When it occurred and its measures <span class="req">· required</span></dd><dt>For example</dt><dd>A credit lead with its loan amount and its outcome.</dd></dl>
+   </span></label>
+  <label class="pick type-pick"><input type="radio" name="model-type" value="dimension" data-asks="what it describes">
+   <span style="flex:1;min-width:0">
+    <span class="type-head"><span class="type-name lc-ref" title="Explained in Learning Card 2.3.6, Five model types">dimension<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (explained in the Learning Centre)</span></span></span>
+    <span class="type-def">One row per thing that describes others, such as an agency, a municipality or a lead source. It changes slowly, if at all.</span>
+    <dl class="type-facts"><dt>Why</dt><dd>A description lives in one place, and every Resource that refers to it follows.</dd><dt>Counting</dt><dd>Count its things; never add them up. It gives labels and groups to other Resources.</dd><dt>Asks for</dt><dd>What it describes <span class="req">· required</span></dd><dt>For example</dt><dd>Agencies, municipalities with their region, lead sources.</dd></dl>
+   </span></label>
+  <label class="pick type-pick"><input type="radio" name="model-type" value="aggregate" data-asks="what it is grouped by, and its counts and sums">
+   <span style="flex:1;min-width:0">
+    <span class="type-head"><span class="type-name lc-ref" title="Explained in Learning Card 2.3.6, Five model types">aggregate<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (explained in the Learning Centre)</span></span></span>
+    <span class="type-def">One row per group, such as per agency per week, with its counts or sums already made.</span>
+    <dl class="type-facts"><dt>Why</dt><dd>Speed, and one agreed figure for everyone who reads it.</dd><dt>Counting</dt><dd>Add up its sums; never its unique counts.</dd><dt>Asks for</dt><dd>What it is grouped by, and its counts and sums <span class="req">· required</span>; its period <span class="req">· when grouped by time</span></dd><dt>For example</dt><dd>Leads per region per month, emails sent per day.</dd></dl>
+   </span></label>
+  <label class="pick type-pick"><input type="radio" name="model-type" value="other" data-asks="a sentence on what one row is">
+   <span style="flex:1;min-width:0">
+    <span class="type-head"><span class="type-name lc-ref" title="Explained in Learning Card 2.3.6, Five model types">other<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (explained in the Learning Centre)</span></span></span>
+    <span class="type-def">None of the five. You say in a sentence what one row is.</span>
+    <dl class="type-facts"><dt>Why</dt><dd>For a Resource that fits no model type, rather than a wrong one.</dd><dt>Counting</dt><dd>No guidance: ask the Data Team before adding anything up.</dd><dt>Asks for</dt><dd>One row is, in a sentence <span class="req">· required</span>. No fields of its own, so its EDA runs only the EDA-Probes for every Resource</dd><dt>For example</dt><dd>A mapping of codes kept for one report.</dd></dl>
+   </span></label>
+ </div>
+ <div class="sheet-foot"><a class="btn-quiet" href="collection-add-resources.html"><i class="ph ph-arrow-left" style="font-size:14px"></i> Back</a><p class="meta" id="type-foot"><code>event</code> · asks for when it happened</p><a class="btn-primary" id="type-next" href="collection-add-relations.html?type=event" style="text-decoration:none">Next: fields and relations<i class="ph ph-arrow-right" style="font-size:15px"></i></a></div>
+</section>
+<script src="app.js"></script>
+</body>
+</html>

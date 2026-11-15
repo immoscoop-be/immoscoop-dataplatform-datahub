@@ -462,6 +462,8 @@ Data Hub shows the cardinality of each mapping and never asks for it ([DEC-RC-08
 
 *Note of 2026-10-28: next to the grain, the Data Admin chooses the model type: `event`, `state`, `fact`, `dimension` or `aggregate` ([DEC-RC-10](05-resource-card.md#dec-rc-10)).*
 
+*Note of 2026-11-15: proposed to change with [FR-CO-44](#fr-co-44): the model type gets a step of its own before the fields, and asks for the fields it needs.*
+
 *Note of 2026-10-28: a field can also map to an Entity the Domain Model does not have; it then only links the Resources that carry the same one ([DEC-CO-21](#dec-co-21)).*
 
 *Note of 2026-10-28, on building it: the step shows the relation types the Domain Model uses, each with the cardinality its vocabulary gives; a type that the Domain Model gives both one and many, such as `basedOn`, is shown as one or many per subject until the Domain Model settles it. How many Resources carry the same identity is said with the links themselves, on the Resource Card ([FR-RC-09](05-resource-card.md#fr-rc-09)). The grain, the model type and the mappings are recorded as [TR-CO-05](../technical/03-collections.md#tr-co-05) and proposed as [TR-AR-10](../technical/01-artifact-registry.md#tr-ar-10).*
@@ -474,6 +476,27 @@ Data Hub shows the cardinality of each mapping and never asks for it ([DEC-RC-08
 In the same step as the relations ([FR-CO-33](#fr-co-33)), the Data Admin sees per Resource how it is stored: its partition column and the unit of its partitions, its cluster columns in their order, and whether a partition filter is required. Data Hub derives them where it can, from the dbt manifest of the model beneath the view, through the lineage, and from BigQuery ([OP-SR-12](04-stacks-and-resources.md#op-sr-12)), and marks them "From dbt". The Data Admin sets what cannot be derived and can correct the rest. A partition filter that BigQuery requires stays required; the Data Admin can also require one where BigQuery does not, so that Data Hub asks for a filter on the partition column in every query on the Resource. Data Hub uses them on the page of the Resource ([FR-SR-39](04-stacks-and-resources.md#fr-sr-39)) and in the Pre-flight ([FR-SR-40](04-stacks-and-resources.md#fr-sr-40)).
 
 *Note of 2026-10-28, on building it: Data Hub derives the storage from the dbt manifest only, through the lineage ([TR-AR-03](../technical/01-artifact-registry.md#tr-ar-03)); reading it from BigQuery waits on [OP-SR-12](04-stacks-and-resources.md#op-sr-12). The facts come with the next run of a dbt project, or when a run is processed again.*
+
+
+<a id="fr-co-44"></a>
+### FR-CO-44 · The model type of a Resource is chosen first, and asks for its own fields
+
+**Status:** Proposed · **Source:** Max, 2026-11-15 ([DEC-UX-261](../../design/principles.md#dec-ux-261)) · **Screens:** [collection-add-type](../../design/screens/collection-add-type.html), [collection-add-relations](../../design/screens/collection-add-relations.html)
+
+After choosing a Resource ([FR-CO-31](#fr-co-31)), the Data Admin chooses its model type on a step of its own, before its fields ([DEC-RC-10](05-resource-card.md#dec-rc-10)). Each model type is shown with what one row is, why it exists, what may be added up, and the fields it asks for. Data Hub suggests one where it can, and the Data Admin confirms it. The model type then asks for the fields a Resource of that kind needs:
+
+| Model type | Asks for |
+| --- | --- |
+| `event` | When it happened: a date or timestamp. Required |
+| `state` | What it is about: the field that identifies the thing. Required. As of when: a date, for a state that keeps its history. Optional |
+| `fact` | When it occurred: a date or timestamp. Required. Its measures: one or more numbers to add up. Required |
+| `dimension` | What it describes: the field that identifies each thing. Required |
+| `aggregate` | What it is grouped by: one or more fields. Required. Its period: a date, when it is grouped by time. Its counts and sums: each marked as adding up or as a unique count that is never added up. Required |
+| `other` | One row is: a sentence ([OP-RC-28](05-resource-card.md#op-rc-28)). Required |
+
+Data Hub offers only the fields whose type fits, suggests them where it can, from the partition column, the grain or a mapping `is`, and says where each suggestion came from. The Resource is added only once every required field is chosen. The fields are kept with the model type; the EDA reads them to choose its EDA-Probes ([OP-ED-03](15-eda.md#op-ed-03)).
+
+**Makes easy:** recording what one row is and the fields it hangs on, so that everyone counts a Resource the right way and its EDA knows what to explore. **Makes hard:** adding a Resource whose model type is a guess, such as an `event` without the moment it happened, or a `state` without what it is about.
 
 <a id="fr-co-35"></a>
 ### FR-CO-35 · The Data Team hands a Collection to any group

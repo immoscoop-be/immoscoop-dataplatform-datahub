@@ -9,15 +9,15 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 259 | 90 (21 open, 69 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 260 | 90 (21 open, 69 done) |
 | [Backlog](../overview/backlog.md) | – | – | – | 7 (5 open, 2 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 19 (19 implemented) | 5 (1 specified, 4 implemented) | 10 | 10 (1 open, 9 done) |
 | [User management](functional/02-user-management.md) | 21 (14 implemented, 7 withdrawn) | 5 (1 implemented, 4 withdrawn) | 12 | 8 (1 open, 7 done) |
-| [Collections](functional/03-collections.md) | 43 (1 proposed, 38 implemented, 4 withdrawn) | 2 (2 specified) | 26 | 18 (1 open, 17 done) |
+| [Collections](functional/03-collections.md) | 44 (2 proposed, 38 implemented, 4 withdrawn) | 2 (2 specified) | 26 | 18 (1 open, 17 done) |
 | [Resources](functional/04-stacks-and-resources.md) | 62 (5 specified, 51 implemented, 6 withdrawn) | 4 (1 specified, 3 withdrawn) | 46 | 25 (4 open, 21 done) |
-| [Resource card](functional/05-resource-card.md) | 27 (4 proposed, 2 specified, 20 implemented, 1 withdrawn) | 1 (1 implemented) | 20 | 27 (2 open, 25 done) |
+| [Resource card](functional/05-resource-card.md) | 27 (4 proposed, 2 specified, 20 implemented, 1 withdrawn) | 1 (1 implemented) | 20 | 28 (3 open, 25 done) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 16 (4 specified, 7 implemented, 5 withdrawn) | – | 14 | 8 (2 open, 6 done) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 7 (3 proposed, 4 implemented) | 1 (1 implemented) | 8 | 8 (8 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | 39 (39 specified) | 4 (4 proposed) | 30 | 15 (15 open) |
@@ -141,6 +141,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-CO-32](functional/03-collections.md#fr-co-32) | A link to something a User may not see looks like a link to nothing | Proposed | – | [not-found](../design/screens/not-found.html) | – | [14bccf3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/14bccf35dc66c7b095ecf09cfe28b150b76f9147) refs, 2026-10-28 |
 | [FR-CO-33](functional/03-collections.md#fr-co-33) | Adding a Resource records its grain and the mapping of every field | Implemented | – | [collection-add-relations](../design/screens/collection-add-relations.html) | [TR-AR-10](technical/01-artifact-registry.md#tr-ar-10), [TR-CO-05](technical/03-collections.md#tr-co-05) | [d0399d5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/d0399d5bf0fbf891c3a740d4bdbdd09aedf2828d) implements, 2026-10-28<br>[9caa711](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9caa71112cd9fc3c9620bd422bce2f14c44ba66e) refs, 2026-10-28<br>[b8393a4](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/b8393a461197a4933a0d9c77b37162108b1c8274) refs, 2026-10-28<br>[081a562](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/081a56267b62dc6710d67615813f5cff52a9a4ab) refs, 2026-10-28 |
 | [FR-CO-34](functional/03-collections.md#fr-co-34) | Adding a Resource records how it is stored | Implemented | – | [collection-add-relations](../design/screens/collection-add-relations.html) | [TR-AR-10](technical/01-artifact-registry.md#tr-ar-10), [TR-CO-05](technical/03-collections.md#tr-co-05) | [d0399d5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/d0399d5bf0fbf891c3a740d4bdbdd09aedf2828d) implements, 2026-10-28<br>[9caa711](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9caa71112cd9fc3c9620bd422bce2f14c44ba66e) refs, 2026-10-28<br>[b8393a4](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/b8393a461197a4933a0d9c77b37162108b1c8274) refs, 2026-10-28<br>[081a562](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/081a56267b62dc6710d67615813f5cff52a9a4ab) refs, 2026-10-28 |
+| [FR-CO-44](functional/03-collections.md#fr-co-44) | The model type of a Resource is chosen first, and asks for its own fields | Proposed | – | [collection-add-type](../design/screens/collection-add-type.html), [collection-add-relations](../design/screens/collection-add-relations.html) | – | – |
 | [FR-CO-35](functional/03-collections.md#fr-co-35) | The Data Team hands a Collection to any group | Implemented | – | – | [TR-CO-03](technical/03-collections.md#tr-co-03) | [081a562](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/081a56267b62dc6710d67615813f5cff52a9a4ab) implements, 2026-10-28<br>[cebbeb5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/cebbeb5f297347a9f81b511279ca1dec61662c55) refs, 2026-10-28 |
 
 ### [Resources](functional/04-stacks-and-resources.md)
