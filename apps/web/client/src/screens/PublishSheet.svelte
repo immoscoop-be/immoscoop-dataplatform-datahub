@@ -134,7 +134,7 @@
   </div>
   {#snippet foot()}
     <div class="foot">
-      <p class="meta keep" role={failed ? 'alert' : undefined}>{failed ? t('resource.actionFailed') : t('publish.keep')}</p>
+      <p class="meta keep" role={failed ? 'alert' : undefined}>{failed ? t(ready ? 'resource.actionFailed' : 'publish.refused') : t('publish.keep')}</p>
       <Button variant="quiet" onclick={onclose}>{t('collection.cancel')}</Button>
       <ConfirmBar declaration={t('publish.declare', { owner })} disabled={!ready} {busy} onconfirm={publish}>
         <Icon name="globe-simple-fill" />{t('publish.button')}

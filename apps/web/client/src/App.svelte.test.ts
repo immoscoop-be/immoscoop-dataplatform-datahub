@@ -633,6 +633,8 @@ function serve({
   slack = undefined as Record<string, string> | undefined,
   /** What the Owner Journey reads from Weekly lead volume; without it, an older catalogue that sends no journey. */
   journey = undefined as JourneyFacts | undefined,
+  /** What a colleague changes on Weekly lead volume while its publication is open: catalogue reads it when it publishes. */
+  meanwhile = undefined as JourneyFacts | undefined,
 } = {}): Saved[] {
   const calls: Saved[] = [];
   // The Users and Permission groups as identity keeps them, changed by what the page asks (TR-PL-07).
@@ -845,6 +847,12 @@ function serve({
       return json({ journey: resource.journey });
     }
     if (path === '/resources/r2/publication' && method === 'POST') {
+      if (meanwhile) {
+        facts = meanwhile;
+        resource = { ...resource, journey: journeyOf(facts) };
+      }
+      // catalogue decides whether it is ready, from what it holds now (DEC-MR-15).
+      if (facts && !journeyOf(facts).ready) return json({ error: 'not_ready', message: 'A step required to publish is open.', open: journeyOf(facts).open }, 409);
       resource = { ...resource, published: true, level: 3, publication: PUBLICATION };
       return json({ resource });
     }
@@ -2791,6 +2799,26 @@ describe('the page of a Resource', () => {
     await fireEvent.click(main.getByRole('tab', { name: 'Maturiteit' }));
     expect(main.getByText('Gepubliceerd op 28 okt 2026 door Max Verstraete, zijn eerste Confirmation; laatst bevestigd op 28 okt 2026 door Max Verstraete.')).toBeTruthy();
     expect(main.queryByText('Publicatie')).toBeNull();
+  });
+
+  it('reads it again when catalogue refuses the publication, and shows what is open now (DEC-MR-15)', async () => {
+    // Meanwhile, a colleague takes the Business Description of its Key Field away.
+    const meanwhile = { ...READY, fields: [{ name: 'week_start', businessDescription: '' }, { name: 'lead_source', businessDescription: '' }] };
+    const calls = serve({ groups: ['g1'], journey: READY, meanwhile });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
+    await fireEvent.click(main.getByRole('button', { name: /Publiceren/ }));
+    const sheet = within(await screen.findByRole('dialog', { name: 'Weekly lead volume' }));
+    await fireEvent.click(sheet.getByRole('checkbox', { name: /Voor Data heb ik deze kaart gelezen/ }));
+    await fireEvent.click(sheet.getByRole('button', { name: /Publiceren en bevestigen/ }));
+    expect(await sheet.findByRole('alert')).toHaveProperty('textContent', 'Niet gepubliceerd: een stap die nodig is om te publiceren staat open. De lijst hierboven toont welke.');
+    const reads = calls.filter((call) => call.method === 'GET' && call.path === '/resources/r2');
+    expect(reads.length).toBeGreaterThan(1);
+    expect(sheet.getByText('Velden:').closest('p')?.textContent).toContain('Sleutelvelden zonder Business Description: week_start;');
+    expect((sheet.getByRole('checkbox') as HTMLInputElement).disabled).toBe(true);
+    expect(main.queryByText('Gepubliceerd', { selector: '.chip' })).toBeNull();
   });
 
   it('leads its Owner through the steps still open before it can be published, and Nothing to add records who said so (DEC-MR-16, DEC-CL-17)', async () => {

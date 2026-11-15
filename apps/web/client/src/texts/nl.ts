@@ -475,6 +475,7 @@ export default {
   'publish.keep': 'Data Hub bewaart de bevestiging met de vingerafdruk van vandaag. Ze vervalt niet; een veld dat later verandert, geeft een waarschuwing, en het Level blijft.',
   'publish.declare': 'Voor {owner} heb ik deze kaart gelezen en bevestig ik dat deze Resource klopt: wat hij is en waar hij voor staat, in elke tekst erop.',
   'publish.button': 'Publiceren en bevestigen',
+  'publish.refused': 'Niet gepubliceerd: een stap die nodig is om te publiceren staat open. De lijst hierboven toont welke.',
   'publish.required.done': 'Nodig om te publiceren, alles gedaan:',
   'publish.done': 'Gedaan:',
   'publish.advised': 'Aangeraden:',

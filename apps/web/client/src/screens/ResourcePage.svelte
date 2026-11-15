@@ -246,6 +246,22 @@
   }
 
   /** Publishes it, marks its changes seen, deprecates it or takes that away: each a step that is logged. */
+  /**
+   * Publishes it with the declaration ticked. The catalogue decides whether it is ready (DEC-MR-15): when it refuses,
+   * the Resource is read again, so that the sheet shows what is open now, also what changed since it opened.
+   */
+  async function publishIt(declaration: string): Promise<boolean> {
+    if (await act(() => catalogue.publish(resource.id, declaration))) {
+      return true;
+    }
+    try {
+      await changed(await catalogue.resource(resource.id));
+    } catch (error) {
+      console.error(`${resource.displayName} could not be read again`, error);
+    }
+    return false;
+  }
+
   async function act(step: () => Promise<ResourceDetail>): Promise<boolean> {
     failed = false;
     try {
@@ -460,7 +476,7 @@
   <PublishSheet
     {resource}
     {collection}
-    onpublish={(declaration) => act(() => catalogue.publish(resource.id, declaration))}
+    onpublish={publishIt}
     onfields={() => {
       sheet = undefined;
       tab = 'columns';

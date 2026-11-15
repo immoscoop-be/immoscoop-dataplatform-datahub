@@ -476,6 +476,7 @@ export default {
   'publish.keep': 'Data Hub keeps the Confirmation with the fingerprint of today. It does not expire; a field that changes later gives a warning, and the Level stays.',
   'publish.declare': 'For {owner}, I have read this card and confirm that this Resource is correct: what it is and what it stands for, in every text on it.',
   'publish.button': 'Publish and confirm',
+  'publish.refused': 'Not published: a step required to publish is open. The list above shows which.',
   'publish.required.done': 'Required to publish, all done:',
   'publish.done': 'Done:',
   'publish.advised': 'Advised:',
