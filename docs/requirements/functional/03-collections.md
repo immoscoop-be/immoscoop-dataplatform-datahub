@@ -481,7 +481,7 @@ In the same step as the relations ([FR-CO-33](#fr-co-33)), the Data Admin sees p
 <a id="fr-co-44"></a>
 ### FR-CO-44 · The model type of a Resource is chosen first, and asks for its own fields
 
-**Status:** Specified · **Source:** Max, 2026-11-15 ([DEC-UX-261](../../design/principles.md#dec-ux-261)) · **Screens:** [collection-add-type](../../design/screens/collection-add-type.html), [collection-add-relations](../../design/screens/collection-add-relations.html)
+**Status:** Specified · **Source:** Max, 2026-11-15 ([DEC-UX-262](../../design/principles.md#dec-ux-262)) · **Screens:** [collection-add-type](../../design/screens/collection-add-type.html), [collection-add-relations](../../design/screens/collection-add-relations.html)
 
 After choosing a Resource ([FR-CO-31](#fr-co-31)), the Data Admin chooses its model type on a step of its own, before its fields ([DEC-RC-10](05-resource-card.md#dec-rc-10)). Each model type is shown with what one row is, why it exists, what may be added up, and the fields it asks for. Data Hub suggests one where it can, and the Data Admin confirms it. The model type then asks for the fields a Resource of that kind needs:
 

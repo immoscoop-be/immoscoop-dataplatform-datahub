@@ -27,6 +27,9 @@
 - <a id="dec-mr-12"></a>**DEC-MR-12** · Described asks of dbt only the descriptions: of the table and of at least one field. `model_type` and `grain` are not standard fields of dbt, so they are not read from its `meta`: Data Hub defines them, by the Data Admin ([DEC-RC-09](05-resource-card.md#dec-rc-09)), and they do not count towards Described. This replaces that part of [DEC-MR-11](#dec-mr-11). *Decided on 2026-10-28, by Max ([OP-MR-06](#op-mr-06)).*
 - <a id="dec-mr-13"></a>**DEC-MR-13** · In v1 a Resource cannot reach 5 · Monitored: the ladder stops at 4 · Explored. Monitored comes in version 2, with the automatic checks from the EDA and the monitors ([OP-DH-19](../../overview/open-themes.md#op-dh-19)). *Decided on 2026-10-28, by Max ([OP-MR-07](#op-mr-07)).* *Note of 2026-11-07: replaced by [DEC-CM-13](08-checks-and-monitoring.md#dec-cm-13): monitoring is built as the next part after the launch, and 5 · Monitored becomes reachable.*
 - <a id="dec-mr-14"></a>**DEC-MR-14** · In v1 Data Hub links no EDA document to a Resource yet: no screen is designed for it. A Resource therefore reaches at most 3 · Confirmed; its ladder shows 4 · Explored as the next step, out of reach, until the link is designed. *Decided on 2026-10-28, by Max ([OP-MR-08](#op-mr-08)).*
+- <a id="dec-mr-15"></a>**DEC-MR-15** · Whether a Resource is ready to be published has one definition, in one place: the catalogue refuses a Publication while a step required to publish is open, and the publication in Data Hub, the publication in Claude and the Owner Journey show the same list of what is done and what is open. It replaces the rule that 2 · Described alone makes a Resource ready ([DEC-MR-10](#dec-mr-10)), which stays the first condition. *Decided on 2026-11-15, by Max, choosing "Everywhere, enforced" from the options Claude proposed for the Owner Journey ([OP-CL-12](17-claude.md#op-cl-12)).*
+- <a id="dec-mr-16"></a>**DEC-MR-16** · A step towards Publication is marked in one of three ways. **Required to publish:** the Business Description; the Key Fields, each with a Business Description; the intended use; the pitfalls; the Known Gaps and the date the data is reliable since; and reading the card back. **Needed for the EDA,** shown but not blocking the Publication: the table type and the grain, which a Data Admin records, and from which the [EDA](15-eda.md) starts, as it does from the Key Fields ([DEC-ED-07](15-eda.md#dec-ed-07), [OP-ED-03](15-eda.md#op-ed-03)). **Advised:** the Business Descriptions of the other fields, the Parameters, the mappings, and the open Questions and Signals. For the pitfalls, the Known Gaps and the Parameters, "none" is an answer: who gave it, and when, is kept. *Decided on 2026-11-15, by Max, choosing "Three marks" from the options Claude proposed ([OP-CL-12](17-claude.md#op-cl-12)).*
+- <a id="dec-mr-17"></a>**DEC-MR-17** · The Owner accepts a text with a yes in the conversation, step by step, and Claude writes it only then ([DEC-CL-07](17-claude.md#dec-cl-07)). The publication reads the whole card back, as a colleague will see it, and its declaration, now kept with the Confirmation, accepts every text on the card, also those written before, by a colleague or an earlier conversation: reading back and publishing are one window. *Decided on 2026-11-15, by Max, choosing "Yes in chat; declaration covers all" from the options Claude proposed ([OP-CL-12](17-claude.md#op-cl-12)).*
 
 The overarching decisions on how the Level is determined and on the two-step Release are in the overview: [DEC-DH-31](../../overview/data-hub.md#dec-dh-31) to [DEC-DH-37](../../overview/data-hub.md#dec-dh-37) and [DEC-DH-38](../../overview/data-hub.md#dec-dh-38) to [DEC-DH-40](../../overview/data-hub.md#dec-dh-40).
 
@@ -185,6 +188,33 @@ Data Hub derives Described from the Current Version of the dbt project: the tabl
 **Status:** Implemented · **Source:** Max, 2026-11-04 ([DEC-UX-175](../../design/principles.md#dec-ux-175)) · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
 
 Beside the ladder of a Resource, its Overview explains every Level from 1 · Available to 5 · Monitored. A Level passed is marked so, with how it was reached: registered through an exposure of a dbt project, the table and how many fields described in dbt ([FR-MR-15](#fr-mr-15)), published and confirmed by whom and when ([FR-SR-49](04-stacks-and-resources.md#fr-sr-49)), with a change since the last Confirmation ([FR-MR-12](#fr-mr-12)). The Level it is at stands out. A Level still to reach says what it takes and who does it: the Data Team describes it in dbt, its Owner publishes it, an EDA document is linked ([DEC-MR-14](#dec-mr-14)), an active check runs on it, which comes in version 2 ([DEC-MR-13](#dec-mr-13)). 0 · Beta is named under them, for concepts. The Publication has no tile of its own.
+
+<a id="fr-mr-17"></a>
+### FR-MR-17 · A Publication waits for the steps required to publish
+
+**Status:** Implemented · **Source:** Max, 2026-11-15 ([DEC-MR-15](#dec-mr-15), [DEC-MR-16](#dec-mr-16), [DEC-CL-17](17-claude.md#dec-cl-17)) · **Screens:** [resource-publish](../../design/screens/resource-publish.html), [mcp-resource-publish](../../design/screens/mcp-resource-publish.html), [resource-overview](../../design/screens/resource-overview.html)
+
+A Resource can be published once it is Described and every step required to publish is done: its Business Description; its Key Fields, each with a Business Description; its intended use; its pitfalls, or who said there are none; its Known Gaps, or who said there are none, and the day it is reliable since. The catalogue refuses a Publication while one is open, and says which. The publication in Data Hub, the publication in Claude, the Maturity of the Resource and the Owner Journey all show the same list: each required step done or open, each open one with what it misses and the way to its part of the Overview; what the [EDA](15-eda.md) needs later, the table type and the grain; and what is advised, the other fields, the Parameters, the mappings and the open Questions and Signals, which hold nothing up.
+
+**Makes easy:** knowing, in one look and in the same words everywhere, what still stands between a Resource and its Publication, and going straight to it. **Makes hard:** publishing a Resource whose card says nothing of what it is for, where it trips people up and what it does not hold.
+
+<a id="fr-mr-18"></a>
+### FR-MR-18 · None is an answer, kept with who gave it and when
+
+**Status:** Implemented · **Source:** Max, 2026-11-15 ([DEC-MR-16](#dec-mr-16)) · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
+
+Where none is an answer, the pitfalls and the Known Gaps in Data Hub, and the Parameters through Claude, whoever may describe the Resource can say there is nothing to add. Data Hub keeps who said so and when, writes it into the Log of the Resource, and shows it in the empty part: "None, according to" whom, on which day, until someone writes one. Claude also records that the Owner went through a step that writes nothing of its own, such as the fields or the open Questions and Signals ([FR-CL-31](17-claude.md#fr-cl-31)).
+
+**Makes easy:** saying, once and for everyone, that a Resource has no pitfall or no Known Gap, so that the next reader trusts the silence. **Makes hard:** an empty part that leaves a reader guessing whether nobody looked or there is nothing to find.
+
+<a id="fr-mr-19"></a>
+### FR-MR-19 · The declaration is kept as the Owner ticked it
+
+**Status:** Implemented · **Source:** Max, 2026-11-15 ([DEC-MR-17](#dec-mr-17))
+
+Once every step required to publish is done, the publication reads the whole card back, as a colleague will see it: the Business Description and the description from dbt, the intended use, the pitfalls, the Known Gaps with the day it is reliable since, the Key Fields and the Parameters. Its declaration accepts every text on the card, also those written before, by a colleague or an earlier conversation: "For" the Owner Unit, "I have read this card and confirm that this Resource is correct: what it is and what it stands for, in every text on it." Data Hub keeps the declaration, in the words the Owner ticked, with the Confirmation.
+
+**Makes easy:** knowing later what exactly an Owner confirmed, in their own words. **Makes hard:** confirming a card without reading it, and a declaration that covers less than the card shows.
 
 ## Open points
 

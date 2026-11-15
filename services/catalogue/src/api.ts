@@ -2,6 +2,7 @@ import type { ServiceCallerVerifier } from '@datahub/auth';
 import { canWith, type CollectionIcon, type CollectionVisibility, NO_PERMISSIONS, permissionValue, reach } from '@datahub/contracts';
 import { isCollectionIcon } from '@datahub/contracts/collection-icons';
 import { type GapScope, gapScopeSchema } from '@datahub/contracts/gaps';
+import { isJourneyStep, type JourneyStepId } from '@datahub/contracts/journey';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { type Collection, type CollectionChanges, type Collections, type FolderOutcome, type Movable, NameTaken, NotEmpty, type Viewer } from './collections.js';
 import { type Group, type Identity, IdentityUnavailable } from './identity.js';
@@ -121,6 +122,23 @@ const CARD_ATTRIBUTES: Record<CardKey, Attribute> = {
   reliableSince: 'availableSince',
   keyFields: 'keyFields',
   parameters: 'keyFields',
+};
+
+/** The attribute who answers in a step of the Owner Journey may describe (DEC-PL-03, DEC-MR-16). */
+const STEP_ATTRIBUTES: Record<JourneyStepId, Attribute> = {
+  start: 'description',
+  data: 'description',
+  businessDescription: 'description',
+  keyFields: 'keyFields',
+  fields: 'description',
+  intendedUse: 'behaviour',
+  pitfalls: 'pitfalls',
+  gaps: 'gaps',
+  parameters: 'keyFields',
+  admin: 'description',
+  messages: 'description',
+  publish: 'description',
+  after: 'description',
 };
 
 /** A project with thousands of exposed tables, with their descriptions, fits well within this. */
@@ -753,7 +771,13 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
   // Only the Owner publishes (FR-SR-16, DEC-PL-06): a member of the Owner Unit of its Collection, with `resources.publish`,
   // in their own name, also in the Permission group Admin; from Described on (FR-SR-17). Publishing is the first
   // Confirmation (FR-SR-49).
-  app.post<{ Params: { id: string } }>('/resources/:id/publication', async (request, reply) => {
+  app.post<{ Params: { id: string }; Body: unknown }>('/resources/:id/publication', async (request, reply) => {
+    // The declaration the Owner ticked, as it was shown, kept with the Confirmation (DEC-MR-17).
+    const body = (request.body ?? {}) as { declaration?: unknown };
+    if (body.declaration !== undefined && (typeof body.declaration !== 'string' || body.declaration.length > 500)) {
+      return reply.code(400).send({ error: 'invalid_request', message: 'The declaration is a text of at most 500 characters.' });
+    }
+    const declaration = typeof body.declaration === 'string' && body.declaration.trim() ? body.declaration.trim() : null;
     const found = await seenResource(request, request.params.id);
     if (!found) {
       return reply.code(404).send(NO_RESOURCE);
@@ -762,7 +786,12 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     if (!found.collection || !may(who, 'resources.publish') || !theirs(who, found.collection.ownerUnit.id)) {
       return reply.code(403).send(forbidden('resources.publish', 'Only the Owner of a Resource publishes it: a member of the Owner Unit of its Collection, with resources.publish.'));
     }
-    switch (await resources.publish(found.resource.id, who)) {
+    const outcome = await resources.publish(found.resource.id, who, declaration);
+    if (typeof outcome === 'object') {
+      // A step required to publish is open: in Data Hub as in Claude, nothing is published (DEC-MR-15, DEC-CL-17).
+      return reply.code(409).send({ error: 'not_ready', message: `A step required to publish is still open: ${outcome.open.join(', ')}.`, open: outcome.open });
+    }
+    switch (outcome) {
       case 'published':
         return resourceAnswer(request, reply, found);
       case 'not_found':
@@ -773,6 +802,39 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
         return reply.code(409).send({ error: 'already_published', message: 'It is published already; a Publication cannot be undone.' });
       case 'not_described':
         return reply.code(409).send({ error: 'not_described', message: 'A Resource is published from 2 · Described: dbt describes its table and at least one of its fields.' });
+    }
+  });
+
+  // The Owner Journey of a Resource, for whoever sees it (OP-CL-12): its steps, the next one, and whether it is ready.
+  app.get<{ Params: { id: string } }>('/resources/:id/journey', async (request, reply) => {
+    const found = await seenResource(request, request.params.id);
+    if (!found) {
+      return reply.code(404).send(NO_RESOURCE);
+    }
+    const journey = await resources.journey(found.resource.id);
+    return journey ? { journey } : reply.code(404).send(NO_RESOURCE);
+  });
+
+  // What the Owner Unit says in a step where the card cannot tell it: gone through it, or nothing to add (DEC-MR-16),
+  // for who may describe what the step is about.
+  app.post<{ Params: { id: string; step: string }; Body: unknown }>('/resources/:id/journey/:step', async (request, reply) => {
+    const step = request.params.step;
+    const answer = (request.body as { answer?: unknown } | null)?.answer;
+    if (!isJourneyStep(step) || (answer !== 'goneThrough' && answer !== 'nothing')) {
+      return reply.code(400).send({ error: 'invalid_request', message: 'A step of the journey, and an answer: goneThrough or nothing.' });
+    }
+    const found = await changeable(request, reply, describing(STEP_ATTRIBUTES[step]));
+    if (!found) {
+      return reply;
+    }
+    const outcome = await resources.recordStep(found.resource.id, step, answer, viewer(request));
+    switch (outcome.outcome) {
+      case 'recorded':
+        return { journey: outcome.journey };
+      case 'not_found':
+        return reply.code(404).send(NO_RESOURCE);
+      case 'invalid':
+        return reply.code(400).send({ error: 'invalid_request', message: outcome.message });
     }
   });
 

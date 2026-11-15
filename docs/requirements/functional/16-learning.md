@@ -389,13 +389,15 @@ The Knowledge Matrix shows every Learning Card as a small square, by Learning Le
 <a id="fr-lr-26"></a>
 ### FR-LR-26 · The steps of a card in Claude
 
-**Status:** Proposed · **Source:** Max, 2026-10-25 · [design](../../design/principles.md#learning)
+**Status:** Implemented · **Source:** Max, 2026-10-25 · [design](../../design/principles.md#learning)
 
 Through the MCP server, Claude can show every step of a Learning Card in the conversation as an MCP App ([DEC-LR-08](#dec-lr-08)). They are the same steps as on the page, without the rail, the panel or any other navigation of Data Hub. A User can check themselves in Claude. "Open in Data Hub" opens the card in the Learning Centre. What the User answers there counts as on the page, as the MCP App acts for the signed-in User; to confirm ([OP-LR-16](#op-lr-16)).
 
 *Note of 2026-10-25: answers are not counted anywhere ([FR-LR-30](#fr-lr-30)); what can count is a card seen, and "I understand it" ([OP-LR-16](#op-lr-16)).*
 
 *Could, not in v1: set on 2026-10-28, by Max; Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
+
+*Note of 2026-11-15: built for the Owner Journey, where the card of a step opens whole when the User asks for it ([DEC-UX-261](../../design/principles.md#dec-ux-261), [TR-LR-09](../technical/16-learning.md#tr-lr-09)). An answer shows its Why and counts nowhere; "I understand it" waits for [OP-LR-16](#op-lr-16). The chart of See it stays on the page of the card in Data Hub: the MCP App gives its Look at and You see, with the link.*
 
 <a id="fr-lr-27"></a>
 ### FR-LR-27 · A Learning Card follows five steps, on a quick or a full path
@@ -631,6 +633,7 @@ A situation that asks someone to act shows an attention box, a strong message, n
 - [ ] <a id="op-lr-37"></a>**OP-LR-37** · Decide whether a place carries its marker while every card that explains it is coming soon ([DEC-LR-33](#dec-lr-33), [DEC-LR-28](#dec-lr-28)). Proposal: no; a place gets its marker once one of its cards is written, and its pop-out then lists the cards coming soon under the written ones, so that the marker always opens something to read. *Raised on 2026-11-11, while recording DEC-LR-33.*
 - [ ] <a id="op-lr-38"></a>**OP-LR-38** · Decide whether a Message Data Hub writes shows a card coming soon under "Understand what is happening here" ([FR-LR-38](#fr-lr-38), [FR-LR-41](#fr-lr-41)). Proposal: yes, its number and title with "Coming soon" and "I want this card", as the reader of the Message is the one who misses it most. *Raised on 2026-11-11, while recording DEC-LR-33: Max decided it for pop-outs.*
 - [ ] <a id="op-lr-39"></a>**OP-LR-39** · [FR-LR-39](#fr-lr-39) says of an `aggregate` that its counts or sums are already made "and are not added up again". Its sums may be added up again (the leads of the weeks of a month), its unique counts never. Card 2.3.6 says so since its fact check; decide whether FR-LR-39 says the same. Proposal: "an `aggregate` is one row per group with its counts or sums already made: its sums may be added up again, its unique counts never". *Raised on 2026-11-14, during the fact check of the Learning Cards.*
+- [ ] <a id="op-lr-40"></a>**OP-LR-40** · Choose one word for each name the Owner Journey cards and the app spell differently. Names stay English and are never translated ([DEC-DH-65](../../overview/data-hub.md#dec-dh-65)), yet the Dutch app shows "Sleutelvelden" for Key Fields, "Voorbeeld" for the Preview, "Berichten" for Messages and "bevestiging" for a Confirmation, and the reviewed cards 4.7.1 and K5.11 say "bekrachtiging". In English, the Owner Journey and [DEC-MR-16](06-maturity-and-release.md#dec-mr-16) say "table type", where the Overview, the Data Admin's editor and the card 2.3.6 say "model type". And the Parameters of a Resource, the fields its Preview filters on, share the name of the Defined Term Parameter of a Lens. The cards K5.12 to K5.19 keep the English names and say "model type", with "table type" only where the journey shows it. Proposal: the Dutch app follows the names, and "model type" everywhere. *Raised on 2026-11-15, while writing the cards of the Owner Journey.*
 
 ## Builds on
 

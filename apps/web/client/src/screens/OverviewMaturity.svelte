@@ -7,6 +7,7 @@
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import Button from '@datahub/ui/primitives/Button.svelte';
   import type { ResourceDetail } from '../lib/catalogue.js';
+  import { checklistOf, type StepPlace } from '../lib/journey.js';
 
   /**
    * The Maturity part of the Overview (DEC-UX-175, FR-MR-16): the ladder, and beside it every Level from 1 · Available
@@ -14,7 +15,19 @@
    * to reach says what it takes and who does it, with "Publish" for its Owner. The Publication has no tile of its own:
    * who published and confirmed it stands with 3 · Confirmed, with what changed since.
    */
-  let { resource, onpublish }: { resource: ResourceDetail; onpublish: (() => void) | undefined } = $props();
+  let {
+    resource,
+    onpublish,
+    onpart,
+  }: {
+    resource: ResourceDetail;
+    onpublish: (() => void) | undefined;
+    /** Goes to where an open step is done (DEC-MR-16). */
+    onpart?: (place: StepPlace) => void;
+  } = $props();
+
+  /** What publishing still takes: the steps required to publish, each done or open (DEC-MR-15, DEC-MR-16). */
+  const checks = $derived(resource.journey && !resource.published ? checklistOf(resource.journey) : null);
 
   type State = 'passed' | 'at' | 'next' | 'later';
   const ICONS: Record<State, IconName> = { passed: 'check-circle-fill', at: 'seal-check-fill', next: 'circle-dashed', later: 'circle-dashed' };
@@ -68,6 +81,18 @@
               <span>{t('overview.changed')}: {resource.changes.map((change) => t(CHANGE_KEYS[change.change], { field: change.field, old: change.old ?? '', new: change.new ?? '', date: day(change.at) })).join('; ')}</span>
             </p>
           {/if}
+          {#if level === 3 && state === 'next' && checks}
+            <p>{t('maturity.3.steps', { done: checks.done.length, total: checks.required.length })}</p>
+            <ul class="steps">
+              {#each checks.required as step (step.step)}
+                <li class:open={!step.done}>
+                  <Icon name={step.done ? 'check-circle-fill' : 'warning-circle-fill'} />{step.name}
+                  {#if !step.done && step.place && onpart}<button type="button" class="go" onclick={() => onpart(step.place as StepPlace)}>{t('publish.goTo')}</button>{/if}
+                </li>
+              {/each}
+            </ul>
+            {#if checks.open.length > 0}<p class="claude">{t('maturity.3.claude')}</p>{/if}
+          {/if}
           {#if level === 3 && state === 'next' && onpublish}
             <div class="act"><Button variant="outline" onclick={onpublish}><Icon name="globe-simple-fill" />{t('resource.publish')}</Button></div>
           {/if}
@@ -99,6 +124,13 @@
   .changed { display: flex; align-items: flex-start; gap: 6px; color: var(--signal-warn); }
   .changed :global(.icon) { margin-top: 3px; flex: none; }
   .act { margin-top: 8px; }
+  .steps { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; font-size: var(--text-small); color: var(--text-secondary); }
+  .steps li { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .steps li :global(.icon) { font-size: 15px; color: var(--text-secondary); }
+  .steps li.open :global(.icon) { color: var(--signal-warn); }
+  .go { all: unset; cursor: pointer; font-size: var(--text-meta); color: var(--text-secondary); text-decoration: underline; text-underline-offset: 3px; }
+  .go:focus-visible { outline: 2px solid var(--text-secondary); }
+  .claude { font-size: var(--text-meta); }
   .beta { margin: 12px 0 0; font-size: var(--text-meta); color: var(--text-muted); line-height: 1.5; }
   @media (max-width: 1100px) { .layout { grid-template-columns: minmax(0, 1fr); } }
 </style>

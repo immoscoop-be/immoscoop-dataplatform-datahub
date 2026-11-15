@@ -861,7 +861,7 @@ if (new URLSearchParams(location.search).has('mismatch')) {
 }
 
 // Adding a Resource, step 2: the model type chosen goes on to step 3 as ?type=, and the foot says what it asks for
-// (DEC-UX-261)
+// (DEC-UX-262)
 document.querySelectorAll('input[name="model-type"]').forEach(i => i.addEventListener('change', () => {
   const foot = document.getElementById('type-foot'), next = document.getElementById('type-next');
   if (foot) foot.innerHTML = `<code>${i.value}</code> · asks for ${i.dataset.asks}`;

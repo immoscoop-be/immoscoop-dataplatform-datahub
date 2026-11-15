@@ -266,6 +266,13 @@ describe.skipIf(!url)('the routes of Collections', () => {
       app.inject({ method, url: path, headers: { authorization }, ...(payload ? { payload } : {}) });
   }
 
+  /** Every step required to publish, done by who may describe it, so that its Owner may publish it (DEC-MR-15, DEC-MR-16). */
+  async function makeReady(as: Awaited<ReturnType<typeof user>>, id: string | undefined, keyField: string) {
+    expect((await as('PATCH', `/resources/${id}`, { businessDescription: 'What it is.', keyFields: [keyField], intendedUse: 'What it is for.', pitfalls: 'Where it trips people up.', reliableSince: '2025-01-01' })).statusCode).toBe(200);
+    expect((await as('PUT', `/resources/${id}/fields`, { fields: [{ name: keyField, businessDescription: 'What the field is.' }] })).statusCode).toBe(200);
+    expect((await as('POST', `/resources/${id}/journey/gaps`, { answer: 'nothing' })).statusCode).toBe(200);
+  }
+
   it('lets anyone create a Collection with one of their own groups, and only those (FR-CO-12, FR-CO-15)', async () => {
     const an = await user('An', [DIGIKOM]);
     const created = await an('POST', '/collections', { name: 'Leads', description: 'Leads of the agencies.', icon: 'coins', ownerUnit: DIGIKOM.id });
@@ -801,9 +808,30 @@ describe.skipIf(!url)('the routes of Collections', () => {
       // Only the Owner publishes, from Described (FR-SR-16, FR-SR-17).
       expect((await dirk('POST', `/resources/${cards}/publication`)).statusCode).toBe(403);
       expect((await an('POST', `/resources/${drafts}/publication`)).json().error).toBe('not_described');
-      const published = await an('POST', `/resources/${cards}/publication`);
+      // Not before every step required to publish is done, in Data Hub as in Claude (DEC-MR-15, DEC-MR-16).
+      const early = await an('POST', `/resources/${cards}/publication`);
+      expect(early.statusCode).toBe(409);
+      expect(early.json().error).toBe('not_ready');
+      // The card of the earlier test holds the rest; its Key Fields have no Business Description yet.
+      expect(early.json().open).toEqual(['fields']);
+      const journey = (await an('GET', `/resources/${cards}/journey`)).json().journey;
+      expect(journey).toMatchObject({ ready: false, next: 'data' });
+      expect((await an('GET', `/resources/${cards}`)).json().resource.journey.open).toEqual(journey.open);
+      // "Nothing to add" where none is an answer, with who and when; not where it is no answer (DEC-MR-16).
+      expect((await an('POST', `/resources/${cards}/journey/intendedUse`, { answer: 'nothing' })).statusCode).toBe(400);
+      expect((await an('POST', `/resources/${cards}/journey/pitfalls`, { answer: 'maybe' })).statusCode).toBe(400);
+      expect((await bert('POST', `/resources/${cards}/journey/pitfalls`, { answer: 'nothing' })).statusCode).toBe(404);
+      const nothing = await an('POST', `/resources/${cards}/journey/pitfalls`, { answer: 'nothing' });
+      expect(nothing.statusCode).toBe(200);
+      expect(nothing.json().journey.steps.find((step: { id: string }) => step.id === 'pitfalls')).toMatchObject({ status: 'done', records: [{ answer: 'nothing', by: 'An' }] });
+      expect((await an('GET', `/resources/${cards}/log`)).json().entries[0].text).toBe('Pitfalls: nothing to add, according to An');
+      await makeReady(an, cards, 'cards_id');
+      const published = await an('POST', `/resources/${cards}/publication`, { declaration: 'For Digikom, I have read this card and confirm it.' });
       expect(published.statusCode).toBe(200);
       expect(published.json().resource).toMatchObject({ level: 3, published: true, publication: { publishedBy: 'An', confirmedBy: 'An' } });
+      expect(published.json().resource.journey).toMatchObject({ ready: false, next: 'after' });
+      // The declaration is kept with the Confirmation (DEC-MR-17).
+      expect((await database.db.selectFrom('resourceConfirmations').select('declaration').where('resourceId', '=', cards).execute())).toEqual([{ declaration: 'For Digikom, I have read this card and confirm it.' }]);
       expect((await an('POST', `/resources/${cards}/publication`)).json().error).toBe('already_published');
       expect((await an('GET', `/resources/${cards}/log`)).json().entries.slice(0, 2).map((entry: { text: string }) => entry.text)).toEqual([
         'Confirmed by An',
@@ -1395,6 +1423,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
       secrets = (await piet('POST', '/collections', { name: 'PL Secrets', description: 'Secrets.', icon: 'lock', ownerUnit: PARTNERS.id })).json().id;
       expect((await admin('POST', `/collections/${plans}/resources`, { resources: [ids.pl_plans, ids.pl_drafts] })).statusCode).toBe(200);
       expect((await admin('POST', `/collections/${deals}/resources`, { resources: [ids.pl_deals, ids.pl_offers] })).statusCode).toBe(200);
+      await makeReady(piet, ids.pl_deals, 'pl_deals_id');
       expect((await piet('POST', `/resources/${ids.pl_deals}/publication`)).statusCode).toBe(200);
     });
 
@@ -1525,6 +1554,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
       expect((await wim('POST', `/resources/${ids.pl_drafts}/publication`)).json()).toMatchObject({ permission: 'resources.publish' });
       // An Admin of the Owner Unit publishes it, in their own name.
       const olaf = await user('Olaf', [PLANNING], 'admin');
+      await makeReady(olaf, ids.pl_drafts, 'pl_drafts_id');
       expect((await olaf('POST', `/resources/${ids.pl_drafts}/publication`)).json().resource).toMatchObject({ published: true, publication: { publishedBy: 'Olaf' }, canPublish: true });
 
       // Deprecating: theirs for a Business analyst, every one with every in reach.
