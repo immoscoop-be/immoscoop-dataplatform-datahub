@@ -21,6 +21,7 @@
   import { moveFocus } from '@datahub/ui/foundations/roving.js';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import OriginTag from '@datahub/ui/marks/OriginTag.svelte';
+  import Button from '@datahub/ui/primitives/Button.svelte';
   import Field from '@datahub/ui/primitives/Field.svelte';
   import Loading from '@datahub/ui/primitives/Loading.svelte';
   import type { CardChanges, DescribeAttribute, KnownGap, LogEntry, Related, ResourceDetail } from '../lib/catalogue.js';
@@ -58,6 +59,7 @@
     canDeprecate,
     onsave,
     gaps,
+    nothing,
     oncolumns,
     onpublish,
     others,
@@ -88,6 +90,8 @@
       change: (gap: KnownGap, text: string, scope: GapScope | null) => Promise<boolean>;
       remove: (gap: KnownGap) => Promise<boolean>;
     };
+    /** Says there is nothing to add to its pitfalls or Known Gaps (DEC-MR-16); answers whether it worked. */
+    nothing?: (step: 'pitfalls' | 'gaps') => Promise<boolean>;
     /** Opens the tab Columns, from its Summary. */
     oncolumns: () => void;
     /** Opens its publication, for its Owner while it is not published; from Maturity. */
@@ -127,6 +131,8 @@
   /** Which attributes each part edits: Known Behaviour holds the intended use, the pitfalls and since when it is reliable. */
   const EDITS: Record<Editable, readonly DescribeAttribute[]> = { description: ['description'], behaviour: ['behaviour', 'pitfalls', 'availableSince'], querying: ['keyFields'] };
   const mayEdit = (which: Editable) => EDITS[which].some((attribute) => describes(attribute));
+  /** Who said there is nothing to add to a step, and when, from the journey of the Resource (DEC-MR-16). */
+  const saidNothing = (step: 'pitfalls' | 'gaps') => resource.journey?.steps.find((one) => one.id === step)?.records.find((record) => record.answer === 'nothing');
 
   let editing: Editable | null = $state(null);
   // Another Resource opens on its Summary: the page sets the part, and what was being edited goes.
@@ -404,7 +410,19 @@
           </SubTile>
           <SubTile>
             <div class="said"><Icon name="warning-fill" />{t('resource.pitfalls')}</div>
-            {#if card.pitfalls}<div class="markdown"><MarkdownText source={card.pitfalls} /></div>{:else}<p class="text">{t('resource.nothingYet')}</p>{/if}
+            {#if card.pitfalls}
+              <div class="markdown"><MarkdownText source={card.pitfalls} /></div>
+            {:else if saidNothing('pitfalls')}
+              {@const said = saidNothing('pitfalls')}
+              <p class="text">{t('overview.nothing.said', { by: said?.by ?? '', date: day(said?.at ?? '') })}</p>
+            {:else}
+              <p class="text">{t('resource.nothingYet')}</p>
+              <!-- Required to publish: the pitfalls, or "Nothing to add", kept with who and when (DEC-MR-16). -->
+              {#if describes('pitfalls') && nothing && !resource.published}
+                <p class="why">{t('overview.nothing.pitfalls')}</p>
+                <Button variant="outline" onclick={() => nothing('pitfalls')}><Icon name="check" />{t('overview.nothing')}</Button>
+              {/if}
+            {/if}
           </SubTile>
           <SubTile>
             <div class="said"><Icon name="calendar-blank-fill" />{t('resource.reliableSince')}</div>
@@ -414,7 +432,17 @@
       {/if}
     {:else if part === 'gaps'}
       {@render head(t('resource.gaps'), t('overview.gaps.lead'))}
-      <OverviewGaps bind:adding={addingGap} gaps={card.knownGaps} fields={resource.fields} canEdit={describes('gaps')} onadd={gaps.add} onchange={gaps.change} onremove={gaps.remove} />
+      <OverviewGaps
+        bind:adding={addingGap}
+        gaps={card.knownGaps}
+        fields={resource.fields}
+        canEdit={describes('gaps')}
+        onadd={gaps.add}
+        onchange={gaps.change}
+        onremove={gaps.remove}
+        none={saidNothing('gaps') ?? null}
+        onnothing={nothing && !resource.published ? () => nothing('gaps') : undefined}
+      />
     {:else if part === 'querying'}
       {@render head(t('overview.querying'), t('overview.querying.lead'), 'querying')}
       {#if editing === 'querying'}
@@ -509,7 +537,7 @@
       </SubTile>
     {:else if part === 'maturity'}
       {@render head(t('resource.maturity'), t('overview.maturity.lead'))}
-      <OverviewMaturity {resource} {onpublish} />
+      <OverviewMaturity {resource} {onpublish} onpart={(place) => (place === 'columns' ? oncolumns() : open(place))} />
     {:else if part === 'changes'}
       {@render head(t('overview.changes'), t('overview.changes.lead'))}
       <SubTile>
@@ -563,6 +591,7 @@
   .said { display: flex; align-items: center; gap: 6px; font-size: var(--text-small); font-weight: var(--weight-medium); margin-bottom: 6px; }
   .said :global(.icon) { color: var(--text-secondary); }
   .text { margin: 0; font-size: var(--text-small); color: var(--text-secondary); line-height: 1.6; white-space: pre-line; }
+  .why { margin: 4px 0 8px; font-size: var(--text-meta); color: var(--text-muted); }
   .empty { margin: 0; font-size: var(--text-small); color: var(--text-muted); line-height: 1.5; }
   .cheap { margin: 10px 0 0; font-size: var(--text-meta); color: var(--text-secondary); line-height: 1.6; }
   /* The name of the table beneath stays on one line, cut off rather than wrapped or spilling over. */

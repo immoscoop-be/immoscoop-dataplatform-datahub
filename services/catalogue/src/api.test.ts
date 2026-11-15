@@ -267,7 +267,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
   }
 
   /** Every step required to publish, done by who may describe it, so that its Owner may publish it (DEC-MR-15, DEC-MR-16). */
-  async function makeReady(as: Awaited<ReturnType<typeof user>>, id: string, keyField: string) {
+  async function makeReady(as: Awaited<ReturnType<typeof user>>, id: string | undefined, keyField: string) {
     expect((await as('PATCH', `/resources/${id}`, { businessDescription: 'What it is.', keyFields: [keyField], intendedUse: 'What it is for.', pitfalls: 'Where it trips people up.', reliableSince: '2025-01-01' })).statusCode).toBe(200);
     expect((await as('PUT', `/resources/${id}/fields`, { fields: [{ name: keyField, businessDescription: 'What the field is.' }] })).statusCode).toBe(200);
     expect((await as('POST', `/resources/${id}/journey/gaps`, { answer: 'nothing' })).statusCode).toBe(200);

@@ -371,7 +371,7 @@ describe('Resources through Claude', () => {
       next: { number: 2, step: 'businessDescription', mark: 'required to publish', writes: 'update_resource_card' },
     });
     // A card not written yet goes by its number, so that Claude never makes one up (FR-CL-15).
-    expect(guided.structuredContent.next.cards).toEqual([{ number: 'K5.14', written: false }]);
+    expect((guided.structuredContent as { next: { cards: unknown } }).next.cards).toEqual([{ number: 'K5.14', written: false }]);
     expect(guided.content[0]?.text).toContain('Step 2 of 12 is next: Business Description, required to publish.');
     expect(guided.content[0]?.text).toContain('Still open before it can be published: Business Description, Key Fields, Fields, Pitfalls, Known Gaps and reliable since.');
 

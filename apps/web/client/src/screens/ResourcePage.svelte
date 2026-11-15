@@ -232,6 +232,8 @@
     change: (known: KnownGap, text: string, scope: GapScope | null) => gap(() => catalogue.changeGap(resource.id, known.id, text, scope)),
     remove: (known: KnownGap) => gap(() => catalogue.removeGap(resource.id, known.id)),
   };
+  /** Nothing to add to its pitfalls or Known Gaps, kept with who and when (DEC-MR-16); the Resource is read again. */
+  const nothing = (step: 'pitfalls' | 'gaps') => gap(() => catalogue.recordStep(resource.id, step, 'nothing'));
 
   async function saveFields(fields: { name: string; businessDescription: string }[]): Promise<boolean> {
     try {
@@ -416,6 +418,7 @@
       {canDeprecate}
       onsave={saveCard}
       {gaps}
+      {nothing}
       oncolumns={() => (tab = 'columns')}
       onpublish={!resource.published && mayPublish && collection ? () => (sheet = 'publish') : undefined}
       {others}
@@ -457,10 +460,18 @@
   <PublishSheet
     {resource}
     {collection}
-    onpublish={() => act(() => catalogue.publish(resource.id))}
+    onpublish={(declaration) => act(() => catalogue.publish(resource.id, declaration))}
     onfields={() => {
       sheet = undefined;
       tab = 'columns';
+    }}
+    onpart={(open) => {
+      sheet = undefined;
+      if (open === 'columns') tab = 'columns';
+      else {
+        tab = 'overview';
+        part = open;
+      }
     }}
     onclose={() => (sheet = undefined)}
   />
