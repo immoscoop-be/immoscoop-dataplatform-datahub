@@ -163,7 +163,7 @@ describe.skipIf(!url)('catalogue migrations', () => {
   });
 
   it('keeps one confirmed address for Slack per User, in lower case, and one code per User (FR-LN-07, OP-LN-08)', async () => {
-    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    const results = await migrate({ db: admin.db, schema, migrations: before('0025'), serviceUser: 'postgres' });
     expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0024-slack-addresses', 'Success']]);
     await sql`insert into slack_addresses (user_id, email) values ('u-an', 'an@immoscoop.be')`.execute(admin.db);
     await expect(sql`insert into slack_addresses (user_id, email) values ('u-an', 'an.claes@immoscoop.be')`.execute(admin.db)).rejects.toThrow(/slack_addresses_pkey/);
@@ -173,5 +173,19 @@ describe.skipIf(!url)('catalogue migrations', () => {
     await expect(code(-1).execute(admin.db)).rejects.toThrow(/check/);
     await code(5).execute(admin.db);
     await expect(code(5).execute(admin.db)).rejects.toThrow(/slack_codes_pkey/);
+  });
+
+  it('keeps what the Owner Unit said in a step of the Owner Journey, once per answer, and the declaration of a Confirmation (DEC-MR-16, DEC-MR-17)', async () => {
+    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0025-owner-journey', 'Success']]);
+    const id = (await sql<{ id: string }>`insert into resources (key, display_name, name, requested_name, resource_type, project_id, node_id, level) values ('p.d.journey', 'Journey', 'journey', 'journey', 'model', 'dbt-prod', 'model.p.journey', 2) returning id`.execute(admin.db)).rows[0]!.id;
+    const record = (step: string, answer: string) => sql`insert into journey_records (resource_id, step, answer, user_id, user_name) values (${id}, ${step}, ${answer}, 'u-an', 'An')`;
+    await record('pitfalls', 'nothing').execute(admin.db);
+    await expect(record('pitfalls', 'nothing').execute(admin.db)).rejects.toThrow(/journey_records_pk/);
+    await expect(record('publish', 'nothing').execute(admin.db)).rejects.toThrow(/check/);
+    await expect(record('pitfalls', 'maybe').execute(admin.db)).rejects.toThrow(/check/);
+    const columns = await sql<{ columnName: string }>`select column_name from information_schema.columns
+      where table_schema = ${schema} and table_name = 'resource_confirmations' and column_name = 'declaration'`.execute(admin.db);
+    expect(columns.rows).toHaveLength(1);
   });
 });

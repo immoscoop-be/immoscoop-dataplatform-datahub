@@ -258,6 +258,22 @@ export const LOG_CATALOGUE = {
     parameters: ['owner', 'level'],
     text: { en: 'Published by {owner}', nl: 'Gepubliceerd door {owner}' },
   },
+  'JRN-001': {
+    about: 'resource',
+    parameters: ['step', 'actor'],
+    text: {
+      en: 'Owner Journey: {step, select, data {Know the data} fields {Fields} admin {Table type, grain and mappings} messages {Open Questions and Signals} pitfalls {Pitfalls} gaps {Known Gaps} parameters {Parameters} other {{step}}} gone through by {actor}',
+      nl: 'Owner Journey: {step, select, data {De data kennen} fields {Velden} admin {Tabeltype, grain en mappings} messages {Open Questions en Signals} pitfalls {Valkuilen} gaps {Known Gaps} parameters {Parameters} other {{step}}} doorlopen door {actor}',
+    },
+  },
+  'JRN-002': {
+    about: 'resource',
+    parameters: ['step', 'actor'],
+    text: {
+      en: '{step, select, data {Know the data} fields {Fields} admin {Table type, grain and mappings} messages {Open Questions and Signals} pitfalls {Pitfalls} gaps {Known Gaps} parameters {Parameters} other {{step}}}: nothing to add, according to {actor}',
+      nl: '{step, select, data {De data kennen} fields {Velden} admin {Tabeltype, grain en mappings} messages {Open Questions en Signals} pitfalls {Valkuilen} gaps {Known Gaps} parameters {Parameters} other {{step}}}: niets toe te voegen, volgens {actor}',
+    },
+  },
   'CNV-050': {
     about: 'resource',
     parameters: ['actor', 'conversation'],
