@@ -7,7 +7,7 @@ The input of the card as Claude drafted it, without an interview: what the brief
 | Card | K5.12 The Owner Journey (Compass, section K5 Data Hub) |
 | Author | Max |
 | Interviewed | Not interviewed: drafted by Claude on 2026-11-15, with the learning-card skill, from the brief of the author |
-| Fact check | To name |
+| Fact check | Claude, a review against the requirements and the code on 2026-11-15; Max reviews it in prod |
 | Test reader | To name, in prod (DEC-LR-38) |
 
 ## 1. The reader's question
@@ -78,8 +78,11 @@ The card has no See it: the third rung is a screen of Data Hub, not a chart. App
 
 The author asked for this card in the brief for the Owner Journey of 2026-11-15, §6: "Each step refers to a card that explains the why. Write the missing ones yourself, in the form and the voice of the existing cards", with for this one "the steps in order and why the order is what it is", and that `explain` finds it on the words an Owner would use. The storyboard drafted its core idea and gain. Claude wrote everything in the card from the requirements (DEC-MR-15, DEC-MR-16, DEC-MR-17, DEC-CL-17, FR-CL-30, FR-CL-31, FR-MR-17), `packages/contracts/src/journey.ts` and the storyboard: the quote, the situation, the example, the three questions and their wrong answers, the first question and the neighbours. The gain of the storyboard gained "describing" so that it names both halves of the work. A "yes" to a suggestion weighs less than the author's own words, so the fact check and the test reader carry more weight here than usual.
 
+Published without a review first, at the author's request on 2026-11-15: "You may publish them all I'll review once in prod". The card is `reviewed` so that prod shows it in the Owner Journey; the author reads it there.
+
 ## To do
 
+- [ ] Max reviews the card in prod, as he asked on 2026-11-15
 - [ ] Fact check: someone of the Data Team other than the author reads the card against the requirements named here
 - [ ] Once K5.14 to K5.18 are written, consider K5.14 under Where to next, the first step that writes a text
 - [ ] The step Start of the journey names this card (`packages/contracts/src/journey.ts`); `links` does not count the steps of the journey as a place yet

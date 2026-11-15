@@ -7,7 +7,7 @@ The input of the card as the drafting gave it: nobody was interviewed, so each a
 | Card | K5.18 What the Data Admin records (Compass, section K5 Data Hub) |
 | Author | Max |
 | Interviewed | Not interviewed: drafted by Claude on 2026-11-15, with the learning-card skill |
-| Fact check | To name |
+| Fact check | Claude, a review against the requirements and the code on 2026-11-15; Max reviews it in prod |
 | Test reader | To name, in prod (DEC-LR-38) |
 
 ## 1. The reader's question
@@ -78,8 +78,11 @@ The card has no See it: the third rung is a screen of Data Hub, not a chart. App
 
 Max, the author, asked for these cards in the brief for the Owner Journey of 2026-11-15, §6: each step refers to a card that explains the why, in the form and the voice of the existing cards, extending a card that exists rather than duplicating one; for this card, "grain and mappings: what the Data Admin records and why the Owner should check it". Claude wrote everything in the card from the requirements, the code of the web app and the MCP server, the prototype of the Overview and the storyboard of the Owner Journey, starting from the rule the storyboard drafted: the quote, the situation, the example, the gain, the three questions, the first question and the neighbours. Claude checked the existing set first: 2.3.5 explains the grain and 2.3.6 the model types; neither says who records them, explains mappings, or why the Owner reads them back. A "yes" to a suggestion weighs less than the author's own words, so the fact check, by someone of the Data Team, and the test reader carry more weight here than usual.
 
+Published without a review first, at the author's request on 2026-11-15: "You may publish them all I'll review once in prod". The card is `reviewed` so that prod shows it in the Owner Journey; the author reads it there.
+
 ## To do
 
+- [ ] Max reviews the card in prod, as he asked on 2026-11-15
 - [ ] Fact check: someone of the Data Team reads the card against this record and the requirements
 - [ ] Test reader: a colleague outside data reads the card in prod and says in their own words what they learned (DEC-LR-38)
 - [ ] The English web app says "table type" in the Owner Journey ("Table type, grain and mappings", "no table type recorded") and "model type" on the Resource and for the Data Admin; DEC-MR-16 and OP-ED-03 say table type, DEC-RC-10 model type; the Dutch says "modeltype" throughout. Once one word is chosen, drop the bridge in the situation and the "table type" of the quote

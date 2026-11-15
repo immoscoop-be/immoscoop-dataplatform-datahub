@@ -7,7 +7,7 @@ The input of the card as the interview gave it: what the author said, what Claud
 | Card | K5.17 Reliable since (Compass, section K5 Data Hub) |
 | Author | Max |
 | Interviewed | 2026-11-15, with the learning-card skill: not interviewed, drafted by Claude |
-| Fact check | To name |
+| Fact check | Claude, a review against the requirements and the code on 2026-11-15; Max reviews it in prod |
 | Test reader | To name, in prod (DEC-LR-38) |
 
 ## 1. The reader's question
@@ -78,8 +78,11 @@ See it shows the third rung as the Chart Server draws it, from example figures: 
 
 The author asked for this card in the brief for the Owner Journey of 2026-11-15, §6: each step refers to a card that explains the why, written in the form and the voice of the existing cards, without duplicating one; reliable since is "the date from which the data can be relied on, and how it differs from a Known Gap", and `explain` must find the card on the words an Owner uses, such as reliable since. Claude wrote everything in the card from the requirements, the code of the web app and the storyboard of the Owner Journey: the quote, the example, the figures and the kind of chart of See it, the gain (the storyboard's, turned to the reader), the three questions with their wrong answers, the first question and the neighbours. The rule is the storyboard's, sharpened as said under question 3. The Known Gap of the questions on credit leads from MySQL without a `visitorId` is the example of FR-RC-04.
 
+Published without a review first, at the author's request on 2026-11-15: "You may publish them all I'll review once in prod". The card is `reviewed` so that prod shows it in the Owner Journey; the author reads it there.
+
 ## To do
 
+- [ ] Max reviews the card in prod, as he asked on 2026-11-15
 - [ ] Fact check: someone of the Data Team other than the author reads the card against this record
 - [ ] Replace the example figures of See it by the real impressions of Search Console, rounded, once the Resource is published; keep "example figures" until then
 - [ ] Offer K5.12 The Owner Journey under Where to next, once it is written

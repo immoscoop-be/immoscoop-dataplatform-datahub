@@ -7,7 +7,7 @@ The input of the card as the interview gave it: what the author said, what Claud
 | Card | K5.16 Pitfalls (Compass, section K5 Data Hub) |
 | Author | Max |
 | Interviewed | 2026-11-15, with the learning-card skill: not interviewed, drafted by Claude |
-| Fact check | To name |
+| Fact check | Claude, a review against the requirements and the code on 2026-11-15; Max reviews it in prod |
 | Test reader | To name, in prod (DEC-LR-38) |
 
 ## 1. The reader's question
@@ -78,8 +78,11 @@ The card has no See it: the third rung is a screen of Data Hub, not a chart, and
 
 The author asked for this card in the brief for the Owner Journey of 2026-11-15, §6: each step refers to a card that explains the why, written in the form and the voice of the existing cards, without duplicating one; the pitfalls are "what goes wrong when someone uses it without knowing it", and `explain` must find the card on the words an Owner uses, such as pitfall. Claude wrote everything in the card from the requirements, the code of the web app and the storyboard of the Owner Journey: the quote and its figures, the example, the gain (sharpened from the storyboard's "Your colleagues avoid the mistakes you already made, or saw made" into a sentence to the reader that holds both sides), the three questions with their wrong answers, the first question and the neighbours. The rule is the storyboard's, unchanged.
 
+Published without a review first, at the author's request on 2026-11-15: "You may publish them all I'll review once in prod". The card is `reviewed` so that prod shows it in the Owner Journey; the author reads it there.
+
 ## To do
 
+- [ ] Max reviews the card in prod, as he asked on 2026-11-15
 - [ ] Fact check: someone of the Data Team other than the author reads the card against this record
 - [ ] Ask the author whether "the SEO team reports 6" against "14" is the right order of magnitude for the position of the site, or replace the figures by real ones
 - [ ] Offer K5.12 The Owner Journey under Where to next, once it is written

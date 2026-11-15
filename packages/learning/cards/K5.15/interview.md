@@ -7,7 +7,7 @@ The input of the card as the drafting gave it: nobody was interviewed, so each a
 | Card | K5.15 Key Fields and Parameters (Compass, section K5 Data Hub) |
 | Author | Max |
 | Interviewed | Not interviewed: drafted by Claude on 2026-11-15, with the learning-card skill |
-| Fact check | To name |
+| Fact check | Claude, a review against the requirements and the code on 2026-11-15; Max reviews it in prod |
 | Test reader | To name, in prod (DEC-LR-38) |
 
 ## 1. The reader's question
@@ -78,8 +78,11 @@ The card has no See it: the third rung is a screen of Data Hub, not a chart. App
 
 Max, the author, asked for these cards in the brief for the Owner Journey of 2026-11-15, §6: each step refers to a card that explains the why, in the form and the voice of the existing cards, extending a card that exists rather than duplicating one; for this card, "what they do for a colleague and for a Preview". Claude wrote everything in the card from the requirements, the code of the web app and the query service, and the storyboard of the Owner Journey, starting from the rule and the gain the storyboard drafted: the quote, the situation, the example, the three questions, the first question and the neighbours. Claude checked the existing set first: no card explained Key Fields or Parameters; 2.3.5 explains the grain, which this card keeps apart from the Key Fields. A "yes" to a suggestion weighs less than the author's own words, so the fact check, by someone of the Data Team, and the test reader carry more weight here than usual.
 
+Published without a review first, at the author's request on 2026-11-15: "You may publish them all I'll review once in prod". The card is `reviewed` so that prod shows it in the Owner Journey; the author reads it there.
+
 ## To do
 
+- [ ] Max reviews the card in prod, as he asked on 2026-11-15
 - [ ] Fact check: someone of the Data Team reads the card against this record and the requirements
 - [ ] Test reader: a colleague outside data reads the card in prod and says in their own words what they learned (DEC-LR-38)
 - [ ] The Parameters of a Resource, the fields its Preview offers to filter on (DEC-SR-19, FR-SR-38), are not the Defined Term Parameter, the input of a Lens (DEC-DH-11); the card writes both with a capital, as the web app does: record it as an open point, raised in the review of this card

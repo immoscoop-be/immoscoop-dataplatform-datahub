@@ -7,7 +7,7 @@ The input of the card as Claude drafted it, without an interview: what the brief
 | Card | K5.13 Publishing a Resource (Compass, section K5 Data Hub) |
 | Author | Max |
 | Interviewed | Not interviewed: drafted by Claude on 2026-11-15, with the learning-card skill, from the brief of the author |
-| Fact check | To name |
+| Fact check | Claude, a review against the requirements and the code on 2026-11-15; Max reviews it in prod |
 | Test reader | To name, in prod (DEC-LR-38) |
 
 ## 1. The reader's question
@@ -78,8 +78,11 @@ The card has no See it: the third rung is a screen of Data Hub, not a chart. App
 
 The author asked for this card in the brief for the Owner Journey of 2026-11-15, §6: "Each step refers to a card that explains the why. Write the missing ones yourself, in the form and the voice of the existing cards", with for this one "what you declare, who will see it, that it is the first Confirmation and cannot be undone", and that `explain` finds it on the words an Owner would use (publish, publication, declaration, confirm). The storyboard drafted no core idea for it. Claude wrote everything in the card from the requirements (FR-SR-49, FR-SR-31, DEC-SR-28, DEC-MR-07, DEC-MR-17, FR-MR-19, DEC-CL-07, FR-CL-32), the texts of the publication in the web app and the storyboard: the quote, the situation, the rule, the example, the three questions and their wrong answers, the first question and the neighbours. A "yes" to a suggestion weighs less than the author's own words, so the fact check and the test reader carry more weight here than usual.
 
+Published without a review first, at the author's request on 2026-11-15: "You may publish them all I'll review once in prod". The card is `reviewed` so that prod shows it in the Owner Journey; the author reads it there.
+
 ## To do
 
+- [ ] Max reviews the card in prod, as he asked on 2026-11-15
 - [ ] Fact check: someone of the Data Team other than the author reads the card against the requirements named here
 - [ ] The step Read it back and publish of the journey names this card (`packages/contracts/src/journey.ts`); `links` does not count the steps of the journey as a place yet
 - [ ] A marker on the declaration of the publication listing this card: to design first (DEC-LR-22)
