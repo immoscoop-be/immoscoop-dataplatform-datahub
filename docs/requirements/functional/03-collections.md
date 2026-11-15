@@ -481,7 +481,7 @@ In the same step as the relations ([FR-CO-33](#fr-co-33)), the Data Admin sees p
 <a id="fr-co-44"></a>
 ### FR-CO-44 · The model type of a Resource is chosen first, and asks for its own fields
 
-**Status:** Proposed · **Source:** Max, 2026-11-15 ([DEC-UX-261](../../design/principles.md#dec-ux-261)) · **Screens:** [collection-add-type](../../design/screens/collection-add-type.html), [collection-add-relations](../../design/screens/collection-add-relations.html)
+**Status:** Specified · **Source:** Max, 2026-11-15 ([DEC-UX-261](../../design/principles.md#dec-ux-261)) · **Screens:** [collection-add-type](../../design/screens/collection-add-type.html), [collection-add-relations](../../design/screens/collection-add-relations.html)
 
 After choosing a Resource ([FR-CO-31](#fr-co-31)), the Data Admin chooses its model type on a step of its own, before its fields ([DEC-RC-10](05-resource-card.md#dec-rc-10)). Each model type is shown with what one row is, why it exists, what may be added up, and the fields it asks for. Data Hub suggests one where it can, and the Data Admin confirms it. The model type then asks for the fields a Resource of that kind needs:
 
@@ -497,6 +497,8 @@ After choosing a Resource ([FR-CO-31](#fr-co-31)), the Data Admin chooses its mo
 The Data Admin chooses them in the table of fields, as part of the definition of each field: what the field is for its model type. Data Hub offers a field only the roles its type fits, suggests them where it can, from the partition column, the grain or a mapping `is`, and says where each suggestion came from. The Resource is added only once every required field is chosen. The fields are kept with the model type; the EDA reads them to choose its EDA-Probes ([OP-ED-03](15-eda.md#op-ed-03)).
 
 **Makes easy:** recording what one row is and the fields it hangs on, so that everyone counts a Resource the right way and its EDA knows what to explore. **Makes hard:** adding a Resource whose model type is a guess, such as an `event` without the moment it happened, or a `state` without what it is about.
+
+*Specified on 2026-11-15, by Max: the fields each model type asks for are confirmed.*
 
 <a id="fr-co-35"></a>
 ### FR-CO-35 · The Data Team hands a Collection to any group
