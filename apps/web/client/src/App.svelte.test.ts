@@ -3599,7 +3599,12 @@ describe('Query', () => {
     expect(panel.getByText(/Weekly lead volume · 1 keer/)).toBeTruthy();
     // It reads only its Resources; another set is a new query, and the Lenses on them come later (DEC-UX-73, DEC-UX-114).
     expect(main.getByText('Leest enkel')).toBeTruthy();
-    expect(main.getByRole('link', { name: /Weekly lead volume/ }).getAttribute('href')).toBe('/resources/r2');
+    // A click on a Resource opens its Summary over the query, as a double-click on its name does; its page is a step further (DEC-UX-259).
+    await fireEvent.click(main.getByRole('button', { name: /Weekly lead volume/ }));
+    const summary = within(await screen.findByRole('dialog', { name: 'Weekly lead volume' }));
+    expect(summary.getByText('Resource van deze query')).toBeTruthy();
+    expect(summary.getByRole('link', { name: /Open de Resource/ }).getAttribute('href')).toBe('/resources/r2');
+    expect(location.pathname).toBe('/query/q1');
     // Its author makes it a Lens (DEC-UX-25).
     expect(main.getByRole('link', { name: 'Maak er een Lens van' }).getAttribute('href')).toBe('/query/q1/lens');
   });
@@ -3833,6 +3838,11 @@ describe('Query', () => {
     await fireEvent.input(window.getByRole('searchbox', { name: 'Filter de kolommen' }), { target: { value: 'source' } });
     expect(columns()).toEqual(['lead_source']);
     expect(window.getByRole('button', { name: /Volledige naam kopiëren/ })).toBeTruthy();
+    // Its chip on top of the frame opens the same window (DEC-UX-259).
+    await fireEvent.click(window.getByRole('button', { name: 'Sluiten' }));
+    await vi.waitFor(() => expect(screen.queryByRole('dialog', { name: 'stg_oltp__leads' })).toBeNull());
+    await fireEvent.click(main.getByRole('button', { name: 'stg_oltp__leads' }));
+    expect(await screen.findByRole('dialog', { name: 'stg_oltp__leads' })).toBeTruthy();
   });
 
   it('checks what is typed once it pauses two seconds, a query that opens at once (DEC-UX-154)', async () => {
@@ -4612,7 +4622,7 @@ describe('Lenses', () => {
     const main = within(await screen.findByRole('main'));
     const update = await main.findByRole('button', { name: 'De Lens bijwerken' });
     expect(main.queryByRole('link', { name: 'Maak er een Lens van' })).toBeNull();
-    expect(main.queryByRole('button', { name: /Lenses op deze Resources/ })).toBeNull();
+    expect(main.queryByRole('button', { name: /^(\d+ )?Lens(es)?$/ })).toBeNull();
     expect(main.getByText(/overschrijft hem met deze query/)).toBeTruthy();
     await fireEvent.click(update);
     const sheet = within(await screen.findByRole('dialog'));
@@ -4666,7 +4676,9 @@ describe('Lenses', () => {
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    const button = await main.findByRole('button', { name: /Lenses op deze Resources · 1/ });
+    // Only how many, its full name on a hover (DEC-UX-260).
+    const button = await main.findByRole('button', { name: '1 Lens' });
+    expect(button.getAttribute('title')).toMatch(/^Lenses op deze Resources/);
     await vi.waitFor(() => expect((button as HTMLButtonElement).disabled).toBe(false));
     await fireEvent.click(button);
     const sheet = within(await screen.findByRole('dialog'));

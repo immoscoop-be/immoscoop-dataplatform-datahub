@@ -764,6 +764,13 @@
 
   const openParameter = (parameter: Parameter | null, defines: MissingParameter | null = null) => (parameterWindow = { key: ++windows, parameter, defines });
 
+  /** A click on a Resource or a table outside Data Hub on top of the frame: what a double-click on its name opens (DEC-UX-259). */
+  function openTable(table: TableSuggestion): void {
+    fieldExplained = null;
+    summaryWindow = table.outside ? null : table;
+    outsideWindow = table.outside ? table : null;
+  }
+
   function explain(what: Explained): void {
     fieldExplained = null;
     if (what.kind === 'parameter') {
@@ -1107,7 +1114,13 @@
       <span class="chips">
         {#each query.resources as resource (resource.id)}
           <span class="chip" class:gone={!resource.visible}>
-            {#if resource.visible}
+            {#if resource.visible && summaryOf}
+              <!-- A click opens its Summary over the query, as a double-click on its name does; "Open the Resource" is in it (DEC-UX-259). -->
+              <button type="button" class="open" title={t('query.chip.summary')} onclick={() => openTable({ id: resource.id, name: resource.displayName, fullName: resource.fullName ?? resource.key })}>
+                <KindIcon kind="resource" />{resource.displayName}{#if collectionName(resource.collectionId)}<span class="meta">· {collectionName(resource.collectionId)}</span>{/if}
+                <MaturityIcon level={resource.level} small />
+              </button>
+            {:else if resource.visible}
               <a href={resourcePath(resource.id)}>
                 <KindIcon kind="resource" />{resource.displayName}{#if collectionName(resource.collectionId)}<span class="meta">· {collectionName(resource.collectionId)}</span>{/if}
                 <MaturityIcon level={resource.level} small />
@@ -1123,7 +1136,8 @@
         {#each known as table (table.key)}
           <!-- A table outside Data Hub: quiet, dashed, without Level, Owner or Publication (DEC-UX-220). -->
           <!-- Only its name; its layer and that it is no Resource on a hover (DEC-UX-243). -->
-          <span class="chip known" title={t('query.known.title', { layer: table.layer })}><Icon name="cube" /><span class="mono">{table.name}</span></span>
+          <!-- A click opens its window, as a double-click on its name does (DEC-UX-259). -->
+          <button type="button" class="chip known" title={t('query.known.title', { layer: table.layer })} onclick={() => openTable({ id: table.key, name: table.name, fullName: table.fullName, outside: true })}><Icon name="cube" /><span class="mono">{table.name}</span></button>
         {/each}
         {#each outside as table (table.name)}
           <span class="chip outside">
@@ -1146,8 +1160,9 @@
       <!-- A query used as a Lens already is one (DEC-UX-77). -->
       {#if !query.lens && query.kind === 'query'}
         <span class="end">
-          <Button variant="quiet" disabled={!lensesOn} title={t('lenses.sheet.hint')} onclick={() => (lensesOpen = true)}
-            ><Icon name="aperture" />{t('query.lensesOn', { count: lensesOn ? lensesOn.exact.length + lensesOn.more.length : 0 })}</Button
+          <!-- Only how many, its full name on a hover; "Lenses" while they are looked up (DEC-UX-260). -->
+          <Button variant="quiet" disabled={!lensesOn} title={`${t('quick.query.lenses')}\n${t('lenses.sheet.hint')}`} onclick={() => (lensesOpen = true)}
+            ><Icon name="aperture" />{lensesOn ? t('query.lensesOn', { count: lensesOn.exact.length + lensesOn.more.length }) : t('query.lensesOn.looking')}</Button
           >
         </span>
       {/if}
@@ -1546,7 +1561,9 @@
   .chips > * { flex: none; }
   .scope > .end { margin-left: auto; flex: none; }
   .chip { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; font-size: var(--text-meta); color: var(--text-primary); background: var(--surface-sub); padding: 4px 6px 4px 10px; border-radius: var(--radius-pill); }
-  .chip > a, .chip > span { display: inline-flex; align-items: center; gap: 5px; color: inherit; text-decoration: none; padding-right: 4px; }
+  .chip > a, .chip > span, .chip > .open { display: inline-flex; align-items: center; gap: 5px; color: inherit; text-decoration: none; padding-right: 4px; }
+  .chip > .open { font: inherit; border: 0; background: none; padding: 0 4px 0 0; cursor: pointer; }
+  button.chip { font: inherit; border: 0; padding: 4px 10px; cursor: pointer; }
   .chip:hover { background: var(--tint-active); }
   .chip .meta { white-space: nowrap; }
   .chip.gone { color: var(--text-muted); }
