@@ -2,11 +2,12 @@
 <!--
   Screen: the page of a Collection, adding Resources
   A Data Admin clicked "Add resources": a sheet lists the Resources without a Collection, to pick from.
-  Step 1 of 3; step 2 chooses its model type (collection-add-type.html, FR-CO-44), step 3 records the fields the model type
-  asks for, the grain and the mapping of every field (collection-add-relations.html, FR-CO-33).
+  Step 1 of 4; step 2 chooses its model type (collection-add-type.html, FR-CO-44), step 3 its grain and storage
+  (collection-add-grain.html), step 4 the fields the model type asks for and the mapping of every field
+  (collection-add-relations.html, FR-CO-33).
   Requirements: FR-CO-07, FR-CO-08, FR-CO-14, FR-CO-31, FR-SR-06, FR-SR-32, FR-SR-35, FR-MR-10
   Decisions: DEC-UX-58, DEC-UX-262, DEC-SR-22. Log: COL-006 and COL-030.
-  Related screens: collection-overview.html, collection-add-type.html, collection-add-relations.html, resource-unassigned.html.
+  Related screens: collection-overview.html, collection-add-type.html, collection-add-grain.html, collection-add-relations.html, resource-unassigned.html.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="datateam">
@@ -155,7 +156,7 @@
 
 <div class="sheet-backdrop" onclick="location.href='collection-overview.html'"></div>
 <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
- <div class="sheet-steps" aria-label="Steps"><span class="on"><b>1</b>Choose a Resource</span><i class="ph ph-arrow-right" aria-hidden="true"></i><a href="collection-add-type.html"><b>2</b>Model type</a><i class="ph ph-arrow-right" aria-hidden="true"></i><a href="collection-add-relations.html"><b>3</b>Fields and relations</a></div>
+ <div class="sheet-steps" aria-label="Steps"><span class="on"><b>1</b>Choose a Resource</span><i class="ph ph-arrow-right" aria-hidden="true"></i><a href="collection-add-type.html"><b>2</b>Model type</a><i class="ph ph-arrow-right" aria-hidden="true"></i><a href="collection-add-grain.html"><b>3</b>Grain and storage</a><i class="ph ph-arrow-right" aria-hidden="true"></i><a href="collection-add-relations.html"><b>4</b>Fields and relations</a></div>
  <div style="display:flex;align-items:flex-start;gap:8px"><div style="flex:1"><h2 id="sheet-title">Add a Resource to Credit leads</h2><p class="meta" style="margin-top:6px;display:block;line-height:1.5">One Resource at a time. Only Resources without a Collection can be added: a Resource is in one Collection at most. The Owner publishes it afterwards.</p></div><a class="icon-btn" href="collection-overview.html" aria-label="Close"><i class="ph ph-x"></i></a></div>
  <label class="search card" style="margin-top:14px;background:var(--surface-sub)"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input placeholder="Search Resources without a Collection"></label>
  <div class="sheet-list" role="radiogroup" aria-label="Resources without a Collection">
