@@ -492,7 +492,7 @@ After choosing a Resource ([FR-CO-31](#fr-co-31)), the Data Admin chooses its mo
 | `fact` | When it occurred: a date or timestamp. Required. Its measures: one or more numbers to add up. Required |
 | `dimension` | What it describes: the field that identifies each thing. Required |
 | `aggregate` | What it is grouped by: one or more fields. Required. Its period: a date, when it is grouped by time. Its counts and sums: each marked as adding up or as a unique count that is never added up. Required |
-| `other` | One row is: a sentence ([OP-RC-28](05-resource-card.md#op-rc-28)). Required |
+| `other` | One row is: a sentence ([DEC-RC-21](05-resource-card.md#dec-rc-21)). Required |
 
 The Data Admin chooses them in the table of fields, as part of the definition of each field: what the field is for its model type. Data Hub offers a field only the roles its type fits, suggests them where it can, from the partition column, the grain or a mapping `is`, and says where each suggestion came from. The Resource is added only once every required field is chosen. The fields are kept with the model type; the EDA reads them to choose its EDA-Probes ([OP-ED-03](15-eda.md#op-ed-03)).
 
