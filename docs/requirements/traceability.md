@@ -29,7 +29,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Conversations](functional/14-conversations.md) | 16 (16 implemented) | 2 (2 implemented) | 13 | 9 (9 done) |
 | [EDA](functional/15-eda.md) | – | – | 9 | 8 (8 open) |
 | [Learning](functional/16-learning.md) | 43 (14 proposed, 13 implemented, 16 withdrawn) | – | 38 | 39 (8 open, 31 done) |
-| [Claude](functional/17-claude.md) | 29 (1 proposed, 28 implemented) | 5 (5 implemented) | 16 | 12 (8 open, 4 done) |
+| [Claude](functional/17-claude.md) | 29 (1 proposed, 28 implemented) | 5 (5 implemented) | 17 | 12 (7 open, 5 done) |
 | [Localisation](non-functional/localisation.md) | 12 (8 specified, 3 implemented, 1 withdrawn) | – | – | – |
 | [Security](non-functional/security.md) | 4 (4 implemented) | – | – | – |
 | [Platform: technical requirements](technical/00-platform.md) | 34 (3 specified, 30 implemented, 1 withdrawn) | – | 33 | 20 (6 open, 14 done) |
