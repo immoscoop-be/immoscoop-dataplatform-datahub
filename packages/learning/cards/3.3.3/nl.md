@@ -3,9 +3,9 @@ number: 3.3.3
 status: reviewed
 minutes: 4
 added: 2026-10-29
-changed: 2026-11-14
+changed: 2026-11-15
 gain: Je beoordeelt of data goed genoeg is voor je beslissing, zonder op perfecte data te wachten.
-translatedFrom: 25e60018a953
+translatedFrom: 53c0aa6cba51
 ---
 
 # Why now
@@ -23,11 +23,11 @@ Data is **betrouwbaar** als ze de verwachting waarmaakt die haar label zet, voor
 
 ## Zoals een keukenweegschaal
 
-Een keukenweegschaal is betrouwbaar voor een recept en nutteloos om goud te wegen. De weegschaal veranderde niet; wat je ervan wil, wel.
+Een keukenweegschaal is betrouwbaar voor een recept en nutteloos om goud te wegen: daar was ze nooit voor bedoeld. De weegschaal veranderde niet; wat je ervan wil, wel.
 
 ## Bijvoorbeeld
 
-De bezoekerscijfers missen wie cookies weigert, elke week ongeveer hetzelfde deel. Voor de trend van het laatste kwartaal is dat goed genoeg; om een kantoor per bezoeker te factureren niet.
+De bezoekerscijfers missen wie cookies weigert, elke week ongeveer hetzelfde deel. Voor de trend van het laatste kwartaal is dat goed genoeg; om een kantoor per bezoeker te factureren niet. Op de Resource die ze bevat, schrijft haar Owner dat op als haar beoogde gebruik: bedoeld voor de trend, niet om te factureren, zodat elke lezer weet voor welk gebruik de Owner instaat.
 
 # See it
 
@@ -74,6 +74,14 @@ Why: de Resource zegt wat je mag verwachten: definitieve weken mag je vergelijke
 
 Why: een gekend, stabiel gat is onschuldig voor de meeste toepassingen en doorslaggevend voor die ene die net die rijen nodig heeft. Betrouwbaarheid beoordeel je tegenover de vraag, niet op zich.
 
+## Het beoogde gebruik van een Resource zegt: "De trend van onze organische zichtbaarheid in zoekmachines, per week en per maand. Niet voor omzetattributie." Je wil weten hoeveel omzet organische zoekopdrachten vorig kwartaal opbrachten. Wat doe je?
+
+- [ ] Haar gebruiken: de cijfers zijn dezelfde, waarvoor je ze ook gebruikt
+- [ ] Niets: het beoogde gebruik verbiedt je haar voor omzet te bevragen
+- [x] Een Resource zoeken die voor omzet bedoeld is, of het haar Owner vragen: deze is dat niet
+
+Why: het beoogde gebruik blokkeert niets en verbergt niets. Haar Owner schrijft waarvoor de Resource bedoeld is, en waarvoor niet, zodat je weet voor welk gebruik die instaat; daarbuiten maken dezelfde cijfers misschien niet waar wat je ervan verwacht.
+
 # You can now
 
 beoordelen of data goed genoeg is voor wat je ermee wil doen, in plaats van te vragen of ze goed is.
@@ -82,4 +90,4 @@ beoordelen of data goed genoeg is voor wat je ermee wil doen, in plaats van te v
 
 - Next to it: K5.2
 - Next to it: 1.2.1
-- Apply: [Open Collections](/collections) Lees de Known Behaviour van een Resource voor je haar voor een beslissing gebruikt.
+- Apply: [Open Collections](/collections) Lees het beoogde gebruik van een Resource, onder Known Behaviour, voor je haar voor een beslissing gebruikt.

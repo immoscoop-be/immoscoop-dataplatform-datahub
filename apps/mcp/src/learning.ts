@@ -35,6 +35,20 @@ export function cards(): Promise<ExplainSource[]> {
 }
 
 /**
+ * One written card in the language asked, with its title from the plan, as the Learning Centre of that environment
+ * shows it: in prod only a reviewed card (DEC-LR-25). The English when there is no translation.
+ */
+export async function cardFor(number: string, language: 'en' | 'nl', environment?: string): Promise<{ card: Card; title: string } | undefined> {
+  const source = (await cards()).find((one) => one.card.number === number);
+  if (!source || !shownIn(environment, source.card)) return undefined;
+  if (language === 'nl' && source.translation) return source.translation;
+  return { card: source.card, title: source.title };
+}
+
+/** The title of a topic of the plan, in a language. */
+export const topicTitle = (number: string, language: 'en' | 'nl'): string | undefined => TOPICS.find((topic) => topic.number === number)?.title[language];
+
+/**
  * The written cards that explain a term, in English or Dutch, best first (FR-CL-15), with the search the package keeps
  * for the checks of a card. In prod only the reviewed ones, as the web app shows them, so that Claude never links to a
  * draft that the Learning Centre of prod does not show (DEC-LR-25).

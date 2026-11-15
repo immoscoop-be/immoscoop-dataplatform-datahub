@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Button from '@datahub/ui/primitives/Button.svelte';
   import type { GapScope } from '@datahub/contracts/gaps';
   import { hasScope } from '@datahub/contracts/gaps';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
@@ -22,6 +23,8 @@
     onchange,
     onremove,
     adding = $bindable(false),
+    none = null,
+    onnothing,
   }: {
     gaps: readonly KnownGap[];
     /** The fields of the Resource, to narrow a gap down by. */
@@ -33,6 +36,10 @@
     onremove: (gap: KnownGap) => Promise<boolean>;
     /** A new gap being written; the quick window opens it too (DEC-UX-258). */
     adding?: boolean;
+    /** Who said there are none, and when, while none is written (DEC-MR-16). */
+    none?: { by: string; at: string } | null;
+    /** Says there are none to add; answers whether it worked. Left out for who may not. */
+    onnothing?: () => Promise<boolean>;
   } = $props();
 
   let changing: string | undefined = $state();
@@ -103,8 +110,15 @@
       </li>
     {/each}
   </ul>
+{:else if none}
+  <p class="empty">{t('overview.nothing.gaps.said', { by: none.by, date: new Intl.DateTimeFormat(currentLanguage() === 'nl' ? 'nl-BE' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(none.at)) })}</p>
 {:else}
   <p class="empty">{t('gaps.none')}</p>
+  <!-- Required to publish: the gaps, or "Nothing to add", kept with who and when (DEC-MR-16). -->
+  {#if canEdit && onnothing}
+    <p class="why">{t('overview.nothing.gaps')}</p>
+    <div class="nothing"><Button variant="outline" disabled={busy} onclick={() => attempt(onnothing)}><Icon name="check" />{t('overview.nothing')}</Button></div>
+  {/if}
 {/if}
 
 {#if canEdit}
@@ -146,4 +160,6 @@
   .empty { margin: 0; font-size: var(--text-small); color: var(--text-muted); line-height: 1.5; }
   .help { margin: 8px 0 0; font-size: var(--text-meta); color: var(--text-muted); line-height: 1.5; }
   .failed { margin: 8px 0 0; font-size: var(--text-small); color: var(--signal-urgent); }
+  .why { margin: 4px 0 8px; font-size: var(--text-meta); color: var(--text-muted); }
+  .nothing { margin-bottom: 12px; }
 </style>

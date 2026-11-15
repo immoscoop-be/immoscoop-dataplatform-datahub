@@ -1,4 +1,5 @@
 import type { GapScope } from '@datahub/contracts/gaps';
+import type { Journey, JourneyAnswer, JourneyStepId } from '@datahub/contracts/journey';
 import { createCall, NotFound, Refused } from './api.js';
 import type { Config } from './config.js';
 import type { Session } from './session.js';
@@ -103,6 +104,8 @@ export interface ResourceDetail extends Resource {
   changes: { field: string; change: 'added' | 'removed' | 'retyped'; old: string | null; new: string | null; at: string }[];
   /** The descriptions from dbt that changed in the last 30 days, with the text before; no field for the table (FR-RC-17). */
   descriptionChanges: { field: string | null; before: string; at: string }[];
+  /** The Owner Journey: its steps, the next one, and whether it is ready to publish (DEC-MR-15); left out by an older catalogue. */
+  journey?: Journey;
   /**
    * What the User may do with it, as catalogue says from their Permissions and its Owner Unit (TR-PL-06): describe
    * any attribute, each attribute (DEC-PL-03), publish it as its Owner (DEC-PL-06), deprecate it, and the work of a
@@ -370,9 +373,13 @@ export function createCatalogue(config: Config, session: Pick<Session, 'accessTo
     async relate(id: string, details: Record<string, unknown>): Promise<ResourceDetail> {
       return ((await (await call(`${resource(id)}/details`, { method: 'PUT', body: details })).json()) as { resource: ResourceDetail }).resource;
     },
-    /** Publishes it, its first Confirmation: only its Owner may (FR-SR-49). */
-    async publish(id: string): Promise<ResourceDetail> {
-      return ((await (await call(`${resource(id)}/publication`, { method: 'POST' })).json()) as { resource: ResourceDetail }).resource;
+    /** Publishes it, its first Confirmation, with the declaration the Owner ticked: only its Owner may (FR-SR-49, DEC-MR-17). */
+    async publish(id: string, declaration: string): Promise<ResourceDetail> {
+      return ((await (await call(`${resource(id)}/publication`, { method: 'POST', body: { declaration } })).json()) as { resource: ResourceDetail }).resource;
+    },
+    /** Keeps what the User said in a step of the Owner Journey, such as nothing to add to its pitfalls (DEC-MR-16). */
+    async recordStep(id: string, step: JourneyStepId, answer: JourneyAnswer): Promise<Journey> {
+      return ((await (await call(`${resource(id)}/journey/${step}`, { method: 'POST', body: { answer } })).json()) as { journey: Journey }).journey;
     },
     /** Marks the changes since its last Confirmation seen (FR-MR-12). */
     async markSeen(id: string): Promise<ResourceDetail> {

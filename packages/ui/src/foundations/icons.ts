@@ -54,6 +54,7 @@ import bookOpenText from '@phosphor-icons/core/assets/regular/book-open-text.svg
 import chartLine from '@phosphor-icons/core/assets/regular/chart-line.svg?raw';
 import chartScatter from '@phosphor-icons/core/assets/regular/chart-scatter.svg?raw';
 import circleDashed from '@phosphor-icons/core/assets/regular/circle-dashed.svg?raw';
+import diamond from '@phosphor-icons/core/assets/regular/diamond.svg?raw';
 import clockCounterClockwise from '@phosphor-icons/core/assets/regular/clock-counter-clockwise.svg?raw';
 import compass from '@phosphor-icons/core/assets/regular/compass.svg?raw';
 import fileXls from '@phosphor-icons/core/assets/regular/file-xls.svg?raw';
@@ -223,6 +224,7 @@ export const ICONS = {
   'chart-line': chartLine,
   'chart-scatter': chartScatter,
   'circle-dashed': circleDashed,
+  diamond,
   'clock-counter-clockwise': clockCounterClockwise,
   compass,
   'file-xls': fileXls,

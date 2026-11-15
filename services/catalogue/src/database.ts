@@ -1,6 +1,7 @@
 import type { CollectionIcon, CollectionVisibility } from '@datahub/contracts';
 import type { SubjectKind } from '@datahub/contracts/messages';
 import type { GapScope } from '@datahub/contracts/gaps';
+import type { JourneyAnswer, JourneyStepId } from '@datahub/contracts/journey';
 import type { ColumnType, Generated } from 'kysely';
 import type { LeftOutReason } from './fields.js';
 
@@ -156,6 +157,17 @@ export interface CatalogueDatabase {
     code: string | null;
     fields: ColumnType<ConfirmedField[], string, string>;
     confirmedAt: Timestamp;
+    /** The declaration the Owner ticked, as it was shown; null for a Confirmation of before (DEC-MR-17). */
+    declaration: string | null;
+  };
+  /** What the Owner Unit said in a step of the Owner Journey, the newest of each answer (DEC-MR-16, OP-CL-12). */
+  journeyRecords: {
+    resourceId: string;
+    step: JourneyStepId;
+    answer: JourneyAnswer;
+    userId: string;
+    userName: string;
+    at: Timestamp;
   };
   /** A field that changed after the last Confirmation: the warning, until it is seen (FR-MR-12). */
   resourceChanges: {

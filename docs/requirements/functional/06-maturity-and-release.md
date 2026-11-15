@@ -189,6 +189,33 @@ Data Hub derives Described from the Current Version of the dbt project: the tabl
 
 Beside the ladder of a Resource, its Overview explains every Level from 1 · Available to 5 · Monitored. A Level passed is marked so, with how it was reached: registered through an exposure of a dbt project, the table and how many fields described in dbt ([FR-MR-15](#fr-mr-15)), published and confirmed by whom and when ([FR-SR-49](04-stacks-and-resources.md#fr-sr-49)), with a change since the last Confirmation ([FR-MR-12](#fr-mr-12)). The Level it is at stands out. A Level still to reach says what it takes and who does it: the Data Team describes it in dbt, its Owner publishes it, an EDA document is linked ([DEC-MR-14](#dec-mr-14)), an active check runs on it, which comes in version 2 ([DEC-MR-13](#dec-mr-13)). 0 · Beta is named under them, for concepts. The Publication has no tile of its own.
 
+<a id="fr-mr-17"></a>
+### FR-MR-17 · A Publication waits for the steps required to publish
+
+**Status:** Implemented · **Source:** Max, 2026-11-15 ([DEC-MR-15](#dec-mr-15), [DEC-MR-16](#dec-mr-16), [DEC-CL-17](17-claude.md#dec-cl-17)) · **Screens:** [resource-publish](../../design/screens/resource-publish.html), [mcp-resource-publish](../../design/screens/mcp-resource-publish.html), [resource-overview](../../design/screens/resource-overview.html)
+
+A Resource can be published once it is Described and every step required to publish is done: its Business Description; its Key Fields, each with a Business Description; its intended use; its pitfalls, or who said there are none; its Known Gaps, or who said there are none, and the day it is reliable since. The catalogue refuses a Publication while one is open, and says which. The publication in Data Hub, the publication in Claude, the Maturity of the Resource and the Owner Journey all show the same list: each required step done or open, each open one with what it misses and the way to its part of the Overview; what the [EDA](15-eda.md) needs later, the table type and the grain; and what is advised, the other fields, the Parameters, the mappings and the open Questions and Signals, which hold nothing up.
+
+**Makes easy:** knowing, in one look and in the same words everywhere, what still stands between a Resource and its Publication, and going straight to it. **Makes hard:** publishing a Resource whose card says nothing of what it is for, where it trips people up and what it does not hold.
+
+<a id="fr-mr-18"></a>
+### FR-MR-18 · None is an answer, kept with who gave it and when
+
+**Status:** Implemented · **Source:** Max, 2026-11-15 ([DEC-MR-16](#dec-mr-16)) · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
+
+Where none is an answer, the pitfalls and the Known Gaps in Data Hub, and the Parameters through Claude, whoever may describe the Resource can say there is nothing to add. Data Hub keeps who said so and when, writes it into the Log of the Resource, and shows it in the empty part: "None, according to" whom, on which day, until someone writes one. Claude also records that the Owner went through a step that writes nothing of its own, such as the fields or the open Questions and Signals ([FR-CL-31](17-claude.md#fr-cl-31)).
+
+**Makes easy:** saying, once and for everyone, that a Resource has no pitfall or no Known Gap, so that the next reader trusts the silence. **Makes hard:** an empty part that leaves a reader guessing whether nobody looked or there is nothing to find.
+
+<a id="fr-mr-19"></a>
+### FR-MR-19 · The declaration is kept as the Owner ticked it
+
+**Status:** Implemented · **Source:** Max, 2026-11-15 ([DEC-MR-17](#dec-mr-17))
+
+Once every step required to publish is done, the publication reads the whole card back, as a colleague will see it: the Business Description and the description from dbt, the intended use, the pitfalls, the Known Gaps with the day it is reliable since, the Key Fields and the Parameters. Its declaration accepts every text on the card, also those written before, by a colleague or an earlier conversation: "For" the Owner Unit, "I have read this card and confirm that this Resource is correct: what it is and what it stands for, in every text on it." Data Hub keeps the declaration, in the words the Owner ticked, with the Confirmation.
+
+**Makes easy:** knowing later what exactly an Owner confirmed, in their own words. **Makes hard:** confirming a card without reading it, and a declaration that covers less than the card shows.
+
 ## Open points
 
 - [ ] <a id="op-mr-01"></a>**OP-MR-01** · Work out a new domain, [EDA](15-eda.md): how an exploration runs and is linked to a Resource (builds on the [EDA framework](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1352237168), Confluence, Dutch). *Could, not in v1: set on 2026-10-28, by Max; a domain for EDA is not part of version 1.*
