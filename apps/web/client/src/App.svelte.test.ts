@@ -2,6 +2,7 @@ import { formatBigQuery } from '@datahub/ui/components/sqlFormat.js';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/svelte';
 import { setLanguage } from '@datahub/ui/foundations/texts.svelte.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { journeyOf, type JourneyFacts } from '@datahub/contracts/journey';
 import { NO_PERMISSIONS, STARTING_GROUPS, type Permissions, type StartingGroup } from '@datahub/contracts/permissions';
 import App from './App.svelte';
 import type { Config } from './lib/config.js';
@@ -245,6 +246,29 @@ const WEEKLY_DETAIL = {
     { name: 'lead_source', position: 2, dataType: 'STRING', description: 'Where the lead came from', businessDescription: 'The website, the app or a partner.' },
   ],
   details: { ...SAVED_SEARCHES.details, partition: { field: 'week_start', unit: 'day' }, clusterBy: ['lead_source'], origins: { partition: 'dbt', clusterBy: 'dbt' } },
+};
+
+/** What the Owner Journey reads from Weekly lead volume, every step required to publish done (DEC-MR-15, DEC-MR-16). */
+const READY: JourneyFacts = {
+  level: 2,
+  inCollection: true,
+  published: false,
+  businessDescription: 'The number of credit leads we send to KBC each week.',
+  keyFields: ['week_start'],
+  fields: [
+    { name: 'week_start', businessDescription: 'The Monday of the week.' },
+    { name: 'lead_source', businessDescription: '' },
+  ],
+  intendedUse: 'Weekly trends.',
+  pitfalls: 'The current week is incomplete.',
+  knownGaps: 1,
+  reliableSince: '2025-01-01',
+  parameters: [],
+  modelType: null,
+  grain: [],
+  mappings: 0,
+  openMessages: 0,
+  records: [],
 };
 
 /** The lineage around Weekly lead volume: two models upstream, one downstream (DEC-AR-06). */
@@ -607,6 +631,10 @@ function serve({
    * without it, the Slack app of Data Hub is not set up here (OP-UX-78). The code it sends is always 123456.
    */
   slack = undefined as Record<string, string> | undefined,
+  /** What the Owner Journey reads from Weekly lead volume; without it, an older catalogue that sends no journey. */
+  journey = undefined as JourneyFacts | undefined,
+  /** What a colleague changes on Weekly lead volume while its publication is open: catalogue reads it when it publishes. */
+  meanwhile = undefined as JourneyFacts | undefined,
 } = {}): Saved[] {
   const calls: Saved[] = [];
   // The Users and Permission groups as identity keeps them, changed by what the page asks (TR-PL-07).
@@ -625,6 +653,9 @@ function serve({
   let sourceJob = { ...SOURCE_JOB_TILE };
   // Weekly lead volume as catalogue keeps it, changed by what the page asks.
   let resource: Record<string, unknown> = { ...WEEKLY_DETAIL, ...weekly };
+  // Its Owner Journey, from the same facts catalogue reads (DEC-MR-16).
+  let facts = journey;
+  if (facts) resource = { ...resource, journey: journeyOf(facts) };
   // The address by which catalogue finds the User in Slack, and the code it sent, changed by what the page asks.
   let slackKept: { email: string; confirmedAt: string } | null = null;
   let slackCode: { email: string; triesLeft: number } | null = null;
@@ -809,7 +840,19 @@ function serve({
       resource = { ...resource, card: { ...card, knownGaps } };
       return method === 'DELETE' ? new Response(null, { status: 204 }) : json({ gap: knownGaps.find((gap) => gap.id === (gapOn[1] ?? added.id)) }, method === 'POST' ? 201 : 200);
     }
+    const step = path.match(/^\/resources\/r2\/journey\/(pitfalls|gaps)$/);
+    if (step && method === 'POST' && facts) {
+      facts = { ...facts, records: [...facts.records, { step: step[1] as 'pitfalls' | 'gaps', answer: 'nothing', by: 'Max Verstraete', at: '2026-11-15T09:00:00Z' }] };
+      resource = { ...resource, journey: journeyOf(facts) };
+      return json({ journey: resource.journey });
+    }
     if (path === '/resources/r2/publication' && method === 'POST') {
+      if (meanwhile) {
+        facts = meanwhile;
+        resource = { ...resource, journey: journeyOf(facts) };
+      }
+      // catalogue decides whether it is ready, from what it holds now (DEC-MR-15).
+      if (facts && !journeyOf(facts).ready) return json({ error: 'not_ready', message: 'A step required to publish is open.', open: journeyOf(facts).open }, 409);
       resource = { ...resource, published: true, level: 3, publication: PUBLICATION };
       return json({ resource });
     }
@@ -2725,7 +2768,7 @@ describe('the page of a Resource', () => {
   });
 
   it('lets its Owner publish it, its first Confirmation, once the declaration is ticked (FR-SR-49, DEC-UX-63)', async () => {
-    const calls = serve({ groups: ['g1'] });
+    const calls = serve({ groups: ['g1'], journey: READY, weekly: { card: { ...WEEKLY_DETAIL.card, keyFields: ['week_start'], intendedUse: 'Weekly trends.', pitfalls: 'The current week is incomplete.', reliableSince: '2025-01-01' } } });
     open('/resources/r2');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
@@ -2734,12 +2777,21 @@ describe('the page of a Resource', () => {
     const sheet = within(await screen.findByRole('dialog', { name: 'Weekly lead volume' }));
     expect(sheet.getByText(/het hele bedrijf, want de Collection is publiek/)).toBeTruthy();
     expect(sheet.getByText(/jij mag hem publiceren/)).toBeTruthy();
+    // Every step required to publish done; what is advised or for the EDA holds nothing up (DEC-MR-15).
+    expect(sheet.getByText(/Nodig om te publiceren, alles gedaan:/).closest('p')?.textContent).toContain('Business Description; Sleutelvelden; Velden; Beoogd gebruik; Valkuilen; Known Gaps en betrouwbaar sinds.');
+    expect(sheet.getByText(/Aangeraden:/).closest('p')?.textContent).toContain('1 ander veld zonder Business Description');
+    expect(sheet.getByText(/Voor de EDA, later:/).closest('p')?.textContent).toContain('geen modeltype vastgelegd; geen grain vastgelegd.');
+    // The card, read back: what the declaration accepts (DEC-MR-17).
+    expect(sheet.getByText('Wat je bevestigt · de kaart, voorgelezen')).toBeTruthy();
+    expect(sheet.getByText('Known Gaps · betrouwbaar sinds 1 jan 2025')).toBeTruthy();
+    expect(sheet.getByText('week_start · geen')).toBeTruthy();
     const button = sheet.getByRole('button', { name: /Publiceren en bevestigen/ }) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
-    await fireEvent.click(sheet.getByRole('checkbox', { name: /Voor Data bevestig ik dat deze Resource klopt/ }));
+    await fireEvent.click(sheet.getByRole('checkbox', { name: /Voor Data heb ik deze kaart gelezen en bevestig ik/ }));
     expect(button.disabled).toBe(false);
     await fireEvent.click(button);
-    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/resources/r2/publication' }));
+    const declaration = 'Voor Data heb ik deze kaart gelezen en bevestig ik dat deze Resource klopt: wat hij is en waar hij voor staat, in elke tekst erop.';
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/resources/r2/publication', body: { declaration } }));
     await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(main.getByText('Gepubliceerd', { selector: '.chip' })).toBeTruthy();
     expect(main.queryByText('Nog niet gepubliceerd.')).toBeNull();
@@ -2747,6 +2799,58 @@ describe('the page of a Resource', () => {
     await fireEvent.click(main.getByRole('tab', { name: 'Maturiteit' }));
     expect(main.getByText('Gepubliceerd op 28 okt 2026 door Max Verstraete, zijn eerste Confirmation; laatst bevestigd op 28 okt 2026 door Max Verstraete.')).toBeTruthy();
     expect(main.queryByText('Publicatie')).toBeNull();
+  });
+
+  it('reads it again when catalogue refuses the publication, and shows what is open now (DEC-MR-15)', async () => {
+    // Meanwhile, a colleague takes the Business Description of its Key Field away.
+    const meanwhile = { ...READY, fields: [{ name: 'week_start', businessDescription: '' }, { name: 'lead_source', businessDescription: '' }] };
+    const calls = serve({ groups: ['g1'], journey: READY, meanwhile });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
+    await fireEvent.click(main.getByRole('button', { name: /Publiceren/ }));
+    const sheet = within(await screen.findByRole('dialog', { name: 'Weekly lead volume' }));
+    await fireEvent.click(sheet.getByRole('checkbox', { name: /Voor Data heb ik deze kaart gelezen/ }));
+    await fireEvent.click(sheet.getByRole('button', { name: /Publiceren en bevestigen/ }));
+    expect(await sheet.findByRole('alert')).toHaveProperty('textContent', 'Niet gepubliceerd: een stap die nodig is om te publiceren staat open. De lijst hierboven toont welke.');
+    const reads = calls.filter((call) => call.method === 'GET' && call.path === '/resources/r2');
+    expect(reads.length).toBeGreaterThan(1);
+    expect(sheet.getByText('Velden:').closest('p')?.textContent).toContain('Sleutelvelden zonder Business Description: week_start;');
+    expect((sheet.getByRole('checkbox') as HTMLInputElement).disabled).toBe(true);
+    expect(main.queryByText('Gepubliceerd', { selector: '.chip' })).toBeNull();
+  });
+
+  it('leads its Owner through the steps still open before it can be published, and Nothing to add records who said so (DEC-MR-16, DEC-CL-17)', async () => {
+    const calls = serve({ groups: ['g1'], journey: { ...READY, pitfalls: '', knownGaps: 0 } });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
+    // Maturity names the steps required to publish, the open ones with the way to them.
+    await fireEvent.click(main.getByRole('tab', { name: 'Maturiteit' }));
+    expect(main.getByText('Daarvoor zijn de stappen gedaan die nodig zijn om te publiceren: nu 4 van 6.')).toBeTruthy();
+    expect(main.getByText(/Of laat Claude je er stap voor stap door leiden/)).toBeTruthy();
+    // The publication shows what is open, leads to it, and holds the declaration back.
+    await fireEvent.click(main.getAllByRole('button', { name: /Publiceren/ })[0]!);
+    const sheet = within(await screen.findByRole('dialog', { name: 'Weekly lead volume' }));
+    expect(sheet.getByText(/^Gedaan:/).closest('p')?.textContent).toContain('Business Description; Sleutelvelden; Velden; Beoogd gebruik.');
+    expect(sheet.getByText('Valkuilen:').closest('p')?.textContent).toContain('geen geschreven, en niemand zei dat er geen zijn.');
+    expect(sheet.getByText('Known Gaps en betrouwbaar sinds:').closest('p')?.textContent).toContain('geen Known Gap geschreven, en niemand zei dat er geen zijn.');
+    expect(sheet.getByText(/om je te helpen Weekly lead volume te publiceren/)).toBeTruthy();
+    expect(sheet.queryByText('Wat je bevestigt · de kaart, voorgelezen')).toBeNull();
+    expect((sheet.getByRole('checkbox') as HTMLInputElement).disabled).toBe(true);
+    expect((sheet.getByRole('button', { name: /Publiceren en bevestigen/ }) as HTMLButtonElement).disabled).toBe(true);
+    const goTo = sheet.getAllByRole('button', { name: 'Ga erheen' });
+    expect(goTo).toHaveLength(2);
+    await fireEvent.click(goTo[0]!);
+    await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    // Its pitfalls: write them, or say there are none.
+    const nothing = await main.findByRole('button', { name: 'Niets toe te voegen' });
+    await fireEvent.click(nothing);
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/resources/r2/journey/pitfalls', body: { answer: 'nothing' } }));
+    expect(await main.findByText('Geen, volgens Max Verstraete, op 15 nov 2026.')).toBeTruthy();
+    expect(calls.some((call) => call.path === '/resources/r2/publication')).toBe(false);
   });
 
   it('warns everyone of a change since its last Confirmation, until its Owner Unit marks it seen (FR-MR-12, DEC-UX-64)', async () => {
@@ -3599,7 +3703,12 @@ describe('Query', () => {
     expect(panel.getByText(/Weekly lead volume · 1 keer/)).toBeTruthy();
     // It reads only its Resources; another set is a new query, and the Lenses on them come later (DEC-UX-73, DEC-UX-114).
     expect(main.getByText('Leest enkel')).toBeTruthy();
-    expect(main.getByRole('link', { name: /Weekly lead volume/ }).getAttribute('href')).toBe('/resources/r2');
+    // A click on a Resource opens its Summary over the query, as a double-click on its name does; its page is a step further (DEC-UX-259).
+    await fireEvent.click(main.getByRole('button', { name: /Weekly lead volume/ }));
+    const summary = within(await screen.findByRole('dialog', { name: 'Weekly lead volume' }));
+    expect(summary.getByText('Resource van deze query')).toBeTruthy();
+    expect(summary.getByRole('link', { name: /Open de Resource/ }).getAttribute('href')).toBe('/resources/r2');
+    expect(location.pathname).toBe('/query/q1');
     // Its author makes it a Lens (DEC-UX-25).
     expect(main.getByRole('link', { name: 'Maak er een Lens van' }).getAttribute('href')).toBe('/query/q1/lens');
   });
@@ -3833,6 +3942,11 @@ describe('Query', () => {
     await fireEvent.input(window.getByRole('searchbox', { name: 'Filter de kolommen' }), { target: { value: 'source' } });
     expect(columns()).toEqual(['lead_source']);
     expect(window.getByRole('button', { name: /Volledige naam kopiëren/ })).toBeTruthy();
+    // Its chip on top of the frame opens the same window (DEC-UX-259).
+    await fireEvent.click(window.getByRole('button', { name: 'Sluiten' }));
+    await vi.waitFor(() => expect(screen.queryByRole('dialog', { name: 'stg_oltp__leads' })).toBeNull());
+    await fireEvent.click(main.getByRole('button', { name: 'stg_oltp__leads' }));
+    expect(await screen.findByRole('dialog', { name: 'stg_oltp__leads' })).toBeTruthy();
   });
 
   it('checks what is typed once it pauses two seconds, a query that opens at once (DEC-UX-154)', async () => {
@@ -4612,7 +4726,7 @@ describe('Lenses', () => {
     const main = within(await screen.findByRole('main'));
     const update = await main.findByRole('button', { name: 'De Lens bijwerken' });
     expect(main.queryByRole('link', { name: 'Maak er een Lens van' })).toBeNull();
-    expect(main.queryByRole('button', { name: /Lenses op deze Resources/ })).toBeNull();
+    expect(main.queryByRole('button', { name: /^(\d+ )?Lens(es)?$/ })).toBeNull();
     expect(main.getByText(/overschrijft hem met deze query/)).toBeTruthy();
     await fireEvent.click(update);
     const sheet = within(await screen.findByRole('dialog'));
@@ -4666,7 +4780,9 @@ describe('Lenses', () => {
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    const button = await main.findByRole('button', { name: /Lenses op deze Resources · 1/ });
+    // Only how many, its full name on a hover (DEC-UX-260).
+    const button = await main.findByRole('button', { name: '1 Lens' });
+    expect(button.getAttribute('title')).toMatch(/^Lenses op deze Resources/);
     await vi.waitFor(() => expect((button as HTMLButtonElement).disabled).toBe(false));
     await fireEvent.click(button);
     const sheet = within(await screen.findByRole('dialog'));

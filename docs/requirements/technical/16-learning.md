@@ -103,6 +103,15 @@ The five steps are one block, `LearningSteps`, which the page of a card and the 
 
 Under the text of a Message Data Hub writes, the web app shows the card its type names in the Message Catalogue (`learningCard` with `fit: 'named'`), once that card is written: its number, title, Learning Level and minutes, and whether the User saw it. A click unfolds it in the Message: its rule, what the User can now do, "Open the whole card" and "I understand it". Unfolded, the card counts as seen, unless it already was.
 
+<a id="tr-lr-09"></a>
+### TR-LR-09 · A whole card in Claude, and the card of a step of the Owner Journey
+
+**Status:** Implemented · **Realises:** [FR-LR-26](../functional/16-learning.md#fr-lr-26), [FR-CL-30](../functional/17-claude.md#fr-cl-30), [DEC-UX-261](../../design/principles.md#dec-ux-261)
+
+mcp offers `show_learning_card` (`number`, `language` en or nl) to every User who may use Claude. It reads the card from `packages/learning` as `explain` does (`src/learning.ts`), in prod only a reviewed one, and refuses one that is not written or not shown there, so that Claude never makes one up. The MCP App draws it in its five steps (`renderCard` in `src/view-page.ts`): Why now, Core idea, See it, Check your understanding and You can now, a step without content left out, with "Next" and "Open in Data Hub". An answer shows its Why; nothing is counted, and "I understand it" is not offered while [OP-LR-16](../functional/16-learning.md#op-lr-16) is open. The chart of See it is drawn on the page of the card in Data Hub; the MCP App gives its Look at and You see, as mcp does not call the Chart Server.
+
+`guide_owner_journey` opens the window of the step that is next (`renderJourney`): the progress over the twelve steps, the step and its mark, what the Resource holds for it now (`heldOf` in `src/journey.ts`: the text on the card from the Owner beside the description from dbt, the Key Fields, how many fields are described, the Known Gaps and reliable since, what a Data Admin recorded, or who said there is nothing to add), each of its Learning Cards as a strip with its core idea and gain, and the tool that writes it. "Read the card" asks Claude in the User's name, with `sendMessage` of the MCP Apps SDK, to show the whole card: it opens as its own MCP App, only when the User asks.
+
 ## Open points
 
 None yet.

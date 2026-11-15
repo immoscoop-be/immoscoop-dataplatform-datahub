@@ -232,6 +232,8 @@
     change: (known: KnownGap, text: string, scope: GapScope | null) => gap(() => catalogue.changeGap(resource.id, known.id, text, scope)),
     remove: (known: KnownGap) => gap(() => catalogue.removeGap(resource.id, known.id)),
   };
+  /** Nothing to add to its pitfalls or Known Gaps, kept with who and when (DEC-MR-16); the Resource is read again. */
+  const nothing = (step: 'pitfalls' | 'gaps') => gap(() => catalogue.recordStep(resource.id, step, 'nothing'));
 
   async function saveFields(fields: { name: string; businessDescription: string }[]): Promise<boolean> {
     try {
@@ -244,6 +246,22 @@
   }
 
   /** Publishes it, marks its changes seen, deprecates it or takes that away: each a step that is logged. */
+  /**
+   * Publishes it with the declaration ticked. The catalogue decides whether it is ready (DEC-MR-15): when it refuses,
+   * the Resource is read again, so that the sheet shows what is open now, also what changed since it opened.
+   */
+  async function publishIt(declaration: string): Promise<boolean> {
+    if (await act(() => catalogue.publish(resource.id, declaration))) {
+      return true;
+    }
+    try {
+      await changed(await catalogue.resource(resource.id));
+    } catch (error) {
+      console.error(`${resource.displayName} could not be read again`, error);
+    }
+    return false;
+  }
+
   async function act(step: () => Promise<ResourceDetail>): Promise<boolean> {
     failed = false;
     try {
@@ -416,6 +434,7 @@
       {canDeprecate}
       onsave={saveCard}
       {gaps}
+      {nothing}
       oncolumns={() => (tab = 'columns')}
       onpublish={!resource.published && mayPublish && collection ? () => (sheet = 'publish') : undefined}
       {others}
@@ -457,10 +476,18 @@
   <PublishSheet
     {resource}
     {collection}
-    onpublish={() => act(() => catalogue.publish(resource.id))}
+    onpublish={publishIt}
     onfields={() => {
       sheet = undefined;
       tab = 'columns';
+    }}
+    onpart={(open) => {
+      sheet = undefined;
+      if (open === 'columns') tab = 'columns';
+      else {
+        tab = 'overview';
+        part = open;
+      }
     }}
     onclose={() => (sheet = undefined)}
   />

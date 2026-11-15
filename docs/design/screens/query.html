@@ -3,11 +3,11 @@
   Screen: Query, a main section of its own (DEC-UX-17)
   SQL over every Resource the User may see, later Lenses too. Panel = the queries that ran: yours; for the Data Team also
   everyone's under "All" (DEC-UX-20); a click opens one. Resources come in through the suggestions, or from "Query" on a Resource.
-  A query is bounded by its Resources (DEC-UX-73, DEC-UX-74): on top of its frame "Reads only" and its Resources; the
-  editor suggests only their columns, and a table in the SQL outside them is an error, with a new query to start with
+  A query is bounded by its Resources (DEC-UX-73, DEC-UX-74): on top of its frame "Reads only" and its Resources, a click on one opening its Summary as a double-click on its name
+  does (DEC-UX-259); the editor suggests only their columns, and a table in the SQL outside them is an error, with a new query to start with
   it. Adding or removing a Resource starts a new query in a sheet: the new set, the name suggested from it and the date,
   the question, the lenses on the new set; the SQL and the Parameters come along, the old query stays, and the new one
-  says where it started from. "Lenses on these resources" opens the overview of a new query while writing. Several
+  says where it started from. "3 Lenses", how many Lenses use them (DEC-UX-260), opens the overview of a new query while writing. Several
   queries may share a set: a query is its name, its question and its Resources. The panel has one item per query, with
   how many runs, unfolding to its last runs; the result card has a tab History: every run is a variation, a row with when it ran, Preview and Apply (DEC-UX-88), of its
   values, its SQL or both. The switch "SQL" shows a table outside the Resources.
@@ -241,7 +241,7 @@
   <!-- On one line: the chips scroll sideways, these stay in view as small round icons, their name on a hover (DEC-UX-249) -->
   <button class="scope-add round" type="button" data-add-res aria-label="Add a Resource" title="Add a Resource"><i class="ph ph-plus"></i></button>
   <button class="scope-add round" type="button" data-find-table data-for="datateam" aria-label="Find a table" title="Find a table: the tables Data Hub knows from the dbt projects it follows, for a power user"><i class="ph ph-magnifying-glass"></i></button>
-  <button class="btn-quiet outline" type="button" data-pane-group="lens" data-pane="free unpublished" hidden data-sheet-open="lenses-sheet" id="lenses-btn" title="See which Lenses already use these Resources"><i class="ph ph-aperture"></i><span>Lenses on these Resources</span><span class="count">3</span></button>
+  <button class="btn-quiet outline" type="button" data-pane-group="lens" data-pane="free unpublished" hidden data-sheet-open="lenses-sheet" id="lenses-btn" title="Lenses on these Resources: see which Lenses already use them (DEC-UX-260)"><i class="ph ph-aperture"></i><span id="lenses-n">3 Lenses</span></button>
  </div>
  <div class="q-body">
  <div class="q-box sql-fold open" id="sql-box">

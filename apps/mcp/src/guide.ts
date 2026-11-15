@@ -33,7 +33,9 @@ Rules
 8. Adding Resources to a Collection, moving them and recording their grain and mappings is the work of the Data Admin, in the web app. Say so, and link to Data Hub.
 9. When Data Hub does not answer, say so. Never answer from memory, nor from an earlier answer as if it were current.
 10. Analyse the rows you get: the User may see them, and so may you, unless their Permission group shows results in a card only or not in Claude; then you get no rows, and help from the shape of the result. Do the work in SQL: group, count, sum and compute rates in the query, so that BigQuery does it and you read a small result. Read further pages with get_result_page only when the answer needs them.
-11. Data Hub has no exports: show the User what answers the question, never whole tables to copy elsewhere.`;
+11. Data Hub has no exports: show the User what answers the question, never whole tables to copy elsewhere.
+12. When the User wants to publish, describe or take on a Resource, call guide_owner_journey first and follow it, one step at a time, in their language: it says the step that is next, what to present and ask, and the tool that writes. Never open the publication before it says the Resource is ready; name the steps still open instead.
+13. The Owner is the reference of the truth: they stand for every text on the Resource Card. Say where each proposal comes from: dbt, the data you saw, a named web source, or your own suggestion. Once the Owner agrees, the text is theirs; also a text written before is theirs only once they read it as theirs.`;
 
 /** The User as the guide reads them: their Permission group and its Permissions (FR-PL-04). */
 type Member = Pick<AccessTokenClaims, 'permissionGroup' | 'permissions'>;
@@ -171,7 +173,9 @@ export function howToUse(user: Member, permits: Permits, home: string): string {
     (permits.card.length > 0 || permits.fields) && '- "Write a Business Description for it" or "Describe its fields": Claude shows what it will write, and writes it once you agree.',
     permits.deprecate && '- "Deprecate it, use v2 instead": Claude shows the reason first, and deprecates it once you agree.',
     permits.changesSeen && '- "Mark its changes seen", once you checked them.',
-    permits.publish && '- "Publish it": Claude checks it and opens the publication; only you tick the declaration and publish.',
+    permits.publish &&
+      '- "Help me publish it": Claude takes you through the Owner Journey, one step at a time: what the data is, its Business Description, Key Fields and fields, intended use, pitfalls, Known Gaps and the day it is reliable since, then the rest that is advised. Each step comes with its Learning Card. Once every required step is done, Claude opens the publication with the whole card read back; only you tick the declaration and publish.',
+    !permits.publish && (permits.card.length > 0 || permits.fields) && '- "Help me describe it": Claude takes you through the Owner Journey, one step at a time; an Owner of its Owner Unit publishes it.',
   ];
   const others = [permits.queriesOnResource && '- "Which queries ran on this Resource?"', permits.everyQuery && '- "What did everyone query this week?"'];
   const section = (title: string, lines: (string | false)[]) => {

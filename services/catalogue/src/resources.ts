@@ -1,4 +1,5 @@
 import { fieldsOf, type GapScope, hasScope } from '@datahub/contracts/gaps';
+import { type Journey, type JourneyAnswer, journeyOf, type JourneyStepId, journeyStep } from '@datahub/contracts/journey';
 import { type Kysely, type Selectable, sql, type Transaction } from 'kysely';
 import type { Viewer } from './collections.js';
 import type { CatalogueDatabase, MappingKind, MappingOrigin, ModelType, Origins, PartitionFilter, PartitionUnit, SchemaChange } from './database.js';
@@ -169,10 +170,15 @@ export interface ResourceDetail extends Resource {
   changes: { field: string; change: SchemaChange; old: string | null; new: string | null; at: Date }[];
   /** The descriptions from dbt that changed in the last 30 days, with the text before: no field for the table (FR-RC-17). */
   descriptionChanges: { field: string | null; before: string; at: Date }[];
+  /** The Owner Journey: its steps, the next one, and whether it is ready to publish (DEC-MR-15, OP-CL-12). */
+  journey: Journey;
 }
 
-/** What publishing a Resource came to (FR-SR-49). */
-export type PublishOutcome = 'published' | 'not_found' | 'no_collection' | 'not_described' | 'already_published';
+/** What publishing a Resource came to (FR-SR-49): not ready while a step required to publish is open (DEC-MR-15). */
+export type PublishOutcome = 'published' | 'not_found' | 'no_collection' | 'not_described' | 'already_published' | { outcome: 'not_ready'; open: JourneyStepId[] };
+
+/** What recording an answer in a step of the Owner Journey came to (DEC-MR-16). */
+export type JourneyRecordOutcome = { outcome: 'recorded'; journey: Journey } | { outcome: 'not_found' } | { outcome: 'invalid'; message: string };
 
 /** What deprecating a Resource, or taking it away, came to (FR-SR-50). */
 export type DeprecateOutcome = 'done' | 'not_found' | 'not_published' | 'not_deprecated' | 'invalid';
@@ -303,8 +309,15 @@ export interface Resources {
    * and when and in which run it was withdrawn, for the tool Withdrawn of Admin (DEC-UX-213).
    */
   withdrawnList(): Promise<WithdrawnResource[]>;
-  /** Publishes a Resource, from Described, and keeps that first Confirmation with its Fingerprint (FR-SR-17, FR-MR-08). */
-  publish(id: string, viewer: Viewer): Promise<PublishOutcome>;
+  /**
+   * Publishes a Resource once it is ready (DEC-MR-15), and keeps that first Confirmation with its Fingerprint and the
+   * declaration the Owner ticked (FR-SR-17, FR-MR-08, DEC-MR-17).
+   */
+  publish(id: string, viewer: Viewer, declaration: string | null): Promise<PublishOutcome>;
+  /** The Owner Journey of a Resource: its steps, the next one, and whether it is ready to publish (OP-CL-12). */
+  journey(id: string): Promise<Journey | undefined>;
+  /** Keeps what the Owner Unit said in a step: gone through it, or nothing to add, with who and when (DEC-MR-16). */
+  recordStep(id: string, step: JourneyStepId, answer: JourneyAnswer, viewer: Viewer): Promise<JourneyRecordOutcome>;
   /** Marks the changes since the last Confirmation seen; how many there were (FR-MR-12). */
   markSeen(id: string, viewer: Viewer): Promise<number>;
   /** Marks a published Resource deprecated, with why and what to use instead (FR-SR-50). */
@@ -361,6 +374,55 @@ async function gapsOf(from: Database, resourceId: string): Promise<KnownGap[]> {
 
 function gapOf(row: { id: string; text: string; scope: GapScope | null; addedByName: string | null; addedAt: Date | null }): KnownGap {
   return { id: String(row.id), text: row.text, scope: row.scope, addedBy: row.addedByName, addedAt: row.addedAt };
+}
+
+/** The Questions and Signals that open a conversation (FR-CV-01): those not closed are open. */
+const ASKING = ['MSG-CNV-01', 'MSG-CNV-03'];
+
+/**
+ * The Owner Journey of a Resource, from its row (OP-CL-12): what its card holds, what the Data Admin recorded, the open
+ * Questions and Signals on it, and what the Owner Unit said where the card cannot tell it (DEC-MR-16).
+ */
+async function journeyFrom(from: Database, row: Row): Promise<Journey> {
+  const [fields, gaps, mappings, open, records, day] = await Promise.all([
+    from
+      .selectFrom('resourceFields')
+      .leftJoin('fieldDescriptions', (join) => join.onRef('fieldDescriptions.resourceId', '=', 'resourceFields.resourceId').onRef('fieldDescriptions.field', '=', 'resourceFields.name'))
+      .select(['resourceFields.name', 'fieldDescriptions.text'])
+      .where('resourceFields.resourceId', '=', row.id)
+      .execute(),
+    from.selectFrom('knownGaps').select((eb) => eb.fn.countAll<string>().as('count')).where('resourceId', '=', row.id).executeTakeFirstOrThrow(),
+    from.selectFrom('resourceMappings').select((eb) => eb.fn.countAll<string>().as('count')).where('resourceId', '=', row.id).executeTakeFirstOrThrow(),
+    from
+      .selectFrom('messages')
+      .select((eb) => eb.fn.countAll<string>().as('count'))
+      .where('subjectKind', '=', 'resource')
+      .where('subjectId', '=', row.id)
+      .where('parentId', 'is', null)
+      .where('type', 'in', ASKING)
+      .where((eb) => eb.or([eb('state', 'is', null), eb('state', '!=', 'closed')]))
+      .executeTakeFirstOrThrow(),
+    from.selectFrom('journeyRecords').select(['step', 'answer', 'userName', 'at']).where('resourceId', '=', row.id).execute(),
+    from.selectFrom('resources').select(sql<string | null>`reliable_since::text`.as('day')).where('id', '=', row.id).executeTakeFirstOrThrow(),
+  ]);
+  return journeyOf({
+    level: row.level,
+    inCollection: row.collectionId !== null,
+    published: row.publishedAt !== null,
+    businessDescription: row.businessDescription,
+    keyFields: row.keyFields,
+    fields: fields.map((field) => ({ name: field.name, businessDescription: field.text ?? '' })),
+    intendedUse: row.intendedUse,
+    pitfalls: row.pitfalls,
+    knownGaps: Number(gaps.count),
+    reliableSince: day.day,
+    parameters: row.parameters,
+    modelType: row.modelType,
+    grain: row.grain,
+    mappings: Number(mappings.count),
+    openMessages: Number(open.count),
+    records: records.map((record) => ({ step: record.step, answer: record.answer, by: record.userName, at: record.at.toISOString() })),
+  });
 }
 
 /**
@@ -893,7 +955,39 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
           : null,
         changes,
         descriptionChanges,
+        journey: await journeyFrom(db, row),
       };
+    },
+
+    async journey(id) {
+      if (!UUID.test(id)) {
+        return undefined;
+      }
+      const row = await db.selectFrom('resources').selectAll().where('id', '=', id).executeTakeFirst();
+      return row ? journeyFrom(db, row) : undefined;
+    },
+
+    async recordStep(id, step, answer, viewer) {
+      if (!UUID.test(id)) {
+        return { outcome: 'not_found' };
+      }
+      if (!journeyStep(step).answers.includes(answer)) {
+        return { outcome: 'invalid', message: `The step ${step} takes no answer ${answer}.` };
+      }
+      return db.transaction().execute(async (trx): Promise<JourneyRecordOutcome> => {
+        const row = await trx.selectFrom('resources').selectAll().where('id', '=', id).forUpdate().executeTakeFirst();
+        if (!row) {
+          return { outcome: 'not_found' };
+        }
+        // The newest of each answer, with who and when; the Log keeps every one (DEC-MR-16).
+        await trx
+          .insertInto('journeyRecords')
+          .values({ resourceId: id, step, answer, userId: viewer.id, userName: viewer.name })
+          .onConflict((conflict) => conflict.columns(['resourceId', 'step', 'answer']).doUpdateSet({ userId: viewer.id, userName: viewer.name, at: new Date() }))
+          .execute();
+        await write(trx, id, answer === 'nothing' ? 'JRN-002' : 'JRN-001', { step, actor: viewer.name }, viewer.id);
+        return { outcome: 'recorded', journey: await journeyFrom(trx, row) };
+      });
     },
 
     async add(items, collection, viewer) {
@@ -1267,7 +1361,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         .execute();
     },
 
-    async publish(id, viewer) {
+    async publish(id, viewer, declaration) {
       if (!UUID.test(id)) {
         return 'not_found';
       }
@@ -1285,13 +1379,19 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         if (row.level < DESCRIBED) {
           return 'not_described';
         }
-        // The first Publication is the first Confirmation, kept with the Fingerprint of this moment (FR-MR-08).
+        // Only once every step required to publish is done, in Data Hub as in Claude (DEC-MR-15).
+        const journey = await journeyFrom(trx, row);
+        if (!journey.ready) {
+          return { outcome: 'not_ready', open: journey.open };
+        }
+        // The first Publication is the first Confirmation, kept with the Fingerprint of this moment (FR-MR-08) and the
+        // declaration the Owner ticked, which accepts every text on the card (DEC-MR-17).
         const fields = await trx.selectFrom('resourceFields').select(['name', 'position', 'dataType', 'description']).where('resourceId', '=', id).orderBy(sql`position nulls last`).execute();
         const code = (await trx.selectFrom('resourceFingerprints').select('code').where('resourceId', '=', id).orderBy('id', 'desc').limit(1).executeTakeFirst())?.code ?? null;
         const print = fingerprint(row.description, fields, code);
         await trx
           .insertInto('resourceConfirmations')
-          .values({ resourceId: id, ownerId: viewer.id, ownerName: viewer.name, ...print, fields: JSON.stringify(fields.map(({ name, dataType }) => ({ name, dataType }))) })
+          .values({ resourceId: id, ownerId: viewer.id, ownerName: viewer.name, ...print, fields: JSON.stringify(fields.map(({ name, dataType }) => ({ name, dataType }))), declaration })
           .execute();
         await trx.updateTable('resources').set({ publishedAt: new Date(), publishedBy: viewer.name, level: CONFIRMED, updatedAt: new Date() }).where('id', '=', id).execute();
         await write(trx, id, 'PUB-040', { owner: viewer.name, level: String(CONFIRMED) }, viewer.id);

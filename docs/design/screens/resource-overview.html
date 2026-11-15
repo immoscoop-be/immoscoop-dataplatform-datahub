@@ -41,7 +41,7 @@
   The switches at the bottom: ?ov=summary (the default), ?ov=description, ?ov=behaviour, ?ov=gaps, ?ov=querying,
   ?ov=entities, ?ov=maturity, ?ov=changes, ?ov=danger; ?lvl=two shows Maturity at 2 · Described; ?dep=on shows a deprecated Resource, its deprecation first
   in the Summary; ?descedit=on edits the Business Description, ?descview=preview previews it.
-  Requirements: FR-RC-19, FR-RC-20, FR-RC-21, FR-RC-22, FR-RC-23, FR-RC-24, FR-RC-25, FR-SR-50, FR-MR-16, FR-CM-28, FR-CO-43
+  Requirements: FR-RC-19, FR-RC-20, FR-RC-21, FR-RC-22, FR-RC-23, FR-RC-24, FR-RC-25, FR-SR-50, FR-MR-16, FR-CM-28, FR-CO-43, FR-MR-17, FR-MR-18
   Decisions: DEC-RC-16, DEC-RC-17, DEC-RC-18, DEC-RC-19, DEC-RC-20, DEC-UX-101, DEC-UX-168, DEC-UX-169, DEC-UX-170, DEC-UX-171, DEC-UX-175, DEC-UX-176, DEC-UX-177, DEC-UX-178, DEC-UX-216.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -257,7 +257,12 @@ The lead source is set by the form the visitor used: website, app, partner or ma
      </div>
      <div class="ov-grid">
       <div class="sub-tile"><div class="said"><i class="ph-fill ph-check-circle"></i>Intended use</div><div class="md"><p>Weekly trends, and comparing <b>lead sources</b>:</p><ul><li>the review with KBC on Monday</li><li>the share of partner leads</li></ul></div></div>
-      <div class="sub-tile"><div class="said"><i class="ph-fill ph-warning"></i>Pitfalls</div><div class="md"><p>The <b>current week</b> is incomplete until Monday morning.</p><p>Don’t sum across sources for <i>unique</i> people.</p></div></div>
+      <div class="sub-tile"><div class="said"><i class="ph-fill ph-warning"></i>Pitfalls</div>
+       <div class="md" data-pane-group="cardfill" data-pane="written"><p>The <b>current week</b> is incomplete until Monday morning.</p><p>Don’t sum across sources for <i>unique</i> people.</p></div>
+       <!-- Not written, and nobody said there are none: required to publish (DEC-MR-16) -->
+       <div data-pane-group="cardfill" data-pane="empty" hidden><p class="prose none">Nothing written yet.</p><p class="meta nothing-why" data-for="owner datateam">Required to publish: write them, or say there are none.</p><button class="btn-quiet outline sm" type="button" data-for="owner datateam" data-go="cardfill:nothing"><i class="ph ph-check" aria-hidden="true"></i>Nothing to add</button></div>
+       <div data-pane-group="cardfill" data-pane="nothing" hidden><p class="prose">None, according to An Claes, on 15 Nov 2026.</p></div>
+      </div>
       <div class="sub-tile"><div class="said"><i class="ph-fill ph-calendar-check"></i>Reliable since</div><p class="prose"><b style="font-weight:500;color:var(--text-primary)">1 Jan 2025</b>. Earlier weeks are incomplete.</p></div>
      </div>
     </section>
@@ -267,7 +272,13 @@ The lead source is set by the form the visitor used: website, app, partner or ma
      <div class="ov-head">
       <div style="flex:1;min-width:0"><h2 class="ov-title">Known Gaps</h2><p class="ov-lead">What the data never holds, or holds only in part: one gap per line. Read them before you trust a result.</p></div>
      </div>
-     <ul class="gap-list">
+     <div class="gaps-none" data-pane-group="cardfill" data-pane="empty nothing" hidden>
+      <p class="prose" data-pane-group="cardfill" data-pane="empty">No Known Gap written yet.</p>
+      <p class="meta nothing-why" data-pane-group="cardfill" data-pane="empty" data-for="owner datateam">Required to publish: add the gaps you know of, or say there are none.</p>
+      <button class="btn-quiet outline sm" type="button" data-pane-group="cardfill" data-pane="empty" data-for="owner datateam" data-go="cardfill:nothing"><i class="ph ph-check" aria-hidden="true"></i>Nothing to add</button>
+      <p class="prose" data-pane-group="cardfill" data-pane="nothing" hidden>None known, according to An Claes, on 15 Nov 2026.</p>
+     </div>
+     <ul class="gap-list" data-pane-group="cardfill" data-pane="written">
       <li class="gap"><i class="ph-fill ph-circle-dashed" aria-hidden="true"></i><div class="gap-body"><p>No leads from the source <span class="mono">partner</span> before March 2025: the partner feed started then.</p><div class="gap-scope"><span class="scope"><i class="ph ph-calendar-blank" aria-hidden="true"></i><span class="scope-k">Period</span>until 28 Feb 2025</span><span class="scope"><i class="ph ph-rows" aria-hidden="true"></i><span class="scope-k">Rows</span><span class="mono">lead_source</span> is <span class="mono">partner</span></span></div><span class="meta">Added by Dirk Vos, Data Team · 14 Oct 2026</span></div><span class="gap-actions" data-for="owner datateam"><button class="icon-btn" type="button" aria-label="Change this gap" title="Change"><i class="ph ph-pencil-simple-line"></i></button><button class="icon-btn" type="button" aria-label="Remove this gap" title="Remove"><i class="ph ph-trash"></i></button></span></li>
       <li class="gap"><i class="ph-fill ph-circle-dashed" aria-hidden="true"></i><div class="gap-body"><p><span class="mono">visitorId</span> is missing for credit leads that come from MySQL rather than from website events, about 99% of them.</p><div class="gap-scope"><span class="scope"><i class="ph ph-columns" aria-hidden="true"></i><span class="scope-k">Fields</span><span class="mono">visitorId</span></span><span class="scope"><i class="ph ph-rows" aria-hidden="true"></i><span class="scope-k">Rows</span><span class="mono">lead_origin</span> is <span class="mono">mysql</span></span></div><span class="meta">Added by An Claes · 2 Sep 2026</span></div><span class="gap-actions" data-for="owner datateam"><button class="icon-btn" type="button" aria-label="Change this gap" title="Change"><i class="ph ph-pencil-simple-line"></i></button><button class="icon-btn" type="button" aria-label="Remove this gap" title="Remove"><i class="ph ph-trash"></i></button></span></li>
       <li class="gap"><i class="ph-fill ph-circle-dashed" aria-hidden="true"></i><div class="gap-body"><p>App leads of iOS miss their channel for one week, after a broken release.</p><div class="gap-scope"><span class="scope"><i class="ph ph-calendar-blank" aria-hidden="true"></i><span class="scope-k">Period</span>2 Sep 2025 – 8 Sep 2025</span><span class="scope"><i class="ph ph-columns" aria-hidden="true"></i><span class="scope-k">Fields</span><span class="mono">lead_channel</span></span><span class="scope"><i class="ph ph-rows" aria-hidden="true"></i><span class="scope-k">Rows</span><span class="mono">lead_source</span> is <span class="mono">app</span></span></div><span class="meta">Added by Maxime Passenier · 20 Oct 2026</span></div><span class="gap-actions" data-for="owner datateam"><button class="icon-btn" type="button" aria-label="Change this gap" title="Change"><i class="ph ph-pencil-simple-line"></i></button><button class="icon-btn" type="button" aria-label="Remove this gap" title="Remove"><i class="ph ph-trash"></i></button></span></li>
@@ -369,7 +380,7 @@ The lead source is set by the form the visitor used: website, app, partner or ma
       <ol class="lvl-list">
        <li class="lvl done"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><div><div class="lvl-name"><b>1 · Available</b><span class="lvl-tag">Passed</span></div><p>Registered on 2 Sep 2026, through the exposure <span class="mono">datahub_weeklyLeads</span> of dbt-prod.</p></div></li>
        <li class="lvl now"><i class="ph-fill ph-seal-check" aria-hidden="true"></i><div><div class="lvl-name"><b>2 · Described</b><span class="lvl-tag">Its Level</span></div><p>The table and 9 of its 16 fields have a description in dbt.</p></div></li>
-       <li class="lvl next"><i class="ph ph-circle-dashed" aria-hidden="true"></i><div><div class="lvl-name"><b>3 · Confirmed</b><span class="lvl-tag">Next</span></div><p>Takes its Owner publishing it: publishing is its first Confirmation, and everyone who sees its Collection sees it then.</p><a class="btn-quiet outline sm lvl-act" data-for="owner" href="resource-publish.html"><i class="ph-fill ph-globe-simple"></i>Publish</a></div></li>
+       <li class="lvl next"><i class="ph ph-circle-dashed" aria-hidden="true"></i><div><div class="lvl-name"><b>3 · Confirmed</b><span class="lvl-tag">Next</span></div><p>Takes its Owner publishing it: publishing is its first Confirmation, and everyone who sees its Collection sees it then. Before that, the steps required to publish are done: 4 of 6 now.</p><ul class="lvl-steps"><li class="done"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Business Description</li><li class="done"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>2 Key Fields, each described</li><li class="done"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Intended use</li><li class="open"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i>Pitfalls<a class="text-link" data-go="ov:behaviour"><span>Write them, or say there are none</span></a></li><li class="open"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i>Known Gaps and reliable since<a class="text-link" data-go="ov:gaps"><span>Go to Known Gaps</span></a></li><li class="done"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Read back, in the publication</li></ul><p class="meta">Or let Claude take you through them, one step at a time: ask Claude, with the Data Hub connector, to help you publish it.</p><a class="btn-quiet outline sm lvl-act" data-for="owner" href="resource-publish.html?ready=steps"><i class="ph-fill ph-globe-simple"></i>Publish</a></div></li>
        <li class="lvl later"><i class="ph ph-circle-dashed" aria-hidden="true"></i><div><div class="lvl-name"><b>4 · Explored</b><span class="lvl-tag">Later</span></div><p>Takes an EDA document linked to it. Data Hub links none yet.</p></div></li>
        <li class="lvl later"><i class="ph ph-circle-dashed" aria-hidden="true"></i><div><div class="lvl-name"><b>5 · Monitored</b><span class="lvl-tag">Later</span></div><p>Takes at least one active check on it. Checks come in a later version, with the monitors.</p></div></li>
       </ol>
@@ -669,6 +680,11 @@ The lead source is set by the form the visitor used: website, app, partner or ma
  <button class="seg" data-target="maturity" data-go="ov:maturity" role="tab" aria-selected="false">Maturity</button>
  <button class="seg" data-target="monitoring" data-go="ov:monitoring" role="tab" aria-selected="false">Monitoring</button>
  <button class="seg" data-target="danger" data-go="ov:danger" role="tab" aria-selected="false">Danger zone</button>
+</div>
+<div class="proto-switch" data-group="cardfill" role="tablist" aria-label="Prototype: pitfalls and Known Gaps" style="bottom:312px">Pitfalls, gaps
+ <button class="seg on" data-target="written" role="tab" aria-selected="true">Written</button>
+ <button class="seg" data-target="empty" role="tab" aria-selected="false">None yet</button>
+ <button class="seg" data-target="nothing" role="tab" aria-selected="false">Nothing to add</button>
 </div>
 <div class="proto-switch" data-group="gapform" role="tablist" aria-label="Prototype: the form of a new gap" style="bottom:216px">New gap
  <button class="seg on" data-target="closed" role="tab" aria-selected="true">Closed</button>

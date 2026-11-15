@@ -6,6 +6,8 @@ import { pages, Refused } from './datahub.js';
 import { collectionIcon } from './icons.js';
 import { CARD_RULE, cardAnswer, notInClaude, runShape, shapeOf, shapeText } from './results.js';
 import { type SummaryFacts, summaryParts, summaryText } from './summary.js';
+import type { Journey } from '@datahub/contracts/journey';
+import { checklist, type JourneyResource, journeyTools } from './journey.js';
 
 /** A Resource as a Collection lists it. */
 interface Item {
@@ -61,7 +63,8 @@ const values = z
  * The tools around Resources (see docs/requirements/functional/17-claude.md, Resources through the MCP): those that
  * write, Preview or publish only when the Permissions of the User allow it (TR-PL-09).
  */
-export function resourceTools({ server, hub, user, permits }: Context): void {
+export function resourceTools(context: Context): void {
+  const { server, hub, user, permits } = context;
   // The ranges of one run of this User, from their Permission group (runs.ranges, DEC-SR-29).
   const free = bytes(rangesOf(user.permissions).approve);
   const large = bytes(rangesOf(user.permissions).request);
@@ -171,6 +174,7 @@ export function resourceTools({ server, hub, user, permits }: Context): void {
       mayChange: collection?.canManage ?? false,
       mayPublish: permits.publish && collection !== null && user.groups.includes(collection.ownerUnit.id),
       page: hub.page(pages.resource(resource.id)),
+      journey: resource.journey as Journey,
     };
   }
 
@@ -455,7 +459,7 @@ export function resourceTools({ server, hub, user, permits }: Context): void {
       {
         title: 'Open the publication of a Resource',
         description:
-          'Opens the publication of a Resource for the User, in the conversation: who will see it, what Data Hub checked, and the declaration. Only the User publishes, by ticking the declaration there: you cannot. Use it only for a member of its Owner Unit (mayPublish in get_resource); for anyone else, say who publishes it.',
+          'Opens the publication of a Resource for the User, in the conversation: who will see it, what Data Hub checked, the whole card read back, and the declaration. Only the User publishes, by ticking the declaration there: you cannot. Call guide_owner_journey first, and this only once it says the Resource is ready; only for a member of its Owner Unit (mayPublish). For anyone else, say who publishes it.',
         inputSchema: { id },
         annotations: READ,
         _meta: SHOWS,
@@ -463,15 +467,19 @@ export function resourceTools({ server, hub, user, permits }: Context): void {
       ({ id: resourceId }) =>
         attempt(async () => {
           const resource = await readResource(resourceId);
-          const ready = resource.level >= 2;
+          // The one rule of Data Hub: Described, and every step required to publish done (DEC-MR-15).
+          const checks = checklist(resource.journey);
+          const ready = resource.level >= 2 && checks.ready;
           const note = resource.published
             ? `${resource.displayName} is published already; a Publication cannot be undone.`
             : !resource.mayPublish
               ? `Only a member of the Owner Unit of ${resource.collection?.name ?? 'its Collection'}${resource.collection ? `, ${resource.collection.owner},` : ''} publishes it. Say so to the User, and offer a Message on the Resource.`
-              : !ready
+              : resource.level < 2
                 ? `It cannot be published yet: it is at ${resource.levelName}, and is published from 2 · Described, once dbt describes the table and at least one field.`
-                : `The publication is shown to the User. Only they can publish it, by ticking the declaration in the window; you cannot. If they see no window, they publish it on its page: ${resource.page}`;
-          return answer({ view: 'publish', resource, ready }, note);
+                : !ready
+                  ? `It is not ready to publish: still open, ${checks.open.map((step) => `${step.name} (${step.what})`).join('; ')}. Do not ask the User to publish: take them through these steps with guide_owner_journey first (DEC-CL-17).`
+                  : `The publication is shown to the User, with the whole card read back. Only they can publish it, by ticking the declaration in the window; you cannot. If they see no window, they publish it on its page: ${resource.page}`;
+          return answer({ view: 'publish', resource, ready, checks }, note);
         }),
     );
 
@@ -480,18 +488,21 @@ export function resourceTools({ server, hub, user, permits }: Context): void {
       {
         title: 'Publish and confirm',
         description: 'The button of the User in the publication: publishes the Resource and confirms it. Only the MCP App calls this.',
-        inputSchema: { id },
+        inputSchema: { id, declaration: z.string().max(500).optional().describe('The declaration the User ticked, as the window showed it.') },
         annotations: SHARE,
         _meta: APP_ONLY,
       },
-      ({ id: resourceId }) =>
+      ({ id: resourceId, declaration }) =>
         attempt(async () => {
-          await hub.send('catalogue', 'POST', `/resources/${enc(resourceId)}/publication`);
+          await hub.send('catalogue', 'POST', `/resources/${enc(resourceId)}/publication`, declaration ? { declaration } : {});
           const resource = await readResource(resourceId);
-          return answer({ view: 'publish', resource, ready: true }, `Published by the User: ${resource.displayName} is now at ${resource.levelName}.`);
+          return answer({ view: 'publish', resource, ready: true }, `Published by the User: ${resource.displayName} is now at ${resource.levelName}. Call guide_owner_journey for what comes after.`);
         }),
     );
   }
+
+  // The Owner Journey (OP-CL-12, DEC-CL-17): it reads the Resource as the other tools do.
+  journeyTools(context, (resourceId) => readResource(resourceId) as Promise<JourneyResource>, context.environment);
 
   if (permits.preview) previewTools();
 

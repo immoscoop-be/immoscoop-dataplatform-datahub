@@ -39,7 +39,8 @@ First sketch; the exact contracts follow in the technical requirements of the do
 | `POST /resources/{id}/gaps`, `PATCH` and `DELETE /resources/{id}/gaps/{gapId}` | Add, change or remove one Known Gap, with who added it and where it holds (Owner and Data Team, [TR-SR-25](../../requirements/technical/04-stacks-and-resources.md#tr-sr-25)) |
 | `PUT /resources/{id}/details` | Edit relations: the grain, storage and mappings again (Data Team) |
 | `GET /resources/{id}/related`, `GET /resources/{id}/lineage` | What it relates to through its identities, and the lineage around it, from registry ([TR-SR-11](../../requirements/technical/04-stacks-and-resources.md#tr-sr-11)) |
-| `POST /resources/{id}/publication` | Publish, the first Confirmation (Owner, [TR-SR-12](../../requirements/technical/04-stacks-and-resources.md#tr-sr-12)) |
+| `POST /resources/{id}/publication` | Publish, the first Confirmation, once every step required to publish is done, with the declaration ticked (Owner, [TR-SR-12](../../requirements/technical/04-stacks-and-resources.md#tr-sr-12), [TR-SR-32](../../requirements/technical/04-stacks-and-resources.md#tr-sr-32)) |
+| `GET /resources/{id}/journey`, `POST /resources/{id}/journey/{step}` | The Owner Journey of a Resource, and a step gone through or with nothing to add, kept with who and when (who may describe it, [TR-SR-32](../../requirements/technical/04-stacks-and-resources.md#tr-sr-32)) |
 | `POST /resources/{id}/changes/seen` | Mark the changes since the last Confirmation seen (Owner Unit and Data Team, [TR-SR-13](../../requirements/technical/04-stacks-and-resources.md#tr-sr-13)) |
 | `PUT /resources/{id}/deprecation`, `DELETE /resources/{id}/deprecation` | Deprecate a published Resource, and take it away (Owner Unit and Data Team, [TR-SR-14](../../requirements/technical/04-stacks-and-resources.md#tr-sr-14)) |
 | `GET /resources/{id}/log` | History, filterable by kind of Log Entry |

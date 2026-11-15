@@ -3,7 +3,7 @@ number: 3.3.3
 status: reviewed
 minutes: 4
 added: 2026-10-29
-changed: 2026-11-14
+changed: 2026-11-15
 gain: You judge whether data is good enough for your decision, without waiting for perfect data.
 ---
 
@@ -22,11 +22,11 @@ Data is **reliable** when it meets the expectation its label sets, for the use y
 
 ## Like a kitchen scale
 
-A kitchen scale is reliable for a recipe and useless for weighing gold. The scale did not change; what you want from it did.
+A kitchen scale is reliable for a recipe and useless for weighing gold: it was never meant for gold. The scale did not change; what you want from it did.
 
 ## For example
 
-The visitor figures miss whoever refuses cookies, about the same share every week. For the trend of the last quarter that is good enough; to bill an agency per visitor it is not.
+The visitor figures miss whoever refuses cookies, about the same share every week. For the trend of the last quarter that is good enough; to bill an agency per visitor it is not. On the Resource that holds them, its Owner writes this down as its intended use: meant for the trend, not for billing, so that every reader knows for which use the Owner vouches.
 
 # See it
 
@@ -73,6 +73,14 @@ Why: the Resource says what to expect: weeks that are final may be compared, the
 
 Why: a known, steady gap is harmless for most uses and decisive for the one that needs those rows. Reliability is judged against the question, not on its own.
 
+## The intended use of a Resource says: "The trend of our organic search visibility, per week and per month. Not for revenue attribution." You want to know how much revenue organic search brought last quarter. What do you do?
+
+- [ ] Use it: the figures are the same, whatever you use them for
+- [ ] Nothing: the intended use keeps you from querying it for revenue
+- [x] Look for a Resource meant for revenue, or ask its Owner: this one is not
+
+Why: the intended use blocks nothing and hides nothing. Its Owner writes what the Resource is meant for, and what not, so you know for which use they vouch; outside it, the same figures may not meet what you expect of them.
+
 # You can now
 
 judge whether data is good enough for what you want to do with it, instead of asking whether it is good.
@@ -81,4 +89,4 @@ judge whether data is good enough for what you want to do with it, instead of as
 
 - Next to it: K5.2
 - Next to it: 1.2.1
-- Apply: [Open Collections](/collections) Read the Known behaviour of a Resource before you use it for a decision.
+- Apply: [Open Collections](/collections) Read the intended use of a Resource, under Known Behaviour, before you use it for a decision.

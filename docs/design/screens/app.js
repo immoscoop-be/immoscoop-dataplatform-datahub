@@ -1231,6 +1231,15 @@ if (document.querySelector('.sql-editor')) colourSql(document.querySelector('.sq
       const sel = getSelection(), word = sel.toString().trim();
       if (FIELDS[word] && sel.rangeCount) showField(word, sel.getRangeAt(0).getBoundingClientRect());
     });
+    // A click on a Resource on top of the frame opens what a double-click on its name opens; a table outside Data Hub
+    // its window (DEC-UX-259). The × on it still starts a new query without it
+    document.getElementById('scope-chips')?.addEventListener('click', e => {
+      if (e.target.closest('.scope-x')) return;
+      const chip = e.target.closest('.scope-chip');
+      if (!chip) return;
+      if (chip.classList.contains('known')) showKnown('known');
+      else if (RESOURCES[chip.dataset.res]) showResource(chip.dataset.res);
+    });
     // The pop-out goes with a click elsewhere, Escape or typing; the window stays until it is closed
     document.addEventListener('mousedown', e => { if (!pop.contains(e.target)) shut(); });
     document.addEventListener('keydown', e => { if (!pop.hidden && (e.key === 'Escape' || e.key.length === 1)) shut(); });
@@ -1404,8 +1413,10 @@ if (scopeBox) {
   })[set.slice().sort().join(',')] || { pane: 'other', exact: 0, more: 0, names: [] };
   const lensButton = () => {
     const set = scopeNow(), l = LENSES(set);
-    $('lenses-btn').querySelector('span').textContent = set.length === 1 ? 'Lenses on this resource' : 'Lenses on these resources';
-    $('lenses-btn').querySelector('.count').textContent = l.exact + l.more;
+    // Only how many, its full name on a hover (DEC-UX-260)
+    const n = l.exact + l.more;
+    $('lenses-n').textContent = `${n} ${n === 1 ? 'Lens' : 'Lenses'}`;
+    $('lenses-btn').title = `${set.length === 1 ? 'Lenses on this Resource' : 'Lenses on these Resources'}: see which Lenses already use them`;
     document.querySelectorAll('[data-lens-set]').forEach(pane => { pane.hidden = pane.dataset.lensSet !== l.pane; });
   };
 

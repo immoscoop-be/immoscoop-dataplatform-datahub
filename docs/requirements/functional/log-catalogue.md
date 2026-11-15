@@ -26,6 +26,8 @@ The prefix of a Log ID says which domain the entry comes from. Every template ha
 
 *Changed on 2026-10-31, while building the Changes downstream: `ART-014` and `ART-015` are new, for a model upstream that is removed or added ([EC-AR-04](01-artifact-registry.md#ec-ar-04)), and `ART-010` and `ART-012` name the model they happened in when it is upstream of the Resource ([FR-AR-12](01-artifact-registry.md#fr-ar-12)).*
 
+*Changed on 2026-11-15, while building the Owner Journey: `JRN-001` and `JRN-002` are new: a step of the journey gone through, and "nothing to add" where none is an answer, in the Log of the Resource ([DEC-MR-16](06-maturity-and-release.md#dec-mr-16), [OP-CL-12](17-claude.md#op-cl-12)).*
+
 *Changed on 2026-11-04: `LEN-003` is new: a Lens deleted by its Owner Unit or the Data Team, with why, in its Log ([FR-LE-18](09-lenses.md#fr-le-18)).*
 
 Most Log Entries are about a Resource. The entries with a Log ID from `COL-001` to `COL-029` are about a Collection itself, and appear in the Log of that Collection.
@@ -76,6 +78,8 @@ Log IDs are not requirement IDs: they are codes in the app itself. Requirement I
 | `MAT-021` | Maturity dropped to Level {level}; the Owner was alerted | Maturiteit gedaald naar Level {level}; de Owner is verwittigd | level, reason |
 | `MAT-022` | Changes since the last Confirmation marked seen by {actor} | Changes sinds de laatste Confirmation als gezien gemarkeerd door {actor} | actor, changes |
 | `PUB-040` | Published by {owner} | Gepubliceerd door {owner} | owner, level |
+| `JRN-001` | Owner Journey: {step, select, data {Know the data} fields {Fields} admin {Table type, grain and mappings} messages {Open Questions and Signals} pitfalls {Pitfalls} gaps {Known Gaps} parameters {Parameters} other {{step}}} gone through by {actor} | Owner Journey: {step, select, data {De data kennen} fields {Velden} admin {Tabeltype, grain en mappings} messages {Open Questions en Signals} pitfalls {Valkuilen} gaps {Known Gaps} parameters {Parameters} other {{step}}} doorlopen door {actor} | step, actor |
+| `JRN-002` | {step, select, data {Know the data} fields {Fields} admin {Table type, grain and mappings} messages {Open Questions and Signals} pitfalls {Pitfalls} gaps {Known Gaps} parameters {Parameters} other {{step}}}: nothing to add, according to {actor} | {step, select, data {De data kennen} fields {Velden} admin {Tabeltype, grain en mappings} messages {Open Questions en Signals} pitfalls {Valkuilen} gaps {Known Gaps} parameters {Parameters} other {{step}}}: niets toe te voegen, volgens {actor} | step, actor |
 | `CNV-050` | Signal raised by {actor} | Signal gemeld door {actor} | actor, conversation |
 | `CNV-051` | Signal turned into an Anomaly by {actor} | Signal omgezet in een Anomaly door {actor} | actor, conversation, anomaly |
 | `BRK-001` | Broken: {missing} no longer exists | Broken: {missing} bestaat niet meer | missing, run |
