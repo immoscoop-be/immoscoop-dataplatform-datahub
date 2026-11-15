@@ -188,7 +188,7 @@ describe('mcp', () => {
     const appOnly = tools.filter((item) => item._meta?.ui?.visibility?.join() === 'app').map((item) => item.name);
     expect(appOnly.sort()).toEqual(['confirm_publication', 'run_preview_approved', 'run_query_approved', 'send_preview_request', 'send_query_request']);
     const shows = tools.filter((item) => item._meta?.ui?.resourceUri === VIEW_URI && !item._meta.ui.visibility).map((item) => item.name);
-    expect(shows.sort()).toEqual(['preview_resource', 'publish_resource', 'run_query', 'show_query', 'show_resource']);
+    expect(shows.sort()).toEqual(['guide_owner_journey', 'preview_resource', 'publish_resource', 'run_query', 'show_learning_card', 'show_query', 'show_resource']);
   });
 
   it('serves the MCP App as one self-contained page (FR-CL-01)', async () => {
@@ -371,7 +371,15 @@ describe('Resources through Claude', () => {
       next: { number: 2, step: 'businessDescription', mark: 'required to publish', writes: 'update_resource_card' },
     });
     // A card not written yet goes by its number, so that Claude never makes one up (FR-CL-15).
-    expect((guided.structuredContent as { next: { cards: unknown } }).next.cards).toEqual([{ number: 'K5.14', written: false }]);
+    // Its Learning Card goes with it as a strip: number, title, core idea and gain (DEC-UX-261).
+    const window = guided.structuredContent as { view: string; next: { cards: unknown }; window: { held: unknown } };
+    expect(window.view).toBe('journey');
+    expect(window.next.cards).toEqual([expect.objectContaining({ number: 'K5.14', title: 'The Business Description', coreIdea: expect.stringContaining('**Business Description**') })]);
+    // The window shows what the step holds now: the text on the card from the Owner, beside the description from dbt.
+    expect(window.window.held).toEqual([
+      expect.objectContaining({ label: 'On the card now', origin: 'From the Owner', text: 'Credit leads per week.' }),
+      expect.objectContaining({ label: 'Next to it', origin: 'From dbt' }),
+    ]);
     expect(guided.content[0]?.text).toContain('Step 2 of 12 is next: Business Description, required to publish.');
     expect(guided.content[0]?.text).toContain('Still open before it can be published: Business Description, Key Fields, Fields, Pitfalls, Known Gaps and reliable since.');
 
@@ -473,7 +481,7 @@ describe('queries through Claude', () => {
 });
 
 describe('the Permissions of the User in Claude (TR-PL-09)', () => {
-  const READS = ['explain', 'get_messages', 'get_related_resources', 'get_resource', 'get_resource_lineage', 'get_resource_log', 'guide_owner_journey', 'how_to_use', 'list_resources', 'search', 'show_resource', 'suggest_lenses', 'who_am_i'];
+  const READS = ['explain', 'get_messages', 'get_related_resources', 'get_resource', 'get_resource_lineage', 'get_resource_log', 'guide_owner_journey', 'how_to_use', 'list_resources', 'search', 'show_learning_card', 'show_resource', 'suggest_lenses', 'who_am_i'];
   const QUERY_TOOLS = ['check_query', 'create_query', 'get_query', 'get_result_page', 'list_queries', 'run_query', 'run_query_approved', 'send_query_request', 'show_query', 'update_query'];
   const PREVIEW_TOOLS = ['preview_resource', 'run_preview_approved', 'send_preview_request'];
   const WRITES = ['deprecate_resource', 'describe_fields', 'mark_changes_seen', 'record_journey_step', 'reply_to_message', 'undeprecate_resource', 'update_resource_card', 'write_message'];
@@ -675,10 +683,11 @@ describe('results in Claude, in a card only, or not in Claude (FR-CL-28)', () =>
     expect(asked.some((call) => call.url.includes('/preview/'))).toBe(false);
     expect((await tool('get_result_page', { run: 'q-9', page: 1 }, token)).isError).toBe(true);
 
-    // No result opens the MCP App, and its buttons for a result are not there; a Resource and its publication still show.
+    // No result opens the MCP App, and its buttons for a result are not there; a Resource, its publication, its journey
+    // and a Learning Card still show, as they hold no rows.
     const tools = await toolsOf(token);
     const shows = names(tools.filter((item) => item._meta?.ui?.resourceUri === VIEW_URI && !item._meta.ui.visibility));
-    expect(shows).toEqual(['publish_resource', 'show_resource']);
+    expect(shows).toEqual(['guide_owner_journey', 'publish_resource', 'show_learning_card', 'show_resource']);
     expect(appOnly(tools)).toEqual(['confirm_publication']);
   });
 
@@ -701,6 +710,34 @@ describe('concepts through Claude', () => {
     const result = await tool('explain', { term: 'Level' }, await issuer.sign());
     const cards = (result.structuredContent as { cards: { number: string; page: string }[] }).cards;
     expect(cards[0]).toMatchObject({ number: 'K5.2', page: `${WEB}/learning/K5.2` });
+  });
+});
+
+describe('a Learning Card in Claude (FR-LR-26, DEC-UX-261)', () => {
+  it('shows a whole written card in its five steps, in the language asked', async () => {
+    const result = await tool('show_learning_card', { number: 'K5.2', language: 'nl' }, await issuer.sign());
+    expect(result.structuredContent).toMatchObject({
+      view: 'card',
+      card: { number: 'K5.2', title: 'Het Level van een Resource', language: 'nl', why: { promise: expect.any(String) }, core: { rule: expect.stringContaining('**') } },
+      page: `${WEB}/learning/K5.2`,
+    });
+    const card = (result.structuredContent as { card: { questions: { options: { right: boolean }[] }[]; can: { choices: { page: string }[] } } }).card;
+    expect(card.questions.length).toBeGreaterThan(0);
+    expect(card.questions.every((question) => question.options.filter((option) => option.right).length === 1)).toBe(true);
+    expect(card.can.choices.every((choice) => choice.page.startsWith(WEB))).toBe(true);
+    expect(result.content[0]?.text).toContain('Retell its core idea');
+  });
+
+  it('never makes up a card that is not written', async () => {
+    const result = await tool('show_learning_card', { number: 'K9.99' }, await issuer.sign());
+    expect(result.isError).toBe(true);
+    expect(result.content[0]?.text).toContain('never make up what it would say');
+  });
+
+  it('opens the whole card only when the User asks: Read the card asks Claude in their name', () => {
+    expect(VIEW_PAGE).toContain("app.sendMessage({ role: 'user', content: [{ type: 'text', text: 'Show me the Learning Card '");
+    expect(VIEW_PAGE).toContain("else if (view.view === 'journey') renderJourney(view);");
+    expect(VIEW_PAGE).toContain("else if (view.view === 'card') renderCard(view);");
   });
 });
 

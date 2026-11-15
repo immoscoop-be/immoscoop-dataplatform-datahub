@@ -45,7 +45,7 @@ export function registerView(server: McpServer, html: string, serverUrl: string)
   server.registerResource(
     'view',
     VIEW_URI,
-    { title: 'Data Hub', description: 'Shows a Resource, a Preview, a publication or the result of a query of Data Hub in the conversation.', mimeType: RESOURCE_MIME_TYPE, _meta: { ui } },
+    { title: 'Data Hub', description: 'Shows a Resource, a Preview, a publication, the result of a query, a step of the Owner Journey or a Learning Card of Data Hub in the conversation.', mimeType: RESOURCE_MIME_TYPE, _meta: { ui } },
     async () => ({ contents: [{ uri: VIEW_URI, mimeType: RESOURCE_MIME_TYPE, text: html, _meta: { ui } }] }),
   );
 }

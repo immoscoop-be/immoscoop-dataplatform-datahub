@@ -1,6 +1,7 @@
 /**
  * The page of the MCP App of Data Hub (FR-CL-01): one page that shows a Resource (FR-CL-07), a Preview
- * (FR-CL-09), a publication (FR-CL-12) or the result of a query (FR-CL-21), by the `view` of the tool result.
+ * (FR-CL-09), a publication (FR-CL-12), the result of a query (FR-CL-21), a step of the Owner Journey with its
+ * Learning Card (FR-CL-30, DEC-UX-261) or a whole Learning Card (FR-LR-26), by the `view` of the tool result.
  * It stands on its own, without the navigation of Data Hub, and carries "Open in Data Hub" (FR-CL-06). The
  * buttons that approve, send a Request or publish call tools only the MCP App may call (DEC-CL-07). For a User
  * whose results show in a card only, it reads the rows itself, through tools only it may call, says under the grid
@@ -117,6 +118,31 @@ summary { cursor: pointer; font-size: var(--text-meta); color: var(--text-muted)
 /* In a card only: one line under the foot of the grid, that Claude does not read its rows (FR-CL-28, DEC-UX-193) */
 .result-private { display: flex; align-items: center; gap: 6px; margin: 0; font-size: var(--text-meta); color: var(--text-muted); }
 .result-private svg { flex: none; width: 14px; height: 14px; }
+/* The Owner Journey: the window of a step, with its progress, what it holds now and its Learning Card (DEC-UX-261) */
+.oj-progress { display: flex; gap: 3px; }
+.oj-progress i { flex: 1; height: 4px; border-radius: 2px; background: var(--tint-active); }
+.oj-progress i.done { background: var(--text-secondary); }
+.oj-progress i.now { background: var(--text-primary); }
+.held + .held { margin-top: 10px; }
+.held p { margin: 0; }
+.held ul { margin: 2px 0 0; padding-left: 18px; }
+.none { color: var(--text-muted); font-style: italic; }
+.lc-strip { border-radius: var(--radius-md); padding: 12px 14px; outline: 1px solid var(--tint-active); display: grid; gap: 6px; font-size: var(--text-small); }
+.lc-strip .t { font-weight: var(--weight-medium); display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; }
+.num { font: var(--text-meta) var(--font-mono); color: var(--text-muted); }
+.lc-strip p { margin: 0; }
+.gain { color: var(--text-secondary); }
+/* A whole Learning Card, in its five steps (FR-LR-26) */
+.rule.big { font-size: 15px; line-height: 1.45; margin: 0; }
+blockquote.quote { margin: 0; padding: 4px 0 4px 12px; border-left: 3px solid var(--tint-active); font-size: 14px; }
+blockquote.quote .meta { margin-top: 4px; }
+.question { display: grid; gap: 6px; }
+.question + .question { margin-top: 14px; }
+.answer { font: inherit; text-align: left; background: var(--surface-sub); border: 0; border-radius: var(--radius-sm); padding: 8px 12px; cursor: pointer; color: var(--text-primary); }
+.answer.picked { outline: 2px solid var(--text-secondary); }
+.answer.right.shown { outline: 2px solid var(--col-teal-ink); }
+.choices { margin: 0; padding-left: 18px; }
+.tabs { flex-wrap: wrap; }
 /* The Summary of a Resource, as the Overview of Data Hub shows it (FR-CL-26) */
 .legend { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; font-size: var(--text-meta); color: var(--text-muted); }
 .legend .weight { margin-left: 8px; }
@@ -395,12 +421,78 @@ function renderQuery(v) {
     '<details><summary>The SQL</summary><pre>' + esc(v.sql) + '</pre></details>' + foot('In your panel of Query', q.page, 'Open in Query');
 }
 
+// What a step of the Owner Journey holds now: a text, lines, chips, or what is not there (DEC-UX-261).
+const heldPart = (h) => '<div class="held"><div class="label">' + esc(h.label) + (h.origin ? '<span class="origin">' + esc(h.origin) + '</span>' : '') + '</div>' +
+  (h.text ? markdown(h.text)
+    : h.items && h.items.length ? '<ul>' + h.items.map((item) => '<li>' + inline(item) + '</li>').join('') + '</ul>'
+    : h.chips && h.chips.length ? '<div>' + h.chips.map((chip) => '<span class="chip">' + esc(chip) + '</span>').join('') + '</div>'
+    : '<p class="none">' + esc(h.none || '') + '</p>') + '</div>';
+// The Learning Card of a step as a strip; the whole card only when the User asks for it (DEC-UX-261).
+const strip = (c) => '<div class="lc-strip"><div class="t"><span class="num">' + esc(c.number) + '</span>' + esc(c.title || '') + (c.written === false ? '<span class="pill">Not written yet</span>' : '') + '</div>' +
+  (c.coreIdea ? '<p>' + inline(c.coreIdea) + '</p>' : '') + (c.gain ? '<p class="gain">' + esc(c.gain) + '</p>' : '') +
+  (c.written === false ? '' : '<div class="row"><button class="quiet" data-card="' + esc(c.number) + '" data-title="' + esc(c.title || '') + '">Read the card</button></div>') + '</div>';
+
+function renderJourney(v) {
+  const w = v.window || {};
+  const r = v.resource;
+  const total = w.total || 12;
+  const at = v.next.number;
+  const steps = v.steps || [];
+  const dots = '<div class="oj-progress" role="img" aria-label="' + esc(at > 0 ? 'Step ' + at + ' of ' + total : 'Before step 1') + '">' +
+    steps.filter((step) => step.number > 0).map((step) => '<i class="' + (step.number === at ? 'now' : step.status === 'done' ? 'done' : '') + '" title="' + esc(step.number + ' · ' + step.name) + '"></i>').join('') + '</div>';
+  const mark = v.next.mark ? '<span class="pill">' + esc(v.next.mark.charAt(0).toUpperCase() + v.next.mark.slice(1)) + '</span>' : '';
+  const now = '<div><span class="meta">' + esc(at > 0 ? 'Step ' + at + ' of ' + total : 'The start') + '</span><div class="row"><span class="title">' + esc(v.next.name) + '</span>' + mark + '</div></div>';
+  const collection = w.collection ? { ...w.collection, name: w.collection.name + ' · Owner: ' + w.collection.owner } : null;
+  const note = v.next.writes ? 'Written with ' + v.next.writes + ', once you agree.' : 'Nothing is written in this step.';
+  root.innerHTML = head('Owner Journey', r.displayName, null, '', collection) + dots + now +
+    '<div class="tile">' + (w.held || []).map(heldPart).join('') + '</div>' + (v.next.cards || []).map(strip).join('') + foot(note, r.page);
+}
+
+// The five steps of a card, in the language of the card (FR-LR-26); its chart is on its page in Data Hub.
+const CARD_WORDS = {
+  en: { steps: ['Why now', 'Core idea', 'See it', 'Check your understanding', 'You can now'], promise: 'In this card:', lookAt: 'Look at:', youSee: 'You see:', chart: 'The chart is on the page of the card in Data Hub.', next: 'Next', can: 'You can now', none: 'No questions on this card.', deeper: 'Deeper', beside: 'Next to it', foot: 'From the Learning Centre of Data Hub' },
+  nl: { steps: ['Waarom nu', 'Kernidee', 'Zie het', 'Check je begrip', 'Je kan nu'], promise: 'In deze kaart:', lookAt: 'Kijk naar:', youSee: 'Je ziet:', chart: 'De grafiek staat op de pagina van de kaart in Data Hub.', next: 'Volgende', can: 'Je kan nu', none: 'Geen vragen op deze kaart.', deeper: 'Dieper', beside: 'Ernaast', foot: 'Uit het Learning Centre van Data Hub' },
+};
+let cardAt = { number: null, step: 0, picked: {} };
+
+function renderCard(v) {
+  const c = v.card;
+  const words = CARD_WORDS[c.language] || CARD_WORDS.en;
+  if (cardAt.number !== c.number) cardAt = { number: c.number, step: 0, picked: {} };
+  const steps = [0, 1, 2, 3, 4].filter((i) => (i !== 2 || c.see) && (i !== 3 || c.questions.length > 0));
+  const nav = '<div class="tabs" role="tablist">' + steps.map((i, n) => '<button class="tab' + (i === cardAt.step ? ' on' : '') + '" role="tab" aria-selected="' + (i === cardAt.step) + '" data-step="' + i + '">' + (n + 1) + ' ' + esc(words.steps[i]) + '</button>').join('') + '</div>';
+  let body = '';
+  if (cardAt.step === 0) {
+    body = '<blockquote class="quote">' + inline(c.why.quote) + '<span class="meta">— ' + esc(c.why.by) + '</span></blockquote><p>' + inline(c.why.situation) + '</p><p class="meta">' + esc(words.promise) + ' ' + esc(c.why.promise) + '</p>';
+  } else if (cardAt.step === 1) {
+    body = '<p class="rule big">' + inline(c.core.rule) + '</p><div class="pair">' + [c.core.metaphor, c.core.example].filter(Boolean).map((part) => '<div class="tile"><div class="label">' + esc(part.title) + '</div>' + markdown(part.text) + '</div>').join('') + '</div>';
+  } else if (cardAt.step === 2) {
+    body = '<p><b>' + esc(words.lookAt) + '</b> ' + inline(c.see.lookAt) + '</p><p><b>' + esc(words.youSee) + '</b> ' + inline(c.see.youSee) + '</p><p class="meta">' + esc(words.chart) + '</p>';
+  } else if (cardAt.step === 3) {
+    body = c.questions.map((q, qi) => {
+      const picked = cardAt.picked[qi];
+      return '<div class="question"><b>' + inline(q.text) + '</b>' + q.options.map((o, oi) => '<button class="answer' + (picked === oi ? ' picked' : '') + (o.right ? ' right' : '') + (picked !== undefined ? ' shown' : '') + '" data-answer="' + qi + '/' + oi + '">' + inline(o.text) + '</button>').join('') +
+        (picked !== undefined ? '<p class="meta">' + inline(q.why) + '</p>' : '') + '</div>';
+    }).join('') || '<p class="meta">' + esc(words.none) + '</p>';
+  } else {
+    const label = (choice) => (choice.kind === 'deeper' ? words.deeper : words.beside);
+    body = '<p>' + esc(words.can) + ' ' + inline(c.can.now) + '</p><ul class="choices">' + c.can.choices.map((choice) => choice.kind === 'apply'
+      ? '<li>' + link(choice.page, choice.label) + ' ' + esc(choice.text) + '</li>'
+      : '<li>' + esc(label(choice)) + ': ' + link(choice.page, choice.number + ' ' + choice.title) + '</li>').join('') + '</ul>';
+  }
+  const later = steps.filter((i) => i > cardAt.step)[0];
+  root.innerHTML = head(c.number, c.title, c.minutes + ' min · ' + c.gain) + nav + '<div>' + body + '</div>' +
+    (later !== undefined ? '<div class="row"><button class="quiet" data-step="' + later + '">' + esc(words.next) + '</button></div>' : '') + foot(words.foot, v.page);
+}
+
 function render() {
   if (!view) return;
   if (view.view === 'resource') renderResource(view.resource, view.parts);
   else if (view.view === 'preview') renderPreview(view);
   else if (view.view === 'publish') renderPublish(view);
   else if (view.view === 'query') renderQuery(view);
+  else if (view.view === 'journey') renderJourney(view);
+  else if (view.view === 'card') renderCard(view);
   else if (view.view === 'sent') root.innerHTML = '<div>Sent to the Data Team. Their answer comes in your Message Centre.</div>';
   setFold();
 }
@@ -482,9 +574,22 @@ const previewArgs = () => {
 const queryArgs = () => ({ id: view.query.id, sql: view.sql, parameters: view.parameters });
 
 root.addEventListener('click', (event) => {
-  const target = event.target.closest('[data-open],[data-tab],[data-act],[data-page],[data-fold]');
+  const target = event.target.closest('[data-open],[data-tab],[data-act],[data-page],[data-fold],[data-card],[data-step],[data-answer]');
   if (!target || target.disabled) return;
   if (target.dataset.fold !== undefined) { folded = !folded; setFold(); return; }
+  // The whole card opens as an MCP App of its own, only when the User asks for it: the button asks Claude, in their name (DEC-UX-261).
+  if (target.dataset.card) {
+    app.sendMessage({ role: 'user', content: [{ type: 'text', text: 'Show me the Learning Card ' + target.dataset.card + (target.dataset.title ? ', ' + target.dataset.title : '') + '.' }] }).catch(() => undefined);
+    return;
+  }
+  if (target.dataset.step !== undefined) { cardAt.step = Number(target.dataset.step); render(); return; }
+  if (target.dataset.answer) {
+    // An answer shows its Why; nothing is counted (FR-LR-30, OP-LR-16).
+    const [question, option] = target.dataset.answer.split('/').map(Number);
+    cardAt.picked[question] = option;
+    render();
+    return;
+  }
   if (target.dataset.open) { event.preventDefault(); app.openLink({ url: target.dataset.open }); return; }
   if (target.dataset.tab) { tab = target.dataset.tab; render(); return; }
   if (target.dataset.page) {

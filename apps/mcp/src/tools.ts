@@ -1,11 +1,11 @@
 import type { AccessTokenClaims } from '@datahub/contracts';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { answer } from './answers.js';
-import { type Context, READ } from './context.js';
+import { answer, refusal } from './answers.js';
+import { type Context, READ, SHOWS } from './context.js';
 import { type DataHub, pages } from './datahub.js';
 import { howToUse, instructionsFor, mayDo } from './guide.js';
-import { explain } from './learning.js';
+import { cardFor, explain, topicTitle } from './learning.js';
 import { messageTools } from './messages.js';
 import { permitsOf } from './permits.js';
 import { queryTools } from './queries.js';
@@ -104,6 +104,53 @@ export function createMcpServer(user: AccessTokenClaims, options: ServerOptions)
         { cards: found.map(({ score: _score, ...card }) => ({ ...card, page: options.hub.page(pages.learningCard(card.number)) })) },
         found.length === 0 ? 'No written Learning Card explains it yet: answer from the concepts in your instructions, and say there is no card for it.' : undefined,
       );
+    },
+  );
+
+  // A whole card in the conversation, in its five steps, when the User asks to read it (FR-LR-26, DEC-UX-261).
+  server.registerTool(
+    'show_learning_card',
+    {
+      title: 'Show a Learning Card',
+      description:
+        'Shows the User a whole Learning Card of Data Hub in the conversation, in its five steps: Why now, Core idea, See it, Check your understanding and You can now. Only when the User asks to read a card, such as the one of a step of the Owner Journey; for a concept, use explain. Give the language the User writes in.',
+      inputSchema: {
+        number: z.string().min(1).max(20).describe('The number of the card, such as K5.15, from explain or guide_owner_journey.'),
+        language: z.enum(['en', 'nl']).optional().describe('en or nl: the language the User writes in. English when not given.'),
+      },
+      annotations: READ,
+      _meta: SHOWS,
+    },
+    async ({ number, language = 'en' }) => {
+      const found = await cardFor(number, language, options.environment);
+      if (!found) {
+        return refusal(`No written Learning Card ${number} is shown here: it is not written yet, or still a draft that this Learning Centre does not show. Say so, and never make up what it would say.`);
+      }
+      const { card, title } = found;
+      const page = options.hub.page(pages.learningCard(card.number));
+      const choices = card.can.choices.map((choice) =>
+        choice.kind === 'apply'
+          ? { kind: 'apply', label: choice.label, text: choice.text, page: options.hub.page(choice.href) }
+          : { kind: choice.kind, number: choice.card, title: topicTitle(choice.card, language) ?? choice.card, page: options.hub.page(pages.learningCard(choice.card)) },
+      );
+      const shown = {
+        view: 'card',
+        card: {
+          number: card.number,
+          title,
+          language,
+          minutes: card.minutes,
+          gain: card.gain,
+          why: card.why,
+          core: card.core,
+          // The chart of See it is drawn on the page of the card in Data Hub; here its words, with the link (DEC-LR-26).
+          see: card.see ? { lookAt: card.see.lookAt, youSee: card.see.youSee } : null,
+          questions: card.questions.map((question) => ({ text: question.text, options: question.options, why: question.why })),
+          can: { now: card.can.now, choices },
+        },
+        page,
+      };
+      return answer(shown, `The User sees ${card.number} ${title} in its five steps. Retell its core idea in a sentence or two, in their language, and tie it to what they are doing; do not repeat the whole card. Link: ${page}`);
     },
   );
 

@@ -2,7 +2,7 @@ import { type Journey, type JourneyMissing, type JourneyStepId, type JourneyStep
 import { shownIn, TOPICS } from '@datahub/learning';
 import { z } from 'zod';
 import { answer, attempt, refusal } from './answers.js';
-import { type Context, READ, WRITE } from './context.js';
+import { type Context, READ, SHOWS, WRITE } from './context.js';
 import { pages } from './datahub.js';
 import { cards } from './learning.js';
 
@@ -14,9 +14,92 @@ export interface JourneyResource {
   levelName: string;
   published: boolean;
   journey: Journey;
-  collection: { id: string; name: string; owner: string } | null;
+  collection: { id: string; name: string; owner: string; icon?: string } | null;
   mayPublish: boolean;
   page: string;
+  /** What the window of a step shows of it: its description from dbt, its card, its fields and what a Data Admin recorded. */
+  description?: string;
+  card?: Record<string, unknown>;
+  fields?: readonly { name: string; businessDescription: string }[];
+  details?: { grain?: string[]; grainSentence?: string; modelType?: string | null; mappings?: unknown[] } | null;
+}
+
+/** One thing the window of a step shows of the Resource now (DEC-UX-261): a text, chips or lines, or what is not there. */
+export interface Held {
+  label: string;
+  /** Who it comes from, as the publication shows it: from the Owner, or from dbt. */
+  origin?: string;
+  text?: string;
+  items?: string[];
+  chips?: string[];
+  /** Shown when there is nothing: what is missing, or who said there is nothing to add. */
+  none?: string;
+}
+
+const dayOf = (value: string) => new Date(value).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+
+/** What a step holds now, as its window shows it before Claude proposes: the texts on the card, or what is missing. */
+export function heldOf(step: JourneyStepState, resource: JourneyResource, journey: Journey): Held[] {
+  const card = resource.card ?? {};
+  const text = (key: string) => (typeof card[key] === 'string' ? (card[key] as string).trim() : '');
+  const list = (key: string) => (Array.isArray(card[key]) ? (card[key] as unknown[]) : []);
+  const nothing = step.records.find((record) => record.answer === 'nothing');
+  const saidNone = nothing ? `None, according to ${nothing.by}, on ${dayOf(nothing.at)}.` : undefined;
+  const fields = resource.fields ?? [];
+  const keyFields = list('keyFields').filter((name): name is string => typeof name === 'string');
+  const described = (name: string) => (fields.find((field) => field.name === name)?.businessDescription ?? '').trim() !== '';
+  const details = resource.details ?? null;
+  const grain = details?.grainSentence?.trim() || (details?.grain?.length ? details.grain.join(' × ') : '');
+  const dbt: Held = { label: 'Next to it', origin: 'From dbt', text: resource.description?.trim() || undefined, none: 'No description from dbt.' };
+  switch (step.id) {
+    case 'start':
+      return [
+        { label: 'Now', text: `${resource.levelName}, ${resource.published ? 'published' : 'not published yet'}.` },
+        { label: 'Its Collection', text: resource.collection ? `${resource.collection.name}, owned by ${resource.collection.owner}.` : undefined, none: 'In no Collection yet.' },
+      ];
+    case 'data':
+      return [
+        { ...dbt, label: 'One row, says dbt' },
+        { label: 'Grain', text: grain || undefined, none: 'Not recorded by a Data Admin yet: step 9.' },
+      ];
+    case 'businessDescription':
+      return [{ label: 'On the card now', origin: 'From the Owner', text: text('businessDescription') || undefined, none: 'Nothing yet.' }, dbt];
+    case 'keyFields':
+      return [{ label: 'Key Fields now', chips: keyFields, none: 'None chosen yet.' }, { label: 'Its fields', text: `${fields.length}` }];
+    case 'fields': {
+      const others = fields.filter((field) => !keyFields.includes(field.name));
+      return [
+        { label: 'Key Fields described', text: keyFields.length > 0 ? `${keyFields.filter(described).length} of ${keyFields.length}` : undefined, none: 'The Key Fields come first: step 3.' },
+        { label: 'Other fields described', text: `${others.filter((field) => described(field.name)).length} of ${others.length}` },
+      ];
+    }
+    case 'intendedUse':
+      return [{ label: 'On the card now', text: text('intendedUse') || undefined, none: 'Nothing yet.' }];
+    case 'pitfalls':
+      return [{ label: 'On the card now', text: text('pitfalls') || undefined, none: saidNone ?? 'Nothing yet, and nobody said there are none.' }];
+    case 'gaps': {
+      const gaps = list('knownGaps').map((gap) => (gap as { text?: string }).text ?? '').filter(Boolean);
+      const since = text('reliableSince');
+      return [
+        { label: 'Known Gaps', items: gaps, none: saidNone ?? 'None written, and nobody said there are none.' },
+        { label: 'Reliable since', text: since ? dayOf(since) : undefined, none: 'No day yet.' },
+      ];
+    }
+    case 'parameters':
+      return [{ label: 'Parameters now', chips: list('parameters').filter((name): name is string => typeof name === 'string'), none: saidNone ?? 'None.' }];
+    case 'admin':
+      return [
+        { label: 'Table type', text: details?.modelType ?? undefined, none: 'Not recorded yet.' },
+        { label: 'Grain', text: grain || undefined, none: 'Not recorded yet.' },
+        { label: 'Fields mapped', text: `${details?.mappings?.length ?? 0}` },
+      ];
+    case 'messages':
+      return [{ label: 'Open Questions and Signals', text: step.missing.includes('openMessages') ? 'Some are open: Claude shows them.' : undefined, none: 'None open.' }];
+    case 'publish':
+      return [{ label: 'Required to publish', text: journey.ready ? 'Every step is done.' : undefined, none: `Still open: ${journey.steps.filter((one) => journey.open.includes(one.id)).map((one) => one.name).join(', ')}.` }];
+    case 'after':
+      return [{ label: 'Level', text: resource.levelName }];
+  }
 }
 
 /**
@@ -179,6 +262,7 @@ export function journeyTools({ server, hub, permits }: Context, read: (id: strin
         'The Owner Journey of a Resource: every step from 2 · Described to its Publication in one order, each with its status, what is missing and its Learning Cards; the one step that is next, with what to say, present and ask, and the tool that writes the answer; and whether it is ready to publish, by the same rule as Data Hub. Call it first whenever the User wants to publish, describe or take on a Resource, and again after every write.',
       inputSchema: { id },
       annotations: READ,
+      _meta: SHOWS,
     },
     ({ id: resourceId }) =>
       attempt(async () => {
@@ -200,6 +284,9 @@ export function journeyTools({ server, hub, permits }: Context, read: (id: strin
           })),
         );
         const guided = {
+          // The window of the step in the conversation (DEC-UX-261): what the step holds now, with its Learning Card.
+          view: 'journey',
+          window: { collection: resource.collection, held: heldOf(next, resource, journey), total: 12 },
           resource: { id: resource.id, displayName: resource.displayName, level: resource.levelName, collection: resource.collection?.name ?? null, owner, page: resource.page },
           you: { mayPublish: resource.mayPublish, mayDescribe },
           ready: journey.ready,
