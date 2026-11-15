@@ -494,7 +494,7 @@ After choosing a Resource ([FR-CO-31](#fr-co-31)), the Data Admin chooses its mo
 | `aggregate` | What it is grouped by: one or more fields. Required. Its period: a date, when it is grouped by time. Its counts and sums: each marked as adding up or as a unique count that is never added up. Required |
 | `other` | One row is: a sentence ([OP-RC-28](05-resource-card.md#op-rc-28)). Required |
 
-Data Hub offers only the fields whose type fits, suggests them where it can, from the partition column, the grain or a mapping `is`, and says where each suggestion came from. The Resource is added only once every required field is chosen. The fields are kept with the model type; the EDA reads them to choose its EDA-Probes ([OP-ED-03](15-eda.md#op-ed-03)).
+The Data Admin chooses them in the table of fields, as part of the definition of each field: what the field is for its model type. Data Hub offers a field only the roles its type fits, suggests them where it can, from the partition column, the grain or a mapping `is`, and says where each suggestion came from. The Resource is added only once every required field is chosen. The fields are kept with the model type; the EDA reads them to choose its EDA-Probes ([OP-ED-03](15-eda.md#op-ed-03)).
 
 **Makes easy:** recording what one row is and the fields it hangs on, so that everyone counts a Resource the right way and its EDA knows what to explore. **Makes hard:** adding a Resource whose model type is a guess, such as an `event` without the moment it happened, or a `state` without what it is about.
 

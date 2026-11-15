@@ -1284,12 +1284,25 @@ body.mcp-demo[data-width="phone"] .mcp-page { max-width: 390px; padding: 16px 12
 .type-facts dt { color: var(--text-muted); }
 .type-facts dd { margin: 0; color: var(--text-secondary); }
 @media (max-width: 900px) { .type-list { grid-template-columns: 1fr; } }
-/* Adding a Resource, step 3: the fields its model type asks for, before the storage (FR-CO-44) */
+/* Adding a Resource, step 3: on top what its model type needs, chosen or missing; the field table says per field what it
+   is for the model type, in a column of its own after the field (FR-CO-44) */
 .type-needs-head { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: var(--text-small); }
 .type-needs-head .code-chip { margin: 0; background: var(--surface-solid); }
 .type-needs-def { color: var(--text-secondary); }
+.need-list, .need-other { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 6px; }
+.need-other { flex-direction: row; align-items: center; gap: 10px; }
+.need-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: var(--text-small); }
+.need-line > i { font-size: 16px; color: var(--text-secondary); }
+.need-line b { font-weight: var(--weight-medium); }
+.need-line .code-chip { margin: 0; background: var(--surface-solid); }
+.need-line.missing > i, .need-line.missing .req { color: var(--signal-warn); font-weight: var(--weight-medium); }
 .req { font-size: var(--text-meta); color: var(--text-muted); }
-.req.missing { color: var(--signal-warn); font-weight: var(--weight-medium); }
+.rel-table.with-role th:nth-child(2) { width: 196px; }
+.rel-table.with-role th:nth-child(3) { width: 150px; }
+.rel-table.with-role th:nth-child(4) { width: 304px; }
+.rel-table .rel-role:disabled { color: var(--text-muted); background: transparent; border-color: transparent; }
+.rel-table .rel-role.set { border-color: var(--text-muted); font-weight: var(--weight-medium); }
+.rel-table.no-role th:nth-child(2), .rel-table.no-role td:nth-child(2) { display: none; }
 .btn-primary.is-disabled { opacity: .4; cursor: not-allowed; pointer-events: none; }
 .rel-grain-text { font: var(--text-small) var(--font-family); color: var(--text-primary); background: var(--surface-solid); border: 1px solid var(--tint-active); border-radius: var(--radius-sm); padding: 4px 8px; width: 220px; }
 .rel-ok { display: inline-flex; align-items: center; gap: 6px; color: var(--text-secondary); }

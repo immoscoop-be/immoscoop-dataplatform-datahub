@@ -868,27 +868,90 @@ document.querySelectorAll('input[name="model-type"]').forEach(i => i.addEventLis
   if (next) next.href = `collection-add-relations.html?type=${i.value}`;
 }));
 
-// Adding a Resource, step 3: only the fields of the model type chosen show, event by default. "Add Resource" stays greyed
-// until every required field is chosen, and the foot says which one is missing (FR-CO-44)
+// Adding a Resource, step 3: the model type chosen (?type=, event by default) asks for fields, chosen in the field table,
+// in the column "For the <type>": a field is offered only the roles its type fits, and a role held by one field moves when
+// it is chosen on another. The block on top lists what the model type needs, chosen or still missing; "Add Resource" stays
+// greyed until every required one is chosen, and the foot says which (FR-CO-44)
 (() => {
-  const sets = document.querySelectorAll('.type-needs-set');
-  if (!sets.length) return;
-  const asked = new URLSearchParams(location.search).get('type');
-  const type = [...sets].some(s => s.dataset.type === asked) ? asked : 'event';
-  sets.forEach(s => { s.hidden = s.dataset.type !== type; });
-  const set = document.querySelector(`.type-needs-set[data-type="${type}"]`);
-  const add = document.getElementById('add-resource'), why = document.getElementById('add-why');
-  const ready = why ? why.innerHTML : '';
-  const check = () => {
-    const fields = [...set.querySelectorAll('[data-required]')];
-    fields.forEach(f => f.parentElement.querySelector('.req')?.classList.toggle('missing', !f.value.trim()));
-    const missing = fields.find(f => !f.value.trim());
-    add?.classList.toggle('is-disabled', !!missing);
-    add?.setAttribute('aria-disabled', missing ? 'true' : 'false');
-    if (why) why.innerHTML = missing ? `Choose ${missing.dataset.required} first: a <code>${type}</code> needs it` : ready;
+  const table = document.querySelector('.rel-table.with-role');
+  if (!table) return;
+  const byId = id => document.getElementById(id);
+  const TYPES = {
+    event: { def: 'One row per thing that happened, at one moment.', roles: [
+      { key: 'when', label: 'When it happened', fits: ['date'], need: 'Required', one: true }] },
+    state: { def: 'One row per thing as it is now, or as it was at a moment.', roles: [
+      { key: 'about', label: 'What it is about', fits: ['id'], need: 'Required', one: true },
+      { key: 'asof', label: 'As of when', fits: ['date'], need: 'Optional: for a state that keeps its history', one: true }] },
+    fact: { def: 'One row per business occurrence, with measures to add up.', roles: [
+      { key: 'when', label: 'When it occurred', fits: ['date'], need: 'Required', one: true },
+      { key: 'measure', label: 'Measure', line: 'Measures', fits: ['number'], need: 'At least one' }] },
+    dimension: { def: 'One row per thing that describes others.', roles: [
+      { key: 'describes', label: 'What it describes', fits: ['id'], need: 'Required', one: true }] },
+    aggregate: { def: 'One row per group, with its counts or sums already made.', roles: [
+      { key: 'group', label: 'Grouped by', fits: ['id', 'text'], need: 'At least one' },
+      { key: 'period', label: 'Period', fits: ['date'], need: 'When grouped by time', one: true },
+      { key: 'sum', label: 'Count or sum, adds up', line: 'Counts and sums', fits: ['number'], need: 'At least one', counts: true },
+      { key: 'unique', label: 'Unique count, never added up', fits: ['number'], counts: true, noLine: true }] },
+    other: { def: 'None of the five model types.', roles: [] },
   };
-  set.querySelectorAll('[data-required]').forEach(f => { f.addEventListener('change', check); f.addEventListener('input', check); });
-  check();
+  const SUGGEST = {
+    event: { collectorDatetime: ['when', 'Suggested from the partition column'] },
+    state: { homeLoanSimulationId: ['about', 'Suggested from its mapping is'] },
+    fact: { collectorDatetime: ['when', 'Suggested from the partition column'], creditAmount: ['measure', 'Suggested: a number'] },
+    dimension: {},
+    aggregate: { listingId: ['group', 'Suggested from the grain'], collectorDatetime: ['period', 'Suggested from the partition column'],
+      creditAmount: ['sum', 'Suggested: a number'] },
+    other: {},
+  };
+  const asked = new URLSearchParams(location.search).get('type');
+  const type = asked in TYPES ? asked : 'event';
+  const roles = TYPES[type].roles, article = /^[aeiou]/.test(type) ? 'an' : 'a';
+  byId('type-chip').textContent = type;
+  byId('type-def').textContent = TYPES[type].def;
+  byId('role-head').textContent = `For the ${type}`;
+  table.classList.toggle('no-role', !roles.length);
+  byId('type-other').hidden = type !== 'other';
+  const rows = [...table.querySelectorAll('.rel-row')];
+  const fieldOf = r => r.querySelector('.rel-field code').textContent;
+  const roleOf = r => r.querySelector('.rel-role');
+  const source = {};
+  rows.forEach(r => {
+    const fits = roles.filter(o => o.fits.includes(r.dataset.ftype)), sel = roleOf(r);
+    sel.innerHTML = '<option value="">—</option>' + fits.map(o => `<option value="${o.key}">${o.label}</option>`).join('');
+    sel.disabled = !fits.length;
+    const s = SUGGEST[type][fieldOf(r)];
+    if (s && fits.some(o => o.key === s[0])) { sel.value = s[0]; source[s[0]] = s[1]; }
+  });
+  const list = byId('need-list'), add = byId('add-resource'), why = byId('add-why'), ready = why.innerHTML;
+  const render = () => {
+    rows.forEach(r => roleOf(r).classList.toggle('set', !!roleOf(r).value));
+    const chosen = key => rows.filter(r => roleOf(r).value === key).map(fieldOf);
+    let missing = null;
+    list.innerHTML = roles.filter(o => !o.noLine).map(o => {
+      const fields = o.counts ? roles.filter(c => c.counts).flatMap(c => chosen(c.key)) : chosen(o.key);
+      const required = o.need === 'Required' || o.need === 'At least one';
+      const state = fields.length ? 'ok' : required ? 'missing' : 'optional';
+      const label = o.line || o.label;
+      if (state === 'missing' && !missing) missing = label.toLowerCase();
+      const icon = { ok: 'ph-check-circle', missing: 'ph-warning-circle', optional: 'ph-circle-dashed' }[state];
+      const what = fields.length
+        ? fields.map(f => `<span class="code-chip">${f}</span>`).join('') + (source[o.key] ? `<span class="rel-src">${source[o.key]}</span>` : '')
+        : `<span class="meta">Not chosen: pick it in the column “For the ${type}” below</span>`;
+      return `<div class="need-line ${state}"><i class="ph ${icon}" aria-hidden="true"></i><b>${label}</b>${what}<span class="req">${o.need}</span></div>`;
+    }).join('');
+    if (type === 'other' && !byId('type-other-text').value.trim()) missing = 'what one row is';
+    add.classList.toggle('is-disabled', !!missing);
+    add.setAttribute('aria-disabled', missing ? 'true' : 'false');
+    why.innerHTML = missing ? `Choose ${missing} first: ${article} <code>${type}</code> needs it` : ready;
+  };
+  rows.forEach(r => roleOf(r).addEventListener('change', e => {
+    const o = roles.find(x => x.key === e.target.value);
+    if (o?.one) rows.forEach(x => { if (roleOf(x) !== e.target && roleOf(x).value === o.key) roleOf(x).value = ''; });
+    if (o) source[o.key] = 'Chosen here';
+    render();
+  }));
+  byId('type-other-text').addEventListener('input', render);
+  render();
 })();
 
 // The editor of Query folds every CTE to its first line, as a code editor does: the arrow in the gutter folds or unfolds
