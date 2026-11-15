@@ -32,7 +32,7 @@ In library terms: Claude is an assistant in the reading room who carries the lib
 - <a id="dec-cl-14"></a>**DEC-CL-14** · Claude analyses the rows it gets for the User ([DEC-CL-06](#dec-cl-06)), and does the work in SQL: it groups, counts and computes in the query, so that BigQuery does the work and Claude reads a small result, rather than paging through raw rows. That Data Hub has no exports ([FR-CH-01](13-channels.md#fr-ch-01)) limits what leaves Data Hub to be kept elsewhere, not what Claude may read to answer. *Decided on 2026-11-02, by Max, while trying the MCP: the rules in the server instructions had Claude hold back from analysing the data.* *Note of 2026-11-06: for a User whose Permission group shows results in Claude; in a card only or not in Claude, Claude gets no rows, and analyses only the shape of a result ([DEC-PL-05](12-permissions-and-library-cards.md#dec-pl-05), [FR-CL-28](#fr-cl-28)).*
 - <a id="dec-cl-15"></a>**DEC-CL-15** · A query made through Claude keeps the mark Claude, also once its User goes on with it in Query, and each run says how it ran: through Claude or in the web app. identity says so in the Access Tokens it gives Claude, so that every service can tell. *Decided on 2026-11-02, by Max ([OP-CL-10](#op-cl-10)), asking for the label Claude on the queries that come from Claude.*
 - <a id="dec-cl-16"></a>**DEC-CL-16** · Whenever Claude reads a Resource, with `get_resource` or `show_resource`, it gets the Summary of the Resource first, before the data of its card; and the MCP App of a Resource opens on that Summary, with Columns beside it, as the Overview opens on it in Data Hub. *Decided on 2026-11-04, by Max: "when I ask the MCP about a Resource, the MCP should receive the Summary of the Resource, as well as this Resource being made available in an MCP App".*
-- <a id="dec-cl-17"></a>**DEC-CL-17** · Whoever wants to publish a Resource is led into the Owner Journey. In Claude, a request to publish, describe or take on a Resource starts the journey, and `publish_resource` opens no window while a step required to publish is open: Claude names the open steps and takes the Owner through them. In Data Hub the publication shows the same open steps, each with a link to its part of the Overview, and says that Claude takes the Owner through them; the catalogue refuses a Publication until they are done ([DEC-MR-15](06-maturity-and-release.md#dec-mr-15)). *Decided on 2026-11-15, by Max: "go, start the build, also please enforce users in the direction of the flow when they want to publish a resource".*
+- <a id="dec-cl-17"></a>**DEC-CL-17** · Whoever wants to publish a Resource is led into the Owner Journey. In Claude, a request to publish, describe or take on a Resource starts the journey, and `publish_resource` offers no declaration while a step required to publish is open: its window lists the open steps, and Claude takes the Owner through them. In Data Hub the publication shows the same open steps, each with a link to its part of the Overview, and says that Claude takes the Owner through them; the catalogue refuses a Publication until they are done ([DEC-MR-15](06-maturity-and-release.md#dec-mr-15)). *Decided on 2026-11-15, by Max: "go, start the build, also please enforce users in the direction of the flow when they want to publish a resource".*
 
 ## Terms
 
@@ -435,6 +435,33 @@ The result of a query, a Preview or a Lens reaches Claude as `claude.results` of
 A tool of the MCP server that answers about something in a situation that pushes a Learning Card ([FR-LR-42](16-learning.md#fr-lr-42)) carries that card in its answer: its number and title, its gain and its address in the Learning Centre, for the User the situation is for. A Resource not published yet carries 4.7.1 Owning a Resource for its Owner; a Message Data Hub wrote carries the card it names ([FR-LR-38](16-learning.md#fr-lr-38)); the Level, the grain and the model type of a Resource carry the cards of their markers. The server instructions tell Claude to offer the card in one line, once per card in a conversation, and, when the situation asks the User to act, to say what to do and where in Data Hub, as Claude does not publish or approve for them. `explain` stays for a concept the User asks about ([FR-CL-15](#fr-cl-15)).
 
 **Makes easy:** learning while working with Claude, without knowing which card to ask for. **Makes hard:** Claude answering around a situation that asks the User to act, and a User who only learns what they think of asking.
+
+<a id="fr-cl-30"></a>
+### FR-CL-30 · Claude takes the Owner through the Owner Journey
+
+**Status:** Implemented · **Source:** Max, 2026-11-15 ([OP-CL-12](#op-cl-12), [DEC-CL-17](#dec-cl-17)) · **Screens:** [owner-journey](../../design/screens/owner-journey.html)
+
+The tool `guide_owner_journey` returns the Owner Journey of a Resource: its thirteen steps in their fixed order, from Start through Know the data, the Business Description, the Key Fields before the other fields, the intended use, the pitfalls, the Known Gaps and the day it is reliable since, the Parameters, the table type, grain and mappings, and the open Questions and Signals, to reading the card back, publishing and what comes after. Each step says whether it is required to publish, needed for the EDA or advised ([DEC-MR-16](06-maturity-and-release.md#dec-mr-16)), whether it is done or open and what it misses, and names its Learning Cards; a card not written yet goes by its number only. The step that is next says what Claude tells the Owner, what it shows and what it asks, and which tool writes it. The journey is read from the Resource itself, never from the conversation: it resumes in any conversation, for any member of the Owner Unit. It also says whether the User may publish and describe the Resource. The prompt `publish_a_resource` starts it. The server instructions tell Claude to take a User who wants to publish, describe or take on a Resource through the journey, one step at a time, to say where each proposal comes from, and to write a text only once the Owner agrees ([DEC-MR-17](06-maturity-and-release.md#dec-mr-17)).
+
+**Makes easy:** an Owner who has never published a Resource getting from 2 · Described to a card a colleague can trust, in one conversation or several. **Makes hard:** skipping a step, taking them in another order, and a journey that only lives in one conversation.
+
+<a id="fr-cl-31"></a>
+### FR-CL-31 · Claude records a step gone through, or that there is nothing to add
+
+**Status:** Implemented · **Source:** Max, 2026-11-15 ([DEC-MR-16](06-maturity-and-release.md#dec-mr-16))
+
+The tool `record_journey_step` records, for a User who may describe the Resource, that the Owner went through a step that writes nothing of its own (Know the data, the fields, the table type, grain and mappings, the open Questions and Signals), or that there is nothing to add to the pitfalls, the Known Gaps or the Parameters. Data Hub keeps who and when, and writes it into the Log of the Resource ([FR-MR-18](06-maturity-and-release.md#fr-mr-18)). Claude records it only after the Owner said so.
+
+**Makes easy:** a journey that remembers what the Owner already went through. **Makes hard:** Claude marking a step done that the Owner never saw.
+
+<a id="fr-cl-32"></a>
+### FR-CL-32 · The publication through Claude shows the steps still open
+
+**Status:** Implemented · **Source:** Max, 2026-11-15 ([DEC-CL-17](#dec-cl-17), [DEC-MR-15](06-maturity-and-release.md#dec-mr-15)) · **Screens:** [mcp-resource-publish](../../design/screens/mcp-resource-publish.html)
+
+`publish_resource` shows the publication with the same list as Data Hub ([FR-MR-17](06-maturity-and-release.md#fr-mr-17)). While a step required to publish is open, its window lists them and offers no declaration to tick, and its answer tells Claude to take the Owner through them with `guide_owner_journey`. Once they are done, the window reads the whole card back and the Owner ticks the declaration and publishes in it themselves ([DEC-CL-07](#dec-cl-07)); the declaration they ticked is kept with the Confirmation ([FR-MR-19](06-maturity-and-release.md#fr-mr-19)).
+
+**Makes easy:** an Owner who asks Claude to publish ending up in the journey instead of at a refusal. **Makes hard:** publishing through Claude past what the web app would refuse.
 
 ## Edge cases
 
