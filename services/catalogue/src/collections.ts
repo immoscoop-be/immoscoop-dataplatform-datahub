@@ -1,6 +1,6 @@
 import type { CollectionIcon, CollectionVisibility } from '@datahub/contracts';
 import { isCollectionIcon } from '@datahub/contracts/collection-icons';
-import { askedWords, HEADLINE, type Marked, marked } from '@datahub/db';
+import { askedWords, HEADLINE, type Marked, marked, sharedCount, shares } from '@datahub/db';
 import { type Kysely, type Selectable, sql, type Transaction } from 'kysely';
 import type { CatalogueDatabase } from './database.js';
 import type { Group } from './identity.js';
@@ -361,29 +361,28 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
       const collectionIds = seen.map((collection) => collection.id);
       const items = seen.flatMap((collection) => collection.resources.filter((item) => !item.withdrawn).map((item) => ({ ...item, collection })));
       if (collectionIds.length === 0) return { collections: [], resources: [] };
-      const { rows: collections } = await sql<{ id: string; shared: string; name: string; description: string }>`
+      // A word of the question by its stem, and the last one, still being typed, as the start of a word (DEC-UX-267).
+      const collectionText = sql`concat_ws(' ', c.name, c.description)`;
+      const { rows: collections } = await sql<{ id: string; shared: string; name: string; description: string; last: string | null }>`
         with query as ${askedWords('search_words', question)}
-        select c.id,
-          (select count(*) from unnest(query.words) as word
-            where word = any(tsvector_to_array(to_tsvector('search_words', concat_ws(' ', c.name, c.description))))) as shared,
+        select c.id, query.last,
+          ${sharedCount('search_words', collectionText)} as shared,
           ts_headline('search_words', c.name, query.q, ${HEADLINE}) as name,
           ts_headline('search_words', c.description, query.q, ${HEADLINE}) as description
         from collections c, query
-        where query.q is not null and c.id = any(${collectionIds}::uuid[])
-          and to_tsvector('search_words', concat_ws(' ', c.name, c.description)) @@ query.q
+        where c.id = any(${collectionIds}::uuid[]) and ${shares('search_words', collectionText)}
       `.execute(db);
       const resourceIds = items.map((item) => item.id);
+      const resourceText = sql`concat_ws(' ', r.display_name, r.description, r.business_description)`;
       const { rows: resources } = resourceIds.length
-        ? await sql<{ id: string; shared: string; name: string; description: string }>`
+        ? await sql<{ id: string; shared: string; name: string; description: string; last: string | null }>`
             with query as ${askedWords('search_words', question)}
-            select r.id,
-              (select count(*) from unnest(query.words) as word
-                where word = any(tsvector_to_array(to_tsvector('search_words', concat_ws(' ', r.display_name, r.description, r.business_description))))) as shared,
+            select r.id, query.last,
+              ${sharedCount('search_words', resourceText)} as shared,
               ts_headline('search_words', r.display_name, query.q, ${HEADLINE}) as name,
               ts_headline('search_words', coalesce(nullif(r.business_description, ''), r.description), query.q, ${HEADLINE}) as description
             from resources r, query
-            where query.q is not null and r.id = any(${resourceIds}::uuid[])
-              and to_tsvector('search_words', concat_ws(' ', r.display_name, r.description, r.business_description)) @@ query.q
+            where r.id = any(${resourceIds}::uuid[]) and ${shares('search_words', resourceText)}
           `.execute(db)
         : { rows: [] };
       const byName = (a: { shared: number; plain: string }, b: { shared: number; plain: string }) => b.shared - a.shared || a.plain.localeCompare(b.plain);
@@ -391,7 +390,7 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
         collections: collections
           .map((row) => {
             const collection = seen.find((one) => one.id === row.id)!;
-            return { id: row.id, name: marked(row.name), description: marked(row.description), icon: collection.icon, resources: collection.resources.filter((item) => !item.withdrawn).length, shared: Number(row.shared), plain: collection.name };
+            return { id: row.id, name: marked(row.name, row.last), description: marked(row.description, row.last), icon: collection.icon, resources: collection.resources.filter((item) => !item.withdrawn).length, shared: Number(row.shared), plain: collection.name };
           })
           .sort(byName)
           .slice(0, FOUND)
@@ -401,8 +400,8 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
             const item = items.find((one) => one.id === row.id)!;
             return {
               id: row.id,
-              displayName: marked(row.name),
-              description: marked(row.description),
+              displayName: marked(row.name, row.last),
+              description: marked(row.description, row.last),
               collectionId: item.collection.id,
               collectionName: item.collection.name,
               level: item.level,
