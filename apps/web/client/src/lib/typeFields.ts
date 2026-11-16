@@ -123,6 +123,7 @@ const NEED_KEYS = {
   counts: 'fields.need.counts',
   asOf: 'fields.need.asOf',
   period: 'fields.need.period',
+  optional: 'fields.need.optional',
 } as const;
 
 /**
@@ -140,7 +141,7 @@ export function needLines<T extends TypeField>(type: ModelType | null, typeField
     const roles: TypeRole[] = counts ? ['addsUp', 'uniqueCount'] : [rule.role];
     const holding = typeFields.filter((typeField) => roles.includes(typeField.role));
     const label = counts ? 'fields.line.counts' : rule.role === 'measure' ? 'fields.line.measure' : ROLE_KEYS[rule.role];
-    const need = rule.need === 'optional' ? (rule.role === 'period' ? NEED_KEYS.period : NEED_KEYS.asOf) : NEED_KEYS[rule.need];
+    const need = rule.need === 'optional' ? (rule.role === 'period' ? NEED_KEYS.period : rule.role === 'asOf' ? NEED_KEYS.asOf : NEED_KEYS.optional) : NEED_KEYS[rule.need];
     const misses = missing.some((item) => item.kind === 'role' && roles.includes(item.role)) || (counts && unmarked.length > 0);
     const held = holding.filter((typeField) => present.has(typeField.field));
     lines.push({

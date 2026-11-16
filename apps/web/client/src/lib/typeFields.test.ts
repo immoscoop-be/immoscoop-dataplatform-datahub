@@ -33,7 +33,7 @@ describe('what a model type asks for, line by line (FR-CO-44, DEC-RC-24)', () =>
     expect(lines.map((line) => [line.label, line.state, line.gone.map((one) => one.field)])).toEqual([
       ['role.about', 'missing', ['listing_id']],
       ['role.createdAt', 'ok', []],
-      ['role.updatedAt', 'missing', []],
+      ['role.updatedAt', 'optional', []],
       ['role.asOf', 'optional', []],
     ]);
   });

@@ -491,7 +491,7 @@ After choosing a Resource ([FR-CO-31](#fr-co-31)), the Data Admin chooses its mo
 | Model type | Asks for |
 | --- | --- |
 | `event` | When it happened: a date or timestamp. Required |
-| `state` | What it is about: the field that identifies the thing. Required. When it was created and when it was last updated: two dates or timestamps. Required. As of when: a date, for a state that keeps its history. Optional |
+| `state` | What it is about: the field that identifies the thing. Required. When it was created and when it was last updated: two dates or timestamps. Optional. As of when: a date, for a state that keeps its history. Optional |
 | `fact` | When it occurred: a date or timestamp. Required. Its measures: one or more numbers to add up. Required |
 | `dimension` | What it describes: the field that identifies each thing. Required |
 | `aggregate` | What it is grouped by: one or more fields. Required. Its period: a date, when it is grouped by time. Its counts and sums: every number field marked as adding up or as a unique count that is never added up. Required |
@@ -501,7 +501,7 @@ The Data Admin chooses them in the table of fields, as part of the definition of
 
 **Makes easy:** recording what one row is and the fields it hangs on, so that everyone counts a Resource the right way and its EDA knows what to explore. **Makes hard:** adding a Resource whose model type is a guess, such as an `event` without the moment it happened, or a `state` without what it is about.
 
-*Specified on 2026-11-15, by Max: the fields each model type asks for are confirmed.* *Note of 2026-11-16, by Max: a `state` also asks when it was created and last updated; every number field of an aggregate is marked; `other` takes the sentence of "One row per"; no model type is suggested from the words of a Colleciónes model ([DEC-RC-25](05-resource-card.md#dec-rc-25)).* *Note of 2026-11-15: built together with the EDA ([EDA](15-eda.md)); the grain and the storage come on a step of their own, before the fields ([DEC-UX-262](../../design/principles.md#dec-ux-262)).*
+*Specified on 2026-11-15, by Max: the fields each model type asks for are confirmed.* *Note of 2026-11-16, by Max: a `state` also asks when it was created and last updated; every number field of an aggregate is marked; `other` takes the sentence of "One row per"; no model type is suggested from the words of a Colleciónes model ([DEC-RC-25](05-resource-card.md#dec-rc-25)).* *Note of 2026-11-16, by Max, in Dutch: for a `state`, when it was created and when it was last updated are not required; only what it is about is.* *Note of 2026-11-15: built together with the EDA ([EDA](15-eda.md)); the grain and the storage come on a step of their own, before the fields ([DEC-UX-262](../../design/principles.md#dec-ux-262)).*
 
 *Note of 2026-11-16, on building it: the sheet has four steps; the fields of the model type are chosen in the column "For the <type>" of the field table, and the catalogue refuses an addition whose model type is incomplete ([TR-CO-09](../technical/03-collections.md#tr-co-09)).*
 
