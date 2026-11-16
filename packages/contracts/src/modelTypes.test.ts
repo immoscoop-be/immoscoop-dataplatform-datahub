@@ -66,10 +66,9 @@ describe('the model types and the fields they ask for (FR-CO-44, DEC-RC-21)', ()
     expect(missingOfType(null, [], fields, '')).toEqual([{ kind: 'modelType' }]);
     expect(missingOfType('event', [], fields, '')).toEqual([{ kind: 'role', role: 'happenedAt' }]);
     expect(missingOfType('event', [{ field: 'collectorDatetime', role: 'happenedAt' }], fields, '')).toEqual([]);
-    expect(missingOfType('state', [{ field: 'listingId', role: 'about' }], fields, '')).toEqual([
-      { kind: 'role', role: 'createdAt' },
-      { kind: 'role', role: 'updatedAt' },
-    ]);
+    // A state asks only for what it is about: when it was created and last updated are optional (FR-CO-44).
+    expect(missingOfType('state', [{ field: 'listingId', role: 'about' }], fields, '')).toEqual([]);
+    expect(missingOfType('state', [], fields, '')).toEqual([{ kind: 'role', role: 'about' }]);
     expect(missingOfType('other', [], fields, '')).toEqual([{ kind: 'sentence' }]);
     expect(missingOfType('other', [], fields, 'generated simulation')).toEqual([]);
   });

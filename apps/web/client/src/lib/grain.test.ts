@@ -219,11 +219,8 @@ describe('the model type of a Resource being added and the fields it asks for (F
     expect(draft.typeFields).toHaveLength(1);
     chooseType(draft, 'state');
     expect(draft.typeFields).toEqual([]);
-    expect(missingOf(draft)).toEqual([
-      { kind: 'role', role: 'about' },
-      { kind: 'role', role: 'createdAt' },
-      { kind: 'role', role: 'updatedAt' },
-    ]);
+    // A state needs only what it is about; when it was created and last updated are optional.
+    expect(missingOf(draft)).toEqual([{ kind: 'role', role: 'about' }]);
   });
 
   it('gives a field one role, and moves a role that takes one field when another field takes it', () => {
