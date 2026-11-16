@@ -129,7 +129,7 @@ export function invalidTypeFields(type: ModelType | null, typeFields: readonly T
   for (const { field, role } of typeFields) {
     const rule = rules.get(role);
     if (!rule) {
-      return type ? `a ${type} has no role ${role}.` : `without a model type, ${field} holds no role.`;
+      return type ? `${/^[aeiou]/.test(type) ? 'an' : 'a'} ${type} has no role ${role}.` : `without a model type, ${field} holds no role.`;
     }
     if (seen.has(field)) {
       return `the field ${field} holds more than one role.`;

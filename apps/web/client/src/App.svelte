@@ -11,7 +11,7 @@
   import Loading from '@datahub/ui/primitives/Loading.svelte';
   import { NotFound as Missing, onPermissionRefused, onSignedOut } from './lib/api.js';
   import { Backgrounds } from './lib/background.svelte.js';
-  import { createCatalogue, type Collection, type LogEntry, type Resource, type ResourceDetail } from './lib/catalogue.js';
+  import { createCatalogue, type Collection, type LogEntry, type Resource, type ResourceDetail, type ToComplete } from './lib/catalogue.js';
   import { type ChartsOverview, createCharts } from './lib/charts.js';
   import { dragging, type Mover } from './lib/dragging.svelte.js';
   import type { Config } from './lib/config.js';
@@ -93,6 +93,8 @@
   let groups: readonly GroupSummary[] | null | undefined = $state();
   /** For the Data Team, the Resources that wait for a Collection, read when Data Hub starts (FR-SR-35). */
   let waiting: readonly Resource[] | undefined = $state();
+  /** For a Data Admin, the Resources whose model type is incomplete, read with the panel (FR-CO-45). */
+  let toComplete: readonly ToComplete[] | undefined = $state();
   /** Every Collection the User sees, read when Data Hub starts and after a change (FR-CO-18). */
   let collections: readonly Collection[] | undefined = $state();
   /** Grows after a new query, a run or a Request: the panel of Query reads its periods again (DEC-UX-139). */
@@ -317,12 +319,26 @@
     }
   };
 
-  /** Reads again what the panel shows: the Collections, and for who sees all the Resources that wait. */
+  /**
+   * Reads again what the panel shows: the Collections, for who sees all the Resources that wait, and for a Data Admin
+   * the Resources to complete, which the panel leaves out when they cannot be read (FR-CO-45).
+   */
   async function refresh(): Promise<void> {
     const read = [
       catalogue.collections().then((found) => (collections = found)),
       ...(seesAll ? [catalogue.waiting().then((found) => (waiting = found))] : []),
     ];
+    if (can(permissions, 'resources.assign')) {
+      catalogue.toComplete().then(
+        (found) => (toComplete = found),
+        (error: unknown) => {
+          toComplete = undefined;
+          console.error('The Resources to complete could not be read', error);
+        },
+      );
+    } else {
+      toComplete = undefined;
+    }
     // The panel shows the Collections even when query does not tell the Lenses.
     queries.lenses().then(
       (found) => (lenses = found),
@@ -1424,6 +1440,7 @@
       {collections}
       {lenses}
       {waiting}
+      {toComplete}
       {currentCollection}
       currentResource={page.kind === 'resource' ? page.id : undefined}
       currentLens={page.kind === 'lens' ? page.id : undefined}

@@ -1,4 +1,5 @@
 import { randomBytes } from 'node:crypto';
+import { MODEL_TYPES, TYPE_ROLES } from '@datahub/contracts/model-types';
 import { createDatabase, migrate } from '@datahub/db';
 import { sql } from 'kysely';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -176,7 +177,7 @@ describe.skipIf(!url)('catalogue migrations', () => {
   });
 
   it('keeps what the Owner Unit said in a step of the Owner Journey, once per answer, and the declaration of a Confirmation (DEC-MR-16, DEC-MR-17)', async () => {
-    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    const results = await migrate({ db: admin.db, schema, migrations: before('0026'), serviceUser: 'postgres' });
     expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0025-owner-journey', 'Success']]);
     const id = (await sql<{ id: string }>`insert into resources (key, display_name, name, requested_name, resource_type, project_id, node_id, level) values ('p.d.journey', 'Journey', 'journey', 'journey', 'model', 'dbt-prod', 'model.p.journey', 2) returning id`.execute(admin.db)).rows[0]!.id;
     const record = (step: string, answer: string) => sql`insert into journey_records (resource_id, step, answer, user_id, user_name) values (${id}, ${step}, ${answer}, 'u-an', 'An')`;
@@ -187,5 +188,26 @@ describe.skipIf(!url)('catalogue migrations', () => {
     const columns = await sql<{ columnName: string }>`select column_name from information_schema.columns
       where table_schema = ${schema} and table_name = 'resource_confirmations' and column_name = 'declaration'`.execute(admin.db);
     expect(columns.rows).toHaveLength(1);
+  });
+
+  it('takes `other` as a model type, and keeps per Resource each field that holds a role of it, once per field (FR-CO-44, DEC-RC-21)', async () => {
+    const id = (await sql<{ id: string }>`select id from resources where key = 'p.d.journey'`.execute(admin.db)).rows[0]!.id;
+    const typed = (type: string) => sql`update resources set model_type = ${type} where id = ${id}`;
+    await expect(typed('other').execute(admin.db)).rejects.toThrow(/resources_model_type_check/);
+    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0026-type-fields', 'Success']]);
+    // Every model type of the shared definition, and nothing else.
+    for (const type of MODEL_TYPES) await typed(type).execute(admin.db);
+    await expect(typed('cube').execute(admin.db)).rejects.toThrow(/resources_model_type_check/);
+
+    const role = (field: string, name: string, origin = 'here') =>
+      sql`insert into resource_type_fields (resource_id, field, role, origin) values (${id}, ${field}, ${name}, ${origin})`;
+    for (const [index, name] of TYPE_ROLES.entries()) await role(`field_${index}`, name).execute(admin.db);
+    await expect(role('field_0', 'measure').execute(admin.db)).rejects.toThrow(/resource_type_fields_pkey/);
+    await expect(role('other_field', 'when').execute(admin.db)).rejects.toThrow(/check/);
+    await expect(role('other_field', 'about', 'name').execute(admin.db)).rejects.toThrow(/check/);
+    await expect(sql`insert into resource_type_fields (resource_id, field, role, origin) values (gen_random_uuid(), 'a', 'about', 'here')`.execute(admin.db)).rejects.toThrow(
+      /foreign key/,
+    );
   });
 });

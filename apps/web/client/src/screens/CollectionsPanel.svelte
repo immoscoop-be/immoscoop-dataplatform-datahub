@@ -7,20 +7,24 @@
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
   import CollectionIcon from '@datahub/ui/marks/CollectionIcon.svelte';
+  import KindIcon from '@datahub/ui/marks/KindIcon.svelte';
+  import MaturityIcon from '@datahub/ui/marks/MaturityIcon.svelte';
   import Chip from '@datahub/ui/primitives/Chip.svelte';
   import Loading from '@datahub/ui/primitives/Loading.svelte';
-  import type { Collection, Resource } from '../lib/catalogue.js';
+  import type { Collection, Resource, ToComplete } from '../lib/catalogue.js';
   import type { LensItem } from '../lib/query.js';
   import { brokenText } from '../lib/broken.js';
   import { dragOf, dropOf, isOver, type Mover } from '../lib/dragging.svelte.js';
   import { contents, counted, lensFolder, pathTo } from '../lib/folders.js';
   import { collectionPath, folderPath, lensPath, resourcePath } from '../lib/routes.js';
+  import { missingWords } from '../lib/typeFields.js';
 
   /**
    * The panel of Collections, the index of the section (What is in the panel): every Collection the
    * User sees, All or Yours, chosen first in the filter next to the search (DEC-UX-87, DEC-UX-161), each unfolding to its Resources (FR-CO-18), then its Lenses,
    * without a label of their own (FR-CO-36). For the Data Team, "Without a Collection" is on top
-   * (DEC-UX-16). Search filters the Collections, their Resources and their Lenses together (FR-CO-24).
+   * (DEC-UX-16), and under it "To complete": the Resources whose model type misses a field it asks for, or that have
+   * none yet, each with what it misses, in the warning colour (FR-CO-45, DEC-UX-265). Search filters the Collections, their Resources and their Lenses together (FR-CO-24).
    * The filter next to it shows Resources, Lenses or both: with one kind left out, a Collection without
    * the other leaves the panel, and with only Lenses each Collection unfolds to them (DEC-UX-151).
    * An unfolded Collection shows its folders first, each folding to what it holds, then what sits at its top
@@ -31,6 +35,7 @@
     collections,
     lenses = [],
     waiting,
+    toComplete,
     currentCollection,
     currentResource,
     currentLens,
@@ -42,6 +47,8 @@
     /** The Lenses the User sees, each in its Collection. */
     lenses?: readonly LensItem[] | undefined;
     waiting: readonly Resource[] | undefined;
+    /** For a Data Admin, the Resources to complete (FR-CO-45); undefined for anyone else, or while they are read. */
+    toComplete?: readonly ToComplete[] | undefined;
     /** The Collection whose page is open, or that holds the Resource whose page is open. */
     currentCollection: string | undefined;
     currentResource: string | undefined;
@@ -138,6 +145,12 @@
       return items.length + lensItems.length > 0 ? [{ collection, view, lensView: its, items, lensItems, found: true, flat: true }] : [];
     }),
   );
+  /** Unfolded unless the User folds it: a to-do, not something waiting (DEC-UX-265). */
+  let completeOpen = $state(true);
+  const completeShown = $derived((toComplete ?? []).filter((item) => !words || fits(item.displayName)));
+  /** What a Resource to complete misses, in a few words: no model type, a role, a number not marked, or a field gone. */
+  const misses = (item: ToComplete) =>
+    [...item.missing.map(missingWords), ...item.gone.map((gone) => t('missing.gone', { field: gone.field }))].join(' · ');
   const waitingShown = $derived(withResources ? (waiting ?? []).filter((resource) => !words || fits(resource.displayName)) : []);
   const counts = $derived({
     resources: inScope.reduce((sum, collection) => sum + collection.resources.length, 0),
@@ -176,6 +189,22 @@
   </TreeGroup>
 {/if}
 
+{#if toComplete && completeShown.length > 0}
+  <!-- In the warning colour, calmer than the red of what waits: a to-do, not an emergency (DEC-UX-265). -->
+  <div class="to-complete">
+    <TreeGroup icon="list-checks" name={t('collections.toComplete')} bind:open={() => completeOpen || Boolean(words), (open) => (completeOpen = open)}>
+      {#snippet meta()}<Chip variant="urgent">{toComplete.length}</Chip>{t('collections.toComplete.meta')}{/snippet}
+      {#each completeShown as item (item.id)}
+        {@const what = misses(item)}
+        <a class="todo" class:current={item.id === currentResource} href={resourcePath(item.id)} title={`${item.displayName} · ${what}`} aria-current={item.id === currentResource ? 'page' : undefined}>
+          <span class="kind"><KindIcon kind="resource" /></span>
+          <span class="todo-name"><span class="clip">{item.displayName}</span><span class="todo-what">{what}</span></span>
+          <MaturityIcon level={item.level} small />
+        </a>
+      {/each}
+    </TreeGroup>
+  </div>
+{/if}
 
 <!-- What a folder holds, or the folders at the top of a Collection: its folders, each folding, then its Resources and Lenses. -->
 {#snippet tree(collection: Collection, view: Collection, lensView: LensItem[], folderId: string | null)}
@@ -289,4 +318,15 @@
   .more:hover { color: var(--text-primary); }
   .more:focus-visible { outline: 2px solid var(--text-secondary); }
   .empty { padding: 8px 4px; }
+  /* The card "To complete": the group and its count in the warning colour, as "Without a Collection" is in the red (DEC-UX-265). */
+  .to-complete :global(.group.card) { background: color-mix(in srgb, var(--signal-warn) 8%, var(--surface-solid)); outline: 1px solid color-mix(in srgb, var(--signal-warn) 30%, transparent); }
+  .to-complete :global(.link > .icon) { color: var(--signal-warn); }
+  .to-complete :global(.chip.urgent) { background: var(--signal-warn); }
+  .todo { display: flex; align-items: center; gap: 8px; padding: 4px 8px 4px 16px; color: var(--text-secondary); text-decoration: none; font-size: var(--text-small); }
+  .todo:hover { color: var(--text-primary); }
+  .todo.current { color: var(--text-primary); font-weight: var(--weight-medium); }
+  .todo .kind { display: inline-flex; font-size: 14px; color: var(--text-muted); }
+  .todo-name { flex: 1; min-width: 0; }
+  .clip { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .todo-what { display: block; font-size: var(--text-meta); color: var(--text-muted); font-weight: var(--weight-regular); }
 </style>

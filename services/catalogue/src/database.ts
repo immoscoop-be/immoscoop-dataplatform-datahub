@@ -2,12 +2,12 @@ import type { CollectionIcon, CollectionVisibility } from '@datahub/contracts';
 import type { SubjectKind } from '@datahub/contracts/messages';
 import type { GapScope } from '@datahub/contracts/gaps';
 import type { JourneyAnswer, JourneyStepId } from '@datahub/contracts/journey';
+import type { ModelType, TypeRole } from '@datahub/contracts/model-types';
 import type { ColumnType, Generated } from 'kysely';
 import type { LeftOutReason } from './fields.js';
 
-/** The model types of a Resource, a fixed list (DEC-RC-10). */
-export const MODEL_TYPES = ['event', 'state', 'fact', 'dimension', 'aggregate'] as const;
-export type ModelType = (typeof MODEL_TYPES)[number];
+/** The model types of a Resource, a fixed list (DEC-RC-10, DEC-RC-21): one definition, in @datahub/contracts. */
+export { MODEL_TYPES, type ModelType } from '@datahub/contracts/model-types';
 export type PartitionUnit = 'hour' | 'day' | 'month' | 'year';
 /** Who requires a filter on the partition column in every query: nobody, Data Hub, or BigQuery (DEC-SR-35). */
 export type PartitionFilter = 'none' | 'dataHub' | 'bigQuery';
@@ -213,6 +213,16 @@ export interface CatalogueDatabase {
     origin: MappingOrigin;
     inDomainModel: boolean;
     release: string | null;
+  };
+  /**
+   * Each field that holds a role of the model type of its Resource, with where it came from (FR-CO-44): one role per
+   * field. A role whose field left the Resource stays, as its warning (DEC-RC-23).
+   */
+  resourceTypeFields: {
+    resourceId: string;
+    field: string;
+    role: TypeRole;
+    origin: Origin;
   };
   /** The plain fields of a Resource, as dbt has them (FR-SR-06, DEC-SR-33). */
   resourceFields: {

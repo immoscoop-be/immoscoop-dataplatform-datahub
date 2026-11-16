@@ -37,7 +37,7 @@ describe('the model types and the fields they ask for (FR-CO-44, DEC-RC-21)', ()
 
   it('refuses a role of another model type, a field that does not fit, a field with two roles and a single role twice', () => {
     expect(invalidTypeFields('event', [{ field: 'collectorDatetime', role: 'happenedAt' }], fields)).toBeUndefined();
-    expect(invalidTypeFields('event', [{ field: 'collectorDatetime', role: 'createdAt' }], fields)).toBe('a event has no role createdAt.');
+    expect(invalidTypeFields('event', [{ field: 'collectorDatetime', role: 'createdAt' }], fields)).toBe('an event has no role createdAt.');
     expect(invalidTypeFields('event', [{ field: 'eventId', role: 'happenedAt' }], fields)).toBe('the field eventId does not fit the role happenedAt.');
     expect(
       invalidTypeFields(
