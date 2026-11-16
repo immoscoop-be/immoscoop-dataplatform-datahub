@@ -1008,6 +1008,14 @@ describe.skipIf(!url)('the routes of Collections', () => {
       // An does not see Ruth's private Collection; a question of common words finds nothing.
       expect((await an('GET', '/search?question=brokers')).json()).toEqual({ collections: [], resources: [] });
       expect((await ruth('GET', '/search?question=the')).json()).toEqual({ collections: [], resources: [] });
+      // While typing, the last word counts as the start of a word, unstemmed: "bro" finds the brokers (DEC-UX-267).
+      const typing = (await ruth('GET', '/search?question=bro')).json();
+      expect(typing.collections).toMatchObject([{ id: collection.id, shared: 1 }]);
+      expect(typing.collections[0].name).toEqual([{ text: 'Broker', shared: true }, { text: ' ratings', shared: false }]);
+      expect(typing.resources).toMatchObject([{ id: review.id, shared: 1 }]);
+      // Also where the stem of what is typed is longer than the stem of the word: "agenci" finds "agencies".
+      expect((await ruth('GET', '/search?question=agenci')).json().collections).toMatchObject([{ id: collection.id }]);
+      expect((await ruth('GET', '/search?question=xyz')).json()).toEqual({ collections: [], resources: [] });
     });
 
     it('checks what registry sends', () => {

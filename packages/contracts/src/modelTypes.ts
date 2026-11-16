@@ -54,8 +54,9 @@ const RULES: Record<ModelType, readonly RoleRule[]> = {
   event: [{ role: 'happenedAt', fits: date, need: 'one', single: true }],
   state: [
     { role: 'about', fits: identifier, need: 'one', single: true },
-    { role: 'createdAt', fits: date, need: 'one', single: true },
-    { role: 'updatedAt', fits: date, need: 'one', single: true },
+    // When it was created and last updated are kept when the Resource has them, but not required (FR-CO-44).
+    { role: 'createdAt', fits: date, need: 'optional', single: true },
+    { role: 'updatedAt', fits: date, need: 'optional', single: true },
     { role: 'asOf', fits: date, need: 'optional', single: true },
   ],
   fact: [

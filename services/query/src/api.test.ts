@@ -1134,6 +1134,8 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     // Mia sees her own waiting Lens, not An's private Collection.
     expect((await searched(mia, 'leads')).map((lens: { name: string }) => lens.name)).toEqual(['Every lead since 2019']);
     expect(await searched(an, 'the brokers of agencies')).toEqual([]);
+    // While typing, the last word counts as the start of a word (DEC-UX-267).
+    expect((await searched(an, 'sour')).map((lens: { name: string }) => lens.name).sort()).toEqual(['All weeks per source', 'Leads per source, week by week']);
   });
 
   it('tells when the User last ran each Lens, for the start screen of Collections (FR-CO-37)', async () => {
