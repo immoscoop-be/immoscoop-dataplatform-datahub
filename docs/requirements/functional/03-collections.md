@@ -445,7 +445,7 @@ A link to a Collection, Resource, Lens or query that a User may not see opens th
 <a id="fr-co-33"></a>
 ### FR-CO-33 · Adding a Resource records its grain and the mapping of every field
 
-**Status:** Implemented · **Source:** Max, 2026-10-24 to 2026-10-26 · [design](../../design/principles.md#page-of-a-collection) · **Screens:** [collection-add-relations](../../design/screens/collection-add-relations.html)
+**Status:** Implemented · **Source:** Max, 2026-10-24 to 2026-10-26 · [design](../../design/principles.md#page-of-a-collection) · **Screens:** [collection-add-grain](../../design/screens/collection-add-grain.html), [collection-add-relations](../../design/screens/collection-add-relations.html)
 
 After picking Resources ([FR-CO-31](#fr-co-31)), the Data Admin sees, per Resource, its grain and every field with its type and description from dbt.
 
@@ -471,12 +471,14 @@ Data Hub shows the cardinality of each mapping and never asks for it ([DEC-RC-08
 <a id="fr-co-34"></a>
 ### FR-CO-34 · Adding a Resource records how it is stored
 
-**Status:** Implemented · **Source:** Max, 2026-10-25 · [design](../../design/principles.md#page-of-a-collection) · **Screens:** [collection-add-relations](../../design/screens/collection-add-relations.html)
+**Status:** Implemented · **Source:** Max, 2026-10-25 · [design](../../design/principles.md#page-of-a-collection) · **Screens:** [collection-add-grain](../../design/screens/collection-add-grain.html)
 
 In the same step as the relations ([FR-CO-33](#fr-co-33)), the Data Admin sees per Resource how it is stored: its partition column and the unit of its partitions, its cluster columns in their order, and whether a partition filter is required. Data Hub derives them where it can, from the dbt manifest of the model beneath the view, through the lineage, and from BigQuery ([OP-SR-12](04-stacks-and-resources.md#op-sr-12)), and marks them "From dbt". The Data Admin sets what cannot be derived and can correct the rest. A partition filter that BigQuery requires stays required; the Data Admin can also require one where BigQuery does not, so that Data Hub asks for a filter on the partition column in every query on the Resource. Data Hub uses them on the page of the Resource ([FR-SR-39](04-stacks-and-resources.md#fr-sr-39)) and in the Pre-flight ([FR-SR-40](04-stacks-and-resources.md#fr-sr-40)).
 
 *Note of 2026-10-28, on building it: Data Hub derives the storage from the dbt manifest only, through the lineage ([TR-AR-03](../technical/01-artifact-registry.md#tr-ar-03)); reading it from BigQuery waits on [OP-SR-12](04-stacks-and-resources.md#op-sr-12). The facts come with the next run of a dbt project, or when a run is processed again.*
 
+
+*Note of 2026-11-15: proposed to move, with the grain, to a step of its own before the fields ([DEC-UX-262](../../design/principles.md#dec-ux-262)).*
 
 <a id="fr-co-44"></a>
 ### FR-CO-44 · The model type of a Resource is chosen first, and asks for its own fields
@@ -498,7 +500,7 @@ The Data Admin chooses them in the table of fields, as part of the definition of
 
 **Makes easy:** recording what one row is and the fields it hangs on, so that everyone counts a Resource the right way and its EDA knows what to explore. **Makes hard:** adding a Resource whose model type is a guess, such as an `event` without the moment it happened, or a `state` without what it is about.
 
-*Specified on 2026-11-15, by Max: the fields each model type asks for are confirmed.*
+*Specified on 2026-11-15, by Max: the fields each model type asks for are confirmed.* *Note of 2026-11-15: built together with the EDA ([EDA](15-eda.md)); the grain and the storage come on a step of their own, before the fields ([DEC-UX-262](../../design/principles.md#dec-ux-262)).*
 
 <a id="fr-co-35"></a>
 ### FR-CO-35 · The Data Team hands a Collection to any group

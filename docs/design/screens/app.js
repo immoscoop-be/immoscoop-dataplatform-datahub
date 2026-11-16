@@ -860,15 +860,24 @@ if (new URLSearchParams(location.search).has('mismatch')) {
   if (demo) { demo.value = 'placedIn'; demo.dispatchEvent(new Event('change')); }
 }
 
-// Adding a Resource, step 2: the model type chosen goes on to step 3 as ?type=, and the foot says what it asks for
-// (DEC-UX-262)
+// Adding a Resource, step 2: the model type chosen goes on as ?type=, and the foot says what it asks for (DEC-UX-262)
 document.querySelectorAll('input[name="model-type"]').forEach(i => i.addEventListener('change', () => {
   const foot = document.getElementById('type-foot'), next = document.getElementById('type-next');
   if (foot) foot.innerHTML = `<code>${i.value}</code> · asks for ${i.dataset.asks}`;
-  if (next) next.href = `collection-add-relations.html?type=${i.value}`;
+  if (next) next.href = `collection-add-grain.html?type=${i.value}`;
 }));
 
-// Adding a Resource, step 3: the model type chosen (?type=, event by default) asks for fields, chosen in the field table,
+// Adding a Resource, step 3: the grain and storage show the model type chosen, and pass it on to step 4 (DEC-UX-262)
+(() => {
+  const next = document.getElementById('grain-next');
+  if (!next) return;
+  const type = new URLSearchParams(location.search).get('type') || 'event';
+  next.href = `collection-add-relations.html?type=${encodeURIComponent(type)}`;
+  const chip = document.getElementById('grain-type');
+  if (chip) chip.textContent = type;
+})();
+
+// Adding a Resource, step 4: the model type chosen (?type=, event by default) asks for fields, chosen in the field table,
 // in the column "For the <type>": a field is offered only the roles its type fits, and a role held by one field moves when
 // it is chosen on another. The block on top lists what the model type needs, chosen or still missing; "Add Resource" stays
 // greyed until every required one is chosen, and the foot says which (FR-CO-44)
@@ -895,7 +904,7 @@ document.querySelectorAll('input[name="model-type"]').forEach(i => i.addEventLis
     other: { def: 'None of the five model types.', roles: [] },
   };
   const SUGGEST = {
-    event: { collectorDatetime: ['when', 'Suggested from the partition column'] },
+    event: { collectorDatetime: ['when', 'From the Domain Model'] },
     state: { homeLoanSimulationId: ['about', 'Suggested from its mapping is'] },
     fact: { collectorDatetime: ['when', 'Suggested from the partition column'], creditAmount: ['measure', 'Suggested: a number'] },
     dimension: {},
