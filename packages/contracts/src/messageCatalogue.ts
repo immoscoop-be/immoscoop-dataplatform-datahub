@@ -76,6 +76,29 @@ const FIELD_CHANGES: MessageItem = {
   },
 };
 
+/** The roles of a model type (FR-CO-44), as in `modelTypes.ts`: the catalogue imports nothing at run time. */
+const TYPE_ROLES = ['happenedAt', 'about', 'createdAt', 'updatedAt', 'asOf', 'occurredAt', 'measure', 'describes', 'groupedBy', 'period', 'addsUp', 'uniqueCount'];
+
+/** A field that held a role of the model type of its Resource and is gone, removed or renamed in dbt (DEC-RC-23). */
+const TYPE_FIELDS_GONE: MessageItem = {
+  fields: [
+    { name: 'field', type: 'name', about: 'The field that is gone, by its name before' },
+    { name: 'role', type: 'choice', about: 'The role it held for the model type', values: TYPE_ROLES },
+  ],
+  text: {
+    nl: {
+      plain:
+        '{field}, {role, select, happenedAt {wanneer het gebeurde} about {waarover het gaat} createdAt {wanneer het werd aangemaakt} updatedAt {wanneer het laatst werd bijgewerkt} asOf {op welk moment het gold} occurredAt {wanneer het zich voordeed} measure {een meetwaarde} describes {wat het beschrijft} groupedBy {waarop gegroepeerd wordt} period {de periode} addsUp {een telling of som die optelt} uniqueCount {een unieke telling}}',
+      rich: '- `{field}`: {role, select, happenedAt {wanneer het gebeurde} about {waarover het gaat} createdAt {wanneer het werd aangemaakt} updatedAt {wanneer het laatst werd bijgewerkt} asOf {op welk moment het gold} occurredAt {wanneer het zich voordeed} measure {een meetwaarde} describes {wat het beschrijft} groupedBy {waarop gegroepeerd wordt} period {de periode} addsUp {een telling of som die optelt} uniqueCount {een unieke telling}}',
+    },
+    en: {
+      plain:
+        '{field}, {role, select, happenedAt {when it happened} about {what it is about} createdAt {when it was created} updatedAt {when it was last updated} asOf {as of when} occurredAt {when it occurred} measure {a measure} describes {what it describes} groupedBy {what it is grouped by} period {its period} addsUp {a count or sum that adds up} uniqueCount {a unique count}}',
+      rich: '- `{field}`: {role, select, happenedAt {when it happened} about {what it is about} createdAt {when it was created} updatedAt {when it was last updated} asOf {as of when} occurredAt {when it occurred} measure {a measure} describes {what it describes} groupedBy {what it is grouped by} period {its period} addsUp {a count or sum that adds up} uniqueCount {a unique count}}',
+    },
+  },
+};
+
 /** One thing a User gains or loses with another Permission group, a line as identity writes it (FR-PL-12). */
 const CHANGE_LINE: MessageItem = {
   fields: [{ name: 'line', type: 'text', about: 'One thing, as identity writes it' }],
@@ -955,6 +978,75 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
       done: 'Published, it shows so.',
     },
     example: { subject: 'Saved searches', collection: 'Web visits', actor: 'Dirk Vos', level: '2 · Described' },
+  },
+  {
+    id: 'MSG-RES-09',
+    title: 'A field of its model type is gone',
+    kind: 'dataHub',
+    subjects: ['resource'],
+    from: 'dataHub',
+    to: ['dataTeam'],
+    when: 'An Artifact Set removes or renames a field that holds a role of the model type of a Resource in a Collection.',
+    per: 'One per Resource and Artifact Set; all point to its one warning.',
+    status: 'Implemented',
+    sources: ['FR-RC-29', 'DEC-RC-23'],
+    parameters: [
+      { name: 'run', type: 'date', about: 'The day of the run of the Source Job' },
+      { name: 'modelType', type: 'name', about: 'Its model type, such as event or aggregate' },
+      { name: 'level', type: 'level', about: 'Its Level, which stays' },
+      { name: 'count', type: 'count', about: 'How many fields that held a role are gone' },
+      { name: 'gone', type: 'list', about: 'Every field that is gone, with the role it held', item: TYPE_FIELDS_GONE },
+    ],
+    text: {
+      nl: {
+        plain: '{count, plural, one {Een veld} other {# velden}} van het modeltype van {subject} {count, plural, one {is} other {zijn}} verdwenen: {gone}. Het level blijft {level}; kies een ander veld voor elke rol.',
+        rich: lines(
+          '**{count, plural, one {Een veld} other {# velden}} van het modeltype van {subject} {count, plural, one {is} other {zijn}} verdwenen**',
+          '',
+          'De dbt-run van {run} verwijderde of hernoemde {count, plural, one {een veld} other {velden}} waar het modeltype `{modelType}` om vraagt:',
+          '',
+          '{gone}',
+          '',
+          'Iedereen die de resource ziet, ziet een waarschuwing met de rol, tot een veld die rol weer heeft. Het level blijft {level}, en ook de publicatie. Kies met Relaties bewerken een ander veld voor elke rol; tot dan staat de resource bij de resources om te vervolledigen.',
+        ),
+      },
+      en: {
+        plain: '{count, plural, one {A field} other {# fields}} of the model type of {subject} {count, plural, one {is} other {are}} gone: {gone}. Its level stays {level}; choose another field for each role.',
+        rich: lines(
+          '**{count, plural, one {A field} other {# fields}} of the model type of {subject} {count, plural, one {is} other {are}} gone**',
+          '',
+          'The dbt run of {run} removed or renamed {count, plural, one {a field} other {fields}} that its model type `{modelType}` asks for:',
+          '',
+          '{gone}',
+          '',
+          'Everyone who sees the resource sees a warning that names the role, until a field holds it again. Its level stays {level}, and so does its publication. Choose another field for each role with Edit relations; until then, the resource is listed to complete.',
+        ),
+      },
+    },
+    learningCard: {
+      fit: 'named',
+      card: { number: '2.3.6', title: 'Five model types, and what each means for counting' },
+      why: 'The card that explains the model types, listed wherever a model type shows (FR-LR-39): what one row is, and so what each role of a model type is for.',
+    },
+    action: {
+      asks: 'act',
+      of: ['dataTeam'],
+      what: 'A Data Admin chooses another field for each role with Edit relations, which reopens the steps from the model type on (DEC-CO-27, DEC-UX-107).',
+      buttons: [
+        { label: { nl: 'Waarschuwing openen', en: 'Open the warning' }, opens: 'The page of the Resource, at its warning' },
+        { label: { nl: 'Relaties bewerken', en: 'Edit relations' }, opens: 'Edit relations of the Resource, from the step of the model type on', for: ['dataTeam'] },
+      ],
+      states: ['open', 'chosen'],
+      done: 'Once a field holds each role again, the warning goes and the Resource leaves the list to complete (FR-RC-29, FR-CO-45).',
+    },
+    example: {
+      subject: 'Weekly lead volume',
+      run: '2026-11-15',
+      modelType: 'aggregate',
+      level: '4 · Explored',
+      count: 1,
+      gone: [{ field: 'week_start', role: 'period' }],
+    },
   },
 
   // Lenses

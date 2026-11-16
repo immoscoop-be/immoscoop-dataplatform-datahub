@@ -52,6 +52,10 @@ Pointers to material this domain will build on, collected during the migration. 
 - <a id="dec-rc-19"></a>**DEC-RC-19** · The intended use and the pitfalls of a Resource are written in Markdown, as its Business Description, in the same editor ([DEC-RC-16](#dec-rc-16)). Its Known Gaps and the Business Descriptions of its fields stay plain text. *Decided on 2026-11-04, by Max.* *Note of 2026-11-04: a Known Gap may also be narrowed down by a scope ([DEC-RC-20](#dec-rc-20)).*
 - <a id="dec-rc-20"></a>**DEC-RC-20** · A Known Gap keeps its why in plain text and may be narrowed down by a scope of up to three kinds, each optional and combined as they apply: a period, fields and rows. A gap without one is free text, as every gap before. The scope lets Data Hub and Claude read where a gap holds; a warning on a query that reads it comes later ([FR-RC-27](#fr-rc-27)). *Decided on 2026-11-04, by Max: "combinable scope is ok, the warning on queries later".*
 - <a id="dec-rc-21"></a>**DEC-RC-21** · Beside the five model types of [DEC-RC-10](#dec-rc-10) there is `other`, for a Resource that fits none of them. `other` asks for a sentence on what one row is and has no fields of its own ([FR-CO-44](03-collections.md#fr-co-44)); its EDA runs only the EDA-Probes for every Resource; it gives no guidance on counting. The Data Team sees how many Resources are `other`, to add a model type when several share a kind. *Decided on 2026-11-15, by Max ([OP-RC-28](#op-rc-28)).*
+- <a id="dec-rc-22"></a>**DEC-RC-22** · A Data Admin changes the model type of a Resource with "Change model type" on its Overview, in its Description. The fields of the old model type are dropped, the new model type asks for its own ([FR-CO-44](03-collections.md#fr-co-44)), and the change triggers an EDA-Revalidation ([OP-ED-04](15-eda.md#op-ed-04)). *Decided on 2026-11-16, by Max.*
+- <a id="dec-rc-23"></a>**DEC-RC-23** · When a field that holds a role of its model type disappears from a Resource, removed or renamed in dbt, the Resource gets a warning that names the role, and the Data Team a Message to choose another field. The Level stays as it is ([DEC-MR-08](06-maturity-and-release.md#dec-mr-08)). *Decided on 2026-11-16, by Max.*
+- <a id="dec-rc-24"></a>**DEC-RC-24** · The Description on the Overview of a Resource shows, next to its model type and its grain, the fields its model type asks for, by their role: for an `event` when it happened, such as `eventDate`; for a `state` what it is about and when it was created and last updated; and so on for each model type ([FR-CO-44](03-collections.md#fr-co-44)). *Decided on 2026-11-16, by Max.*
+- <a id="dec-rc-25"></a>**DEC-RC-25** · Data Hub suggests no model type from the words of a Colleciónes model, such as its strategy or the grain word of `meta.model`: they change too often. Until the Domain Model says the model type itself ([DEC-AR-11](01-artifact-registry.md#dec-ar-11), [OP-AR-11](01-artifact-registry.md#op-ar-11)), the Data Admin chooses it by hand. *Decided on 2026-11-16, by Max.*
 
 ## Requirements
 
@@ -294,6 +298,30 @@ On the tab Columns, a field that a Known Gap names under Fields ([FR-RC-24](#fr-
 When a query, a Lens or a Preview reads the period or the rows of a Known Gap of one of its Resources, its Pre-flight says so, with the gap.
 
 *Could, not in v1: set on 2026-11-04, by Max ([DEC-RC-20](#dec-rc-20)).*
+
+<a id="fr-rc-28"></a>
+### FR-RC-28 · The Description shows the fields of the model type, and changing the model type
+
+**Status:** Implemented · **Source:** Max, 2026-11-16 ([DEC-RC-22](#dec-rc-22), [DEC-RC-24](#dec-rc-24)) · **Screens:** [collection-add-type](../../design/screens/collection-add-type.html), [resource-overview](../../design/screens/resource-overview.html)
+
+The Description on the Overview of a Resource shows its model type, its grain and the fields its model type asks for, each by its role and with the field that holds it, such as "Happened at `eventDate`" for an `event`. For a Data Admin it has "Change model type", which opens the steps of adding a Resource from the model type on ([DEC-UX-262](../../design/principles.md#dec-ux-262)); the fields of the old model type are dropped, and the change triggers an EDA-Revalidation.
+
+**Makes easy:** a reader seeing at once which field says when an event happened or what a state is about. **Makes hard:** a model type that changes without its fields, or its EDA, following.
+
+*Note of 2026-11-16, on building it: the EDA-Revalidation that a change of model type triggers comes with the [EDA](15-eda.md); until then the change drops the fields of the old model type.*
+
+<a id="fr-rc-29"></a>
+### FR-RC-29 · A field of the model type that disappears gives a warning
+
+**Status:** Implemented · **Source:** Max, 2026-11-16 ([DEC-RC-23](#dec-rc-23)) · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
+
+When a field that holds a role of the model type of a Resource is removed or renamed in dbt, the Resource shows a warning that names the role and the field that held it, and the Data Team gets a Message to choose another field. The Level and the Publication stay as they are. The warning goes once a field holds the role again.
+
+**Makes easy:** noticing at once that an `event` no longer says when it happened. **Makes hard:** a Resource that silently loses what its EDA and its counting rest on.
+
+*Note of 2026-11-16, on building it: the Message to the Data Team is [MSG-RES-09](message-catalogue.md#msg-res-09); the warning is `typeState.gone` of the Resource ([TR-CO-09](../technical/03-collections.md#tr-co-09)).*
+
+*Note of 2026-11-16, on building it: the Message to the Data Team is [MSG-RES-09](message-catalogue.md#msg-res-09).*
 
 ## Edge cases
 

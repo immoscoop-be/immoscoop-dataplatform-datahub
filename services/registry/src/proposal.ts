@@ -20,8 +20,8 @@ export interface ProposedMapping {
 
 /**
  * What Data Hub proposes for a Resource when the Data Team adds it (FR-CO-33, FR-CO-34, FR-AR-17):
- * how it is stored, its grain and model type, and a mapping for every field it can say something
- * about. Each is a suggestion the Data Admin confirms or changes (DEC-RC-09).
+ * how it is stored, its grain, and a mapping for every field it can say something about. Each is a
+ * suggestion the Data Admin confirms or changes (DEC-RC-09).
  */
 export interface Proposal {
   nodeId: string;
@@ -36,7 +36,11 @@ export interface Proposal {
     from: string | null;
   };
   grain: { fields: string[]; origin: Origin } | null;
-  modelType: { value: 'event' | 'state'; origin: Origin } | null;
+  /**
+   * Always none: no model type is suggested from the words of a Colleciónes model, its strategy or the grain word of
+   * `meta.model`, which change too often; the Data Admin chooses it until the Domain Model says it (DEC-RC-25).
+   */
+  modelType: null;
   mappings: ProposedMapping[];
   /** The release of the Domain Model the proposal was made with; null when the collector did not answer (EC-AR-05). */
   domainModel: { release: string } | null;
@@ -125,14 +129,6 @@ export function propose(node: NodeDetail, beneath: { stored?: NodeDetail; collec
       ? { fields: [grainField], origin: 'domainModel' }
       : null;
 
-  // The model type, from the strategy of the Colleciónes model: an event or a state (DEC-RC-10).
-  const strategy = (colleciones?.strategy ?? '').toLowerCase();
-  const modelType: Proposal['modelType'] = strategy.includes('event')
-    ? { value: 'event', origin: 'domainModel' }
-    : strategy.includes('state')
-      ? { value: 'state', origin: 'domainModel' }
-      : null;
-
   const mappings = new Map<string, ProposedMapping>();
   const add = (mapping: ProposedMapping) => {
     if (!mappings.has(mapping.field)) {
@@ -203,7 +199,7 @@ export function propose(node: NodeDetail, beneath: { stored?: NodeDetail; collec
       : { name: node.name, entity: null, action: null, colleciones: false },
     storage,
     grain,
-    modelType,
+    modelType: null,
     mappings: node.columns.flatMap((column) => mappings.get(column.name) ?? []),
     domainModel: model && { release: model.release },
   };

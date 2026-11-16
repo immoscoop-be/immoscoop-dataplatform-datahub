@@ -1,4 +1,5 @@
 import { type GapScope, hasScope, scopeText } from '@datahub/contracts/gaps';
+import type { ModelType } from '@datahub/contracts/model-types';
 import { curate, SUMMARY, type SummaryPart, WEIGHT_MEANS, type Weight, WEIGHTS } from '@datahub/contracts/summary';
 
 /** What the Summary of a Resource is made of, as the MCP reads it from catalogue and query. */
@@ -26,7 +27,8 @@ export interface SummaryFacts {
     clusterBy: string[];
     grain: string[];
     grainSentence: string;
-    modelType: string | null;
+    /** One of the six, `other` among them (DEC-RC-21). */
+    modelType: ModelType | null;
   };
   storage: { size?: string; partitions?: number | null } | null;
   publication: { publishedAt: string; publishedBy: string; confirmedAt: string; confirmedBy: string } | null;

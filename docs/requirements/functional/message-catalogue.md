@@ -30,7 +30,7 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | User | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-04](#msg-cnv-04), [MSG-CNV-07](#msg-cnv-07) | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-03](#msg-cnv-03), [MSG-LRN-01](#msg-lrn-01) | [MSG-CNV-03](#msg-cnv-03), [MSG-LEN-01](#msg-len-01), [MSG-QRY-01](#msg-qry-01) |
 | Owner | [MSG-RES-07](#msg-res-07) | – | – |
 | Data Team | [MSG-CNV-05](#msg-cnv-05) | – | – |
-| Data Hub | [MSG-CNV-06](#msg-cnv-06), [MSG-LEN-02](#msg-len-02), [MSG-LEN-06](#msg-len-06), [MSG-KEY-01](#msg-key-01), [MSG-KEY-02](#msg-key-02), [MSG-USR-01](#msg-usr-01) | [MSG-RES-02](#msg-res-02), [MSG-RES-03](#msg-res-03), [MSG-RES-04](#msg-res-04), [MSG-RES-05](#msg-res-05), [MSG-RES-06](#msg-res-06), [MSG-RES-08](#msg-res-08), [MSG-LEN-03](#msg-len-03), [MSG-LEN-04](#msg-len-04), [MSG-LEN-05](#msg-len-05), [MSG-QRY-02](#msg-qry-02), [MSG-RPT-01](#msg-rpt-01) | [MSG-COL-01](#msg-col-01), [MSG-RES-01](#msg-res-01), [MSG-LEN-03](#msg-len-03), [MSG-USR-02](#msg-usr-02), [MSG-USR-03](#msg-usr-03) |
+| Data Hub | [MSG-CNV-06](#msg-cnv-06), [MSG-LEN-02](#msg-len-02), [MSG-LEN-06](#msg-len-06), [MSG-KEY-01](#msg-key-01), [MSG-KEY-02](#msg-key-02), [MSG-USR-01](#msg-usr-01) | [MSG-RES-02](#msg-res-02), [MSG-RES-03](#msg-res-03), [MSG-RES-04](#msg-res-04), [MSG-RES-05](#msg-res-05), [MSG-RES-06](#msg-res-06), [MSG-RES-08](#msg-res-08), [MSG-LEN-03](#msg-len-03), [MSG-LEN-04](#msg-len-04), [MSG-LEN-05](#msg-len-05), [MSG-QRY-02](#msg-qry-02), [MSG-RPT-01](#msg-rpt-01) | [MSG-COL-01](#msg-col-01), [MSG-RES-01](#msg-res-01), [MSG-RES-09](#msg-res-09), [MSG-LEN-03](#msg-len-03), [MSG-USR-02](#msg-usr-02), [MSG-USR-03](#msg-usr-03) |
 
 ## Overview
 
@@ -52,6 +52,7 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | [MSG-RES-06](#msg-res-06) | A Resource was withdrawn | Resource | Data Hub → Owner | Nothing | Named: K5.11 | Implemented |
 | [MSG-RES-07](#msg-res-07) | The Owner tells the Consumers about a change | Resource | Owner → Consumers | Nothing | By the writer | Proposed |
 | [MSG-RES-08](#msg-res-08) | A Resource arrived in your Collection | Resource | Data Hub → Owner | Something to do | Named: 4.7.1 | Implemented |
+| [MSG-RES-09](#msg-res-09) | A field of its model type is gone | Resource | Data Hub → Data Team | Something to do | Named: 2.3.6 | Implemented |
 | [MSG-LEN-01](#msg-len-01) | Request to accept a very large Lens | Lens | User → Data Team | A decision | By the writer | Implemented |
 | [MSG-LEN-02](#msg-len-02) | A Lens grew into large | Lens | Data Hub → its author | Nothing | Named: K5.6 | Implemented |
 | [MSG-LEN-03](#msg-len-03) | A Lens grew into very large | Lens | Data Hub → Data Team and Owner | A decision | Named: K5.6 | Implemented |
@@ -1931,6 +1932,138 @@ Template, English, laid out:
 **{subject} is now in your collection {collection}**
 
 {actor} of the data team added it. It is at {level} and not yet published, so only your team and the data team see it. Read its descriptions, add your own where they help, and publish it when it is right: publishing it is your first confirmation.
+```
+
+</details>
+
+<a id="msg-res-09"></a>
+
+### MSG-RES-09 · A field of its model type is gone
+
+| | |
+| --- | --- |
+| Kind | Data Hub |
+| About | Resource |
+| From → to | Data Hub → Data Team |
+| When | An Artifact Set removes or renames a field that holds a role of the model type of a Resource in a Collection. |
+| How many | One per Resource and Artifact Set; all point to its one warning. |
+| Status | Implemented |
+| Comes from | [FR-RC-29](05-resource-card.md#fr-rc-29), [DEC-RC-23](05-resource-card.md#dec-rc-23) |
+
+**What it asks:** Something to do, of the Data Team. A Data Admin chooses another field for each role with Edit relations, which reopens the steps from the model type on ([DEC-CO-27](03-collections.md#dec-co-27), [DEC-UX-107](../../design/principles.md#dec-ux-107)).
+
+**How it ends:** Once a field holds each role again, the warning goes and the Resource leaves the list to complete ([FR-RC-29](05-resource-card.md#fr-rc-29), [FR-CO-45](03-collections.md#fr-co-45)). It starts `open` and ends `chosen`.
+
+| Button | Opens | For |
+| --- | --- | --- |
+| Open the warning · *Waarschuwing openen* | The page of the Resource, at its warning | every recipient |
+| Edit relations · *Relaties bewerken* | Edit relations of the Resource, from the step of the model type on | Data Team |
+
+**Learning Card:** Named: **2.3.6 Five model types, and what each means for counting**. The card that explains the model types, listed wherever a model type shows ([FR-LR-39](16-learning.md#fr-lr-39)): what one row is, and so what each role of a model type is for.
+
+**Dutch, laid out**, with the example:
+
+> **Een veld van het modeltype van Weekly lead volume is verdwenen**
+>
+> De dbt-run van 15 november 2026 verwijderde of hernoemde een veld waar het modeltype `aggregate` om vraagt:
+>
+> - `week_start`: de periode
+>
+> Iedereen die de resource ziet, ziet een waarschuwing met de rol, tot een veld die rol weer heeft. Het level blijft 4 · Explored, en ook de publicatie. Kies met Relaties bewerken een ander veld voor elke rol; tot dan staat de resource bij de resources om te vervolledigen.
+
+**Dutch, plain:**
+
+```text
+Een veld van het modeltype van Weekly lead volume is verdwenen: week_start, de periode. Het level blijft 4 · Explored; kies een ander veld voor elke rol.
+```
+
+**English, laid out**, with the example:
+
+> **A field of the model type of Weekly lead volume is gone**
+>
+> The dbt run of 15 November 2026 removed or renamed a field that its model type `aggregate` asks for:
+>
+> - `week_start`: its period
+>
+> Everyone who sees the resource sees a warning that names the role, until a field holds it again. Its level stays 4 · Explored, and so does its publication. Choose another field for each role with Edit relations; until then, the resource is listed to complete.
+
+**English, plain:**
+
+```text
+A field of the model type of Weekly lead volume is gone: week_start, its period. Its level stays 4 · Explored; choose another field for each role.
+```
+
+<details>
+<summary>Parameters and templates</summary>
+
+| Parameter | Type | Holds |
+| --- | --- | --- |
+| `run` | date | The day of the run of the Source Job |
+| `modelType` | name | Its model type, such as event or aggregate |
+| `level` | level | Its Level, which stays |
+| `count` | count | How many fields that held a role are gone |
+| `gone` | list | Every field that is gone, with the role it held |
+| `gone[].field` | name | The field that is gone, by its name before |
+| `gone[].role` | choice: `happenedAt`, `about`, `createdAt`, `updatedAt`, `asOf`, `occurredAt`, `measure`, `describes`, `groupedBy`, `period`, `addsUp`, `uniqueCount` | The role it held for the model type |
+
+Template, Dutch, plain:
+
+```text
+{count, plural, one {Een veld} other {# velden}} van het modeltype van {subject} {count, plural, one {is} other {zijn}} verdwenen: {gone}. Het level blijft {level}; kies een ander veld voor elke rol.
+```
+
+Template, Dutch, laid out:
+
+```markdown
+**{count, plural, one {Een veld} other {# velden}} van het modeltype van {subject} {count, plural, one {is} other {zijn}} verdwenen**
+
+De dbt-run van {run} verwijderde of hernoemde {count, plural, one {een veld} other {velden}} waar het modeltype `{modelType}` om vraagt:
+
+{gone}
+
+Iedereen die de resource ziet, ziet een waarschuwing met de rol, tot een veld die rol weer heeft. Het level blijft {level}, en ook de publicatie. Kies met Relaties bewerken een ander veld voor elke rol; tot dan staat de resource bij de resources om te vervolledigen.
+```
+
+Template, English, plain:
+
+```text
+{count, plural, one {A field} other {# fields}} of the model type of {subject} {count, plural, one {is} other {are}} gone: {gone}. Its level stays {level}; choose another field for each role.
+```
+
+Template, English, laid out:
+
+```markdown
+**{count, plural, one {A field} other {# fields}} of the model type of {subject} {count, plural, one {is} other {are}} gone**
+
+The dbt run of {run} removed or renamed {count, plural, one {a field} other {fields}} that its model type `{modelType}` asks for:
+
+{gone}
+
+Everyone who sees the resource sees a warning that names the role, until a field holds it again. Its level stays {level}, and so does its publication. Choose another field for each role with Edit relations; until then, the resource is listed to complete.
+```
+
+One item of `gone`, Dutch, plain:
+
+```text
+{field}, {role, select, happenedAt {wanneer het gebeurde} about {waarover het gaat} createdAt {wanneer het werd aangemaakt} updatedAt {wanneer het laatst werd bijgewerkt} asOf {op welk moment het gold} occurredAt {wanneer het zich voordeed} measure {een meetwaarde} describes {wat het beschrijft} groupedBy {waarop gegroepeerd wordt} period {de periode} addsUp {een telling of som die optelt} uniqueCount {een unieke telling}}
+```
+
+One item of `gone`, Dutch, laid out:
+
+```markdown
+- `{field}`: {role, select, happenedAt {wanneer het gebeurde} about {waarover het gaat} createdAt {wanneer het werd aangemaakt} updatedAt {wanneer het laatst werd bijgewerkt} asOf {op welk moment het gold} occurredAt {wanneer het zich voordeed} measure {een meetwaarde} describes {wat het beschrijft} groupedBy {waarop gegroepeerd wordt} period {de periode} addsUp {een telling of som die optelt} uniqueCount {een unieke telling}}
+```
+
+One item of `gone`, English, plain:
+
+```text
+{field}, {role, select, happenedAt {when it happened} about {what it is about} createdAt {when it was created} updatedAt {when it was last updated} asOf {as of when} occurredAt {when it occurred} measure {a measure} describes {what it describes} groupedBy {what it is grouped by} period {its period} addsUp {a count or sum that adds up} uniqueCount {a unique count}}
+```
+
+One item of `gone`, English, laid out:
+
+```markdown
+- `{field}`: {role, select, happenedAt {when it happened} about {what it is about} createdAt {when it was created} updatedAt {when it was last updated} asOf {as of when} occurredAt {when it occurred} measure {a measure} describes {what it describes} groupedBy {what it is grouped by} period {its period} addsUp {a count or sum that adds up} uniqueCount {a unique count}}
 ```
 
 </details>

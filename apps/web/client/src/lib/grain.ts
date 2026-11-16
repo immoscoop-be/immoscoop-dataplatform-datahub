@@ -1,9 +1,8 @@
+import { missingOfType, rolesFor, rolesOf, type MissingOfType, type ModelType, type TypeRole } from '@datahub/contracts/model-types';
+import type { IconName } from '@datahub/ui/foundations/icons.js';
 import type { ResourceDetail } from './catalogue.js';
 import type { Proposal, TypeCardinality } from './registry.js';
 
-/** The model types of a Resource, a fixed list (DEC-RC-10). */
-export const MODEL_TYPES = ['event', 'state', 'fact', 'dimension', 'aggregate'] as const;
-export type ModelType = (typeof MODEL_TYPES)[number];
 export const UNITS = ['hour', 'day', 'month', 'year'] as const;
 export type Unit = (typeof UNITS)[number];
 
@@ -11,6 +10,13 @@ export type Unit = (typeof UNITS)[number];
 export type Origin = 'dbt' | 'test' | 'domainModel' | 'here';
 export type MappingKind = 'none' | 'is' | 'relation' | 'performedBy';
 export type MappingOrigin = 'domainModel' | 'name' | 'here';
+
+/** A field holding a role of the model type, with where that came from (FR-CO-44). */
+export interface TypeFieldDraft {
+  field: string;
+  role: TypeRole;
+  origin: Origin;
+}
 
 export interface FieldDraft {
   name: string;
@@ -24,7 +30,7 @@ export interface FieldDraft {
   origin: MappingOrigin;
 }
 
-/** What the Data Admin is about to record for one Resource (FR-CO-33, FR-CO-34), as they change it. */
+/** What the Data Admin is about to record for one Resource (FR-CO-33, FR-CO-34, FR-CO-44), as they change it. */
 export interface Draft {
   id: string;
   displayName: string;
@@ -39,15 +45,33 @@ export interface Draft {
   grainSentence: string;
   modelType: ModelType | null;
   origins: Partial<Record<'partition' | 'clusterBy' | 'partitionFilter' | 'grain' | 'grainSentence' | 'modelType', Origin>>;
+  /** The fields that hold the roles of its model type; one field holds one role at most. */
+  typeFields: TypeFieldDraft[];
   fields: FieldDraft[];
   leftOut: ResourceDetail['leftOut'];
   /** The release of the Domain Model the proposal was made with; null without it. */
   release: string | null;
 }
 
+/** The words and icon of where a value came from, as each step of adding a Resource shows it; a quiet one is greyer. */
+export const ORIGINS: Readonly<Record<string, { icon: IconName; key: string; quiet?: boolean }>> = {
+  dbt: { icon: 'file-text', key: 'grain.origin.dbt' },
+  test: { icon: 'file-text', key: 'grain.origin.test' },
+  domainModel: { icon: 'graph', key: 'grain.origin.domainModel' },
+  name: { icon: 'lightbulb', key: 'grain.origin.name', quiet: true },
+  here: { icon: 'user', key: 'grain.origin.chosen' },
+  written: { icon: 'user', key: 'grain.origin.written' },
+  bigQuery: { icon: 'lock-simple', key: 'grain.origin.bigQuery' },
+  optional: { icon: 'info', key: 'grain.origin.optional', quiet: true },
+  before: { icon: 'arrow-left', key: 'fields.need.before', quiet: true },
+};
+
 const IDENTITY = /^[a-z][A-Za-z0-9]*\.[a-z][A-Za-z0-9]*$/;
 
-/** The draft of a Resource from its fields and what registry proposes, or from its fields alone. */
+/**
+ * The draft of a Resource from its fields and what registry proposes, or from its fields alone. It starts without a
+ * model type: Data Hub suggests none from the words of a Colleciónes model, so the Data Admin chooses it (DEC-RC-25).
+ */
 export function draftOf(resource: ResourceDetail, proposal: Proposal | null): Draft {
   const mapped = new Map((proposal?.mappings ?? []).map((mapping) => [mapping.field, mapping]));
   const storage = proposal?.storage;
@@ -63,14 +87,14 @@ export function draftOf(resource: ResourceDetail, proposal: Proposal | null): Dr
     filterLocked: Boolean(partition && storage?.requirePartitionFilter),
     grain: proposal?.grain?.fields ?? [],
     grainSentence: '',
-    modelType: proposal?.modelType?.value ?? null,
+    modelType: null,
     origins: {
       ...(partition ? { partition: 'dbt' as const } : {}),
       ...(storage?.clusterBy.length ? { clusterBy: 'dbt' as const } : {}),
       ...(partition && storage?.requirePartitionFilter ? { partitionFilter: 'dbt' as const } : {}),
       ...(proposal?.grain ? { grain: proposal.grain.origin === 'test' ? ('test' as const) : ('domainModel' as const) } : {}),
-      ...(proposal?.modelType ? { modelType: 'domainModel' as const } : {}),
     },
+    typeFields: [],
     fields: resource.fields.map((field) => {
       const proposed = mapped.get(field.name);
       return {
@@ -90,7 +114,10 @@ export function draftOf(resource: ResourceDetail, proposal: Proposal | null): Dr
   };
 }
 
-/** The draft of a Resource from what was recorded when it was added, to change it with Edit relations (DEC-UX-107). */
+/**
+ * The draft of a Resource from what was recorded when it was added, to change it with Edit relations (DEC-UX-107): its
+ * model type and the fields that hold its roles too, also a role whose field is gone, for the Data Admin to replace.
+ */
 export function recordedDraftOf(resource: ResourceDetail): Draft {
   const { details } = resource;
   const mapped = new Map(details.mappings.map((mapping) => [mapping.field, mapping]));
@@ -108,6 +135,7 @@ export function recordedDraftOf(resource: ResourceDetail): Draft {
     grainSentence: details.grainSentence,
     modelType: details.modelType,
     origins: details.origins,
+    typeFields: (details.typeFields ?? []).map(({ field, role, origin }) => ({ field, role, origin })),
     fields: resource.fields.map((field) => {
       const recorded = mapped.get(field.name);
       return {
@@ -207,9 +235,78 @@ export function strangers(draft: Draft, identities: ReadonlySet<string>): string
   ];
 }
 
+/**
+ * Chooses the model type (FR-CO-44): the fields its old model type asked for are dropped, as the new one asks for its own
+ * (DEC-RC-22). Choosing the one it has changes nothing.
+ */
+export function chooseType(draft: Draft, type: ModelType): void {
+  if (draft.modelType === type) return;
+  const roles = new Set(rolesOf(type).map((rule) => rule.role));
+  draft.modelType = type;
+  draft.origins.modelType = 'here';
+  draft.typeFields = draft.typeFields.filter((typeField) => roles.has(typeField.role));
+}
+
+/** The role a field holds for the model type, or null. */
+export function roleOf(draft: Draft, name: string): TypeRole | null {
+  return draft.typeFields.find((typeField) => typeField.field === name)?.role ?? null;
+}
+
+/**
+ * Gives a field a role of the model type, or takes its role away with null (FR-CO-44). A field holds one role; a role
+ * that one field holds, such as when an event happened, moves to it from the field that held it.
+ */
+export function holdRole(draft: Draft, name: string, role: TypeRole | null): void {
+  const rule = rolesOf(draft.modelType).find((one) => one.role === role);
+  draft.typeFields = [
+    ...draft.typeFields.filter((typeField) => typeField.field !== name && !(rule?.single && typeField.role === rule.role)),
+    ...(rule ? [{ field: name, role: rule.role, origin: 'here' as const }] : []),
+  ];
+}
+
+/** The roles that take a date and that the partition column can hold, and those the single field of the grain can. */
+const FROM_PARTITION: readonly TypeRole[] = ['happenedAt', 'occurredAt', 'period'];
+const FROM_GRAIN: readonly TypeRole[] = ['about', 'describes'];
+
+/**
+ * Suggests the fields its model type asks for where that is cheap (FR-CO-44), each with where it came from: the
+ * partition column, a date, for when an event happened, when a fact occurred or the period of an aggregate; the one
+ * field of the grain, mapped `is`, for what a state is about or what a dimension describes. A role a field already
+ * holds, and a field that holds a role, stay as they are; a role whose field is gone is given the suggestion.
+ */
+export function suggestTypeFields(draft: Draft): void {
+  const fieldOf = (name: string) => draft.fields.find((field) => field.name === name);
+  const offer = (role: TypeRole, name: string, origin: Origin) => {
+    const field = fieldOf(name);
+    const held = draft.typeFields.some((typeField) => typeField.role === role && fieldOf(typeField.field));
+    const busy = draft.typeFields.some((typeField) => typeField.field === name);
+    if (!field || held || busy || !rolesFor(draft.modelType, field.dataType).includes(role)) return;
+    draft.typeFields = [...draft.typeFields.filter((typeField) => typeField.role !== role), { field: name, role, origin }];
+  };
+  const partition = draft.partition?.field;
+  if (partition) {
+    for (const role of FROM_PARTITION) offer(role, partition, draft.origins.partition ?? 'here');
+  }
+  const [only, ...more] = draft.grain;
+  if (only && more.length === 0 && fieldOf(only)?.kind === 'is') {
+    for (const role of FROM_GRAIN) offer(role, only, draft.origins.grain ?? 'here');
+  }
+}
+
+/** What is still missing before the model type of the draft has every field it asks for (FR-CO-44). */
+export function missingOf(draft: Draft): MissingOfType[] {
+  return missingOfType(
+    draft.modelType,
+    draft.typeFields,
+    draft.fields.map((field) => ({ name: field.name, dataType: field.dataType })),
+    draft.grainSentence,
+  );
+}
+
 /** What catalogue records for a Resource when it is added (TR-CO-05). */
 export function requestOf(draft: Draft, identities: ReadonlySet<string>) {
   const subjects = subjectsOf(draft);
+  const names = new Set(draft.fields.map((field) => field.name));
   return {
     id: draft.id,
     partition: draft.partition,
@@ -223,6 +320,8 @@ export function requestOf(draft: Draft, identities: ReadonlySet<string>) {
       ...(draft.grainSentence.trim() && !draft.origins.grainSentence ? { grainSentence: 'here' as const } : {}),
     },
     release: draft.release || null,
+    // A role whose field is gone is not recorded again: it is missing until another field holds it (DEC-RC-23).
+    typeFields: draft.typeFields.filter((typeField) => names.has(typeField.field)).map(({ field, role, origin }) => ({ field, role, origin })),
     mappings: draft.fields
       .filter((field) => field.kind !== 'none')
       .map((field) => ({

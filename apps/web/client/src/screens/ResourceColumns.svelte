@@ -13,7 +13,7 @@
    * to its description from dbt, its Entity, and what it serves as, the partition, a cluster column with
    * its place, a Parameter. Its Owner Unit and the Data Team edit the Business Descriptions in place
    * (FR-RC-16), from 2 · Described on (DEC-MR-10); a Data Admin opens step 2 of adding with Edit relations
-   * (DEC-UX-107). A Key Field carries "Key Field" with a key, first (DEC-UX-263). A field a Known Gap names under Fields carries "Known Gap", with the gap on hover and the way to
+   * (DEC-UX-107). A Key Field carries "Key Field" with a key, first (DEC-UX-266). A field a Known Gap names under Fields carries "Known Gap", with the gap on hover and the way to
    * Known Gaps (FR-RC-26).
    */
   let {
@@ -55,7 +55,7 @@
   let show = $state<'all' | 'changed'>('all');
   const listed = $derived(show === 'changed' ? resource.fields.filter((field) => changedInDbt.has(field.name)) : resource.fields);
 
-  /** What a field serves as, in the order of the design: a Key Field first (DEC-UX-263), the partition, a cluster column, a Parameter. */
+  /** What a field serves as, in the order of the design: a Key Field first (DEC-UX-266), the partition, a cluster column, a Parameter. */
   function roles(field: Field): { label: string; strong: boolean; warn?: boolean; key?: boolean }[] {
     const cluster = details.clusterBy.indexOf(field.name);
     return [

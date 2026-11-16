@@ -31,10 +31,10 @@
   import { sizeText } from '../lib/size.js';
   import { command, useScreenCommands, view } from '../lib/commands.svelte.js';
   import type { QuickRow } from '../lib/quick.js';
-  import LearningRef from './LearningRef.svelte';
   import OverviewDanger from './OverviewDanger.svelte';
   import OverviewGaps from './OverviewGaps.svelte';
   import OverviewMaturity from './OverviewMaturity.svelte';
+  import OverviewRow from './OverviewRow.svelte';
   import OverviewSummary from './OverviewSummary.svelte';
 
   /**
@@ -68,6 +68,7 @@
     removeFrom = null,
     removeLater = null,
     onremove,
+    onchangetype,
     part = $bindable('summary'),
   }: {
     resource: ResourceDetail;
@@ -106,6 +107,8 @@
     removeLater?: string | null;
     /** Takes it out of its Collection; answers whether it worked. */
     onremove?: () => Promise<boolean>;
+    /** Opens the steps of its relations from the model type on, for a Data Admin (FR-RC-28); undefined for anyone else. */
+    onchangetype?: () => void;
     /** The part on screen, which the page can open, such as the Danger zone from a deprecation. */
     part?: Part;
   } = $props();
@@ -320,20 +323,9 @@
 {/snippet}
 
 {#snippet modelAndGrain()}
-  {#if details.modelType || details.grain.length > 0}
-    <div class="model">
-      {#if details.modelType}
-        <LearningRef place="modelType" shape="chip">
-          {#snippet children(mark)}<span class="code">{t('resource.modelType', { type: details.modelType ?? '' })}{@render mark?.()}</span>{/snippet}
-        </LearningRef>
-      {/if}
-      {#if details.grain.length > 0}
-        <LearningRef place="grain" shape="chip">
-          {#snippet children(mark)}<span class="code" title={details.grainSentence || undefined}>{t('resource.grain', { fields: details.grain.join(' × ') })}{@render mark?.()}</span>{/snippet}
-        </LearningRef>
-      {/if}
-      <OriginTag origin="dataTeam" />
-    </div>
+  <!-- What one row is, from the Data Team, at the end of the Description (FR-RC-28, DEC-UX-263). -->
+  {#if details.modelType || details.grain.length > 0 || onchangetype}
+    <div class="row"><OverviewRow {resource} {onchangetype} /></div>
   {/if}
 {/snippet}
 
@@ -581,7 +573,7 @@
   .pair .label { margin-bottom: 6px; }
   .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
   .reliable { max-width: 240px; margin-top: 14px; }
-  .model { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+  .row { margin-top: 12px; }
   .code { display: inline-flex; align-items: center; gap: 4px; font: var(--text-meta) var(--font-mono); color: var(--text-secondary); background: var(--surface-solid); padding: 3px 8px; border-radius: var(--radius-chip); }
   .code button { all: unset; cursor: pointer; color: var(--text-muted); }
   .code button:focus-visible { outline: 2px solid var(--text-secondary); }

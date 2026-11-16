@@ -3,12 +3,14 @@
   Screen: the page of a Collection, adding Resources, step 2: the model type
   After choosing a Resource (collection-add-resources.html), the Data Admin chooses what one row of it is: its model type.
   A card per model type says what one row is, why the type exists, what may be added up, the fields it asks for in step 3
-  (collection-add-grain.html, then collection-add-relations.html) and an example. Data Hub suggests one where it can, here from the strategy of the
-  Colleciónes model; the Data Admin confirms it. `other` stands beside the five, for a Resource that fits none
+  (collection-add-grain.html, then collection-add-relations.html) and an example. Data Hub suggests one only when the Domain Model says it in meta.model
+  (FR-AR-20, ?suggested shows it), never from the words of a Colleciónes model (DEC-RC-25); otherwise no card is chosen. `other` stands beside the five, for a Resource that fits none
   (DEC-RC-21). The choice goes on as ?type=, which step 4 reads to show the fields of that model type.
-  Requirements: FR-CO-44
-  Decisions: DEC-UX-262, DEC-UX-58, DEC-RC-10, DEC-RC-21. Learning Card: 2.3.6 (FR-LR-39).
-  Related screens: collection-add-resources.html, collection-add-relations.html, learning-card.html.
+  Requirements: FR-CO-44, FR-RC-28
+  Decisions: DEC-UX-262, DEC-UX-263, DEC-UX-58, DEC-RC-10, DEC-RC-21, DEC-RC-22. Learning Card: 2.3.6 (FR-LR-39).
+  ?change=aggregate shows it opened by "Change model type" on the Overview (FR-RC-28): without the first step, the model type
+  it has now marked, and what changing drops; "Next" waits for another one.
+  Related screens: resource-overview.html, collection-add-resources.html, collection-add-relations.html, learning-card.html.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="datateam">
@@ -159,19 +161,20 @@
 <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
  <div class="sheet-steps" aria-label="Steps"><a class="done" href="collection-add-resources.html"><b><i class="ph ph-check"></i></b>Choose a Resource</a><i class="ph ph-arrow-right" aria-hidden="true"></i><span class="on"><b>2</b>Model type</span><i class="ph ph-arrow-right" aria-hidden="true"></i><a href="collection-add-grain.html"><b>3</b>Grain and storage</a><i class="ph ph-arrow-right" aria-hidden="true"></i><a href="collection-add-relations.html"><b>4</b>Fields and relations</a></div>
  <div style="display:flex;align-items:flex-start;gap:8px"><div style="flex:1"><h2 id="sheet-title">What is one row of Credit simulations?</h2><p class="meta" style="margin-top:6px;display:block;line-height:1.5">Choose its model type. It decides what may be added up, which fields the next step asks for, and which EDA-Probes its EDA runs. Everyone who reads the Resource sees it.</p></div><a class="icon-btn" href="collection-overview.html" aria-label="Close"><i class="ph ph-x"></i></a></div>
- <p class="check-line" style="margin-top:10px"><i class="ph ph-graph"></i><span><b>Suggested: event.</b> Credit simulations is built on the Colleciónes event <code>homeLoanSimulation.generate</code>, whose strategy is an event. Check it, and choose another when it is wrong.</span></p>
+ <div class="alert" id="type-change" hidden role="status" style="margin-top:10px"><i class="ph-fill ph-warning-circle"></i><p><b style="font-weight:500">It is an <span class="mono" id="type-now">aggregate</span> now.</b> Changing it drops the fields that model type asks for, and its EDA is revalidated. Its grain and mappings stay, for you to check in the next steps.</p></div>
+ <p class="check-line" id="type-suggested" style="margin-top:10px" hidden><i class="ph ph-graph"></i><span><b>Suggested: event.</b> The Domain Model says so in the meta of <code>homeLoanSimulation.generate</code>. Check it, and choose another when it is wrong.</span></p>
  <div class="sheet-list type-list" role="radiogroup" aria-label="Model type" style="margin-top:10px">
-  <label class="pick type-pick"><input type="radio" name="model-type" value="event" data-asks="when it happened" checked>
+  <label class="pick type-pick"><input type="radio" name="model-type" value="event" data-asks="when it happened">
    <span style="flex:1;min-width:0">
-    <span class="type-head"><span class="type-name lc-ref" title="Explained in Learning Card 2.3.6, Five model types">event<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (explained in the Learning Centre)</span></span><span class="rel-src"><i class="ph ph-graph"></i>Suggested by the Domain Model</span></span>
+    <span class="type-head"><span class="type-name lc-ref" title="Explained in Learning Card 2.3.6, Five model types">event<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (explained in the Learning Centre)</span></span><span class="rel-src type-sug" hidden><i class="ph ph-graph"></i>Suggested by the Domain Model</span></span>
     <span class="type-def">One row per thing that happened, at one moment. A row never changes after; new rows only add on.</span>
     <dl class="type-facts"><dt>Why</dt><dd>The most faithful record of behaviour: what happened, when, and in which order.</dd><dt>Counting</dt><dd>Add its rows up over any period.</dd><dt>Asks for</dt><dd>When it happened <span class="req">· required</span></dd><dt>For example</dt><dd>A property view, a lead sent, a simulation generated.</dd></dl>
    </span></label>
-  <label class="pick type-pick"><input type="radio" name="model-type" value="state" data-asks="what it is about">
+  <label class="pick type-pick"><input type="radio" name="model-type" value="state" data-asks="what it is about, and when it was created and last updated">
    <span style="flex:1;min-width:0">
     <span class="type-head"><span class="type-name lc-ref" title="Explained in Learning Card 2.3.6, Five model types">state<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (explained in the Learning Centre)</span></span></span>
     <span class="type-def">One row per thing as it is now, or as it was at a moment. The same thing comes back, with values that may have changed.</span>
-    <dl class="type-facts"><dt>Why</dt><dd>To answer how things stand, without rebuilding it from the events each time.</dd><dt>Counting</dt><dd>Count at one moment; never add up over periods.</dd><dt>Asks for</dt><dd>What it is about <span class="req">· required</span>; as of when <span class="req">· when it keeps its history</span></dd><dt>For example</dt><dd>A listing as it is now; the listings online on each day.</dd></dl>
+    <dl class="type-facts"><dt>Why</dt><dd>To answer how things stand, without rebuilding it from the events each time.</dd><dt>Counting</dt><dd>Count at one moment; never add up over periods.</dd><dt>Asks for</dt><dd>What it is about, when it was created and when it was last updated <span class="req">· required</span>; as of when <span class="req">· when it keeps its history</span></dd><dt>For example</dt><dd>A listing as it is now; the listings online on each day.</dd></dl>
    </span></label>
   <label class="pick type-pick"><input type="radio" name="model-type" value="fact" data-asks="when it occurred, and its measures">
    <span style="flex:1;min-width:0">
@@ -189,16 +192,16 @@
    <span style="flex:1;min-width:0">
     <span class="type-head"><span class="type-name lc-ref" title="Explained in Learning Card 2.3.6, Five model types">aggregate<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (explained in the Learning Centre)</span></span></span>
     <span class="type-def">One row per group, such as per agency per week, with its counts or sums already made.</span>
-    <dl class="type-facts"><dt>Why</dt><dd>Speed, and one agreed figure for everyone who reads it.</dd><dt>Counting</dt><dd>Add up its sums; never its unique counts.</dd><dt>Asks for</dt><dd>What it is grouped by, and its counts and sums <span class="req">· required</span>; its period <span class="req">· when grouped by time</span></dd><dt>For example</dt><dd>Leads per region per month, emails sent per day.</dd></dl>
+    <dl class="type-facts"><dt>Why</dt><dd>Speed, and one agreed figure for everyone who reads it.</dd><dt>Counting</dt><dd>Add up its sums; never its unique counts.</dd><dt>Asks for</dt><dd>What it is grouped by, and every number marked as a sum or a unique count <span class="req">· required</span>; its period <span class="req">· when grouped by time</span></dd><dt>For example</dt><dd>Leads per region per month, emails sent per day.</dd></dl>
    </span></label>
-  <label class="pick type-pick"><input type="radio" name="model-type" value="other" data-asks="a sentence on what one row is">
+  <label class="pick type-pick"><input type="radio" name="model-type" value="other" data-asks="the sentence of One row per, in the next step">
    <span style="flex:1;min-width:0">
     <span class="type-head"><span class="type-name lc-ref" title="Explained in Learning Card 2.3.6, Five model types">other<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (explained in the Learning Centre)</span></span></span>
     <span class="type-def">None of the five. You say in a sentence what one row is.</span>
-    <dl class="type-facts"><dt>Why</dt><dd>For a Resource that fits no model type, rather than a wrong one.</dd><dt>Counting</dt><dd>No guidance: ask the Data Team before adding anything up.</dd><dt>Asks for</dt><dd>One row is, in a sentence <span class="req">· required</span>. No fields of its own, so its EDA runs only the EDA-Probes for every Resource</dd><dt>For example</dt><dd>A mapping of codes kept for one report.</dd></dl>
+    <dl class="type-facts"><dt>Why</dt><dd>For a Resource that fits no model type, rather than a wrong one.</dd><dt>Counting</dt><dd>No guidance: ask the Data Team before adding anything up.</dd><dt>Asks for</dt><dd>Its sentence is "One row per", in the next step <span class="req">· required</span>. No fields of its own, so its EDA runs only the EDA-Probes for every Resource</dd><dt>For example</dt><dd>A mapping of codes kept for one report.</dd></dl>
    </span></label>
  </div>
- <div class="sheet-foot"><a class="btn-quiet" href="collection-add-resources.html"><i class="ph ph-arrow-left" style="font-size:14px"></i> Back</a><p class="meta" id="type-foot"><code>event</code> · asks for when it happened</p><a class="btn-primary" id="type-next" href="collection-add-grain.html?type=event" style="text-decoration:none">Next: grain and storage<i class="ph ph-arrow-right" style="font-size:15px"></i></a></div>
+ <div class="sheet-foot"><a class="btn-quiet" href="collection-add-resources.html"><i class="ph ph-arrow-left" style="font-size:14px"></i> Back</a><p class="meta" id="type-foot">Choose a model type</p><a class="btn-primary is-disabled" id="type-next" aria-disabled="true" href="collection-add-grain.html" style="text-decoration:none">Next: grain and storage<i class="ph ph-arrow-right" style="font-size:15px"></i></a></div>
 </section>
 <script src="app.js"></script>
 </body>

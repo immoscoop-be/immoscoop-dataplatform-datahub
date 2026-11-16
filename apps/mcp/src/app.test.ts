@@ -745,7 +745,7 @@ describe('the MCP App', () => {
   it('opens a Resource on its Summary, fits a phone and folds (FR-CL-26, FR-CL-27, DEC-UX-180, DEC-UX-181)', () => {
     expect(VIEW_PAGE).toContain('data-tab="summary">Summary</button>');
     expect(VIEW_PAGE).toContain("let tab = 'summary';");
-    // Its Columns mark the Key Fields first, as Data Hub does (DEC-UX-263).
+    // Its Columns mark the Key Fields first, as Data Hub does (DEC-UX-266).
     expect(VIEW_PAGE).toContain(`(card.keyFields ?? []).includes(name) ? '<span class="pill">Key Field</span>'`);
     // On a phone: one column, the fields as cards, buttons and tabs at least 44 px.
     const phone = VIEW_PAGE.slice(VIEW_PAGE.indexOf('@media (max-width: 520px)'));
