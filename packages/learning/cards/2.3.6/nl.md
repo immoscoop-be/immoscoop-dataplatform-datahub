@@ -3,7 +3,7 @@ number: 2.3.6
 status: reviewed
 minutes: 6
 added: 2026-10-29
-changed: 2026-11-14
+changed: 2026-11-16
 gain: Je ziet aan het model type van een Resource wat je mag optellen, en wat nooit.
 translatedFrom: d0e4a6e12de9
 ---
@@ -27,7 +27,7 @@ De kasbonnen zijn events: tel ze op. De voorraad in de rekken is een state: je t
 
 ## Bijvoorbeeld
 
-Een `event` is één rij per iets dat gebeurde, op een moment, en verandert daarna nooit, zoals een verstuurde lead. Een `state` is één rij per ding zoals het is, of was op een moment, zoals een pand dat op een dag online staat. Een `fact` is één rij per zakelijke gebeurtenis met de maten om op te tellen. Een `dimension` is één rij per ding dat andere beschrijft, zoals een kantoor. Een `aggregate` is één rij per groep met haar tellingen al gemaakt.
+Een `event` is één rij per iets dat gebeurde, op een moment, en verandert daarna nooit, zoals een verstuurde lead. Een `state` is één rij per ding zoals het is, of was op een moment, zoals een pand dat op een dag online staat. Een `fact` is één rij per zakelijke gebeurtenis met de maten om op te tellen. Een `dimension` is één rij per ding dat andere beschrijft, zoals een kantoor. Een `aggregate` is één rij per groep met haar tellingen al gemaakt. Past geen van de vijf, dan kiest de Data Admin `other` en zegt hij in een zin wat één rij is: dan is er geen regel om te tellen, dus vraag het aan het Data Team voor je iets optelt.
 
 # See it
 

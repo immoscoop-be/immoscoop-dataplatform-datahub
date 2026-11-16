@@ -3,7 +3,7 @@ number: 2.3.6
 status: reviewed
 minutes: 6
 added: 2026-10-29
-changed: 2026-11-14
+changed: 2026-11-16
 gain: You see from the model type of a Resource what you may add up, and what never.
 ---
 
@@ -26,7 +26,7 @@ The till receipts are events: add them up. The stock on the shelves is a state: 
 
 ## For example
 
-An `event` is one row per thing that happened, at a moment, and never changes after, such as a lead sent. A `state` is one row per thing as it is, or was at a moment, such as a listing online on a day. A `fact` is one row per business occurrence with the measures to add up. A `dimension` is one row per thing that describes others, such as an agency. An `aggregate` is one row per group with its counts already made.
+An `event` is one row per thing that happened, at a moment, and never changes after, such as a lead sent. A `state` is one row per thing as it is, or was at a moment, such as a listing online on a day. A `fact` is one row per business occurrence with the measures to add up. A `dimension` is one row per thing that describes others, such as an agency. An `aggregate` is one row per group with its counts already made. When none of the five fits, the Data Admin chooses `other` and says in a sentence what one row is: then there is no rule for counting, so ask the Data Team before you add anything up.
 
 # See it
 

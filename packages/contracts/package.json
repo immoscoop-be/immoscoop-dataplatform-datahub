@@ -55,6 +55,10 @@
     "./journey": {
       "types": "./dist/journey.d.ts",
       "default": "./dist/journey.js"
+    },
+    "./model-types": {
+      "types": "./dist/modelTypes.d.ts",
+      "default": "./dist/modelTypes.js"
     }
   },
   "files": [
