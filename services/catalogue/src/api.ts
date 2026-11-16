@@ -3,6 +3,7 @@ import { canWith, type CollectionIcon, type CollectionVisibility, NO_PERMISSIONS
 import { isCollectionIcon } from '@datahub/contracts/collection-icons';
 import { type GapScope, gapScopeSchema } from '@datahub/contracts/gaps';
 import { isJourneyStep, type JourneyStepId } from '@datahub/contracts/journey';
+import { MODEL_TYPES, type ModelType, TYPE_ROLES } from '@datahub/contracts/model-types';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { type Collection, type CollectionChanges, type Collections, type FolderOutcome, type Movable, NameTaken, NotEmpty, type Viewer } from './collections.js';
 import { type Group, type Identity, IdentityUnavailable } from './identity.js';
@@ -10,7 +11,7 @@ import { learningRoutes } from './learning-api.js';
 import type { Learning } from './learning.js';
 import { messageRoutes } from './message-api.js';
 import type { Messages } from './messages.js';
-import { MODEL_TYPES, type ModelType, type Origins, type PartitionUnit } from './database.js';
+import type { Origins, PartitionUnit } from './database.js';
 import type { QueryService } from './query.js';
 import { type Registry, RegistryUnavailable } from './registry.js';
 import { REQUEST_TYPES, type RequestFields, type Requests, type RequestType } from './requests.js';
@@ -26,6 +27,7 @@ import {
   type EditOutcome,
   type GapOutcome,
   type Mapping,
+  type RecordedTypeField,
   type Resource,
   type Resources,
   type ResourcesUpdate,
@@ -510,6 +512,15 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     return { resources: await resources.withdrawnList() };
   });
 
+  // The Resources whose model type misses a field it asks for, or that have none yet, for the Data Team (FR-CO-45,
+  // DEC-CO-27). A path of its own, before `/resources/:id`; the router takes it over the parameter anyway.
+  app.get('/resources/to-complete', async (request, reply) => {
+    if (!may(viewer(request), 'resources.assign')) {
+      return reply.code(403).send(forbidden('resources.assign', 'Only a Data Admin sees the Resources to complete.'));
+    }
+    return { resources: await resources.toComplete() };
+  });
+
   /** A Resource the User sees, with its Collection as they see it: none for a Resource without one. */
   interface Seen {
     resource: Resource;
@@ -712,9 +723,10 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     return editOutcome(request, reply, found, await resources.describeFields(found.resource.id, descriptions, viewer(request)));
   });
 
-  // Edit relations, as at step 2 of adding (DEC-UX-107): the grain, storage and model type are the work of a Data Admin
-  // (`resources.assign`); the mappings are the Entity mapping, an attribute to describe (DEC-PL-03). Each part that
-  // changes needs its own Permission.
+  // Edit relations, as at step 2 of adding (DEC-UX-107): the grain, storage, model type and the fields it asks for are the
+  // work of a Data Admin (`resources.assign`); the mappings are the Entity mapping, an attribute to describe (DEC-PL-03).
+  // Each part that changes needs its own Permission. A change of the work of a Data Admin leaves the model type with every
+  // field it asks for (FR-CO-44); a change of the mappings alone is taken also on a Resource added before that.
   app.put<{ Params: { id: string }; Body: unknown }>('/resources/:id/details', async (request, reply) => {
     const input = request.body;
     const details = input !== null && typeof input === 'object' && !Array.isArray(input) ? parseDetails(input as Record<string, unknown>) : 'Send the details as a JSON object.';
@@ -738,7 +750,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     if (mapped && !describes(who, found.collection.ownerUnit.id, 'entityMapping')) {
       return reply.code(403).send(notDescribed('entityMapping'));
     }
-    return editOutcome(request, reply, found, await resources.relate(found.resource.id, details, who));
+    return editOutcome(request, reply, found, await resources.relate(found.resource.id, details, who, assigned));
   });
 
   // Each mapping with the Resources that carry the same identity, as far as the User sees them (FR-RC-09).
@@ -1262,6 +1274,8 @@ const FILTERS = ['none', 'dataHub', 'bigQuery'] as const;
 const KINDS = ['is', 'relation', 'performedBy'] as const;
 const MAPPING_ORIGINS = ['domainModel', 'name', 'here'] as const;
 const ORIGINS = ['dbt', 'test', 'domainModel', 'here'] as const;
+/** At most this many fields hold a role of a model type, as many as the mappings. */
+const TYPE_FIELDS_LIMIT = 1000;
 const ORIGIN_KEYS = ['partition', 'clusterBy', 'partitionFilter', 'grain', 'grainSentence', 'modelType'] as const;
 const IDENTITY = /^[a-z][A-Za-z0-9]*\.[a-z][A-Za-z0-9]*$/;
 const NAME = (value: unknown, max = 1024): value is string => typeof value === 'string' && value.length > 0 && value.length <= max;
@@ -1352,6 +1366,19 @@ function parseDetails(input: Record<string, unknown>): Details | string {
       inDomainModel: mapping.inDomainModel as boolean,
     });
   }
+  // The fields of its model type (FR-CO-44): a client that does not send them yet sends none.
+  const sentTypeFields = input.typeFields ?? [];
+  if (!Array.isArray(sentTypeFields) || sentTypeFields.length > TYPE_FIELDS_LIMIT) {
+    return `The fields of the model type come as a list of at most ${TYPE_FIELDS_LIMIT}.`;
+  }
+  const typeFields: RecordedTypeField[] = [];
+  for (const raw of sentTypeFields as unknown[]) {
+    const held = (raw ?? {}) as Record<string, unknown>;
+    if (!NAME(held.field) || !one(TYPE_ROLES, held.role) || !one(ORIGINS, held.origin)) {
+      return `Each field of the model type has its field, a role (${TYPE_ROLES.join(', ')}), and its origin: dbt, test, domainModel or here.`;
+    }
+    typeFields.push({ field: held.field, role: held.role, origin: held.origin });
+  }
   return {
     partition: partition ? { field: partition.field as string, unit: partition.unit as PartitionUnit | null } : null,
     clusterBy: input.clusterBy as string[],
@@ -1359,6 +1386,7 @@ function parseDetails(input: Record<string, unknown>): Details | string {
     grain: input.grain as string[],
     grainSentence: (input.grainSentence as string).trim(),
     modelType: input.modelType as ModelType | null,
+    typeFields,
     origins: origins as Origins,
     release: release as string | null,
     mappings,

@@ -1,4 +1,4 @@
-import { askedWords, HEADLINE, type Marked, marked } from '@datahub/db';
+import { askedWords, HEADLINE, type Marked, marked, sharedCount, shares } from '@datahub/db';
 import { type Kysely, type Selectable, sql } from 'kysely';
 import type { LensField, LensLogId, LensParameterRow, LensRange, LensState, Missing, NamedResource, QueryDatabase } from './database.js';
 import type { Query, Viewer } from './queries.js';
@@ -378,20 +378,21 @@ export function createLenses(db: Kysely<QueryDatabase>): Lenses {
     async words(question, ids) {
       if (ids.length === 0) return new Map();
       const options = HEADLINE;
-      const { rows } = await sql<{ id: string; shared: string; name: string; question: string; shows: string; tags: string[] }>`
+      // A word of the question by its stem, and the last one, still being typed, as the start of a word (DEC-UX-267).
+      const lensText = sql`concat_ws(' ', lens.name, lens.question, lens.shows, array_to_string(lens.tag_list, ' '))`;
+      const { rows } = await sql<{ id: string; shared: string; name: string; question: string; shows: string; tags: string[]; last: string | null }>`
         with query as ${askedWords('lens_words', question)}, lens as (
           select l.*, array(select jsonb_array_elements_text(l.tags)) as tag_list from lenses l where l.id = any(${ids as string[]}::uuid[])
         )
-        select lens.id,
-          (select count(*) from unnest(query.words) as word
-            where word = any(tsvector_to_array(to_tsvector('lens_words', concat_ws(' ', lens.name, lens.question, lens.shows, array_to_string(lens.tag_list, ' ')))))) as shared,
+        select lens.id, query.last,
+          ${sharedCount('lens_words', lensText)} as shared,
           case when query.q is null then lens.name else ts_headline('lens_words', lens.name, query.q, ${options}) end as name,
           case when query.q is null then lens.question else ts_headline('lens_words', lens.question, query.q, ${options}) end as question,
           case when query.q is null then lens.shows else ts_headline('lens_words', lens.shows, query.q, ${options}) end as shows,
-          array(select tag from unnest(lens.tag_list) as tag where query.q is not null and to_tsvector('lens_words', tag) @@ query.q) as tags
+          array(select tag from unnest(lens.tag_list) as tag where ${shares('lens_words', sql`tag`)}) as tags
         from lens, query
       `.execute(db);
-      return new Map(rows.map((row) => [row.id, { shared: Number(row.shared), name: marked(row.name), question: marked(row.question), shows: marked(row.shows), tags: row.tags }]));
+      return new Map(rows.map((row) => [row.id, { shared: Number(row.shared), name: marked(row.name, row.last), question: marked(row.question, row.last), shows: marked(row.shows, row.last), tags: row.tags }]));
     },
   };
 }

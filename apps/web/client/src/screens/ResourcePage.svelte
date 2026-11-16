@@ -24,11 +24,12 @@
   import type { QuickRow } from '../lib/quick.js';
   import { Refused } from '../lib/api.js';
   import type { requestOf } from '../lib/grain.js';
+  import { missingWords, roleWords } from '../lib/typeFields.js';
   import AddResources from './AddResources.svelte';
   import LearningPop from './LearningPop.svelte';
   import LearningRef from './LearningRef.svelte';
   import PublishSheet from './PublishSheet.svelte';
-  import RelationsSheet from './RelationsSheet.svelte';
+  import RelationsSheet, { type RelationsStart } from './RelationsSheet.svelte';
   import ResourceColumns from './ResourceColumns.svelte';
   import ResourceHistory from './ResourceHistory.svelte';
   import ResourceLineage from './ResourceLineage.svelte';
@@ -38,8 +39,9 @@
   /**
    * The page of a Resource (Detail page of a Resource): its name and Key, its state in a status row, and
    * its tabs Overview, Columns, Lineage, History and Preview (DEC-UX-90). Its Owner Unit and the Data Team
-   * edit what Data Hub keeps about it in place (FR-RC-15); a Data Admin changes its grain and relations
-   * (DEC-UX-107). A Resource without a Collection says so, and only the Data Team sees it. Its Owner
+   * edit what Data Hub keeps about it in place (FR-RC-15); a Data Admin changes its model type, grain and relations
+   * (DEC-UX-107, DEC-CO-27). A field of its model type that is gone shows as a warning for everyone (FR-RC-29), and a
+   * model type that is incomplete as one for the Data Team (FR-CO-45); each reopens the steps of its relations. A Resource without a Collection says so, and only the Data Team sees it. Its Owner
    * publishes it, the first Confirmation (FR-SR-49); once published, its Owner Unit and the Data Team
    * deprecate it (FR-SR-50), and mark seen what changed since its last Confirmation (FR-MR-12). Its
    * Preview shows its first rows (FR-SR-38); its History, the queries that used it, only for who sees the queries
@@ -99,7 +101,8 @@
   let related: Related[] | undefined = $state();
   /** Its size and partitions from BigQuery (FR-SR-39); null where BigQuery does not tell them. */
   let storage: Storage | null | undefined = $state();
-  let relating = $state(false);
+  /** The steps of its relations, open where they were asked to open (DEC-CO-27); undefined while closed. */
+  let relating: RelationsStart | undefined = $state();
   let sheet: 'publish' | undefined = $state();
   /** The part of the Overview on screen, which a deprecation opens on its Danger zone (DEC-UX-176). */
   let part: OverviewPart = $state('summary');
@@ -119,7 +122,7 @@
     part = 'summary';
     related = undefined;
     storage = undefined;
-    relating = false;
+    relating = undefined;
     sheet = undefined;
     adding = false;
     failed = false;
@@ -198,6 +201,22 @@
       .join('; '),
   );
   const reason = $derived(resource.deprecation ? resource.deprecation.reason.replace(/([^.!?])$/, '$1.') : '');
+  /**
+   * The roles of its model type whose field is gone, removed or renamed in dbt, each with when it went where its changes
+   * tell (FR-RC-29, DEC-RC-23); and what its model type still misses, for the Data Team (FR-CO-45).
+   */
+  const gone = $derived(
+    (resource.typeState?.gone ?? []).map((one) => {
+      const removed = resource.changes.find((change) => change.field === one.field && change.change === 'removed');
+      const values: Record<string, string> = removed ? { role: roleWords(one.role), date: day(removed.at) } : { role: roleWords(one.role) };
+      return { key: removed ? 'resource.gone.removed' : 'resource.gone.left', values, names: { field: one.field } };
+    }),
+  );
+  const goneText = $derived(gone.map((one) => t(one.key, { ...one.values, ...one.names })).join('; '));
+  const LIST_LOCALES = { nl: 'nl-BE', en: 'en-GB' } as const;
+  const missingText = $derived(new Intl.ListFormat(LIST_LOCALES[currentLanguage()]).format((resource.typeState?.missing ?? []).map(missingWords)));
+  /** What one row is is the work of a Data Admin, for a Resource in a Collection (DEC-CO-27). */
+  const relates = $derived(assigns && resource.collectionId !== null);
 
   /** Shows the Resource as catalogue gives it back, with its Log, after a change. */
   async function changed(updated: ResourceDetail) {
@@ -289,7 +308,7 @@
   async function saveRelations(details: Record<string, unknown>): Promise<boolean> {
     try {
       await changed(await catalogue.relate(resource.id, details));
-      relating = false;
+      relating = undefined;
       return true;
     } catch (error) {
       console.error(`The relations of ${resource.displayName} could not be changed`, error);
@@ -322,7 +341,9 @@
     const instead = resource.deprecation?.insteadOf;
     if (instead) rows.push(place('resource:instead', 'arrow-right', t('resource.deprecated.use', { name: instead.displayName }), () => go(resourcePath(instead.id)), { meta: t('quick.resource.instead.meta'), words: t('quick.resource.instead.words') }));
     if (resource.changes.length > 0 && describes('description')) rows.push(command('resource:seen', 'check-circle-fill', t('quick.resource.seen'), () => void act(() => catalogue.markSeen(resource.id)), { meta: changedText, words: t('quick.resource.seen.words') }));
-    if (tab === 'columns' && (assigns || describes('entityMapping')) && resource.collectionId !== null) rows.push(command('resource:relations', 'graph-fill', t('resource.editRelations'), () => (relating = true), { meta: t('resource.editRelations.title'), words: t('quick.resource.relations.words') }));
+    if (relates && goneText) rows.push(command('resource:gone', 'warning-circle-fill', t('resource.gone.choose'), () => (relating = 'fields'), { meta: goneText, words: t('quick.resource.relations.words') }));
+    if (relates && missingText) rows.push(command('resource:complete', 'list-checks', t('resource.incomplete.complete'), () => (relating = 'type'), { meta: missingText, words: t('quick.resource.relations.words') }));
+    if (tab === 'columns' && (assigns || describes('entityMapping')) && resource.collectionId !== null) rows.push(command('resource:relations', 'graph-fill', t('resource.editRelations'), () => (relating = 'type'), { meta: t('resource.editRelations.title'), words: t('quick.resource.relations.words') }));
     for (const one of tabs) if (one.id !== tab) rows.push(view(`resource:tab:${one.id}`, TAB_ICONS[one.id] ?? 'list-numbers', t(one.label), () => (tab = one.id), { words: t('quick.tab.words') }));
     if (collection) {
       const into = collection;
@@ -421,6 +442,27 @@
   </Callout>
 {/if}
 
+{#if goneText}
+  <!-- A field of its model type that is gone, for everyone; the Level stays, and it goes once a field holds the role again (DEC-UX-264). -->
+  <Callout icon="warning-circle-fill" tone="warning">
+    <b>{t('resource.gone.title')}</b>
+    {#each gone as one, index (index)}{#if index > 0}; {/if}<Sentence key={one.key} values={one.values} names={one.names} />{/each}. {t('resource.gone.level', { level: levelName(resource.level) })}
+    {#snippet action()}
+      {#if relates}<Button variant="outline" onclick={() => (relating = 'fields')}>{t('resource.gone.choose')}</Button>{/if}
+    {/snippet}
+  </Callout>
+{/if}
+{#if relates && missingText}
+  <!-- Its model type misses a field it asks for, or it has none yet: for the Data Team only (DEC-UX-265). -->
+  <Callout icon="list-checks" tone="warning">
+    <b>{t('resource.incomplete.title')}</b>
+    {missingText}. {t('resource.incomplete.text')}
+    {#snippet action()}
+      <Button variant="outline" onclick={() => (relating = 'type')}>{t('resource.incomplete.complete')}</Button>
+    {/snippet}
+  </Callout>
+{/if}
+
 <Tabs label={resource.displayName} current={tab} tabs={tabs.map(({ id, label }) => ({ id, label: t(label) }))} onselect={(id) => (tab = id)}>
   {#if tab === 'overview'}
     <ResourceOverview
@@ -443,6 +485,7 @@
       removeFrom={canRemove ? (collection?.name ?? null) : null}
       removeLater={removedByTeam ? (collection?.name ?? null) : null}
       onremove={() => mark(async () => (await catalogue.removeResource(resource.id), catalogue.resource(resource.id)))}
+      onchangetype={relates ? () => (relating = resource.details.modelType ? 'change' : 'type') : undefined}
       bind:part
     />
   {:else if tab === 'columns'}
@@ -451,7 +494,7 @@
       canEdit={describes('description')}
       relate={(assigns || describes('entityMapping')) && resource.collectionId !== null}
       onsave={saveFields}
-      onrelate={() => (relating = true)}
+      onrelate={() => (relating = 'type')}
       ongaps={() => {
         tab = 'overview';
         part = 'gaps';
@@ -470,7 +513,7 @@
   <AddResources into={collections} waiting={[resource]} {catalogue} {registry} onadd={addTo} onclose={() => (adding = false)} />
 {/if}
 {#if relating}
-  <RelationsSheet {resource} {registry} onsave={saveRelations} onclose={() => (relating = false)} />
+  <RelationsSheet {resource} {registry} {assigns} start={relating} onsave={saveRelations} onclose={() => (relating = undefined)} />
 {/if}
 {#if sheet === 'publish' && collection}
   <PublishSheet

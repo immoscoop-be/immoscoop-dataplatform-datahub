@@ -6,7 +6,17 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { type Collections, createCollections, NotEmpty, type Viewer } from './collections.js';
 import type { CatalogueDatabase } from './database.js';
 import { migrations } from './migrations/index.js';
-import { checkDetails, createResources, type Details, type ExposedTable, type Resources, type ResourcesUpdate, whatDetailsChange } from './resources.js';
+import {
+  checkDetails,
+  createResources,
+  type Details,
+  type ExposedTable,
+  incomplete,
+  missingSentence,
+  type Resources,
+  type ResourcesUpdate,
+  whatDetailsChange,
+} from './resources.js';
 
 const url = process.env.DATAHUB_TEST_DATABASE_URL;
 if (!url && process.env.CI) {
@@ -256,6 +266,7 @@ describe.skipIf(!url)('Resources in Postgres', () => {
       grain: ['simulations_id'],
       grainSentence: 'generated simulation',
       modelType: 'event',
+      typeFields: [{ field: 'created_at', role: 'happenedAt', origin: 'dbt' }],
       origins: { partition: 'dbt', clusterBy: 'dbt', partitionFilter: 'dbt', grain: 'domainModel', grainSentence: 'here', modelType: 'domainModel' },
       release: '0.0.70',
       mappings: [{ field: 'simulations_id', kind: 'is', relationType: null, identity: 'homeLoanSimulation.homeLoanSimulationId', subject: null, origin: 'domainModel', inDomainModel: true }],
@@ -296,6 +307,7 @@ describe.skipIf(!url)('Resources in Postgres', () => {
       grain: ['events_id'],
       grainSentence: '',
       modelType: 'event',
+      typeFields: [{ field: 'created_at', role: 'happenedAt', origin: 'here' }],
       origins: { partition: 'here', partitionFilter: 'here' },
       release: null,
       mappings: [],
@@ -309,18 +321,62 @@ describe.skipIf(!url)('Resources in Postgres', () => {
   });
 
   it('checks what was recorded against the fields of the Resource (FR-CO-33, DEC-RC-08)', () => {
-    const base: Details = { partition: null, clusterBy: [], partitionFilter: 'none', grain: [], grainSentence: '', modelType: null, origins: {}, release: null, mappings: [] };
+    const base: Details = { partition: null, clusterBy: [], partitionFilter: 'none', grain: [], grainSentence: '', modelType: null, typeFields: [], origins: {}, release: null, mappings: [] };
     const is = { kind: 'is' as const, relationType: null, subject: null, origin: 'here' as const, inDomainModel: true };
-    expect(checkDetails({ ...base, grain: ['a'] }, ['a', 'b'])).toBeUndefined();
-    expect(checkDetails({ ...base, clusterBy: ['c'] }, ['a'])).toBe('it has no field c.');
-    expect(checkDetails({ ...base, mappings: [{ field: 'a', identity: 'x.a', ...is }, { field: 'a', identity: 'x.b', ...is }] }, ['a'])).toBe('the field a maps twice.');
+    const named = (...names: string[]) => names.map((name) => ({ name, dataType: 'STRING' }));
+    expect(checkDetails({ ...base, grain: ['a'] }, named('a', 'b'))).toBeUndefined();
+    expect(checkDetails({ ...base, clusterBy: ['c'] }, named('a'))).toBe('it has no field c.');
+    expect(checkDetails({ ...base, mappings: [{ field: 'a', identity: 'x.a', ...is }, { field: 'a', identity: 'x.b', ...is }] }, named('a'))).toBe('the field a maps twice.');
     expect(
-      checkDetails({ ...base, mappings: [{ field: 'b', kind: 'relation', relationType: 'basedOn', identity: 'y.b', subject: 'a', origin: 'here', inDomainModel: true }] }, ['a', 'b']),
+      checkDetails({ ...base, mappings: [{ field: 'b', kind: 'relation', relationType: 'basedOn', identity: 'y.b', subject: 'a', origin: 'here', inDomainModel: true }] }, named('a', 'b')),
     ).toBe('the relation of b starts from a, which is not mapped as is.');
   });
 
+  it('checks the fields of the model type: a field of the Resource, a role of its model type that fits the field (FR-CO-44)', () => {
+    const base: Details = { partition: null, clusterBy: [], partitionFilter: 'none', grain: [], grainSentence: '', modelType: 'event', typeFields: [], origins: {}, release: null, mappings: [] };
+    const fields = [
+      { name: 'lead_id', dataType: 'STRING' },
+      { name: 'sent_at', dataType: 'TIMESTAMP' },
+      { name: 'amount', dataType: 'NUMERIC(10, 2)' },
+    ];
+    const held = (field: string, role: Details['typeFields'][number]['role']) => ({ field, role, origin: 'here' as const });
+    expect(checkDetails({ ...base, typeFields: [held('sent_at', 'happenedAt')] }, fields)).toBeUndefined();
+    // A field the Resource does not have is a stranger, as for the grain.
+    expect(checkDetails({ ...base, typeFields: [held('sent_on', 'happenedAt')] }, fields)).toBe('it has no field sent_on.');
+    // A role of another model type, a field whose type does not fit, a role that takes one field held twice.
+    expect(checkDetails({ ...base, typeFields: [held('lead_id', 'about')] }, fields)).toBe('an event has no role about.');
+    expect(checkDetails({ ...base, typeFields: [held('lead_id', 'happenedAt')] }, fields)).toBe('the field lead_id does not fit the role happenedAt.');
+    expect(checkDetails({ ...base, modelType: 'fact', typeFields: [held('amount', 'measure'), held('amount', 'occurredAt')] }, fields)).toBe('the field amount holds more than one role.');
+    expect(checkDetails({ ...base, modelType: null, typeFields: [held('sent_at', 'happenedAt')] }, fields)).toBe('without a model type, sent_at holds no role.');
+    // A role recorded before on a field that left the Resource since may stay as it was: it shows as gone (DEC-RC-23).
+    const before = [{ field: 'sent_on', role: 'happenedAt' as const }];
+    expect(checkDetails({ ...base, typeFields: [held('sent_on', 'happenedAt')] }, fields, before)).toBeUndefined();
+    expect(checkDetails({ ...base, typeFields: [held('sent_on', 'happenedAt')] }, fields, [{ field: 'sent_on', role: 'measure' }])).toBe('it has no field sent_on.');
+  });
+
+  it('says what the model type still misses before a Resource is added with it (FR-CO-44)', () => {
+    const base: Details = { partition: null, clusterBy: [], partitionFilter: 'none', grain: [], grainSentence: '', modelType: null, typeFields: [], origins: {}, release: null, mappings: [] };
+    const fields = [
+      { name: 'source', dataType: 'STRING' },
+      { name: 'week_start', dataType: 'DATE' },
+      { name: 'lead_count', dataType: 'INT64' },
+      { name: 'visitors', dataType: 'INT64' },
+    ];
+    expect(incomplete(base, fields)).toBe('it has no model type yet.');
+    expect(incomplete({ ...base, modelType: 'event' }, fields)).toBe('its model type event still asks for a field as happenedAt.');
+    expect(incomplete({ ...base, modelType: 'other' }, fields)).toBe('its model type other still asks for the sentence of One row per.');
+    expect(incomplete({ ...base, modelType: 'other', grainSentence: 'lead source per week' }, fields)).toBeUndefined();
+    const aggregate: Details = { ...base, modelType: 'aggregate', typeFields: [{ field: 'source', role: 'groupedBy', origin: 'here' }, { field: 'lead_count', role: 'addsUp', origin: 'here' }] };
+    expect(incomplete(aggregate, fields)).toBe('its model type aggregate still asks for the number visitors marked as addsUp or uniqueCount.');
+    expect(incomplete({ ...aggregate, typeFields: [...aggregate.typeFields, { field: 'visitors', role: 'uniqueCount', origin: 'here' }] }, fields)).toBeUndefined();
+    expect(missingSentence('state', [{ kind: 'role', role: 'about' }, { kind: 'role', role: 'createdAt' }, { kind: 'role', role: 'updatedAt' }])).toBe(
+      'its model type state still asks for a field as about, a field as createdAt and a field as updatedAt.',
+    );
+    expect(missingSentence('event', [])).toBeUndefined();
+  });
+
   it('tells apart what changes of the grain and storage, and what of the Entity mapping (DEC-PL-03)', () => {
-    const base: Details = { partition: null, clusterBy: [], partitionFilter: 'none', grain: [], grainSentence: '', modelType: null, origins: { grain: 'here', modelType: 'dbt' }, release: null, mappings: [] };
+    const base: Details = { partition: null, clusterBy: [], partitionFilter: 'none', grain: [], grainSentence: '', modelType: null, typeFields: [], origins: { grain: 'here', modelType: 'dbt' }, release: null, mappings: [] };
     const is = { kind: 'is' as const, relationType: null, subject: null, origin: 'here' as const, inDomainModel: true };
     const mapped: Details = { ...base, release: '0.0.70', mappings: [{ field: 'b', identity: 'x.b', ...is }, { field: 'a', identity: 'x.a', ...is }] };
     expect(whatDetailsChange(base, { ...base, origins: { modelType: 'dbt', grain: 'here' } })).toEqual({ assigned: false, mapped: false });
@@ -331,6 +387,11 @@ describe.skipIf(!url)('Resources in Postgres', () => {
     // The same mappings in another order are the same.
     expect(whatDetailsChange(mapped, { ...mapped, mappings: [...mapped.mappings].reverse() })).toEqual({ assigned: false, mapped: false });
     expect(whatDetailsChange(mapped, { ...base, modelType: 'fact' })).toEqual({ assigned: true, mapped: true });
+    // The fields of the model type are the work of a Data Admin, in any order the same (FR-CO-44).
+    const typed: Details = { ...base, modelType: 'fact', typeFields: [{ field: 'a', role: 'occurredAt', origin: 'here' }, { field: 'b', role: 'measure', origin: 'here' }] };
+    expect(whatDetailsChange(typed, { ...typed, typeFields: [...typed.typeFields].reverse() })).toEqual({ assigned: false, mapped: false });
+    expect(whatDetailsChange(typed, { ...typed, typeFields: typed.typeFields.slice(1) })).toEqual({ assigned: true, mapped: false });
+    expect(whatDetailsChange(typed, { ...typed, typeFields: [{ ...typed.typeFields[0]!, origin: 'domainModel' }, typed.typeFields[1]!] })).toEqual({ assigned: true, mapped: false });
   });
 
   it('logs every Change upstream in each Resource it reaches, with its distance, and tells the Owner of new code once (FR-AR-12, EC-AR-04, MSG-RES-04)', async () => {
@@ -376,6 +437,126 @@ describe.skipIf(!url)('Resources in Postgres', () => {
     // The Owner hears once per Artifact Set, of the nearest change of code; a Resource without a Collection has none.
     const told = await database.db.selectFrom('messages').select(['subjectId', 'params']).where('type', '=', 'MSG-RES-04').execute();
     expect(told).toEqual([{ subjectId: reportResource!.id, params: { run: '2026-10-30', node: 'int_leads', distance: '1' } }]);
+  });
+
+  it('records the fields of its model type, refuses a Resource whose model type misses one, and lists those to complete (FR-CO-44, FR-CO-45)', async () => {
+    const typed = (runId: string, tables: ExposedTable[]): ResourcesUpdate => ({ projectId: '5151', projectName: 'typed', runId, generatedAt: '2026-11-15T06:00:00Z', tables });
+    const weekly = table('weekly_leads', {
+      columns: [
+        { name: 'lead_source', position: 1, dataType: 'STRING', description: 'The source.' },
+        { name: 'week_start', position: 2, dataType: 'DATE', description: '' },
+        { name: 'lead_count', position: 3, dataType: 'INT64', description: '' },
+        { name: 'visitors', position: 4, dataType: 'INT64', description: '' },
+      ],
+    });
+    await resources.apply(typed('1', [weekly, table('leads_sent'), table('older_leads')]));
+    const { weekly_leads: weeklyLeads, leads_sent: leadsSent, older_leads: olderLeads } = await byKey();
+    const typedCollection = await collections.create({ name: 'Typed', description: 'Typed.', icon: 'coins', ownerUnit: DIGIKOM, visibility: 'private' }, dirk);
+    const base: Details = { partition: null, clusterBy: [], partitionFilter: 'none', grain: [], grainSentence: '', modelType: null, typeFields: [], origins: {}, release: null, mappings: [] };
+    const aggregate: Details = {
+      ...base,
+      grain: ['lead_source', 'week_start'],
+      grainSentence: 'lead source per week',
+      modelType: 'aggregate',
+      typeFields: [
+        { field: 'visitors', role: 'uniqueCount', origin: 'here' },
+        { field: 'week_start', role: 'period', origin: 'dbt' },
+        { field: 'lead_source', role: 'groupedBy', origin: 'here' },
+        { field: 'lead_count', role: 'addsUp', origin: 'here' },
+      ],
+    };
+    const adding = (details: Details, id = weeklyLeads!.id) => resources.add([{ id, details }], typedCollection, dirk);
+    // Recorded without a model type, or with one that misses a field it asks for, it is not added (FR-CO-44).
+    expect(await adding(base)).toEqual({ outcome: 'invalid', id: weeklyLeads!.id, message: 'weekly_leads: it has no model type yet.' });
+    expect(await adding({ ...aggregate, typeFields: aggregate.typeFields.slice(1) })).toEqual({
+      outcome: 'invalid',
+      id: weeklyLeads!.id,
+      message: 'weekly_leads: its model type aggregate still asks for the number visitors marked as addsUp or uniqueCount.',
+    });
+    // A role of another model type, a field that does not fit its role, a field it does not have.
+    const event = (typeFields: Details['typeFields']): Details => ({ ...base, modelType: 'event', typeFields });
+    expect(await adding(event([{ field: 'created_at', role: 'createdAt', origin: 'here' }]), leadsSent!.id)).toMatchObject({ message: 'leads_sent: an event has no role createdAt.' });
+    expect(await adding(event([{ field: 'leads_sent_id', role: 'happenedAt', origin: 'here' }]), leadsSent!.id)).toMatchObject({
+      message: 'leads_sent: the field leads_sent_id does not fit the role happenedAt.',
+    });
+    expect(await adding(event([{ field: 'sent_at', role: 'happenedAt', origin: 'here' }]), leadsSent!.id)).toMatchObject({ message: 'leads_sent: it has no field sent_at.' });
+    expect((await resources.get(weeklyLeads!.id))?.collectionId).toBeNull();
+
+    // Complete, it is added; one sent by its ID alone is added as before, and is to complete (DEC-CO-27).
+    expect(await resources.add([{ id: weeklyLeads!.id, details: aggregate }, { id: olderLeads!.id }], typedCollection, dirk)).toEqual({ outcome: 'added', added: 2 });
+    const weeklyDetail = await resources.detail(weeklyLeads!.id);
+    // Kept in the order of the fields.
+    expect(weeklyDetail?.details.typeFields).toEqual([
+      { field: 'lead_source', role: 'groupedBy', origin: 'here' },
+      { field: 'week_start', role: 'period', origin: 'dbt' },
+      { field: 'lead_count', role: 'addsUp', origin: 'here' },
+      { field: 'visitors', role: 'uniqueCount', origin: 'here' },
+    ]);
+    expect(weeklyDetail?.typeState).toEqual({ missing: [], gone: [] });
+    expect((await resources.detail(olderLeads!.id))?.typeState).toEqual({ missing: [{ kind: 'modelType' }], gone: [] });
+    const toComplete = async () => (await resources.toComplete()).filter((resource) => resource.collection.id === typedCollection.id);
+    expect(await toComplete()).toEqual([
+      { id: olderLeads!.id, displayName: 'older_leads', collection: { id: typedCollection.id, name: 'Typed' }, level: 2, missing: [{ kind: 'modelType' }], gone: [] },
+    ]);
+    // Of every Collection, each missing something, by Display Name: reviews was added to Credit by its ID alone.
+    const listed = await resources.toComplete();
+    expect(listed.find((resource) => resource.displayName === 'reviews')).toMatchObject({ collection: { name: 'Credit' }, missing: [{ kind: 'modelType' }] });
+    expect(listed.every((resource) => resource.missing.length > 0)).toBe(true);
+    expect(listed.map((resource) => resource.displayName.toLowerCase())).toEqual(listed.map((resource) => resource.displayName.toLowerCase()).sort());
+
+    // Its mappings change without completing it, as the Entity mapping of an Owner Unit does; the work of a Data Admin completes it.
+    const mapping = { field: 'older_leads_id', kind: 'is' as const, relationType: null, identity: 'lead.leadId', subject: null, origin: 'here' as const, inDomainModel: true };
+    expect(await resources.relate(olderLeads!.id, { ...base, mappings: [mapping] }, dirk)).toEqual({ outcome: 'edited', changed: ['details'] });
+    expect(await resources.relate(olderLeads!.id, { ...base, grain: ['older_leads_id'] }, dirk, true)).toEqual({ outcome: 'invalid', message: 'older_leads: it has no model type yet.' });
+    const happened = event([{ field: 'created_at', role: 'happenedAt', origin: 'here' }]);
+    expect(await resources.relate(olderLeads!.id, { ...happened, mappings: [mapping] }, dirk, true)).toEqual({ outcome: 'edited', changed: ['details'] });
+    expect(await toComplete()).toEqual([]);
+    // Another model type drops the fields of the old one (DEC-RC-22).
+    expect(await resources.relate(weeklyLeads!.id, { ...aggregate, modelType: 'other', typeFields: [] }, dirk, true)).toEqual({ outcome: 'edited', changed: ['details'] });
+    expect((await resources.detail(weeklyLeads!.id))?.details).toMatchObject({ modelType: 'other', typeFields: [] });
+  });
+
+  it('warns when a field of its model type is gone, tells the Data Team once, and keeps the Level (FR-RC-29, DEC-RC-23, MSG-RES-09)', async () => {
+    const typed = (runId: string, tables: ExposedTable[]): ResourcesUpdate => ({ projectId: '5151', projectName: 'typed', runId, generatedAt: '2026-11-16T06:00:00Z', tables });
+    const renamed = table('older_leads', {
+      columns: [
+        { name: 'older_leads_id', position: 1, dataType: 'STRING', description: 'The older_leads.' },
+        { name: 'sent_at', position: 2, dataType: 'TIMESTAMP', description: '' },
+      ],
+    });
+    const { id } = (await resources.inCollection((await collections.list(dirk)).find((collection) => collection.name === 'Typed')!.id)).find((resource) => resource.name === 'older_leads')!;
+    // created_at, which says when it happened, is renamed to sent_at in dbt.
+    await resources.apply(typed('2', [table('weekly_leads'), table('leads_sent'), renamed]));
+    const told = () => database.db.selectFrom('messages').select(['type', 'writerId', 'params', 'state']).where('subjectId', '=', id).where('type', '=', 'MSG-RES-09').execute();
+    expect(await told()).toEqual([
+      {
+        type: 'MSG-RES-09',
+        writerId: null,
+        params: { run: '2026-11-16', modelType: 'event', level: '2', count: '1', gone: JSON.stringify([{ field: 'created_at', role: 'happenedAt' }]) },
+        state: null,
+      },
+    ]);
+    const detail = await resources.detail(id);
+    expect(detail?.level).toBe(2);
+    // The role stays as recorded, and shows as gone and missing until a field holds it again.
+    expect(detail?.details.typeFields).toEqual([{ field: 'created_at', role: 'happenedAt', origin: 'here' }]);
+    expect(detail?.typeState).toEqual({ missing: [{ kind: 'role', role: 'happenedAt' }], gone: [{ field: 'created_at', role: 'happenedAt' }] });
+    expect((await resources.toComplete()).find((resource) => resource.id === id)).toMatchObject({ missing: [{ kind: 'role', role: 'happenedAt' }], gone: [{ field: 'created_at', role: 'happenedAt' }] });
+    // Once per Artifact Set: the next run that does not change it tells nobody again.
+    await resources.apply(typed('3', [table('weekly_leads'), table('leads_sent'), renamed]));
+    expect(await told()).toHaveLength(1);
+
+    // What else changes keeps the role as it is; another field takes it, and the warning goes.
+    const kept: Details = { ...detail!.details, grainSentence: 'one lead' };
+    expect(await resources.relate(id, kept, dirk)).toEqual({ outcome: 'edited', changed: ['details'] });
+    expect(await resources.relate(id, kept, dirk, true)).toEqual({ outcome: 'invalid', message: 'older_leads: its model type event still asks for a field as happenedAt.' });
+    expect(await resources.relate(id, { ...kept, typeFields: [{ field: 'sent_at', role: 'happenedAt', origin: 'here' }] }, dirk, true)).toEqual({ outcome: 'edited', changed: ['details'] });
+    expect((await resources.detail(id))?.typeState).toEqual({ missing: [], gone: [] });
+    // A withdrawn Resource is not to complete.
+    await resources.relate(id, { ...kept, typeFields: [] }, dirk);
+    expect((await resources.toComplete()).map((resource) => resource.id)).toContain(id);
+    await resources.apply(typed('4', [table('weekly_leads'), table('leads_sent')]));
+    expect((await resources.toComplete()).map((resource) => resource.id)).not.toContain(id);
   });
 
   it('never lets a Log Entry of a Resource be changed or removed (FR-SR-11)', async () => {

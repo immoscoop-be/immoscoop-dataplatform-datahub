@@ -47,6 +47,7 @@ In library terms: just as a library arranges its shelves into collections, each 
 - <a id="dec-co-24"></a>**DEC-CO-24** · When the author of a Lens owns no Collection yet, "Make it a lens" offers to make one in the same step: a name, one of their groups as its Owner Unit, and an icon; it is private, and can be shared later. The Lens then goes into it ([DEC-CO-20](#dec-co-20), [FR-CO-12](#fr-co-12)). Someone who is in no group can own no Collection, and keeps their query as a query. *Decided on 2026-10-28, by Max ([OP-CO-19](#op-co-19)).*
 - <a id="dec-co-25"></a>**DEC-CO-25** · The icon of a Collection is required, as it is the only thing that sets a Collection apart ([DEC-CO-23](#dec-co-23)). This replaces [FR-CO-05](#fr-co-05). *Decided on 2026-10-28, by Max ([OP-CO-20](#op-co-20)).*
 - <a id="dec-co-26"></a>**DEC-CO-26** · A Collection keeps what it holds in folders, inside the Collection: each folder, Resource and Lens sits at its top or in one folder of it, and folders nest without a limit. Folders keep things in order and change nothing else: who sees a Resource or a Lens, who owns it and what it is built on stay as they are. Its Owner Unit and the Data Team manage the folders; everyone who sees the Collection sees them. Only an empty folder is deleted, and new Resources and Lenses come in at the top. *Decided on 2026-10-31, by Max.*
+- <a id="dec-co-27"></a>**DEC-CO-27** · The Resources added before their model type asked for its fields ([FR-CO-44](#fr-co-44)) are listed for the Data Team as "to complete", each with the fields Data Hub can suggest. "Edit relations" on the Columns tab reopens the steps Model type, Grain and storage, and Fields and relations for that Resource ([DEC-UX-107](../../design/principles.md#dec-ux-107)). An EDA-Setup starts only on a Resource whose model type has every field it asks for ([DEC-ED-07](15-eda.md#dec-ed-07)). *Decided on 2026-11-16, by Max.*
 
 ## What a Collection has
 
@@ -445,7 +446,7 @@ A link to a Collection, Resource, Lens or query that a User may not see opens th
 <a id="fr-co-33"></a>
 ### FR-CO-33 · Adding a Resource records its grain and the mapping of every field
 
-**Status:** Implemented · **Source:** Max, 2026-10-24 to 2026-10-26 · [design](../../design/principles.md#page-of-a-collection) · **Screens:** [collection-add-relations](../../design/screens/collection-add-relations.html)
+**Status:** Implemented · **Source:** Max, 2026-10-24 to 2026-10-26 · [design](../../design/principles.md#page-of-a-collection) · **Screens:** [collection-add-grain](../../design/screens/collection-add-grain.html), [collection-add-relations](../../design/screens/collection-add-relations.html)
 
 After picking Resources ([FR-CO-31](#fr-co-31)), the Data Admin sees, per Resource, its grain and every field with its type and description from dbt.
 
@@ -462,6 +463,8 @@ Data Hub shows the cardinality of each mapping and never asks for it ([DEC-RC-08
 
 *Note of 2026-10-28: next to the grain, the Data Admin chooses the model type: `event`, `state`, `fact`, `dimension` or `aggregate` ([DEC-RC-10](05-resource-card.md#dec-rc-10)).*
 
+*Note of 2026-11-15: proposed to change with [FR-CO-44](#fr-co-44): the model type gets a step of its own before the fields, and asks for the fields it needs.* *Note of 2026-11-16: changed so, with FR-CO-44.*
+
 *Note of 2026-10-28: a field can also map to an Entity the Domain Model does not have; it then only links the Resources that carry the same one ([DEC-CO-21](#dec-co-21)).*
 
 *Note of 2026-10-28, on building it: the step shows the relation types the Domain Model uses, each with the cardinality its vocabulary gives; a type that the Domain Model gives both one and many, such as `basedOn`, is shown as one or many per subject until the Domain Model settles it. How many Resources carry the same identity is said with the links themselves, on the Resource Card ([FR-RC-09](05-resource-card.md#fr-rc-09)). The grain, the model type and the mappings are recorded as [TR-CO-05](../technical/03-collections.md#tr-co-05) and proposed as [TR-AR-10](../technical/01-artifact-registry.md#tr-ar-10).*
@@ -469,11 +472,49 @@ Data Hub shows the cardinality of each mapping and never asks for it ([DEC-RC-08
 <a id="fr-co-34"></a>
 ### FR-CO-34 · Adding a Resource records how it is stored
 
-**Status:** Implemented · **Source:** Max, 2026-10-25 · [design](../../design/principles.md#page-of-a-collection) · **Screens:** [collection-add-relations](../../design/screens/collection-add-relations.html)
+**Status:** Implemented · **Source:** Max, 2026-10-25 · [design](../../design/principles.md#page-of-a-collection) · **Screens:** [collection-add-grain](../../design/screens/collection-add-grain.html)
 
 In the same step as the relations ([FR-CO-33](#fr-co-33)), the Data Admin sees per Resource how it is stored: its partition column and the unit of its partitions, its cluster columns in their order, and whether a partition filter is required. Data Hub derives them where it can, from the dbt manifest of the model beneath the view, through the lineage, and from BigQuery ([OP-SR-12](04-stacks-and-resources.md#op-sr-12)), and marks them "From dbt". The Data Admin sets what cannot be derived and can correct the rest. A partition filter that BigQuery requires stays required; the Data Admin can also require one where BigQuery does not, so that Data Hub asks for a filter on the partition column in every query on the Resource. Data Hub uses them on the page of the Resource ([FR-SR-39](04-stacks-and-resources.md#fr-sr-39)) and in the Pre-flight ([FR-SR-40](04-stacks-and-resources.md#fr-sr-40)).
 
 *Note of 2026-10-28, on building it: Data Hub derives the storage from the dbt manifest only, through the lineage ([TR-AR-03](../technical/01-artifact-registry.md#tr-ar-03)); reading it from BigQuery waits on [OP-SR-12](04-stacks-and-resources.md#op-sr-12). The facts come with the next run of a dbt project, or when a run is processed again.*
+
+
+*Note of 2026-11-15: proposed to move, with the grain, to a step of its own before the fields ([DEC-UX-262](../../design/principles.md#dec-ux-262)).* *Note of 2026-11-16: moved so, with [FR-CO-44](#fr-co-44).*
+
+<a id="fr-co-44"></a>
+### FR-CO-44 · The model type of a Resource is chosen first, and asks for its own fields
+
+**Status:** Implemented · **Source:** Max, 2026-11-15 ([DEC-UX-262](../../design/principles.md#dec-ux-262)) · **Screens:** [collection-add-type](../../design/screens/collection-add-type.html), [collection-add-relations](../../design/screens/collection-add-relations.html)
+
+After choosing a Resource ([FR-CO-31](#fr-co-31)), the Data Admin chooses its model type on a step of its own, before its fields ([DEC-RC-10](05-resource-card.md#dec-rc-10)). Each model type is shown with what one row is, why it exists, what may be added up, and the fields it asks for. Data Hub suggests one only when the Domain Model says it ([FR-AR-20](01-artifact-registry.md#fr-ar-20)), never from the words of a Colleciónes model ([DEC-RC-25](05-resource-card.md#dec-rc-25)); otherwise the Data Admin chooses it. The model type then asks for the fields a Resource of that kind needs:
+
+| Model type | Asks for |
+| --- | --- |
+| `event` | When it happened: a date or timestamp. Required |
+| `state` | What it is about: the field that identifies the thing. Required. When it was created and when it was last updated: two dates or timestamps. Required. As of when: a date, for a state that keeps its history. Optional |
+| `fact` | When it occurred: a date or timestamp. Required. Its measures: one or more numbers to add up. Required |
+| `dimension` | What it describes: the field that identifies each thing. Required |
+| `aggregate` | What it is grouped by: one or more fields. Required. Its period: a date, when it is grouped by time. Its counts and sums: every number field marked as adding up or as a unique count that is never added up. Required |
+| `other` | One row is: the sentence of "One row per", in the step of the grain ([DEC-RC-21](05-resource-card.md#dec-rc-21)). Required |
+
+The Data Admin chooses them in the table of fields, as part of the definition of each field: what the field is for its model type. Data Hub offers a field only the roles its type fits, suggests them where it can, from the partition column, the grain or a mapping `is`, and says where each suggestion came from. The Resource is added only once every required field is chosen. The fields are kept with the model type; the EDA reads them to choose its EDA-Probes ([OP-ED-03](15-eda.md#op-ed-03)).
+
+**Makes easy:** recording what one row is and the fields it hangs on, so that everyone counts a Resource the right way and its EDA knows what to explore. **Makes hard:** adding a Resource whose model type is a guess, such as an `event` without the moment it happened, or a `state` without what it is about.
+
+*Specified on 2026-11-15, by Max: the fields each model type asks for are confirmed.* *Note of 2026-11-16, by Max: a `state` also asks when it was created and last updated; every number field of an aggregate is marked; `other` takes the sentence of "One row per"; no model type is suggested from the words of a Colleciónes model ([DEC-RC-25](05-resource-card.md#dec-rc-25)).* *Note of 2026-11-15: built together with the EDA ([EDA](15-eda.md)); the grain and the storage come on a step of their own, before the fields ([DEC-UX-262](../../design/principles.md#dec-ux-262)).*
+
+*Note of 2026-11-16, on building it: the sheet has four steps; the fields of the model type are chosen in the column "For the <type>" of the field table, and the catalogue refuses an addition whose model type is incomplete ([TR-CO-09](../technical/03-collections.md#tr-co-09)).*
+
+<a id="fr-co-45"></a>
+### FR-CO-45 · Resources to complete
+
+**Status:** Implemented · **Source:** Max, 2026-11-16 ([DEC-CO-27](#dec-co-27)) · **Screens:** [collection-overview](../../design/screens/collection-overview.html), [resource-overview](../../design/screens/resource-overview.html)
+
+The Data Team sees which Resources miss a field their model type asks for, or have no model type yet, each with what is missing and the fields Data Hub suggests. Opening one goes to "Edit relations", which reopens the steps from the model type on. Until it is complete, its EDA-Setup cannot start.
+
+**Makes easy:** bringing the Resources added before FR-CO-44 up to it, one by one, with suggestions. **Makes hard:** exploring a Resource whose model type is a guess or incomplete.
+
+*Note of 2026-11-16, on building it: the list says what each Resource misses; the suggestions show in the steps that "Complete it" opens, not in the list itself. That an EDA-Setup waits for it comes with the [EDA](15-eda.md).*
 
 <a id="fr-co-35"></a>
 ### FR-CO-35 · The Data Team hands a Collection to any group

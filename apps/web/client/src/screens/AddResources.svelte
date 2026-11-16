@@ -4,6 +4,7 @@
   import Steps from '@datahub/ui/containers/Steps.svelte';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { levelName } from '@datahub/ui/foundations/levels.js';
+  import Sentence from '@datahub/ui/foundations/Sentence.svelte';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import { day } from '@datahub/ui/foundations/when.js';
   import KindIcon from '@datahub/ui/marks/KindIcon.svelte';
@@ -12,22 +13,27 @@
   import Loading from '@datahub/ui/primitives/Loading.svelte';
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import CollectionIcon from '@datahub/ui/marks/CollectionIcon.svelte';
+  import type { ModelType } from '@datahub/contracts/model-types';
   import type { Catalogue, Collection, Resource } from '../lib/catalogue.js';
-  import { type Draft, draftOf, requestOf, strangers, unfinished } from '../lib/grain.js';
+  import { type Draft, draftOf, missingOf, requestOf, strangers, suggestTypeFields, unfinished } from '../lib/grain.js';
   import type { DomainModelView, Registry } from '../lib/registry.js';
+  import { TYPE_KEYS, waitingFor } from '../lib/typeFields.js';
+  import ResourceFields from './ResourceFields.svelte';
   import ResourceGrain from './ResourceGrain.svelte';
+  import ResourceType from './ResourceType.svelte';
 
   /** What adding came to: done, a Resource meanwhile in another Collection, refused, or a failure. */
   type Added = 'added' | 'elsewhere' | 'refused' | 'failed';
 
   /**
-   * Adding a Resource to a Collection, one at a time (DEC-UX-132), in a sheet over its page, in two
-   * steps named on top (FR-CO-31, DEC-UX-58). First the Resources without a Collection, searchable,
-   * each with its description from dbt, how it came in and its Level, to choose one. Then, in a wider
-   * sheet, how it is stored, its grain and model type, and the mapping of every field, from what dbt
-   * and the Domain Model propose (FR-CO-33, FR-CO-34). It is added, with all of it, in one go. Opened
-   * from a Resource that waits, the first step is the choice of the Collection instead, the Resource
-   * chosen (DEC-UX-131).
+   * Adding a Resource to a Collection, one at a time (DEC-UX-132), in a sheet over its page, in four steps named on
+   * top (FR-CO-31, DEC-UX-262). First the Resources without a Collection, searchable, each with its description from
+   * dbt, how it came in and its Level, to choose one. Then its model type, chosen from a card per model type, none
+   * chosen to start with (FR-CO-44, DEC-RC-25). Then its grain and how it is stored (FR-CO-33, FR-CO-34). Then, in a
+   * wider sheet, the fields its model type asks for and the mapping of every field, from what dbt and the Domain Model
+   * propose. "Add Resource" waits until the model type has every field it asks for, and says what is missing. It is
+   * added, with all of it, in one go. Opened from a Resource that waits, the first step is the choice of the Collection
+   * instead, the Resource chosen (DEC-UX-131).
    */
   let {
     collection,
@@ -50,7 +56,13 @@
     onclose: () => void;
   } = $props();
 
-  let step = $state(0);
+  /** The steps: choosing the Resource or the Collection, its model type, its grain and storage, its fields and relations. */
+  const CHOOSE = 0;
+  const TYPE = 1;
+  const GRAIN = 2;
+  const FIELDS = 3;
+
+  let step = $state(CHOOSE);
   let query = $state('');
   /** The Resource chosen, as a list of at most one. */
   // svelte-ignore state_referenced_locally
@@ -65,6 +77,8 @@
   /** The draft of each Resource chosen, by its ID; null when it could not be read. */
   let drafts: Record<string, Draft | null> = $state({});
   let show: 'all' | 'mapped' = $state('all');
+  /** The model type the fields were last suggested for, by the ID of the Resource: suggested once per model type. */
+  const suggested: Record<string, ModelType | null> = {};
 
   const words = $derived(query.trim().toLowerCase());
   const shown = $derived(
@@ -96,14 +110,26 @@
   }
 
   function next() {
-    step = 1;
-    problem = undefined;
+    go(TYPE);
     if (model === undefined || model === null) {
       readModel();
     }
     for (const resource of waiting.filter((one) => chosen.includes(one.id))) {
       if (!(resource.id in drafts)) {
         draft(resource);
+      }
+    }
+  }
+
+  /** To a step; on the step of the fields, what its model type asks for is suggested where it is cheap, once per model type. */
+  function go(to: number) {
+    step = to;
+    problem = undefined;
+    if (to !== FIELDS) return;
+    for (const one of picked) {
+      if (suggested[one.id] !== one.modelType) {
+        suggestTypeFields(one);
+        suggested[one.id] = one.modelType;
       }
     }
   }
@@ -119,10 +145,16 @@
   }
 
   const picked = $derived(chosen.flatMap((id) => (drafts[id] ? [drafts[id]] : [])));
+  const current = $derived(picked[0]);
   const loading = $derived(model === undefined || chosen.some((id) => !(id in drafts)));
+  const reading = $derived(chosen.some((id) => !(id in drafts)));
   const unreadable = $derived(waiting.filter((resource) => chosen.includes(resource.id) && drafts[resource.id] === null));
   const identities = $derived(new Set(model?.identities ?? []));
   const open = $derived(picked.flatMap((one) => unfinished(one)));
+  /** What its model type still misses: "Add Resource" waits until nothing is (FR-CO-44). */
+  const missing = $derived(picked.flatMap((one) => missingOf(one)));
+  const list = (items: string[]) => new Intl.ListFormat(currentLanguage() === 'nl' ? 'nl-BE' : 'en-GB').format(items);
+  const waits = $derived(waitingFor(missing, current?.modelType ?? null, list));
   const counts = $derived({
     resources: picked.length,
     is: picked.flatMap((one) => one.fields).filter((field) => field.kind === 'is').length,
@@ -131,6 +163,14 @@
   });
   const fieldCount = $derived(picked.reduce((sum, one) => sum + one.fields.length, 0));
   const mappedCount = $derived(picked.reduce((sum, one) => sum + one.fields.filter((field) => field.kind !== 'none').length, 0));
+  /** `other` asks for "One row per" on the step of the grain (DEC-RC-21). */
+  const sentenceMissing = $derived(current?.modelType === 'other' && current.grainSentence.trim() === '');
+
+  const TITLES = ['add.title', 'type.title', 'grain.title', 'fields.title'] as const;
+  const TEXTS = ['add.text', 'type.text', 'grain.text', 'fields.text'] as const;
+  const title = $derived(
+    step === CHOOSE ? (into ? t('add.into.title', { name: waiting[0]?.displayName ?? '' }) : t('add.title', { name: collection ?? '' })) : t(TITLES[step] ?? 'type.title', { name: chosenName }),
+  );
 
   async function add() {
     adding = true;
@@ -146,16 +186,17 @@
   }
 </script>
 
-<Sheet
-  title={step === 1 ? t('grain.title', { name: chosenName }) : into ? t('add.into.title', { name: waiting[0]?.displayName ?? '' }) : t('add.title', { name: collection ?? '' })}
-  wide={step === 1}
-  {onclose}
->
+<Sheet {title} wide={step === FIELDS} {onclose}>
   {#snippet top()}
-    <Steps label={t('add.steps')} steps={[t(into ? 'add.step.collection' : 'add.step.choose'), t('add.step.grain')]} current={step} onstep={(index) => (step = index)} />
+    <Steps
+      label={t('add.steps')}
+      steps={[t(into ? 'add.step.collection' : 'add.step.choose'), t('add.step.type'), t('add.step.grain'), t('add.step.fields')]}
+      current={step}
+      onstep={go}
+    />
   {/snippet}
-  {#snippet head()}<p class="meta text">{step === 0 ? t(into ? 'add.into.text' : 'add.text') : t('grain.text')}</p>{/snippet}
-  {#if step === 0 && into}
+  {#snippet head()}<p class="meta text">{step === CHOOSE ? t(into ? 'add.into.text' : 'add.text') : t(TEXTS[step] ?? 'type.text')}</p>{/snippet}
+  {#if step === CHOOSE && into}
     <div class="search"><Search bind:value={query} placeholder={t('add.into.search')} surface="sub" /></div>
     <div class="list" role="radiogroup" aria-label={t('add.step.collection')}>
       {#each collections as one (one.id)}
@@ -180,7 +221,7 @@
         <p class="meta empty">{t(words ? 'add.into.noMatch' : 'add.into.none')}</p>
       {/each}
     </div>
-  {:else if step === 0}
+  {:else if step === CHOOSE}
     <div class="search"><Search bind:value={query} placeholder={t('add.search')} surface="sub" /></div>
     <div class="list" role="radiogroup" aria-label={t('add.step.choose')}>
       {#each shown as resource (resource.id)}
@@ -199,6 +240,26 @@
         </label>
       {:else}
         <p class="meta empty">{t(words ? 'add.noMatch' : 'add.none')}</p>
+      {/each}
+    </div>
+  {:else if reading || !current}
+    <div class="list">
+      {#if reading}
+        <p class="meta empty">{t('grain.loading')} <Loading inline /></p>
+      {:else}
+        {#each unreadable as resource (resource.id)}
+          <p class="meta empty warn">{t('grain.failed', { name: resource.displayName })} <button type="button" class="text-link" onclick={retry}>{t('grain.model.retry')}</button></p>
+        {/each}
+      {/if}
+    </div>
+  {:else if step === TYPE}
+    {#each chosen as id (id)}
+      {#if drafts[id]}<ResourceType bind:draft={drafts[id]} />{/if}
+    {/each}
+  {:else if step === GRAIN}
+    <div class="list">
+      {#each chosen as id (id)}
+        {#if drafts[id]}<ResourceGrain bind:draft={drafts[id]} onchangetype={() => go(TYPE)} />{/if}
       {/each}
     </div>
   {:else}
@@ -229,34 +290,46 @@
       {#if loading}
         <p class="meta empty">{t('grain.loading')} <Loading inline /></p>
       {:else}
-        {#each unreadable as resource (resource.id)}
-          <p class="meta empty warn">{t('grain.failed', { name: resource.displayName })} <button type="button" class="text-link" onclick={retry}>{t('grain.model.retry')}</button></p>
-        {/each}
         {#each chosen as id (id)}
           {#if drafts[id]}
-            <ResourceGrain bind:draft={drafts[id]} model={model ?? null} {show} />
+            <ResourceFields bind:draft={drafts[id]} model={model ?? null} {show} onchangetype={() => go(TYPE)} />
           {/if}
         {/each}
       {/if}
     </div>
   {/if}
   {#snippet foot()}
-    {#if step === 0}
+    {#if step === CHOOSE}
       <p class="meta chosen">
         {#if into}{target ? t('add.into.chosen', { name: targetName }) : t('add.into.nothing')}{:else}{chosenName ? t('add.chosen', { name: chosenName }) : t('add.nothing')}{/if}
       </p>
       <Button variant="quiet" onclick={onclose}>{t('collection.cancel')}</Button>
       <Button disabled={into ? !target : chosen.length === 0} onclick={next}>{t('add.next')}<Icon name="arrow-right" /></Button>
+    {:else if step === TYPE}
+      <Button variant="quiet" onclick={() => go(CHOOSE)}><Icon name="arrow-left" />{t('grain.back')}</Button>
+      <p class="meta chosen">
+        {#if current?.modelType}<Sentence key="type.foot" values={{ asks: t(TYPE_KEYS[current.modelType].wants) }} names={{ type: current.modelType }} />{:else}{t('type.foot.none')}{/if}
+      </p>
+      <Button disabled={!current?.modelType} onclick={() => go(GRAIN)}>{t('type.next')}<Icon name="arrow-right" /></Button>
+    {:else if step === GRAIN}
+      <Button variant="quiet" onclick={() => go(TYPE)}><Icon name="arrow-left" />{t('grain.back')}</Button>
+      <p class="meta chosen">
+        {#if sentenceMissing}<Sentence key="grain.foot.sentence" names={{ type: 'other' }} />
+        {:else if current?.grainSentence.trim()}{t('grain.foot', { sentence: current.grainSentence.trim() })}
+        {:else}{t('grain.foot.none')}{/if}
+      </p>
+      <Button disabled={!current || sentenceMissing} onclick={() => go(FIELDS)}>{t('grain.next')}<Icon name="arrow-right" /></Button>
     {:else}
-      <Button variant="quiet" onclick={() => (step = 0)}><Icon name="arrow-left" />{t('grain.back')}</Button>
+      <Button variant="quiet" onclick={() => go(GRAIN)}><Icon name="arrow-left" />{t('grain.back')}</Button>
       <p class="meta chosen" role={problem ? 'alert' : undefined}>
         {#if problem?.outcome === 'elsewhere'}{t('add.elsewhere')}
         {:else if problem?.outcome === 'refused'}{problem.message ?? t('add.failed')}
         {:else if problem?.outcome === 'failed'}{t('add.failed')}
+        {:else if waits}<Sentence key={waits.key} values={waits.values} names={waits.names} />
         {:else if open.length > 0}{t('grain.unfinished', { fields: open.join(', ') })}
         {:else}{t('grain.summary', counts)}{/if}
       </p>
-      <Button disabled={adding || loading || unreadable.length > 0 || open.length > 0} onclick={add}><Icon name="plus-circle-fill" />{t('add.button')}</Button>
+      <Button disabled={adding || loading || unreadable.length > 0 || open.length > 0 || missing.length > 0} onclick={add}><Icon name="plus-circle-fill" />{t('add.button')}</Button>
     {/if}
   {/snippet}
 </Sheet>

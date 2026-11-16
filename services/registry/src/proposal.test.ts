@@ -58,7 +58,8 @@ describe('what Data Hub proposes for a Resource (FR-CO-33, FR-CO-34, FR-AR-17)',
       // A cluster column the table does not have promises nothing.
       storage: { partition: { field: 'collectorDatetime', unit: 'day' }, clusterBy: ['homeLoanSimulationId', 'listingId'], requirePartitionFilter: true, from: 'mrt_homeLoanSimulation_generate' },
       grain: { fields: ['eventId'], origin: 'domainModel' },
-      modelType: { value: 'event', origin: 'domainModel' },
+      // No model type from the strategy of a Colleciónes model, though it says Event (DEC-RC-25).
+      modelType: null,
       domainModel: { release: '0.0.70' },
     });
     expect(proposal.mappings).toEqual([

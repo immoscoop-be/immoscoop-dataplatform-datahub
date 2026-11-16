@@ -1,8 +1,17 @@
 import { fieldsOf, type GapScope, hasScope } from '@datahub/contracts/gaps';
 import { type Journey, type JourneyAnswer, journeyOf, type JourneyStepId, journeyStep } from '@datahub/contracts/journey';
+import {
+  type FieldOfType,
+  goneOfType,
+  invalidTypeFields,
+  type MissingOfType,
+  missingOfType,
+  type ModelType,
+  type TypeField,
+} from '@datahub/contracts/model-types';
 import { type Kysely, type Selectable, sql, type Transaction } from 'kysely';
 import type { Viewer } from './collections.js';
-import type { CatalogueDatabase, MappingKind, MappingOrigin, ModelType, Origins, PartitionFilter, PartitionUnit, SchemaChange } from './database.js';
+import type { CatalogueDatabase, MappingKind, MappingOrigin, Origin, Origins, PartitionFilter, PartitionUnit, SchemaChange } from './database.js';
 import { type Column, fingerprint, type LeftOut, levelAtRegistration, splitColumns } from './fields.js';
 import { logText, type ResourceLogId } from './log.js';
 import { seesAll, seesPublic, theirs } from './viewer.js';
@@ -95,10 +104,15 @@ export interface Mapping {
   inDomainModel: boolean;
 }
 
+/** A field that holds a role of the model type of its Resource, with where that came from (FR-CO-44). */
+export interface RecordedTypeField extends TypeField {
+  origin: Origin;
+}
+
 /**
  * What the Data Admin records when adding a Resource (FR-CO-33, FR-CO-34): how it is stored, what one
- * row is, its model type and the mapping of its fields, with where each came from and the release of the
- * Domain Model the mappings were made with (FR-AR-17).
+ * row is, its model type with the fields it asks for (FR-CO-44) and the mapping of its fields, with where
+ * each came from and the release of the Domain Model the mappings were made with (FR-AR-17).
  */
 export interface Details {
   partition: { field: string; unit: PartitionUnit | null } | null;
@@ -107,9 +121,30 @@ export interface Details {
   grain: string[];
   grainSentence: string;
   modelType: ModelType | null;
+  /** Each field that holds a role of its model type, in the order of the fields; a role whose field is gone last. */
+  typeFields: RecordedTypeField[];
   origins: Origins;
   release: string | null;
   mappings: Mapping[];
+}
+
+/**
+ * How far the model type of a Resource has the fields it asks for, from its fields now (FR-CO-45, FR-RC-29): what is
+ * still missing, and each role whose field is gone from it, removed or renamed in dbt (DEC-RC-23).
+ */
+export interface TypeState {
+  missing: MissingOfType[];
+  gone: TypeField[];
+}
+
+/** A Resource whose model type misses a field it asks for, or that has none yet, for the Data Team (FR-CO-45, DEC-CO-27). */
+export interface ToComplete {
+  id: string;
+  displayName: string;
+  collection: { id: string; name: string };
+  level: number;
+  missing: MissingOfType[];
+  gone: TypeField[];
 }
 
 /** What the Owner and the Data Team keep about a Resource in Data Hub, next to what comes from dbt (FR-RC-15). */
@@ -161,6 +196,8 @@ export interface ResourceDetail extends Resource {
   leftOut: LeftOut[];
   /** Empty until it is added to a Collection with them. */
   details: Details;
+  /** What its model type still misses, and each role whose field is gone (FR-CO-45, FR-RC-29). */
+  typeState: TypeState;
   card: Card;
   /** Who published it and when, and who confirmed it last and when (FR-RC-12); null until it is published. */
   publication: { publishedAt: Date; publishedBy: string; confirmedAt: Date; confirmedBy: string } | null;
@@ -298,8 +335,16 @@ export interface Resources {
   removeGap(id: string, gapId: string, viewer: Viewer): Promise<GapOutcome>;
   /** Writes, changes or removes the Business Descriptions of fields; an empty text removes one (FR-RC-16). */
   describeFields(id: string, descriptions: readonly { field: string; text: string }[], viewer: Viewer): Promise<EditOutcome>;
-  /** Records the grain, storage and mappings of a Resource again, from Edit relations (DEC-UX-107). */
-  relate(id: string, details: Details, viewer: Viewer): Promise<EditOutcome>;
+  /**
+   * Records the grain, storage, model type and mappings of a Resource again, from Edit relations (DEC-UX-107). When
+   * `complete`, its model type must have every field it asks for (FR-CO-44); a change of its mappings alone need not.
+   */
+  relate(id: string, details: Details, viewer: Viewer, complete?: boolean): Promise<EditOutcome>;
+  /**
+   * Every Resource in a Collection, not withdrawn, whose model type misses a field it asks for or that has none yet,
+   * by Display Name, for the Data Team (FR-CO-45, DEC-CO-27).
+   */
+  toComplete(): Promise<ToComplete[]>;
   /** Each mapping of a Resource with the other Resources the viewer sees that carry its identity. */
   related(id: string, viewer: Viewer): Promise<Related[]>;
   /** The Resources the viewer sees on the given Nodes. */
@@ -516,6 +561,24 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
       }
     }
 
+    // A field that held a role of its model type is gone, removed or renamed: the role stays, as its warning, and the
+    // Data Team is told to choose another field, once per Artifact Set; the Level stays (DEC-RC-23, FR-RC-29).
+    const removed = before.filter((field) => !now.has(field.name)).map((field) => field.name);
+    if (row.collectionId && removed.length > 0) {
+      const gone = (await trx.selectFrom('resourceTypeFields').select(['field', 'role']).where('resourceId', '=', row.id).where('field', 'in', removed).execute()).sort(
+        (a, b) => removed.indexOf(a.field) - removed.indexOf(b.field),
+      );
+      if (gone.length > 0) {
+        await tell(trx, row.id, 'MSG-RES-09', {
+          run: runDay,
+          modelType: row.modelType ?? '',
+          level: String(level),
+          count: String(gone.length),
+          gone: JSON.stringify(gone.map(({ field, role }) => ({ field, role }))),
+        });
+      }
+    }
+
     const descriptions = [
       ...(row.description !== table.description ? [{ field: null, before: row.description, after: table.description }] : []),
       ...fields.flatMap((field) => {
@@ -618,9 +681,19 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
   }
 
   async function fieldNames(trx: Database, resourceId: string): Promise<string[]> {
-    return (await trx.selectFrom('resourceFields').select('name').where('resourceId', '=', resourceId).orderBy(sql`position nulls last`).orderBy('name').execute()).map(
-      (field) => field.name,
-    );
+    return (await typedFields(trx, resourceId)).map((field) => field.name);
+  }
+
+  /** The fields of a Resource with their type in BigQuery, in their order, as its model type reads them (FR-CO-44). */
+  async function typedFields(trx: Database, resourceId: string): Promise<FieldOfType[]> {
+    return trx.selectFrom('resourceFields').select(['name', 'dataType']).where('resourceId', '=', resourceId).orderBy(sql`position nulls last`).orderBy('name').execute();
+  }
+
+  /** The fields that hold a role of the model type of a Resource, in the order of its fields; a role whose field is gone last. */
+  async function typeFieldsOf(trx: Database, resourceId: string, fields: readonly FieldOfType[]): Promise<RecordedTypeField[]> {
+    const order = new Map(fields.map((field, index) => [field.name, index]));
+    const rows = await trx.selectFrom('resourceTypeFields').select(['field', 'role', 'origin']).where('resourceId', '=', resourceId).orderBy('field').execute();
+    return rows.sort((a, b) => (order.get(a.field) ?? fields.length) - (order.get(b.field) ?? fields.length));
   }
 
   async function keepColumns(trx: Database, resourceId: string, columns: { fields: Column[]; leftOut: LeftOut[] }) {
@@ -652,8 +725,8 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
   }
 
   /**
-   * Records how a Resource is stored, its grain, model type and mappings, and logs it with the addition
-   * (FR-CO-33): a mapping in the same transaction as the Log Entry that tells it.
+   * Records how a Resource is stored, its grain, model type with the fields it asks for (FR-CO-44) and mappings, and
+   * logs it with the addition (FR-CO-33): a mapping in the same transaction as the Log Entry that tells it.
    */
   async function record(trx: Database, resourceId: string, details: Details, fieldCount: number, viewer: Viewer) {
     await trx
@@ -676,6 +749,14 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
       await trx
         .insertInto('resourceMappings')
         .values(details.mappings.map((mapping) => ({ resourceId, ...mapping, release: details.release })))
+        .execute();
+    }
+    // The fields of the model type, replaced as a whole: those of a model type it no longer has go (DEC-RC-22).
+    await trx.deleteFrom('resourceTypeFields').where('resourceId', '=', resourceId).execute();
+    if (details.typeFields.length > 0) {
+      await trx
+        .insertInto('resourceTypeFields')
+        .values(details.typeFields.map(({ field, role, origin }) => ({ resourceId, field, role, origin })))
         .execute();
     }
     await write(
@@ -904,6 +985,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         .where('resourceId', '=', id)
         .execute();
       const order = new Map(fields.map((field, index) => [field.name, index]));
+      const typeFields = await typeFieldsOf(db, id, fields);
       const details: Details = {
         partition: row.partitionField ? { field: row.partitionField, unit: row.partitionUnit } : null,
         clusterBy: row.clusterBy,
@@ -911,6 +993,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         grain: row.grain,
         grainSentence: row.grainSentence,
         modelType: row.modelType,
+        typeFields,
         origins: row.origins,
         release: row.domainModelRelease,
         mappings: mappings.sort((a, b) => (order.get(a.field) ?? 0) - (order.get(b.field) ?? 0)),
@@ -945,6 +1028,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         fields,
         leftOut,
         details,
+        typeState: typeStateOf(row.modelType, typeFields, fields, row.grainSentence),
         card: cardOf(row, row.reliableDay, await gapsOf(db, id)),
         publication:
           row.publishedAt && confirmation
@@ -1013,15 +1097,22 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
           return { outcome: 'in_another_collection', ids: elsewhere.map((row) => row.id) };
         }
         const adding = rows.filter((row) => row.collectionId === null).sort((a, b) => a.displayName.localeCompare(b.displayName));
-        const fieldsOf = new Map<string, string[]>();
+        const fieldsOf = new Map<string, FieldOfType[]>();
         if (adding.length > 0) {
-          for (const field of await trx.selectFrom('resourceFields').select(['resourceId', 'name']).where('resourceId', 'in', adding.map((row) => row.id)).execute()) {
-            fieldsOf.set(field.resourceId, [...(fieldsOf.get(field.resourceId) ?? []), field.name]);
+          for (const field of await trx
+            .selectFrom('resourceFields')
+            .select(['resourceId', 'name', 'dataType'])
+            .where('resourceId', 'in', adding.map((row) => row.id))
+            .orderBy(sql`position nulls last`)
+            .orderBy('name')
+            .execute()) {
+            fieldsOf.set(field.resourceId, [...(fieldsOf.get(field.resourceId) ?? []), { name: field.name, dataType: field.dataType }]);
           }
         }
         for (const row of adding) {
+          // Recorded, its model type has every field it asks for, or it is not added (FR-CO-44); one sent by its ID alone, as before.
           const details = wanted.find((item) => item.id === row.id)?.details;
-          const problem = details && checkDetails(details, fieldsOf.get(row.id) ?? []);
+          const problem = details && (checkDetails(details, fieldsOf.get(row.id) ?? []) ?? incomplete(details, fieldsOf.get(row.id) ?? []));
           if (problem) {
             return { outcome: 'invalid', id: row.id, message: `${row.displayName}: ${problem}` };
           }
@@ -1265,7 +1356,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
       });
     },
 
-    async relate(id, details, viewer) {
+    async relate(id, details, viewer, complete = false) {
       if (!UUID.test(id)) {
         return { outcome: 'not_found' };
       }
@@ -1274,13 +1365,51 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         if (!row) {
           return { outcome: 'not_found' };
         }
-        const fields = await fieldNames(trx, id);
-        const problem = checkDetails(details, fields);
+        const fields = await typedFields(trx, id);
+        // A role whose field is gone may stay as it was recorded: the Resource shows it as gone (DEC-RC-23).
+        const kept = await typeFieldsOf(trx, id, fields);
+        const problem = checkDetails(details, fields, kept) ?? (complete ? incomplete(details, fields) : undefined);
         if (problem) {
           return { outcome: 'invalid', message: `${row.displayName}: ${problem}` };
         }
         await record(trx, id, details, fields.length, viewer);
         return { outcome: 'edited', changed: ['details'] };
+      });
+    },
+
+    async toComplete() {
+      const rows = await db
+        .selectFrom('resources as r')
+        .innerJoin('collections as c', 'c.id', 'r.collectionId')
+        .select(['r.id', 'r.displayName', 'r.level', 'r.modelType', 'r.grainSentence', 'c.id as collectionId', 'c.name as collectionName'])
+        .where('r.withdrawnAt', 'is', null)
+        .orderBy(sql`lower(r.display_name)`)
+        .orderBy('r.id')
+        .execute();
+      if (rows.length === 0) {
+        return [];
+      }
+      const ids = rows.map((row) => row.id);
+      const fields = new Map<string, FieldOfType[]>();
+      for (const field of await db
+        .selectFrom('resourceFields')
+        .select(['resourceId', 'name', 'dataType'])
+        .where('resourceId', 'in', ids)
+        .orderBy('resourceId')
+        .orderBy(sql`position nulls last`)
+        .orderBy('name')
+        .execute()) {
+        (fields.get(field.resourceId) ?? fields.set(field.resourceId, []).get(field.resourceId)!).push({ name: field.name, dataType: field.dataType });
+      }
+      const typeFields = new Map<string, TypeField[]>();
+      for (const held of await db.selectFrom('resourceTypeFields').select(['resourceId', 'field', 'role']).where('resourceId', 'in', ids).orderBy('field').execute()) {
+        (typeFields.get(held.resourceId) ?? typeFields.set(held.resourceId, []).get(held.resourceId)!).push({ field: held.field, role: held.role });
+      }
+      return rows.flatMap((row) => {
+        const state = typeStateOf(row.modelType, typeFields.get(row.id) ?? [], fields.get(row.id) ?? [], row.grainSentence);
+        return state.missing.length === 0
+          ? []
+          : [{ id: row.id, displayName: row.displayName, collection: { id: row.collectionId, name: row.collectionName }, level: row.level, ...state }];
       });
     },
 
@@ -1464,8 +1593,8 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
 }
 
 /**
- * What a change of the details of a Resource changes (DEC-PL-03): how it is stored, its grain and model type, the work
- * of a Data Admin (`assigned`); and its mappings with the release of the Domain Model they were made with, its Entity
+ * What a change of the details of a Resource changes (DEC-PL-03): how it is stored, its grain, model type and the fields
+ * it asks for, the work of a Data Admin (`assigned`); and its mappings with the release of the Domain Model they were made with, its Entity
  * mapping (`mapped`). Each needs its own Permission; what is sent as it is changes nothing.
  */
 export function whatDetailsChange(before: Details, after: Details): { assigned: boolean; mapped: boolean } {
@@ -1477,6 +1606,7 @@ export function whatDetailsChange(before: Details, after: Details): { assigned: 
     details.mappings
       .map(({ field, kind, relationType, identity, subject, origin, inDomainModel }) => ({ field, kind, relationType, identity, subject, origin, inDomainModel }))
       .sort((a, b) => a.field.localeCompare(b.field));
+  const typeFields = (details: Details) => details.typeFields.map(({ field, role, origin }) => ({ field, role, origin })).sort((a, b) => a.field.localeCompare(b.field));
   return {
     assigned:
       !same(before.partition, after.partition) ||
@@ -1485,6 +1615,7 @@ export function whatDetailsChange(before: Details, after: Details): { assigned: 
       !same(before.grain, after.grain) ||
       before.grainSentence !== after.grainSentence ||
       before.modelType !== after.modelType ||
+      !same(typeFields(before), typeFields(after)) ||
       !same(sorted(before.origins), sorted(after.origins)),
     mapped: before.release !== after.release || !same(mappings(before), mappings(after)),
   };
@@ -1492,19 +1623,27 @@ export function whatDetailsChange(before: Details, after: Details): { assigned: 
 
 /**
  * What the Data Admin recorded fits the Resource: every field it names is a field of it, a field maps
- * once, and a relation starts from a field mapped as `is` (DEC-RC-08). Returns the problem, if any.
+ * once, a relation starts from a field mapped as `is` (DEC-RC-08), and every role belongs to its model
+ * type and fits the type of its field (FR-CO-44). A role recorded before, `kept`, may stay on a field
+ * that left the Resource since, which shows as gone (DEC-RC-23). Returns the problem, if any.
  */
-export function checkDetails(details: Details, fields: readonly string[]): string | undefined {
-  const known = new Set(fields);
+export function checkDetails(details: Details, fields: readonly FieldOfType[], kept: readonly TypeField[] = []): string | undefined {
+  const known = new Set(fields.map((field) => field.name));
+  const stays = (held: TypeField) => kept.some((before) => before.field === held.field && before.role === held.role);
   const named = [
     ...details.grain,
     ...details.clusterBy,
     ...(details.partition ? [details.partition.field] : []),
     ...details.mappings.flatMap((mapping) => [mapping.field, ...(mapping.subject ? [mapping.subject] : [])]),
+    ...details.typeFields.filter((held) => !stays(held)).map((held) => held.field),
   ];
   const stranger = named.find((field) => !known.has(field));
   if (stranger !== undefined) {
     return `it has no field ${stranger}.`;
+  }
+  const misfit = invalidTypeFields(details.modelType, details.typeFields, fields);
+  if (misfit !== undefined) {
+    return misfit;
   }
   const mapped = details.mappings.map((mapping) => mapping.field);
   const twice = mapped.find((field, index) => mapped.indexOf(field) !== index);
@@ -1517,4 +1656,36 @@ export function checkDetails(details: Details, fields: readonly string[]): strin
     return `the relation of ${loose.field} starts from ${loose.subject}, which is not mapped as is.`;
   }
   return undefined;
+}
+
+/** What the model type of a Resource still misses, and each role whose field is gone, from its fields now (FR-CO-45, FR-RC-29). */
+export function typeStateOf(type: ModelType | null, typeFields: readonly TypeField[], fields: readonly FieldOfType[], grainSentence: string): TypeState {
+  return {
+    missing: missingOfType(type, typeFields, fields, grainSentence),
+    gone: goneOfType(typeFields, fields).map(({ field, role }) => ({ field, role })),
+  };
+}
+
+/** What is missing, as a sentence that names it. */
+export function missingSentence(type: ModelType | null, missing: readonly MissingOfType[]): string | undefined {
+  if (missing.length === 0) {
+    return undefined;
+  }
+  if (type === null || missing.some((one) => one.kind === 'modelType')) {
+    return 'it has no model type yet.';
+  }
+  const parts = missing.map((one) =>
+    one.kind === 'role' ? `a field as ${one.role}` : one.kind === 'unmarked' ? `the number ${one.field} marked as addsUp or uniqueCount` : 'the sentence of One row per',
+  );
+  const listed = parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}`;
+  return `its model type ${type} still asks for ${listed}.`;
+}
+
+/**
+ * Whether what was recorded gives the model type every field it asks for (FR-CO-44): a model type, each required role
+ * held by a field the Resource has, every number of an aggregate marked, or the sentence of `other`. Returns what is
+ * missing, as a sentence, if anything.
+ */
+export function incomplete(details: Details, fields: readonly FieldOfType[]): string | undefined {
+  return missingSentence(details.modelType, missingOfType(details.modelType, details.typeFields, fields, details.grainSentence));
 }
