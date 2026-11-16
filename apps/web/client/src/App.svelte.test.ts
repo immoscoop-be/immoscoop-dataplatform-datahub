@@ -635,6 +635,8 @@ function serve({
   journey = undefined as JourneyFacts | undefined,
   /** What a colleague changes on Weekly lead volume while its publication is open: catalogue reads it when it publishes. */
   meanwhile = undefined as JourneyFacts | undefined,
+  /** The Resources whose model type is incomplete, as catalogue lists them to a Data Admin (FR-CO-45). */
+  toComplete = [] as Record<string, unknown>[],
 } = {}): Saved[] {
   const calls: Saved[] = [];
   // The Users and Permission groups as identity keeps them, changed by what the page asks (TR-PL-07).
@@ -816,6 +818,9 @@ function serve({
     }
     if (path === '/resources?collection=none') {
       return dataTeam ? json({ resources: waiting }) : json({ error: 'forbidden' }, 403);
+    }
+    if (path === '/resources/to-complete') {
+      return dataTeam ? json({ resources: toComplete }) : json({ error: 'forbidden' }, 403);
     }
     if (path === '/withdrawn') {
       return dataTeam ? json({ resources: WITHDRAWN }) : json({ error: 'forbidden' }, 403);
@@ -1700,7 +1705,7 @@ describe('the web app, for the Data Team', () => {
     expect(screen.getByRole('link', { name: /Saved searches/ }).getAttribute('aria-current')).toBe('page');
   });
 
-  it('adds a waiting Resource to a Collection from its own page: the Collection first, then its grain (FR-CO-31, DEC-UX-131)', async () => {
+  it('adds a waiting Resource to a Collection from its own page: the Collection first, then its model type, grain and fields (FR-CO-31, DEC-UX-131)', async () => {
     const calls = serve({ as: 'admin' });
     open('/resources/r1');
     render(App, { config: CONFIG });
@@ -1708,15 +1713,22 @@ describe('the web app, for the Data Team', () => {
     await fireEvent.click(await notice.findByRole('button', { name: /Aan een Collection toevoegen/ }));
     const sheet = within(screen.getByRole('dialog', { name: 'Saved searches aan een Collection toevoegen' }));
     expect(sheet.getByText('Nog geen Collection gekozen')).toBeTruthy();
-    const next = sheet.getByRole('button', { name: /Volgende: grain en relaties/ }) as HTMLButtonElement;
+    const next = sheet.getByRole('button', { name: /Volgende: modeltype/ }) as HTMLButtonElement;
     expect(next.disabled).toBe(true);
     await fireEvent.click(sheet.getByRole('radio', { name: /Credit leads/ }));
-    expect(sheet.getByText('In Credit leads · daarna zijn grain en relaties')).toBeTruthy();
+    expect(sheet.getByText('In Credit leads · daarna zijn modeltype')).toBeTruthy();
     await fireEvent.click(next);
 
-    // The second step is the one of the page of a Collection, with this Resource chosen.
-    const second = within(await screen.findByRole('dialog', { name: 'Grain en relaties van Saved searches' }));
-    await fireEvent.input(await second.findByRole('textbox', { name: 'Wat één rij is, in woorden' }), { target: { value: 'saved search' } });
+    // The next steps are those of the page of a Collection, with this Resource chosen.
+    const type = within(await screen.findByRole('dialog', { name: 'Wat is één rij van Saved searches?' }));
+    await fireEvent.click(await type.findByRole('radio', { name: /^dimension/ }));
+    await fireEvent.click(type.getByRole('button', { name: /Volgende: grain en opslag/ }));
+    const grain = within(await screen.findByRole('dialog', { name: 'Grain en opslag van Saved searches' }));
+    await fireEvent.input(grain.getByRole('textbox', { name: 'Wat één rij is, in woorden' }), { target: { value: 'saved search' } });
+    await fireEvent.click(grain.getByRole('button', { name: /Volgende: velden en relaties/ }));
+    const second = within(await screen.findByRole('dialog', { name: 'Velden en relaties van Saved searches' }));
+    // The one field of the grain, mapped is, is what a dimension describes.
+    expect(((await second.findByRole('combobox', { name: 'Wat search_id is voor zijn modeltype' })) as HTMLSelectElement).value).toBe('describes');
     await fireEvent.click(second.getByRole('button', { name: 'Resource toevoegen' }));
     await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     const added = calls.find((call) => call.method === 'POST' && call.path === '/collections/c1/resources');
@@ -2944,7 +2956,7 @@ describe('the page of a Resource', () => {
     expect(main.queryByRole('tab', { name: 'Gevarenzone' })).toBeNull();
   });
 
-  it('lets a Data Admin change its grain and relations with Edit relations (DEC-UX-107)', async () => {
+  it('lets a Data Admin change its model type, grain and relations with Edit relations, in three steps (DEC-UX-107, DEC-CO-27)', async () => {
     const calls = serve({ as: 'admin' });
     open('/resources/r2');
     render(App, { config: CONFIG });
@@ -2952,16 +2964,57 @@ describe('the page of a Resource', () => {
     await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
     await fireEvent.click(main.getByRole('tab', { name: 'Kolommen' }));
     await fireEvent.click(main.getByRole('button', { name: /Relaties bewerken/ }));
-    const sheet = within(await screen.findByRole('dialog', { name: 'Grain en relaties van Weekly lead volume' }));
+    // It opens at its model type, the steps on top without choosing a Resource.
+    const type = within(await screen.findByRole('dialog', { name: 'Wat is één rij van Weekly lead volume?' }));
+    expect(type.getByRole('navigation', { name: 'Stappen' }).textContent).toMatch(/^\s*1\s*Modeltype\s*2\s*Grain en opslag\s*3\s*Velden en relaties\s*$/);
+    expect(type.getByText('Kies een modeltype')).toBeTruthy();
+    await fireEvent.click(type.getByRole('radio', { name: /^event/ }));
+    expect(type.getByText(/vraagt wanneer het gebeurde/)).toBeTruthy();
+    await fireEvent.click(type.getByRole('button', { name: /Volgende: grain en opslag/ }));
+    const grain = within(await screen.findByRole('dialog', { name: 'Grain en opslag van Weekly lead volume' }));
+    await fireEvent.click(grain.getByRole('button', { name: /Volgende: velden en relaties/ }));
+    const sheet = within(await screen.findByRole('dialog', { name: 'Velden en relaties van Weekly lead volume' }));
+    // The partition column, a date from dbt, is suggested for when it happened.
+    expect(((await sheet.findByRole('combobox', { name: 'Wat week_start is voor zijn modeltype' })) as HTMLSelectElement).value).toBe('happenedAt');
     await fireEvent.click(await sheet.findByRole('button', { name: 'Bewaren' }));
     await vi.waitFor(() =>
       expect(calls).toContainEqual({
         method: 'PUT',
         path: '/resources/r2/details',
-        body: expect.objectContaining({ partition: { field: 'week_start', unit: 'day' }, clusterBy: ['lead_source'], mappings: [] }),
+        body: expect.objectContaining({
+          partition: { field: 'week_start', unit: 'day' },
+          clusterBy: ['lead_source'],
+          mappings: [],
+          modelType: 'event',
+          typeFields: [{ field: 'week_start', role: 'happenedAt', origin: 'dbt' }],
+        }),
       }),
     );
     await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  });
+
+  it('lets an Owner Unit that maps fields save its mappings while the model type is incomplete, without changing the model type (DEC-PL-03, TR-CO-09)', async () => {
+    const MAPS_ONLY = { description: false, behaviour: false, pitfalls: false, availableSince: false, gaps: false, keyFields: false, entityMapping: true };
+    const calls = serve({ groups: ['g1'], weekly: { canEdit: true, canDescribe: MAPS_ONLY, canPublish: false, canDeprecate: false, canAssign: false, canRemove: false } });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
+    await fireEvent.click(main.getByRole('tab', { name: 'Kolommen' }));
+    await fireEvent.click(main.getByRole('button', { name: /Relaties bewerken/ }));
+    // It opens at the fields, without the steps of the model type and the grain, which only a Data Admin changes.
+    const sheet = within(await screen.findByRole('dialog', { name: 'Velden en relaties van Weekly lead volume' }));
+    expect(sheet.queryByRole('navigation', { name: 'Stappen' })).toBeNull();
+    await sheet.findByRole('combobox', { name: 'Mapping van week_start' });
+    // Without a model type it has no roles to give: no column for them.
+    expect(sheet.queryByRole('combobox', { name: 'Wat week_start is voor zijn modeltype' })).toBeNull();
+    // Saving is not held back by the model type it still misses.
+    const save = sheet.getByRole('button', { name: 'Bewaren' }) as HTMLButtonElement;
+    expect(save.disabled).toBe(false);
+    await fireEvent.click(save);
+    await vi.waitFor(() =>
+      expect(calls).toContainEqual({ method: 'PUT', path: '/resources/r2/details', body: expect.objectContaining({ modelType: null, typeFields: [] }) }),
+    );
   });
 
   it('walks its lineage one step at a time, the Resource in the middle, on a canvas that pans and zooms (FR-SR-54, DEC-UX-100, DEC-UX-152)', async () => {
@@ -3184,17 +3237,20 @@ describe('the web app, for the Data Team, with Collections', () => {
     await fireEvent.click((await main.findAllByRole('button', { name: /Resources toevoegen/ }))[0]!);
     const sheet = within(screen.getByRole('dialog', { name: 'Een Resource toevoegen aan Credit leads' }));
     await fireEvent.click(sheet.getByRole('radio', { name: /Saved searches/ }));
-    await fireEvent.click(sheet.getByRole('button', { name: /Volgende: grain en relaties/ }));
-    const second = within(await screen.findByRole('dialog', { name: 'Grain en relaties van Saved searches' }));
+    await fireEvent.click(sheet.getByRole('button', { name: /Volgende: modeltype/ }));
+    await fireEvent.click(await screen.findByRole('radio', { name: /^other/ }));
+    await fireEvent.click(screen.getByRole('button', { name: /Volgende: grain en opslag/ }));
+    await fireEvent.input(await screen.findByRole('textbox', { name: 'Wat één rij is, in woorden' }), { target: { value: 'saved search' } });
+    await fireEvent.click(screen.getByRole('button', { name: /Volgende: velden en relaties/ }));
+    const second = within(await screen.findByRole('dialog', { name: 'Velden en relaties van Saved searches' }));
     expect(await second.findByText(/zoals het op prod draait; het zegt zijn versie niet/)).toBeTruthy();
-    await fireEvent.input(second.getByRole('textbox', { name: 'Wat één rij is, in woorden' }), { target: { value: 'saved search' } });
     await fireEvent.click(second.getByRole('button', { name: 'Resource toevoegen' }));
     await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     const added = calls.find((call) => call.method === 'POST' && call.path === '/collections/c1/resources')?.body as { resources: { release: unknown }[] };
     expect(added.resources[0]?.release).toBeNull();
   });
 
-  it('adds a Resource without a Collection from the page of a Collection, one at a time, in a sheet of two steps (FR-CO-31, FR-CO-33, FR-CO-34, DEC-UX-132)', async () => {
+  it('adds a Resource without a Collection from the page of a Collection, one at a time, in a sheet of four steps (FR-CO-31, FR-CO-33, FR-CO-34, FR-CO-44, DEC-UX-132, DEC-UX-262)', async () => {
     const reviews = { ...SAVED_SEARCHES, id: 'r9', displayName: 'Agency reviews', name: 'agency_reviews', exposures: ['datahub_agencyReviews'] };
     const calls = serve({ as: 'admin', waiting: [SAVED_SEARCHES, reviews] });
     open('/collections/c1');
@@ -3205,19 +3261,46 @@ describe('the web app, for the Data Team, with Collections', () => {
     expect(sheet.getByText(/^Kwam binnen op 21 okt\.? via de exposure datahub_savedSearches$/)).toBeTruthy();
     expect(sheet.queryByRole('checkbox')).toBeNull();
     expect(sheet.getByText('Nog geen Resource gekozen')).toBeTruthy();
-    const next = sheet.getByRole('button', { name: /Volgende: grain en relaties/ }) as HTMLButtonElement;
+    expect(sheet.getByRole('navigation', { name: 'Stappen' }).textContent).toMatch(/^\s*1\s*Een Resource kiezen\s*2\s*Modeltype\s*3\s*Grain en opslag\s*4\s*Velden en relaties\s*$/);
+    const next = sheet.getByRole('button', { name: /Volgende: modeltype/ }) as HTMLButtonElement;
     expect(next.disabled).toBe(true);
     // Choosing another Resource replaces the first: one at a time.
     await fireEvent.click(sheet.getByRole('radio', { name: /Agency reviews/ }));
     await fireEvent.click(sheet.getByRole('radio', { name: /Saved searches/ }));
     expect(sheet.getAllByRole('radio', { checked: true }).map((radio) => radio.closest('label')?.textContent)).toEqual([expect.stringContaining('Saved searches')]);
-    expect(sheet.getByText('Saved searches · daarna zijn grain en relaties')).toBeTruthy();
+    expect(sheet.getByText('Saved searches · daarna zijn modeltype')).toBeTruthy();
     await fireEvent.click(next);
 
-    // Step 2: what dbt and the Domain Model propose, each with where it came from.
-    const second = within(await screen.findByRole('dialog', { name: 'Grain en relaties van Saved searches' }));
+    // Step 2: its model type, a card per model type, none chosen to start with (DEC-RC-25); "Next" waits.
+    const type = within(await screen.findByRole('dialog', { name: 'Wat is één rij van Saved searches?' }));
+    const cards = await type.findAllByRole('radio');
+    expect(cards.map((card) => card.getAttribute('value'))).toEqual(['event', 'state', 'fact', 'dimension', 'aggregate', 'other']);
+    expect(cards.filter((card) => (card as HTMLInputElement).checked)).toEqual([]);
+    expect(type.getByRole('radio', { name: /^dimension/ }).closest('label')?.textContent).toContain('Wat het beschrijft · vereist');
+    const toGrain = type.getByRole('button', { name: /Volgende: grain en opslag/ }) as HTMLButtonElement;
+    expect(toGrain.disabled).toBe(true);
+    expect(type.getByText('Kies een modeltype')).toBeTruthy();
+    await fireEvent.click(type.getByRole('radio', { name: /^dimension/ }));
+    expect(type.getByText(/^· vraagt wat het beschrijft$/).closest('p')?.textContent).toBe('dimension · vraagt wat het beschrijft');
+    await fireEvent.click(toGrain);
+
+    // Step 3: its grain and storage, with its model type and "Change".
+    const grain = within(await screen.findByRole('dialog', { name: 'Grain en opslag van Saved searches' }));
+    expect(grain.getByText('dimension')).toBeTruthy();
+    expect(await grain.findByText('Uit een dbt-test')).toBeTruthy();
+    await fireEvent.input(grain.getByRole('textbox', { name: 'Wat één rij is, in woorden' }), { target: { value: 'saved search' } });
+    expect(grain.getByText('Eén rij per saved search · daarna zijn velden en relaties')).toBeTruthy();
+    await fireEvent.click(grain.getByRole('button', { name: /Volgende: velden en relaties/ }));
+
+    // Step 4: what dbt and the Domain Model propose, each with where it came from, and what the model type asks for.
+    const second = within(await screen.findByRole('dialog', { name: 'Velden en relaties van Saved searches' }));
     expect(await second.findByText(/versie 0\.0\.70, zoals het op prod draait/)).toBeTruthy();
-    expect(await second.findByText('Uit een dbt-test')).toBeTruthy();
+    expect(second.getByRole('columnheader', { name: 'Voor het modeltype dimension' })).toBeTruthy();
+    const role = second.getByRole('combobox', { name: 'Wat search_id is voor zijn modeltype' }) as HTMLSelectElement;
+    expect(role.value).toBe('describes');
+    expect([...role.options].map((option) => option.textContent)).toEqual(['—', 'Wat het beschrijft']);
+    // What a dimension describes is chosen, suggested from the grain of a dbt test.
+    expect(second.getByRole('group', { name: 'Wat zijn modeltype vraagt' }).textContent).toMatch(/Wat het beschrijft\s*search_id\s*Uit een dbt-test\s*Vereist/);
     const mapping = second.getByRole('combobox', { name: 'Mapping van search_id' }) as HTMLSelectElement;
     expect(mapping.value).toBe('is');
     expect((second.getByRole('combobox', { name: 'Entity-identiteit van search_id' }) as HTMLInputElement).value).toBe('search.searchId');
@@ -3229,8 +3312,21 @@ describe('the web app, for the Data Team, with Collections', () => {
     expect((second.getByRole('button', { name: 'Resource toevoegen' }) as HTMLButtonElement).disabled).toBe(true);
     await fireEvent.input(identity, { target: { value: 'filter.filterId' } });
     expect(second.getByText(/zit nog niet in het Domain Model/)).toBeTruthy();
-    await fireEvent.input(second.getByRole('textbox', { name: 'Wat één rij is, in woorden' }), { target: { value: 'saved search' } });
-    await fireEvent.click(second.getByRole('button', { name: 'Resource toevoegen' }));
+    // What a dimension describes is held by one field: chosen on another, it moves there (FR-CO-44).
+    const add = second.getByRole('button', { name: 'Resource toevoegen' }) as HTMLButtonElement;
+    expect(add.disabled).toBe(false);
+    const other = second.getByRole('combobox', { name: 'Wat filters is voor zijn modeltype' }) as HTMLSelectElement;
+    await fireEvent.change(other, { target: { value: 'describes' } });
+    expect(role.value).toBe('');
+    expect(other.value).toBe('describes');
+    // Without it, "Add Resource" waits, and the foot says what is missing.
+    await fireEvent.change(other, { target: { value: '' } });
+    expect(add.disabled).toBe(true);
+    expect(second.getByText(/^Kies eerst wat het beschrijft: het modeltype/).textContent).toBe('Kies eerst wat het beschrijft: het modeltype dimension heeft het nodig.');
+    expect(second.getByRole('group', { name: 'Wat zijn modeltype vraagt' }).textContent).toContain('Niet gekozen: kies het in de kolom “Voor het modeltype dimension” hieronder');
+    await fireEvent.change(role, { target: { value: 'describes' } });
+    expect(add.disabled).toBe(false);
+    await fireEvent.click(add);
     await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(calls).toContainEqual({
       method: 'POST',
@@ -3244,9 +3340,11 @@ describe('the web app, for the Data Team, with Collections', () => {
             partitionFilter: 'none',
             grain: ['search_id'],
             grainSentence: 'saved search',
-            modelType: null,
-            origins: { grain: 'test', grainSentence: 'here' },
+            modelType: 'dimension',
+            origins: { grain: 'test', grainSentence: 'here', modelType: 'here' },
             release: '0.0.70',
+            // Chosen again here, after it moved.
+            typeFields: [{ field: 'search_id', role: 'describes', origin: 'here' }],
             mappings: [
               { field: 'search_id', kind: 'is', relationType: null, identity: 'search.searchId', subject: null, origin: 'name', inDomainModel: true },
               { field: 'filters', kind: 'relation', relationType: 'occurredWithin', identity: 'filter.filterId', subject: 'search_id', origin: 'here', inDomainModel: false },
@@ -3255,6 +3353,192 @@ describe('the web app, for the Data Team, with Collections', () => {
         ],
       },
     });
+  });
+});
+
+/** Weekly lead volume as an aggregate: grouped by its source, per week, its leads adding up (FR-CO-44). */
+const AGGREGATE = {
+  fields: [
+    { name: 'week_start', position: 1, dataType: 'DATE', description: 'Monday of the week', businessDescription: '' },
+    { name: 'lead_source', position: 2, dataType: 'STRING', description: 'Where the lead came from', businessDescription: '' },
+    { name: 'lead_count', position: 3, dataType: 'INT64', description: 'Number of leads', businessDescription: '' },
+  ],
+  details: {
+    ...WEEKLY_DETAIL.details,
+    grain: ['week_start', 'lead_source'],
+    grainSentence: 'week and lead source',
+    modelType: 'aggregate',
+    origins: { partition: 'dbt', clusterBy: 'dbt', modelType: 'here' },
+    typeFields: [
+      { field: 'lead_source', role: 'groupedBy', origin: 'here' },
+      { field: 'week_start', role: 'period', origin: 'dbt' },
+      { field: 'lead_count', role: 'addsUp', origin: 'here' },
+    ],
+  },
+};
+
+/** The same aggregate after dbt renamed week_start to week_monday and added visits, which holds no role yet (FR-RC-29, FR-CO-45). */
+const RENAMED = {
+  fields: [
+    { name: 'week_monday', position: 1, dataType: 'DATE', description: 'Monday of the week', businessDescription: '' },
+    { name: 'lead_source', position: 2, dataType: 'STRING', description: 'Where the lead came from', businessDescription: '' },
+    { name: 'lead_count', position: 3, dataType: 'INT64', description: 'Number of leads', businessDescription: '' },
+    { name: 'visits', position: 4, dataType: 'INT64', description: 'Unique visitors', businessDescription: '' },
+  ],
+  details: { ...AGGREGATE.details, partition: null, origins: {} },
+  changes: [{ field: 'week_start', change: 'removed', old: 'DATE', new: null, at: '2026-11-15T06:00:00Z' }],
+  typeState: { gone: [{ field: 'week_start', role: 'period' }], missing: [{ kind: 'unmarked', field: 'visits' }] },
+};
+
+describe('the model type of a Resource and the fields it asks for (FR-CO-44, FR-CO-45, FR-RC-28, FR-RC-29)', () => {
+  /** The value of a fact of what one row is, by its label. */
+  const fact = (label: string) => (screen.getByText(label, { selector: 'dt' }).nextElementSibling?.textContent ?? '').replace(/\s+/g, ' ').trim();
+
+  it('shows what one row is at the end of its Description, by role, and lets a Data Admin change its model type, which drops its fields (DEC-UX-263, DEC-RC-22)', async () => {
+    const calls = serve({ as: 'admin', weekly: AGGREGATE });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    await fireEvent.click(await screen.findByRole('tab', { name: 'Beschrijving' }));
+    expect(screen.getByText('Wat één rij is')).toBeTruthy();
+    expect(fact('Modeltype')).toContain('Eén rij per groep, met zijn tellingen of sommen al gemaakt');
+    expect(fact('Grain')).toContain('Eén rij per week and lead source.');
+    expect(fact('Gegroepeerd op')).toBe('lead_source');
+    expect(fact('Periode')).toBe('week_start');
+    expect(fact('Tellingen en sommen')).toBe('lead_count telt op');
+
+    await fireEvent.click(screen.getByRole('button', { name: /Modeltype wijzigen/ }));
+    const type = within(await screen.findByRole('dialog', { name: 'Het modeltype van Weekly lead volume wijzigen' }));
+    expect(type.getByText(/^Zijn modeltype is nu/).textContent).toBe('Zijn modeltype is nu aggregate.');
+    expect(type.getByText(/laat de velden vallen die dat modeltype vraagt, en zijn EDA wordt opnieuw gevalideerd/)).toBeTruthy();
+    expect((type.getByRole('radio', { name: /^aggregate/ }) as HTMLInputElement).checked).toBe(true);
+    expect(type.getByRole('radio', { name: /^aggregate/ }).closest('label')?.textContent).toContain('Nu');
+    // "Next" waits for another model type.
+    const next = type.getByRole('button', { name: /Volgende: grain en opslag/ }) as HTMLButtonElement;
+    expect(next.disabled).toBe(true);
+    expect(type.getByText('Kies een ander modeltype')).toBeTruthy();
+    await fireEvent.click(type.getByRole('radio', { name: /^event/ }));
+    expect(next.disabled).toBe(false);
+    await fireEvent.click(next);
+    await fireEvent.click(await screen.findByRole('button', { name: /Volgende: velden en relaties/ }));
+    const fields = within(await screen.findByRole('dialog', { name: 'Velden en relaties van Weekly lead volume' }));
+    // The fields of the aggregate are gone; the partition column, from dbt, is when the event happened.
+    expect(((await fields.findByRole('combobox', { name: 'Wat week_start is voor zijn modeltype' })) as HTMLSelectElement).value).toBe('happenedAt');
+    expect(((fields.getByRole('combobox', { name: 'Wat lead_count is voor zijn modeltype' })) as HTMLSelectElement).disabled).toBe(true);
+    await fireEvent.click(fields.getByRole('button', { name: 'Bewaren' }));
+    await vi.waitFor(() =>
+      expect(calls).toContainEqual({
+        method: 'PUT',
+        path: '/resources/r2/details',
+        body: expect.objectContaining({ modelType: 'event', typeFields: [{ field: 'week_start', role: 'happenedAt', origin: 'dbt' }] }),
+      }),
+    );
+  });
+
+  it('warns everyone that a field of its model type is gone, and shows the role gone in its Description (FR-RC-29, DEC-UX-264)', async () => {
+    serve({ groups: ['g1'], weekly: RENAMED });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
+    const warning = main.getByText('Een veld van zijn modeltype is weg:').closest('[role="status"]') as HTMLElement;
+    expect(warning.textContent).toMatch(/week_start, voor “periode”, werd op 15 nov\.? 2026 verwijderd in dbt\. Het Level blijft 2 · Described; het Data Team is verwittigd\./);
+    // Only the Data Team chooses another field, and only it sees that its model type is incomplete (DEC-UX-265).
+    expect(within(warning).queryByRole('button')).toBeNull();
+    expect(main.queryByText('Zijn modeltype is onvolledig:')).toBeNull();
+    await fireEvent.click(main.getByRole('tab', { name: 'Beschrijving' }));
+    expect(fact('Periode')).toMatch(/^Weg: week_start werd op 15 nov\.? 2026 verwijderd in dbt$/);
+    expect(fact('Tellingen en sommen')).toMatch(/^lead_count telt op ?Nog niet gemarkeerd: visits$/);
+    expect(main.queryByRole('button', { name: /Modeltype wijzigen/ })).toBeNull();
+  });
+
+  it('lets a Data Admin choose another field for the role that is gone, at the step of the fields (DEC-UX-264)', async () => {
+    const calls = serve({ as: 'admin', weekly: RENAMED });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('button', { name: 'Een ander veld kiezen' }));
+    const sheet = within(await screen.findByRole('dialog', { name: 'Velden en relaties van Weekly lead volume' }));
+    const needs = await sheet.findByRole('group', { name: 'Wat zijn modeltype vraagt' });
+    expect(needs.textContent).toContain('week_start is weg uit dbt: kies een ander in de kolom “Voor het modeltype aggregate” hieronder');
+    expect(needs.textContent).toContain('Nog niet gemarkeerd: visits, in de kolom “Voor het modeltype aggregate” hieronder');
+    const save = sheet.getByRole('button', { name: 'Bewaren' }) as HTMLButtonElement;
+    await vi.waitFor(() => expect(sheet.getByText(/^Markeer eerst/).textContent).toBe('Markeer eerst visits: elk getalveld telt op of is een unieke telling.'));
+    expect(save.disabled).toBe(true);
+    // A field is offered only the roles its type fits.
+    const week = sheet.getByRole('combobox', { name: 'Wat week_monday is voor zijn modeltype' }) as HTMLSelectElement;
+    expect([...week.options].map((option) => option.textContent)).toEqual(['—', 'Gegroepeerd op', 'Periode']);
+    const visits = sheet.getByRole('combobox', { name: 'Wat visits is voor zijn modeltype' }) as HTMLSelectElement;
+    expect([...visits.options].map((option) => option.textContent)).toEqual(['—', 'Gegroepeerd op', 'Telling of som, telt op', 'Unieke telling, nooit opgeteld']);
+    await fireEvent.change(week, { target: { value: 'period' } });
+    await fireEvent.change(visits, { target: { value: 'uniqueCount' } });
+    expect(save.disabled).toBe(false);
+    await fireEvent.click(save);
+    await vi.waitFor(() =>
+      expect(calls).toContainEqual({
+        method: 'PUT',
+        path: '/resources/r2/details',
+        body: expect.objectContaining({
+          modelType: 'aggregate',
+          typeFields: [
+            { field: 'lead_source', role: 'groupedBy', origin: 'here' },
+            { field: 'lead_count', role: 'addsUp', origin: 'here' },
+            { field: 'week_monday', role: 'period', origin: 'here' },
+            { field: 'visits', role: 'uniqueCount', origin: 'here' },
+          ],
+        }),
+      }),
+    );
+  });
+
+  it('tells the Data Team that its model type is incomplete, and "Complete it" reopens the steps from the model type on (FR-CO-45, DEC-UX-265)', async () => {
+    serve({ as: 'admin', weekly: RENAMED });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const warning = (await main.findByText('Zijn modeltype is onvolledig:')).closest('[role="status"]') as HTMLElement;
+    expect(warning.textContent).toContain('visits niet gemarkeerd. Zijn EDA kan pas starten als het volledig is. Enkel het Data Team ziet dit.');
+    await fireEvent.click(within(warning).getByRole('button', { name: 'Vervolledigen' }));
+    const type = within(await screen.findByRole('dialog', { name: 'Wat is één rij van Weekly lead volume?' }));
+    expect((type.getByRole('radio', { name: /^aggregate/ }) as HTMLInputElement).checked).toBe(true);
+    expect(type.queryByText(/^Zijn modeltype is nu/)).toBeNull();
+    expect((type.getByRole('button', { name: /Volgende: grain en opslag/ }) as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it('lists the Resources to complete for the Data Team in the panel, each with what it misses, and opens one (FR-CO-45, DEC-UX-265)', async () => {
+    const calls = serve({
+      as: 'admin',
+      toComplete: [
+        { id: 'r2', displayName: 'Weekly lead volume', collection: { id: 'c1', name: 'Credit leads' }, level: 2, missing: [{ kind: 'unmarked', field: 'lead_count' }], gone: [] },
+        { id: 'r5', displayName: 'Lead sources', collection: { id: 'c1', name: 'Credit leads' }, level: 4, missing: [{ kind: 'modelType' }], gone: [] },
+        { id: 'r6', displayName: 'Listing views per day', collection: { id: 'c2', name: 'Listings' }, level: 4, missing: [{ kind: 'role', role: 'happenedAt' }], gone: [{ field: 'viewed_at', role: 'happenedAt' }] },
+      ],
+    });
+    open('/collections');
+    render(App, { config: CONFIG });
+    const panel = within(await screen.findByRole('complementary', { name: 'Collections' }));
+    expect(await panel.findByText('Te vervolledigen')).toBeTruthy();
+    expect(panel.getByText(/modeltypes te vervolledigen · enkel Data Team/).textContent).toContain('3');
+    const weekly = panel.getByRole('link', { name: /Weekly lead volume/ });
+    expect(weekly.textContent).toContain('lead_count niet gemarkeerd');
+    expect(panel.getByRole('link', { name: /Lead sources/ }).textContent).toContain('nog geen modeltype');
+    expect(panel.getByRole('link', { name: /Listing views per day/ }).textContent).toContain('mist wanneer het gebeurde · viewed_at weg');
+    await fireEvent.click(weekly);
+    expect(location.pathname).toBe('/resources/r2');
+    expect(calls.filter((call) => call.path === '/resources/to-complete').length).toBeGreaterThan(0);
+  });
+
+  it('shows no card To complete when nothing is left, nor to anyone but the Data Team', async () => {
+    serve({ as: 'admin' });
+    open('/collections');
+    render(App, { config: CONFIG });
+    await screen.findByRole('button', { name: 'Toon wat Zonder Collection bevat' });
+    expect(screen.queryByText('Te vervolledigen')).toBeNull();
+    cleanup();
+    const calls = serve({ toComplete: [{ id: 'r2', displayName: 'Weekly lead volume', collection: { id: 'c1', name: 'Credit leads' }, level: 2, missing: [{ kind: 'modelType' }], gone: [] }] });
+    render(App, { config: CONFIG });
+    await screen.findByRole('complementary', { name: 'Collections' });
+    expect(screen.queryByText('Te vervolledigen')).toBeNull();
+    expect(calls.some((call) => call.path === '/resources/to-complete')).toBe(false);
   });
 });
 
@@ -5250,7 +5534,8 @@ describe('the markers of the Learning Centre', () => {
     open('/resources/r2');
     render(App, { config: CONFIG });
     await fireEvent.click(await screen.findByRole('tab', { name: 'Beschrijving' }));
-    const grain = await screen.findByRole('button', { name: /^grain: week_start × lead_source/ });
+    // What one row is, at the end of the Description: the first field of its grain carries the marker (DEC-UX-263).
+    const grain = await screen.findByRole('button', { name: /^week_start/ });
     expect(grain.textContent).toContain('ⓘ');
     expect(grain.getAttribute('aria-haspopup')).toBe('dialog');
     await fireEvent.keyDown(grain, { key: 'Enter' });
@@ -5278,7 +5563,7 @@ describe('the markers of the Learning Centre', () => {
     expect(items.map((item) => item.textContent)).toEqual([expect.stringMatching(/^K5\.2Het Level van een Resource/), expect.stringMatching(/^3\.3\.3/)]);
     await fireEvent.keyDown(screen.getByRole('button', { name: /2 · Described.*uitgelegd/ }), { key: 'Escape' });
     await fireEvent.click(screen.getByRole('tab', { name: 'Beschrijving' }));
-    await fireEvent.keyDown(screen.getByRole('button', { name: /^modeltype: aggregate/ }), { key: 'Enter' });
+    await fireEvent.keyDown(screen.getByRole('button', { name: /^aggregate/ }), { key: 'Enter' });
     expect(within(screen.getByRole('dialog', { name: 'Uitgelegd in 1 Learning Card' })).getByRole('button', { name: /^2\.3\.6/ })).toBeTruthy();
   });
 });

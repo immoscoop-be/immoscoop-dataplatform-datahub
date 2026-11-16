@@ -1,5 +1,6 @@
 import type { GapScope } from '@datahub/contracts/gaps';
 import type { Journey, JourneyAnswer, JourneyStepId } from '@datahub/contracts/journey';
+import type { MissingOfType, ModelType, TypeField, TypeRole } from '@datahub/contracts/model-types';
 import { createCall, NotFound, Refused } from './api.js';
 import type { Config } from './config.js';
 import type { Session } from './session.js';
@@ -51,17 +52,45 @@ export interface Mapping {
   inDomainModel: boolean;
 }
 
-/** What the Data Admin recorded when adding a Resource (FR-CO-33, FR-CO-34, TR-CO-05). */
+/** Where a fact recorded when adding a Resource came from: dbt, a dbt test, the Domain Model, or the Data Admin. */
+export type DetailOrigin = 'dbt' | 'test' | 'domainModel' | 'here';
+
+/** A field holding a role of the model type of its Resource, and where that came from (FR-CO-44). */
+export interface RecordedTypeField {
+  field: string;
+  role: TypeRole;
+  origin: DetailOrigin;
+}
+
+/** What the Data Admin recorded when adding a Resource (FR-CO-33, FR-CO-34, FR-CO-44, TR-CO-05). */
 export interface Details {
   partition: { field: string; unit: 'hour' | 'day' | 'month' | 'year' | null } | null;
   clusterBy: string[];
   partitionFilter: 'none' | 'dataHub' | 'bigQuery';
   grain: string[];
   grainSentence: string;
-  modelType: 'event' | 'state' | 'fact' | 'dimension' | 'aggregate' | null;
-  origins: Partial<Record<'partition' | 'clusterBy' | 'partitionFilter' | 'grain' | 'grainSentence' | 'modelType', 'dbt' | 'test' | 'domainModel' | 'here'>>;
+  modelType: ModelType | null;
+  origins: Partial<Record<'partition' | 'clusterBy' | 'partitionFilter' | 'grain' | 'grainSentence' | 'modelType', DetailOrigin>>;
+  /** The fields that hold the roles of its model type; left out by an older catalogue. */
+  typeFields?: RecordedTypeField[];
   release: string | null;
   mappings: Mapping[];
+}
+
+/** What its model type still misses, and the roles whose field is gone from dbt (FR-CO-45, FR-RC-29). */
+export interface TypeState {
+  missing: MissingOfType[];
+  gone: TypeField[];
+}
+
+/** A Resource whose model type misses a field it asks for, or that has none yet, for the Data Team (FR-CO-45). */
+export interface ToComplete {
+  id: string;
+  displayName: string;
+  collection: { id: string; name: string };
+  level: number;
+  missing: MissingOfType[];
+  gone: TypeField[];
 }
 
 /** A Known Gap, with who added it and when; neither for a gap of before (FR-RC-21). */
@@ -106,6 +135,8 @@ export interface ResourceDetail extends Resource {
   descriptionChanges: { field: string | null; before: string; at: string }[];
   /** The Owner Journey: its steps, the next one, and whether it is ready to publish (DEC-MR-15); left out by an older catalogue. */
   journey?: Journey;
+  /** What its model type still misses, and the roles whose field is gone (FR-CO-45, FR-RC-29); left out by an older catalogue. */
+  typeState?: TypeState;
   /**
    * What the User may do with it, as catalogue says from their Permissions and its Owner Unit (TR-PL-06): describe
    * any attribute, each attribute (DEC-PL-03), publish it as its Owner (DEC-PL-06), deprecate it, and the work of a
@@ -343,6 +374,10 @@ export function createCatalogue(config: Config, session: Pick<Session, 'accessTo
     async waiting(): Promise<Resource[]> {
       return ((await (await call('/resources?collection=none')).json()) as { resources: Resource[] }).resources;
     },
+    /** The Resources whose model type misses a field it asks for, or that have none yet: only a Data Admin may ask (FR-CO-45). */
+    async toComplete(): Promise<ToComplete[]> {
+      return ((await (await call('/resources/to-complete')).json()) as { resources: ToComplete[] }).resources;
+    },
     async resource(id: string): Promise<ResourceDetail> {
       return ((await (await call(resource(id))).json()) as { resource: ResourceDetail }).resource;
     },
@@ -369,7 +404,7 @@ export function createCatalogue(config: Config, session: Pick<Session, 'accessTo
     async describeFields(id: string, fields: readonly { name: string; businessDescription: string }[]): Promise<ResourceDetail> {
       return ((await (await call(`${resource(id)}/fields`, { method: 'PUT', body: { fields } })).json()) as { resource: ResourceDetail }).resource;
     },
-    /** Records the grain, storage and mappings again, from Edit relations: only a Data Admin may (DEC-UX-107). */
+    /** Records the model type and its fields, the grain, storage and mappings again, from Edit relations: only a Data Admin may (DEC-UX-107, DEC-CO-27). */
     async relate(id: string, details: Record<string, unknown>): Promise<ResourceDetail> {
       return ((await (await call(`${resource(id)}/details`, { method: 'PUT', body: details })).json()) as { resource: ResourceDetail }).resource;
     },

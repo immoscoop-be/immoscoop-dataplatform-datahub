@@ -17,7 +17,10 @@ export interface DomainModelView {
 
 export type ProposalOrigin = 'dbt' | 'test' | 'domainModel' | 'name';
 
-/** What registry proposes for the Resource on a Node (TR-AR-10). */
+/**
+ * What registry proposes for the Resource on a Node (TR-AR-10). It proposes no model type: Data Hub suggests none from
+ * the words of a Colleciónes model (DEC-RC-25), so the Data Admin chooses it.
+ */
 export interface Proposal {
   nodeId: string;
   builtOn: { name: string; entity: string | null; action: string | null; colleciones: boolean };
@@ -28,7 +31,6 @@ export interface Proposal {
     from: string | null;
   };
   grain: { fields: string[]; origin: ProposalOrigin } | null;
-  modelType: { value: 'event' | 'state'; origin: ProposalOrigin } | null;
   mappings: { field: string; kind: 'is' | 'relation' | 'performedBy'; relationType: string | null; identity: string; origin: ProposalOrigin }[];
   domainModel: { release: string } | null;
 }

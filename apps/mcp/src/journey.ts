@@ -1,4 +1,5 @@
 import { type Journey, type JourneyMissing, type JourneyStepId, type JourneyStepState, JOURNEY_STEPS, journeyStep } from '@datahub/contracts/journey';
+import type { ModelType } from '@datahub/contracts/model-types';
 import { shownIn, TOPICS } from '@datahub/learning';
 import { z } from 'zod';
 import { answer, attempt, refusal } from './answers.js';
@@ -21,7 +22,7 @@ export interface JourneyResource {
   description?: string;
   card?: Record<string, unknown>;
   fields?: readonly { name: string; businessDescription: string }[];
-  details?: { grain?: string[]; grainSentence?: string; modelType?: string | null; mappings?: unknown[] } | null;
+  details?: { grain?: string[]; grainSentence?: string; modelType?: ModelType | null; mappings?: unknown[] } | null;
 }
 
 /** One thing the window of a step shows of the Resource now (DEC-UX-261): a text, chips or lines, or what is not there. */

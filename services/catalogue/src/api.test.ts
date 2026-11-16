@@ -68,6 +68,7 @@ describe('the Resources to add, in a request (FR-CO-31, FR-CO-33, FR-CO-34)', ()
     grain: ['event_id'],
     grainSentence: ' generated simulation ',
     modelType: 'event',
+    typeFields: [{ field: 'created_at', role: 'happenedAt', origin: 'dbt' }],
     origins: { partition: 'dbt', grain: 'domainModel', grainSentence: 'here' },
     release: '0.0.70',
     mappings: [{ field: 'listing_id', kind: 'relation', relationType: 'basedOn', identity: 'listing.listingId', subject: 'event_id', origin: 'domainModel', inDomainModel: true }],
@@ -81,6 +82,10 @@ describe('the Resources to add, in a request (FR-CO-31, FR-CO-33, FR-CO-34)', ()
       expect(parseAdd({ resources: [{ id: 'r3', ...details, release }] })).toEqual([{ id: 'r3', details: { ...details, grainSentence: 'generated simulation', release: null } }]);
     }
     expect(parseAdd({ resources: [{ id: 'r4', ...details, release: 42 }] })).toBe('The release of the Domain Model is a version, or none.');
+    // A client that does not send the fields of the model type yet sends none (FR-CO-44); `other` is a model type (DEC-RC-21).
+    expect(parseAdd({ resources: [{ id: 'r5', ...details, typeFields: undefined, modelType: 'other' }] })).toEqual([
+      { id: 'r5', details: { ...details, grainSentence: 'generated simulation', modelType: 'other', typeFields: [] } },
+    ]);
   });
 
   it('refuses what does not fit', () => {
@@ -90,6 +95,14 @@ describe('the Resources to add, in a request (FR-CO-31, FR-CO-33, FR-CO-34)', ()
     expect(parseAdd({ resources: [{ id: 'r', ...details, clusterBy: ['a', 'b', 'c', 'd', 'e'] }] })).toMatch(/at most four/);
     expect(parseAdd({ resources: [{ id: 'r', ...details, modelType: 'cube' }] })).toMatch(/model type/);
     expect(parseAdd({ resources: [{ id: 'r', ...details, origins: { grain: 'guessed' } }] })).toMatch(/origins/);
+    for (const wrong of [{ role: 'when' }, { role: undefined }, { origin: 'name' }, { field: '' }]) {
+      expect(parseAdd({ resources: [{ id: 'r', ...details, typeFields: [{ ...details.typeFields[0], ...wrong }] }] })).toMatch(/^Each field of the model type has its field, a role \(happenedAt, about/);
+    }
+    expect(parseAdd({ resources: [{ id: 'r', ...details, typeFields: [null] }] })).toMatch(/Each field of the model type/);
+    expect(parseAdd({ resources: [{ id: 'r', ...details, typeFields: 'created_at' }] })).toBe('The fields of the model type come as a list of at most 1000.');
+    expect(parseAdd({ resources: [{ id: 'r', ...details, typeFields: Array.from({ length: 1001 }, (_, index) => ({ field: `f${index}`, role: 'measure', origin: 'here' })) }] })).toMatch(
+      /at most 1000/,
+    );
     const mapping = details.mappings[0]!;
     for (const wrong of [{ identity: 'listing' }, { kind: 'relation', relationType: null }, { kind: 'is', relationType: 'basedOn' }, { origin: 'dbt' }, { inDomainModel: 'yes' }]) {
       expect(parseAdd({ resources: [{ id: 'r', ...details, mappings: [{ ...mapping, ...wrong }] }] })).toMatch(/Each mapping/);
@@ -515,12 +528,17 @@ describe.skipIf(!url)('the routes of Collections', () => {
       expect((await dirk('DELETE', `/resources/${leads.id}/collection`)).statusCode).toBe(204);
       expect((await an('DELETE', `/collections/${collection.id}/folders/${kept.id}`)).statusCode).toBe(204);
       // With what the Data Admin recorded at step 2: a field the Resource lacks is refused (FR-CO-33).
-      const recorded = { partition: null, clusterBy: [], partitionFilter: 'none', grain: ['leads_id'], grainSentence: 'lead', modelType: 'fact', origins: { grain: 'here' }, release: null, mappings: [] };
+      const recorded = { partition: null, clusterBy: [], partitionFilter: 'none', grain: ['leads_id'], grainSentence: 'lead', modelType: 'other', origins: { grain: 'here' }, release: null, mappings: [] };
       const lacking = await dirk('POST', `/collections/${collection.id}/resources`, { resources: [{ id: leads.id, ...recorded, grain: ['nope'] }] });
       expect(lacking.statusCode).toBe(400);
       expect(lacking.json().message).toBe('leads: it has no field nope.');
+      // Recorded, its model type has every field it asks for, or it is not added (FR-CO-44).
+      const incomplete = await dirk('POST', `/collections/${collection.id}/resources`, { resources: [{ id: leads.id, ...recorded, modelType: 'dimension' }] });
+      expect(incomplete.json()).toEqual({ error: 'invalid_request', message: 'leads: its model type dimension still asks for a field as describes.', resources: [leads.id] });
+      const untyped = await dirk('POST', `/collections/${collection.id}/resources`, { resources: [{ id: leads.id, ...recorded, modelType: null }] });
+      expect(untyped.json().message).toBe('leads: it has no model type yet.');
       expect((await dirk('POST', `/collections/${collection.id}/resources`, { resources: [{ id: leads.id, ...recorded }] })).statusCode).toBe(200);
-      expect((await dirk('GET', `/resources/${leads.id}`)).json().resource.details).toMatchObject({ grain: ['leads_id'], grainSentence: 'lead', modelType: 'fact' });
+      expect((await dirk('GET', `/resources/${leads.id}`)).json().resource.details).toMatchObject({ grain: ['leads_id'], grainSentence: 'lead', modelType: 'other', typeFields: [] });
       expect((await dirk('DELETE', `/resources/${leads.id}/collection`)).statusCode).toBe(204);
       expect((await an('GET', `/collections/${collection.id}`)).json().resources.map((resource: { displayName: string }) => resource.displayName)).toEqual(['visits']);
 
@@ -608,6 +626,68 @@ describe.skipIf(!url)('the routes of Collections', () => {
       expect((await dirk('GET', '/resources/not-an-id')).statusCode).toBe(404);
     });
 
+    it('lists the Resources to complete for the Data Team, and shows everyone who sees one what its model type misses (FR-CO-45, FR-RC-29, MSG-RES-09)', async () => {
+      const an = await user('An', [DIGIKOM]);
+      const dirk = await user('Dirk', [], 'admin');
+      // A dbt project of its own, so that its runs withdraw nothing of the others.
+      const typed = (runId: string, dated: string) =>
+        fromRegistry({
+          projectId: '7777',
+          projectName: 'typed',
+          runId,
+          generatedAt: '2026-11-16T06:00:00Z',
+          tables: ['sends', 'drops'].map((name) => ({
+            key: `immoscoop-dataplatform.typed.${name}`,
+            nodeId: `model.typed.${name}`,
+            name,
+            resourceType: 'model',
+            description: `About ${name}.`,
+            exposures: [`datahub_${name}`],
+            label: null,
+            checksum: null,
+            columns: [
+              { name: `${name}_id`, position: 1, dataType: 'STRING', description: 'The ID.' },
+              { name: dated, position: 2, dataType: 'TIMESTAMP', description: '' },
+            ],
+          })),
+        });
+      expect((await typed('1', 'sent_at')).statusCode).toBe(200);
+      const waiting = (await dirk('GET', '/resources?collection=none')).json().resources as { id: string; name: string }[];
+      const [sends, drops] = ['sends', 'drops'].map((name) => waiting.find((resource) => resource.name === name)!.id);
+      const collection = (await an('POST', '/collections', { name: 'Sends', description: 'Sends.', icon: 'coins', ownerUnit: DIGIKOM.id })).json();
+      const event = { partition: null, clusterBy: [], partitionFilter: 'none', grain: [], grainSentence: '', modelType: 'event', typeFields: [{ field: 'sent_at', role: 'happenedAt', origin: 'here' }], origins: {}, release: null, mappings: [] };
+      expect((await dirk('POST', `/collections/${collection.id}/resources`, { resources: [{ id: sends, ...event }, drops] })).statusCode).toBe(200);
+
+      // Only for who adds Resources to Collections; the path is no Resource ID.
+      expect((await an('GET', '/resources/to-complete')).json()).toEqual({
+        error: 'forbidden',
+        message: 'Only a Data Admin sees the Resources to complete.',
+        permission: 'resources.assign',
+      });
+      const listed = async () => ((await dirk('GET', '/resources/to-complete')).json().resources as { id: string }[]).filter((resource) => [sends, drops].includes(resource.id));
+      expect(await listed()).toEqual([{ id: drops, displayName: 'drops', collection: { id: collection.id, name: 'Sends' }, level: 2, missing: [{ kind: 'modelType' }], gone: [] }]);
+      expect((await an('GET', `/resources/${sends}`)).json().resource).toMatchObject({
+        details: { modelType: 'event', typeFields: [{ field: 'sent_at', role: 'happenedAt', origin: 'here' }] },
+        typeState: { missing: [], gone: [] },
+      });
+
+      // sent_at is renamed in dbt: everyone who sees it sees which role is gone, and the Data Team is told, once.
+      expect((await typed('2', 'sent_on')).statusCode).toBe(200);
+      expect((await an('GET', `/resources/${sends}`)).json().resource.typeState).toEqual({ missing: [{ kind: 'role', role: 'happenedAt' }], gone: [{ field: 'sent_at', role: 'happenedAt' }] });
+      expect((await listed()).map((resource) => resource.id)).toEqual([drops, sends]);
+      const told = async (who: typeof an) =>
+        (await who('GET', '/messages?view=forYou')).json().messages.filter((message: { type: string; subject: { id: string } }) => message.type === 'MSG-RES-09' && message.subject.id === sends);
+      expect(await told(dirk)).toEqual([expect.objectContaining({ params: { run: '2026-11-16', modelType: 'event', level: '2', count: '1', gone: '[{"field":"sent_at","role":"happenedAt"}]' } })]);
+      expect(await told(an)).toEqual([]);
+      expect((await typed('3', 'sent_on')).statusCode).toBe(200);
+      expect(await told(dirk)).toHaveLength(1);
+
+      // Another field takes the role, with Edit relations: the warning goes.
+      const fixed = await dirk('PUT', `/resources/${sends}/details`, { ...event, typeFields: [{ field: 'sent_on', role: 'happenedAt', origin: 'here' }] });
+      expect(fixed.json().resource.typeState).toEqual({ missing: [], gone: [] });
+      expect((await listed()).map((resource) => resource.id)).toEqual([drops]);
+    });
+
     it('lets the Owner Unit and the Data Team keep the Resource Card, and shows what it relates to (FR-RC-15, FR-RC-09, FR-SR-54)', async () => {
       const an = await user('An', [DIGIKOM]);
       const bert = await user('Bert', [SALES]);
@@ -634,7 +714,8 @@ describe.skipIf(!url)('the routes of Collections', () => {
         partitionFilter: 'none',
         grain: [],
         grainSentence: '',
-        modelType: 'fact',
+        modelType: 'event',
+        typeFields: [{ field: 'week', role: 'happenedAt', origin: 'here' }],
         origins: {},
         release: '0.0.70',
         mappings: [{ field, kind: 'relation', relationType: 'basedOn', identity: 'listing.listingId', subject: null, origin: 'name', inDomainModel: true }],
@@ -1540,8 +1621,11 @@ describe.skipIf(!url)('the routes of Collections', () => {
       const paul = await user('Paul', [PLANNING]);
       expect((await paul('PUT', `/resources/${ids.pl_plans}/details`, current)).json()).toMatchObject({ permission: 'resources.assign' });
       expect((await paul('PUT', `/resources/${ids.pl_waiting}/collection`, { collectionId: plans })).json()).toMatchObject({ permission: 'resources.assign' });
-      const regrouped = await admin('PUT', `/resources/${ids.pl_plans}/details`, { ...current, grain: ['pl_plans_id'], grainSentence: 'one plan' });
-      expect(regrouped.json().resource.details).toMatchObject({ grain: ['pl_plans_id'], grainSentence: 'one plan', mappings: [] });
+      // The work of a Data Admin leaves its model type with every field it asks for (FR-CO-44); the mappings alone did not need to.
+      const untyped = await admin('PUT', `/resources/${ids.pl_plans}/details`, { ...current, grain: ['pl_plans_id'], grainSentence: 'one plan' });
+      expect(untyped.json()).toEqual({ error: 'invalid_request', message: 'pl_plans: it has no model type yet.' });
+      const regrouped = await admin('PUT', `/resources/${ids.pl_plans}/details`, { ...current, grain: ['pl_plans_id'], grainSentence: 'one plan', modelType: 'other' });
+      expect(regrouped.json().resource.details).toMatchObject({ grain: ['pl_plans_id'], grainSentence: 'one plan', modelType: 'other', mappings: [] });
     });
 
     it('lets only the Owner publish, with resources.publish, also in Admin; and deprecate as far as it reaches (DEC-PL-06)', async () => {

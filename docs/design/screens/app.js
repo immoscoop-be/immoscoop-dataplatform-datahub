@@ -861,11 +861,44 @@ if (new URLSearchParams(location.search).has('mismatch')) {
 }
 
 // Adding a Resource, step 2: the model type chosen goes on as ?type=, and the foot says what it asks for (DEC-UX-262)
+// Without a suggestion no card is chosen and "Next" waits; ?suggested shows the Domain Model saying it (FR-AR-20, DEC-RC-25)
 document.querySelectorAll('input[name="model-type"]').forEach(i => i.addEventListener('change', () => {
   const foot = document.getElementById('type-foot'), next = document.getElementById('type-next');
   if (foot) foot.innerHTML = `<code>${i.value}</code> · asks for ${i.dataset.asks}`;
-  if (next) next.href = `collection-add-grain.html?type=${i.value}`;
+  if (next) { next.href = `collection-add-grain.html?type=${i.value}`; next.classList.remove('is-disabled'); next.setAttribute('aria-disabled', 'false'); }
 }));
+// Opened by "Change model type" on the Overview (FR-RC-28, DEC-UX-263): without the first step, the model type it has now
+// marked, what changing drops, and "Next" waiting for another one
+(() => {
+  const now = new URLSearchParams(location.search).get('change');
+  const box = document.getElementById('type-change');
+  if (!now || !box) return;
+  box.hidden = false;
+  document.getElementById('type-now').textContent = now;
+  const steps = document.querySelector('.sheet-steps');
+  steps.firstElementChild.remove();
+  steps.firstElementChild.remove();
+  document.getElementById('sheet-title').textContent = 'Change the model type of Credit simulations';
+  const current = document.querySelector(`input[name="model-type"][value="${now}"]`);
+  if (current) {
+    current.checked = true;
+    current.closest('.type-pick').querySelector('.type-head').insertAdjacentHTML('beforeend', '<span class="rel-src"><i class="ph ph-check"></i>Now</span>');
+  }
+  document.getElementById('type-foot').textContent = 'Choose another model type';
+  document.querySelectorAll('input[name="model-type"]').forEach(i => i.addEventListener('change', () => {
+    const next = document.getElementById('type-next');
+    const same = i.value === now;
+    next.classList.toggle('is-disabled', same);
+    next.setAttribute('aria-disabled', same ? 'true' : 'false');
+  }));
+})();
+if (document.getElementById('type-suggested') && new URLSearchParams(location.search).has('suggested')) {
+  document.getElementById('type-suggested').hidden = false;
+  document.querySelectorAll('.type-sug').forEach(e => { e.hidden = false; });
+  const event = document.querySelector('input[name="model-type"][value="event"]');
+  event.checked = true;
+  event.dispatchEvent(new Event('change'));
+}
 
 // Adding a Resource, step 3: the grain and storage show the model type chosen, and pass it on to step 4 (DEC-UX-262)
 (() => {
@@ -875,6 +908,9 @@ document.querySelectorAll('input[name="model-type"]').forEach(i => i.addEventLis
   next.href = `collection-add-relations.html?type=${encodeURIComponent(type)}`;
   const chip = document.getElementById('grain-type');
   if (chip) chip.textContent = type;
+  // `other` has no fields of its own: its sentence is "One row per", so here it is required (DEC-RC-21)
+  const sentence = document.querySelector('.rel-grain-text');
+  if (type === 'other' && sentence) sentence.insertAdjacentHTML('afterend', '<span class="req">Required for <code>other</code></span>');
 })();
 
 // Adding a Resource, step 4: the model type chosen (?type=, event by default) asks for fields, chosen in the field table,
@@ -890,6 +926,8 @@ document.querySelectorAll('input[name="model-type"]').forEach(i => i.addEventLis
       { key: 'when', label: 'When it happened', fits: ['date'], need: 'Required', one: true }] },
     state: { def: 'One row per thing as it is now, or as it was at a moment.', roles: [
       { key: 'about', label: 'What it is about', fits: ['id'], need: 'Required', one: true },
+      { key: 'created', label: 'Created at', fits: ['date'], need: 'Required', one: true },
+      { key: 'updated', label: 'Updated at', fits: ['date'], need: 'Required', one: true },
       { key: 'asof', label: 'As of when', fits: ['date'], need: 'Optional: for a state that keeps its history', one: true }] },
     fact: { def: 'One row per business occurrence, with measures to add up.', roles: [
       { key: 'when', label: 'When it occurred', fits: ['date'], need: 'Required', one: true },
@@ -899,9 +937,9 @@ document.querySelectorAll('input[name="model-type"]').forEach(i => i.addEventLis
     aggregate: { def: 'One row per group, with its counts or sums already made.', roles: [
       { key: 'group', label: 'Grouped by', fits: ['id', 'text'], need: 'At least one' },
       { key: 'period', label: 'Period', fits: ['date'], need: 'When grouped by time', one: true },
-      { key: 'sum', label: 'Count or sum, adds up', line: 'Counts and sums', fits: ['number'], need: 'At least one', counts: true },
+      { key: 'sum', label: 'Count or sum, adds up', line: 'Counts and sums', fits: ['number'], need: 'Every number field', counts: true },
       { key: 'unique', label: 'Unique count, never added up', fits: ['number'], counts: true, noLine: true }] },
-    other: { def: 'None of the five model types.', roles: [] },
+    other: { def: 'None of the five model types. Its sentence is "One row per", in the step before.', roles: [] },
   };
   const SUGGEST = {
     event: { collectorDatetime: ['when', 'From the Domain Model'] },
@@ -919,7 +957,6 @@ document.querySelectorAll('input[name="model-type"]').forEach(i => i.addEventLis
   byId('type-def').textContent = TYPES[type].def;
   byId('role-head').textContent = `For the ${type}`;
   table.classList.toggle('no-role', !roles.length);
-  byId('type-other').hidden = type !== 'other';
   const rows = [...table.querySelectorAll('.rel-row')];
   const fieldOf = r => r.querySelector('.rel-field code').textContent;
   const roleOf = r => r.querySelector('.rel-role');
@@ -938,17 +975,21 @@ document.querySelectorAll('input[name="model-type"]').forEach(i => i.addEventLis
     let missing = null;
     list.innerHTML = roles.filter(o => !o.noLine).map(o => {
       const fields = o.counts ? roles.filter(c => c.counts).flatMap(c => chosen(c.key)) : chosen(o.key);
-      const required = o.need === 'Required' || o.need === 'At least one';
-      const state = fields.length ? 'ok' : required ? 'missing' : 'optional';
+      const unmarked = o.counts ? rows.filter(r => r.dataset.ftype === 'number' && !roleOf(r).value).map(fieldOf) : [];
+      const required = o.need === 'Required' || o.need === 'At least one' || o.need === 'Every number field';
+      const state = fields.length && !unmarked.length ? 'ok' : required ? 'missing' : 'optional';
       const label = o.line || o.label;
       if (state === 'missing' && !missing) missing = label.toLowerCase();
       const icon = { ok: 'ph-check-circle', missing: 'ph-warning-circle', optional: 'ph-circle-dashed' }[state];
-      const what = fields.length
+      const what = unmarked.length
+        ? `<span class="meta">Not marked yet: ${unmarked.map(f => `<code>${f}</code>`).join(', ')}, in the column “For the ${type}” below</span>`
+        : fields.length
         ? fields.map(f => `<span class="code-chip">${f}</span>`).join('') + (source[o.key] ? `<span class="rel-src">${source[o.key]}</span>` : '')
         : `<span class="meta">Not chosen: pick it in the column “For the ${type}” below</span>`;
       return `<div class="need-line ${state}"><i class="ph ${icon}" aria-hidden="true"></i><b>${label}</b>${what}<span class="req">${o.need}</span></div>`;
     }).join('');
-    if (type === 'other' && !byId('type-other-text').value.trim()) missing = 'what one row is';
+    // `other` has no fields of its own: it shows the sentence of "One row per" from the step before (DEC-RC-21)
+    if (type === 'other') list.innerHTML = '<div class="need-line ok"><i class="ph ph-check-circle" aria-hidden="true"></i><b>One row per</b><span class="code-chip">generated simulation</span><span class="rel-src">From the step before</span><span class="req">Required</span></div>';
     add.classList.toggle('is-disabled', !!missing);
     add.setAttribute('aria-disabled', missing ? 'true' : 'false');
     why.innerHTML = missing ? `Choose ${missing} first: ${article} <code>${type}</code> needs it` : ready;
@@ -959,7 +1000,6 @@ document.querySelectorAll('input[name="model-type"]').forEach(i => i.addEventLis
     if (o) source[o.key] = 'Chosen here';
     render();
   }));
-  byId('type-other-text').addEventListener('input', render);
   render();
 })();
 

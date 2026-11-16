@@ -8,7 +8,8 @@
     weight: Read first, Before you query, When interpreting results, or Context. A deprecation comes first; a part
     with nothing in it is left out. Claude reads the same.
   - Description: the Business Description, written in Markdown and shown
-    rendered, the description from dbt under it, and the model type and grain. Edit opens the Markdown editor of the app
+    rendered, the description from dbt under it, and what one row is: the model type, the grain and each field its model
+    type asks for by its role, with "Change model type" for a Data Admin (FR-RC-28, DEC-UX-263). Edit opens the Markdown editor of the app
     (MarkdownEditor, DEC-UX-158), as for the intro of a Collection, with the description from dbt beside it, read-only.
   - Known behaviour: intended use and pitfalls, in Markdown, and since when it is reliable (DEC-RC-19).
   - Known Gaps: a list, one gap per line, each with who added it and when; the Owner and the Data Team add one at the
@@ -40,9 +41,11 @@
     published, and here, published, a line that says only the Data Team takes it out now (DEC-UX-214, FR-CO-43).
   The switches at the bottom: ?ov=summary (the default), ?ov=description, ?ov=behaviour, ?ov=gaps, ?ov=querying,
   ?ov=entities, ?ov=maturity, ?ov=changes, ?ov=danger; ?lvl=two shows Maturity at 2 · Described; ?dep=on shows a deprecated Resource, its deprecation first
-  in the Summary; ?descedit=on edits the Business Description, ?descview=preview previews it.
-  Requirements: FR-RC-19, FR-RC-20, FR-RC-21, FR-RC-22, FR-RC-23, FR-RC-24, FR-RC-25, FR-SR-50, FR-MR-16, FR-CM-28, FR-CO-43, FR-MR-17, FR-MR-18
-  Decisions: DEC-RC-16, DEC-RC-17, DEC-RC-18, DEC-RC-19, DEC-RC-20, DEC-UX-101, DEC-UX-168, DEC-UX-169, DEC-UX-170, DEC-UX-171, DEC-UX-175, DEC-UX-176, DEC-UX-177, DEC-UX-178, DEC-UX-216.
+  in the Summary; ?descedit=on edits the Business Description, ?descview=preview previews it. ?rolegone=on shows the
+  warning that a field of its model type is gone (FR-RC-29, DEC-UX-264); ?complete=missing shows the Data Team that its
+  model type is incomplete (FR-CO-45, DEC-UX-265); ?role=datateam shows what a Data Admin sees.
+  Requirements: FR-RC-19, FR-RC-20, FR-RC-21, FR-RC-22, FR-RC-23, FR-RC-24, FR-RC-25, FR-RC-28, FR-RC-29, FR-SR-50, FR-MR-16, FR-CM-28, FR-CO-43, FR-CO-45, FR-MR-17, FR-MR-18
+  Decisions: DEC-RC-16, DEC-RC-17, DEC-RC-18, DEC-RC-19, DEC-RC-20, DEC-UX-101, DEC-UX-168, DEC-UX-169, DEC-UX-170, DEC-UX-171, DEC-UX-175, DEC-UX-176, DEC-UX-177, DEC-UX-178, DEC-UX-216, DEC-UX-263, DEC-UX-264, DEC-UX-265, DEC-RC-22, DEC-RC-23, DEC-RC-24.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="owner">
@@ -157,6 +160,8 @@
  <div class="alert" data-pane-group="mon" data-pane="finding" hidden role="status"><i class="ph-fill ph-warning-circle"></i><p><b style="font-weight:500">Its monitor found:</b> the leads of the source partner_api dropped to 118 in the week of 26 October, far below its usual 180 to 260; the other sources held. The credit team looks into it. Figures for partner_api of that week may be low.</p><a class="btn-quiet outline" href="monitor.html" style="text-decoration:none">Open monitoring</a></div>
  <div class="alert dep-line" data-pane-group="dep" data-pane="on" hidden role="status"><i class="ph-fill ph-archive"></i><p><b style="font-weight:500">Deprecated</b> by the credit team on 20 Oct 2026: replaced by the weekly figures that include partner leads. It stays usable, and so do the Lenses on it; a new Lens on it gets a warning.</p><a class="alert-btn" href="#">Use Weekly lead volume v2</a><button class="alert-btn" data-for="owner datateam" data-go="ov:danger">Danger zone</button></div>
  <div class="alert" role="status"><i class="ph-fill ph-warning-circle"></i><p><b style="font-weight:500">Changed since it was confirmed:</b> the field <span class="mono">lead_channel</span> was added yesterday. Its Level stays 4 · Explored; the Owner has been told.</p><button class="alert-btn" data-seen data-for="owner datateam" data-pop="pop-rec" aria-haspopup="dialog" aria-expanded="false">Mark as seen<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (explained in the Learning Centre)</span></button></div>
+ <div class="alert" data-pane-group="rolegone" data-pane="on" hidden role="status"><i class="ph-fill ph-warning-circle"></i><p><b style="font-weight:500">A field of its model type is gone:</b> <span class="mono">week_start</span>, its period, was removed in dbt yesterday. Its Level stays 4 · Explored; the Data Team has been told.</p><a class="alert-btn" data-for="datateam" href="collection-add-relations.html?type=aggregate">Choose another field</a></div>
+ <div class="alert" data-pane-group="complete" data-pane="missing" data-for="datateam" hidden role="status"><i class="ph-fill ph-list-checks"></i><p><b style="font-weight:500">Its model type is incomplete:</b> an <span class="mono">aggregate</span> asks how each count adds up, and <span class="mono">lead_count</span> is not marked yet. Its EDA cannot start until it is complete. Only the Data Team sees this.</p><a class="alert-btn" href="collection-add-type.html?change=aggregate">Complete it</a></div>
  <div class="tabs" data-group="tabs" role="tablist">
   <button class="tab on" data-target="overview" role="tab" aria-selected="true">Overview</button>
   <button class="tab" data-target="columns" role="tab" aria-selected="false">Columns</button>
@@ -209,7 +214,16 @@
        <div class="desc-head"><span class="label">Description</span><span class="origin">From dbt</span></div>
        <p class="prose">One row per week and lead source with the number of credit leads sent to KBC. A lead counts in the week it was first submitted, not when it was followed up. Test and duplicate requests are excluded.</p>
       </div>
-      <div class="ov-chips"><span class="code-chip">model type: aggregate</span><span class="code-chip lc-ref" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-grain">grain: week × lead source<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (explained in the learning centre)</span></span><span class="origin">From the Data Team</span></div>
+      <div class="sub-tile row-tile">
+       <div class="desc-head"><span class="label">What one row is</span><span class="origin">From the Data Team</span><span style="flex:1"></span><a class="text-link" data-for="datateam" href="collection-add-type.html?change=aggregate" title="Change model type, for a Data Admin"><i class="ph ph-shapes"></i><span>Change model type</span></a></div>
+       <dl class="type-facts row-facts">
+        <dt>Model type</dt><dd><span class="code-chip lc-ref" tabindex="0" title="Explained in Learning Card 2.3.6, Five model types">aggregate<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (explained in the Learning Centre)</span></span> One row per group, with its counts already made: add up its sums, never its unique counts.</dd>
+        <dt>Grain</dt><dd><span class="code-chip lc-ref" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-grain">week_start<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (explained in the learning centre)</span></span><span class="code-chip">lead_source</span> One week × one lead source.</dd>
+        <dt>Grouped by</dt><dd><span class="code-chip">lead_source</span></dd>
+        <dt>Period</dt><dd><span data-pane-group="rolegone" data-pane="off"><span class="code-chip">week_start</span> a week, Monday to Sunday</span><span class="row-gone" data-pane-group="rolegone" data-pane="on" hidden><i class="ph-fill ph-warning-circle"></i>Gone: <span class="mono">week_start</span> was removed in dbt yesterday</span></dd>
+        <dt>Counts and sums</dt><dd><span data-pane-group="complete" data-pane="yes"><span class="code-chip">lead_count</span> adds up</span><span class="row-gone" data-pane-group="complete" data-pane="missing" hidden><i class="ph-fill ph-warning-circle"></i>Not marked yet: <span class="mono">lead_count</span></span></dd>
+       </dl>
+      </div>
      </div>
 
      <!-- Editing: the Markdown editor of the app (MarkdownEditor, DEC-UX-158), as for the intro of a Collection, with the description from dbt beside it, read-only. -->
@@ -701,6 +715,14 @@ The lead source is set by the form the visitor used: website, app, partner or ma
 <div class="proto-switch" data-group="dep" role="tablist" aria-label="Prototype: deprecated or not" style="bottom:72px">Deprecated
  <button class="seg on" data-target="off" role="tab" aria-selected="true">No</button>
  <button class="seg" data-target="on" role="tab" aria-selected="false">Yes</button>
+</div>
+<div class="proto-switch" data-group="rolegone" role="tablist" aria-label="Prototype: a field of its model type" style="bottom:360px">Type field
+ <button class="seg on" data-target="off" role="tab" aria-selected="true">Held</button>
+ <button class="seg" data-target="on" role="tab" aria-selected="false">Gone</button>
+</div>
+<div class="proto-switch" data-group="complete" role="tablist" aria-label="Prototype: its model type complete or not" style="bottom:408px">Complete
+ <button class="seg on" data-target="yes" role="tab" aria-selected="true">Yes</button>
+ <button class="seg" data-target="missing" role="tab" aria-selected="false">Missing</button>
 </div>
 <script src="app.js"></script>
 </body>

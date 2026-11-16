@@ -546,7 +546,7 @@ A Message that Data Hub writes itself, such as a changed description in dbt ([FR
 
 One Learning Card explains the five model types together, so that a User can tell them apart and knows what each means for counting: an `event` is one row per thing that happened, at a moment, and never changes after; a `state` is one row per thing as it is, or was at a moment, and changes over time; a `fact` is one row per business occurrence with the measures to add up; a `dimension` is one row per thing that describes others, such as an agency or a lead source; an `aggregate` is one row per group with its counts or sums already made, which are not added up again. Its place in the master learning plan is next to [2.3.5 The grain question: what is one row?](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1356070916), which points to it. Wherever a model type shows, its marker lists this card ([FR-LR-37](#fr-lr-37)).
 
-*Note of 2026-10-29: the card is 2.3.6, drafted in part 8a, and 2.3.5 points to it ([TR-LR-01](../technical/16-learning.md#tr-lr-01)); since part 8b the model type of a Resource carries its marker ([TR-LR-06](../technical/16-learning.md#tr-lr-06)).*
+*Note of 2026-10-29: the card is 2.3.6, drafted in part 8a, and 2.3.5 points to it ([TR-LR-01](../technical/16-learning.md#tr-lr-01)); since part 8b the model type of a Resource carries its marker ([TR-LR-06](../technical/16-learning.md#tr-lr-06)).* *Note of 2026-11-16: the card also says what `other` means for counting, a sixth model type for a Resource that fits none of the five ([DEC-RC-21](05-resource-card.md#dec-rc-21)).*
 
 
 <a id="fr-lr-40"></a>

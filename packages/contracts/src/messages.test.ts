@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { MESSAGE_CATALOGUE } from './messageCatalogue.js';
+import { TYPE_ROLES } from './modelTypes.js';
 import {
   contextPath,
   implicitParameters,
@@ -124,6 +125,18 @@ describe('the Message Catalogue (FR-CV-10)', () => {
         expect(button.label.nl && button.label.en && button.opens, type.id).toBeTruthy();
       }
     }
+  });
+
+  it('names the roles of a model type as the model types do, and says each in words (MSG-RES-09, FR-CO-44)', () => {
+    const gone = MESSAGE_CATALOGUE.find((type) => type.id === 'MSG-RES-09')?.parameters.find((parameter) => parameter.name === 'gone');
+    const role = gone?.item?.fields.find((field) => field.name === 'role');
+    expect(role?.values).toEqual([...TYPE_ROLES]);
+    const type = MESSAGE_CATALOGUE.find((one) => one.id === 'MSG-RES-09') as MessageType;
+    const values = { ...type.example, count: 2, gone: [{ field: 'week_start', role: 'period' }, { field: 'lead_count', role: 'addsUp' }] };
+    expect(renderMessage(type, 'en', 'plain', values)).toBe(
+      '2 fields of the model type of Weekly lead volume are gone: week_start, its period; lead_count, a count or sum that adds up. Its level stays 4 · Explored; choose another field for each role.',
+    );
+    expect(renderMessage(type, 'nl', 'rich', values)).toContain('- `week_start`: de periode\n- `lead_count`: een telling of som die optelt');
   });
 
   it('fills in its example in both languages and both layouts', () => {

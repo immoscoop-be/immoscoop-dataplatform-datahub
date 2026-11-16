@@ -307,6 +307,11 @@ html[data-role="colleague"] [data-for]:not([data-for~="colleague"]) { display: n
 /* "Without a collection" is no Collection: no colour bar, but the urgent red, as it waits for the Data Team (DEC-UX-16) */
 .tree-group.unassigned { background: color-mix(in srgb, var(--signal-urgent) 9%, var(--surface-solid)); outline: 1px solid color-mix(in srgb, var(--signal-urgent) 35%, transparent); }
 .tree-group.unassigned .item-title, .tree-group.unassigned .item-icon { color: var(--signal-urgent); }
+/* The Resources to complete, for the Data Team (DEC-UX-265): a to-do in the warning colour, calmer than the red above */
+.tree-group.to-complete { background: color-mix(in srgb, var(--signal-warn) 8%, var(--surface-solid)); outline: 1px solid color-mix(in srgb, var(--signal-warn) 30%, transparent); }
+.tree-group.to-complete .item-icon { color: var(--signal-warn); }
+.tree-group.to-complete .count-badge { background: var(--signal-warn); }
+.todo-what { display: block; font-size: var(--text-meta); color: var(--text-muted); }
 .count-badge { display: inline-flex; min-width: 16px; height: 16px; padding: 0 5px; align-items: center; justify-content: center; border-radius: 8px;
   background: var(--signal-urgent); color: var(--text-on-urgent); font-size: 10px; font-weight: var(--weight-semibold); }
 
@@ -1304,6 +1309,12 @@ body.mcp-demo[data-width="phone"] .mcp-page { max-width: 390px; padding: 16px 12
 .rel-table .rel-role.set { border-color: var(--text-muted); font-weight: var(--weight-medium); }
 .rel-table.no-role th:nth-child(2), .rel-table.no-role td:nth-child(2) { display: none; }
 .btn-primary.is-disabled { opacity: .4; cursor: not-allowed; pointer-events: none; }
+/* What one row is, at the end of the Description of a Resource (DEC-UX-263) */
+.row-tile .desc-head { display: flex; align-items: center; gap: 8px; }
+.row-facts { grid-template-columns: 112px 1fr; font-size: var(--text-small); }
+.row-facts dd { color: var(--text-primary); display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.row-facts .code-chip { margin: 0; }
+.row-gone { display: inline-flex; align-items: center; gap: 4px; color: var(--signal-warn); }
 .rel-grain-text { font: var(--text-small) var(--font-family); color: var(--text-primary); background: var(--surface-solid); border: 1px solid var(--tint-active); border-radius: var(--radius-sm); padding: 4px 8px; width: 220px; }
 .rel-ok { display: inline-flex; align-items: center; gap: 6px; color: var(--text-secondary); }
 .rel-ok code { font: var(--text-meta) var(--font-mono); }
