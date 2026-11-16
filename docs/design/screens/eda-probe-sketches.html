@@ -8,10 +8,11 @@
   3. The Resource map: the fields of one Resource as columns, and what each EDA-Probe found drawn where it looks: the
      overview of an EDA-Profile.
   The header of a column shows the kind of its field as a Phosphor icon (key, calendar, tag, hash, link).
-  Mode, Spread, Chance per segment and Real or chance are proposed EDA-Probes, not yet in the table of DEC-ED-11 (Max, 2026-11-16).
+  The mode, Spread and Chance, per segment joined the EDA-Probes by DEC-ED-14; Real or chance is not an EDA-Probe of its own but
+  what every comparison says (DEC-ED-14).
   A fingerprint marks what identifies a row: a key marks a Key Field in the app.
   Requirements: none yet: the EDA-Probes are being worked out one by one.
-  Decisions: DEC-ED-09, DEC-ED-10, DEC-ED-11, DEC-ED-12.
+  Decisions: DEC-ED-09, DEC-ED-10, DEC-ED-11, DEC-ED-12, DEC-ED-14, DEC-ED-16, DEC-UX-266, DEC-UX-268.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en">
@@ -329,7 +330,7 @@
     <figcaption class="sk-cap">One city, three spellings: case and a trailing space split it into three groups.</figcaption>
    </figure>
    <figure class="sk-card card" style="--place:var(--col-magenta)">
-    <div class="sk-step">Weight · proposed</div>
+    <div class="sk-step">Weight</div>
     <h3 class="sk-name">The mode</h3>
     <p class="sk-q">Which value comes most often?</p>
     <svg class="sk-svg" viewBox="0 0 250 150" role="img" aria-label="The mode: Three of six rows share one value: the mode. Far ahead of the rest, it can be a default rather than a choice."><defs><pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="var(--signal-warn)" stroke-width="1.2" opacity=".5"/></pattern></defs><rect x="33" y="12" width="184" height="132" fill="var(--sk-paper)" stroke="var(--sk-line)"/>
@@ -349,7 +350,7 @@
     <figcaption class="sk-cap">Three of six rows share one value: the mode. Far ahead of the rest, it can be a default rather than a choice.</figcaption>
    </figure>
    <figure class="sk-card card" style="--place:var(--col-magenta)">
-    <div class="sk-step">Weight · proposed</div>
+    <div class="sk-step">Weight</div>
     <h3 class="sk-name">Spread</h3>
     <p class="sk-q">How far do the values lie from the average?</p>
     <svg class="sk-svg" viewBox="0 0 250 150" role="img" aria-label="Spread: The dashed line is the average; the band is one standard deviation either side. Most bars end inside it; one ends far out."><defs><pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="var(--signal-warn)" stroke-width="1.2" opacity=".5"/></pattern></defs><rect x="33" y="12" width="184" height="132" fill="var(--sk-paper)" stroke="var(--sk-line)"/>
@@ -411,7 +412,7 @@
     <figcaption class="sk-cap">Each row runs from created to updated. One runs backwards.</figcaption>
    </figure>
    <figure class="sk-card card" style="--place:var(--col-ochre)">
-    <div class="sk-step">Relations between fields · proposed</div>
+    <div class="sk-step">Relations between fields</div>
     <h3 class="sk-name">Chance, per segment</h3>
     <p class="sk-q">How likely is something, and does it depend on another field?</p>
     <svg class="sk-svg" viewBox="0 0 250 150" role="img" aria-label="Chance, per segment: Budget is empty in 2 of the 3 partner rows, and in none of the others: the chance depends on the channel."><defs><pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="var(--signal-warn)" stroke-width="1.2" opacity=".5"/></pattern></defs><rect x="33" y="20" width="184" height="132" fill="var(--sk-paper)" stroke="var(--sk-line)"/>
@@ -431,7 +432,7 @@
     <figcaption class="sk-cap">Budget is empty in 2 of the 3 partner rows, and in none of the others: the chance depends on the channel.</figcaption>
    </figure>
    <figure class="sk-card card" style="--place:var(--col-ochre)">
-    <div class="sk-step">Relations between fields · proposed</div>
+    <div class="sk-step">Every comparison</div>
     <h3 class="sk-name">Real or chance?</h3>
     <p class="sk-q">Is a difference between two segments real?</p>
     <svg class="sk-svg" viewBox="0 0 250 150" role="img" aria-label="Real or chance?: One city asks a higher budget than the other. The test says how likely chance alone makes such a gap: rarely, so it is real."><defs><pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="var(--signal-warn)" stroke-width="1.2" opacity=".5"/></pattern></defs><rect x="33" y="20" width="184" height="132" fill="var(--sk-paper)" stroke="var(--sk-line)"/>
