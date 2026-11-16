@@ -2779,6 +2779,18 @@ describe('the page of a Resource', () => {
     expect(main.getByRole('tab', { name: /^Known Gaps/ }).getAttribute('aria-selected')).toBe('true');
   });
 
+  it('marks the Key Fields in its Columns, first among what a field serves as (DEC-UX-266)', async () => {
+    serve({ groups: ['g1'], weekly: { card: { ...WEEKLY_DETAIL.card, keyFields: ['week_start'] } } });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
+    await fireEvent.click(main.getByRole('tab', { name: 'Kolommen' }));
+    const rowOf = (name: string) => main.getByRole('cell', { name }).closest('tr') as HTMLElement;
+    expect([...rowOf('week_start').querySelectorAll('.pill')].map((pill) => pill.textContent?.trim())).toEqual(['Sleutelveld', 'Partitie']);
+    expect(rowOf('lead_source').textContent).not.toContain('Sleutelveld');
+  });
+
   it('lets its Owner publish it, its first Confirmation, once the declaration is ticked (FR-SR-49, DEC-UX-63)', async () => {
     const calls = serve({ groups: ['g1'], journey: READY, weekly: { card: { ...WEEKLY_DETAIL.card, keyFields: ['week_start'], intendedUse: 'Weekly trends.', pitfalls: 'The current week is incomplete.', reliableSince: '2025-01-01' } } });
     open('/resources/r2');
