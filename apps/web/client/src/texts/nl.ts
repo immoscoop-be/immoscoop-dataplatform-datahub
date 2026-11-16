@@ -417,6 +417,7 @@ export default {
   'resource.column.type': 'Type',
   'resource.column.entity': 'Entity',
   'resource.column.field': 'Veld',
+  'resource.role.keyField': 'Sleutelveld',
   'resource.role.partition': 'Partitie',
   'resource.role.cluster': 'Cluster {number}',
   'resource.role.parameter': 'Parameter',

@@ -418,6 +418,7 @@ export default {
   'resource.column.type': 'Type',
   'resource.column.entity': 'Entity',
   'resource.column.field': 'Field',
+  'resource.role.keyField': 'Key Field',
   'resource.role.partition': 'Partition',
   'resource.role.cluster': 'Cluster {number}',
   'resource.role.parameter': 'Parameter',
