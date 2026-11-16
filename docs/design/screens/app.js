@@ -867,6 +867,31 @@ document.querySelectorAll('input[name="model-type"]').forEach(i => i.addEventLis
   if (foot) foot.innerHTML = `<code>${i.value}</code> · asks for ${i.dataset.asks}`;
   if (next) { next.href = `collection-add-grain.html?type=${i.value}`; next.classList.remove('is-disabled'); next.setAttribute('aria-disabled', 'false'); }
 }));
+// Opened by "Change model type" on the Overview (FR-RC-28, DEC-UX-263): without the first step, the model type it has now
+// marked, what changing drops, and "Next" waiting for another one
+(() => {
+  const now = new URLSearchParams(location.search).get('change');
+  const box = document.getElementById('type-change');
+  if (!now || !box) return;
+  box.hidden = false;
+  document.getElementById('type-now').textContent = now;
+  const steps = document.querySelector('.sheet-steps');
+  steps.firstElementChild.remove();
+  steps.firstElementChild.remove();
+  document.getElementById('sheet-title').textContent = 'Change the model type of Credit simulations';
+  const current = document.querySelector(`input[name="model-type"][value="${now}"]`);
+  if (current) {
+    current.checked = true;
+    current.closest('.type-pick').querySelector('.type-head').insertAdjacentHTML('beforeend', '<span class="rel-src"><i class="ph ph-check"></i>Now</span>');
+  }
+  document.getElementById('type-foot').textContent = 'Choose another model type';
+  document.querySelectorAll('input[name="model-type"]').forEach(i => i.addEventListener('change', () => {
+    const next = document.getElementById('type-next');
+    const same = i.value === now;
+    next.classList.toggle('is-disabled', same);
+    next.setAttribute('aria-disabled', same ? 'true' : 'false');
+  }));
+})();
 if (document.getElementById('type-suggested') && new URLSearchParams(location.search).has('suggested')) {
   document.getElementById('type-suggested').hidden = false;
   document.querySelectorAll('.type-sug').forEach(e => { e.hidden = false; });

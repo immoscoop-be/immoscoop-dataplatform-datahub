@@ -506,7 +506,7 @@ The Data Admin chooses them in the table of fields, as part of the definition of
 <a id="fr-co-45"></a>
 ### FR-CO-45 · Resources to complete
 
-**Status:** Specified · **Source:** Max, 2026-11-16 ([DEC-CO-27](#dec-co-27))
+**Status:** Specified · **Source:** Max, 2026-11-16 ([DEC-CO-27](#dec-co-27)) · **Screens:** [collection-overview](../../design/screens/collection-overview.html), [resource-overview](../../design/screens/resource-overview.html)
 
 The Data Team sees which Resources miss a field their model type asks for, or have no model type yet, each with what is missing and the fields Data Hub suggests. Opening one goes to "Edit relations", which reopens the steps from the model type on. Until it is complete, its EDA-Setup cannot start.
 

@@ -302,7 +302,7 @@ When a query, a Lens or a Preview reads the period or the rows of a Known Gap of
 <a id="fr-rc-28"></a>
 ### FR-RC-28 · The Description shows the fields of the model type, and changing the model type
 
-**Status:** Specified · **Source:** Max, 2026-11-16 ([DEC-RC-22](#dec-rc-22), [DEC-RC-24](#dec-rc-24))
+**Status:** Specified · **Source:** Max, 2026-11-16 ([DEC-RC-22](#dec-rc-22), [DEC-RC-24](#dec-rc-24)) · **Screens:** [collection-add-type](../../design/screens/collection-add-type.html), [resource-overview](../../design/screens/resource-overview.html)
 
 The Description on the Overview of a Resource shows its model type, its grain and the fields its model type asks for, each by its role and with the field that holds it, such as "Happened at `eventDate`" for an `event`. For a Data Admin it has "Change model type", which opens the steps of adding a Resource from the model type on ([DEC-UX-262](../../design/principles.md#dec-ux-262)); the fields of the old model type are dropped, and the change triggers an EDA-Revalidation.
 
@@ -311,7 +311,7 @@ The Description on the Overview of a Resource shows its model type, its grain an
 <a id="fr-rc-29"></a>
 ### FR-RC-29 · A field of the model type that disappears gives a warning
 
-**Status:** Specified · **Source:** Max, 2026-11-16 ([DEC-RC-23](#dec-rc-23))
+**Status:** Specified · **Source:** Max, 2026-11-16 ([DEC-RC-23](#dec-rc-23)) · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
 
 When a field that holds a role of the model type of a Resource is removed or renamed in dbt, the Resource shows a warning that names the role and the field that held it, and the Data Team gets a Message to choose another field. The Level and the Publication stay as they are. The warning goes once a field holds the role again.
 

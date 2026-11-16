@@ -6,9 +6,11 @@
   (collection-add-grain.html, then collection-add-relations.html) and an example. Data Hub suggests one only when the Domain Model says it in meta.model
   (FR-AR-20, ?suggested shows it), never from the words of a Colleciónes model (DEC-RC-25); otherwise no card is chosen. `other` stands beside the five, for a Resource that fits none
   (DEC-RC-21). The choice goes on as ?type=, which step 4 reads to show the fields of that model type.
-  Requirements: FR-CO-44
-  Decisions: DEC-UX-262, DEC-UX-58, DEC-RC-10, DEC-RC-21. Learning Card: 2.3.6 (FR-LR-39).
-  Related screens: collection-add-resources.html, collection-add-relations.html, learning-card.html.
+  Requirements: FR-CO-44, FR-RC-28
+  Decisions: DEC-UX-262, DEC-UX-263, DEC-UX-58, DEC-RC-10, DEC-RC-21, DEC-RC-22. Learning Card: 2.3.6 (FR-LR-39).
+  ?change=aggregate shows it opened by "Change model type" on the Overview (FR-RC-28): without the first step, the model type
+  it has now marked, and what changing drops; "Next" waits for another one.
+  Related screens: resource-overview.html, collection-add-resources.html, collection-add-relations.html, learning-card.html.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="datateam">
@@ -159,6 +161,7 @@
 <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
  <div class="sheet-steps" aria-label="Steps"><a class="done" href="collection-add-resources.html"><b><i class="ph ph-check"></i></b>Choose a Resource</a><i class="ph ph-arrow-right" aria-hidden="true"></i><span class="on"><b>2</b>Model type</span><i class="ph ph-arrow-right" aria-hidden="true"></i><a href="collection-add-grain.html"><b>3</b>Grain and storage</a><i class="ph ph-arrow-right" aria-hidden="true"></i><a href="collection-add-relations.html"><b>4</b>Fields and relations</a></div>
  <div style="display:flex;align-items:flex-start;gap:8px"><div style="flex:1"><h2 id="sheet-title">What is one row of Credit simulations?</h2><p class="meta" style="margin-top:6px;display:block;line-height:1.5">Choose its model type. It decides what may be added up, which fields the next step asks for, and which EDA-Probes its EDA runs. Everyone who reads the Resource sees it.</p></div><a class="icon-btn" href="collection-overview.html" aria-label="Close"><i class="ph ph-x"></i></a></div>
+ <div class="alert" id="type-change" hidden role="status" style="margin-top:10px"><i class="ph-fill ph-warning-circle"></i><p><b style="font-weight:500">It is an <span class="mono" id="type-now">aggregate</span> now.</b> Changing it drops the fields that model type asks for, and its EDA is revalidated. Its grain and mappings stay, for you to check in the next steps.</p></div>
  <p class="check-line" id="type-suggested" style="margin-top:10px" hidden><i class="ph ph-graph"></i><span><b>Suggested: event.</b> The Domain Model says so in the meta of <code>homeLoanSimulation.generate</code>. Check it, and choose another when it is wrong.</span></p>
  <div class="sheet-list type-list" role="radiogroup" aria-label="Model type" style="margin-top:10px">
   <label class="pick type-pick"><input type="radio" name="model-type" value="event" data-asks="when it happened">
