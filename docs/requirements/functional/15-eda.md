@@ -3,7 +3,7 @@
 | | |
 | --- | --- |
 | Domain | 15 of Data Hub · code `ED` |
-| Status | To be specified: the frame, the phases and the first decisions were set on 2026-11-15, by Max; which EDA-Probes are offered and required, and the flows of the phases, are still open |
+| Status | To be specified: the frame, the phases, the EDA-Steps and EDA-Probes per model type are decided (2026-11-15 and 16, by Max); each EDA-Probe and the flows of the phases are still to work out |
 | Source of truth | This file |
 | Origin | Proposed as a new domain in [OP-MR-01](06-maturity-and-release.md#op-mr-01). Framed by Max on 2026-11-15, in the review of an EDA proposal by Marc of 2026-11-10. It started from the [EDA framework](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1352237168) on Confluence (Dutch); where the two differ, this file holds. |
 
@@ -28,6 +28,9 @@ The EDA is a function of Data Hub that lets business explore a Resource. The Res
 - <a id="dec-ed-07"></a>**DEC-ED-07** · An EDA covers at least the Key Fields of its Resource ([DEC-SR-19](04-stacks-and-resources.md#dec-sr-19)), and a Rule of a Monitor can use only a field its EDA covers. A field added later is no Key Field until it is marked one, so it lowers nothing. When a Key Field is not covered, the Level stays at 4 · Explored with a warning that names it; Data Hub leads the Owner to an EDA-Revalidation, and then to monitoring the field. *Decided on 2026-11-14, by Max.*
 - <a id="dec-ed-08"></a>**DEC-ED-08** · Personal data is out of the scope of the EDA for now. An EDA has no rules of its own for personal data and follows what its User may see, as every query does. It comes back with confidentiality ([OP-PL-01](12-permissions-and-library-cards.md#op-pl-01)). *Decided on 2026-11-14, by Max.*
 - <a id="dec-ed-09"></a>**DEC-ED-09** · An EDA is made of EDA-Steps, and an EDA-Step of EDA-Probes. An EDA-Step validates one part of the Resource, such as its gaps; an EDA-Probe is one query that measures one aspect of its data, such as the nulls of a Key Field. *Decided on 2026-11-15, by Max.*
+- <a id="dec-ed-10"></a>**DEC-ED-10** · The kinds of table of an EDA are the model types of its Resource, with the fields their roles name ([FR-CO-44](03-collections.md#fr-co-44)): an EDA-Probe reads the field a role names, such as when an `event` happened, rather than guessing a column. A Resource of type `other` gets only the EDA-Probes that apply to every Resource. *Decided on 2026-11-16, by Max.* ([OP-ED-03](#op-ed-03))
+- <a id="dec-ed-11"></a>**DEC-ED-11** · An EDA offers the EDA-Steps Basis, Gaps, Weight, Correctness and Relations between fields, each with the EDA-Probes of [the table below](#eda-steps-and-eda-probes). An EDA-Probe that reads another Resource points to it ([DEC-DH-68](../../overview/data-hub.md#dec-dh-68)). *Decided on 2026-11-16, by Max.* ([OP-ED-01](#op-ed-01))
+- <a id="dec-ed-12"></a>**DEC-ED-12** · Per model type an EDA-Probe is Must, Should or Could, as [the table below](#eda-steps-and-eda-probes) says. Must: without it the EDA-Setup is not complete, so the Resource does not reach 4 · Explored. Should: on by default; the Owner may switch it off. Could: on request. An EDA-Probe that does not apply to a model type is not offered. *Decided on 2026-11-16, by Max.* ([OP-ED-02](#op-ed-02))
 
 ## Terms
 
@@ -47,17 +50,37 @@ The EDA is a function of Data Hub that lets business explore a Resource. The Res
 2. **EDA-Rerun.** The EDA-Probes run again and register a new EDA-Profile ([DEC-ED-06](#dec-ed-06)). How an EDA-Rerun starts, and what follows, is [OP-ED-05](#op-ed-05).
 3. **EDA-Revalidation.** The EDA-Setup itself is reconsidered, triggered by a change to the table, by heavy use of fields the EDA does not include, or by other triggers ([OP-ED-04](#op-ed-04)). It leads back into the EDA-Setup.
 
-## EDA-Steps and EDA-Probes, proposed
+## EDA-Steps and EDA-Probes
 
-A first cut, proposed on 2026-11-15 from the checks of the EDA proposal and grouped by what the EDA explores ([DEC-ED-02](#dec-ed-02)). Which are offered is [OP-ED-01](#op-ed-01); which are required for which kind of table is [OP-ED-02](#op-ed-02) and [OP-ED-03](#op-ed-03).
+What each EDA-Probe reads, and per model type whether it is Must (M), Should (S) or Could (C), or not offered (–) ([DEC-ED-11](#dec-ed-11), [DEC-ED-12](#dec-ed-12)). The roles are those of [FR-CO-44](03-collections.md#fr-co-44).
 
-| EDA-Step | Validates | EDA-Probes |
-| --- | --- | --- |
-| Basis | That the data matches what Data Hub records | The grain holds; row count and date range; volume over time, with empty periods |
-| Gaps | What is missing | Nulls per Key Field; disguised nulls, such as empty strings, "N/A" or 1900-01-01; where gaps cluster, by period or segment; values without a match, such as municipalities without a region |
-| Weight | Where the data lies | Distribution of numbers: percentiles, median, interquartile range, histogram; distribution of categories: top values and the rest, rare values; share per segment; outliers below Q1 − 1.5 × IQR or above Q3 + 1.5 × IQR |
-| Correctness | How correct it is | Impossible values, such as a surface of 0 or a date in the future; numbers or dates stored as text; variants of one category in case, spacing or spelling; relationships that hold through an Entity and identifier ([FR-RC-08](05-resource-card.md#fr-rc-08)): rows without a match on either side, and rows that multiply |
-| Relations between fields | How fields hang together | Derived values that agree, such as price per m²; differences between segments; correlations between Key Fields |
+| EDA-Step | EDA-Probe | Reads | `event` | `state` | `fact` | `dimension` | `aggregate` | `other` |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Basis | The grain holds | The grain | M | M | M | M | M | M |
+| Basis | Row count | – | M | M | M | M | M | M |
+| Basis | Date range | When it happened; created and updated at; when it occurred; the period | M | M | M | – | M | – |
+| Basis | Volume over time, with empty periods | The same date, or as of when for a state | M | C ¹ | M | – | M | – |
+| Basis | Settling between EDA-Reruns | When it happened; when it occurred | S | – | S | – | C | – |
+| Basis | How often things change | Updated at | – | C | – | – | – | – |
+| Gaps | Nulls per Key Field | The Key Fields | M | M | M | M | M | M |
+| Gaps | Disguised nulls, such as empty strings, "N/A" or 1900-01-01 | The Key Fields | M | M | M | M | M | M |
+| Gaps | Where gaps cluster, by period or segment | A date of a role, or a segment | S | S | S | C | S | C |
+| Gaps | Values without a match | The mapped fields | S | S | S | S | S | S |
+| Weight | Distribution of numbers | Measures, counts and sums | M | M | M | M | M | M |
+| Weight | Distribution of categories | The Key Fields | M | M | M | M | M | M |
+| Weight | Share per segment | The segment fields | S | S | S | S | S | C |
+| Weight | Outliers, outside Q1 − 1.5 × IQR and Q3 + 1.5 × IQR | Measures, counts and sums | S | S | S | C | S | C |
+| Correctness | Impossible values, such as a surface of 0 or a date in the future | Every field | M | M | M | M | M | M |
+| Correctness | Numbers or dates stored as text | The text fields | S | S | S | S | S | S |
+| Correctness | Variants of one category in case, spacing or spelling | The categories | S | S | S | M | C | S |
+| Correctness | Relationships hold through an Entity and identifier ([FR-RC-08](05-resource-card.md#fr-rc-08)) | The mapped fields | M | M | M | S | C | S |
+| Correctness | Dates in order: created before updated, none in the future | Created and updated at | – | M | – | – | – | – |
+| Correctness | The aggregate adds up to its source | Counts and sums | – | – | – | – | S | – |
+| Relations between fields | Derived values agree, such as price per m² | Fields of the domain | C | C | C | C | C | C |
+| Relations between fields | Differences between segments | The segment fields | S | C | S | C | S | C |
+| Relations between fields | Correlations between Key Fields | The numbers among them | C | C | C | C | C | C |
+
+¹ For a state that keeps its history: as of when is chosen.
 
 ## Requirements
 
@@ -72,9 +95,9 @@ None yet. They follow once the open points below are decided.
 
 Raised on 2026-11-15, in the review of the EDA proposal:
 
-- [ ] <a id="op-ed-01"></a>**OP-ED-01** · Decide which EDA-Steps and EDA-Probes an EDA offers. Proposal: the [first cut](#eda-steps-and-eda-probes-proposed) above. An EDA-Probe that reads another Resource points to it ([DEC-DH-68](../../overview/data-hub.md#dec-dh-68)).
-- [ ] <a id="op-ed-02"></a>**OP-ED-02** · Decide which EDA-Probes are required in which context: Must, Should or Could, per kind of table and per kind of field.
-- [ ] <a id="op-ed-03"></a>**OP-ED-03** · Decide whether an EDA needs table types, and whether they change what is required. Starting point: the model types a Resource already has, set by the Data Admin ([DEC-RC-10](05-resource-card.md#dec-rc-10)). The EDA proposal already asks volume over time only of event and fact tables.
+- [x] <a id="op-ed-01"></a>**OP-ED-01** · Decide which EDA-Steps and EDA-Probes an EDA offers. Proposal: the first cut of 2026-11-15. An EDA-Probe that reads another Resource points to it ([DEC-DH-68](../../overview/data-hub.md#dec-dh-68)). *Decided on 2026-11-16, by Max ([DEC-ED-11](#dec-ed-11)).*
+- [x] <a id="op-ed-02"></a>**OP-ED-02** · Decide which EDA-Probes are required in which context: Must, Should or Could, per kind of table and per kind of field. *Decided on 2026-11-16, by Max ([DEC-ED-12](#dec-ed-12)).*
+- [x] <a id="op-ed-03"></a>**OP-ED-03** · Decide whether an EDA needs table types, and whether they change what is required. Starting point: the model types a Resource already has, set by the Data Admin ([DEC-RC-10](05-resource-card.md#dec-rc-10)). The EDA proposal already asks volume over time only of event and fact tables. *Decided on 2026-11-16, by Max ([DEC-ED-10](#dec-ed-10)).*
 - [ ] <a id="op-ed-04"></a>**OP-ED-04** · Decide what triggers an EDA-Revalidation, how it starts and what happens. Candidates: a field added, removed or retyped ([FR-MR-12](06-maturity-and-release.md#fr-mr-12)); a logic Change ([DEC-DH-27](../../overview/data-hub.md#dec-dh-27)); heavy use of fields the EDA does not include, from a meta-analysis of usage at a later stage; a field newly marked a Key Field. Part of it: how Data Hub asks whether a new field is a Key Field. Proposal: the Message on a changed schema asks the Owner, field by field ([MSG-RES-03](message-catalogue.md#msg-res-03)). *Note of 2026-11-16, by Max: a change of model type triggers one ([DEC-RC-22](05-resource-card.md#dec-rc-22)); an EDA-Setup starts only when the model type has every field it asks for ([DEC-CO-27](03-collections.md#dec-co-27)).*
 - [ ] <a id="op-ed-05"></a>**OP-ED-05** · Decide how an EDA-Rerun starts and what follows. Candidates: on the schedule set in the EDA-Setup, and on demand by the Owner. Monitoring already runs its queries as Data Hub on a schedule ([DEC-CM-16](08-checks-and-monitoring.md#dec-cm-16), [DEC-CM-28](08-checks-and-monitoring.md#dec-cm-28)).
 - [ ] <a id="op-ed-06"></a>**OP-ED-06** · Decide whether EDA and monitoring need a service in Python, for methods SQL does not offer, such as changepoints and seasonal baselines ([FR-CM-38](08-checks-and-monitoring.md#fr-cm-38)). Proposal: not now. An EDA computes in BigQuery SQL, which returns only aggregates, and Data Hub works on those in TypeScript; this is revisited with FR-CM-38, as one service for both.
