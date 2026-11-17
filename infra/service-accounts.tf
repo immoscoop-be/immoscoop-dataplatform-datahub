@@ -55,3 +55,11 @@ resource "google_project_iam_member" "query_reads" {
   role    = "roles/bigquery.dataViewer"
   member  = google_service_account.service["query"].member
 }
+
+# registry reads the schema of the tables of its dbt projects, never their rows, for a table the catalog of a run
+# lacks: its columns and their types then come from BigQuery (EC-AR-06, TR-AR-15). Its ingest job runs as registry.
+resource "google_project_iam_member" "registry_reads_schemas" {
+  project = var.project_id
+  role    = "roles/bigquery.metadataViewer"
+  member  = google_service_account.service["registry"].member
+}

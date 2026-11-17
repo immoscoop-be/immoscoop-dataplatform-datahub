@@ -102,6 +102,7 @@ describe('the tables exposed to Data Hub', () => {
       ],
       tests: [],
       labels: {},
+      uncatalogued: [],
     };
     const [table] = exposedTables(set).tables;
     // The view has no partition of its own; the model beneath it does, and it passes collectorDatetime and entity

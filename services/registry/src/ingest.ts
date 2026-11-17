@@ -8,6 +8,7 @@ import type { RegistryDatabase } from './database.js';
 import { createDbtCloud } from './dbt-cloud.js';
 import { createProcessing, type Log } from './processing.js';
 import { lazy, settingsFromEnv } from './settings.js';
+import { createTableSchemas } from './table-schemas.js';
 
 // The ingest job of registry (TR-AR-02, DEC-PF-20): processes every pending Artifact Set, then stops.
 // A set that fails keeps its reason and does not fail the job; only an error outside the sets does.
@@ -37,6 +38,8 @@ try {
     }),
     catalogue: createCatalogue(settings.catalogueUrl, metadataIdToken()),
     changes: createChanges(database.db),
+    // The tables the catalog of a run lacks get their columns from BigQuery (EC-AR-06, TR-AR-15).
+    schemas: createTableSchemas(accessToken),
     log,
   });
   const result = await processing.runPending();

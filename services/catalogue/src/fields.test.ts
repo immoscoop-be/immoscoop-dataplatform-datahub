@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { type Column, fingerprint, levelAtRegistration, splitColumns } from './fields.js';
+import { type Column, fingerprint, levelAtRegistration, retyped, splitColumns } from './fields.js';
 
 const column = (name: string, dataType: string | null, description = ''): Column => ({ name, position: null, dataType, description });
 
@@ -67,5 +67,13 @@ describe('a Fingerprint (FR-SR-08)', () => {
     const redescribed = fingerprint('Every saved search.', fields, 'sum-1');
     expect(redescribed).toMatchObject({ structure: base.structure, types: base.types });
     expect(redescribed.descriptions).not.toBe(base.descriptions);
+  });
+
+  it('are retyped only when both types are known and differ (FR-MR-15, EC-AR-06)', () => {
+    // A type that becomes known, from BigQuery for a table the catalog lacked, is no change of the data.
+    expect(retyped(null, 'DATE')).toBe(false);
+    expect(retyped('DATE', null)).toBe(false);
+    expect(retyped('NUMERIC(12, 2)', 'numeric(12,2)')).toBe(false);
+    expect(retyped('STRING', 'INT64')).toBe(true);
   });
 });

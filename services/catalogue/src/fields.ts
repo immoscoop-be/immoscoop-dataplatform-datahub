@@ -52,6 +52,15 @@ export function splitColumns(columns: readonly Column[]): { fields: Column[]; le
   return { fields, leftOut };
 }
 
+/**
+ * Whether a field was retyped (FR-MR-15): only when both types are known and differ, written the same way. A type
+ * that becomes known, as when registry reads it from BigQuery for a table the catalog lacked (EC-AR-06), is no change.
+ */
+export function retyped(before: string | null, after: string | null): boolean {
+  const written = (type: string) => type.toUpperCase().replace(/\s+/g, '');
+  return before !== null && after !== null && before.trim() !== '' && after.trim() !== '' && written(before) !== written(after);
+}
+
 /** Why a Resource has the Level it got at Registration: a code in its Log, never free text (FR-SR-11). */
 export type LevelReason = 'described' | 'table-undescribed' | 'fields-undescribed';
 
