@@ -172,6 +172,9 @@ describe.skipIf(!url)('the routes of Collections', () => {
   const groupsOf = new Map<string, Group[]>();
   let identityDown = false;
   let registryDown = false;
+  /** The column types BigQuery gives through registry, by table, and which tables were asked (DEC-AR-13). */
+  let schemaTypes: Record<string, { name: string; dataType: string }[]> = {};
+  let schemasAsked: string[] = [];
   /** What catalogue had query check after a new Current Version (FR-SR-52). */
   const checkedByQuery: string[][] = [];
   let queryDown = false;
@@ -228,6 +231,13 @@ describe.skipIf(!url)('the routes of Collections', () => {
             });
             const near = direction === 'upstream' ? [node('decks', 'marts', 1), node('stg_cards', 'staging', 2)] : [node('card_share', 'marts', 1)];
             return { direction, nodes: [node('cards', 'marts', 0), ...near], edges: [], truncated: false };
+          },
+          async columns({ project, dataset, table }) {
+            schemasAsked.push(`${project}.${dataset}.${table}`);
+            if (registryDown) {
+              throw new RegistryUnavailable('registry answered 503');
+            }
+            return schemaTypes[`${project}.${dataset}.${table}`];
           },
         },
         requests: createRequests(database.db),
@@ -624,6 +634,45 @@ describe.skipIf(!url)('the routes of Collections', () => {
       // Without a Collection, only the Data Team sees it (FR-SR-31).
       expect((await an('GET', `/resources/${searches.id}`)).statusCode).toBe(404);
       expect((await dirk('GET', '/resources/not-an-id')).statusCode).toBe(404);
+    });
+
+    it('fills the types its fields lack from BigQuery as a Resource is read, and keeps a type it knows (DEC-AR-13, TR-AR-16)', async () => {
+      const dirk = await user('Dirk', [], 'admin');
+      const untyped = update('5', ['inleads']);
+      untyped.tables[0]!.columns = [
+        { name: 'leadId', position: 1, dataType: null as unknown as string, description: 'Id of the intake lead.' },
+        { name: 'createDate', position: 2, dataType: null as unknown as string, description: '' },
+        { name: 'status', position: 3, dataType: 'STRING', description: '' },
+      ];
+      await fromRegistry(untyped);
+      const id = ((await dirk('GET', '/resources?collection=none')).json().resources as { id: string; name: string }[]).find((one) => one.name === 'inleads')!.id;
+      schemaTypes = { 'immoscoop-dataplatform.dbt_marts.inleads': [{ name: 'leadid', dataType: 'STRING' }, { name: 'createDate', dataType: 'DATE' }, { name: 'status', dataType: 'INT64' }] };
+      schemasAsked = [];
+      const shown = await dirk('GET', `/resources/${id}`);
+      expect(shown.json().resource.fields).toEqual([
+        expect.objectContaining({ name: 'leadId', dataType: 'STRING' }),
+        expect.objectContaining({ name: 'createDate', dataType: 'DATE' }),
+        // A type it knows stays, also when BigQuery says another.
+        expect.objectContaining({ name: 'status', dataType: 'STRING' }),
+      ]);
+      expect(schemasAsked).toEqual(['immoscoop-dataplatform.dbt_marts.inleads']);
+      // Kept: the next read asks BigQuery nothing.
+      await dirk('GET', `/resources/${id}`);
+      expect(schemasAsked).toHaveLength(1);
+
+      // Without registry, it is shown as it is, and asked again only after a while.
+      const other = update('6', ['outleads']);
+      other.tables[0]!.columns = [{ name: 'leadId', position: 1, dataType: null as unknown as string, description: '' }];
+      await fromRegistry(other);
+      const outleads = ((await dirk('GET', '/resources?collection=none')).json().resources as { id: string; name: string }[]).find((one) => one.name === 'outleads')!.id;
+      registryDown = true;
+      schemasAsked = [];
+      const down = await dirk('GET', `/resources/${outleads}`);
+      expect(down.statusCode).toBe(200);
+      expect(down.json().resource.fields).toEqual([expect.objectContaining({ name: 'leadId', dataType: null })]);
+      await dirk('GET', `/resources/${outleads}`);
+      expect(schemasAsked).toHaveLength(1);
+      registryDown = false;
     });
 
     it('lists the Resources to complete for the Data Team, and shows everyone who sees one what its model type misses (FR-CO-45, FR-RC-29, MSG-RES-09)', async () => {

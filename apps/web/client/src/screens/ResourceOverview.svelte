@@ -5,6 +5,7 @@
 
 <script lang="ts">
   import { tick } from 'svelte';
+  import PurposeLine from './PurposeLine.svelte';
   import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import type { GapScope } from '@datahub/contracts/gaps';
   import type { SummarySource } from '@datahub/contracts/summary';
@@ -360,6 +361,7 @@
       {#if editing === 'description'}
         <form onsubmit={save} novalidate>
           {@render editBar()}
+          <PurposeLine kind="dbt" />
           <div class="side-by-side">
             <div>
               <div class="tag-line"><span class="label">{t('description.business')}</span><OriginTag origin="owner" /></div>
@@ -384,6 +386,8 @@
       {/if}
     {:else if part === 'behaviour'}
       {@render head(t('resource.behaviour'), t('overview.behaviour.lead'), 'behaviour')}
+      <!-- For who writes them, the test between a pitfall and a Known Gap (DEC-UX-275). -->
+      {#if describes('pitfalls') || describes('gaps')}<PurposeLine kind="gap" />{/if}
       {#if editing === 'behaviour'}
         <form onsubmit={save} novalidate>
           {@render editBar()}
@@ -424,6 +428,7 @@
       {/if}
     {:else if part === 'gaps'}
       {@render head(t('resource.gaps'), t('overview.gaps.lead'))}
+      {#if describes('gaps') || describes('pitfalls')}<PurposeLine kind="gap" />{/if}
       <OverviewGaps
         bind:adding={addingGap}
         gaps={card.knownGaps}

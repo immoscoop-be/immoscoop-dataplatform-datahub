@@ -1,5 +1,6 @@
 <script lang="ts">
   import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
+  import PurposeLine from './PurposeLine.svelte';
   import EditBar from '@datahub/ui/containers/EditBar.svelte';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
@@ -117,6 +118,7 @@
         surface="sub"
       />
     </div>
+    <PurposeLine kind="dbt" />
     <div class="rows">
       <div class="row headrow">
         <span class="label">{t('resource.column.field')}</span>

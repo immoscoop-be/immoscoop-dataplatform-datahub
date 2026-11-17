@@ -11,6 +11,13 @@ export type MyPageTab = (typeof MY_PAGE_TABS)[number];
  */
 export type Talk = { readonly messages?: true; readonly message?: string };
 
+/**
+ * A spot on the page of a Resource, at an address of its own after it (DEC-CL-19, DEC-UX-274): a tab, or a part of
+ * its Overview. A link from Claude opens the part that a step of the Owner Journey writes, such as its Known Gaps.
+ */
+export const RESOURCE_SPOTS = ['columns', 'lineage', 'history', 'preview', 'summary', 'description', 'behaviour', 'gaps', 'querying', 'entities', 'maturity', 'changes', 'danger'] as const;
+export type ResourceSpot = (typeof RESOURCE_SPOTS)[number];
+
 export type Route =
   | { readonly kind: 'start'; readonly section: Section }
   /** The Message Centre, with one Message opened on the right (FR-CV-06). */
@@ -22,7 +29,7 @@ export type Route =
    */
   | { readonly kind: 'groups'; readonly id: string | null; readonly making?: true }
   /** The page of a Resource, in the section Collections. */
-  | ({ readonly kind: 'resource'; readonly id: string; readonly section: Section } & Talk)
+  | ({ readonly kind: 'resource'; readonly id: string; readonly section: Section; readonly at?: ResourceSpot } & Talk)
   /** The page of a Collection (FR-CO-25). */
   | ({ readonly kind: 'collection'; readonly id: string; readonly section: Section } & Talk)
   /** The page of a folder of a Collection (FR-CO-38). */
@@ -52,7 +59,7 @@ export type Route =
 
 export const HOME = '/collections';
 export const myPagePath = (tab: MyPageTab): string => (tab === 'profile' ? '/me' : `/me/${tab}`);
-export const resourcePath = (id: string): string => `/resources/${encodeURIComponent(id)}`;
+export const resourcePath = (id: string, at?: ResourceSpot): string => `/resources/${encodeURIComponent(id)}${at ? `/${at}` : ''}`;
 /** Groups, and one Group opened in it (FR-UM-18). */
 export const GROUPS = '/groups';
 export const groupPath = (id: string): string => `${GROUPS}/${encodeURIComponent(id)}`;
@@ -253,6 +260,19 @@ export function route(path: string, adminTools: readonly AdminTool[] = ADMIN_TOO
   if (inCollection && folder) {
     try {
       return { kind: 'folder', collection: decodeURIComponent(inCollection), id: decodeURIComponent(folder), section: collections };
+    } catch {
+      return { kind: 'notFound' };
+    }
+  }
+  // A spot on the page of a Resource: one of its tabs, or a part of its Overview (DEC-CL-19).
+  const [, spotted, spot] = /^\/resources\/([^/]+)\/([^/]+)$/.exec(clean) ?? [];
+  if (spotted && spot) {
+    const at = RESOURCE_SPOTS.find((one) => one === spot);
+    if (!at) {
+      return { kind: 'notFound' };
+    }
+    try {
+      return { kind: 'resource', id: decodeURIComponent(spotted), section: collections, at };
     } catch {
       return { kind: 'notFound' };
     }

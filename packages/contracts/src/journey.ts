@@ -59,7 +59,7 @@ export const JOURNEY_STEPS: readonly JourneyStep[] = [
   { id: 'fields', number: 4, mark: 'required', cards: ['K5.14'], parts: ['columns'], writes: 'describe_fields', answers: ['goneThrough'], name: 'Fields' },
   { id: 'intendedUse', number: 5, mark: 'required', cards: ['3.3.3'], parts: ['behaviour'], writes: 'update_resource_card', answers: [], name: 'Intended use' },
   { id: 'pitfalls', number: 6, mark: 'required', cards: ['K5.16'], parts: ['behaviour'], writes: 'update_resource_card', answers: ['nothing'], name: 'Pitfalls' },
-  { id: 'gaps', number: 7, mark: 'required', cards: ['K5.3', 'K5.17'], parts: ['gaps', 'behaviour'], writes: 'update_resource_card', answers: ['nothing'], name: 'Known Gaps and reliable since' },
+  { id: 'gaps', number: 7, mark: 'required', cards: ['K5.3', 'K5.17'], parts: ['gaps', 'behaviour'], writes: 'add_known_gap and update_resource_card', answers: ['nothing'], name: 'Known Gaps and reliable since' },
   { id: 'parameters', number: 8, mark: 'advised', cards: ['K5.15'], parts: ['querying'], writes: 'update_resource_card', answers: ['nothing'], name: 'Parameters' },
   { id: 'admin', number: 9, mark: 'eda', cards: ['2.3.6', 'K5.18'], parts: ['entities'], writes: 'write_message', answers: ['goneThrough'], name: 'Table type, grain and mappings' },
   { id: 'messages', number: 10, mark: 'advised', cards: ['4.7.1'], parts: ['messages'], writes: 'reply_to_message', answers: ['goneThrough'], name: 'Open Questions and Signals' },

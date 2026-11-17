@@ -84,7 +84,8 @@ export function createDataHub(options: DataHubOptions, authorization: string): D
 
 /** The pages of Data Hub, as the web app names them. */
 export const pages = {
-  resource: (id: string) => `/resources/${encodeURIComponent(id)}`,
+  /** A Resource, at a spot when given: a tab, or a part of its Overview, such as `gaps` (DEC-CL-19). */
+  resource: (id: string, at?: string) => `/resources/${encodeURIComponent(id)}${at ? `/${at}` : ''}`,
   collection: (id: string) => `/collections/${encodeURIComponent(id)}`,
   lens: (id: string) => `/lenses/${encodeURIComponent(id)}`,
   query: (id: string) => `/query/${encodeURIComponent(id)}`,

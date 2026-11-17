@@ -77,7 +77,7 @@
     load();
   });
 
-  /** Fetches and processes the run of a failed delivery again (FR-AR-14). */
+  /** Fetches and processes the run of a failed delivery again, or the current one (FR-AR-14, DEC-UX-277). */
   async function processAgain(runId: string) {
     again = { runId, state: 'busy' };
     try {
@@ -404,9 +404,14 @@
                 <li><span>{t(opened.set?.status === 'processing' ? 'admin.did.processing' : 'admin.did.pending')}</span></li>
               {/if}
             </ol>
-            {#if kind === 'failed' && opened.runId}
+            {#if (kind === 'failed' || (opened.set?.status === 'processed' && opened.set.current)) && opened.runId}
               {@const runId = opened.runId}
-              <div class="why attention">{t('admin.todo.failed')}</div>
+              <!-- A failed run, or the current one, to read it with what Data Hub does now (FR-AR-14, DEC-UX-277). -->
+              {#if kind === 'failed'}
+                <div class="why attention">{t('admin.todo.failed')}</div>
+              {:else}
+                <p class="text">{t('admin.todo.current', { project: projectOf(opened.projectId) })}</p>
+              {/if}
               <div class="actions">
                 <Button variant="outline" disabled={again?.runId === runId && again.state === 'busy'} onclick={() => processAgain(runId)}><Icon name="arrows-clockwise" />{t('admin.again')}</Button>
                 {#if again?.runId === runId && again.state === 'queued'}<span class="meta">{t('admin.again.queued')}</span>{/if}

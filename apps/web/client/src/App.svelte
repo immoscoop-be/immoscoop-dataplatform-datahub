@@ -1239,6 +1239,7 @@
         {@const resource = opened.resource}
         <ResourcePage
           {resource}
+          at={page.at}
           messages={messagesButton}
           threads={onObject?.key === `resource:${resource.id}` ? onObject.messages : undefined}
           log={opened.log}
