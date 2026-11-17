@@ -1918,7 +1918,7 @@ describe('Admin, for the Data Team', () => {
     expect(screen.getByRole('region', { name: 'dbt-marketing' })).toBeTruthy();
   });
 
-  it('lists every delivery with what Data Hub did, and processes a failed set again (FR-AR-19, FR-AR-14)', async () => {
+  it('lists every delivery with what Data Hub did, and processes a failed set, or the current one, again (FR-AR-19, FR-AR-14, DEC-UX-277)', async () => {
     const calls = serve({ as: 'admin' });
     open('/admin/webhooks');
     render(App, { config: UAT });
@@ -1933,6 +1933,15 @@ describe('Admin, for the Data Team', () => {
     await fireEvent.click(opened.getByRole('button', { name: 'Opnieuw verwerken' }));
     expect(await opened.findByText('Data Hub haalt de run opnieuw op en verwerkt hem; de lijst toont hoe het liep.')).toBeTruthy();
     expect(calls).toContainEqual({ method: 'POST', path: '/runs/58141207/reprocess' });
+
+    // The run that is the Current Version can be processed again too, to read it with what Data Hub does now (DEC-UX-277).
+    const current = (await list.findAllByRole('button')).find((item) => item.textContent?.includes('58101536'));
+    expect(current).toBeTruthy();
+    await fireEvent.click(current!);
+    const processed = within(screen.getByRole('region', { name: 'De geopende levering' }));
+    expect(processed.getByText(/Deze run is de Current Version van immoscoop_dataplatform_sql/)).toBeTruthy();
+    await fireEvent.click(processed.getByRole('button', { name: 'Opnieuw verwerken' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/runs/58101536/reprocess' }));
 
     // An ignored delivery says why, and what the Data Admin can do.
     await fireEvent.click(list.getByRole('button', { name: /^Genegeerd/ }));

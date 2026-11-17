@@ -12,12 +12,14 @@ export type Results = 'claude' | 'card' | 'none';
 /** What Claude may write for a User, as the several choices of `claude.use` name them. */
 export type ClaudeWrite = 'descriptions' | 'messages' | 'deprecations' | 'changesSeen';
 
-/** The attributes of a Resource as `resources.describe` names them, for each part of the Resource Card Claude writes. */
+/**
+ * The attributes of a Resource as `resources.describe` names them, for each part of the Resource Card Claude writes
+ * with update_resource_card. The Known Gaps are written one at a time, with their scope, by tools of their own (DEC-CL-20).
+ */
 export const CARD_ATTRIBUTES = {
   businessDescription: 'description',
   intendedUse: 'behaviour',
   pitfalls: 'pitfalls',
-  knownGaps: 'gaps',
   reliableSince: 'availableSince',
   keyFields: 'keyFields',
   parameters: 'keyFields',
@@ -46,6 +48,8 @@ export interface Permits {
   card: CardKey[];
   /** The Business Description of fields: the attribute description of `resources.describe`. */
   fields: boolean;
+  /** Add, change and remove Known Gaps, one at a time with their scope: the attribute gaps (DEC-CL-20). */
+  gaps: boolean;
   /** Mark the changes of a Resource seen: `claude.use` changesSeen and the attribute description. */
   changesSeen: boolean;
   /** The kinds of Message Claude may place for them: `claude.use` messages and `messages.write`. */
@@ -99,6 +103,7 @@ export function permitsOf(permissions: Permissions): Permits {
     preview: can(permissions, 'resources.preview'),
     card: (Object.keys(CARD_ATTRIBUTES) as CardKey[]).filter((key) => described.includes(CARD_ATTRIBUTES[key])),
     fields: described.includes('description'),
+    gaps: described.includes('gaps'),
     changesSeen: claudeWrites(permissions, 'changesSeen') && attributes(permissions).includes('description'),
     messageKinds: claudeWrites(permissions, 'messages') && can(permissions, 'messages.write') && Array.isArray(kinds) ? kinds : [],
     // A User always replies in their own Questions and Signals; messages.reply adds those of others.

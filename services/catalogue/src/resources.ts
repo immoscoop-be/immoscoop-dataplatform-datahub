@@ -314,6 +314,11 @@ export interface Resources {
   /** A Resource with its fields and the columns left out of it. */
   detail(id: string): Promise<ResourceDetail | undefined>;
   /**
+   * Fills the types its fields lack from the types of its table, by the name of the column, in any case: a type that is
+   * known, from the catalog of dbt or from BigQuery at a run, stays (DEC-AR-13). Tells how many fields got one.
+   */
+  fillTypes(id: string, types: ReadonlyMap<string, string>): Promise<number>;
+  /**
    * Adds Resources to a Collection in one go, never from another one (FR-CO-08, FR-CO-31): all of
    * them, or none when one cannot be added. One already in the Collection stays as it is.
    */
@@ -951,6 +956,23 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
       }
       const row = await db.selectFrom('resources').selectAll().where('id', '=', id).executeTakeFirst();
       return row && present(row);
+    },
+
+    async fillTypes(id, types) {
+      if (!UUID.test(id) || types.size === 0) {
+        return 0;
+      }
+      return db.transaction().execute(async (trx) => {
+        const untyped = await trx.selectFrom('resourceFields').select('name').where('resourceId', '=', id).where('dataType', 'is', null).execute();
+        let filled = 0;
+        for (const { name } of untyped) {
+          const dataType = types.get(name.toLowerCase());
+          if (!dataType) continue;
+          await trx.updateTable('resourceFields').set({ dataType }).where('resourceId', '=', id).where('name', '=', name).where('dataType', 'is', null).execute();
+          filled++;
+        }
+        return filled;
+      });
     },
 
     async detail(id) {

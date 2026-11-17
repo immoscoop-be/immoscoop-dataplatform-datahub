@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import type { GapScope } from '@datahub/contracts/gaps';
   import Breadcrumb from '@datahub/ui/components/Breadcrumb.svelte';
   import ObjectHeader from '@datahub/ui/components/ObjectHeader.svelte';
@@ -18,7 +19,7 @@
   import type { Conversation, WrittenKind } from '../lib/messages.js';
   import type { QueryClient, Storage } from '../lib/query.js';
   import type { Registry } from '../lib/registry.js';
-  import { collectionPath, newQueryPath, resourcePath } from '../lib/routes.js';
+  import { collectionPath, newQueryPath, type ResourceSpot, resourcePath } from '../lib/routes.js';
   import { command, place, useScreenCommands, view } from '../lib/commands.svelte.js';
   import type { IconName } from '@datahub/ui/foundations/icons.js';
   import type { QuickRow } from '../lib/quick.js';
@@ -63,6 +64,7 @@
     onrun,
     messages,
     threads,
+    at,
   }: {
     resource: ResourceDetail;
     log: readonly LogEntry[] | undefined;
@@ -85,6 +87,8 @@
     messages?: { count: number | null; href: string; kinds?: readonly WrittenKind[]; write?: (kind: WrittenKind) => void };
     /** The Questions, Remarks and Signals on it, the newest first, for its Summary; undefined while they are read. */
     threads?: readonly Conversation[];
+    /** The spot its address opens on: a tab, or a part of its Overview, as a link from Claude names it (DEC-CL-19). */
+    at?: ResourceSpot;
   } = $props();
 
   // The tabs of a Resource (DEC-UX-90).
@@ -110,6 +114,26 @@
   let adding = $state(false);
   let failed = $state(false);
 
+  /** Opens a spot: one of its tabs, or a part of its Overview; with none, the Overview on its Summary. */
+  function goTo(spot: ResourceSpot | undefined) {
+    if (spot === 'columns' || spot === 'lineage' || spot === 'history' || spot === 'preview') {
+      tab = spot;
+      part = 'summary';
+    } else {
+      tab = 'overview';
+      part = spot ?? 'summary';
+    }
+  }
+  // Another spot on the same Resource, from a link: the page goes there.
+  let spotFor: string | undefined;
+  $effect(() => {
+    const key = `${resource.id}:${at ?? ''}`;
+    if (spotFor !== undefined && spotFor !== key && untrack(() => readFor) === resource.id) {
+      goTo(at);
+    }
+    spotFor = key;
+  });
+
   // Read again for another Resource: what it relates to, and the first tab on its Summary.
   let readFor: string | undefined;
   $effect(() => {
@@ -118,8 +142,7 @@
       return;
     }
     readFor = id;
-    tab = 'overview';
-    part = 'summary';
+    goTo(untrack(() => at));
     related = undefined;
     storage = undefined;
     relating = undefined;

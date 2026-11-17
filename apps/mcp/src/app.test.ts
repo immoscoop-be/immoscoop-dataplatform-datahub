@@ -380,6 +380,14 @@ describe('Resources through Claude', () => {
       expect.objectContaining({ label: 'On the card now', origin: 'From the Owner', text: 'Credit leads per week.' }),
       expect.objectContaining({ label: 'Next to it', origin: 'From dbt' }),
     ]);
+    // The window keeps the overview at hand, says what the text of the step is for, and links to its spot (FR-CL-33, DEC-CL-19).
+    const shown = guided.structuredContent as { window: { overview: { steps: { number: number; state: string; mark: string; says: string }[]; done: number; open: number }; purpose: string; link: { url: string; label: string } } };
+    expect(shown.window.overview.open).toBe(5);
+    expect(shown.window.overview.steps.find((step) => step.number === 1)).toMatchObject({ state: 'done', says: 'Done' });
+    expect(shown.window.overview.steps.find((step) => step.number === 2)).toMatchObject({ state: 'now', mark: 'Required' });
+    expect(shown.window.overview.steps.find((step) => step.number === 8)).toMatchObject({ state: 'optional', mark: 'Optional' });
+    expect(shown.window.purpose).toContain('**dbt** says how the data is made');
+    expect(shown.window.link).toEqual({ url: `${WEB}/resources/${RESOURCE_ID}/description`, label: 'Open the Description in Data Hub' });
     expect(guided.content[0]?.text).toContain('Step 2 of 12 is next: Business Description, required to publish.');
     expect(guided.content[0]?.text).toContain('Still open before it can be published: Business Description, Key Fields, Fields, Pitfalls, Known Gaps and reliable since.');
 
@@ -420,6 +428,41 @@ describe('Resources through Claude', () => {
     const written = await tool('update_resource_card', { id: RESOURCE_ID, pitfalls: 'Mind the current week.', before: { pitfalls: 'The current week is incomplete.' } }, await issuer.sign());
     expect(written.isError).toBeUndefined();
     expect(asked.find((call) => call.method === 'PATCH')?.body).toEqual({ pitfalls: 'Mind the current week.' });
+  });
+
+  it('writes a Known Gap one at a time, with its scope, and never through the card (DEC-CL-20, FR-CL-34)', async () => {
+    const owner = await issuer.sign();
+    // The card tool no longer takes the Known Gaps as a list of texts.
+    const card = (await toolsOf(owner)).find((item) => item.name === 'update_resource_card');
+    expect(Object.keys(card?.inputSchema.properties ?? {})).not.toContain('knownGaps');
+
+    const scope = { rows: { field: 'query', is: 'empty' } };
+    answers[`POST ${CATALOGUE}/resources/${RESOURCE_ID}/gaps`] = () => [201, { gap: { id: '7', text: 'Anonymised queries have no text.', scope, addedBy: 'An', addedAt: '2026-11-17T10:00:00Z' } }];
+    const added = await tool('add_known_gap', { id: RESOURCE_ID, text: 'Anonymised queries have no text.', scope }, owner);
+    expect(added.isError).toBeUndefined();
+    expect(asked.find((call) => call.method === 'POST')?.body).toEqual({ text: 'Anonymised queries have no text.', scope });
+    // Its link opens the Known Gaps of the Resource in Data Hub (DEC-CL-19).
+    expect(added.structuredContent).toMatchObject({ page: expect.stringMatching(new RegExp(`/resources/${RESOURCE_ID}/gaps$`)) });
+    // A scope Data Hub cannot read is refused before it is sent.
+    expect((await tool('add_known_gap', { id: RESOURCE_ID, text: 'A gap.', scope: { period: { from: 'last week', to: null } } }, owner)).isError).toBe(true);
+
+    // Changing only the scope keeps the text, and who added it stays with Data Hub.
+    const gap = { id: '1', text: 'No partner leads before March.', scope: { period: { from: null, to: '2025-02-28' } }, addedBy: 'An', addedAt: '2026-11-01T10:00:00Z' };
+    answers[`GET ${CATALOGUE}/resources/${RESOURCE_ID}`] = () => [200, detail({ card: { businessDescription: '', intendedUse: '', pitfalls: '', knownGaps: [gap], reliableSince: null, keyFields: [], parameters: [] } })];
+    answers[`PATCH ${CATALOGUE}/resources/${RESOURCE_ID}/gaps/1`] = () => [200, { gap: { ...gap, scope: { fields: ['lead_source'] } } }];
+    asked.length = 0;
+    const changed = await tool('change_known_gap', { id: RESOURCE_ID, gap: '1', scope: { fields: ['lead_source'] }, before: { text: gap.text, scope: gap.scope } }, owner);
+    expect(changed.isError).toBeUndefined();
+    expect(asked.find((call) => call.method === 'PATCH')?.body).toEqual({ text: gap.text, scope: { fields: ['lead_source'] } });
+    // Not over what a colleague changed since Claude showed it (EC-CL-03).
+    asked.length = 0;
+    const stale = await tool('change_known_gap', { id: RESOURCE_ID, gap: '1', text: 'Something else.', before: { text: 'An older text.', scope: null } }, owner);
+    expect(stale.isError).toBe(true);
+    expect(asked.some((call) => call.method === 'PATCH')).toBe(false);
+
+    answers[`DELETE ${CATALOGUE}/resources/${RESOURCE_ID}/gaps/1`] = () => [204, null];
+    expect((await tool('remove_known_gap', { id: RESOURCE_ID, gap: '1', before: gap.text }, owner)).isError).toBeUndefined();
+    expect(asked.some((call) => call.method === 'DELETE' && call.url.endsWith('/gaps/1'))).toBe(true);
   });
 
   it('runs a Preview up to 100 MB, and above leaves it to the User in the MCP App (FR-CL-09, DEC-CL-07)', async () => {
@@ -484,7 +527,7 @@ describe('the Permissions of the User in Claude (TR-PL-09)', () => {
   const READS = ['explain', 'get_messages', 'get_related_resources', 'get_resource', 'get_resource_lineage', 'get_resource_log', 'guide_owner_journey', 'how_to_use', 'list_resources', 'search', 'show_learning_card', 'show_resource', 'suggest_lenses', 'who_am_i'];
   const QUERY_TOOLS = ['check_query', 'create_query', 'get_query', 'get_result_page', 'list_queries', 'run_query', 'run_query_approved', 'send_query_request', 'show_query', 'update_query'];
   const PREVIEW_TOOLS = ['preview_resource', 'run_preview_approved', 'send_preview_request'];
-  const WRITES = ['deprecate_resource', 'describe_fields', 'mark_changes_seen', 'record_journey_step', 'reply_to_message', 'undeprecate_resource', 'update_resource_card', 'write_message'];
+  const WRITES = ['add_known_gap', 'change_known_gap', 'deprecate_resource', 'describe_fields', 'mark_changes_seen', 'record_journey_step', 'remove_known_gap', 'reply_to_message', 'undeprecate_resource', 'update_resource_card', 'write_message'];
 
   it('offers an Admin every tool, the queries of others included', async () => {
     const tools = names(await toolsOf(await issuer.sign({ as: 'admin' })));
@@ -508,7 +551,7 @@ describe('the Permissions of the User in Claude (TR-PL-09)', () => {
     const messagesOnly = permissionsOf('businessAnalyst', (permissions) => (permissions['claude.use'].values = { writes: ['messages'], note: '' }));
     const tools = names(await toolsOf(await issuer.sign({ permissions: messagesOnly })));
     expect(tools).toEqual(expect.arrayContaining(['write_message', 'reply_to_message', 'publish_resource', 'create_query', 'preview_resource']));
-    for (const name of ['update_resource_card', 'describe_fields', 'mark_changes_seen', 'deprecate_resource', 'undeprecate_resource', 'record_journey_step']) expect(tools).not.toContain(name);
+    for (const name of ['update_resource_card', 'describe_fields', 'add_known_gap', 'change_known_gap', 'remove_known_gap', 'mark_changes_seen', 'deprecate_resource', 'undeprecate_resource', 'record_journey_step']) expect(tools).not.toContain(name);
 
     // Only the attributes they may describe: pitfalls, so no Business Descriptions of fields and no changes marked seen.
     const pitfalls = permissionsOf('businessAnalyst', (permissions) => (permissions['resources.describe'].values = { reach: 'theirs', attributes: ['pitfalls'] }));
@@ -516,6 +559,7 @@ describe('the Permissions of the User in Claude (TR-PL-09)', () => {
     expect(Object.keys(described.find((item) => item.name === 'update_resource_card')?.inputSchema.properties ?? {}).sort()).toEqual(['before', 'id', 'pitfalls']);
     expect(names(described)).not.toContain('describe_fields');
     expect(names(described)).not.toContain('mark_changes_seen');
+    expect(names(described)).not.toContain('add_known_gap');
 
     // Without resources.publish, no publication; without resources.preview, no Preview.
     const noPublish = permissionsOf('businessAnalyst', (permissions) => {

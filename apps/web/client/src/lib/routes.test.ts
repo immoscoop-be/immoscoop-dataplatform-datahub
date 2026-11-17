@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { chartPath, contextPath, editLensPath, GROUPS, groupPath, learningPath, messagePath, messagesOnPath, NEW_GROUP, newLensForPath, objectPath, queryRunsPath, route, seePath, usersPath } from './routes.js';
+import { chartPath, contextPath, editLensPath, GROUPS, groupPath, learningPath, messagePath, messagesOnPath, NEW_GROUP, newLensForPath, objectPath, queryRunsPath, resourcePath, route, seePath, usersPath } from './routes.js';
 
 describe('the addresses of the web app', () => {
   it('opens on the start screen of Collections', () => {
@@ -28,6 +28,11 @@ describe('the addresses of the web app', () => {
     expect(route('/resources/0d4b1f0e-2a8e')).toMatchObject({ kind: 'resource', id: '0d4b1f0e-2a8e', section: { id: 'collections' } });
     expect(route('/resources/%E0%A4%A')).toEqual({ kind: 'notFound' });
     expect(route('/resources/a/b')).toEqual({ kind: 'notFound' });
+    // A spot on its page: a tab, or a part of its Overview, which a link from Claude opens (DEC-CL-19).
+    expect(route('/resources/r1/gaps')).toMatchObject({ kind: 'resource', id: 'r1', at: 'gaps' });
+    expect(route('/resources/r1/columns')).toMatchObject({ kind: 'resource', id: 'r1', at: 'columns' });
+    expect(route('/resources/r1/gaps/messages')).toMatchObject({ kind: 'resource', id: 'r1', at: 'gaps', messages: true });
+    expect(resourcePath('r1', 'behaviour')).toBe('/resources/r1/behaviour');
   });
 
   it('has a page per Collection, and an empty one to make a new Collection (FR-CO-12, FR-CO-25)', () => {

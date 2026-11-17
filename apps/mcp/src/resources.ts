@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { answer, attempt, firstSentence, levelName, plain, refusal } from './answers.js';
 import { rangesOf } from '@datahub/contracts';
+import { type GapScope, gapScopeSchema } from '@datahub/contracts/gaps';
 import { APP_ONLY, bytes, type Context, READ, SHARE, SHOWS, WRITE } from './context.js';
 import { pages, Refused } from './datahub.js';
 import { collectionIcon } from './icons.js';
@@ -317,7 +318,6 @@ export function resourceTools(context: Context): void {
     businessDescription: z.string().max(4000).optional().describe('The Business Description of the table, next to the one from dbt, in Markdown.'),
     intendedUse: z.string().max(2000).optional().describe('What it is meant for, in Markdown (FR-RC-23).'),
     pitfalls: z.string().max(2000).optional().describe('Where it trips people up, in Markdown (FR-RC-23).'),
-    knownGaps: z.array(z.string().max(1000)).max(50).optional().describe('Every Known Gap, the whole list as its texts: a gap whose text stays keeps who added it.'),
     reliableSince: z.string().nullable().optional().describe('Since when its data is reliable: YYYY-MM-DD, or null.'),
     keyFields: z.array(z.string()).max(50).optional(),
     parameters: z.array(z.string()).max(50).optional().describe('The fields a Preview offers to choose by.'),
@@ -326,7 +326,6 @@ export function resourceTools(context: Context): void {
     businessDescription: 'the Business Description',
     intendedUse: 'intended use',
     pitfalls: 'pitfalls',
-    knownGaps: 'Known Gaps',
     reliableSince: 'since when it is reliable',
     keyFields: 'key fields',
     parameters: 'Parameters',
@@ -353,8 +352,7 @@ export function resourceTools(context: Context): void {
           if (Object.keys(given).length === 0) return refusal('Name at least one thing to change.');
           if (before) {
             const { resource } = await hub.get<{ resource: Detail }>('catalogue', `/resources/${enc(resourceId)}`);
-            // The Known Gaps are items with who added them; Claude shows and sends their texts.
-            const now = (key: string) => (key === 'knownGaps' ? ((resource.card.knownGaps ?? []) as { text: string }[]).map((gap) => gap.text) : resource.card[key]);
+            const now = (key: string) => resource.card[key];
             const moved = Object.entries(before).filter(([key, value]) => JSON.stringify(now(key) ?? null) !== JSON.stringify(value ?? null));
             if (moved.length > 0) {
               return refusal(
@@ -364,6 +362,94 @@ export function resourceTools(context: Context): void {
           }
           const { resource } = await hub.send<{ resource: Detail }>('catalogue', 'PATCH', `/resources/${enc(resourceId)}`, given);
           return answer({ changed: Object.keys(given), card: resource.card, page: hub.page(pages.resource(resourceId)) }, 'Written.');
+        }),
+    );
+  }
+
+  // The Known Gaps one at a time, each with its scope, through the routes of the web app: a gap keeps who added it
+  // when its text or scope changes (DEC-CL-20, FR-CL-34).
+  if (permits.gaps) {
+    interface Gap {
+      id: string;
+      text: string;
+      scope: GapScope | null;
+      addedBy?: string | null;
+      addedAt?: string | null;
+    }
+    const gapId = z.string().min(1).describe('The ID of the Known Gap, from card.knownGaps of get_resource.');
+    const scope = gapScopeSchema
+      .nullable()
+      .optional()
+      .describe(
+        'Where the gap holds, each part optional and combined as they apply: period {from, to} as YYYY-MM-DD, one side null when it is open; fields, the fields that are empty or unreliable in it; rows, the rows it holds for: {field, is: "oneOf", values} or {field, is: "empty"}. Propose one from what you found in the data. null takes it away.',
+      );
+    const gapsOf = async (resourceId: string) => {
+      const { resource } = await hub.get<{ resource: Detail }>('catalogue', `/resources/${enc(resourceId)}`);
+      return (resource.card.knownGaps ?? []) as Gap[];
+    };
+    const shown = (gap: Gap) => ({ text: gap.text, scope: gap.scope ?? null });
+    const TEST = 'A Known Gap is in the data itself: it would go away if the data were repaired. How the data is misread is a pitfall, written with update_resource_card.';
+
+    server.registerTool(
+      'add_known_gap',
+      {
+        title: 'Add a Known Gap',
+        description: `Adds one Known Gap to a Resource the User may describe: what is missing from its data, or holds only in part, and why, with the scope where it holds. ${TEST} Show the User the text and the scope first, and call this only once they agree.`,
+        inputSchema: { id, text: z.string().min(1).max(1000).describe('What is missing, or holds only in part, and why, in plain text.'), scope },
+        annotations: WRITE,
+      },
+      ({ id: resourceId, text, scope: where }) =>
+        attempt(async () => {
+          const { gap } = await hub.send<{ gap: Gap }>('catalogue', 'POST', `/resources/${enc(resourceId)}/gaps`, { text, ...(where === undefined ? {} : { scope: where }) });
+          return answer({ added: gap, page: hub.page(pages.resource(resourceId, 'gaps')) }, 'Added, with your name.');
+        }),
+    );
+
+    server.registerTool(
+      'change_known_gap',
+      {
+        title: 'Change a Known Gap',
+        description:
+          'Changes the text or the scope of one Known Gap of a Resource the User may describe; who added it stays. Leave out the text to keep it, the scope to keep it, or pass null to take the scope away. Show the User the change first, and call this only once they agree. Pass in before the gap as you showed it.',
+        inputSchema: {
+          id,
+          gap: gapId,
+          text: z.string().min(1).max(1000).optional().describe('Its new text; left out, it stays.'),
+          scope,
+          before: z.object({ text: z.string(), scope: z.unknown().optional() }).optional().describe('The gap as you showed it to the User, before the change.'),
+        },
+        annotations: WRITE,
+      },
+      ({ id: resourceId, gap: which, text, scope: where, before }) =>
+        attempt(async () => {
+          if (text === undefined && where === undefined) return refusal('Name a new text, a new scope, or both.');
+          const found = (await gapsOf(resourceId)).find((gap) => gap.id === which);
+          if (!found) return refusal('This Resource has no such Known Gap. Read it again with get_resource.');
+          if (before && JSON.stringify(shown(found)) !== JSON.stringify({ text: before.text, scope: before.scope ?? null })) {
+            return refusal(`Changed since you showed it, by someone else: it is now ${JSON.stringify(shown(found))}. Show the User the gap as it is, and ask again before you write.`);
+          }
+          const { gap } = await hub.send<{ gap: Gap }>('catalogue', 'PATCH', `/resources/${enc(resourceId)}/gaps/${enc(which)}`, { text: text ?? found.text, ...(where === undefined ? {} : { scope: where }) });
+          return answer({ changed: gap, page: hub.page(pages.resource(resourceId, 'gaps')) }, 'Changed; who added it stays.');
+        }),
+    );
+
+    server.registerTool(
+      'remove_known_gap',
+      {
+        title: 'Remove a Known Gap',
+        description: 'Removes one Known Gap of a Resource the User may describe. Ask the User first, and pass in before its text as you showed it.',
+        inputSchema: { id, gap: gapId, before: z.string().optional().describe('The text of the gap as you showed it to the User.') },
+        annotations: WRITE,
+      },
+      ({ id: resourceId, gap: which, before }) =>
+        attempt(async () => {
+          if (before !== undefined) {
+            const found = (await gapsOf(resourceId)).find((gap) => gap.id === which);
+            if (!found) return refusal('This Resource has no such Known Gap. Read it again with get_resource.');
+            if (found.text !== before) return refusal(`Changed since you showed it, by someone else: it now reads ${JSON.stringify(found.text)}. Show the User the gap as it is, and ask again.`);
+          }
+          await hub.send('catalogue', 'DELETE', `/resources/${enc(resourceId)}/gaps/${enc(which)}`);
+          return answer({ removed: which, page: hub.page(pages.resource(resourceId, 'gaps')) }, 'Removed.');
         }),
     );
   }

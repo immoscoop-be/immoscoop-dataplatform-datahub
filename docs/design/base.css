@@ -2417,6 +2417,51 @@ body.oj-plain .oj-tag { visibility: hidden; }
 .oj-card + .oj-card { margin-top: -6px; }
 .oj-towrite { font-size: 10px; font-weight: var(--weight-medium); color: var(--signal-warn); }
 .oj-win .check-line { padding: 2px 0; }
+/* The overview of the journey, folded on top of every step (DEC-UX-272); unfolded at the start (DEC-UX-271) */
+.oj-where { border-radius: var(--radius-md); background: var(--surface-sub); }
+.oj-where > summary { list-style: none; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; align-items: center; padding: 10px 12px; cursor: pointer; }
+.oj-where > summary::-webkit-details-marker { display: none; }
+.oj-where > summary .oj-progress { grid-column: 1 / -1; }
+.oj-where > summary .where { font-size: var(--text-small); }
+.oj-where > summary .where b { font-weight: var(--weight-medium); }
+.oj-where > summary .tally { font-size: var(--text-meta); color: var(--text-muted); display: inline-flex; align-items: center; gap: 6px; }
+.oj-where > summary .tally .open { color: var(--signal-warn); }
+.oj-where > summary .chev { transition: transform var(--dur-fast, 0.12s); }
+.oj-where[open] > summary .chev { transform: rotate(180deg); }
+.oj-where > .oj-list { padding: 0 12px 8px; }
+.oj-list li.now { font-weight: var(--weight-medium); }
+.oj-list li.now .n { color: var(--text-primary); }
+.oj-list .st.miss { color: var(--signal-warn); }
+.oj-list .st.opt { font-style: italic; }
+/* "How can we help with this step?": its Learning Cards folded, one line each (DEC-UX-273) */
+.oj-help { display: grid; gap: 4px; }
+.oj-help > .label { display: flex; align-items: center; gap: 6px; margin: 0 0 2px; }
+.oj-help-card { border-radius: var(--radius-md); background: color-mix(in srgb, var(--col-teal-ink) 7%, var(--surface-solid)); }
+.oj-help-card > summary { list-style: none; display: grid; grid-template-columns: 20px auto minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 8px 12px; cursor: pointer; font-size: var(--text-small); }
+.oj-help-card > summary::-webkit-details-marker { display: none; }
+.oj-help-card > summary > i:first-child { font-size: 17px; color: var(--col-teal-ink); }
+.oj-help-card > summary .num { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.oj-help-card > summary .tt { font-weight: var(--weight-medium); min-width: 0; }
+.oj-help-card > summary .chev { color: var(--text-muted); transition: transform var(--dur-fast, 0.12s); }
+.oj-help-card[open] > summary .chev { transform: rotate(180deg); }
+.oj-help-card .body { display: grid; gap: 4px; padding: 0 12px 10px 40px; }
+.oj-help-card .body .rule { margin: 0; font-size: var(--text-small); line-height: 1.5; }
+.oj-help-card .body .gain { margin: 0; font-size: var(--text-meta); color: var(--text-muted); line-height: 1.5; }
+.oj-help-card .body .acts { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 2px; }
+/* What the User gets on the way, at the start (DEC-UX-271) */
+.oj-gets { display: grid; gap: 8px; }
+.oj-gets .get { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 2px 10px; align-items: start; }
+.oj-gets .get > i, .oj-gets .get > svg { font-size: 18px; color: var(--col-teal-ink); margin-top: 1px; }
+.oj-gets .get p { margin: 0; }
+/* Every link to Data Hub, one form: the mark of Data Hub, what it opens, the arrow of a link that leaves (DEC-UX-274) */
+.dh-link { display: inline-flex; align-items: center; gap: 6px; }
+.dh-link .dh-mark { flex: none; }
+/* Where a text is written, what it is for (DEC-UX-275) */
+.purpose-line { display: flex; align-items: flex-start; gap: 8px; margin: 0; padding: 8px 12px; border-radius: var(--radius-md); border: 1px dashed var(--tint-active); font-size: var(--text-small); color: var(--text-secondary); line-height: 1.5; }
+.purpose-line > i { margin-top: 2px; color: var(--text-muted); }
+.purpose-line b { color: var(--text-primary); font-weight: var(--weight-medium); }
+.edit-purpose { margin: 4px 0 8px; }
+.ov-purpose { margin: 0 0 14px; }
 @media (max-width: 900px) {
   .oj-layout { grid-template-columns: minmax(0, 1fr); }
   .oj-map { position: static; max-height: none; }

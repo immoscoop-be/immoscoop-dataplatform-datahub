@@ -16,11 +16,12 @@
   ignored and why, or refused; the list keeps to the height of the screen and scrolls within itself (DEC-UX-167). One
   opened shows on the right, as a Message does in the Message Centre: the job, the run,
   the event, what Data Hub did step by step, and what the Data Admin can do. A run without a catalog.json fails (EC-AR-02);
-  processing it again is FR-AR-14. The switch at the bottom opens each kind: ?opened=recorded, ?opened=ignored,
+  processing it again is FR-AR-14, and so is processing again the run that is the Current Version, to read it with what
+  Data Hub does now (DEC-UX-277). The switch at the bottom opens each kind: ?opened=recorded, ?opened=ignored,
   ?opened=refused, ?opened=failed, ?opened=test, and ?opened=none for no deliveries yet; ?pick=open opens the sheet that
   changes a Source Job, ?pick=follow the one that follows a dbt project, and ?stop=open asks to stop following dbt-prod.
   Requirements: FR-AR-18, FR-AR-19
-  Decisions: DEC-AR-02, DEC-AR-09, DEC-AR-10, DEC-UX-130, DEC-UX-166, DEC-UX-167.
+  Decisions: DEC-AR-02, DEC-AR-09, DEC-AR-10, DEC-UX-130, DEC-UX-166, DEC-UX-167, DEC-UX-277.
   Decided with it: OP-UX-50, OP-UX-51, OP-UX-52.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -189,6 +190,9 @@
    <li><i class="ph-fill ph-check-circle"></i><span>Made it the Current Version of Colleciónes</span><span class="meta">12:46</span></li>
    <li><i class="ph-fill ph-check-circle"></i><span>9 Registrations: 9 new Resources wait <a class="text-link" href="resource-unassigned.html">without a Collection</a></span><span class="meta">12:46</span></li>
   </ol>
+  <!-- The current run can be read again with what Data Hub does now (DEC-UX-277, FR-AR-14). -->
+  <p class="wh-text" style="margin-top:16px">This run is the Current Version of Colleciónes. Process it again to read it with what Data Hub does now, such as the column types BigQuery gives for a model the catalog lacks; nothing else changes.</p>
+  <div class="wh-actions"><button class="btn-quiet outline"><i class="ph ph-arrow-counter-clockwise"></i>Process again</button></div>
  </section>
 
  <section class="card mc-detail" data-pane-group="wh" data-pane="ignored" hidden aria-label="The delivery opened">

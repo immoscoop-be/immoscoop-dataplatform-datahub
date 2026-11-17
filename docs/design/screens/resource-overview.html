@@ -44,8 +44,13 @@
   in the Summary; ?descedit=on edits the Business Description, ?descview=preview previews it. ?rolegone=on shows the
   warning that a field of its model type is gone (FR-RC-29, DEC-UX-264); ?complete=missing shows the Data Team that its
   model type is incomplete (FR-CO-45, DEC-UX-265); ?role=datateam shows what a Data Admin sees.
+  Decided on 2026-11-17, by Max (DEC-RC-26, DEC-RC-27, DEC-UX-275): where a text is written, one quiet line says what it
+  is for. Above the editor of the Business Description, that dbt says how the data is made and the Business Description
+  what it represents and what it is used for; for whoever may write them, above the pitfalls and above the Known Gaps,
+  the test that tells them apart: a Known Gap would go away if the data were repaired, a Pitfall stays true even when
+  every row is right. While Known behaviour is edited, the line stays above its editors.
   Requirements: FR-RC-19, FR-RC-20, FR-RC-21, FR-RC-22, FR-RC-23, FR-RC-24, FR-RC-25, FR-RC-28, FR-RC-29, FR-SR-50, FR-MR-16, FR-CM-28, FR-CO-43, FR-CO-45, FR-MR-17, FR-MR-18
-  Decisions: DEC-RC-16, DEC-RC-17, DEC-RC-18, DEC-RC-19, DEC-RC-20, DEC-UX-101, DEC-UX-168, DEC-UX-169, DEC-UX-170, DEC-UX-171, DEC-UX-175, DEC-UX-176, DEC-UX-177, DEC-UX-178, DEC-UX-216, DEC-UX-263, DEC-UX-264, DEC-UX-265, DEC-RC-22, DEC-RC-23, DEC-RC-24.
+  Decisions: DEC-RC-16, DEC-RC-17, DEC-RC-18, DEC-RC-19, DEC-RC-20, DEC-UX-101, DEC-UX-168, DEC-UX-169, DEC-UX-170, DEC-UX-171, DEC-UX-175, DEC-UX-176, DEC-UX-177, DEC-UX-178, DEC-UX-216, DEC-UX-263, DEC-UX-264, DEC-UX-265, DEC-RC-22, DEC-RC-23, DEC-RC-24, DEC-RC-26, DEC-RC-27, DEC-UX-275.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="owner">
@@ -229,6 +234,7 @@
      <!-- Editing: the Markdown editor of the app (MarkdownEditor, DEC-UX-158), as for the intro of a Collection, with the description from dbt beside it, read-only. -->
      <div data-pane-group="descedit" data-pane="on" hidden>
       <div class="edit-bar"><i class="ph-fill ph-pencil-simple" style="color:var(--text-secondary)"></i><p>Editing the Business Description. Every change you save goes into the history, with your name.</p><button class="btn-quiet" type="button" data-go="descedit:off">Cancel</button><button class="btn-primary" type="button" data-go="descedit:off"><i class="ph-fill ph-check" style="font-size:15px"></i>Save</button></div>
+      <p class="purpose-line ov-purpose"><i class="ph ph-info" aria-hidden="true"></i><span><b>dbt</b> says how the data is made. <b>The Business Description</b> says what it represents and what it is used for, in the words of the business.</span></p>
       <div class="ov-edit">
        <div>
         <div class="desc-head"><span class="label">Business Description</span><span class="origin">From the Owner</span></div>
@@ -269,6 +275,7 @@ The lead source is set by the form the visitor used: website, app, partner or ma
       <div style="flex:1;min-width:0"><h2 class="ov-title">Known behaviour</h2><p class="ov-lead">What it is meant for, where it trips people up, and from when it can be trusted. Intended use and pitfalls are written in Markdown.</p></div>
       <a class="edit-link" data-for="owner datateam" href="resource-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a>
      </div>
+     <p class="purpose-line ov-purpose" data-for="owner datateam"><i class="ph ph-info" aria-hidden="true"></i><span><b>A Known Gap</b> is in the data itself: it would go away if the data were repaired. <b>A Pitfall</b> is in how the data is read: it stays true even when every row is right.</span></p>
      <div class="ov-grid">
       <div class="sub-tile"><div class="said"><i class="ph-fill ph-check-circle"></i>Intended use</div><div class="md"><p>Weekly trends, and comparing <b>lead sources</b>:</p><ul><li>the review with KBC on Monday</li><li>the share of partner leads</li></ul></div></div>
       <div class="sub-tile"><div class="said"><i class="ph-fill ph-warning"></i>Pitfalls</div>
@@ -298,6 +305,7 @@ The lead source is set by the form the visitor used: website, app, partner or ma
       <li class="gap"><i class="ph-fill ph-circle-dashed" aria-hidden="true"></i><div class="gap-body"><p>App leads of iOS miss their channel for one week, after a broken release.</p><div class="gap-scope"><span class="scope"><i class="ph ph-calendar-blank" aria-hidden="true"></i><span class="scope-k">Period</span>2 Sep 2025 – 8 Sep 2025</span><span class="scope"><i class="ph ph-columns" aria-hidden="true"></i><span class="scope-k">Fields</span><span class="mono">lead_channel</span></span><span class="scope"><i class="ph ph-rows" aria-hidden="true"></i><span class="scope-k">Rows</span><span class="mono">lead_source</span> is <span class="mono">app</span></span></div><span class="meta">Added by Maxime Passenier · 20 Oct 2026</span></div><span class="gap-actions" data-for="owner datateam"><button class="icon-btn" type="button" aria-label="Change this gap" title="Change"><i class="ph ph-pencil-simple-line"></i></button><button class="icon-btn" type="button" aria-label="Remove this gap" title="Remove"><i class="ph ph-trash"></i></button></span></li>
       <li class="gap"><i class="ph-fill ph-circle-dashed" aria-hidden="true"></i><div class="gap-body"><p>Leads from the fair in Kortrijk were entered by hand, a week late; they count in the week they were entered.</p><span class="meta">Added by An Claes · 3 Nov 2026 · free text</span></div><span class="gap-actions" data-for="owner datateam"><button class="icon-btn" type="button" aria-label="Change this gap" title="Change"><i class="ph ph-pencil-simple-line"></i></button><button class="icon-btn" type="button" aria-label="Remove this gap" title="Remove"><i class="ph ph-trash"></i></button></span></li>
      </ul>
+     <p class="purpose-line ov-purpose" data-for="owner datateam"><i class="ph ph-info" aria-hidden="true"></i><span><b>A Known Gap</b> is in the data itself: it would go away if the data were repaired. <b>A Pitfall</b> is in how the data is read: it stays true even when every row is right.</span></p>
      <form class="gap-add" data-for="owner datateam" data-pane-group="gapform" data-pane="closed" onsubmit="return false">
       <i class="ph ph-plus" aria-hidden="true"></i>
       <input type="text" aria-label="A new Known Gap" placeholder="Add a gap, such as a field that is empty for part of the rows" data-go="gapform:open">
