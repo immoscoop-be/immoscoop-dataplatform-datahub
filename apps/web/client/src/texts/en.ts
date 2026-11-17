@@ -1895,6 +1895,7 @@ export default {
   'admin.did.processing': 'Being processed',
   'admin.did.pending': 'Waits to be processed',
   'admin.again': 'Process again',
+  'admin.todo.current': 'This run is the Current Version of {project}. Process it again to read it with what Data Hub does now, such as the column types BigQuery gives for a model the catalog lacks; nothing else changes.',
   'admin.again.queued': 'Data Hub fetches and processes the run again; the list shows how it went.',
   'admin.again.failed': 'That did not work. Try again in a minute.',
   'admin.webhooks.pick.title': 'The Source Job of {project}',

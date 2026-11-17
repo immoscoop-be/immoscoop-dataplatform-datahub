@@ -211,6 +211,8 @@ Anyone with access to a Resource can read its Log.
 
 A run can be fetched and processed again manually, for recovery and tests.
 
+*Note of 2026-11-17: on Webhooks, a failed run and the run that is the Current Version of its dbt project can be processed again; the current one to read it with what Data Hub does now, such as the column types from BigQuery ([EC-AR-06](#ec-ar-06), [DEC-UX-277](../../design/principles.md#dec-ux-277)).*
+
 <a id="fr-ar-15"></a>
 ### FR-AR-15 · Read the Domain Model in use
 

@@ -1894,6 +1894,7 @@ export default {
   'admin.did.processing': 'Wordt verwerkt',
   'admin.did.pending': 'Wacht op verwerking',
   'admin.again': 'Opnieuw verwerken',
+  'admin.todo.current': 'Deze run is de Current Version van {project}. Verwerk hem opnieuw om hem te lezen met wat Data Hub nu doet, zoals de kolomtypes die BigQuery geeft voor een model dat de catalog mist; verder verandert er niets.',
   'admin.again.queued': 'Data Hub haalt de run opnieuw op en verwerkt hem; de lijst toont hoe het liep.',
   'admin.again.failed': 'Dat lukte niet. Probeer het over een minuut opnieuw.',
   'admin.webhooks.pick.title': 'De Source Job van {project}',
