@@ -12,7 +12,7 @@ import {
 import { type Kysely, type Selectable, sql, type Transaction } from 'kysely';
 import type { Viewer } from './collections.js';
 import type { CatalogueDatabase, MappingKind, MappingOrigin, Origin, Origins, PartitionFilter, PartitionUnit, SchemaChange } from './database.js';
-import { type Column, fingerprint, type LeftOut, levelAtRegistration, splitColumns } from './fields.js';
+import { type Column, fingerprint, type LeftOut, levelAtRegistration, retyped, splitColumns } from './fields.js';
 import { logText, type ResourceLogId } from './log.js';
 import { seesAll, seesPublic, theirs } from './viewer.js';
 
@@ -533,7 +533,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
       ...fields.filter((field) => !was.has(field.name)).map((field) => ({ field: field.name, change: 'added' as const, old: null, new: field.dataType })),
       ...before.filter((field) => !now.has(field.name)).map((field) => ({ field: field.name, change: 'removed' as const, old: field.dataType, new: null })),
       ...fields
-        .filter((field) => was.has(field.name) && (was.get(field.name)!.dataType ?? '') !== (field.dataType ?? ''))
+        .filter((field) => was.has(field.name) && retyped(was.get(field.name)!.dataType, field.dataType))
         .map((field) => ({ field: field.name, change: 'retyped' as const, old: was.get(field.name)!.dataType, new: field.dataType })),
     ];
     for (const change of changes) {

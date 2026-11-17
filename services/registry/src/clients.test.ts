@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createBucket } from './bucket.js';
 import { createCatalogue } from './catalogue.js';
-import { createDbtCloud } from './dbt-cloud.js';
+import { createDbtCloud, generatesDocs } from './dbt-cloud.js';
 import { createIngestStarter } from './ingest-job.js';
 import { lazy, settingsFromEnv } from './settings.js';
 
@@ -118,6 +118,14 @@ describe('the jobs of a dbt project in dbt Cloud (FR-AR-18)', () => {
         String(url).includes('/environments/') ? new Response('no', { status: 404 }) : Response.json({ data: [{ id: 7, name: 'A job', project_id: 9367, environment_id: 3 }] }),
     });
     expect(await dbt.jobs('9367')).toEqual([{ id: '7', name: 'A job', projectId: '9367', environmentId: '3', environmentName: null, kind: 'other', generatesDocs: false, lastRun: null }]);
+  });
+
+  it('counts a job as generating the docs with "Generate docs on run", or with a docs step of its own (EC-AR-02, EC-AR-06)', () => {
+    expect(generatesDocs({ generate_docs: true })).toBe(true);
+    // Its own step, with a selection of its own, so that the default selector of the project does not leave models out.
+    expect(generatesDocs({ generate_docs: false, execute_steps: ['dbt build', 'dbt docs generate --select fqn:* --exclude package:dbt_project_evaluator'] })).toBe(true);
+    expect(generatesDocs({ generate_docs: false, execute_steps: ['dbt build', 'dbt run-operation generate_docs_index'] })).toBe(false);
+    expect(generatesDocs({ execute_steps: null })).toBe(false);
   });
 });
 

@@ -6,12 +6,22 @@ import type { DbtCloud } from './dbt-cloud.js';
 import { sampleCatalog, sampleManifest } from './fixtures.js';
 import type { NormalisedSet } from './normalise.js';
 import { createProcessing, type Log } from './processing.js';
+import { SchemasUnavailable, type TableAddress, type TableSchemas } from './table-schemas.js';
 
 const bytes = (value: unknown) => new TextEncoder().encode(JSON.stringify(value));
 
 /** The ingest job against fakes: a queue of sets, a bucket in memory and dbt Cloud with given files. */
 function harness(
-  options: { dbtFiles?: Record<string, Uint8Array>; stored?: Record<string, Uint8Array>; saveFails?: boolean; current?: boolean; catalogueFails?: boolean; previous?: number; changesFail?: boolean } = {},
+  options: {
+    dbtFiles?: Record<string, Uint8Array>;
+    stored?: Record<string, Uint8Array>;
+    saveFails?: boolean;
+    current?: boolean;
+    catalogueFails?: boolean;
+    previous?: number;
+    changesFail?: boolean;
+    schemas?: TableSchemas;
+  } = {},
 ) {
   const queue: ClaimedSet[] = [
     { id: 1, projectId: '9367', jobId: '322951', runId: '100' },
@@ -67,6 +77,7 @@ function harness(
         return [{ kind: 'logic', node: `between ${previous} and ${current}`, reaches: [{ nodeId: 'model.p.orders', distance: 1 }] }];
       },
     },
+    ...(options.schemas ? { schemas: options.schemas } : {}),
     log,
   });
   return { processing, saved, failed, objects, asked, logged, told };
@@ -108,6 +119,52 @@ describe('the ingest job', () => {
     expect(saved.map((entry) => entry.set.runId)).toEqual(['101']);
     // The manifest is kept all the same: the run can be processed again once the docs exist.
     expect(objects.has('9367/100/manifest.json')).toBe(true);
+  });
+
+  it('gives the tables the catalog lacks their columns from BigQuery, with what the manifest says of them (EC-AR-06)', async () => {
+    const asked: TableAddress[] = [];
+    const schemas: TableSchemas = {
+      columns: async (address) => {
+        asked.push(address);
+        return [
+          { name: 'ORDER_ID', position: 1, dataType: 'INT64', description: 'In BigQuery.' },
+          { name: 'valid_from', position: 2, dataType: 'TIMESTAMP', description: 'Kept by dbt with persist_docs.' },
+        ];
+      },
+    };
+    const withDocs = sampleManifest() as unknown as { nodes: Record<string, { columns: Record<string, unknown> }> };
+    withDocs.nodes['snapshot.immoscoop_dataplatform_sql.orders_history']!.columns = { order_id: { name: 'order_id', description: 'The order, from the manifest.', meta: { pii: false } } };
+    const { processing, saved, logged } = harness({ dbtFiles: { '100/manifest.json': bytes(withDocs), '100/catalog.json': bytes(sampleCatalog()), ...run101 }, schemas });
+    expect(await processing.runPending()).toEqual({ processed: 2, failed: 0 });
+    // Only the table the catalog lacks is asked, where the manifest says it is.
+    expect(asked[0]).toEqual({ project: 'immoscoop-dataplatform', dataset: 'dbt_marts', table: 'orders_history' });
+    expect(saved[0]?.normalised.columns.filter((column) => column.nodeId === 'snapshot.immoscoop_dataplatform_sql.orders_history')).toEqual([
+      { nodeId: 'snapshot.immoscoop_dataplatform_sql.orders_history', name: 'ORDER_ID', position: 1, dataType: 'INT64', description: 'The order, from the manifest.', meta: { pii: false } },
+      { nodeId: 'snapshot.immoscoop_dataplatform_sql.orders_history', name: 'valid_from', position: 2, dataType: 'TIMESTAMP', description: 'Kept by dbt with persist_docs.', meta: {} },
+    ]);
+    // The tables of the catalog keep its columns.
+    expect(saved[0]?.normalised.columns.filter((column) => column.nodeId === 'model.immoscoop_dataplatform_sql.orders').map((column) => column.dataType)).toEqual(['INT64', 'INT64', 'TIMESTAMP']);
+    expect(logged).toContain('1 of the 1 tables the catalog lacks got their columns from BigQuery');
+  });
+
+  it('keeps the columns of the manifest for a table BigQuery does not know, and fails the set when BigQuery does not answer', async () => {
+    const unknown = harness({ dbtFiles: { ...run100, ...run101 }, schemas: { columns: async () => undefined } });
+    expect(await unknown.processing.runPending()).toEqual({ processed: 2, failed: 0 });
+    expect(unknown.saved[0]?.normalised.columns.some((column) => column.nodeId === 'snapshot.immoscoop_dataplatform_sql.orders_history')).toBe(false);
+    expect(unknown.logged).toContain('0 of the 1 tables the catalog lacks got their columns from BigQuery; 1 kept those of the manifest');
+
+    const down = harness({
+      dbtFiles: { ...run100, ...run101 },
+      schemas: {
+        columns: async () => {
+          throw new SchemasUnavailable('BigQuery answered 503 for immoscoop-dataplatform.dbt_marts.orders_history: Backend error');
+        },
+      },
+    });
+    expect(await down.processing.runPending()).toEqual({ processed: 0, failed: 2 });
+    // No version becomes current whose fields lost their types: the one before stays.
+    expect(down.saved).toEqual([]);
+    expect(down.failed[0]?.error).toBe('BigQuery answered 503 for immoscoop-dataplatform.dbt_marts.orders_history: Backend error');
   });
 
   it('fails a set whose files are not Artifacts or cannot be saved', async () => {

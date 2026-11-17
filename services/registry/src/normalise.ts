@@ -65,6 +65,11 @@ export interface NormalisedSet {
   tests: TestRow[];
   /** The `label` of every exposure that has one, by unique ID; not stored, but handed to catalogue (TR-AR-08). */
   labels: Record<string, string>;
+  /**
+   * The models, seeds and snapshots with a table that the catalog lacks, such as those its `dbt docs generate` did
+   * not select: their columns are those of the manifest, without types, until BigQuery gives them (EC-AR-06).
+   */
+  uncatalogued: string[];
 }
 
 /** The kinds of Node in `manifest.nodes`; sources and exposures have their own sections. */
@@ -101,6 +106,9 @@ export function normalise(manifest: unknown, catalog: unknown): NormalisedSet {
   const known = new Set(nodes.map((node) => node.uniqueId));
 
   const columns = [...built, ...sources, ...exposures].flatMap(([id, node]) => columnRows(id, node, catalogEntries.get(id)));
+  const uncatalogued = built
+    .filter(([id, node]) => !catalogEntries.has(id) && string(object(node.config).materialized) !== 'ephemeral')
+    .map(([id]) => id);
 
   const edges = [...built, ...exposures].flatMap(([id, node]) =>
     [...new Set(strings(object(node.depends_on).nodes))]
@@ -132,6 +140,7 @@ export function normalise(manifest: unknown, catalog: unknown): NormalisedSet {
     edges,
     tests,
     labels,
+    uncatalogued,
   };
 }
 

@@ -44,6 +44,7 @@ resource "google_cloud_run_v2_job" "registry_ingest" {
     google_cloud_run_v2_job.migrate,
     google_project_iam_member.database_client,
     google_project_iam_member.database_login,
+    google_project_iam_member.registry_reads_schemas,
     google_secret_manager_secret_iam_member.reader,
     google_storage_bucket_iam_member.registry_artifacts,
   ]
