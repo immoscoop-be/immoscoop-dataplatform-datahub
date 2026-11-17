@@ -71,7 +71,8 @@ export function createRegistry(url: string, idToken: IdTokenSource, request: typ
       try {
         response = await request(new URL(`/internal/tables/columns?${query}`, url), {
           headers: { authorization: `Bearer ${await idToken(url)}` },
-          signal: AbortSignal.timeout(8_000),
+          // Long enough for a registry that has to start first, and for BigQuery behind it.
+          signal: AbortSignal.timeout(30_000),
         });
       } catch (error) {
         throw new RegistryUnavailable('registry did not answer', { cause: error });

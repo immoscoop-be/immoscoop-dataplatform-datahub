@@ -56,6 +56,8 @@ export interface ApiOptions {
   learning: Learning;
   /** query, to check what reads the Resources a new Current Version changed (FR-SR-52); absent, nothing is checked then. */
   query?: QueryService;
+  /** How long a read waits for the types its fields lack from BigQuery, in milliseconds; 12 seconds when not given. */
+  typesWait?: number;
 }
 
 /** The fields a request may send for a Collection. */
@@ -564,44 +566,72 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
   }
 
   /**
-   * The Resource as it is now, with its fields and what the User may do with it, as an answer; 404 when it is gone
-   * meanwhile. Its Collection, as the User saw it a moment ago, still says whose it is.
-   */
-  /**
    * A Resource whose fields lack their types, such as one registered before the types came from BigQuery, gets them
    * as it is read: registry reads the schema of its table in BigQuery, and the types it lacked are kept, so that the
-   * page, its relations and Claude see them as a Preview does (DEC-AR-13, TR-AR-16). A type that is known stays. A
-   * table BigQuery cannot tell is asked again after a while, never at every read.
+   * page, its relations and Claude see them as a Preview does (DEC-AR-13, TR-AR-16). A type that is known stays.
+   *
+   * A read waits a while for them, long enough for a registry that has to start first; when they take longer, the
+   * Resource is shown as it is and the types are still kept once they come, for the next read. A table BigQuery cannot
+   * tell is asked again after a while, never at every read; one registry or BigQuery did not answer for, soon again.
    */
-  const typesAsked = new Map<string, number>();
+  const typesAgainAt = new Map<string, number>();
+  const typesFilling = new Map<string, Promise<number>>();
   const TYPES_AGAIN = 10 * 60_000;
+  const TYPES_RETRY = 30_000;
+  const typesWait = options.typesWait ?? 12_000;
+
+  async function fillTypes(request: FastifyRequest, id: string, address: { project: string; dataset: string; table: string }): Promise<number> {
+    try {
+      const columns = await registry.columns(address);
+      // Once BigQuery answered, it is not asked again for a while: a type it lacks now, it lacks a minute later too.
+      typesAgainAt.set(id, Date.now() + TYPES_AGAIN);
+      if (!columns) {
+        request.log.warn({ resource: id, ...address }, 'BigQuery has no such table, or may not show it to registry: the fields keep no type');
+        return 0;
+      }
+      const filled = await resources.fillTypes(id, new Map(columns.map((column) => [column.name.toLowerCase(), column.dataType])));
+      if (filled > 0) {
+        request.log.info({ resource: id, filled }, `${filled} fields got their type from BigQuery`);
+      }
+      return filled;
+    } catch (error) {
+      // Without registry or BigQuery, the Resource is shown as it is; the types are asked again soon.
+      typesAgainAt.set(id, Date.now() + TYPES_RETRY);
+      request.log.warn({ err: error, resource: id }, 'the types of the fields could not be read from BigQuery');
+      return 0;
+    }
+  }
+
   async function typed(request: FastifyRequest, detail: ResourceDetail | undefined): Promise<ResourceDetail | undefined> {
     if (!detail || !detail.fields.some((field) => field.dataType === null)) {
       return detail;
     }
-    const asked = typesAsked.get(detail.id);
-    if (asked !== undefined && Date.now() - asked < TYPES_AGAIN) {
+    const againAt = typesAgainAt.get(detail.id);
+    if (againAt !== undefined && Date.now() < againAt) {
       return detail;
     }
-    typesAsked.set(detail.id, Date.now());
     const [project, dataset, table, ...more] = (detail.fullName ?? detail.key).split('.');
     if (!project || !dataset || !table || more.length > 0) {
       return detail;
     }
-    try {
-      const columns = await registry.columns({ project, dataset, table });
-      if (!columns) return detail;
-      const filled = await resources.fillTypes(detail.id, new Map(columns.map((column) => [column.name.toLowerCase(), column.dataType])));
-      if (filled === 0) return detail;
-      request.log.info({ resource: detail.id, filled }, `${filled} fields got their type from BigQuery`);
-      return await resources.detail(detail.id);
-    } catch (error) {
-      // Without registry or BigQuery, the Resource is shown as it is; the types are asked again later.
-      request.log.warn({ err: error, resource: detail.id }, 'the types of the fields could not be read from BigQuery');
-      return detail;
+    // One fill at a time per Resource: a read while one runs waits for that one.
+    let filling = typesFilling.get(detail.id);
+    if (!filling) {
+      filling = fillTypes(request, detail.id, { project, dataset, table }).finally(() => typesFilling.delete(detail.id));
+      typesFilling.set(detail.id, filling);
     }
+    let timer: NodeJS.Timeout | undefined;
+    const waited = new Promise<number>((resolve) => {
+      timer = setTimeout(() => resolve(0), typesWait);
+    });
+    const filled = await Promise.race([filling, waited]).finally(() => clearTimeout(timer));
+    return filled > 0 ? await resources.detail(detail.id) : detail;
   }
 
+  /**
+   * The Resource as it is now, with its fields and what the User may do with it, as an answer; 404 when it is gone
+   * meanwhile. Its Collection, as the User saw it a moment ago, still says whose it is.
+   */
   async function resourceAnswer(request: FastifyRequest, reply: FastifyReply, found: Seen) {
     const detail = await typed(request, await resources.detail(found.resource.id));
     if (!detail) {
