@@ -6,13 +6,10 @@
   from dbt alone (DEC-RC-02). A description from dbt that changed in the last 30 days says so, with the text before;
   the filter shows only those fields. Reached from the Columns tab and from the Message on a changed description (messages.html?msg=described).
   One quiet line above the fields says what each description is for: dbt says how the data is made, the Business
-  Description what it represents and what it is used for (DEC-UX-275). Under the name of each field, "What's in it?"
-  looks at its data on a click and folds open under the row what is in it: its different values and the share empty,
-  the values that come most often for text (all of them up to 20), the lowest and highest for a number or a date, and
-  the period it read, the last 30 days of the partition; a click again folds it. It runs as the User and keeps nothing.
-  The switch shows its states on lead_channel: looked at, while it looks, and a field too large for a glance (FR-RC-30).
-  Requirements: FR-SR-06, FR-RC-15, FR-RC-16, FR-RC-17, FR-RC-18, FR-RC-30
-  Decisions: DEC-UX-09, DEC-UX-61, DEC-RC-01, DEC-RC-02, DEC-RC-03, DEC-UX-275, DEC-UX-276, DEC-RC-27, DEC-RC-28.
+  Description what it represents and what it is used for (DEC-UX-275). What is in a field is not shown yet: it gets
+  its own design first (DEC-RC-28, OP-RC-29).
+  Requirements: FR-SR-06, FR-RC-15, FR-RC-16, FR-RC-17, FR-RC-18
+  Decisions: DEC-UX-09, DEC-UX-61, DEC-RC-01, DEC-RC-02, DEC-RC-03, DEC-UX-275, DEC-RC-27.
   Related screens: resource-detail.html?tabs=columns (Cancel and Save go back there), resource-edit.html (the Overview).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -141,62 +138,28 @@
    <span class="desc-head"><span class="label">Description</span><span class="origin">From dbt</span></span>
   </div>
   <div class="fd-row" data-pane-group="fd" data-pane="all">
-   <div class="fd-name"><code>week_start</code><span class="meta">DATE</span><span class="pill pill-strong">Partition</span><span class="pill">Parameter</span><button class="look-link" type="button" aria-expanded="false"><i class="ph ph-magnifying-glass" aria-hidden="true"></i>What's in it?</button></div>
+   <div class="fd-name"><code>week_start</code><span class="meta">DATE</span><span class="pill pill-strong">Partition</span><span class="pill">Parameter</span></div>
    <label class="field"><span class="fd-narrow" aria-hidden="true">Business Description</span><span class="sr-only">Business Description of week_start</span><textarea rows="3" placeholder="What this field means, in business language. Left empty, Readers see the description from dbt alone."></textarea></label>
    <div class="fd-dbt"><span class="origin fd-narrow">From dbt</span>Monday of the week the lead was submitted</div>
   </div>
   <div class="fd-row" data-pane-group="fd" data-pane="all">
-   <div class="fd-name"><code>lead_source</code><span class="meta">STRING</span><span class="code-chip" style="margin:6px 4px 0 0">leadSource</span><span class="pill pill-strong">Cluster 1</span><span class="pill">Parameter</span><button class="look-link" type="button" aria-expanded="true"><i class="ph ph-magnifying-glass" aria-hidden="true"></i>What's in it?<i class="ph ph-caret-down" aria-hidden="true"></i></button></div>
+   <div class="fd-name"><code>lead_source</code><span class="meta">STRING</span><span class="code-chip" style="margin:6px 4px 0 0">leadSource</span><span class="pill pill-strong">Cluster 1</span><span class="pill">Parameter</span></div>
    <label class="field"><span class="fd-narrow" aria-hidden="true">Business Description</span><span class="sr-only">Business Description of lead_source</span><textarea rows="3">Where the lead came in: the website, the app, a partner or a mailing.</textarea></label>
    <div class="fd-dbt"><span class="origin fd-narrow">From dbt</span>Where the lead came from</div>
-   <div class="fd-look field-look" aria-label="What is in lead_source">
-    <div class="look">
-     <div class="look-head"><span class="facts">4 values, all of them · none empty</span></div>
-     <div class="look-bars">
-      <span class="v">website</span><span class="bar"><span style="width:61%"></span></span><span class="pct">61%</span>
-      <span class="v">app</span><span class="bar"><span style="width:22%"></span></span><span class="pct">22%</span>
-      <span class="v">partner</span><span class="bar"><span style="width:12%"></span></span><span class="pct">12%</span>
-      <span class="v">mailing</span><span class="bar"><span style="width:5%"></span></span><span class="pct">5%</span>
-     </div>
-    </div>
-    <p class="look-foot">The last 30 days: the weeks of 19 Oct to 16 Nov 2026. Looked at as you, 0.2 MB read, nothing kept.</p>
-   </div>
   </div>
   <div class="fd-row" data-pane-group="fd" data-pane="all changed">
-   <div class="fd-name"><code>lead_count</code><span class="meta">INT64</span><button class="look-link" type="button" aria-expanded="false"><i class="ph ph-magnifying-glass" aria-hidden="true"></i>What's in it?</button></div>
+   <div class="fd-name"><code>lead_count</code><span class="meta">INT64</span></div>
    <label class="field"><span class="fd-narrow" aria-hidden="true">Business Description</span><span class="sr-only">Business Description of lead_count</span><textarea rows="3">How many credit leads went to KBC that week from this source. Someone who applies twice counts twice.</textarea></label>
    <div class="fd-dbt"><div class="desc-head"><span class="origin fd-narrow">From dbt</span><span class="pill">Changed in dbt yesterday</span></div>Number of credit leads sent to KBC, without test and duplicate requests<span class="fd-was">Before: <del>Number of credit leads sent to KBC</del></span></div>
   </div>
   <div class="fd-row" data-pane-group="fd" data-pane="all">
-   <div class="fd-name"><code>lead_channel</code><span class="meta">STRING</span><span class="pill pill-strong">Cluster 2</span><span class="pill" style="color:var(--signal-warn)">New</span><button class="look-link" type="button" aria-expanded="true"><i class="ph ph-magnifying-glass" aria-hidden="true"></i>What's in it?<i class="ph ph-caret-down" aria-hidden="true"></i></button></div>
+   <div class="fd-name"><code>lead_channel</code><span class="meta">STRING</span><span class="pill pill-strong">Cluster 2</span><span class="pill" style="color:var(--signal-warn)">New</span></div>
    <label class="field"><span class="fd-narrow" aria-hidden="true">Business Description</span><span class="sr-only">Business Description of lead_channel</span><textarea rows="3" placeholder="What this field means, in business language. Left empty, Readers see the description from dbt alone."></textarea></label>
    <div class="fd-dbt"><span class="origin fd-narrow">From dbt</span>Channel of the first visit</div>
-   <div class="fd-look field-look" aria-label="What is in lead_channel" data-pane-group="look" data-pane="done">
-    <div class="look">
-     <div class="look-head"><span class="facts">7 values, all of them · <span class="warn">31% empty</span></span></div>
-     <div class="look-bars">
-      <span class="v">organic</span><span class="bar"><span style="width:23%"></span></span><span class="pct">23%</span>
-      <span class="v">paid search</span><span class="bar"><span style="width:15%"></span></span><span class="pct">15%</span>
-      <span class="v">direct</span><span class="bar"><span style="width:12%"></span></span><span class="pct">12%</span>
-      <span class="v">social</span><span class="bar"><span style="width:7%"></span></span><span class="pct">7%</span>
-      <span class="v">email</span><span class="bar"><span style="width:5%"></span></span><span class="pct">5%</span>
-      <span class="v">referral</span><span class="bar"><span style="width:4%"></span></span><span class="pct">4%</span>
-      <span class="v">display</span><span class="bar"><span style="width:3%"></span></span><span class="pct">3%</span>
-     </div>
-    </div>
-    <p class="look-foot">The last 30 days: the weeks of 19 Oct to 16 Nov 2026. Looked at as you, 0.2 MB read, nothing kept.</p>
-   </div>
-   <div class="fd-look" data-pane-group="look" data-pane="wait" hidden><div class="fd-look-wait"><span class="loading-dots" style="padding:0;opacity:1;animation:none"><i></i><i></i><i></i></span>Looking at what is in <span class="mono">lead_channel</span>, over the last 30 days…</div></div>
-   <div class="fd-look" data-pane-group="look" data-pane="large" hidden><p class="look-none"><b>Too large for a glance:</b> looking at <span class="mono">lead_channel</span> would read 240 MB, more than the 100 MB a look may read. In Query you can look further, with its Pre-flight.</p></div>
   </div>
   <p class="meta" style="margin:12px 4px 2px;line-height:1.5"><i class="ph ph-info"></i>The description from dbt changes in the dbt project, not here. When it changes, the Owner gets a Message; the Business Description stays as it is.</p>
  </form>
 </main>
-</div>
-<div class="proto-switch" data-group="look" role="tablist" aria-label="Prototype: What's in it? on lead_channel">What's in it?
- <button class="seg on" data-target="done" role="tab" aria-selected="true">Looked at</button>
- <button class="seg" data-target="wait" role="tab" aria-selected="false">While it looks</button>
- <button class="seg" data-target="large" role="tab" aria-selected="false">Too large</button>
 </div>
 <script src="app.js"></script>
 </body>

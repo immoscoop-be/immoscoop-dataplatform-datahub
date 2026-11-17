@@ -23,12 +23,11 @@
   step keeps the overview folded on top (where we are, done, still missing, required or optional); the Learning Cards
   fold under "How can we help with this step?"; every link to Data Hub has one form, with the mark of Data Hub, and
   opens the spot the step writes; a quiet line says what dbt and the Business Description are for, and the test between
-  a Known Gap and a Pitfall; at Fields Claude looks at what is in each field first (look_at_fields); a Known Gap is
-  written one at a time with where it holds (add_known_gap). The tool names look_at_fields and add_known_gap are
-  proposals, settled when it is built.
+  a Known Gap and a Pitfall; a Known Gap is written one at a time with where it holds (add_known_gap). What is in a
+  field is not shown yet: it gets its own design first (DEC-RC-28, OP-RC-29).
   The switches: the step, on the left; who asks (an Owner, a Business Analyst of the Owner Unit, or someone outside it);
   the case of step 11 (ready, or a required step still open); and the Annotations.
-  Requirements: FR-CL-30, FR-CL-33, FR-CL-34, FR-CL-35, FR-RC-30
+  Requirements: FR-CL-30, FR-CL-33, FR-CL-34, FR-CL-35
   Decisions: DEC-MR-15, DEC-MR-16, DEC-MR-17, DEC-UX-261, DEC-CL-07, DEC-CL-02, DEC-SR-28, DEC-MR-07, DEC-CL-18,
   DEC-CL-19, DEC-CL-20, DEC-UX-271, DEC-UX-272, DEC-UX-273, DEC-UX-274, DEC-UX-275, DEC-UX-276, DEC-RC-26, DEC-RC-27,
   DEC-RC-28.
@@ -289,9 +288,8 @@
 
  <!-- ===================== 4 · Fields ===================== -->
  <div data-pane-group="step" data-pane="s4" hidden style="display:contents">
-  <p class="oj-step-head">Step 4 · Fields: the Key Fields first and required, the others advised, five at a time; Claude looks at what is in them first</p>
-  <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg"><p><b>Step 4 · Fields.</b> A Business Description for each field: the five Key Fields first, which are required, then the others, which are advised. I'll look at what's in them first. (<a class="text-link" style="display:inline"><span>K5.14 The Business Description</span></a>)</p></div></div>
-  <div class="oj-row"><span class="oj-tag cui">CUI · tool</span><div class="mcp-tool"><i class="ph ph-plugs-connected" aria-hidden="true"></i>Data Hub · <span class="mono">look_at_fields</span> · the 5 Key Fields, the last 30 days</div></div>
+  <p class="oj-step-head">Step 4 · Fields: the Key Fields first and required, the others advised, five at a time</p>
+  <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg"><p><b>Step 4 · Fields.</b> A Business Description for each field: the five Key Fields first, which are required, then the others, which are advised. (<a class="text-link" style="display:inline"><span>K5.14 The Business Description</span></a>)</p></div></div>
   <div class="oj-row oj-app"><span class="oj-tag oj-mcp">MCP App</span>
    <section class="mcp-app oj-win" aria-label="Owner Journey, step 4, from Data Hub">
     <div class="mcp-app-head"><i class="ph-fill ph-path" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">Owner Journey · Attraction · Owner: SEO</span><div class="float-title">Search Console impressions, whole site</div></div></div>
@@ -299,57 +297,22 @@
     <div class="oj-now"><h3>Fields</h3><span class="oj-mark">Required for the 5 Key Fields</span><span class="oj-mark advised">advised for the other 5</span></div>
     <div class="oj-held"><dl><dt>Key Fields described</dt><dd>0 of 5</dd><dt>Other fields</dt><dd>0 of 5</dd><dt>Every field</dt><dd>has a description from dbt</dd></dl></div>
     <p class="purpose-line"><i class="ph ph-info" aria-hidden="true"></i><span><b>dbt</b> says how the data is made. <b>The Business Description</b> says what it represents and what it is used for, in the words of the business.</span></p>
-    <div class="oj-held field-look">
-     <span class="label">What's in them · the last 30 days</span>
-     <div class="look">
-      <div class="look-head"><span class="mono">search_type</span><span class="meta">STRING</span><span class="facts">6 values · none empty</span></div>
-      <div class="look-bars">
-       <span class="v">web</span><span class="bar"><span style="width:81%"></span></span><span class="pct">81%</span>
-       <span class="v">image</span><span class="bar"><span style="width:9%"></span></span><span class="pct">9%</span>
-       <span class="v">discover</span><span class="bar"><span style="width:6%"></span></span><span class="pct">6%</span>
-       <span class="v">video</span><span class="bar"><span style="width:2%"></span></span><span class="pct">2%</span>
-       <span class="v">news</span><span class="bar"><span style="width:1%"></span></span><span class="pct">1%</span>
-       <span class="v">googleNews</span><span class="bar"><span style="width:1%"></span></span><span class="pct">1%</span>
-      </div>
-     </div>
-     <div class="look">
-      <div class="look-head"><span class="mono">query</span><span class="meta">STRING</span><span class="facts">≈ 412,000 values · <span class="warn">24% empty</span></span></div>
-      <div class="look-bars">
-       <span class="v">immoscoop</span><span class="bar"><span style="width:2%"></span></span><span class="pct">2.1%</span>
-       <span class="v">immoscoop gent</span><span class="bar"><span style="width:0.6%"></span></span><span class="pct">0.6%</span>
-       <span class="v">immoscoop antwerpen</span><span class="bar"><span style="width:0.5%"></span></span><span class="pct">0.5%</span>
-      </div>
-     </div>
-     <div class="look">
-      <div class="look-head"><span class="mono">data_date</span><span class="meta">DATE · partition</span><span class="facts">30 values · none empty</span></div>
-      <p class="look-range">From 18 Oct 2026 to 16 Nov 2026</p>
-     </div>
-     <div class="look">
-      <div class="look-head"><span class="mono">impressions</span><span class="meta">INT64</span><span class="facts">≈ 9,400 values · none empty</span></div>
-      <p class="look-range">From 1 to 182,340</p>
-     </div>
-     <div class="look">
-      <div class="look-head"><span class="mono">clicks</span><span class="meta">INT64</span><span class="facts">≈ 2,100 values · none empty</span></div>
-      <p class="look-range">From 0 to 9,812</p>
-     </div>
-     <p class="look-foot">Looked at as you: 38 MB read, counts approximate, nothing kept.</p>
-    </div>
     <div class="oj-help">
      <span class="label"><i class="ph ph-lifebuoy" aria-hidden="true"></i>How can we help with this step?</span>
      <details class="oj-help-card"><summary><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><span class="num">K5.14</span><span class="tt">The Business Description <span class="oj-towrite">To write</span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></summary>
       <div class="body"><p class="rule">The <b>Business Description</b> says in the words of the business what a table or a field is for, next to what dbt says it is made of.</p><div class="acts"><a class="text-link dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open the card in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div></div>
      </details>
     </div>
-    <div class="mcp-app-foot"><span>Looked at with <span class="mono">look_at_fields</span>; written with <span class="mono">describe_fields</span>, once you agree.</span><a class="text-link open-dh dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open Columns in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
+    <div class="mcp-app-foot"><span>Written with <span class="mono">describe_fields</span>, once you agree.</span><a class="text-link open-dh dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open Columns in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
    </section>
   </div>
   <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg">
-   <p>The five Key Fields: what dbt says about how each is made, what's in it, and my proposal for what it means.</p>
+   <p>The five Key Fields: what dbt says about how each is made, and my proposal for what it means.</p>
    <table>
     <tr><th>Field</th><th>dbt says</th><th>Proposal</th><th>Source</th></tr>
-    <tr><td><code>data_date</code></td><td>Date of the data</td><td>The day of the searches, in Pacific Time as Google counts it: a day ends nine hours after ours.</td><td class="src">Search Console Help; the look: 30 days</td></tr>
-    <tr><td><code>query</code></td><td>The search query</td><td>What the person typed in Google; empty when Google anonymised it, about a quarter of the rows.</td><td class="src">the look: 24% empty</td></tr>
-    <tr><td><code>search_type</code></td><td>web, image, video, news, discover, googleNews</td><td>Where in Google it appeared: mostly web search, then images, Discover, video and News. Filter on it before you compare.</td><td class="src">the look: 6 values; your words, step 3</td></tr>
+    <tr><td><code>data_date</code></td><td>Date of the data</td><td>The day of the searches, in Pacific Time as Google counts it: a day ends nine hours after ours.</td><td class="src">Search Console Help</td></tr>
+    <tr><td><code>query</code></td><td>The search query</td><td>What the person typed in Google; empty when Google anonymised it, about a quarter of the rows.</td><td class="src">the Preview</td></tr>
+    <tr><td><code>search_type</code></td><td>web, image, video, news, discover, googleNews</td><td>Where in Google it appeared: web search, images, Discover, video or News. Filter on it before you compare.</td><td class="src">the Preview; your words, step 3</td></tr>
     <tr><td><code>impressions</code></td><td>Number of impressions</td><td>How often a page of ours appeared in the results.</td><td class="src">dbt</td></tr>
     <tr><td><code>clicks</code></td><td>Number of clicks</td><td>How often someone clicked through to our site.</td><td class="src">dbt</td></tr>
    </table>
@@ -465,7 +428,7 @@
    <p>Two questions only you can answer:</p>
    <p>1. Is the anonymised share a Known Gap you want written down? I'd propose:</p>
    <blockquote>Queries Google anonymises have no query text: about a quarter of the rows, and 6% of the clicks. Their impressions and clicks are in the totals of the site.</blockquote>
-   <p class="src">Where it holds: the rows where <code>query</code> is empty, on every day. From the look at step 4.</p>
+   <p class="src">Where it holds: the rows where <code>query</code> is empty, on every day. From the Preview at step 1.</p>
    <p>2. From which day can it be relied on? The export started on 14 Feb 2025: was its first stretch complete?</p>
   </div></div>
   <div class="oj-row"><span class="oj-tag cui">CUI · you</span><div class="mcp-msg user">Write the gap. Reliable since 1 March 2025: February was a test. And add one: Discover and web search added up give the wrong total.</div></div>

@@ -2460,28 +2460,6 @@ body.oj-plain .oj-tag { visibility: hidden; }
 .purpose-line { display: flex; align-items: flex-start; gap: 8px; margin: 0; padding: 8px 12px; border-radius: var(--radius-md); border: 1px dashed var(--tint-active); font-size: var(--text-small); color: var(--text-secondary); line-height: 1.5; }
 .purpose-line > i { margin-top: 2px; color: var(--text-muted); }
 .purpose-line b { color: var(--text-primary); font-weight: var(--weight-medium); }
-/* What is in a field (DEC-UX-276, FR-RC-30) */
-.field-look { display: grid; gap: 10px; }
-.field-look .look { display: grid; gap: 4px; }
-.field-look .look-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; font-size: var(--text-small); }
-.field-look .look-head .facts { font-size: var(--text-meta); color: var(--text-muted); }
-.field-look .look-head .facts .warn { color: var(--signal-warn); }
-.look-bars { display: grid; grid-template-columns: 11em minmax(60px, 1fr) 3.5em; gap: 3px 8px; align-items: center; font-size: var(--text-meta); }
-.look-bars .v { font-family: var(--font-mono, monospace); color: var(--text-secondary); max-width: 16em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.look-bars .bar { height: 6px; border-radius: 3px; background: var(--tint-active); overflow: hidden; }
-.look-bars .bar > span { display: block; height: 100%; border-radius: 3px; background: color-mix(in srgb, var(--col-teal-ink) 70%, var(--surface-solid)); }
-.look-bars .pct { text-align: right; color: var(--text-muted); font-variant-numeric: tabular-nums; }
-.field-look .look-range { font-size: var(--text-meta); color: var(--text-secondary); }
-.field-look .look-foot { font-size: var(--text-meta); color: var(--text-muted); }
-.look-link { display: flex; width: fit-content; align-items: center; gap: 4px; margin-top: 8px; padding: 0; border: 0; background: none; font: inherit; font-size: var(--text-meta); color: var(--text-secondary); cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
-.look-link:hover { color: var(--text-primary); }
-.look-link[aria-expanded="true"] .ph-caret-down { transform: rotate(180deg); }
-/* The look folded open under the row of its field, on the Columns tab (FR-RC-30) */
-.fd-look { grid-column: 1 / -1; margin: -2px 0 0; padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface-sub); }
-.fd-look .look-bars { max-width: 520px; }
-.fd-look .look-none { margin: 0; font-size: var(--text-small); color: var(--text-secondary); }
-.fd-look .look-none b { font-weight: var(--weight-medium); color: var(--text-primary); }
-.fd-look-wait { display: flex; align-items: center; gap: 8px; font-size: var(--text-meta); color: var(--text-muted); }
 .edit-purpose { margin: 4px 0 8px; }
 .ov-purpose { margin: 0 0 14px; }
 @media (max-width: 900px) {
