@@ -5,7 +5,7 @@ import { type Permissions, type StartingGroup, startingPermissions } from '@data
 import { createDatabase, migrate, type Database } from '@datahub/db';
 import type { FastifyInstance } from 'fastify';
 import { type Kysely, sql } from 'kysely';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { parse, parseAdd, parseCard, parseFieldDescriptions, parseRequest, parseUpdate } from './api.js';
 import { buildApp } from './app.js';
 import { createCollections } from './collections.js';
@@ -175,6 +175,8 @@ describe.skipIf(!url)('the routes of Collections', () => {
   /** The column types BigQuery gives through registry, by table, and which tables were asked (DEC-AR-13). */
   let schemaTypes: Record<string, { name: string; dataType: string }[]> = {};
   let schemasAsked: string[] = [];
+  /** While set, registry answers only once it settles, as one that has to start first does. */
+  let schemasSlow: Promise<void> | undefined;
   /** What catalogue had query check after a new Current Version (FR-SR-52). */
   const checkedByQuery: string[][] = [];
   let queryDown = false;
@@ -237,6 +239,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
             if (registryDown) {
               throw new RegistryUnavailable('registry answered 503');
             }
+            await schemasSlow;
             return schemaTypes[`${project}.${dataset}.${table}`];
           },
         },
@@ -249,6 +252,8 @@ describe.skipIf(!url)('the routes of Collections', () => {
             checkedByQuery.push([...resourceIds]);
           },
         },
+        // A read waits only a moment for the types here, so that a slow registry shows within a test.
+        typesWait: 100,
         // query tells about its Lenses with its own Google ID token (DEC-PF-30).
         lensCallers: {
           async verify(token) {
@@ -660,7 +665,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
       await dirk('GET', `/resources/${id}`);
       expect(schemasAsked).toHaveLength(1);
 
-      // Without registry, it is shown as it is, and asked again only after a while.
+      // Without registry, it is shown as it is, and asked again soon, never at every read.
       const other = update('6', ['outleads']);
       other.tables[0]!.columns = [{ name: 'leadId', position: 1, dataType: null as unknown as string, description: '' }];
       await fromRegistry(other);
@@ -673,6 +678,29 @@ describe.skipIf(!url)('the routes of Collections', () => {
       await dirk('GET', `/resources/${outleads}`);
       expect(schemasAsked).toHaveLength(1);
       registryDown = false;
+
+      // A slow registry, such as one that has to start first: the read shows the Resource as it is, and the types are
+      // kept once they come, for the next read, without asking BigQuery again.
+      // A dbt project of its own, so that its run withdraws nothing of the others.
+      const slow = { ...update('1', ['slowleads']), projectId: '8888', projectName: 'slow' };
+      slow.tables[0]!.columns = [{ name: 'leadId', position: 1, dataType: null as unknown as string, description: '' }];
+      await fromRegistry(slow);
+      const slowleads = ((await dirk('GET', '/resources?collection=none')).json().resources as { id: string; name: string }[]).find((one) => one.name === 'slowleads')!.id;
+      schemaTypes = { 'immoscoop-dataplatform.dbt_marts.slowleads': [{ name: 'leadId', dataType: 'STRING' }] };
+      let settle!: () => void;
+      schemasSlow = new Promise((resolve) => {
+        settle = resolve;
+      });
+      schemasAsked = [];
+      expect((await dirk('GET', `/resources/${slowleads}`)).json().resource.fields).toEqual([expect.objectContaining({ name: 'leadId', dataType: null })]);
+      // A read while the first is still on its way asks nothing more.
+      expect((await dirk('GET', `/resources/${slowleads}`)).json().resource.fields).toEqual([expect.objectContaining({ name: 'leadId', dataType: null })]);
+      settle();
+      schemasSlow = undefined;
+      await vi.waitFor(async () => {
+        expect((await dirk('GET', `/resources/${slowleads}`)).json().resource.fields).toEqual([expect.objectContaining({ name: 'leadId', dataType: 'STRING' })]);
+      });
+      expect(schemasAsked).toEqual(['immoscoop-dataplatform.dbt_marts.slowleads']);
     });
 
     it('lists the Resources to complete for the Data Team, and shows everyone who sees one what its model type misses (FR-CO-45, FR-RC-29, MSG-RES-09)', async () => {
