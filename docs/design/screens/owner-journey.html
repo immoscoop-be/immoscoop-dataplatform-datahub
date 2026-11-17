@@ -18,10 +18,20 @@
   whole card on ask (DEC-UX-261). The rest is a proposal (OP-CL-12): the tool guide_owner_journey, the order of the steps,
   the cards to write (K5.12 to K5.19, and 3.3.3 extended), and a Business Analyst who goes through the steps and hands
   over the publication.
+  Decided on 2026-11-17, by Max, after a session with business describing a Resource through Claude (DEC-CL-18 to
+  DEC-CL-20): the start says what and why, what you get on the way and that nothing but the publication is final; every
+  step keeps the overview folded on top (where we are, done, still missing, required or optional); the Learning Cards
+  fold under "How can we help with this step?"; every link to Data Hub has one form, with the mark of Data Hub, and
+  opens the spot the step writes; a quiet line says what dbt and the Business Description are for, and the test between
+  a Known Gap and a Pitfall; at Fields Claude looks at what is in each field first (look_at_fields); a Known Gap is
+  written one at a time with where it holds (add_known_gap). The tool names look_at_fields and add_known_gap are
+  proposals, settled when it is built.
   The switches: the step, on the left; who asks (an Owner, a Business Analyst of the Owner Unit, or someone outside it);
   the case of step 11 (ready, or a required step still open); and the Annotations.
-  Requirements: FR-CL-30
-  Decisions: DEC-MR-15, DEC-MR-16, DEC-MR-17, DEC-UX-261, DEC-CL-07, DEC-CL-02, DEC-SR-28, DEC-MR-07.
+  Requirements: FR-CL-30, FR-CL-33, FR-CL-34, FR-CL-35, FR-RC-30
+  Decisions: DEC-MR-15, DEC-MR-16, DEC-MR-17, DEC-UX-261, DEC-CL-07, DEC-CL-02, DEC-SR-28, DEC-MR-07, DEC-CL-18,
+  DEC-CL-19, DEC-CL-20, DEC-UX-271, DEC-UX-272, DEC-UX-273, DEC-UX-274, DEC-UX-275, DEC-UX-276, DEC-RC-26, DEC-RC-27,
+  DEC-RC-28.
   Open points: OP-CL-12. The EDA starts from the Key Fields (DEC-ED-07), and perhaps from the table type (OP-ED-03).
   Not in v1: Claude comes in version 2 (DEC-CH-02).
   Rules: ../principles.md  ·  Placeholder content only.
@@ -75,13 +85,24 @@
 
  <!-- ===================== 0 · Start ===================== -->
  <div data-pane-group="step" data-pane="s0" style="display:contents">
-  <p class="oj-step-head">Step 0 · Start: who you are, what publishing means, the road there</p>
+  <p class="oj-step-head">Step 0 · Start: what we do and why, the road ahead, what you get on the way, who you are</p>
   <div class="oj-row"><span class="oj-tag cui">CUI · you</span><div class="mcp-msg user">Help me publish Search Console impressions, whole site. It's ours, SEO.</div></div>
   <div class="oj-row"><span class="oj-tag cui">CUI · tool</span><div class="mcp-tool"><i class="ph ph-plugs-connected" aria-hidden="true"></i>Data Hub · <span class="mono">guide_owner_journey</span></div></div>
   <div class="oj-row oj-app" data-pane-group="who" data-pane="owner analyst"><span class="oj-tag oj-mcp">MCP App</span>
    <section class="mcp-app oj-win" aria-label="Owner Journey, from Data Hub">
     <div class="mcp-app-head"><i class="ph-fill ph-path" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">Owner Journey · Resource · <i class="ph ph-magnet" aria-hidden="true" style="vertical-align:-2px;margin-right:3px"></i>Attraction · Owner: SEO</span><div class="float-title">Search Console impressions, whole site</div></div><span class="status"><span class="maturity" data-level="2" data-no-tooltip></span>2 · Described</span></div>
-    <div class="oj-progress" data-at="0"></div>
+    <div class="oj-held">
+     <span class="label">What we are going to do</span>
+     <p>Together we write the card of this Resource, step by step, so that a colleague outside SEO can find it, understand it and trust it. At the end you publish it, and everyone who sees Attraction can use it.</p>
+     <p class="before">Why: today only SEO and the Data Team see it, with a description from dbt that says how it is made, not what it means.</p>
+    </div>
+    <div class="oj-progress" data-at="0" data-open></div>
+    <div class="oj-held oj-gets">
+     <span class="label">What you get on the way</span>
+     <div class="get"><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><p><b>Learning Cards.</b> Under each step, "How can we help with this step?" lists the cards that explain it, behind this icon: a click opens one.</p></div>
+     <div class="get"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><p><b>Data Hub, one click away.</b> "Open … in Data Hub" opens the same spot in Data Hub, where you can read and write too.</p></div>
+     <div class="get"><i class="ph ph-arrow-counter-clockwise" aria-hidden="true"></i><p><b>Nothing is final.</b> Everything you write you can change later, here or in Data Hub. Only publishing is for good.</p></div>
+    </div>
     <div class="oj-held">
      <span class="label">You</span>
      <p data-pane-group="who" data-pane="owner">You are in SEO, the Owner Unit of Attraction: you may describe this Resource and publish it.</p>
@@ -91,39 +112,20 @@
      <div class="check-line"><i class="ph-fill ph-seal-check" aria-hidden="true"></i><span><b>It is the first Confirmation:</b> for SEO, you vouch for what it is and what it stands for, and every text on its card is yours. The Level rises to 3 · Confirmed.</span></div>
      <div class="check-line"><i class="ph-fill ph-lock-simple" aria-hidden="true"></i><span><b>It cannot be undone.</b></span></div>
     </div>
-    <div class="oj-held">
-     <span class="label">The road there · 7 steps required, 2 needed later for the EDA, 3 advised</span>
-     <ol class="oj-list">
-      <li><span class="n">1</span><span>Know the data</span><span class="st">To do</span></li>
-      <li><span class="n">2</span><span>Business Description <span class="oj-mark">Required</span></span><span class="st">Empty</span></li>
-      <li><span class="n">3</span><span>Key Fields <span class="oj-mark">Required</span> <span class="oj-mark eda">the EDA starts from them</span></span><span class="st">None yet</span></li>
-      <li><span class="n">4</span><span>Fields <span class="oj-mark">Required for the Key Fields</span> <span class="oj-mark advised">the others</span></span><span class="st">0 of 10</span></li>
-      <li><span class="n">5</span><span>Intended use <span class="oj-mark">Required</span><span class="who">Written before this journey: read it as yours</span></span><span class="st open">To read</span></li>
-      <li><span class="n">6</span><span>Pitfalls <span class="oj-mark">Required</span><span class="who">Written before this journey: read it as yours</span></span><span class="st open">To read</span></li>
-      <li><span class="n">7</span><span>Known Gaps and reliable since <span class="oj-mark">Required</span></span><span class="st">Empty</span></li>
-      <li><span class="n">8</span><span>Parameters <span class="oj-mark advised">Advised</span></span><span class="st">None</span></li>
-      <li><span class="n">9</span><span>Table type, grain and mappings <span class="oj-mark eda">For the EDA</span><span class="who">Recorded by a Data Admin, in Data Hub</span></span><span class="st">Not recorded</span></li>
-      <li><span class="n">10</span><span>Questions and Signals <span class="oj-mark advised">Advised</span></span><span class="st">1 open</span></li>
-      <li><span class="n">11</span><span>Read it back and publish <span class="oj-mark">Required</span></span><span class="st">After 2 to 7</span></li>
-      <li><span class="n">12</span><span>After</span><span class="st"></span></li>
-     </ol>
+    <div class="oj-help">
+     <span class="label"><i class="ph ph-lifebuoy" aria-hidden="true"></i>How can we help with this step?</span>
+     <details class="oj-help-card" open><summary><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><span class="num">K5.12</span><span class="tt">The Owner Journey <span class="oj-towrite">To write</span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></summary>
+      <div class="body"><p class="rule">The <b>Owner Journey</b> takes a Resource from described to published in a fixed order: first what it is, then how to use it and where it trips people up, and last what you vouch for.</p><p class="gain">You know what publishing asks of you before you start, and where you left off when you come back.</p><div class="acts"><a class="text-link dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open the card in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div></div>
+     </details>
+     <details class="oj-help-card"><summary><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><span class="num">4.7.1</span><span class="tt">Owning a Resource</span><i class="ph ph-caret-down chev" aria-hidden="true"></i></summary>
+      <div class="body"><p class="rule">Your data is the product of your work: as its <b>Owner</b> you describe it and publish it, so that others rely on it and your work gets used beyond your team.</p><p class="gain">You turn the data of your domain into something colleagues outside your team rely on and build on.</p><div class="acts"><a class="text-link"><i class="ph ph-book-open" aria-hidden="true"></i><span>Read the card</span></a><a class="text-link dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open the card in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div></div>
+     </details>
     </div>
-    <div class="oj-card"><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i>
-     <div class="t"><span class="num">K5.12</span>The Owner Journey<span class="oj-towrite">To write</span></div>
-     <p class="rule">The <b>Owner Journey</b> takes a Resource from described to published in a fixed order: first what it is, then how to use it and where it trips people up, and last what you vouch for.</p>
-     <p class="gain">You know what publishing asks of you before you start, and where you left off when you come back.</p>
-     <div class="acts"><a class="text-link"><i class="ph ph-book-open" aria-hidden="true"></i><span>Read the card</span></a><a class="text-link"><span>In Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
-    </div>
-    <div class="oj-card"><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i>
-     <div class="t"><span class="num">4.7.1</span>Owning a Resource</div>
-     <p class="rule">Your data is the product of your work: as its <b>Owner</b> you describe it and publish it, so that others rely on it and your work gets used beyond your team.</p>
-     <p class="gain">You turn the data of your domain into something colleagues outside your team rely on and build on.</p>
-    </div>
-    <div class="mcp-app-foot"><span>From Data Hub, as you see it. The journey is kept with the Resource: you, or a colleague of SEO, go on where it stopped.</span><a class="text-link open-dh"><span>Open in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
+    <div class="mcp-app-foot"><span>From Data Hub, as you see it. The journey is kept with the Resource: you, or a colleague of SEO, go on where it stopped.</span><a class="text-link open-dh dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open the Resource in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
    </section>
   </div>
   <div class="oj-row" data-pane-group="who" data-pane="owner"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg">
-   <p>You're in SEO, so this one is yours to publish. Publishing makes it visible to everyone who sees Attraction, it is your Confirmation of what it is, and it can't be undone, so we go through the card first: twelve steps, seven of them required before the publication opens. You can stop at any step and pick it up later, here or in another conversation.</p>
+   <p>You're in SEO, so this one is yours to publish. We go through its card first: twelve steps, seven of them required before the publication opens. Nothing you write is final, you can change it later, here or in Data Hub; only the publication can't be undone. And you can stop at any step and pick it up later.</p>
    <p>Intended use and pitfalls are already on the card. Someone wrote them before, so I'll ask you to read them as your own.</p>
    <p>Shall we start by looking at the data together? (<a class="text-link" style="display:inline"><span>K5.12 The Owner Journey</span></a>)</p>
   </div></div>
@@ -158,7 +160,7 @@
    <section class="mcp-app oj-win" aria-label="Owner Journey, step 1, from Data Hub">
     <div class="mcp-app-head"><i class="ph-fill ph-path" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">Owner Journey · Attraction · Owner: SEO</span><div class="float-title">Search Console impressions, whole site</div></div></div>
     <div class="oj-progress" data-at="1"></div>
-    <div class="oj-now"><span class="n">Step 1 of 12</span><h3>Know the data</h3></div>
+    <div class="oj-now"><h3>Know the data</h3></div>
     <div class="oj-held"><dl>
      <dt>One row, says dbt</dt><dd>One day × query × country × device × search type, from the Search Console bulk export.</dd>
      <dt>Grain</dt><dd class="none">Not recorded by a Data Admin yet: step 9.</dd>
@@ -166,13 +168,13 @@
      <dt>Used by</dt><dd>3 colleagues, 31 queries in the last 30 days.</dd>
      <dt>Messages</dt><dd>1 open Question: step 10.</dd>
     </dl></div>
-    <div class="oj-card"><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i>
-     <div class="t"><span class="num">2.3.5</span>The grain question: what is one row, and along which key do you count?</div>
-     <p class="rule">Every count stands on a <b>grain</b>, what one row is, and a key you count along; when a row does not belong to exactly one value of the key, it is counted more than once or drops out.</p>
-     <p class="gain">You explain why two counts of "the same" differ before anyone calls one of them wrong.</p>
-     <div class="acts"><a class="text-link"><i class="ph ph-book-open" aria-hidden="true"></i><span>Read the card</span></a></div>
+    <div class="oj-help">
+     <span class="label"><i class="ph ph-lifebuoy" aria-hidden="true"></i>How can we help with this step?</span>
+     <details class="oj-help-card"><summary><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><span class="num">2.3.5</span><span class="tt">The grain question: what is one row, and along which key do you count?</span><i class="ph ph-caret-down chev" aria-hidden="true"></i></summary>
+      <div class="body"><p class="rule">Every count stands on a <b>grain</b>, what one row is, and a key you count along; when a row does not belong to exactly one value of the key, it is counted more than once or drops out.</p><p class="gain">You explain why two counts of "the same" differ before anyone calls one of them wrong.</p><div class="acts"><a class="text-link"><i class="ph ph-book-open" aria-hidden="true"></i><span>Read the card</span></a><a class="text-link dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open the card in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div></div>
+     </details>
     </div>
-    <div class="mcp-app-foot"><span>Nothing is written in this step; going through it is kept.</span><a class="text-link open-dh"><span>Open in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
+    <div class="mcp-app-foot"><span>Nothing is written in this step; going through it is kept.</span><a class="text-link open-dh dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open its Summary in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
    </section>
   </div>
   <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg">
@@ -187,25 +189,26 @@
  <!-- ===================== 2 · Business Description ===================== -->
  <div data-pane-group="step" data-pane="s2" hidden style="display:contents">
   <p class="oj-step-head">Step 2 · Business Description: present, propose with its source, ask, show the final text, write on a yes</p>
-  <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg"><p><b>Step 2 · Business Description</b>, required. What the table is, in business words, next to what dbt says: colleagues read yours first. (<a class="text-link" style="display:inline"><span>K5.14 The Business Description</span></a>)</p></div></div>
+  <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg"><p><b>Step 2 · Business Description</b>, required. dbt says how the table is made; yours says what it represents and what SEO uses it for. Colleagues read yours first. (<a class="text-link" style="display:inline"><span>K5.14 The Business Description</span></a>)</p></div></div>
   <div class="oj-row oj-app"><span class="oj-tag oj-mcp">MCP App</span>
    <section class="mcp-app oj-win" aria-label="Owner Journey, step 2, from Data Hub">
     <div class="mcp-app-head"><i class="ph-fill ph-path" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">Owner Journey · Attraction · Owner: SEO</span><div class="float-title">Search Console impressions, whole site</div></div></div>
     <div class="oj-progress" data-at="2"></div>
-    <div class="oj-now"><span class="n">Step 2 of 12</span><h3>Business Description</h3><span class="oj-mark">Required to publish</span></div>
+    <div class="oj-now"><h3>Business Description</h3><span class="oj-mark">Required to publish</span></div>
     <div class="oj-held">
      <div class="desc-head"><span class="label">On the card now</span><span class="origin">From the Owner</span></div>
      <p class="none">Nothing yet.</p>
      <div class="desc-head" style="margin-top:4px"><span class="label">Next to it</span><span class="origin">From dbt</span></div>
      <p>Daily Search Console impressions and clicks for the whole site, from the bulk export.</p>
     </div>
-    <div class="oj-card"><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i>
-     <div class="t"><span class="num">K5.14</span>The Business Description<span class="oj-towrite">To write</span></div>
-     <p class="rule">The <b>Business Description</b> says in the words of the business what a table or a field is for, next to what dbt says it is made of: a colleague reads yours first.</p>
-     <p class="gain">Colleagues outside your team understand your data without asking you.</p>
-     <div class="acts"><a class="text-link"><i class="ph ph-book-open" aria-hidden="true"></i><span>Read the card</span></a></div>
+    <p class="purpose-line"><i class="ph ph-info" aria-hidden="true"></i><span><b>dbt</b> says how the data is made. <b>The Business Description</b> says what it represents and what it is used for, in the words of the business.</span></p>
+    <div class="oj-help">
+     <span class="label"><i class="ph ph-lifebuoy" aria-hidden="true"></i>How can we help with this step?</span>
+     <details class="oj-help-card"><summary><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><span class="num">K5.14</span><span class="tt">The Business Description <span class="oj-towrite">To write</span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></summary>
+      <div class="body"><p class="rule">The <b>Business Description</b> says in the words of the business what a table or a field is for, next to what dbt says it is made of: a colleague reads yours first.</p><p class="gain">Colleagues outside your team understand your data without asking you.</p><div class="acts"><a class="text-link dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open the card in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div></div>
+     </details>
     </div>
-    <div class="mcp-app-foot"><span>Written with <span class="mono">update_resource_card</span>, once you agree.</span><a class="text-link open-dh"><span>Open in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
+    <div class="mcp-app-foot"><span>Written with <span class="mono">update_resource_card</span>, once you agree.</span><a class="text-link open-dh dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open the Description in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
    </section>
   </div>
   <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg">
@@ -233,7 +236,7 @@
    <section class="mcp-app oj-win" aria-label="Owner Journey, step 3, from Data Hub">
     <div class="mcp-app-head"><i class="ph-fill ph-path" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">Owner Journey · Attraction · Owner: SEO</span><div class="float-title">Search Console impressions, whole site</div></div></div>
     <div class="oj-progress" data-at="3"></div>
-    <div class="oj-now"><span class="n">Step 3 of 12</span><h3>Key Fields</h3><span class="oj-mark">Required to publish</span><span class="oj-mark eda">the EDA starts from them</span></div>
+    <div class="oj-now"><h3>Key Fields</h3><span class="oj-mark">Required to publish</span><span class="oj-mark eda">the EDA starts from them</span></div>
     <div class="oj-held">
      <span class="label">On the card now: none · its 10 fields, by use in the last 30 days</span>
      <table>
@@ -249,13 +252,13 @@
       <tr><td class="mono">site_url</td><td>STRING</td><td>0</td></tr>
      </table>
     </div>
-    <div class="oj-card"><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i>
-     <div class="t"><span class="num">K5.15</span>Key Fields and Parameters<span class="oj-towrite">To write</span></div>
-     <p class="rule"><b>Key Fields</b> are the few fields a colleague should look at first, and the EDA explores; Parameters are those a Preview offers to filter on.</p>
-     <p class="gain">Colleagues find their way into a table of many fields, and the EDA knows where to start.</p>
-     <div class="acts"><a class="text-link"><i class="ph ph-book-open" aria-hidden="true"></i><span>Read the card</span></a></div>
+    <div class="oj-help">
+     <span class="label"><i class="ph ph-lifebuoy" aria-hidden="true"></i>How can we help with this step?</span>
+     <details class="oj-help-card"><summary><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><span class="num">K5.15</span><span class="tt">Key Fields and Parameters <span class="oj-towrite">To write</span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></summary>
+      <div class="body"><p class="rule"><b>Key Fields</b> are the few fields a colleague should look at first, and the EDA explores; Parameters are those a Preview offers to filter on.</p><p class="gain">Colleagues find their way into a table of many fields, and the EDA knows where to start.</p><div class="acts"><a class="text-link dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open the card in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div></div>
+     </details>
     </div>
-    <div class="mcp-app-foot"><span>Written with <span class="mono">update_resource_card</span>, once you agree.</span><a class="text-link open-dh"><span>Open in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
+    <div class="mcp-app-foot"><span>Written with <span class="mono">update_resource_card</span>, once you agree.</span><a class="text-link open-dh dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open Querying in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
    </section>
   </div>
   <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg">
@@ -274,7 +277,7 @@
      <div class="lc-point card"><h3><i class="ph ph-map-trifold" aria-hidden="true"></i>Like the legend of a map</h3><p>A map holds a thousand things; its legend names the five you need to find your way.</p></div>
      <div class="lc-point card"><h3><i class="ph ph-calculator" aria-hidden="true"></i>At Immoscoop</h3><p>Search Console impressions has 10 fields. Five of them answer nearly every question asked of it; the EDA checks their gaps and their weight first.</p></div>
     </div>
-    <div class="mcp-app-foot"><span>The whole card, from the Learning Centre, as in learning-mcp.html.</span><a class="text-link open-dh"><span>Open in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
+    <div class="mcp-app-foot"><span>The whole card, from the Learning Centre, as in learning-mcp.html.</span><a class="text-link open-dh dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open Querying in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
    </section>
   </div>
   <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg">
@@ -286,28 +289,67 @@
 
  <!-- ===================== 4 · Fields ===================== -->
  <div data-pane-group="step" data-pane="s4" hidden style="display:contents">
-  <p class="oj-step-head">Step 4 · Fields: the Key Fields first and required, the others advised, five at a time</p>
-  <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg"><p><b>Step 4 · Fields.</b> A Business Description for each field: the five Key Fields first, which are required, then the others, which are advised. (<a class="text-link" style="display:inline"><span>K5.14 The Business Description</span></a>)</p></div></div>
+  <p class="oj-step-head">Step 4 · Fields: the Key Fields first and required, the others advised, five at a time; Claude looks at what is in them first</p>
+  <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg"><p><b>Step 4 · Fields.</b> A Business Description for each field: the five Key Fields first, which are required, then the others, which are advised. I'll look at what's in them first. (<a class="text-link" style="display:inline"><span>K5.14 The Business Description</span></a>)</p></div></div>
+  <div class="oj-row"><span class="oj-tag cui">CUI · tool</span><div class="mcp-tool"><i class="ph ph-plugs-connected" aria-hidden="true"></i>Data Hub · <span class="mono">look_at_fields</span> · the 5 Key Fields, the last 30 days</div></div>
   <div class="oj-row oj-app"><span class="oj-tag oj-mcp">MCP App</span>
    <section class="mcp-app oj-win" aria-label="Owner Journey, step 4, from Data Hub">
     <div class="mcp-app-head"><i class="ph-fill ph-path" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">Owner Journey · Attraction · Owner: SEO</span><div class="float-title">Search Console impressions, whole site</div></div></div>
     <div class="oj-progress" data-at="4"></div>
-    <div class="oj-now"><span class="n">Step 4 of 12</span><h3>Fields</h3><span class="oj-mark">Required for the 5 Key Fields</span><span class="oj-mark advised">advised for the other 5</span></div>
+    <div class="oj-now"><h3>Fields</h3><span class="oj-mark">Required for the 5 Key Fields</span><span class="oj-mark advised">advised for the other 5</span></div>
     <div class="oj-held"><dl><dt>Key Fields described</dt><dd>0 of 5</dd><dt>Other fields</dt><dd>0 of 5</dd><dt>Every field</dt><dd>has a description from dbt</dd></dl></div>
-    <div class="oj-card"><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i>
-     <div class="t"><span class="num">K5.14</span>The Business Description<span class="oj-towrite">To write</span></div>
-     <p class="rule">The <b>Business Description</b> says in the words of the business what a table or a field is for, next to what dbt says it is made of.</p>
+    <p class="purpose-line"><i class="ph ph-info" aria-hidden="true"></i><span><b>dbt</b> says how the data is made. <b>The Business Description</b> says what it represents and what it is used for, in the words of the business.</span></p>
+    <div class="oj-held field-look">
+     <span class="label">What's in them · the last 30 days</span>
+     <div class="look">
+      <div class="look-head"><span class="mono">search_type</span><span class="meta">STRING</span><span class="facts">6 values · none empty</span></div>
+      <div class="look-bars">
+       <span class="v">web</span><span class="bar"><span style="width:81%"></span></span><span class="pct">81%</span>
+       <span class="v">image</span><span class="bar"><span style="width:9%"></span></span><span class="pct">9%</span>
+       <span class="v">discover</span><span class="bar"><span style="width:6%"></span></span><span class="pct">6%</span>
+       <span class="v">video</span><span class="bar"><span style="width:2%"></span></span><span class="pct">2%</span>
+       <span class="v">news</span><span class="bar"><span style="width:1%"></span></span><span class="pct">1%</span>
+       <span class="v">googleNews</span><span class="bar"><span style="width:1%"></span></span><span class="pct">1%</span>
+      </div>
+     </div>
+     <div class="look">
+      <div class="look-head"><span class="mono">query</span><span class="meta">STRING</span><span class="facts">≈ 412,000 values · <span class="warn">24% empty</span></span></div>
+      <div class="look-bars">
+       <span class="v">immoscoop</span><span class="bar"><span style="width:2%"></span></span><span class="pct">2.1%</span>
+       <span class="v">immoscoop gent</span><span class="bar"><span style="width:0.6%"></span></span><span class="pct">0.6%</span>
+       <span class="v">immoscoop antwerpen</span><span class="bar"><span style="width:0.5%"></span></span><span class="pct">0.5%</span>
+      </div>
+     </div>
+     <div class="look">
+      <div class="look-head"><span class="mono">data_date</span><span class="meta">DATE · partition</span><span class="facts">30 values · none empty</span></div>
+      <p class="look-range">From 18 Oct 2026 to 16 Nov 2026</p>
+     </div>
+     <div class="look">
+      <div class="look-head"><span class="mono">impressions</span><span class="meta">INT64</span><span class="facts">≈ 9,400 values · none empty</span></div>
+      <p class="look-range">From 1 to 182,340</p>
+     </div>
+     <div class="look">
+      <div class="look-head"><span class="mono">clicks</span><span class="meta">INT64</span><span class="facts">≈ 2,100 values · none empty</span></div>
+      <p class="look-range">From 0 to 9,812</p>
+     </div>
+     <p class="look-foot">Looked at as you: 38 MB read, counts approximate, nothing kept.</p>
     </div>
-    <div class="mcp-app-foot"><span>Written with <span class="mono">describe_fields</span>, once you agree.</span><a class="text-link open-dh"><span>Open in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
+    <div class="oj-help">
+     <span class="label"><i class="ph ph-lifebuoy" aria-hidden="true"></i>How can we help with this step?</span>
+     <details class="oj-help-card"><summary><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><span class="num">K5.14</span><span class="tt">The Business Description <span class="oj-towrite">To write</span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></summary>
+      <div class="body"><p class="rule">The <b>Business Description</b> says in the words of the business what a table or a field is for, next to what dbt says it is made of.</p><div class="acts"><a class="text-link dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open the card in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div></div>
+     </details>
+    </div>
+    <div class="mcp-app-foot"><span>Looked at with <span class="mono">look_at_fields</span>; written with <span class="mono">describe_fields</span>, once you agree.</span><a class="text-link open-dh dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open Columns in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
    </section>
   </div>
   <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg">
-   <p>The five Key Fields, with what dbt says and my proposal:</p>
+   <p>The five Key Fields: what dbt says about how each is made, what's in it, and my proposal for what it means.</p>
    <table>
     <tr><th>Field</th><th>dbt says</th><th>Proposal</th><th>Source</th></tr>
-    <tr><td><code>data_date</code></td><td>Date of the data</td><td>The day of the searches, in Pacific Time as Google counts it: a day ends nine hours after ours.</td><td class="src">Search Console Help</td></tr>
-    <tr><td><code>query</code></td><td>The search query</td><td>What the person typed in Google; empty when Google anonymised it.</td><td class="src">the Preview</td></tr>
-    <tr><td><code>search_type</code></td><td>web, image, video, news, discover, googleNews</td><td>Where in Google it appeared: Search, Discover or News. Filter on it before you compare.</td><td class="src">your words, step 3</td></tr>
+    <tr><td><code>data_date</code></td><td>Date of the data</td><td>The day of the searches, in Pacific Time as Google counts it: a day ends nine hours after ours.</td><td class="src">Search Console Help; the look: 30 days</td></tr>
+    <tr><td><code>query</code></td><td>The search query</td><td>What the person typed in Google; empty when Google anonymised it, about a quarter of the rows.</td><td class="src">the look: 24% empty</td></tr>
+    <tr><td><code>search_type</code></td><td>web, image, video, news, discover, googleNews</td><td>Where in Google it appeared: mostly web search, then images, Discover, video and News. Filter on it before you compare.</td><td class="src">the look: 6 values; your words, step 3</td></tr>
     <tr><td><code>impressions</code></td><td>Number of impressions</td><td>How often a page of ours appeared in the results.</td><td class="src">dbt</td></tr>
     <tr><td><code>clicks</code></td><td>Number of clicks</td><td>How often someone clicked through to our site.</td><td class="src">dbt</td></tr>
    </table>
@@ -327,18 +369,19 @@
    <section class="mcp-app oj-win" aria-label="Owner Journey, step 5, from Data Hub">
     <div class="mcp-app-head"><i class="ph-fill ph-path" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">Owner Journey · Attraction · Owner: SEO</span><div class="float-title">Search Console impressions, whole site</div></div></div>
     <div class="oj-progress" data-at="5"></div>
-    <div class="oj-now"><span class="n">Step 5 of 12</span><h3>Intended use</h3><span class="oj-mark">Required to publish</span></div>
+    <div class="oj-now"><h3>Intended use</h3><span class="oj-mark">Required to publish</span></div>
     <div class="oj-held">
      <span class="label">On the card now</span>
      <p>The trend of our organic search visibility, per week and per month. Not for revenue attribution.</p>
      <span class="before">Written before this journey, on 6 Nov 2026. Once you agree, it is yours: the card keeps no trace of who wrote it.</span>
     </div>
-    <div class="oj-card"><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i>
-     <div class="t"><span class="num">3.3.3</span>Reliable for which purpose<span class="oj-towrite">To extend: the intended use on a card</span></div>
-     <p class="rule">Data is <b>reliable</b> when it meets the expectation its label sets, for the use you have in mind: the same figures can be good enough for a trend and not for an invoice.</p>
-     <p class="gain">You judge whether data is good enough for your decision, without waiting for perfect data.</p>
+    <div class="oj-help">
+     <span class="label"><i class="ph ph-lifebuoy" aria-hidden="true"></i>How can we help with this step?</span>
+     <details class="oj-help-card"><summary><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><span class="num">3.3.3</span><span class="tt">Reliable for which purpose<span class="oj-towrite">To extend: the intended use on a card</span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></summary>
+      <div class="body"><p class="rule">Data is <b>reliable</b> when it meets the expectation its label sets, for the use you have in mind: the same figures can be good enough for a trend and not for an invoice.</p><p class="gain">You judge whether data is good enough for your decision, without waiting for perfect data.</p><div class="acts"><a class="text-link"><i class="ph ph-book-open" aria-hidden="true"></i><span>Read the card</span></a><a class="text-link dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open the card in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div></div>
+     </details>
     </div>
-    <div class="mcp-app-foot"><span>Written with <span class="mono">update_resource_card</span>, once you agree.</span><a class="text-link open-dh"><span>Open in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
+    <div class="mcp-app-foot"><span>Written with <span class="mono">update_resource_card</span>, once you agree.</span><a class="text-link open-dh dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open Known Behaviour in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
    </section>
   </div>
   <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg">
@@ -355,23 +398,25 @@
  <!-- ===================== 6 · Pitfalls ===================== -->
  <div data-pane-group="step" data-pane="s6" hidden style="display:contents">
   <p class="oj-step-head">Step 6 · Pitfalls: where it trips people up; "none" is an answer too</p>
-  <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg"><p><b>Step 6 · Pitfalls</b>, required. What goes wrong when someone uses it without knowing it. One was written before this journey. (<a class="text-link" style="display:inline"><span>K5.16 Pitfalls</span></a>)</p></div></div>
+  <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg"><p><b>Step 6 · Pitfalls</b>, required. What goes wrong when someone reads it without knowing it, even when every row is right. One was written before this journey. (<a class="text-link" style="display:inline"><span>K5.16 Pitfalls</span></a>)</p></div></div>
   <div class="oj-row oj-app"><span class="oj-tag oj-mcp">MCP App</span>
    <section class="mcp-app oj-win" aria-label="Owner Journey, step 6, from Data Hub">
     <div class="mcp-app-head"><i class="ph-fill ph-path" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">Owner Journey · Attraction · Owner: SEO</span><div class="float-title">Search Console impressions, whole site</div></div></div>
     <div class="oj-progress" data-at="6"></div>
-    <div class="oj-now"><span class="n">Step 6 of 12</span><h3>Pitfalls</h3><span class="oj-mark">Required to publish</span></div>
+    <div class="oj-now"><h3>Pitfalls</h3><span class="oj-mark">Required to publish</span></div>
     <div class="oj-held">
      <span class="label">On the card now</span>
      <p>Do not average the position.</p>
      <span class="before">Written before this journey, on 6 Nov 2026. "None" is an answer too: the journey keeps that you went through the step.</span>
     </div>
-    <div class="oj-card"><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i>
-     <div class="t"><span class="num">K5.16</span>Pitfalls<span class="oj-towrite">To write</span></div>
-     <p class="rule">A <b>pitfall</b> is a way to read a table wrongly that looks right: written on its card, the next colleague steps around it.</p>
-     <p class="gain">Your colleagues avoid the mistakes you already made, or saw made.</p>
+    <p class="purpose-line"><i class="ph ph-info" aria-hidden="true"></i><span><b>A Known Gap</b> is in the data itself: it would go away if the data were repaired. <b>A Pitfall</b> is in how the data is read: it stays true even when every row is right.</span></p>
+    <div class="oj-help">
+     <span class="label"><i class="ph ph-lifebuoy" aria-hidden="true"></i>How can we help with this step?</span>
+     <details class="oj-help-card"><summary><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><span class="num">K5.16</span><span class="tt">Pitfalls <span class="oj-towrite">To write</span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></summary>
+      <div class="body"><p class="rule">A <b>pitfall</b> is a way to read a table wrongly that looks right: written on its card, the next colleague steps around it.</p><p class="gain">Your colleagues avoid the mistakes you already made, or saw made.</p><div class="acts"><a class="text-link dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open the card in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div></div>
+     </details>
     </div>
-    <div class="mcp-app-foot"><span>Written with <span class="mono">update_resource_card</span>, once you agree.</span><a class="text-link open-dh"><span>Open in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
+    <div class="mcp-app-foot"><span>Written with <span class="mono">update_resource_card</span>, once you agree.</span><a class="text-link open-dh dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open Known Behaviour in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
    </section>
   </div>
   <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg">
@@ -389,13 +434,13 @@
 
  <!-- ===================== 7 · Known Gaps and reliable since ===================== -->
  <div data-pane-group="step" data-pane="s7" hidden style="display:contents">
-  <p class="oj-step-head">Step 7 · Known Gaps and reliable since: Claude looks for holes in the data, the Owner says what they mean</p>
-  <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg"><p><b>Step 7 · Known Gaps and reliable since</b>, required. Where data is missing, and from which date it can be relied on. (<a class="text-link" style="display:inline"><span>K5.3 The Known Gaps of a Resource</span></a>, <a class="text-link" style="display:inline"><span>K5.17 Reliable since</span></a>)</p></div></div>
+  <p class="oj-step-head">Step 7 · Known Gaps and reliable since: Claude looks for holes in the data, the Owner says what they mean; one gap at a time, with where it holds, and a misreading moved to the pitfalls</p>
+  <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg"><p><b>Step 7 · Known Gaps and reliable since</b>, required. Where data is missing, and from which date it can be relied on. A gap is in the data itself; how it is misread belongs to the pitfalls. (<a class="text-link" style="display:inline"><span>K5.3 The Known Gaps of a Resource</span></a>, <a class="text-link" style="display:inline"><span>K5.17 Reliable since</span></a>)</p></div></div>
   <div class="oj-row oj-app"><span class="oj-tag oj-mcp">MCP App</span>
    <section class="mcp-app oj-win" aria-label="Owner Journey, step 7, from Data Hub">
     <div class="mcp-app-head"><i class="ph-fill ph-path" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">Owner Journey · Attraction · Owner: SEO</span><div class="float-title">Search Console impressions, whole site</div></div></div>
     <div class="oj-progress" data-at="7"></div>
-    <div class="oj-now"><span class="n">Step 7 of 12</span><h3>Known Gaps and reliable since</h3><span class="oj-mark">Required to publish</span></div>
+    <div class="oj-now"><h3>Known Gaps and reliable since</h3><span class="oj-mark">Required to publish</span></div>
     <div class="oj-held"><dl>
      <dt>Known Gaps</dt><dd class="none">None written</dd>
      <dt>Reliable since</dt><dd class="none">Not set</dd>
@@ -403,28 +448,35 @@
      <dt>Empty days since</dt><dd>None</dd>
      <dt>Rows without a query</dt><dd>24%, and 6% of the clicks</dd>
     </dl></div>
-    <div class="oj-card"><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i>
-     <div class="t"><span class="num">K5.3</span>The Known Gaps of a Resource</div>
-     <p class="rule">A hole in the data is not the problem, a hole nobody wrote down is: write it down as a <b>Known Gap</b> of its Resource.</p>
+    <p class="purpose-line"><i class="ph ph-info" aria-hidden="true"></i><span><b>A Known Gap</b> is in the data itself: it would go away if the data were repaired. <b>A Pitfall</b> is in how the data is read: it stays true even when every row is right.</span></p>
+    <div class="oj-help">
+     <span class="label"><i class="ph ph-lifebuoy" aria-hidden="true"></i>How can we help with this step?</span>
+     <details class="oj-help-card"><summary><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><span class="num">K5.3</span><span class="tt">The Known Gaps of a Resource</span><i class="ph ph-caret-down chev" aria-hidden="true"></i></summary>
+      <div class="body"><p class="rule">A hole in the data is not the problem, a hole nobody wrote down is: write it down as a <b>Known Gap</b> of its Resource.</p><div class="acts"><a class="text-link"><i class="ph ph-book-open" aria-hidden="true"></i><span>Read the card</span></a><a class="text-link dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open the card in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div></div>
+     </details>
+     <details class="oj-help-card"><summary><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><span class="num">K5.17</span><span class="tt">Reliable since <span class="oj-towrite">To write</span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></summary>
+      <div class="body"><p class="rule"><b>Reliable since</b> is the day from which the whole table can be relied on; a Known Gap is a hole after that day, or in part of the rows.</p><p class="gain">Nobody compares this year with a start-up period that was never complete.</p><div class="acts"><a class="text-link dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open the card in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div></div>
+     </details>
     </div>
-    <div class="oj-card"><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i>
-     <div class="t"><span class="num">K5.17</span>Reliable since<span class="oj-towrite">To write</span></div>
-     <p class="rule"><b>Reliable since</b> is the day from which the whole table can be relied on; a Known Gap is a hole after that day, or in part of the rows.</p>
-     <p class="gain">Nobody compares this year with a start-up period that was never complete.</p>
-    </div>
-    <div class="mcp-app-foot"><span>Written with <span class="mono">update_resource_card</span>, once you agree.</span><a class="text-link open-dh"><span>Open in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
+    <div class="mcp-app-foot"><span>Written with <span class="mono">add_known_gap</span>, one gap with its scope, and <span class="mono">update_resource_card</span>, once you agree.</span><a class="text-link open-dh dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open the Known Gaps in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
    </section>
   </div>
   <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg">
    <p>Two questions only you can answer:</p>
    <p>1. Is the anonymised share a Known Gap you want written down? I'd propose:</p>
    <blockquote>Queries Google anonymises have no query text: about a quarter of the rows, and 6% of the clicks. Their impressions and clicks are in the totals of the site.</blockquote>
+   <p class="src">Where it holds: the rows where <code>query</code> is empty, on every day. From the look at step 4.</p>
    <p>2. From which day can it be relied on? The export started on 14 Feb 2025: was its first stretch complete?</p>
   </div></div>
-  <div class="oj-row"><span class="oj-tag cui">CUI · you</span><div class="mcp-msg user">Write the gap. Reliable since 1 March 2025: February was a test.</div></div>
-  <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg"><p>Known Gap as above, reliable since 1 Mar 2025. Shall I write both?</p></div></div>
-  <div class="oj-row"><span class="oj-tag cui">CUI · you</span><div class="mcp-msg user">Yes.</div></div>
-  <div class="oj-row"><span class="oj-tag cui">CUI · tool</span><div class="mcp-tool"><i class="ph ph-plugs-connected" aria-hidden="true"></i>Data Hub · <span class="mono">update_resource_card</span> · knownGaps, reliableSince, before: none · then <span class="mono">guide_owner_journey</span></div></div>
+  <div class="oj-row"><span class="oj-tag cui">CUI · you</span><div class="mcp-msg user">Write the gap. Reliable since 1 March 2025: February was a test. And add one: Discover and web search added up give the wrong total.</div></div>
+  <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg">
+   <p>That last one reads as a pitfall rather than a Known Gap: every row of Discover is right, the mistake is in adding it to web search. A Known Gap would go away if the data were repaired; this stays true even when every row is right. Shall I put it under the pitfalls instead?</p>
+   <blockquote>Do not add Discover to web search: they count different things. Filter on <code>search_type</code> before you compare.</blockquote>
+   <p>Then I write three things: the Known Gap above, with where it holds; reliable since 1 Mar 2025; and this pitfall next to the two of step 6.</p>
+  </div></div>
+  <div class="oj-row"><span class="oj-tag cui">CUI · you</span><div class="mcp-msg user">Yes, under the pitfalls. Write them.</div></div>
+  <div class="oj-row"><span class="oj-tag cui">CUI · tool</span><div class="mcp-tool"><i class="ph ph-plugs-connected" aria-hidden="true"></i>Data Hub · <span class="mono">add_known_gap</span> · text, rows: <span class="mono">query</span> is empty</div></div>
+  <div class="oj-row"><span class="oj-tag cui">CUI · tool</span><div class="mcp-tool"><i class="ph ph-plugs-connected" aria-hidden="true"></i>Data Hub · <span class="mono">update_resource_card</span> · reliableSince, before: not set; pitfalls, before: the text of step 6 · then <span class="mono">guide_owner_journey</span></div></div>
  </div>
 
  <!-- ===================== 8 · Parameters ===================== -->
@@ -435,13 +487,15 @@
    <section class="mcp-app oj-win" aria-label="Owner Journey, step 8, from Data Hub">
     <div class="mcp-app-head"><i class="ph-fill ph-path" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">Owner Journey · Attraction · Owner: SEO</span><div class="float-title">Search Console impressions, whole site</div></div></div>
     <div class="oj-progress" data-at="8"></div>
-    <div class="oj-now"><span class="n">Step 8 of 12</span><h3>Parameters</h3><span class="oj-mark advised">Advised</span></div>
+    <div class="oj-now"><h3>Parameters</h3><span class="oj-mark advised">Advised</span></div>
     <div class="oj-held"><span class="label">On the card now</span><p class="none">None. "None" is an answer too.</p></div>
-    <div class="oj-card"><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i>
-     <div class="t"><span class="num">K5.15</span>Key Fields and Parameters<span class="oj-towrite">To write</span></div>
-     <p class="rule"><b>Key Fields</b> are the few fields a colleague should look at first, and the EDA explores; Parameters are those a Preview offers to filter on.</p>
+    <div class="oj-help">
+     <span class="label"><i class="ph ph-lifebuoy" aria-hidden="true"></i>How can we help with this step?</span>
+     <details class="oj-help-card"><summary><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><span class="num">K5.15</span><span class="tt">Key Fields and Parameters <span class="oj-towrite">To write</span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></summary>
+      <div class="body"><p class="rule"><b>Key Fields</b> are the few fields a colleague should look at first, and the EDA explores; Parameters are those a Preview offers to filter on.</p><div class="acts"><a class="text-link dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open the card in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div></div>
+     </details>
     </div>
-    <div class="mcp-app-foot"><span>Written with <span class="mono">update_resource_card</span>, once you agree.</span><a class="text-link open-dh"><span>Open in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
+    <div class="mcp-app-foot"><span>Written with <span class="mono">update_resource_card</span>, once you agree.</span><a class="text-link open-dh dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open Querying in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
    </section>
   </div>
   <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg"><p>I'd propose <code>search_type</code>, <code>country</code> and <code>device</code>: the ways colleagues cut it in their queries.</p><p class="src">Source: the 31 queries on it in the last 30 days.</p></div></div>
@@ -457,21 +511,22 @@
    <section class="mcp-app oj-win" aria-label="Owner Journey, step 9, from Data Hub">
     <div class="mcp-app-head"><i class="ph-fill ph-path" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">Owner Journey · Attraction · Owner: SEO</span><div class="float-title">Search Console impressions, whole site</div></div></div>
     <div class="oj-progress" data-at="9"></div>
-    <div class="oj-now"><span class="n">Step 9 of 12</span><h3>Table type, grain and mappings</h3><span class="oj-mark eda">Needed for the EDA</span></div>
+    <div class="oj-now"><h3>Table type, grain and mappings</h3><span class="oj-mark eda">Needed for the EDA</span></div>
     <div class="oj-held"><dl>
      <dt><span class="oj-mark eda">Table type</span></dt><dd class="none">Not recorded</dd>
      <dt><span class="oj-mark eda">Grain</span></dt><dd class="none">Not recorded</dd>
      <dt><span class="oj-mark advised">Mappings</span></dt><dd class="none">0 of 10 fields mapped to an Entity</dd>
     </dl><span class="before">The work of a Data Admin, in Data Hub. You check what they recorded.</span></div>
-    <div class="oj-card"><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i>
-     <div class="t"><span class="num">2.3.6</span>Five model types, and what each means for counting</div>
-     <p class="rule">The <b>model type</b> says what one row is, and with it what you may count: an <code>aggregate</code> holds counts made already, of which you add up the sums and never the unique counts.</p>
+    <div class="oj-help">
+     <span class="label"><i class="ph ph-lifebuoy" aria-hidden="true"></i>How can we help with this step?</span>
+     <details class="oj-help-card"><summary><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><span class="num">2.3.6</span><span class="tt">Five model types, and what each means for counting</span><i class="ph ph-caret-down chev" aria-hidden="true"></i></summary>
+      <div class="body"><p class="rule">The <b>model type</b> says what one row is, and with it what you may count: an <code>aggregate</code> holds counts made already, of which you add up the sums and never the unique counts.</p><div class="acts"><a class="text-link"><i class="ph ph-book-open" aria-hidden="true"></i><span>Read the card</span></a><a class="text-link dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open the card in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div></div>
+     </details>
+     <details class="oj-help-card"><summary><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><span class="num">K5.18</span><span class="tt">What the Data Admin records <span class="oj-towrite">To write</span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></summary>
+      <div class="body"><p class="rule">The Data Admin records the <b>table type</b>, the grain and the mappings of a Resource; the Owner checks them, because the EDA and every join start from them.</p><div class="acts"><a class="text-link dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open the card in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div></div>
+     </details>
     </div>
-    <div class="oj-card"><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i>
-     <div class="t"><span class="num">K5.18</span>What the Data Admin records<span class="oj-towrite">To write</span></div>
-     <p class="rule">The Data Admin records the <b>table type</b>, the grain and the mappings of a Resource; the Owner checks them, because the EDA and every join start from them.</p>
-    </div>
-    <div class="mcp-app-foot"><span>Claude cannot record these; it can ask the Data Team with <span class="mono">write_message</span>.</span><a class="text-link open-dh"><span>Open in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
+    <div class="mcp-app-foot"><span>Claude cannot record these; it can ask the Data Team with <span class="mono">write_message</span>.</span><a class="text-link open-dh dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open Entities in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
    </section>
   </div>
   <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg">
@@ -491,16 +546,18 @@
    <section class="mcp-app oj-win" aria-label="Owner Journey, step 10, from Data Hub">
     <div class="mcp-app-head"><i class="ph-fill ph-path" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">Owner Journey · Attraction · Owner: SEO</span><div class="float-title">Search Console impressions, whole site</div></div></div>
     <div class="oj-progress" data-states="dddddddddqna-"></div>
-    <div class="oj-now"><span class="n">Step 10 of 12</span><h3>Questions and Signals</h3><span class="oj-mark advised">Advised</span></div>
+    <div class="oj-now"><h3>Questions and Signals</h3><span class="oj-mark advised">Advised</span></div>
     <div class="oj-held">
      <span class="label">Open · 1 Question</span>
      <div class="check-line"><i class="ph-fill ph-chat-circle-dots" aria-hidden="true"></i><span><b>Why are the clicks lower than in Search Console's own screen?</b> <span class="meta">A colleague of Marketing, 9 Nov</span></span></div>
     </div>
-    <div class="oj-card"><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i>
-     <div class="t"><span class="num">4.7.1</span>Owning a Resource</div>
-     <p class="rule">Your data is the product of your work: as its <b>Owner</b> you describe it and publish it, so that others rely on it.</p>
+    <div class="oj-help">
+     <span class="label"><i class="ph ph-lifebuoy" aria-hidden="true"></i>How can we help with this step?</span>
+     <details class="oj-help-card"><summary><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><span class="num">4.7.1</span><span class="tt">Owning a Resource</span><i class="ph ph-caret-down chev" aria-hidden="true"></i></summary>
+      <div class="body"><p class="rule">Your data is the product of your work: as its <b>Owner</b> you describe it and publish it, so that others rely on it.</p><div class="acts"><a class="text-link"><i class="ph ph-book-open" aria-hidden="true"></i><span>Read the card</span></a><a class="text-link dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open the card in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div></div>
+     </details>
     </div>
-    <div class="mcp-app-foot"><span>Replied with <span class="mono">reply_to_message</span>, once you agree.</span><a class="text-link open-dh"><span>Open in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
+    <div class="mcp-app-foot"><span>Replied with <span class="mono">reply_to_message</span>, once you agree.</span><a class="text-link open-dh dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open the Messages in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
    </section>
   </div>
   <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg">
@@ -539,9 +596,10 @@
        <div class="desc-head"><span class="label">Intended use</span></div>
        <p>The trend of our organic search visibility, per week and per month. Not for revenue attribution, and not for a single day of the last three, which Google completes late.</p>
        <div class="desc-head"><span class="label">Pitfalls</span></div>
-       <p>Do not average the position: the table keeps sum_top_position; the average position is sum(sum_top_position) / sum(impressions) + 1. Clicks per query do not add up to the clicks of the site: anonymised queries have no query text.</p>
+       <p>Do not average the position: the table keeps sum_top_position; the average position is sum(sum_top_position) / sum(impressions) + 1. Clicks per query do not add up to the clicks of the site: anonymised queries have no query text. Do not add Discover to web search: they count different things. Filter on search_type before you compare.</p>
        <div class="desc-head"><span class="label">Known Gaps · reliable since 1 Mar 2025</span></div>
        <p>Queries Google anonymises have no query text: about a quarter of the rows, and 6% of the clicks.</p>
+       <div class="gap-scope"><span class="scope"><i class="ph ph-rows" aria-hidden="true"></i><span class="scope-k">Rows</span><span class="mono">query</span> is empty</span></div>
        <div class="desc-head"><span class="label">Key Fields · Parameters</span></div>
        <p>data_date, query, search_type, impressions, clicks · search_type</p>
        <a class="text-link"><span>And its 10 fields: 5 described by you, every one by dbt</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a>
@@ -553,7 +611,7 @@
      <div class="confirm-bar" data-pane-group="who" data-pane="owner"><label><input type="checkbox"><span>For SEO, I have read this card and confirm that this Resource is correct: what it is and what it stands for, in every text on it.</span></label><button class="btn-primary"><i class="ph-fill ph-globe-simple" style="font-size:15px" aria-hidden="true"></i>Publish and confirm</button></div>
      <div class="confirm-bar" data-pane-group="who" data-pane="analyst outside" hidden><label><input type="checkbox" disabled><span>Only an Owner of SEO publishes it: you went through the card, and they confirm it.</span></label><button class="btn-primary" disabled><i class="ph-fill ph-globe-simple" style="font-size:15px" aria-hidden="true"></i>Publish and confirm</button></div>
      <span>Only you can publish it; Claude cannot. The declaration is kept with the Confirmation.</span>
-     <a class="text-link open-dh"><span>Open in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a>
+     <a class="text-link open-dh dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open Maturity in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a>
     </div>
    </section>
   </div>
@@ -588,16 +646,16 @@
      <div class="check-line"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><span>5 Key Fields, each described.</span></div>
      <div class="check-line"><i class="ph ph-diamond" aria-hidden="true" style="color:var(--col-olive)"></i><span>Table type and grain, asked of the Data Team.</span></div>
     </div>
-    <div class="oj-card"><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i>
-     <div class="t"><span class="num">K5.19</span>After publication<span class="oj-towrite">To write</span></div>
-     <p class="rule">Publishing starts the work of an <b>Owner</b> rather than ending it: you mark changes seen, answer Messages, and keep the Level where it is.</p>
-     <p class="gain">Your Resource stays worth relying on after the day you published it.</p>
+    <div class="oj-help">
+     <span class="label"><i class="ph ph-lifebuoy" aria-hidden="true"></i>How can we help with this step?</span>
+     <details class="oj-help-card"><summary><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><span class="num">K5.19</span><span class="tt">After publication <span class="oj-towrite">To write</span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></summary>
+      <div class="body"><p class="rule">Publishing starts the work of an <b>Owner</b> rather than ending it: you mark changes seen, answer Messages, and keep the Level where it is.</p><p class="gain">Your Resource stays worth relying on after the day you published it.</p><div class="acts"><a class="text-link dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open the card in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div></div>
+     </details>
+     <details class="oj-help-card"><summary><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><span class="num">K5.2</span><span class="tt">The Level of a Resource</span><i class="ph ph-caret-down chev" aria-hidden="true"></i></summary>
+      <div class="body"><p class="rule">The <b>Level</b> says how much you may build on a Resource: from 3 · Confirmed its Owner vouches for it, and it drops as soon as what it stood on goes away.</p><div class="acts"><a class="text-link"><i class="ph ph-book-open" aria-hidden="true"></i><span>Read the card</span></a><a class="text-link dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open the card in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div></div>
+     </details>
     </div>
-    <div class="oj-card"><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i>
-     <div class="t"><span class="num">K5.2</span>The Level of a Resource</div>
-     <p class="rule">The <b>Level</b> says how much you may build on a Resource: from 3 · Confirmed its Owner vouches for it, and it drops as soon as what it stood on goes away.</p>
-    </div>
-    <div class="mcp-app-foot"><span>Kept in the Log of the Resource: each step, by whom and when, through Claude.</span><a class="text-link open-dh"><span>Open in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
+    <div class="mcp-app-foot"><span>Kept in the Log of the Resource: each step, by whom and when, through Claude.</span><a class="text-link open-dh dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open Maturity in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
    </section>
   </div>
   <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg">
@@ -615,7 +673,7 @@
   <div class="oj-row oj-app"><span class="oj-tag oj-mcp">MCP App</span>
    <section class="mcp-app oj-win" aria-label="Owner Journey, picked up again, from Data Hub">
     <div class="mcp-app-head"><i class="ph-fill ph-path" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">Owner Journey · Attraction · Owner: SEO</span><div class="float-title">Search Console impressions, whole site</div></div><span class="status"><span class="maturity" data-level="2" data-no-tooltip></span>2 · Described</span></div>
-    <div class="oj-progress" data-at="6"></div>
+    <div class="oj-progress" data-at="6" data-open></div>
     <ol class="oj-list">
      <li><span class="n">1</span><span>Know the data<span class="who">You, 12 Nov</span></span><span class="st done">Gone through</span></li>
      <li><span class="n">2</span><span>Business Description<span class="who">You, 12 Nov</span></span><span class="st done">Done</span></li>
@@ -626,7 +684,7 @@
      <li><span class="n">7</span><span>Known Gaps and reliable since <span class="oj-mark">Required</span></span><span class="st">To do</span></li>
      <li><span class="n">8–12</span><span>Parameters, what the Data Admin records, Questions and Signals, publish, after</span><span class="st">To do</span></li>
     </ol>
-    <div class="mcp-app-foot"><span>Kept with the Resource: an Owner of SEO, or a colleague of SEO, goes on where it stopped.</span><a class="text-link open-dh"><span>Open in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
+    <div class="mcp-app-foot"><span>Kept with the Resource: an Owner of SEO, or a colleague of SEO, goes on where it stopped.</span><a class="text-link open-dh dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open the Resource in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
    </section>
   </div>
   <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg">
@@ -660,12 +718,40 @@ const MARKS = ['-', '-', 'r', 'r', 'r', 'r', 'r', 'r', 'a', 'e', 'a', 'r', '-'];
 const NAMES = ['Start', 'Know the data', 'Business Description', 'Key Fields', 'Fields', 'Intended use', 'Pitfalls', 'Known Gaps and reliable since', 'Parameters', 'Table type, grain and mappings', 'Questions and Signals', 'Read it back and publish', 'After'];
 const CLASS = { d: 'done', n: 'now', r: 'required', e: 'eda', q: 'asked', a: 'advised', '-': '' };
 const SAYS = { d: 'done', n: 'now', r: 'required to publish', e: 'needed for the EDA', q: 'asked of the Data Team', a: 'advised', '-': '' };
+// What each step holds now, for the test case, and how its mark reads in the overview (DEC-UX-272)
+const HOLDS = ['', 'To do', 'Empty', 'None yet', '0 of 10 described', 'Written before: to read', 'Written before: to read', 'Empty', 'None', 'Not recorded', '1 open', 'After the required steps', ''];
+const MARKWORD = { r: 'Required', e: 'For the EDA', a: 'Optional', '-': '' };
 document.querySelectorAll('.oj-progress').forEach(bar => {
   const at = Number(bar.dataset.at ?? -1);
   const states = bar.dataset.states ?? MARKS.map((mark, i) => (i < at ? 'd' : i === at ? 'n' : mark)).join('');
   bar.setAttribute('role', 'img');
   bar.setAttribute('aria-label', 'The steps of the journey');
   bar.innerHTML = [...states].map((s, i) => `<span class="${CLASS[s]}" title="${i} · ${NAMES[i]}${SAYS[s] ? ': ' + SAYS[s] : ''}"></span>`).join('');
+  // The overview: folded on every step, unfolded at the start; where we are, what is done, what is still missing
+  const now = states.indexOf('n');
+  const done = [...states].slice(1).filter(s => s === 'd').length;
+  const open = MARKS.filter((mark, i) => mark === 'r' && states[i] !== 'd').length;
+  const where = document.createElement('details');
+  where.className = 'oj-where';
+  where.open = bar.dataset.open !== undefined;
+  const summary = document.createElement('summary');
+  summary.innerHTML = `<span class="where">${now > 0 ? `Step ${now} of 12 · <b>${NAMES[now]}</b>` : '<b>The road ahead</b> · 12 steps'}</span><span class="tally">${done} done · <span class="open">${open} required still open</span><i class="ph ph-caret-down chev" aria-hidden="true"></i></span>`;
+  // A window that lists the steps itself, such as a journey picked up again, keeps its own list in the overview
+  const own = bar.nextElementSibling?.matches('ol.oj-list') ? bar.nextElementSibling : null;
+  bar.replaceWith(where);
+  summary.prepend(bar);
+  where.append(summary);
+  if (own) { where.append(own); return; }
+  const status = (s, i) => s === 'd' ? ['done', 'Done'] : i === now ? ['', 'Now'] : s === 'q' ? ['', 'Asked of the Data Team'] : MARKS[i] === 'r' ? ['miss', HOLDS[i]] : MARKS[i] === 'a' ? ['opt', HOLDS[i] || 'Optional'] : ['', HOLDS[i]];
+  const list = document.createElement('ol');
+  list.className = 'oj-list';
+  list.innerHTML = NAMES.map((name, i) => {
+    if (i === 0) return '';
+    const [cls, text] = status(states[i], i);
+    const mark = MARKS[i] === '-' ? '' : ` <span class="oj-mark${MARKS[i] === 'e' ? ' eda' : MARKS[i] === 'a' ? ' advised' : ''}">${MARKWORD[MARKS[i]]}</span>`;
+    return `<li class="${i === now ? 'now' : ''}"><span class="n">${i}</span><span>${name}${mark}</span><span class="st ${cls}">${text}</span></li>`;
+  }).join('');
+  where.append(list);
 });
 // The annotations: CUI and MCP App tagged, or the conversation as the Owner sees it
 document.querySelectorAll('#oj-annot [data-plain]').forEach(b => b.addEventListener('click', () => {
