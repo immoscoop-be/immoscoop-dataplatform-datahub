@@ -13,6 +13,7 @@ import { createProposals } from './proposal.js';
 import { createReading } from './reading.js';
 import { lazy, settingsFromEnv } from './settings.js';
 import { createSourceJobs } from './source-jobs.js';
+import { createTableSchemas } from './table-schemas.js';
 
 const settings = settingsFromEnv();
 const accessToken = metadataAccessToken();
@@ -55,6 +56,8 @@ const app = await buildApp({
   // address, for a User it checked (DEC-AR-06).
   internal: {
     reading,
+    // The column types of a table for catalogue, from BigQuery, as the ingest job reads them (DEC-AR-13).
+    schemas: createTableSchemas(accessToken),
     serviceCallers: createServiceCallerVerifier({
       audience: registryUrl,
       serviceAccounts: [required('DATAHUB_CATALOGUE_SERVICE_ACCOUNT')],

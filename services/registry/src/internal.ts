@@ -1,11 +1,14 @@
 import type { ServiceCallerVerifier } from '@datahub/auth';
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { Direction, NodeSummary, Reading } from './reading.js';
+import { SchemasUnavailable, type TableSchemas } from './table-schemas.js';
 
 export interface InternalOptions {
   reading: Pick<Reading, 'lineage'>;
   /** Who may ask: catalogue, by a Google ID token for registry's own address. */
   serviceCallers: ServiceCallerVerifier;
+  /** The schema of a table as BigQuery keeps it, for a Resource whose fields lack their types (EC-AR-06, DEC-AR-13). */
+  schemas?: TableSchemas;
 }
 
 /** How far the lineage around a Resource reaches: as far as registry walks one (TR-AR-06). */
@@ -36,19 +39,22 @@ export function layerOf(node: Pick<NodeSummary, 'layer' | 'filePath' | 'resource
  * Resource, for its tab Lineage (DEC-AR-06). Only names, layers and projects leave registry this way.
  */
 export async function internalRoutes(app: FastifyInstance, options: InternalOptions): Promise<void> {
+  /** Only catalogue asks, as itself; a call without its Google ID token is refused. */
+  const onlyCatalogue = (what: string) => async (request: FastifyRequest, reply: FastifyReply) => {
+    const token = /^Bearer (\S+)$/.exec(request.headers.authorization ?? '')?.[1] ?? '';
+    try {
+      await options.serviceCallers.verify(token);
+    } catch (error) {
+      request.log.warn({ err: error }, `a call for ${what} was refused`);
+      return reply.code(401).send({ error: 'unauthorized', message: `Only catalogue asks for ${what}.` });
+    }
+  };
+
   app.get<{ Params: { id: string }; Querystring: { direction?: string } }>(
     '/internal/nodes/:id/lineage',
     {
       config: { public: true },
-      onRequest: async (request, reply) => {
-        const token = /^Bearer (\S+)$/.exec(request.headers.authorization ?? '')?.[1] ?? '';
-        try {
-          await options.serviceCallers.verify(token);
-        } catch (error) {
-          request.log.warn({ err: error }, 'a call for the lineage around a Resource was refused');
-          return reply.code(401).send({ error: 'unauthorized', message: 'Only catalogue asks for the lineage around a Resource.' });
-        }
-      },
+      onRequest: onlyCatalogue('the lineage around a Resource'),
     },
     async (request, reply) => {
       const direction = request.query.direction;
@@ -78,6 +84,38 @@ export async function internalRoutes(app: FastifyInstance, options: InternalOpti
         edges: lineage.edges.filter((edge) => kept.has(edge.parentId) && kept.has(edge.childId)),
         truncated: lineage.truncated,
       };
+    },
+  );
+
+  // The column types of a table, from its schema in BigQuery, never a row: catalogue asks them for a Resource whose
+  // fields lack their types, such as one registered before the types came from BigQuery (DEC-AR-13, TR-AR-16).
+  app.get<{ Querystring: { project?: string; dataset?: string; table?: string } }>(
+    '/internal/tables/columns',
+    {
+      config: { public: true },
+      onRequest: onlyCatalogue('the columns of a table'),
+    },
+    async (request, reply) => {
+      const { project, dataset, table } = request.query;
+      if (!project || !dataset || !table) {
+        return reply.code(400).send({ error: 'invalid_request', message: 'Name the project, dataset and table.' });
+      }
+      if (!options.schemas) {
+        return reply.code(404).send({ error: 'not_found', message: 'registry reads no schemas here.' });
+      }
+      try {
+        const columns = await options.schemas.columns({ project, dataset, table });
+        if (!columns) {
+          return reply.code(404).send({ error: 'not_found', message: 'BigQuery has no such table, or may not show it.' });
+        }
+        return { columns: columns.map(({ name, dataType }) => ({ name, dataType })) };
+      } catch (error) {
+        if (error instanceof SchemasUnavailable) {
+          request.log.warn({ err: error }, 'BigQuery did not give the schema of a table');
+          return reply.code(503).send({ error: 'unavailable', message: 'BigQuery did not answer; ask again later.' });
+        }
+        throw error;
+      }
     },
   );
 }

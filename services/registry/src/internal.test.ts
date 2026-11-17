@@ -4,6 +4,7 @@ import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { buildApp } from './app.js';
 import { layerOf } from './internal.js';
+import { SchemasUnavailable } from './table-schemas.js';
 import type { Lineage, NodeSummary } from './reading.js';
 
 const summary = (uniqueId: string, extra: Partial<NodeSummary> = {}): NodeSummary => ({
@@ -92,6 +93,35 @@ describe('the lineage around a Resource, for catalogue (DEC-AR-06)', () => {
   it('names a wrong direction and an unknown Node', async () => {
     expect((await ask('/internal/nodes/model.p.weekly/lineage?direction=sideways')).statusCode).toBe(400);
     expect((await ask('/internal/nodes/model.p.gone/lineage?direction=upstream')).statusCode).toBe(404);
+  });
+
+  it('gives catalogue the column types of a table from BigQuery, never a row, and only to catalogue (DEC-AR-13)', async () => {
+    const tables: string[] = [];
+    const typed = await buildApp({
+      verifier: (await createTestIssuer()).verifier,
+      logger: false,
+      internal: {
+        reading: { lineage: async () => undefined },
+        serviceCallers: { verify: async (token) => (token === 'catalogue-id-token' ? 'catalogue' : Promise.reject(new TokenError('rejected'))) },
+        schemas: {
+          async columns({ project, dataset, table }) {
+            tables.push(`${project}.${dataset}.${table}`);
+            if (table === 'down') throw new SchemasUnavailable('BigQuery did not answer');
+            return table === 'inLeads' ? [{ name: 'leadId', position: 1, dataType: 'STRING', description: 'Id of the intake lead.' }] : undefined;
+          },
+        },
+      },
+    });
+    const get = (url: string, token = 'catalogue-id-token') => typed.inject({ method: 'GET', url, headers: { authorization: `Bearer ${token}` } });
+    const answer = await get('/internal/tables/columns?project=p&dataset=dbt_prod_DIGICOMM&table=inLeads');
+    expect(answer.statusCode).toBe(200);
+    expect(answer.json()).toEqual({ columns: [{ name: 'leadId', dataType: 'STRING' }] });
+    expect(tables).toEqual(['p.dbt_prod_DIGICOMM.inLeads']);
+    expect((await get('/internal/tables/columns?project=p&dataset=d&table=gone')).statusCode).toBe(404);
+    expect((await get('/internal/tables/columns?project=p&dataset=d&table=down')).statusCode).toBe(503);
+    expect((await get('/internal/tables/columns?project=p&dataset=d')).statusCode).toBe(400);
+    expect((await get('/internal/tables/columns?project=p&dataset=d&table=inLeads', 'someone-else')).statusCode).toBe(401);
+    await typed.close();
   });
 
   it('names the layer from Colleciónes, the folder of the model, or its kind', () => {

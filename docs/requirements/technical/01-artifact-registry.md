@@ -187,3 +187,10 @@ When it normalises a set ([TR-AR-03](#tr-ar-03)), the ingest job names the model
 
 A job whose own steps run `dbt docs generate` counts as generating the docs, as one with "Generate docs on run" does ([EC-AR-02](../functional/01-artifact-registry.md#ec-ar-02)): a Source Job may run it with a selection of its own, so that the catalog has every model.
 
+<a id="tr-ar-16"></a>
+### TR-AR-16 · catalogue fills the types its fields lack from BigQuery, through registry
+
+**Status:** Implemented · **Realises:** [DEC-AR-13](../functional/01-artifact-registry.md#dec-ar-13), [EC-AR-06](../functional/01-artifact-registry.md#ec-ar-06)
+
+When catalogue serves a Resource (`GET /resources/{id}`) and one of its fields has no type, it asks registry, as itself with a Google ID token ([TR-AR-11](#tr-ar-11)), for the column types of its table: `GET /internal/tables/columns?project=&dataset=&table=`, from its full name in BigQuery. registry reads the schema with `tables.get`, as its ingest job does ([TR-AR-15](#tr-ar-15)), with the same BigQuery Metadata Viewer, and answers the names and types, 404 for a table BigQuery does not know or may not show, 503 when BigQuery does not answer. catalogue keeps a type only for a field that has none, matched by name in any case, and serves the Resource with it. A Resource it could not fill is asked again after ten minutes at the earliest, never at every read; without an answer, the Resource is served as it is. Filling a type writes no Log Entry and changes no Fingerprint: the next run brings the types it has.
+
