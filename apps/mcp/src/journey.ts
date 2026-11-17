@@ -1,3 +1,4 @@
+import type { GapScope } from '@datahub/contracts/gaps';
 import { type Journey, type JourneyMissing, type JourneyStepId, type JourneyStepState, JOURNEY_STEPS, journeyStep } from '@datahub/contracts/journey';
 import type { ModelType } from '@datahub/contracts/model-types';
 import { shownIn, TOPICS } from '@datahub/learning';
@@ -33,6 +34,8 @@ export interface Held {
   text?: string;
   items?: string[];
   chips?: string[];
+  /** The Known Gaps, each with its scope, which the window shows next to its text, as the Summary does (FR-CL-34). */
+  gaps?: { text: string; scope: GapScope | null }[];
   /** Shown when there is nothing: what is missing, or who said there is nothing to add. */
   none?: string;
 }
@@ -40,7 +43,7 @@ export interface Held {
 const dayOf = (value: string) => new Date(value).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
 
 /** What a step holds now, as its window shows it before Claude proposes: the texts on the card, or what is missing. */
-export function heldOf(step: JourneyStepState, resource: JourneyResource, journey: Journey): Held[] {
+export function heldOf(step: JourneyStepState, resource: JourneyResource, journey: Journey, mayDescribe = false): Held[] {
   const card = resource.card ?? {};
   const text = (key: string) => (typeof card[key] === 'string' ? (card[key] as string).trim() : '');
   const list = (key: string) => (Array.isArray(card[key]) ? (card[key] as unknown[]) : []);
@@ -53,11 +56,29 @@ export function heldOf(step: JourneyStepState, resource: JourneyResource, journe
   const grain = details?.grainSentence?.trim() || (details?.grain?.length ? details.grain.join(' × ') : '');
   const dbt: Held = { label: 'Next to it', origin: 'From dbt', text: resource.description?.trim() || undefined, none: 'No description from dbt.' };
   switch (step.id) {
-    case 'start':
+    case 'start': {
+      // Who the User is, and what publishing means (DEC-CL-18).
+      const owner = resource.collection?.owner ?? 'its Owner Unit';
+      const where = resource.collection?.name ?? 'its Collection';
       return [
-        { label: 'Now', text: `${resource.levelName}, ${resource.published ? 'published' : 'not published yet'}.` },
-        { label: 'Its Collection', text: resource.collection ? `${resource.collection.name}, owned by ${resource.collection.owner}.` : undefined, none: 'In no Collection yet.' },
+        {
+          label: 'You',
+          text: resource.mayPublish
+            ? `You are in ${owner}, the Owner Unit of ${where}: you may describe this Resource and publish it.`
+            : mayDescribe
+              ? `You may describe this Resource, step by step. Publishing it is for an Owner of ${owner}; you hand it over at step 11.`
+              : `Only ${owner} describes and publishes it.`,
+        },
+        {
+          label: 'Publishing it',
+          items: [
+            `**Everyone who sees ${where} sees it.** Now only ${owner} and the Data Team do.`,
+            `**It is the first Confirmation:** for ${owner}, you vouch for what it is and what it stands for, and every text on its card is yours. The Level rises to 3 · Confirmed.`,
+            '**It cannot be undone.**',
+          ],
+        },
       ];
+    }
     case 'data':
       return [
         { ...dbt, label: 'One row, says dbt' },
@@ -79,10 +100,13 @@ export function heldOf(step: JourneyStepState, resource: JourneyResource, journe
     case 'pitfalls':
       return [{ label: 'On the card now', text: text('pitfalls') || undefined, none: saidNone ?? 'Nothing yet, and nobody said there are none.' }];
     case 'gaps': {
-      const gaps = list('knownGaps').map((gap) => (gap as { text?: string }).text ?? '').filter(Boolean);
+      const gaps = list('knownGaps')
+        .map((gap) => gap as { text?: string; scope?: GapScope | null })
+        .filter((gap) => gap.text)
+        .map((gap) => ({ text: gap.text as string, scope: gap.scope ?? null }));
       const since = text('reliableSince');
       return [
-        { label: 'Known Gaps', items: gaps, none: saidNone ?? 'None written, and nobody said there are none.' },
+        { label: 'Known Gaps', gaps, none: saidNone ?? 'None written, and nobody said there are none.' },
         { label: 'Reliable since', text: since ? dayOf(since) : undefined, none: 'No day yet.' },
       ];
     }
@@ -110,8 +134,8 @@ export function heldOf(step: JourneyStepState, resource: JourneyResource, journe
  */
 export const GUIDE: Readonly<Record<JourneyStepId, { say: string; present: string; ask: string }>> = {
   start: {
-    say: 'Who the User is, and whether they may publish it. What publishing means: everyone who sees its Collection sees it, it is the first Confirmation, and it cannot be undone.',
-    present: 'The steps ahead: which are required to publish, which are advised, and what the EDA needs later.',
+    say: 'What the User is about to do and why: write the card of this Resource step by step, so that a colleague outside their team can find it, understand it and trust it; today only its Owner Unit and the Data Team see it, with a description from dbt that says how it is made, not what it means. Who the User is, and whether they may publish it. What publishing means: everyone who sees its Collection sees it, it is the first Confirmation, and it cannot be undone. That everything they write can be changed later, here or in Data Hub: only publishing is for good.',
+    present: 'The steps ahead, which the window shows unfolded: which are required to publish, which are optional, and what the EDA needs later; and what they get on the way: the Learning Cards under "How can we help with this step?", and a link to the same spot in Data Hub.',
     ask: 'Whether to start.',
   },
   data: {
@@ -120,7 +144,7 @@ export const GUIDE: Readonly<Record<JourneyStepId, { say: string; present: strin
     ask: 'Whether one row is what the card says it is. Once the User has looked, record the step gone through with record_journey_step.',
   },
   businessDescription: {
-    say: 'What the table is, in the words of the business, next to the description from dbt: colleagues read it first.',
+    say: 'What the table is, in the words of the business, next to the description from dbt: dbt says how the data is made, the Business Description what it represents and what it is used for. Colleagues read it first.',
     present: 'The Business Description on the card, if any, and the description from dbt.',
     ask: 'What it is for in their work. Propose a text, and say where each part comes from.',
   },
@@ -130,7 +154,7 @@ export const GUIDE: Readonly<Record<JourneyStepId, { say: string; present: strin
     ask: 'Which fields matter most. Propose some, with where the proposal comes from.',
   },
   fields: {
-    say: 'A Business Description for each field: the Key Fields first, which are required, then the others, which are advised.',
+    say: 'A Business Description for each field: the Key Fields first, which are required, then the others, which are advised. dbt says how a field is made; its Business Description says what it means and how it is used.',
     present: 'Five fields at a time, each with what dbt says and your proposal.',
     ask: 'What is off. When the User leaves the other fields for later, record the step gone through with record_journey_step.',
   },
@@ -140,14 +164,14 @@ export const GUIDE: Readonly<Record<JourneyStepId, { say: string; present: strin
     ask: 'Whether it still holds, and what to add.',
   },
   pitfalls: {
-    say: 'Where it trips people up when they use it without knowing.',
+    say: 'Where it trips people up when they read it without knowing. A pitfall is in how the data is read: it stays true even when every row is right.',
     present: 'The pitfalls on the card, and any you see in the data.',
-    ask: 'What else goes wrong with it. "None" is an answer: once the User says so, record "nothing" with record_journey_step.',
+    ask: 'What else goes wrong with it. When a text the User proposes would go away if the data were repaired, it is a Known Gap: say so, and offer to keep it for the next step. "None" is an answer: once the User says so, record "nothing" with record_journey_step.',
   },
   gaps: {
-    say: 'Where data is missing, and the day from which it can be relied on.',
-    present: 'Its Known Gaps, the day it is reliable since, and holes you find in the data, such as empty periods or fields empty for part of the rows.',
-    ask: 'Which gaps to write down, and from which day it is reliable. "No gaps" is an answer: record "nothing" with record_journey_step; the day is still needed.',
+    say: 'Where data is missing, and the day from which it can be relied on. A Known Gap is in the data itself: it would go away if the data were repaired; how the data is misread is a pitfall.',
+    present: 'Its Known Gaps, the day it is reliable since, and holes you find in the data, such as empty periods or fields empty for part of the rows. Propose each gap with the scope where it holds: a period, fields, rows.',
+    ask: 'Which gaps to write down, each on its own with add_known_gap and its scope, and from which day it is reliable, with update_resource_card. When a proposed gap is a misreading, say so with the test and offer to write it under the pitfalls instead; the User decides. "No gaps" is an answer: record "nothing" with record_journey_step; the day is still needed.',
   },
   parameters: {
     say: 'The fields a Preview offers to filter on.',
@@ -177,6 +201,79 @@ export const GUIDE: Readonly<Record<JourneyStepId, { say: string; present: strin
 };
 
 const MARKS = { required: 'required to publish', eda: 'needed for the EDA, not to publish', advised: 'advised', none: '' } as const;
+/** How the overview of the window names the mark of a step: an advised step is optional (DEC-UX-272). */
+const MARK_WORDS = { required: 'Required', eda: 'For the EDA', advised: 'Optional', none: '' } as const;
+
+/** Where a text is written, what it is for: the quiet line of a step (DEC-UX-275, DEC-RC-26, DEC-RC-27). */
+const DBT_OR_BUSINESS = '**dbt** says how the data is made. **The Business Description** says what it represents and what it is used for, in the words of the business.';
+const GAP_OR_PITFALL = '**A Known Gap** is in the data itself: it would go away if the data were repaired. **A Pitfall** is in how the data is read: it stays true even when every row is right.';
+const PURPOSE: Partial<Record<JourneyStepId, string>> = { businessDescription: DBT_OR_BUSINESS, fields: DBT_OR_BUSINESS, pitfalls: GAP_OR_PITFALL, gaps: GAP_OR_PITFALL };
+
+/** What the link of a step opens in Data Hub, in words: the part of the Overview or the tab it writes (DEC-CL-19). */
+const SPOT_NAMES: Record<string, string> = {
+  summary: 'its Summary',
+  description: 'the Description',
+  behaviour: 'Known behaviour',
+  gaps: 'the Known Gaps',
+  querying: 'Querying',
+  entities: 'Entities',
+  maturity: 'Maturity',
+  columns: 'Columns',
+  messages: 'the Messages',
+};
+
+/** The spot a step writes, as an address after the Resource, and its link in words; the start opens the Resource. */
+export function spotOf(step: JourneyStepState): { at?: string; label: string } {
+  const at = step.id === 'start' ? undefined : step.parts[0];
+  return at && SPOT_NAMES[at] ? { at, label: `Open ${SPOT_NAMES[at]} in Data Hub` } : { label: 'Open the Resource in Data Hub' };
+}
+
+/**
+ * The overview of the journey, which every window keeps at hand (DEC-UX-272): each step after the start with its
+ * mark, and where it stands: done, now, still missing for a required one, or optional.
+ */
+export function overviewOf(journey: Journey, at: JourneyStepId) {
+  const steps = journey.steps
+    .filter((step) => step.number > 0)
+    .map((step) => {
+      const what = step.missing.map((missing) => missingText(step, missing)).join('; ');
+      const said = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+      const state = step.id === at ? 'now' : step.status === 'done' ? 'done' : step.mark === 'required' ? 'missing' : 'optional';
+      const says =
+        state === 'now'
+          ? 'Now'
+          : state === 'done'
+            ? 'Done'
+            : step.id === 'publish'
+              ? journey.ready
+                ? 'Ready to publish'
+                : 'After the required steps'
+              : step.id === 'after'
+                ? 'After publishing'
+                : step.passed
+                  ? 'Gone through'
+                  : what
+                    ? said(what)
+                    : 'To do';
+      return { number: step.number, name: step.name, mark: MARK_WORDS[step.mark], state, says };
+    });
+  return { steps, done: steps.filter((step) => step.state === 'done').length, open: journey.open.length };
+}
+
+/** What the start of the journey says the User is about to do and why, and what they get on the way (DEC-UX-271). */
+function startOf(resource: JourneyResource) {
+  const owner = resource.collection?.owner ?? 'its Owner Unit';
+  const where = resource.collection?.name ?? 'its Collection';
+  return {
+    what: `Together we write the card of this Resource, step by step, so that a colleague outside ${owner} can find it, understand it and trust it. At the end ${resource.mayPublish ? 'you publish it' : `an Owner of ${owner} publishes it`}, and everyone who sees ${where} can use it.`,
+    why: `Why: today only ${owner} and the Data Team see it, with a description from dbt that says how it is made, not what it means.`,
+    gets: [
+      { kind: 'cards', title: 'Learning Cards.', text: 'Under each step, "How can we help with this step?" lists the cards that explain it: a click opens one.' },
+      { kind: 'hub', title: 'Data Hub, one click away.', text: '"Open … in Data Hub" opens the same spot in Data Hub, where you can read and write too.' },
+      { kind: 'final', title: 'Nothing is final.', text: 'Everything you write you can change later, here or in Data Hub. Only publishing is for good.' },
+    ],
+  };
+}
 
 /** What is missing, in words, for Claude and the publication window. */
 function missingText(step: JourneyStepState, missing: JourneyMissing): string {
@@ -253,7 +350,7 @@ async function cardsOf(numbers: readonly string[], hub: Context['hub'], environm
 export function journeyTools({ server, hub, permits }: Context, read: (id: string) => Promise<JourneyResource>, environment?: string): void {
   const enc = encodeURIComponent;
   const id = z.string().min(1).describe('The ID of the Resource, from list_resources or search.');
-  const mayDescribe = permits.card.length > 0 || permits.fields;
+  const mayDescribe = permits.card.length > 0 || permits.fields || permits.gaps;
 
   server.registerTool(
     'guide_owner_journey',
@@ -284,10 +381,21 @@ export function journeyTools({ server, hub, permits }: Context, read: (id: strin
             cards: step.cards,
           })),
         );
+        const spot = spotOf(next);
         const guided = {
-          // The window of the step in the conversation (DEC-UX-261): what the step holds now, with its Learning Card.
+          // The window of the step in the conversation (DEC-CL-18, FR-CL-33): the start says what and why; every step
+          // keeps the overview at hand, what it holds now, what its text is for, its Learning Cards folded, and the
+          // link to the spot in Data Hub that it writes.
           view: 'journey',
-          window: { collection: resource.collection, held: heldOf(next, resource, journey), total: 12 },
+          window: {
+            collection: resource.collection,
+            held: heldOf(next, resource, journey, mayDescribe),
+            total: 12,
+            overview: overviewOf(journey, next.id),
+            ...(next.id === 'start' ? { start: startOf(resource) } : {}),
+            ...(PURPOSE[next.id] ? { purpose: PURPOSE[next.id] } : {}),
+            link: { url: hub.page(pages.resource(resource.id, spot.at)), label: spot.label },
+          },
           resource: { id: resource.id, displayName: resource.displayName, level: resource.levelName, collection: resource.collection?.name ?? null, owner, page: resource.page },
           you: { mayPublish: resource.mayPublish, mayDescribe },
           ready: journey.ready,

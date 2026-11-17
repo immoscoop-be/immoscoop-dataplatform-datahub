@@ -220,7 +220,7 @@ Whenever Claude uses a Resource, in a list, an answer or a query, it names its L
 
 Each tool that returns an object returns the address of its page in Data Hub, at the tab that matches what was asked: Overview, Columns, Lineage, History or Preview. Claude gives it with its answer, and every MCP App carries "Open in Data Hub" in place of the navigation of Data Hub ([components](../../design/components.md)). *Note of 2026-11-17: every such link has one form, with the mark of Data Hub, and leads to the spot ([DEC-CL-19](#dec-cl-19)).*
 
-*Note of 2026-11-01, on building it: the pages of the web app have no address per tab, so the link opens the page of the object.*
+*Note of 2026-11-01, on building it: the pages of the web app have no address per tab, so the link opens the page of the object.* *Note of 2026-11-17, on building [DEC-CL-19](#dec-cl-19): the page of a Resource now has an address per tab and per part of its Overview, such as `/resources/{id}/gaps`; the window of the Owner Journey links there, and the other MCP Apps to the tab they show.*
 
 *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 
@@ -471,7 +471,7 @@ The tool `record_journey_step` records, for a User who may describe the Resource
 <a id="fr-cl-33"></a>
 ### FR-CL-33 · The Owner Journey opens with what and why, keeps its overview at hand and folds its Learning Cards
 
-**Status:** Specified · **Source:** Max, 2026-11-17 ([DEC-CL-18](#dec-cl-18), [DEC-RC-27](05-resource-card.md#dec-rc-27)) · **Screens:** [owner-journey](../../design/screens/owner-journey.html)
+**Status:** Implemented · **Source:** Max, 2026-11-17 ([DEC-CL-18](#dec-cl-18), [DEC-RC-27](05-resource-card.md#dec-rc-27)) · **Screens:** [owner-journey](../../design/screens/owner-journey.html)
 
 The window of the Start step says what the Owner is about to do and why, what they get on the way (the Learning Cards behind their icon, the link to Data Hub, and that everything can be changed later except publishing), and shows the overview of the journey unfolded. Every other step shows the overview folded: the step it is, how many steps are done and how many required steps are still open; unfolded, each step with what the Resource holds for it, and whether it is required, needed for the EDA, or optional. The Learning Cards of a step are folded under "How can we help with this step?". At the steps Business Description and Fields, the window says that dbt says how the data is made and the Business Description what it represents and is used for, and Claude says the same in its own words. What is in a field is not shown yet ([DEC-RC-28](05-resource-card.md#dec-rc-28)). It refines [FR-CL-30](#fr-cl-30).
 
@@ -480,7 +480,7 @@ The window of the Start step says what the Owner is about to do and why, what th
 <a id="fr-cl-34"></a>
 ### FR-CL-34 · Claude writes a Known Gap with its scope
 
-**Status:** Specified · **Source:** Max, 2026-11-17 ([DEC-CL-20](#dec-cl-20)) · **Screens:** [owner-journey](../../design/screens/owner-journey.html)
+**Status:** Implemented · **Source:** Max, 2026-11-17 ([DEC-CL-20](#dec-cl-20)) · **Screens:** [owner-journey](../../design/screens/owner-journey.html)
 
 The MCP server has tools to add, change and remove one Known Gap of a Resource, each with its scope: a period, the fields that are empty or unreliable in it, and the rows it holds for ([FR-RC-24](05-resource-card.md#fr-rc-24)). They write through the same routes as the web app, check the same rules, and keep who added a gap when its text or scope changes. `update_resource_card` no longer takes the Known Gaps. At the step Known Gaps of the Owner Journey, Claude proposes a scope for every gap it proposes, from what it found in the data, and the window shows the scope of each gap next to its text, as the Summary does ([FR-RC-25](05-resource-card.md#fr-rc-25)).
 
@@ -489,7 +489,7 @@ The MCP server has tools to add, change and remove one Known Gap of a Resource, 
 <a id="fr-cl-35"></a>
 ### FR-CL-35 · Claude tells a Known Gap from a Pitfall
 
-**Status:** Specified · **Source:** Max, 2026-11-17 ([DEC-RC-26](05-resource-card.md#dec-rc-26)) · **Screens:** [owner-journey](../../design/screens/owner-journey.html)
+**Status:** Implemented · **Source:** Max, 2026-11-17 ([DEC-RC-26](05-resource-card.md#dec-rc-26)) · **Screens:** [owner-journey](../../design/screens/owner-journey.html)
 
 At the steps Pitfalls and Known Gaps of the Owner Journey, the window shows the test that tells them apart: a Known Gap would go away if the data were repaired; a Pitfall stays true even when every row is right. When the Owner proposes a text that reads as the other one, Claude says so, with the test, and offers to write it there instead; the Owner decides.
 

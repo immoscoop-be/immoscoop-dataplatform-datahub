@@ -118,7 +118,7 @@
           <p class="read">{card.keyFields.join(', ') || t('publish.none')} · {card.parameters.join(', ') || t('publish.none')}</p>
           <button type="button" class="text-link" onclick={onfields}>{t('publish.fields', { count: resource.fields.length, described: dbtFields })}<Icon name="arrow-right" /></button>
         </div>
-        <p class="meta text">{t('publish.notData')}</p>
+        <p class="meta text">{t('publish.notData')} {t('publish.changeLater')}</p>
       </section>
     {:else if described}
       <section class="block">

@@ -1,8 +1,9 @@
 /**
  * The page of the MCP App of Data Hub (FR-CL-01): one page that shows a Resource (FR-CL-07), a Preview
  * (FR-CL-09), a publication (FR-CL-12), the result of a query (FR-CL-21), a step of the Owner Journey with its
- * Learning Card (FR-CL-30, DEC-UX-261) or a whole Learning Card (FR-LR-26), by the `view` of the tool result.
- * It stands on its own, without the navigation of Data Hub, and carries "Open in Data Hub" (FR-CL-06). The
+ * overview and its Learning Cards folded (FR-CL-30, FR-CL-33) or a whole Learning Card (FR-LR-26), by the `view` of
+ * the tool result. It stands on its own, without the navigation of Data Hub, and carries a link to the spot in Data
+ * Hub, in one form with the mark of Data Hub (FR-CL-06, DEC-CL-19). The
  * buttons that approve, send a Request or publish call tools only the MCP App may call (DEC-CL-07). For a User
  * whose results show in a card only, it reads the rows itself, through tools only it may call, says under the grid
  * that Claude does not read them, and tells Claude no value of them (FR-CL-28, DEC-UX-193).
@@ -118,19 +119,61 @@ summary { cursor: pointer; font-size: var(--text-meta); color: var(--text-muted)
 /* In a card only: one line under the foot of the grid, that Claude does not read its rows (FR-CL-28, DEC-UX-193) */
 .result-private { display: flex; align-items: center; gap: 6px; margin: 0; font-size: var(--text-meta); color: var(--text-muted); }
 .result-private svg { flex: none; width: 14px; height: 14px; }
-/* The Owner Journey: the window of a step, with its progress, what it holds now and its Learning Card (DEC-UX-261) */
+/* Every link to Data Hub, one form: the mark of Data Hub, what it opens, the arrow of a link that leaves (DEC-UX-274) */
+.dh-link { display: inline-flex; align-items: center; gap: 6px; }
+.dh-mark { flex: none; }
+/* The Owner Journey: the window of a step (DEC-CL-18): the overview at hand, what the step holds now, what its text
+   is for, and its Learning Cards folded under "How can we help with this step?" (DEC-UX-271 to DEC-UX-275) */
+.ic { display: inline-flex; flex: none; }
+.ic svg { width: 1em; height: 1em; }
 .oj-progress { display: flex; gap: 3px; }
 .oj-progress i { flex: 1; height: 4px; border-radius: 2px; background: var(--tint-active); }
-.oj-progress i.done { background: var(--text-secondary); }
+.oj-progress i.done { background: var(--col-teal-ink); }
 .oj-progress i.now { background: var(--text-primary); }
+.oj-where { border-radius: var(--radius-md); background: var(--surface-sub); }
+.oj-where > summary { list-style: none; display: grid; gap: 8px; padding: 10px 12px; cursor: pointer; font-size: var(--text-small); color: var(--text-primary); }
+.oj-where > summary::-webkit-details-marker, .help-card > summary::-webkit-details-marker { display: none; }
+.oj-where .line { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.oj-where .where { flex: 1; min-width: 0; }
+.oj-where .where b, .help-card .tt { font-weight: var(--weight-medium); }
+.oj-where .tally { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-meta); color: var(--text-muted); }
+.oj-where .tally .open { color: var(--signal-warn); }
+.chev { color: var(--text-muted); transition: transform .15s ease; }
+details[open] > summary .chev { transform: rotate(180deg); }
+.oj-list { list-style: none; margin: 0; padding: 0 12px 8px; }
+.oj-list li { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 8px; align-items: baseline; padding: 6px 0; border-top: 1px solid var(--tint-hover); font-size: var(--text-small); }
+.oj-list li.now { font-weight: var(--weight-medium); }
+.oj-list .n { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.oj-list .mk { margin-left: 6px; font-size: var(--text-meta); font-weight: normal; color: var(--text-muted); }
+.oj-list .st { font-size: var(--text-meta); font-weight: normal; color: var(--text-muted); text-align: right; }
+.oj-list .st.done { color: var(--col-teal-ink); }
+.oj-list .st.missing { color: var(--signal-warn); }
+.oj-list .st.optional { font-style: italic; }
 .held + .held { margin-top: 10px; }
 .held p { margin: 0; }
 .held ul { margin: 2px 0 0; padding-left: 18px; }
+.held strong { font-weight: var(--weight-medium); }
+.held .gap + .gap { margin-top: 6px; }
+.scope { display: inline-flex; gap: 5px; margin: 4px 4px 0 0; padding: 2px 9px; border-radius: var(--radius-pill); background: var(--surface-solid); font-size: var(--text-meta); color: var(--text-secondary); }
+.scope .k { color: var(--text-muted); }
 .none { color: var(--text-muted); font-style: italic; }
-.lc-strip { border-radius: var(--radius-md); padding: 12px 14px; outline: 1px solid var(--tint-active); display: grid; gap: 6px; font-size: var(--text-small); }
-.lc-strip .t { font-weight: var(--weight-medium); display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; }
+.purpose { display: flex; align-items: flex-start; gap: 8px; margin: 0; padding: 8px 12px; border-radius: var(--radius-md); border: 1px dashed var(--tint-active); font-size: var(--text-small); color: var(--text-secondary); line-height: 1.5; }
+.purpose .ic { margin-top: 3px; color: var(--text-muted); }
+.purpose strong { color: var(--text-primary); font-weight: var(--weight-medium); }
+.gets { display: grid; gap: 8px; }
+.get { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 10px; align-items: start; font-size: var(--text-small); }
+.get > .ic, .get > .dh-mark { margin-top: 2px; font-size: 17px; color: var(--col-teal-ink); }
+.get p { margin: 0; }
+.get b { font-weight: var(--weight-medium); }
+.help { display: grid; gap: 4px; }
+.help > .label { display: flex; align-items: center; gap: 6px; }
+.help-card { border-radius: var(--radius-md); background: color-mix(in srgb, var(--col-teal-ink) 7%, var(--surface-solid)); }
+.help-card > summary { list-style: none; display: grid; grid-template-columns: 18px auto minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 8px 12px; cursor: pointer; font-size: var(--text-small); color: var(--text-primary); }
+.help-card > summary > .ic { font-size: 16px; color: var(--col-teal-ink); }
+.help-card .body { display: grid; gap: 4px; padding: 0 12px 10px 38px; font-size: var(--text-small); }
+.help-card .body p { margin: 0; }
+.help-card .acts { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin-top: 2px; }
 .num { font: var(--text-meta) var(--font-mono); color: var(--text-muted); }
-.lc-strip p { margin: 0; }
 .gain { color: var(--text-secondary); }
 /* A whole Learning Card, in its five steps (FR-LR-26) */
 .rule.big { font-size: 15px; line-height: 1.45; margin: 0; }
@@ -231,8 +274,19 @@ const day = (value) => (value ? new Date(value).toLocaleDateString('en-GB', { da
 const levelOf = (name) => Number(String(name ?? '').split(' ')[0]);
 const bars = (level) => '<span class="bars" aria-hidden="true">' + [0, 1, 2, 3, 4].map((n) => '<i class="' + (n < level ? 'on' : '') + '" style="height:' + (3 + n * 2) + 'px"></i>').join('') + '</span>';
 const level = (name) => (name ? '<span class="status">' + bars(levelOf(name)) + esc(name) + '</span>' : '');
-const link = (url, label) => (url ? '<a data-open="' + esc(url) + '">' + esc(label) + ' ↗</a>' : '');
-const foot = (note, url, label = 'Open in Data Hub') => '<div class="foot"><span>' + esc(note) + '</span>' + link(url, label) + '</div>';
+// The mark of Data Hub, its two rings, before every link to it (DEC-UX-274).
+const MARK = '<svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg>';
+const link = (url, label) => (url ? '<a class="dh-link" data-open="' + esc(url) + '">' + MARK + '<span>' + esc(label) + '</span> ↗</a>' : '');
+const foot = (note, url, label = 'Open the Resource in Data Hub') => '<div class="foot"><span>' + esc(note) + '</span>' + link(url, label) + '</div>';
+// A few drawings of Phosphor, inline: the sandbox loads nothing from outside.
+const PATHS = {
+  card: 'M176,207.24a119,119,0,0,0,16-7.73V240a8,8,0,0,1-16,0Zm11.76-88.43-56-29.87a8,8,0,0,0-7.52,14.12L171,128l17-9.06Zm64-29.87-120-64a8,8,0,0,0-7.52,0l-120,64a8,8,0,0,0,0,14.12L32,117.87v48.42a15.91,15.91,0,0,0,4.06,10.65C49.16,191.53,78.51,216,128,216a130,130,0,0,0,48-8.76V130.67L171,128l-43,22.93L43.83,106l0,0L25,96,128,41.07,231,96l-18.78,10-.06,0L188,118.94a8,8,0,0,1,4,6.93v73.64a115.63,115.63,0,0,0,27.94-22.57A15.91,15.91,0,0,0,224,166.29V117.87l27.76-14.81a8,8,0,0,0,0-14.12Z',
+  final: 'M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z',
+  caret: 'M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z',
+  info: 'M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z',
+  help: 'M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm39.1,131.79a47.84,47.84,0,0,0,0-55.58l28.5-28.49a87.83,87.83,0,0,1,0,112.56ZM96,128a32,32,0,1,1,32,32A32,32,0,0,1,96,128Zm88.28-67.6L155.79,88.9a47.84,47.84,0,0,0-55.58,0L71.72,60.4a87.83,87.83,0,0,1,112.56,0ZM60.4,71.72l28.5,28.49a47.84,47.84,0,0,0,0,55.58L60.4,184.28a87.83,87.83,0,0,1,0-112.56ZM71.72,195.6l28.49-28.5a47.84,47.84,0,0,0,55.58,0l28.49,28.5a87.83,87.83,0,0,1-112.56,0Z',
+};
+const ic = (name, cls = '') => '<span class="ic' + (cls ? ' ' + cls : '') + '" aria-hidden="true"><svg viewBox="0 0 256 256" fill="currentColor"><path d="' + PATHS[name] + '"/></svg></span>';
 // The Collection of a card, with its icon: a drawing of Phosphor that mcp read itself, never text of a User (DEC-UX-164).
 const icon = (svg) => (typeof svg === 'string' && svg.startsWith('<svg') ? '<span class="ci" aria-hidden="true">' + svg + '</span>' : '');
 const of = (collection) => (collection ? ' · ' + icon(collection.icon) + esc(collection.name) : '');
@@ -347,7 +401,7 @@ function renderResource(r, parts) {
     (r.fields ?? []).map((f) => '<tr><td class="mono name">' + esc(f.name) + '</td><td class="meta type">' + esc(f.dataType) + '</td><td data-label="Business Description, from the Owner">' + (esc(f.businessDescription) || '–') + '</td><td data-label="Description, from dbt">' + (esc(f.description) || '–') + '</td><td>' + role(f.name) + '</td></tr>').join('') + '</tbody></table>';
   root.innerHTML = head(kind, r.displayName, r.key, '', r.collection) + state + dep + changes +
     '<div class="tabs"><button class="tab' + (tab === 'columns' ? '' : ' on') + '" data-tab="summary">Summary</button><button class="tab' + (tab === 'columns' ? ' on' : '') + '" data-tab="columns">Columns</button></div>' +
-    (tab === 'columns' ? columns : summary) + foot('As you see it in Data Hub', r.page);
+    (tab === 'columns' ? columns : summary) + (tab === 'columns' ? foot('As you see it in Data Hub', r.page + '/columns', 'Open Columns in Data Hub') : foot('As you see it in Data Hub', r.page));
 }
 
 function renderPreview(v) {
@@ -362,7 +416,7 @@ function renderPreview(v) {
   }).join('');
   const pf = v.preflight ? '<span class="preflight">' + (v.outcome === 'ran' ? 'Scanned ' : 'Reads ') + esc(v.reads ?? '?') + (v.preflight.partitions !== null && v.preflight.partitions !== undefined ? ' · ' + esc(v.preflight.partitions) + ' partitions' : '') + '</span>' : '';
   const body = v.outcome === 'ran' ? rowsOf(v) + privately(v) : v.outcome === 'approve' ? approvePanel(v.reads, v.request, v.preflight) : v.outcome === 'request' ? requestPanel(v.reads, v.request, v.preflight) : problems(v.preflight, v.problem);
-  root.innerHTML = head('Preview', v.resource.displayName, null, level(v.resource.levelName), v.collection) + '<div class="params">' + windowSelect + choices + pf + '</div>' + body + foot('Kept in your Query Log, as a preview', v.resource.page);
+  root.innerHTML = head('Preview', v.resource.displayName, null, level(v.resource.levelName), v.collection) + '<div class="params">' + windowSelect + choices + pf + '</div>' + body + foot('Kept in your Query Log, as a preview', v.resource.page + '/preview', 'Open the Preview in Data Hub');
 }
 
 function renderPublish(v) {
@@ -371,7 +425,7 @@ function renderPublish(v) {
   if (r.published) {
     root.innerHTML = head('Publish · Resource', r.displayName, null, level(r.levelName), r.collection) +
       '<div class="checks"><div>✓ <b>Published and confirmed</b> on ' + esc(day(r.publication?.publishedAt)) + ' by ' + esc(r.publication?.publishedBy) + ', for ' + esc(owner) + '. It does not expire; a field that changes later gives a warning, and the Level stays.</div><div>✓ Everyone who sees ' + esc(r.collection?.name ?? 'its Collection') + ' sees it now.</div></div>' +
-      foot('Kept in the Log of the Resource', r.page);
+      foot('Kept in the Log of the Resource', r.page + '/maturity', 'Open Maturity in Data Hub');
     return;
   }
   const who = r.collection?.visibility === 'public' ? 'the whole company, as the Collection is public' : 'everyone who sees the Collection';
@@ -402,7 +456,7 @@ function renderPublish(v) {
     '<div><div class="label">What Data Hub checked</div>' + checks + '</div>' +
     (v.ready ? read : '') +
     '<div class="declare"><label><input type="checkbox" id="declare"' + (may && v.ready ? '' : ' disabled') + '><span>' + esc(declaration) + '</span></label><button class="primary" data-act="publish" data-declaration="' + esc(declaration) + '" disabled>Publish and confirm</button></div>' +
-    foot('Only you can publish it; Claude cannot.', r.page);
+    foot('Only you can publish it; Claude cannot.', r.page + '/maturity', 'Open Maturity in Data Hub');
   const box = document.getElementById('declare');
   const button = root.querySelector('[data-act="publish"]');
   box.addEventListener('change', () => { button.disabled = !box.checked; });
@@ -418,34 +472,64 @@ function renderQuery(v) {
     : v.outcome === 'expired' ? '<p class="meta">BigQuery no longer keeps the result of its last run.</p>'
     : problems(v.preflight, v.problem);
   root.innerHTML = head('Query · yours', q.name, q.question, '', v.collection) + reads + body +
-    '<details><summary>The SQL</summary><pre>' + esc(v.sql) + '</pre></details>' + foot('In your panel of Query', q.page, 'Open in Query');
+    '<details><summary>The SQL</summary><pre>' + esc(v.sql) + '</pre></details>' + foot('In your panel of Query', q.page, 'Open the query in Data Hub');
 }
 
-// What a step of the Owner Journey holds now: a text, lines, chips, or what is not there (DEC-UX-261).
+// The scope of a Known Gap, as the Summary shows it after its text (FR-RC-25, FR-CL-34).
+const scopeChips = (scope) => {
+  if (!scope) return '';
+  const chips = [];
+  if (scope.period) chips.push(['Period', scope.period.from && scope.period.to ? day(scope.period.from) + ' – ' + day(scope.period.to) : scope.period.from ? 'from ' + day(scope.period.from) : 'until ' + day(scope.period.to)]);
+  if (scope.fields && scope.fields.length) chips.push(['Fields', scope.fields.join(', ')]);
+  if (scope.rows) chips.push(['Rows', scope.rows.field + (scope.rows.is === 'empty' ? ' is empty' : ' is ' + scope.rows.values.join(', '))]);
+  return chips.length ? '<div>' + chips.map(([k, v]) => '<span class="scope"><span class="k">' + esc(k) + '</span>' + esc(v) + '</span>').join('') + '</div>' : '';
+};
+// What a step of the Owner Journey holds now: a text, lines, chips, gaps with their scope, or what is not there.
 const heldPart = (h) => '<div class="held"><div class="label">' + esc(h.label) + (h.origin ? '<span class="origin">' + esc(h.origin) + '</span>' : '') + '</div>' +
   (h.text ? markdown(h.text)
+    : h.gaps && h.gaps.length ? h.gaps.map((gap) => '<div class="gap">' + markdown(gap.text) + scopeChips(gap.scope) + '</div>').join('')
     : h.items && h.items.length ? '<ul>' + h.items.map((item) => '<li>' + inline(item) + '</li>').join('') + '</ul>'
     : h.chips && h.chips.length ? '<div>' + h.chips.map((chip) => '<span class="chip">' + esc(chip) + '</span>').join('') + '</div>'
     : '<p class="none">' + esc(h.none || '') + '</p>') + '</div>';
-// The Learning Card of a step as a strip; the whole card only when the User asks for it (DEC-UX-261).
-const strip = (c) => '<div class="lc-strip"><div class="t"><span class="num">' + esc(c.number) + '</span>' + esc(c.title || '') + (c.written === false ? '<span class="pill">Not written yet</span>' : '') + '</div>' +
-  (c.coreIdea ? '<p>' + inline(c.coreIdea) + '</p>' : '') + (c.gain ? '<p class="gain">' + esc(c.gain) + '</p>' : '') +
-  (c.written === false ? '' : '<div class="row"><button class="quiet" data-card="' + esc(c.number) + '" data-title="' + esc(c.title || '') + '">Read the card</button></div>') + '</div>';
+// A Learning Card of a step, folded to one line: its icon, number and title; unfolded, its core idea, what it brings,
+// "Read the card" and its link in Data Hub (DEC-UX-273). A card not written yet goes by its number and title only.
+const helpCard = (c) => '<details class="help-card"><summary>' + ic('card') + '<span class="num">' + esc(c.number) + '</span><span class="tt">' + esc(c.title || '') + (c.written === false ? ' <span class="pill">Not written yet</span>' : '') + '</span>' + ic('caret', 'chev') + '</summary>' +
+  '<div class="body">' + (c.coreIdea ? '<p>' + inline(c.coreIdea) + '</p>' : '') + (c.gain ? '<p class="gain">' + esc(c.gain) + '</p>' : '') +
+  (c.written === false ? '' : '<div class="acts"><button class="quiet" data-card="' + esc(c.number) + '" data-title="' + esc(c.title || '') + '">Read the card</button>' + link(c.page, 'Open the card in Data Hub') + '</div>') + '</div></details>';
+// Whether the overview is open: unfolded at the start, folded on every other step, unless the User opened or folded
+// it on this step.
+let overviewAt = { step: null, open: false };
 
 function renderJourney(v) {
   const w = v.window || {};
   const r = v.resource;
   const total = w.total || 12;
   const at = v.next.number;
-  const steps = v.steps || [];
-  const dots = '<div class="oj-progress" role="img" aria-label="' + esc(at > 0 ? 'Step ' + at + ' of ' + total : 'Before step 1') + '">' +
-    steps.filter((step) => step.number > 0).map((step) => '<i class="' + (step.number === at ? 'now' : step.status === 'done' ? 'done' : '') + '" title="' + esc(step.number + ' · ' + step.name) + '"></i>').join('') + '</div>';
+  const start = v.next.step === 'start';
+  const o = w.overview || { steps: [], done: 0, open: 0 };
+  // The overview at hand (DEC-UX-272): folded on every step, unfolded at the start.
+  const bar = '<div class="oj-progress" role="img" aria-label="' + esc(at > 0 ? 'Step ' + at + ' of ' + total : 'Before step 1') + '">' +
+    o.steps.map((step) => '<i class="' + (step.state === 'now' ? 'now' : step.state === 'done' ? 'done' : '') + '" title="' + esc(step.number + ' · ' + step.name) + '"></i>').join('') + '</div>';
+  const where = '<span class="where">' + (start ? '<b>The road ahead</b> · ' + total + ' steps' : 'Step ' + at + ' of ' + total + ' · <b>' + esc(v.next.name) + '</b>') + '</span>';
+  const tally = '<span class="tally">' + o.done + ' done · <span class="open">' + o.open + ' required still open</span>' + ic('caret', 'chev') + '</span>';
+  const list = '<ol class="oj-list">' + o.steps.map((step) => '<li class="' + (step.state === 'now' ? 'now' : '') + '"><span class="n">' + step.number + '</span><span>' + esc(step.name) + (step.mark ? '<span class="mk">' + esc(step.mark) + '</span>' : '') + '</span><span class="st ' + esc(step.state) + '">' + esc(step.says) + '</span></li>').join('') + '</ol>';
+  const open = overviewAt.step === v.next.step ? overviewAt.open : start;
+  const overview = '<details class="oj-where" data-overview' + (open ? ' open' : '') + '><summary>' + bar + '<span class="line">' + where + tally + '</span></summary>' + list + '</details>';
+  // The start says what the User is about to do and why, and what they get on the way (DEC-UX-271).
+  const s = w.start;
+  const what = s ? '<div class="tile"><div class="label">What we are going to do</div><p style="margin:0 0 6px">' + esc(s.what) + '</p><p class="meta">' + esc(s.why) + '</p></div>' : '';
+  const gets = s ? '<div class="tile gets"><div class="label">What you get on the way</div>' + s.gets.map((g) => '<div class="get">' + (g.kind === 'hub' ? MARK : ic(g.kind === 'cards' ? 'card' : 'final')) + '<p><b>' + esc(g.title) + '</b> ' + esc(g.text) + '</p></div>').join('') + '</div>' : '';
   const mark = v.next.mark ? '<span class="pill">' + esc(v.next.mark.charAt(0).toUpperCase() + v.next.mark.slice(1)) + '</span>' : '';
-  const now = '<div><span class="meta">' + esc(at > 0 ? 'Step ' + at + ' of ' + total : 'The start') + '</span><div class="row"><span class="title">' + esc(v.next.name) + '</span>' + mark + '</div></div>';
+  const now = start ? '' : '<div class="row"><span class="title">' + esc(v.next.name) + '</span>' + mark + '</div>';
+  const purpose = w.purpose ? '<p class="purpose">' + ic('info') + '<span>' + inline(w.purpose) + '</span></p>' : '';
+  const cards = (v.next.cards || []).length ? '<div class="help"><span class="label">' + ic('help') + 'How can we help with this step?</span>' + v.next.cards.map(helpCard).join('') + '</div>' : '';
   const collection = w.collection ? { ...w.collection, name: w.collection.name + ' · Owner: ' + w.collection.owner } : null;
-  const note = v.next.writes ? 'Written with ' + v.next.writes + ', once you agree.' : 'Nothing is written in this step.';
-  root.innerHTML = head('Owner Journey', r.displayName, null, '', collection) + dots + now +
-    '<div class="tile">' + (w.held || []).map(heldPart).join('') + '</div>' + (v.next.cards || []).map(strip).join('') + foot(note, r.page);
+  const note = v.next.writes ? 'Written with ' + v.next.writes + ', once you agree.' : start ? 'The journey is kept with the Resource: you, or a colleague of its Owner Unit, go on where it stopped.' : 'Nothing is written in this step.';
+  const out = w.link || { url: r.page, label: 'Open the Resource in Data Hub' };
+  root.innerHTML = head('Owner Journey', r.displayName, null, level(r.level), collection) + what + overview + gets + now +
+    '<div class="tile">' + (w.held || []).map(heldPart).join('') + '</div>' + purpose + cards + foot(note, out.url, out.label);
+  const details = root.querySelector('[data-overview]');
+  details?.querySelector('summary')?.addEventListener('click', () => { overviewAt = { step: v.next.step, open: !details.open }; });
 }
 
 // The five steps of a card, in the language of the card (FR-LR-26); its chart is on its page in Data Hub.
