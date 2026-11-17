@@ -105,6 +105,11 @@ describe('normalise', () => {
     ]);
   });
 
+  it('names the tables the catalog lacks, so that their columns can come from BigQuery (EC-AR-06)', () => {
+    // The snapshot builds a table the catalog does not list; the ephemeral model builds none, and sources and exposures do not count.
+    expect(set.uncatalogued).toEqual([`snapshot.${P}.orders_history`]);
+  });
+
   it('links each Node to the Nodes it depends on, once, and only to Nodes', () => {
     const parents = (id: string) =>
       set.edges

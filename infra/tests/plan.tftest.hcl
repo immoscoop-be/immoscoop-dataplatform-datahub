@@ -673,6 +673,29 @@ run "query_runs_jobs_reads_the_tables_and_asks_catalogue" {
   }
 }
 
+run "registry_reads_the_schemas_of_the_tables_never_their_rows" {
+  command = plan
+
+  override_resource {
+    target          = google_service_account.service["registry"]
+    override_during = plan
+    values = {
+      email  = "datahub-registry@test-project.iam.gserviceaccount.com"
+      member = "serviceAccount:datahub-registry@test-project.iam.gserviceaccount.com"
+    }
+  }
+
+  assert {
+    condition     = google_project_iam_member.registry_reads_schemas.role == "roles/bigquery.metadataViewer" && google_project_iam_member.registry_reads_schemas.project == "test-project" && google_project_iam_member.registry_reads_schemas.member == "serviceAccount:datahub-registry@test-project.iam.gserviceaccount.com"
+    error_message = "registry reads the schemas of the tables a catalog lacks, and no rows (EC-AR-06, TR-AR-15)."
+  }
+
+  assert {
+    condition     = google_cloud_run_v2_job.registry_ingest.template[0].template[0].service_account == "datahub-registry@test-project.iam.gserviceaccount.com"
+    error_message = "The ingest job, which reads those schemas, runs as registry."
+  }
+}
+
 run "no_service_keeps_an_instance_running_and_none_is_kept_warm_unless_the_environment_says_so" {
   command = plan
 

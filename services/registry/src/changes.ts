@@ -86,7 +86,7 @@ export function compare(before: Version, after: Version): NodeChange[] {
       if (!prior) {
         changes.push({ kind: 'structural', ...of, field: name, direction: 'added' });
       } else {
-        if ((prior.dataType ?? '') !== (column.dataType ?? '')) changes.push({ kind: 'type', ...of, field: name, old: prior.dataType, new: column.dataType });
+        if (retyped(prior.dataType, column.dataType)) changes.push({ kind: 'type', ...of, field: name, old: prior.dataType, new: column.dataType });
         if (prior.description !== column.description) described = true;
       }
     }
@@ -207,4 +207,13 @@ function childrenOf(rows: readonly { parentId: string; childId: string }[]): Map
     (children.get(parentId) ?? children.set(parentId, []).get(parentId)!).push(childId);
   }
   return children;
+}
+
+/**
+ * Whether a field changed type: only when both types are known and differ, written the same way. A type that becomes
+ * known, from BigQuery for a table the catalog lacked (EC-AR-06), or that is no longer known, is no change of the data.
+ */
+export function retyped(before: string | null, after: string | null): boolean {
+  const written = (type: string) => type.toUpperCase().replace(/\s+/g, '');
+  return before !== null && after !== null && before.trim() !== '' && after.trim() !== '' && written(before) !== written(after);
 }

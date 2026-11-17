@@ -153,7 +153,8 @@
 <style>
   .over { display: block; margin: 0 0 2px; }
   .chips { margin-top: 14px; }
-  .list { margin: 6px -4px 0; }
+  /* Only the Messages scroll: the new Message and the chips stay on top, the foot at the bottom (.sheet-list in base.css) */
+  .list { flex: 1; min-height: 0; overflow-y: auto; margin: 6px -4px 0; padding: 0 4px; }
   .none { padding: 12px 4px; }
   .note { flex: 1; margin: 0; }
   .link { display: inline-flex; align-items: center; gap: 5px; font-size: var(--text-small); color: var(--text-primary); text-decoration: none; }

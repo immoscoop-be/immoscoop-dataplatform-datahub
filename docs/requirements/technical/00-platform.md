@@ -135,7 +135,7 @@ The request and response schemas of every service are defined with zod in `packa
 | --- | --- |
 | identity | The Data Hub user reader admin role in Workspace, and Groups Reader until the Owner Units moved ([OP-UM-03](../functional/02-user-management.md#op-um-03), [TR-PF-26](#tr-pf-26), [TR-UM-04](02-user-management.md#tr-um-04)); Cloud SQL client; signing with its key in Cloud KMS ([TR-PF-24](#tr-pf-24)) |
 | catalogue | Cloud SQL client |
-| registry | Cloud SQL client; write access to the artifact bucket; the dbt Cloud token and the webhook secret from Secret Manager; starting its ingest job ([TR-AR-01](01-artifact-registry.md#tr-ar-01)), which runs as the same service account |
+| registry | Cloud SQL client; write access to the artifact bucket; the dbt Cloud token and the webhook secret from Secret Manager; starting its ingest job ([TR-AR-01](01-artifact-registry.md#tr-ar-01)), which runs as the same service account; BigQuery Metadata Viewer on the project of Data Hub, for the schemas of the tables a catalog lacks, never their rows ([TR-AR-15](01-artifact-registry.md#tr-ar-15)) |
 | query | BigQuery Data Viewer on the project of Data Hub, where the tables of its dbt projects are ([DEC-SR-32](../functional/04-stacks-and-resources.md#dec-sr-32)), and BigQuery Job User; Cloud SQL client, for its queries and the Query Log ([DEC-PF-29](#dec-pf-29)) |
 | semgraph | None: no data and no secrets, as it is open to everyone ([DEC-PF-24](#dec-pf-24)) |
 | web, mcp | None beyond calling the services; web keeps the Refresh Tokens of its Users in their cookies, not in a store of its own |

@@ -177,3 +177,13 @@ The Changes go with the tables to `POST /internal/resources`, as `changes`: per 
 ## Open points
 
 None yet.
+
+<a id="tr-ar-15"></a>
+### TR-AR-15 · The ingest job reads the columns of the tables the catalog lacks from BigQuery
+
+**Status:** Implemented · **Realises:** [EC-AR-06](../functional/01-artifact-registry.md#ec-ar-06), [DEC-AR-12](../functional/01-artifact-registry.md#dec-ar-12)
+
+When it normalises a set ([TR-AR-03](#tr-ar-03)), the ingest job names the models, seeds and snapshots with a table that the catalog lacks. Before the set is saved, it asks BigQuery for the schema of each of those tables, eight at a time, with `tables.get` and only its schema: never a row, and nothing billed. Each column gets its name, its position, its type in GoogleSQL as the catalog writes it (`INT64`, `NUMERIC(10, 2)`, `STRUCT<city STRING>`, `ARRAY<STRING>`), and the fields of a record as columns of their own, `parent.child`; its description and meta come from the manifest, else the description BigQuery keeps. A table BigQuery answers 404 or 403 for keeps the columns of the manifest; any other failure fails the set. The service account of registry, which its ingest job runs as, has BigQuery Metadata Viewer on the project of Data Hub for it ([TR-PF-11](00-platform.md#tr-pf-11)). A Change of type is only found when both types are known and differ, written the same way ([TR-AR-14](#tr-ar-14)), and catalogue counts a field as retyped by the same rule ([TR-SR-13](04-stacks-and-resources.md#tr-sr-13)).
+
+A job whose own steps run `dbt docs generate` counts as generating the docs, as one with "Generate docs on run" does ([EC-AR-02](../functional/01-artifact-registry.md#ec-ar-02)): a Source Job may run it with a selection of its own, so that the catalog has every model.
+

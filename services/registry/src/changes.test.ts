@@ -3,7 +3,7 @@ import { createDatabase, migrate, type Database } from '@datahub/db';
 import { type Kysely, sql } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createArtifactSets } from './artifact-sets.js';
-import { compare, createChanges, propagate, type Version } from './changes.js';
+import { compare, createChanges, propagate, retyped, type Version } from './changes.js';
 import type { RegistryDatabase } from './database.js';
 import { sampleCatalog, sampleManifest } from './fixtures.js';
 import { migrations } from './migrations/index.js';
@@ -63,6 +63,17 @@ describe('the Changes between two versions of a dbt project (FR-AR-11)', () => {
       { kind: 'description', nodeId: 'model.p.visits', node: 'visits' },
     ]);
     expect(compare(before, before)).toEqual([]);
+  });
+
+  it('sees no type change in a type that only becomes known, or is no longer known (EC-AR-06)', () => {
+    const untyped: Version = { nodes: [node('model.p.companies')], columns: [column('model.p.companies', 'scoopStartDate', null)] };
+    const typed: Version = { nodes: [node('model.p.companies')], columns: [column('model.p.companies', 'scoopStartDate', 'DATE')] };
+    expect(compare(untyped, typed)).toEqual([]);
+    expect(compare(typed, untyped)).toEqual([]);
+    // Written alike, from the catalog or from BigQuery, it is the same type.
+    expect(retyped('NUMERIC(10, 2)', 'numeric(10,2)')).toBe(false);
+    expect(retyped('STRUCT<city STRING>', 'STRUCT<city STRING, zip INT64>')).toBe(true);
+    expect(retyped('', 'DATE')).toBe(false);
   });
 
   it('follows each Change downstream to the tables of Resources, however deep, at the shortest distance (FR-AR-12, EC-AR-04)', () => {

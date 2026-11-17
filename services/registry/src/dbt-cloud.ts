@@ -133,7 +133,7 @@ export function createDbtCloud(options: DbtCloudOptions): DbtCloud {
             environmentId,
             environmentName: environmentId ? (environments.get(environmentId) ?? null) : null,
             kind: kindOf(job),
-            generatesDocs: job.generate_docs === true,
+            generatesDocs: generatesDocs(job),
             lastRun: job.most_recent_run ? { at: job.most_recent_run.finished_at ?? job.most_recent_run.created_at ?? null, status: job.most_recent_run.status_humanized ?? null } : null,
           };
         });
@@ -151,8 +151,18 @@ interface RawJob {
   state?: number;
   job_type?: string | null;
   generate_docs?: boolean;
+  /** Its commands, such as `dbt build`, in the order they run. */
+  execute_steps?: string[] | null;
   triggers?: { github_webhook?: boolean; git_provider_webhook?: boolean; schedule?: boolean; on_merge?: boolean };
   most_recent_run?: { finished_at?: string | null; created_at?: string | null; status_humanized?: string | null } | null;
+}
+
+/**
+ * Whether its runs have a catalog (EC-AR-02): "Generate docs on run" is on, or one of its own commands is
+ * `dbt docs generate`, such as one with a selection of its own so that the catalog has every model (EC-AR-06).
+ */
+export function generatesDocs(job: Pick<RawJob, 'generate_docs' | 'execute_steps'>): boolean {
+  return job.generate_docs === true || (job.execute_steps ?? []).some((step) => /^\s*dbt\s+docs\s+generate\b/.test(step));
 }
 
 /** What a job does, from its type, or else from what triggers it. */

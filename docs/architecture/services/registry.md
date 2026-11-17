@@ -25,7 +25,7 @@ In the proposal this service was called ingest, as a Cloud Run job. It became a 
 
 1. A Source Job finishes in dbt Cloud, which calls `POST /webhooks/dbt-cloud`, signed with the shared secret ([TR-AR-01](../../requirements/technical/01-artifact-registry.md#tr-ar-01)).
 2. registry checks the signature, records the run once as a pending Artifact Set when it comes from a Source Job, starts the job `datahub-registry-ingest` and answers. It keeps every delivery, with what it did with it ([TR-AR-13](../../requirements/technical/01-artifact-registry.md#tr-ar-13)).
-3. The job fetches `manifest.json` and `catalog.json`, stores them unchanged in the artifact bucket ([TR-AR-02](../../requirements/technical/01-artifact-registry.md#tr-ar-02)), normalises them ([TR-AR-03](../../requirements/technical/01-artifact-registry.md#tr-ar-03)), and makes the set the Current Version in the same transaction ([TR-AR-04](../../requirements/technical/01-artifact-registry.md#tr-ar-04)).
+3. The job fetches `manifest.json` and `catalog.json`, stores them unchanged in the artifact bucket ([TR-AR-02](../../requirements/technical/01-artifact-registry.md#tr-ar-02)), normalises them ([TR-AR-03](../../requirements/technical/01-artifact-registry.md#tr-ar-03)), reads from BigQuery the columns of the tables the catalog lacks, such as the models the default selector of the dbt project leaves out of `dbt docs generate` ([TR-AR-15](../../requirements/technical/01-artifact-registry.md#tr-ar-15)), and makes the set the Current Version in the same transaction ([TR-AR-04](../../requirements/technical/01-artifact-registry.md#tr-ar-04)).
 
 ## API
 
@@ -59,7 +59,7 @@ The dbt projects Data Hub follows with their Source Jobs, which a Data Admin set
 
 ## Talks to
 
-The dbt Cloud Admin API, for the artifacts of a run and the jobs and environments of a dbt project; the artifact bucket; and catalogue, with the service identity: after every new Current Version, the tables under the exposures tagged `datahub`, with their columns and the checksum of their code ([TR-AR-08](../../requirements/technical/01-artifact-registry.md#tr-ar-08)), and the Changes since the previous Current Version with the tables they reach ([TR-AR-14](../../requirements/technical/01-artifact-registry.md#tr-ar-14)).
+The dbt Cloud Admin API, for the artifacts of a run and the jobs and environments of a dbt project; the artifact bucket; the BigQuery API, for the schema of a table the catalog lacks ([TR-AR-15](../../requirements/technical/01-artifact-registry.md#tr-ar-15)); and catalogue, with the service identity: after every new Current Version, the tables under the exposures tagged `datahub`, with their columns and the checksum of their code ([TR-AR-08](../../requirements/technical/01-artifact-registry.md#tr-ar-08)), and the Changes since the previous Current Version with the tables they reach ([TR-AR-14](../../requirements/technical/01-artifact-registry.md#tr-ar-14)).
 
 The collector of Colleciónes, `GET /domain-model/immoscoop` at `https://colleciones-eventos.immoscoop.be`, its public API, for the whole contract of the Domain Model in use, read each time it is needed ([DEC-AR-04](../../requirements/functional/01-artifact-registry.md#dec-ar-04), [TR-AR-09](../../requirements/technical/01-artifact-registry.md#tr-ar-09)). The routes are below.
 
@@ -86,4 +86,4 @@ The collector serves the Domain Model it validates events against, read in real 
 
 ## Permissions
 
-See [TR-PF-11](../../requirements/technical/00-platform.md#tr-pf-11): Cloud SQL client, write access to the artifact bucket, the dbt Cloud token and the webhook secret from Secret Manager, and starting its ingest job, which runs under the same service account.
+See [TR-PF-11](../../requirements/technical/00-platform.md#tr-pf-11): Cloud SQL client, write access to the artifact bucket, the dbt Cloud token and the webhook secret from Secret Manager, starting its ingest job, which runs under the same service account, and BigQuery Metadata Viewer on the project, for the schemas of the tables a catalog lacks ([TR-AR-15](../../requirements/technical/01-artifact-registry.md#tr-ar-15)).
