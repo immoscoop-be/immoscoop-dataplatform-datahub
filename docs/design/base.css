@@ -2620,3 +2620,43 @@ body.oj-plain .oj-tag { visibility: hidden; }
   .wl-row > :nth-child(n+3) { grid-column: 2; }
 }
 @media (max-width: 700px) { .wl-cards { grid-template-columns: minmax(0, 1fr); } }
+
+/* What a Lens shows of how it is found (OP-UX-96): for everyone, how many colleagues used it this month, its Questions it
+   answers and the Lenses colleagues who found it also used; for its Owner Unit and the Data Team, the searches that led
+   to a run of it with who and when, and the Lenses that answer the same searches; in Edit more, its Questions it answers */
+.fo-head-use { margin-top: 10px; }
+.fo-qs { margin: 6px 0 0; padding: 0; list-style: none; display: grid; gap: 3px; }
+.fo-qs li { font-style: italic; font-weight: var(--weight-light); font-size: var(--text-body); color: var(--text-primary); }
+.fo-also { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 8px; }
+.fo-also-item, .fo-same { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface-solid); color: inherit; text-decoration: none; }
+.fo-also-item:hover, .fo-same:hover { outline: 1px solid var(--tint-active); }
+.fo-also-item > i, .fo-same > i { font-size: 30px; color: var(--text-secondary); flex: none; }
+.fo-also-item > span, .fo-same-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.fo-also-q { font-style: italic; font-weight: var(--weight-light); font-size: var(--text-body); line-height: 1.4; }
+.fo-also-lens { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-small); font-weight: var(--weight-semibold); }
+.fo-owner { outline: 1px dashed var(--tint-active); }
+.fo-owner-label { display: flex; align-items: center; gap: 8px; }
+.fo-searches { width: 100%; }
+.fo-searches td:first-child { font-size: var(--text-body); }
+.fo-who { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.fo-act { text-align: right; white-space: nowrap; }
+.fo-add { padding: 4px 10px; font-size: var(--text-meta); display: inline-flex; align-items: center; gap: 4px; }
+.fo-added { display: inline-flex; align-items: center; gap: 4px; font-size: var(--text-meta); color: var(--col-teal-ink); }
+.fo-same { margin-top: 8px; align-items: center; }
+.fo-same .fo-same-text { flex: 1; }
+.fo-same > .meta { flex: none; }
+.eq-field { display: flex; flex-direction: column; gap: 8px; }
+.eq-list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.eq-list li { display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 12px; border-radius: var(--radius-field); background: var(--surface-sub); font-size: var(--text-body); }
+.eq-list li > span:first-child { flex: 1; font-style: italic; }
+.eq-list .icon-btn { width: 26px; height: 26px; font-size: 13px; }
+.eq-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.eq-pick > .meta { flex-basis: 100%; }
+.eq-sugg { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border: 0; border-radius: var(--radius-pill); background: var(--surface-soft); outline: 1px dashed var(--tint-active); font: var(--text-small) var(--font-family); color: var(--text-secondary); cursor: pointer; }
+.eq-sugg:hover { background: var(--tint-hover); }
+.ex-none { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: var(--radius-md); background: var(--surface-sub); font-size: var(--text-small); line-height: 1.5; }
+.ex-none > i { font-size: 22px; color: var(--text-secondary); flex: none; }
+.ex-none p { flex: 1; margin: 0; }
+.ex-none b { font-weight: var(--weight-medium); }
+.ex-none .btn-quiet { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+@media (max-width: 1000px) { .fo-also { grid-template-columns: minmax(0, 1fr); } .ex-none { flex-wrap: wrap; } }
