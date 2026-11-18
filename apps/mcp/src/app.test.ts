@@ -186,9 +186,9 @@ describe('mcp', () => {
   it('keeps the buttons of the User from Claude: those tools are for the MCP App only (DEC-CL-07)', async () => {
     const tools: { name: string; _meta?: { ui?: { visibility?: string[]; resourceUri?: string } } }[] = (await call('tools/list', {}, await issuer.sign())).json().result.tools;
     const appOnly = tools.filter((item) => item._meta?.ui?.visibility?.join() === 'app').map((item) => item.name);
-    expect(appOnly.sort()).toEqual(['confirm_publication', 'run_preview_approved', 'run_query_approved', 'send_preview_request', 'send_query_request']);
+    expect(appOnly.sort()).toEqual(['confirm_publication', 'run_lens_approved', 'run_preview_approved', 'run_query_approved', 'send_preview_request', 'send_query_request']);
     const shows = tools.filter((item) => item._meta?.ui?.resourceUri === VIEW_URI && !item._meta.ui.visibility).map((item) => item.name);
-    expect(shows.sort()).toEqual(['guide_owner_journey', 'preview_resource', 'publish_resource', 'run_query', 'show_learning_card', 'show_query', 'show_resource']);
+    expect(shows.sort()).toEqual(['guide_owner_journey', 'preview_resource', 'publish_resource', 'run_lens', 'run_query', 'show_learning_card', 'show_query', 'show_resource']);
   });
 
   it('serves the MCP App as one self-contained page (FR-CL-01)', async () => {
@@ -524,20 +524,23 @@ describe('queries through Claude', () => {
 });
 
 describe('the Permissions of the User in Claude (TR-PL-09)', () => {
-  const READS = ['explain', 'get_messages', 'get_related_resources', 'get_resource', 'get_resource_lineage', 'get_resource_log', 'guide_owner_journey', 'how_to_use', 'list_resources', 'search', 'show_learning_card', 'show_resource', 'suggest_lenses', 'who_am_i'];
+  const READS = ['explain', 'get_lens', 'get_messages', 'get_related_resources', 'get_resource', 'get_resource_lineage', 'get_resource_log', 'guide_owner_journey', 'how_to_use', 'list_resources', 'search', 'show_learning_card', 'show_resource', 'suggest_lenses', 'who_am_i'];
+  // Every User who sees a Lens may run it, through Claude too (FR-CL-36).
+  const LENS_RUNS = ['run_lens', 'run_lens_approved'];
   const QUERY_TOOLS = ['check_query', 'create_query', 'get_query', 'get_result_page', 'list_queries', 'run_query', 'run_query_approved', 'send_query_request', 'show_query', 'update_query'];
   const PREVIEW_TOOLS = ['preview_resource', 'run_preview_approved', 'send_preview_request'];
   const WRITES = ['add_known_gap', 'change_known_gap', 'deprecate_resource', 'describe_fields', 'mark_changes_seen', 'record_journey_step', 'remove_known_gap', 'reply_to_message', 'undeprecate_resource', 'update_resource_card', 'write_message'];
 
   it('offers an Admin every tool, the queries of others included', async () => {
     const tools = names(await toolsOf(await issuer.sign({ as: 'admin' })));
-    expect(tools).toEqual([...READS, ...QUERY_TOOLS, ...PREVIEW_TOOLS, ...WRITES, 'confirm_publication', 'get_resource_queries', 'publish_resource'].sort());
+    expect(tools).toEqual([...READS, ...LENS_RUNS, ...QUERY_TOOLS, ...PREVIEW_TOOLS, ...WRITES, 'confirm_publication', 'get_resource_queries', 'publish_resource'].sort());
   });
 
   it('offers a Lens user no query tools and no Preview, and lets Claude write only their Questions and Signals', async () => {
     const tools = await toolsOf(await issuer.sign({ as: 'lensUser' }));
-    expect(names(tools)).toEqual([...READS, 'reply_to_message', 'write_message'].sort());
-    for (const name of [...QUERY_TOOLS, ...PREVIEW_TOOLS, 'read_result_rows', 'read_preview_choices', 'publish_resource', 'get_resource_queries']) expect(names(tools)).not.toContain(name);
+    // They run the Lenses they see, in a card only, whose rows the MCP App reads itself (FR-CL-28, FR-CL-36).
+    expect(names(tools)).toEqual([...READS, ...LENS_RUNS, 'read_result_rows', 'reply_to_message', 'write_message'].sort());
+    for (const name of [...QUERY_TOOLS, ...PREVIEW_TOOLS, 'read_preview_choices', 'publish_resource', 'get_resource_queries']) expect(names(tools)).not.toContain(name);
     expect(tools.find((item) => item.name === 'write_message')?.inputSchema.properties.kind?.enum).toEqual(['question', 'signal']);
     // The instructions tell Claude from the start that they make no queries and see results in a card only.
     const { result } = (await call('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'test', version: '1' } }, await issuer.sign({ as: 'lensUser' }))).json();
@@ -689,7 +692,7 @@ describe('results in Claude, in a card only, or not in Claude (FR-CL-28)', () =>
     expect(rows.content[0]?.text).not.toContain(SECRET);
 
     const tools = await toolsOf(token);
-    expect(appOnly(tools)).toEqual(['confirm_publication', 'read_preview_choices', 'read_result_rows', 'run_preview_approved', 'run_query_approved', 'send_preview_request', 'send_query_request']);
+    expect(appOnly(tools)).toEqual(['confirm_publication', 'read_preview_choices', 'read_result_rows', 'run_lens_approved', 'run_preview_approved', 'run_query_approved', 'send_preview_request', 'send_query_request']);
     expect(tools.find((item) => item.name === 'run_query')?._meta?.ui?.resourceUri).toBe(VIEW_URI);
   });
 
@@ -746,6 +749,125 @@ describe('results in Claude, in a card only, or not in Claude (FR-CL-28)', () =>
     const preview = await tool('preview_resource', { id: RESOURCE_ID }, await showing('card'));
     expect(preview.structuredContent).toMatchObject({ outcome: 'blocked', problem: expect.stringContaining('a narrower window or a Parameter reads less') });
     expect(asked.some((call) => call.url.endsWith('/preview/runs'))).toBe(false);
+  });
+});
+
+describe('Lenses through Claude (FR-CL-36, FR-CL-37)', () => {
+  const LENS_ID = 'l-1';
+  const SECRET = 'kept-from-claude';
+  const lens = (overrides: Record<string, unknown> = {}) => ({
+    id: LENS_ID,
+    name: 'Leads per source name',
+    question: 'Which sources brought the credit leads in?',
+    shows: 'The leads of each source, by its name.',
+    steps: ['Takes the weekly lead volume.'],
+    collectionId: 'c-1',
+    state: 'published',
+    broken: null,
+    resources: [{ id: RESOURCE_ID, displayName: 'Weekly lead volume', level: 4 }],
+    parameters: [
+      { name: 'dateFrom', label: 'From', kind: 'date', value: 'DATE_TRUNC(CURRENT_DATE(), MONTH)' },
+      { name: 'channel', label: 'Lead channel', kind: 'choice', value: 'Form', list: ['Form', 'Phone', 'Partner'] },
+    ],
+    fields: [{ name: 'leads', type: 'INT64', description: 'The number of leads that came in through this source.', from: null }],
+    ...overrides,
+  });
+  const page = { number: 1, size: 100, totalRows: 1, columns: [{ name: 'source_name', type: 'STRING' }, { name: 'leads', type: 'INT64' }], rows: [[SECRET, 4242]] };
+  const ran = { ref: 'q-7', number: 1, state: 'done', rowCount: 1, processedBytes: 24_000_000 };
+
+  beforeEach(() => {
+    answers[`GET ${QUERY}/lenses/${LENS_ID}`] = () => [200, { lens: lens() }];
+    answers[`GET ${CATALOGUE}/collections/c-1`] = () => [200, collection];
+    answers[`POST ${QUERY}/lenses/${LENS_ID}/runs`] = () => [201, { run: ran, page }];
+  });
+
+  it('reads a Lens with its Parameters, the day a date function gives today, its fields and its Levels', async () => {
+    const result = await tool('get_lens', { id: LENS_ID }, await issuer.sign());
+    const today = new Date();
+    const first = `${today.getUTCFullYear()}-${String(today.getUTCMonth() + 1).padStart(2, '0')}-01`;
+    expect(result.structuredContent).toMatchObject({
+      lens: {
+        runs: true,
+        parameters: [
+          { name: 'dateFrom', label: 'From', kind: 'date', default: 'DATE_TRUNC(CURRENT_DATE(), MONTH)', gives: first },
+          { name: 'channel', label: 'Lead channel', kind: 'choice', default: 'Form', list: ['Form', 'Phone', 'Partner'] },
+        ],
+        fields: [{ name: 'leads', description: 'The number of leads that came in through this source.' }],
+        resources: [{ displayName: 'Weekly lead volume', levelName: '4 · Explored' }],
+        page: `${WEB}/lenses/${LENS_ID}`,
+      },
+    });
+  });
+
+  it('runs a Lens with the values of the question and shows it with its Parameters to change (DEC-CL-21)', async () => {
+    const result = await tool('run_lens', { id: LENS_ID, values: { dateFrom: '2026-11-09', channel: 'Phone' } }, await showing('claude'));
+    expect(asked.find((call) => call.method === 'POST')?.body).toEqual({ values: { dateFrom: '2026-11-09', channel: 'Phone' }, approve: false });
+    expect(result.structuredContent).toMatchObject({
+      view: 'lens',
+      outcome: 'ran',
+      lens: { id: LENS_ID, name: 'Leads per source name', page: `${WEB}/lenses/${LENS_ID}` },
+      collection: { name: 'Credit leads' },
+      resources: [{ levelName: '4 · Explored' }],
+      parameters: [
+        { name: 'dateFrom', value: '2026-11-09', changed: true, default: { value: 'DATE_TRUNC(CURRENT_DATE(), MONTH)' } },
+        { name: 'channel', value: 'Phone', changed: true, list: ['Form', 'Phone', 'Partner'] },
+      ],
+      fields: [{ name: 'leads', description: 'The number of leads that came in through this source.' }],
+      run: { ref: 'q-7' },
+      reads: '24 MB',
+    });
+    expect((result.structuredContent as { dateFunctions: { label: string }[] }).dateFunctions.map((fn) => fn.label)).toContain('Start of this week');
+    expect(result.content[0]?.text).toContain('name the Levels: Weekly lead volume (4 · Explored)');
+    expect(JSON.stringify(result)).toContain(SECRET);
+  });
+
+  it('above 100 MB waits for the button of the User, and above 1 GB does not run and sends nothing to the Data Team', async () => {
+    const preflight = (bytes: number, range: string) => ({ runnable: true, bytes, range, partitions: 46, problems: [], warnings: [] });
+    answers[`POST ${QUERY}/lenses/${LENS_ID}/runs`] = (body) =>
+      (body as { approve: boolean }).approve
+        ? [201, { run: { ...ran, processedBytes: 840_000_000 }, page }]
+        : [409, { error: 'approval_needed', message: 'This query reads enough to need your approval.', preflight: preflight(840_000_000, 'approve') }];
+    const token = await showing('claude');
+    const waiting = await tool('run_lens', { id: LENS_ID, values: { dateFrom: 'DATE_TRUNC(CURRENT_DATE(), YEAR)' } }, token);
+    expect(waiting.structuredContent).toMatchObject({ view: 'lens', outcome: 'approve', reads: '840 MB', given: { dateFrom: 'DATE_TRUNC(CURRENT_DATE(), YEAR)' } });
+    expect(waiting.content[0]?.text).toContain('Only the User approves it');
+    const approved = await tool('run_lens_approved', { id: LENS_ID, values: { dateFrom: 'DATE_TRUNC(CURRENT_DATE(), YEAR)' } }, token);
+    expect(approved.structuredContent).toMatchObject({ outcome: 'ran' });
+    expect(asked.filter((call) => call.method === 'POST').map((call) => (call.body as { approve: boolean }).approve)).toEqual([false, true]);
+
+    answers[`POST ${QUERY}/lenses/${LENS_ID}/runs`] = () => [409, { error: 'request_needed', message: 'Too large.', preflight: preflight(2_400_000_000, 'request') }];
+    const large = await tool('run_lens', { id: LENS_ID, values: { dateFrom: '2024-01-01' } }, token);
+    expect(large.structuredContent).toMatchObject({ outcome: 'large', reads: '2.4 GB' });
+    expect(large.content[0]?.text).toContain('nothing goes to the Data Team');
+    expect(asked.some((call) => call.url.includes('/requests'))).toBe(false);
+  });
+
+  it('says why a Lens that stopped or is Broken does not run, and runs nothing', async () => {
+    answers[`GET ${QUERY}/lenses/${LENS_ID}`] = () => [200, { lens: lens({ state: 'stopped' }) }];
+    const stopped = await tool('run_lens', { id: LENS_ID }, await showing('claude'));
+    expect(stopped.structuredContent).toMatchObject({ view: 'lens', outcome: 'halted', reason: expect.stringContaining('it stopped until the Data Team accepts it again') });
+    answers[`GET ${QUERY}/lenses/${LENS_ID}`] = () => [200, { lens: lens({ broken: { kind: 'column', name: 'first_reply_at', since: '2026-11-16' } }) }];
+    expect((await tool('get_lens', { id: LENS_ID }, await issuer.sign())).structuredContent).toMatchObject({ lens: { runs: false, why: expect.stringContaining('first_reply_at') } });
+    expect(asked.some((call) => call.method === 'POST')).toBe(false);
+  });
+
+  it('in a card only gives Claude the shape of the result, and not in Claude only the link (FR-CL-28)', async () => {
+    const shown = await tool('run_lens', { id: LENS_ID }, await showing('card'));
+    expect(JSON.stringify(shown)).not.toContain(SECRET);
+    expect(JSON.stringify(shown)).not.toContain('4242');
+    expect(shown.structuredContent).toMatchObject({ view: 'lens', results: 'card', outcome: 'ran', run: { ref: 'q-7' }, result: { rows: 1 } });
+
+    asked = [];
+    const none = await tool('run_lens', { id: LENS_ID }, await showing('none'));
+    expect(none.structuredContent).toMatchObject({ results: 'none', page: `${WEB}/lenses/${LENS_ID}` });
+    expect(asked.some((call) => call.method === 'POST')).toBe(false);
+  });
+
+  it('says a deleted Lens no longer runs', async () => {
+    answers[`GET ${QUERY}/lenses/${LENS_ID}`] = () => [410, { error: 'deleted', message: 'This Lens was deleted.' }];
+    const result = await tool('run_lens', { id: LENS_ID }, await issuer.sign());
+    expect(result.isError).toBe(true);
+    expect(result.content[0]?.text).toContain('This Lens was deleted');
   });
 });
 

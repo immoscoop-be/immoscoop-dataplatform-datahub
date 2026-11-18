@@ -26,7 +26,7 @@ Rules
 1. Name the Level of every Resource you use, and say when it is deprecated, why and what to use instead.
 2. Not found means it does not exist or the User may not see it. Say so; never guess at what it might hold.
 3. Give the link to the page in Data Hub with what you answer.
-4. Before you write a query, call suggest_lenses with its Resources and the question. Offer a Lens that answers it; write a query only when the User wants their own.
+4. Before you write a query, call suggest_lenses with its Resources and the question. Offer a Lens that answers it, and run it with run_lens, its values chosen from the question after get_lens; write a query only when the User wants their own.
 5. A query reads only its own Resources. Need another? Make a new query with startedFrom. Check the SQL with check_query until it can run, and fix what the Pre-flight names. Filter on the partition column, and follow the Resource Card, such as a week that is not complete yet.
 6. You never approve a run above 100 MB, never send a Request to the Data Team and never publish a Resource: the User does that in the window Data Hub shows, or in Data Hub itself.
 7. Before you change anything (a description, a deprecation, changes marked seen, a Message), show the User exactly what you will write, and write only once they agree. Pass what you showed as before, so that Data Hub can tell when a colleague changed it meanwhile.
@@ -52,9 +52,9 @@ export function instructionsFor(user: Member, permits: Permits): string {
       'Their Permission group does not let them work with Data Hub in Claude: you have no tools of Data Hub for them but who_am_i and how_to_use. Say so when they ask for Data Hub, and point them to Data Hub itself.',
     );
   } else {
-    if (!permits.query) lines.push('They do not make queries: find the Lenses that answer their question, which they run on the page of the Lens.');
-    if (permits.results === 'card') lines.push(`A result of a query or a Preview shows in a card only. ${CARD_RULE}`);
-    if (permits.results === 'none') lines.push(`A result of a query or a Preview is not shown in Claude. ${NONE_RULE}`);
+    if (!permits.query) lines.push('They do not make queries: find the Lenses that answer their question, and run them with run_lens.');
+    if (permits.results === 'card') lines.push(`A result of a query, a Preview or a Lens shows in a card only. ${CARD_RULE}`);
+    if (permits.results === 'none') lines.push(`A result of a query, a Preview or a Lens is not shown in Claude. ${NONE_RULE}`);
   }
   if (lines.length === 0) return INSTRUCTIONS;
   return `${INSTRUCTIONS}\n\nThis User, of the Permission group ${user.permissionGroup.name}\n${lines.map((line) => `- ${line}`).join('\n')}`;
@@ -158,8 +158,8 @@ export function howToUse(user: Member, permits: Permits, home: string): string {
   const ranges = rangesOf(user.permissions);
   const look = [
     permits.preview && '- "Show me some rows of last week." Claude opens the Preview in the conversation.',
-    permits.query && '- "What share of the credit leads came from partners, per week?" Claude first looks for a Lens, else writes a query of yours, checks it and runs it.',
-    !permits.query && '- "Is there a Lens on the share of partner leads?" Claude finds the Lenses that answer it, and you run them on their own page.',
+    permits.query && '- "What share of the credit leads came from partners, per week?" Claude first looks for a Lens and runs it, else writes a query of yours, checks it and runs it.',
+    !permits.query && '- "Is there a Lens on the share of partner leads?" Claude finds the Lenses that answer it and runs one for you, with the values of your question.',
     (permits.query || permits.preview) &&
       `- Up to ${bytes(ranges.approve)} a run goes at once. Above that, you approve it yourself in the window${ranges.above === 'request' ? `; above ${bytes(ranges.request)} you can send a Request to the Data Team` : `, up to ${bytes(ranges.request)}`}.`,
     (permits.query || permits.preview) && permits.results === 'card' && '- Your Permission group shows results in a card only: you see the rows in the window, Claude does not read them. Claude tells you its columns, how many rows and what it read, and can help you raise a Signal.',

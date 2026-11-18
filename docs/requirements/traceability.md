@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 276 | 91 (22 open, 69 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 277 | 91 (22 open, 69 done) |
 | [Backlog](../overview/backlog.md) | – | – | – | 7 (5 open, 2 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
@@ -29,7 +29,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Conversations](functional/14-conversations.md) | 16 (16 implemented) | 2 (2 implemented) | 13 | 9 (9 done) |
 | [EDA](functional/15-eda.md) | – | – | 16 | 8 (5 open, 3 done) |
 | [Learning](functional/16-learning.md) | 43 (13 proposed, 14 implemented, 16 withdrawn) | – | 38 | 40 (9 open, 31 done) |
-| [Claude](functional/17-claude.md) | 35 (1 proposed, 34 implemented) | 5 (5 implemented) | 20 | 12 (7 open, 5 done) |
+| [Claude](functional/17-claude.md) | 37 (1 proposed, 36 implemented) | 5 (5 implemented) | 21 | 12 (7 open, 5 done) |
 | [Localisation](non-functional/localisation.md) | 12 (8 specified, 3 implemented, 1 withdrawn) | – | – | – |
 | [Security](non-functional/security.md) | 4 (4 implemented) | – | – | – |
 | [Platform: technical requirements](technical/00-platform.md) | 34 (3 specified, 30 implemented, 1 withdrawn) | – | 33 | 20 (6 open, 14 done) |
@@ -492,6 +492,8 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-CL-33](functional/17-claude.md#fr-cl-33) | The Owner Journey opens with what and why, keeps its overview at hand and folds its Learning Cards | Implemented | – | [owner-journey](../design/screens/owner-journey.html) | – | [4f4c224](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4f4c2243e83b2ad9d8f4565d93b6675f6135ce1e) implements, 2026-11-17<br>[bda9ac6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/bda9ac6e8dc1fd0a05c85333b9a24f5b447658f9) refs, 2026-11-17 |
 | [FR-CL-34](functional/17-claude.md#fr-cl-34) | Claude writes a Known Gap with its scope | Implemented | – | [owner-journey](../design/screens/owner-journey.html) | – | [4f4c224](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4f4c2243e83b2ad9d8f4565d93b6675f6135ce1e) implements, 2026-11-17<br>[bda9ac6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/bda9ac6e8dc1fd0a05c85333b9a24f5b447658f9) refs, 2026-11-17 |
 | [FR-CL-35](functional/17-claude.md#fr-cl-35) | Claude tells a Known Gap from a Pitfall | Implemented | – | [owner-journey](../design/screens/owner-journey.html) | – | [4f4c224](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4f4c2243e83b2ad9d8f4565d93b6675f6135ce1e) implements, 2026-11-17<br>[bda9ac6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/bda9ac6e8dc1fd0a05c85333b9a24f5b447658f9) refs, 2026-11-17 |
+| [FR-CL-36](functional/17-claude.md#fr-cl-36) | Claude runs a Lens, with its result in an MCP App | Implemented | – | [mcp-lens](../design/screens/mcp-lens.html) | – | – |
+| [FR-CL-37](functional/17-claude.md#fr-cl-37) | Claude reads a Lens before it runs it | Implemented | – | [mcp-lens](../design/screens/mcp-lens.html) | – | – |
 
 ## Edge cases
 
@@ -504,7 +506,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [EC-AR-03](functional/01-artifact-registry.md#ec-ar-03) | The table of a Resource is renamed | Specified | – | – | [39b70a1](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/39b70a18d41407e759edaaa00fdc0d9133a82eea) refs, 2026-10-28 |
 | [EC-AR-04](functional/01-artifact-registry.md#ec-ar-04) | An upstream model disappears | Implemented | – | [TR-AR-14](technical/01-artifact-registry.md#tr-ar-14), [TR-SR-22](technical/04-stacks-and-resources.md#tr-sr-22) | [9e03f14](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9e03f14a0de3f0ea670e8563e8dc0ac09dd12981) implements, 2026-10-31<br>[39b70a1](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/39b70a18d41407e759edaaa00fdc0d9133a82eea) refs, 2026-10-28 |
 | [EC-AR-05](functional/01-artifact-registry.md#ec-ar-05) | The collector does not answer | Implemented | – | [TR-AR-09](technical/01-artifact-registry.md#tr-ar-09) | [8e8176e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8e8176e5f6bc69fd2949908d4e51290bee443530) refs, 2026-11-13<br>[1c589cc](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1c589cc085d0d44d05150d003ee6bea9080a96d5) refs, 2026-11-12<br>[6c15dc9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/6c15dc9a86c0bc1f81eee09927c6836bd9658b5e) implements, 2026-10-31<br>[b8393a4](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/b8393a461197a4933a0d9c77b37162108b1c8274) refs, 2026-10-28<br>[39b70a1](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/39b70a18d41407e759edaaa00fdc0d9133a82eea) refs, 2026-10-28<br>[84b935b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/84b935bd18234a526ee0465d6e31080556957bad) refs, 2026-10-28 |
-| [EC-AR-06](functional/01-artifact-registry.md#ec-ar-06) | The catalog lacks a model | Implemented | – | [TR-AR-15](technical/01-artifact-registry.md#tr-ar-15), [TR-AR-16](technical/01-artifact-registry.md#tr-ar-16) | [41f9d52](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/41f9d52c9a2fb0e7fea105ce2bfb93475e46b17f) refs, 2026-11-17<br>[50157fb](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/50157fbc61380e109b8b8c09f92aaba25a185338) implements, 2026-11-17 |
+| [EC-AR-06](functional/01-artifact-registry.md#ec-ar-06) | The catalog lacks a model | Implemented | – | [TR-AR-15](technical/01-artifact-registry.md#tr-ar-15), [TR-AR-16](technical/01-artifact-registry.md#tr-ar-16) | [1ca03a9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1ca03a9df6e11e777a4868912746757c190c2693) refs, 2026-11-17<br>[41f9d52](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/41f9d52c9a2fb0e7fea105ce2bfb93475e46b17f) refs, 2026-11-17<br>[50157fb](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/50157fbc61380e109b8b8c09f92aaba25a185338) implements, 2026-11-17 |
 
 ### [User management](functional/02-user-management.md)
 
@@ -639,7 +641,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [TR-AR-13](technical/01-artifact-registry.md#tr-ar-13) | registry keeps every delivery of the webhook for 30 days | Implemented | [FR-AR-19](functional/01-artifact-registry.md#fr-ar-19) | [042fc25](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/042fc25c4002a03661cdbc884b35b184a464f9ce) implements, 2026-10-31 |
 | [TR-AR-14](technical/01-artifact-registry.md#tr-ar-14) | registry compares each new Current Version and follows its Changes downstream | Implemented | [FR-AR-11](functional/01-artifact-registry.md#fr-ar-11), [FR-AR-12](functional/01-artifact-registry.md#fr-ar-12), [EC-AR-04](functional/01-artifact-registry.md#ec-ar-04) | [50157fb](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/50157fbc61380e109b8b8c09f92aaba25a185338) refs, 2026-11-17<br>[debf050](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/debf0508888aad817cc38a94aed96e88941bffc1) implements, 2026-10-31 |
 | [TR-AR-15](technical/01-artifact-registry.md#tr-ar-15) | The ingest job reads the columns of the tables the catalog lacks from BigQuery | Implemented | [EC-AR-06](functional/01-artifact-registry.md#ec-ar-06), [DEC-AR-12](functional/01-artifact-registry.md#dec-ar-12) | [50157fb](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/50157fbc61380e109b8b8c09f92aaba25a185338) implements, 2026-11-17 |
-| [TR-AR-16](technical/01-artifact-registry.md#tr-ar-16) | catalogue fills the types its fields lack from BigQuery, through registry | Implemented | [DEC-AR-13](functional/01-artifact-registry.md#dec-ar-13), [EC-AR-06](functional/01-artifact-registry.md#ec-ar-06) | – |
+| [TR-AR-16](technical/01-artifact-registry.md#tr-ar-16) | catalogue fills the types its fields lack from BigQuery, through registry | Implemented | [DEC-AR-13](functional/01-artifact-registry.md#dec-ar-13), [EC-AR-06](functional/01-artifact-registry.md#ec-ar-06) | [d775103](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/d77510339cb4d94d62d937552063c722e75451d8) refs, 2026-11-17<br>[1ca03a9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1ca03a9df6e11e777a4868912746757c190c2693) implements, 2026-11-17 |
 
 ### [User management: technical requirements](technical/02-user-management.md)
 

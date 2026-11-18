@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<!--
+  Screen: a Lens in Claude, run and its result as an MCP App (FR-CL-36, FR-CL-37, DEC-CL-21)
+  A conversation in Claude, drawn plainly. Claude offers a Lens that answers the question (FR-CL-17, DEC-CL-10), reads
+  its Parameters with get_lens (FR-CL-37), and runs it with run_lens, the values chosen from the question (FR-CL-36).
+  The frame holds what the page of a Lens holds when it runs (DEC-UX-26), in the blocks of the other MCP Apps: the name
+  and question of the Lens, its Collection with its icon (DEC-UX-164), the Resources it reads with their Level; its
+  Parameters as controls, as in the Preview (FR-CL-09), each with the value Claude chose, a date as a date or as a
+  function with the day it gives today, and "Default" on a changed one; "Run" at their end, enabled once a value changed
+  (DEC-CL-21, DEC-UX-278); the grid of Query with the description of each field on the head of its column (DEC-UX-230),
+  what it read and its Query ID, and what each field holds, folded under the grid for a phone, where nothing shows on a hover; and "Open the Lens in Data Hub". No SQL, as on the page of a Lens (DEC-UX-27); no Request: a run
+  above 1 GB is not sent to the Data Team, the User chooses values that read less, as on the page of a Lens. The run is
+  a run of the query of the User of this Lens, in their Query Log (FR-LE-12), labelled Claude (FR-CL-22).
+  The switch shows six cases:
+  · up to 100 MB: it runs at once, and Claude answers from the rows (DEC-CL-06), names the Levels;
+  · changed in the card: the User chose another lead channel and ran it again; Claude is told, and reads the new result;
+  · from 100 MB to 1 GB: only the button of the User runs it (DEC-CL-07);
+  · above 1 GB: it does not run with these values; the User chooses values that read less, nothing goes to the Data Team;
+  · it does not run: a Lens that stopped, waits for the Data Team or is Broken says why, its Parameters greyed, and
+    links to the Lens;
+  · in a card only: for a User whose Permission group shows results in a card only, the same result, with one line at
+    its foot that Claude does not read these rows (FR-CL-28, DEC-UX-193).
+  Requirements: FR-CL-36, FR-CL-37
+  Decisions: DEC-CL-06, DEC-CL-07, DEC-CL-10, DEC-CL-21, DEC-UX-26, DEC-UX-27, DEC-UX-164, DEC-UX-180, DEC-UX-181, DEC-UX-193, DEC-UX-230, DEC-UX-278, DEC-LE-11, DEC-LE-14.
+  Open points: OP-CL-09 (for a query; for a Lens decided by DEC-CL-21).
+  Not in v1: the whole screen, as Claude comes in version 2 (DEC-CH-02). Its blocks are those of mcp-query.html,
+  mcp-resource-preview.html and lens.html.
+  The button at the top right folds the frame to its head, and unfolds it again (DEC-UX-181); ?fold=on shows it folded.
+  ?width=phone shows the frame as Claude on a phone shows it, at 390 px (DEC-UX-180).
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="colleague">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — A Lens in Claude</title>
+</head>
+<body class="mcp-demo">
+<div class="mcp-page">
+ <p class="mcp-caption"><i class="ph ph-info" aria-hidden="true"></i>Prototype: how Claude runs a Lens and shows its result, as an MCP App. Only the part inside the frame comes from Data Hub.</p>
+
+ <div class="mcp-msg user">How many credit leads came in from each source last week?</div>
+ <div class="mcp-msg">
+  <p>There is a Lens for exactly that: <a class="text-link" href="lens.html" style="display:inline"><span>Leads per source name</span></a>, in Credit leads. Shall I run it for last week?</p>
+ </div>
+ <div class="mcp-msg user" data-pane-group="l" data-pane="free changed card halted">Yes, please.</div>
+ <div class="mcp-msg user" data-pane-group="l" data-pane="approve" hidden>Yes, but since the start of this year.</div>
+ <div class="mcp-msg user" data-pane-group="l" data-pane="large" hidden>Yes, but since the start of 2024.</div>
+
+ <div class="mcp-tool"><i class="ph ph-plugs-connected" aria-hidden="true"></i>Data Hub · <span class="mono">get_lens</span> · <span class="mono">run_lens</span></div>
+
+ <div class="mcp-msg" data-pane-group="l" data-pane="approve" hidden>
+  <p>Since the start of this year reads about 840 MB, more than the 100 MB Data Hub runs freely. Approve it in the window below; I can't do that for you.</p>
+ </div>
+ <div class="mcp-msg" data-pane-group="l" data-pane="large" hidden>
+  <p>Since the start of 2024 reads about 2.4 GB, more than one run of a Lens may: it doesn't run with these values. Since the start of this year reads 840 MB, which you can approve yourself. Shall I take that?</p>
+ </div>
+ <div class="mcp-msg" data-pane-group="l" data-pane="halted" hidden>
+  <p>The Lens doesn't run right now: one run with its defaults grew past 1 GB, so it stopped until the Data Team accepts it again. I can write a query of yours for last week instead, if you like.</p>
+ </div>
+
+ <section class="mcp-app" aria-label="The Lens Leads per source name, from Data Hub">
+  <div class="mcp-app-head"><i class="ph-fill ph-aperture" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">Lens · <i class="ph ph-coins" aria-hidden="true" style="vertical-align:-2px;margin-right:3px"></i>Credit leads</span><div class="float-title">Leads per source name</div><span class="meta">Which sources brought the credit leads in, by the name colleagues know them by?</span></div></div>
+  <div class="status-row">
+   <span class="meta" style="align-self:center">Reads</span>
+   <span class="status"><span class="maturity" data-level="4" data-no-tooltip></span>Weekly lead volume · 4 · Explored</span>
+   <span class="status"><span class="maturity" data-level="3" data-no-tooltip></span>Lead sources · 3 · Confirmed</span>
+  </div>
+
+  <div class="alert" data-pane-group="l" data-pane="halted" hidden><i class="ph-fill ph-hand-palm" aria-hidden="true" style="color:var(--signal-urgent)"></i><span><b>It does not run now.</b> One run with its defaults grew past 1 GB on 16 Nov: the Lens stopped until the Data Team accepts it again.</span></div>
+
+  <div class="param-bar">
+   <span class="label" style="margin:0">Parameters</span>
+   <label class="param" data-pane-group="l" data-pane="free changed card halted"><span>From</span><select><option selected>9 Nov 2026</option><optgroup label="A function, worked out at every run"><option>ƒ Today · 18 Nov</option><option>ƒ Today − 3 days · 15 Nov</option><option>ƒ Start of this week · 16 Nov</option><option>ƒ Start of this month · 1 Nov</option><option>ƒ Start of this year · 1 Jan</option></optgroup><option>Another date…</option></select><button class="param-reset" type="button" data-pane-group="l" data-pane="free changed card" title="Back to its default: start of this month"><i class="ph ph-arrow-counter-clockwise" aria-hidden="true"></i>Default</button></label>
+   <label class="param" data-pane-group="l" data-pane="approve" hidden><span>From</span><select><option>9 Nov 2026</option><optgroup label="A function, worked out at every run"><option selected>ƒ Start of this year · 1 Jan</option></optgroup><option>Another date…</option></select><button class="param-reset" type="button" title="Back to its default: start of this month"><i class="ph ph-arrow-counter-clockwise" aria-hidden="true"></i>Default</button></label>
+   <label class="param" data-pane-group="l" data-pane="large" hidden><span>From</span><select><option selected>1 Jan 2024</option><optgroup label="A function, worked out at every run"><option>ƒ Start of this year · 1 Jan</option></optgroup><option>Another date…</option></select><button class="param-reset" type="button" title="Back to its default: start of this month"><i class="ph ph-arrow-counter-clockwise" aria-hidden="true"></i>Default</button></label>
+   <label class="param"><span>To</span><select><optgroup label="A function, worked out at every run"><option selected>ƒ End of the last complete week · 15 Nov</option><option>ƒ Today − 3 days · 15 Nov</option><option>ƒ Today · 18 Nov</option></optgroup><option>Another date…</option></select></label>
+   <label class="param" data-pane-group="l" data-pane="free card halted approve large"><span>Lead channel</span><select><option selected>Form</option><option>Phone</option><option>Partner</option></select></label>
+   <label class="param" data-pane-group="l" data-pane="changed" hidden><span>Lead channel</span><select><option>Form</option><option selected>Phone</option><option>Partner</option></select><button class="param-reset" type="button" title="Back to its default: Form"><i class="ph ph-arrow-counter-clockwise" aria-hidden="true"></i>Default</button></label>
+   <span style="flex:1"></span>
+   <span class="preflight ok" data-pane-group="l" data-pane="free card"><i class="ph-fill ph-gauge"></i>Scanned 24 MB · 2 of 312 partitions</span>
+   <span class="preflight ok" data-pane-group="l" data-pane="changed" hidden><i class="ph-fill ph-gauge"></i>Scanned 24 MB · 2 of 312 partitions</span>
+   <span class="preflight" data-pane-group="l" data-pane="approve" hidden><i class="ph-fill ph-gauge"></i>Reads about 840 MB · 46 of 312 partitions</span>
+   <span class="preflight" data-pane-group="l" data-pane="large" hidden><i class="ph-fill ph-gauge"></i>Reads about 2.4 GB · 98 of 312 partitions</span>
+   <button class="btn-primary run-btn" type="button" disabled title="Change a value to run it again" data-pane-group="l" data-pane="free changed card approve large halted"><i class="ph-fill ph-play" style="font-size:14px"></i>Run</button>
+  </div>
+
+  <div data-pane-group="l" data-pane="free card">
+   <div class="rgrid-scroll" id="result-grid" tabindex="0" aria-label="Rows of the result">
+    <table class="rgrid"><colgroup></colgroup><thead></thead><tbody></tbody></table>
+   </div>
+   <script type="application/json" id="result-data">{"cols":[{"name":"lead_source","type":"STRING","description":"Where the lead came in: the website, the app, a partner or a mailing."},{"name":"source_name","type":"STRING","description":"The name of the source as colleagues know it."},{"name":"leads","type":"INT64","description":"The number of leads that came in through this source."},{"name":"share_of_leads","type":"FLOAT64","description":"The share of all leads of the period that came from this source, in percent."}],
+    "rows":[["website","Website",412,72.5],["app","App",97,17.1],["partner","Partner network",38,6.7],["mailing","Mailing",21,3.7]]}</script>
+   <div class="result-foot">
+    <span id="rg-total">4 rows</span><span class="dot">·</span><span>scanned 24 MB, 2 of 312 partitions</span><span class="dot">·</span>
+    <span class="query-id">Query ID <span class="mono">q-20261118-4c1d9e</span><button class="icon-btn" aria-label="Copy the Query ID" title="Copy the Query ID"><i class="ph ph-copy"></i></button></span>
+    <span class="rg-pager">
+     <span>100 rows a page</span><span class="dot">·</span><span id="rg-range">1 – 4 of 4</span>
+     <span class="pager">
+      <button class="icon-btn" data-page="first" aria-label="First page" title="First page"><i class="ph ph-caret-double-left"></i></button>
+      <button class="icon-btn" data-page="prev" aria-label="Previous page" title="Previous page"><i class="ph ph-caret-left"></i></button>
+      <button class="icon-btn" data-page="next" aria-label="Next page" title="Next page"><i class="ph ph-caret-right"></i></button>
+      <button class="icon-btn" data-page="last" aria-label="Last page" title="Last page"><i class="ph ph-caret-double-right"></i></button>
+     </span>
+    </span>
+   </div>
+   <p class="result-private" data-pane-group="l" data-pane="card" hidden><i class="ph ph-eye-slash" aria-hidden="true"></i>Claude does not read these rows.</p>
+   <details class="sub-tile"><summary class="meta" style="cursor:pointer">What the fields hold</summary><dl style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;margin:10px 0 0;font-size:var(--text-small)"><dt class="mono">lead_source</dt><dd style="margin:0">Where the lead came in: the website, the app, a partner or a mailing.</dd><dt class="mono">source_name</dt><dd style="margin:0">The name of the source as colleagues know it.</dd><dt class="mono">leads</dt><dd style="margin:0">The number of leads that came in through this source.</dd><dt class="mono">share_of_leads</dt><dd style="margin:0">The share of all leads of the period that came from this source, in percent.</dd></dl></details>
+  </div>
+
+  <div data-pane-group="l" data-pane="changed" hidden>
+   <div class="rgrid-scroll" tabindex="0" aria-label="Rows of the result">
+    <table class="rgrid"><thead><tr><th scope="col"><span class="rh-described" title="Where the lead came in: the website, the app, a partner or a mailing.">lead_source</span></th><th scope="col"><span class="rh-described" title="The name of the source as colleagues know it.">source_name</span></th><th scope="col" class="num"><span class="rh-described" title="The number of leads that came in through this source.">leads</span></th><th scope="col" class="num"><span class="rh-described" title="The share of all leads of the period that came from this source, in percent.">share_of_leads</span></th></tr></thead>
+     <tbody><tr><td>website</td><td>Website</td><td class="num">61</td><td class="num">73.5</td></tr><tr><td>app</td><td>App</td><td class="num">14</td><td class="num">16.9</td></tr><tr><td>partner</td><td>Partner network</td><td class="num">6</td><td class="num">7.2</td></tr><tr><td>mailing</td><td>Mailing</td><td class="num">2</td><td class="num">2.4</td></tr></tbody></table>
+   </div>
+   <div class="result-foot"><span>4 rows</span><span class="dot">·</span><span>scanned 24 MB, 2 of 312 partitions</span><span class="dot">·</span><span class="query-id">Query ID <span class="mono">q-20261118-4c1d9e</span></span></div>
+  </div>
+
+  <div class="sub-tile" data-pane-group="l" data-pane="approve" hidden>
+   <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <span class="run-gauge" aria-hidden="true" style="flex:1;min-width:200px"><span class="gauge"><span class="gauge-fill" style="width:84%"></span><span class="gauge-mark" style="left:10%"></span><span class="gauge-mark" style="left:100%"></span></span><span class="gauge-legend"><span>0</span><span style="left:10%">100 MB</span><span style="left:100%">1 GB</span></span></span>
+    <button class="btn-primary run-btn high" type="button"><i class="ph-fill ph-play" style="font-size:14px"></i>Approve and run<span class="run-gb">840 MB</span></button>
+   </div>
+   <p class="meta" style="display:block;line-height:1.5;margin:12px 0 0"><b style="font-weight:500;color:var(--text-primary)">840 MB at most, above 100 MB:</b> you approve this run yourself; Claude cannot do it for you. A later From reads less: from the start of this month, 80 MB.</p>
+  </div>
+
+  <div class="sub-tile" data-pane-group="l" data-pane="large" hidden>
+   <div style="display:flex;align-items:flex-start;gap:12px">
+    <i class="ph-fill ph-hand-palm" style="font-size:20px;color:var(--signal-urgent);margin-top:2px" aria-hidden="true"></i>
+    <div style="flex:1;min-width:0">
+     <div style="font-weight:500;font-size:var(--text-small)">With these values one run reads about 2.4 GB, more than 1 GB</div>
+     <p class="meta" style="display:block;line-height:1.5;margin:4px 0 0">Choose values that read less: a later From reads less. A Lens does not go to the Data Team for one run.</p>
+    </div>
+   </div>
+  </div>
+
+  <div class="mcp-app-foot"><span><i class="ph ph-aperture" aria-hidden="true"></i> In your Query Log, as a run of this Lens</span><a class="text-link open-dh" href="lens.html"><span>Open the Lens in Data Hub</span><i class="ph ph-arrow-square-out"></i></a></div>
+ </section>
+
+ <div class="mcp-msg" data-pane-group="l" data-pane="free">
+  <p>Last week, 9 to 15 November, 568 credit leads came in through the form. The website brought most of them: 412, or 72.5%. Then the app with 97, the partner network with 38 and mailings with 21.</p>
+  <p>Weekly lead volume is at <b>4 · Explored</b>, Lead sources at <b>3 · Confirmed</b>. You can change the period or the lead channel in the window and run it again.</p>
+ </div>
+ <div class="mcp-msg" data-pane-group="l" data-pane="changed" hidden>
+  <p>You ran it again for phone leads: 83 last week, with the same order. The website brought 61 of them, the app 14, partners 6 and mailings 2. By phone, the share of partners is a little higher than through the form: 7.2% against 6.7%.</p>
+ </div>
+ <div class="mcp-msg" data-pane-group="l" data-pane="card" hidden>
+  <p>Your result is in the card above: 4 rows, one per source, with <span class="mono">lead_source</span>, <span class="mono">source_name</span>, <span class="mono">leads</span> and <span class="mono">share_of_leads</span>. Your Permission group shows results in the card only, so I don't read its values.</p>
+  <p>Weekly lead volume is at <b>4 · Explored</b>, Lead sources at <b>3 · Confirmed</b>.</p>
+ </div>
+</div>
+<div class="rg-menu" id="rg-menu" role="menu" hidden>
+ <button class="menu-item" role="menuitem" data-act="asc"><i class="ph ph-sort-ascending"></i>Sort this page, smallest first</button>
+ <button class="menu-item" role="menuitem" data-act="desc"><i class="ph ph-sort-descending"></i>Sort this page, largest first</button>
+ <button class="menu-item" role="menuitem" data-act="fit"><i class="ph ph-arrows-out-line-horizontal"></i>Fit the width to its values</button>
+ <button class="menu-item" role="menuitem" data-act="copy"><i class="ph ph-copy"></i>Copy the name</button>
+</div>
+<div class="proto-switch" data-group="l" role="tablist" aria-label="Prototype: the case">Case
+ <button class="seg on" data-target="free" role="tab" aria-selected="true">Up to 100 MB</button>
+ <button class="seg" data-target="changed" role="tab" aria-selected="false">Changed in the card</button>
+ <button class="seg" data-target="approve" role="tab" aria-selected="false">100 MB to 1 GB</button>
+ <button class="seg" data-target="large" role="tab" aria-selected="false">Above 1 GB</button>
+ <button class="seg" data-target="halted" role="tab" aria-selected="false">It does not run</button>
+ <button class="seg" data-target="card" role="tab" aria-selected="false">In a card only</button>
+</div>
+<div class="proto-switch" data-group="width" role="tablist" aria-label="Prototype: Claude on a computer or a phone" style="top:16px;bottom:auto">Width
+ <button class="seg on" data-target="computer" role="tab" aria-selected="true">Computer</button>
+ <button class="seg" data-target="phone" role="tab" aria-selected="false">Phone</button>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
