@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 296 | 98 (25 open, 73 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 297 | 98 (24 open, 74 done) |
 | [Backlog](../overview/backlog.md) | – | – | – | 8 (6 open, 2 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
