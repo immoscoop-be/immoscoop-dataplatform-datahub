@@ -175,6 +175,37 @@ details[open] > summary .chev { transform: rotate(180deg); }
 .term-def p { margin: 0; }
 .term-def b { color: var(--text-primary); font-weight: var(--weight-medium); }
 @media (max-width: 520px) { .term { width: 44px; height: 44px; } }
+/* The fields suggested by Claude, decided by the User (DEC-UX-281) */
+.basis { margin: 0; font-size: var(--text-small); line-height: 1.5; color: var(--text-secondary); }
+.done { display: flex; gap: 10px; align-items: flex-start; padding: 10px 14px; border-radius: var(--radius-md); background: var(--surface-sub); font-size: var(--text-small); }
+.done b, .theirs b { font-weight: var(--weight-medium); color: var(--text-primary); }
+.fseg { display: flex; gap: 2px; flex-wrap: wrap; }
+.fseg button { font: inherit; font-size: var(--text-small); background: none; border: 0; padding: 4px 10px; border-radius: var(--radius-pill); color: var(--text-muted); cursor: pointer; }
+.fseg button.on { background: var(--surface-sub); color: var(--text-primary); font-weight: var(--weight-medium); }
+.fseg .n { margin-left: 5px; color: var(--text-muted); font-weight: 400; }
+.frows { display: grid; }
+.frow { display: grid; grid-template-columns: auto minmax(110px, .7fr) minmax(0, 1.3fr); gap: 6px 14px; align-items: start; padding: 12px 2px; border-top: 1px solid var(--tint-hover); }
+.frow[hidden] { display: none; }
+.fkey { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 7px; border-radius: var(--radius-pill); font-size: var(--text-meta); color: var(--text-muted); cursor: pointer; white-space: nowrap; }
+.fkey input { margin: 0; padding: 0; accent-color: var(--text-primary); }
+.fkey:has(input:checked) { color: var(--text-primary); background: var(--surface-sub); }
+.fname { display: grid; gap: 3px; min-width: 0; }
+.fname code { font: var(--weight-medium) var(--text-small) var(--font-mono); overflow-wrap: anywhere; }
+.fdbt { margin-top: 3px; font-size: var(--text-meta); line-height: 1.45; color: var(--text-secondary); }
+.fdbt .meta { display: block; }
+.ftext { display: grid; gap: 4px; min-width: 0; }
+.ftext textarea { min-height: 54px; field-sizing: content; line-height: 1.5; box-sizing: border-box; }
+.fmark { justify-self: start; font-size: 10px; padding: 1px 7px; border-radius: var(--radius-pill); color: var(--text-secondary); background: var(--tint-hover); }
+.fmark.suggested { color: var(--col-teal-ink); background: color-mix(in srgb, var(--col-teal-ink) 12%, var(--surface-solid)); }
+.fmark.edited { color: var(--text-primary); background: var(--tint-active); }
+.fmark.unsaved { color: var(--signal-warn); background: color-mix(in srgb, var(--signal-warn) 12%, var(--surface-solid)); }
+.fneeds { font-size: var(--text-meta); color: var(--signal-warn); }
+.theirs { grid-column: 2 / -1; display: grid; gap: 6px; padding: 10px 12px; border-radius: var(--radius-md); background: color-mix(in srgb, var(--signal-warn) 10%, var(--surface-solid)); font-size: var(--text-small); }
+.theirs p { margin: 0; line-height: 1.5; }
+.theirs .acts { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.fsave { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.fsave .meta { flex: 1; min-width: 160px; display: inline; }
+.fsave button.primary:disabled { opacity: .45; cursor: default; }
 .gets { display: grid; gap: 8px; }
 .get { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 10px; align-items: start; font-size: var(--text-small); }
 .get > .ic, .get > .dh-mark { margin-top: 2px; font-size: 17px; color: var(--col-teal-ink); }
@@ -260,6 +291,11 @@ blockquote.quote .meta { margin-top: 4px; }
   .params { flex-direction: column; align-items: stretch; }
   .params label { display: grid; grid-template-columns: auto minmax(0, 1fr); }
   .lp { display: grid; grid-template-columns: auto minmax(0, 1fr); }
+  .frow { grid-template-columns: minmax(0, 1fr) auto; }
+  .frow .fkey { grid-column: 2; grid-row: 1; min-height: 44px; }
+  .frow .fname { grid-column: 1; grid-row: 1; }
+  .frow .ftext, .theirs { grid-column: 1 / -1; }
+  .fsave button.primary { width: 100%; min-height: 44px; }
   .lp button.quiet { grid-column: 2; justify-self: start; width: auto; }
   .lp select, .lp input:not([type=checkbox]) { min-height: 40px; }
   .params select, .params input { min-height: 40px; }
@@ -300,6 +336,7 @@ const foot = (note, url, label = 'Open the Resource in Data Hub') => '<div class
 const PATHS = {
   card: 'M176,207.24a119,119,0,0,0,16-7.73V240a8,8,0,0,1-16,0Zm11.76-88.43-56-29.87a8,8,0,0,0-7.52,14.12L171,128l17-9.06Zm64-29.87-120-64a8,8,0,0,0-7.52,0l-120,64a8,8,0,0,0,0,14.12L32,117.87v48.42a15.91,15.91,0,0,0,4.06,10.65C49.16,191.53,78.51,216,128,216a130,130,0,0,0,48-8.76V130.67L171,128l-43,22.93L43.83,106l0,0L25,96,128,41.07,231,96l-18.78,10-.06,0L188,118.94a8,8,0,0,1,4,6.93v73.64a115.63,115.63,0,0,0,27.94-22.57A15.91,15.91,0,0,0,224,166.29V117.87l27.76-14.81a8,8,0,0,0,0-14.12Z',
   final: 'M224,128a96,96,0,0,1-94.71,96H128A95.38,95.38,0,0,1,62.1,197.8a8,8,0,0,1,11-11.63A80,80,0,1,0,71.43,71.39a3.07,3.07,0,0,1-.26.25L44.59,96H72a8,8,0,0,1,0,16H24a8,8,0,0,1-8-8V56a8,8,0,0,1,16,0V85.8L60.25,60A96,96,0,0,1,224,128Z',
+  check: 'M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z',
   caret: 'M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z',
   info: 'M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z',
   help: 'M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm39.1,131.79a47.84,47.84,0,0,0,0-55.58l28.5-28.49a87.83,87.83,0,0,1,0,112.56ZM96,128a32,32,0,1,1,32,32A32,32,0,0,1,96,128Zm88.28-67.6L155.79,88.9a47.84,47.84,0,0,0-55.58,0L71.72,60.4a87.83,87.83,0,0,1,112.56,0ZM60.4,71.72l28.5,28.49a47.84,47.84,0,0,0,0,55.58L60.4,184.28a87.83,87.83,0,0,1,0-112.56ZM71.72,195.6l28.49-28.5a47.84,47.84,0,0,0,55.58,0l28.49,28.5a87.83,87.83,0,0,1-112.56,0Z',
@@ -648,6 +685,91 @@ function renderCard(v) {
     (later !== undefined ? '<div class="row"><button class="quiet" data-step="' + later + '">' + esc(words.next) + '</button></div>' : '') + foot(words.foot, v.page);
 }
 
+// The fields suggested by Claude, decided by the User in one card (DEC-UX-281, FR-CL-38): a row per field with the box
+// Key Field, its name, type and description from dbt, and its Business Description to edit, marked by where it comes
+// from. The filter only shows or hides rows, so that what the User typed stays.
+let fieldsShow = 'all';
+const FIELD_MARKS = { suggested: 'Suggested', card: 'On the card', unsaved: 'Not saved', empty: '' };
+const clock = (at) => (at ? new Date(at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '');
+const many = (n, one, more) => n + ' ' + (n === 1 ? one : more);
+function renderFields(v) {
+  const r = v.resource;
+  const rows = v.rows || [];
+  const conflicts = v.conflicts || [];
+  const counts = { all: rows.length, suggested: rows.filter((x) => x.mark === 'suggested').length, key: rows.filter((x) => x.key).length };
+  const seg = (k, label) => '<button data-show="' + k + '" class="' + (fieldsShow === k ? 'on' : '') + '" aria-pressed="' + (fieldsShow === k) + '">' + label + '<span class="n" data-count="' + k + '">' + counts[k] + '</span></button>';
+  const segs = '<div class="fseg" role="group" aria-label="Which fields">' + seg('all', 'All fields') + (counts.suggested ? seg('suggested', 'Suggested') : '') + (v.mayKey ? seg('key', 'Key Fields') : '') + '</div>';
+  const basis = v.basedOn ? '<p class="basis">Suggested by Claude from ' + esc(String(v.basedOn).replace(/[.\s]+$/, '')) + '.</p>' : '';
+  const s = v.saved;
+  const done = s ? '<div class="done">' + ic('check') + '<span><b>Saved to Data Hub</b> at ' + esc(clock(s.at)) + ': ' + esc(many(s.descriptions.length, 'description', 'descriptions')) + ', and ' + esc(many(s.keyFields.length, 'Key Field', 'Key Fields')) + ' on the card, with your name in its history.</span></div>' : '';
+  const alert = conflicts.length ? '<div class="alert"><span><b>Saved, except ' + (conflicts.length === 1 ? 'one field' : conflicts.length + ' fields') + '.</b> ' + (conflicts.length === 1 ? 'A colleague described it' : 'Colleagues described them') + ' after this window opened. Choose which text ' + (conflicts.length === 1 ? 'it keeps' : 'each keeps') + '.</span></div>' : '';
+  const row = (x) => {
+    const conflict = conflicts.find((c) => c.name === x.name);
+    const key = v.mayKey ? '<label class="fkey" title="Key Field: a field that matters most"><input type="checkbox" data-key="' + esc(x.name) + '"' + (x.key ? ' checked' : '') + '>Key Field</label>' : '<span></span>';
+    const name = '<div class="fname"><code>' + esc(x.name) + '</code><span class="meta">' + esc(x.type || '') + (x.pills || []).map((p) => ' <span class="pill">' + esc(p) + '</span>').join('') + '</span><span class="fdbt">' + (x.dbt ? '<span class="meta">From dbt</span>' + esc(x.dbt) : '<i>No description in dbt</i>') + '</span></div>';
+    const mark = FIELD_MARKS[x.mark] ? '<span class="fmark ' + esc(x.mark) + '" data-mark>' + FIELD_MARKS[x.mark] + '</span>' : '<span class="fmark" data-mark hidden></span>';
+    const text = v.mayText
+      ? '<label class="ftext">' + mark + '<textarea rows="3" data-text="' + esc(x.name) + '" aria-label="Business Description of ' + esc(x.name) + '" placeholder="What it holds, in the words of the business"' + NO_FILL + '>' + esc(x.text) + '</textarea><span class="fneeds" data-needs hidden>A Key Field needs a description to be published.</span></label>'
+      : '<div class="ftext">' + esc(x.text) + '</div>';
+    const theirs = conflict ? '<div class="theirs" data-theirs-of="' + esc(x.name) + '"><span class="meta"><b>' + (conflict.by ? esc(conflict.by) : 'A colleague') + ' wrote' + (conflict.at ? ' at ' + esc(clock(conflict.at)) : '') + '</b></span><p>' + esc(conflict.theirs) + '</p><div class="acts"><button class="quiet" data-theirs="' + esc(x.name) + '">Keep this text</button><button class="primary" data-mine="' + esc(x.name) + '">Use mine</button></div></div>' : '';
+    return '<div class="frow" data-row="' + esc(x.name) + '">' + key + name + text + theirs + '</div>';
+  };
+  const save = '<div class="fsave"><span class="meta" data-saves></span><button class="primary" data-act="save-fields">Save to Data Hub</button></div>';
+  root.innerHTML = head('Fields', r.displayName, 'Which fields matter most, and what each holds in the words of the business', level(r.levelName), v.collection) + basis + done + alert + segs +
+    '<div class="frows">' + rows.map(row).join('') + '</div>' + save + foot('Only your click saves, as yours.', r.columns, 'Open the Columns in Data Hub');
+  showFields();
+  syncFields();
+}
+/** Which rows the filter shows, without drawing the card again. */
+function showFields() {
+  for (const el of root.querySelectorAll('[data-row]')) {
+    const x = view.rows.find((one) => one.name === el.dataset.row);
+    const key = el.querySelector('[data-key]')?.checked ?? x.key;
+    el.hidden = fieldsShow === 'suggested' ? x.mark !== 'suggested' : fieldsShow === 'key' ? !key : false;
+  }
+  root.querySelectorAll('[data-show]').forEach((b) => { b.classList.toggle('on', b.dataset.show === fieldsShow); b.setAttribute('aria-pressed', String(b.dataset.show === fieldsShow)); });
+}
+/** What Save would write, as the User ticked and typed it: a text edited, a suggestion kept, a Key Field added or taken away. */
+function fieldChanges() {
+  const conflicted = new Set((view.conflicts || []).map((c) => c.name));
+  const out = { added: 0, removed: 0, fields: [] };
+  for (const x of view.rows) {
+    const box = root.querySelector('[data-key="' + CSS.escape(x.name) + '"]');
+    if (box && box.checked !== x.wasKey) out[box.checked ? 'added' : 'removed'] += 1;
+    const area = root.querySelector('[data-text="' + CSS.escape(x.name) + '"]');
+    if (!area || conflicted.has(x.name)) continue;
+    const value = area.value.trim();
+    if (x.mark === 'suggested' ? value !== '' : value !== x.text.trim()) out.fields.push({ name: x.name, businessDescription: value });
+  }
+  return out;
+}
+function syncFields() {
+  for (const x of view.rows) {
+    const el = root.querySelector('[data-row="' + CSS.escape(x.name) + '"]');
+    const area = el?.querySelector('[data-text]');
+    const key = el?.querySelector('[data-key]')?.checked ?? x.key;
+    if (area) {
+      const mark = el.querySelector('[data-mark]');
+      if (area.value !== x.text) { mark.hidden = false; mark.className = 'fmark edited'; mark.textContent = 'Edited'; }
+      el.querySelector('[data-needs]').hidden = !(key && area.value.trim() === '');
+    }
+  }
+  const c = fieldChanges();
+  const parts = [...(c.added ? [many(c.added, 'Key Field', 'Key Fields')] : []), ...(c.fields.length ? [many(c.fields.length, 'description', 'descriptions')] : [])];
+  const took = c.removed ? (parts.length ? ', and takes ' : 'Takes ') + many(c.removed, 'Key Field', 'Key Fields') + ' away' : '';
+  const line = root.querySelector('[data-saves]');
+  if (line) line.textContent = parts.length || c.removed ? (parts.length ? 'Saves ' + parts.join(' and ') : '') + took + ', as yours.' : view.saved ? 'Saved. Change something to save again.' : 'Nothing to save yet.';
+  const button = root.querySelector('[data-act="save-fields"]');
+  if (button) button.disabled = !(parts.length || c.removed);
+  const keys = root.querySelector('[data-count="key"]');
+  if (keys) keys.textContent = String([...root.querySelectorAll('[data-key]')].filter((b) => b.checked).length);
+}
+const fieldsArgs = () => {
+  const c = fieldChanges();
+  const keyFields = view.mayKey ? [...root.querySelectorAll('[data-key]')].filter((b) => b.checked).map((b) => b.dataset.key) : undefined;
+  return { id: view.resource.id, ...(keyFields && (c.added || c.removed) ? { keyFields } : {}), fields: c.fields, before: view.before };
+};
+
 function render() {
   if (!view) return;
   if (view.view === 'resource') renderResource(view.resource, view.parts);
@@ -657,6 +779,7 @@ function render() {
   else if (view.view === 'lens') renderLens(view);
   else if (view.view === 'journey') renderJourney(view);
   else if (view.view === 'card') renderCard(view);
+  else if (view.view === 'fields') renderFields(view);
   else if (view.view === 'sent') root.innerHTML = '<div>Sent to the Data Team. Their answer comes in your Message Centre.</div>';
   setFold();
 }
@@ -677,6 +800,8 @@ function toldClaude(result, told, card) {
 /** A result to show: in a card only, with the choices of its Preview the MCP App read already for this window. */
 function kept(next) {
   if (next.results === 'card') cardOnly = true;
+  // What the suggestions were based on stays on the card after it saved (DEC-UX-281).
+  if (next.view === 'fields' && view?.view === 'fields' && !next.basedOn) return { ...next, basedOn: view.basedOn };
   if (next.results === 'card' && next.view === 'preview' && !next.choices && keptChoices.key === next.resource.id + '/' + next.window) return { ...next, choices: keptChoices.choices };
   return next;
 }
@@ -762,9 +887,29 @@ const keepLens = () => {
 };
 
 root.addEventListener('click', (event) => {
-  const target = event.target.closest('[data-open],[data-tab],[data-act],[data-page],[data-fold],[data-card],[data-step],[data-answer],[data-default]');
+  const target = event.target.closest('[data-open],[data-tab],[data-act],[data-page],[data-fold],[data-card],[data-step],[data-answer],[data-default],[data-show],[data-theirs],[data-mine]');
   if (!target || target.disabled) return;
   if (target.dataset.fold !== undefined) { folded = !folded; setFold(); return; }
+  // The fields card: the filter, and the choice between a colleague's text and the User's own (FR-CL-38).
+  if (view?.view === 'fields' && target.dataset.show) { fieldsShow = target.dataset.show; showFields(); return; }
+  if (view?.view === 'fields' && target.dataset.theirs) {
+    const name = target.dataset.theirs;
+    const conflict = view.conflicts.find((c) => c.name === name);
+    view = { ...view, conflicts: view.conflicts.filter((c) => c !== conflict), rows: view.rows.map((x) => (x.name === name ? { ...x, text: conflict.theirs, mark: 'card' } : x)) };
+    const area = root.querySelector('[data-text="' + CSS.escape(name) + '"]');
+    if (area) area.value = conflict.theirs;
+    root.querySelector('[data-theirs-of="' + CSS.escape(name) + '"]')?.remove();
+    void show(null, 'The User kept the text ' + (conflict.by || 'a colleague') + ' wrote for ' + name + '.');
+    syncFields();
+    return;
+  }
+  if (view?.view === 'fields' && target.dataset.mine) {
+    const name = target.dataset.mine;
+    const conflict = view.conflicts.find((c) => c.name === name);
+    const mine = root.querySelector('[data-text="' + CSS.escape(name) + '"]')?.value.trim() ?? conflict.mine;
+    call('save_fields', { id: view.resource.id, fields: [{ name, businessDescription: mine }], before: { keyFields: view.before.keyFields, fields: [{ name, businessDescription: conflict.theirs }] } }, 'The User chose their own text for ' + name + ' over the one a colleague wrote, and saved it.');
+    return;
+  }
   // A Parameter of a Lens back to its default, the other values kept; Run runs it (DEC-UX-278).
   if (target.dataset.default !== undefined && view?.view === 'lens') {
     keepLens();
@@ -806,6 +951,8 @@ root.addEventListener('click', (event) => {
   } else if (view.view === 'lens') {
     if (act === 'run-lens') call('run_lens', { id: view.lens.id, values: lensValues() }, 'The User changed the values of the Lens in the card and ran it again.');
     if (act === 'approve') call('run_lens_approved', { id: view.lens.id, values: view.given }, 'The User approved and ran the Lens in Data Hub.');
+  } else if (view.view === 'fields' && act === 'save-fields') {
+    call('save_fields', fieldsArgs(), 'The User saved the fields in the card.');
   } else if (view.view === 'publish' && act === 'publish') {
     call('confirm_publication', { id: view.resource.id, declaration: target.dataset.declaration || undefined }, 'The User published and confirmed the Resource in Data Hub.');
   }
@@ -827,6 +974,12 @@ const lensChanged = (event) => {
   root.querySelector('[data-act="run-lens"]')?.removeAttribute('disabled');
 };
 root.addEventListener('change', lensChanged);
+// What the User ticks and types in the fields card: the marks and what Save writes follow (DEC-UX-281).
+const fieldsChanged = (event) => {
+  if (view?.view === 'fields' && event.target.closest('[data-key],[data-text]')) syncFields();
+};
+root.addEventListener('input', fieldsChanged);
+root.addEventListener('change', fieldsChanged);
 root.addEventListener('input', lensChanged);
 
 function applyTheme(context) {

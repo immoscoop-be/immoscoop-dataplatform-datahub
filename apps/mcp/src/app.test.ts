@@ -186,9 +186,9 @@ describe('mcp', () => {
   it('keeps the buttons of the User from Claude: those tools are for the MCP App only (DEC-CL-07)', async () => {
     const tools: { name: string; _meta?: { ui?: { visibility?: string[]; resourceUri?: string } } }[] = (await call('tools/list', {}, await issuer.sign())).json().result.tools;
     const appOnly = tools.filter((item) => item._meta?.ui?.visibility?.join() === 'app').map((item) => item.name);
-    expect(appOnly.sort()).toEqual(['confirm_publication', 'run_lens_approved', 'run_preview_approved', 'run_query_approved', 'send_preview_request', 'send_query_request']);
+    expect(appOnly.sort()).toEqual(['confirm_publication', 'run_lens_approved', 'run_preview_approved', 'run_query_approved', 'save_fields', 'send_preview_request', 'send_query_request']);
     const shows = tools.filter((item) => item._meta?.ui?.resourceUri === VIEW_URI && !item._meta.ui.visibility).map((item) => item.name);
-    expect(shows.sort()).toEqual(['guide_owner_journey', 'preview_resource', 'publish_resource', 'run_lens', 'run_query', 'show_learning_card', 'show_query', 'show_resource']);
+    expect(shows.sort()).toEqual(['guide_owner_journey', 'preview_resource', 'publish_resource', 'run_lens', 'run_query', 'show_learning_card', 'show_query', 'show_resource', 'suggest_fields']);
   });
 
   it('serves the MCP App as one self-contained page (FR-CL-01)', async () => {
@@ -432,6 +432,58 @@ describe('Resources through Claude', () => {
     expect(asked.find((call) => call.method === 'PATCH')?.body).toEqual({ pitfalls: 'Mind the current week.' });
   });
 
+  it('shows the fields Claude suggests in a card, and writes only what the User saves there, never over a colleague (FR-CL-38, DEC-CL-22)', async () => {
+    const owner = await issuer.sign();
+    const fields = [
+      { name: 'week_start', dataType: 'DATE', description: 'Monday of the week', businessDescription: '' },
+      { name: 'lead_source', dataType: 'STRING', description: 'Where the lead came from', businessDescription: 'The website, the app or a partner.' },
+      { name: 'lead_count', dataType: 'INT64', description: 'Number of leads', businessDescription: '' },
+    ];
+    const card = { ...detail().resource.card, keyFields: ['lead_source'] };
+    answers[`GET ${CATALOGUE}/resources/${RESOURCE_ID}`] = () => [200, detail({ fields, card, details: { partition: { field: 'week_start' }, clusterBy: ['lead_source'] } })];
+    answers[`GET ${CATALOGUE}/collections/c-1`] = () => [200, collection];
+    // Only the MCP App saves: Claude is not offered save_fields.
+    expect(appOnly(await toolsOf(owner))).toContain('save_fields');
+
+    const shown = await tool('suggest_fields', {
+      id: RESOURCE_ID,
+      keyFields: ['week_start', 'lead_count', 'no_such_field'],
+      descriptions: [
+        { name: 'week_start', text: 'The Monday of the week the lead came in.' },
+        { name: 'lead_source', text: 'Where it came in.' },
+      ],
+      basedOn: 'the names and the descriptions from dbt',
+    }, owner);
+    const view = shown.structuredContent as { view: string; rows: { name: string; text: string; mark: string; key: boolean; wasKey: boolean; pills: string[] }[]; before: { keyFields: string[] }; mayKey: boolean; mayText: boolean };
+    expect(view).toMatchObject({ view: 'fields', mayKey: true, mayText: true, before: { keyFields: ['lead_source'] } });
+    expect(view.rows).toEqual([
+      expect.objectContaining({ name: 'week_start', text: 'The Monday of the week the lead came in.', mark: 'suggested', key: true, wasKey: false, pills: ['Partition'] }),
+      // A text on the card is kept: Claude's suggestion never replaces it.
+      expect.objectContaining({ name: 'lead_source', text: 'The website, the app or a partner.', mark: 'card', key: true, wasKey: true, pills: ['Cluster 1'] }),
+      expect.objectContaining({ name: 'lead_count', text: '', mark: 'empty', key: true }),
+    ]);
+    expect(shown.content[0]?.text).toContain('Nothing is written');
+    expect(shown.content[0]?.text).toContain('Kept the text already on the card for lead_source.');
+    expect(shown.content[0]?.text).toContain('Not fields of this Resource, left out: no_such_field.');
+    expect(asked.some((call) => call.method !== 'GET')).toBe(false);
+
+    // The User saves; a colleague described lead_count since the card opened, which stays theirs.
+    answers[`GET ${CATALOGUE}/resources/${RESOURCE_ID}`] = () => [200, detail({ fields: fields.map((field) => (field.name === 'lead_count' ? { ...field, businessDescription: 'Leads sent to KBC.' } : field)), card })];
+    answers[`GET ${CATALOGUE}/resources/${RESOURCE_ID}/log`] = () => [200, { entries: [{ logId: 'RES-010', params: { field: 'lead_count', actor: 'An Claes' }, at: '2026-11-18T12:38:00.000Z' }] }];
+    answers[`PATCH ${CATALOGUE}/resources/${RESOURCE_ID}`] = () => [200, detail()];
+    answers[`PUT ${CATALOGUE}/resources/${RESOURCE_ID}/fields`] = () => [200, {}];
+    const saved = await tool('save_fields', {
+      id: RESOURCE_ID,
+      keyFields: ['lead_source', 'week_start'],
+      fields: [{ name: 'week_start', businessDescription: 'The Monday of the week the lead came in.' }, { name: 'lead_count', businessDescription: 'How many leads.' }],
+      before: { keyFields: ['lead_source'], fields: fields.map(({ name, businessDescription }) => ({ name, businessDescription })) },
+    }, owner);
+    expect(asked.find((call) => call.method === 'PATCH')?.body).toEqual({ keyFields: ['lead_source', 'week_start'] });
+    expect(asked.find((call) => call.method === 'PUT')?.body).toEqual({ fields: [{ name: 'week_start', businessDescription: 'The Monday of the week the lead came in.' }] });
+    expect(saved.structuredContent).toMatchObject({ view: 'fields', saved: { descriptions: ['week_start'] }, conflicts: [{ name: 'lead_count', theirs: 'Leads sent to KBC.', mine: 'How many leads.', by: 'An Claes' }] });
+    expect(saved.content[0]?.text).toContain('Not saved, as a colleague described it after the card opened: lead_count, by An Claes.');
+  });
+
   it('writes a Known Gap one at a time, with its scope, and never through the card (DEC-CL-20, FR-CL-34)', async () => {
     const owner = await issuer.sign();
     // The card tool no longer takes the Known Gaps as a list of texts.
@@ -532,10 +584,12 @@ describe('the Permissions of the User in Claude (TR-PL-09)', () => {
   const QUERY_TOOLS = ['check_query', 'create_query', 'get_query', 'get_result_page', 'list_queries', 'run_query', 'run_query_approved', 'send_query_request', 'show_query', 'update_query'];
   const PREVIEW_TOOLS = ['preview_resource', 'run_preview_approved', 'send_preview_request'];
   const WRITES = ['add_known_gap', 'change_known_gap', 'deprecate_resource', 'describe_fields', 'mark_changes_seen', 'record_journey_step', 'remove_known_gap', 'reply_to_message', 'undeprecate_resource', 'update_resource_card', 'write_message'];
+  // The fields suggested by Claude, decided by the User in a card: only for who may describe them (FR-CL-38).
+  const FIELDS = ['save_fields', 'suggest_fields'];
 
   it('offers an Admin every tool, the queries of others included', async () => {
     const tools = names(await toolsOf(await issuer.sign({ as: 'admin' })));
-    expect(tools).toEqual([...READS, ...LENS_RUNS, ...QUERY_TOOLS, ...PREVIEW_TOOLS, ...WRITES, 'confirm_publication', 'get_resource_queries', 'publish_resource'].sort());
+    expect(tools).toEqual([...READS, ...LENS_RUNS, ...QUERY_TOOLS, ...PREVIEW_TOOLS, ...WRITES, ...FIELDS, 'confirm_publication', 'get_resource_queries', 'publish_resource'].sort());
   });
 
   it('offers a Lens user no query tools and no Preview, and lets Claude write only their Questions and Signals', async () => {
@@ -556,13 +610,14 @@ describe('the Permissions of the User in Claude (TR-PL-09)', () => {
     const messagesOnly = permissionsOf('businessAnalyst', (permissions) => (permissions['claude.use'].values = { writes: ['messages'], note: '' }));
     const tools = names(await toolsOf(await issuer.sign({ permissions: messagesOnly })));
     expect(tools).toEqual(expect.arrayContaining(['write_message', 'reply_to_message', 'publish_resource', 'create_query', 'preview_resource']));
-    for (const name of ['update_resource_card', 'describe_fields', 'add_known_gap', 'change_known_gap', 'remove_known_gap', 'mark_changes_seen', 'deprecate_resource', 'undeprecate_resource', 'record_journey_step']) expect(tools).not.toContain(name);
+    for (const name of ['update_resource_card', 'describe_fields', ...FIELDS, 'add_known_gap', 'change_known_gap', 'remove_known_gap', 'mark_changes_seen', 'deprecate_resource', 'undeprecate_resource', 'record_journey_step']) expect(tools).not.toContain(name);
 
     // Only the attributes they may describe: pitfalls, so no Business Descriptions of fields and no changes marked seen.
     const pitfalls = permissionsOf('businessAnalyst', (permissions) => (permissions['resources.describe'].values = { reach: 'theirs', attributes: ['pitfalls'] }));
     const described = await toolsOf(await issuer.sign({ permissions: pitfalls }));
     expect(Object.keys(described.find((item) => item.name === 'update_resource_card')?.inputSchema.properties ?? {}).sort()).toEqual(['before', 'id', 'pitfalls']);
     expect(names(described)).not.toContain('describe_fields');
+    for (const name of FIELDS) expect(names(described)).not.toContain(name);
     expect(names(described)).not.toContain('mark_changes_seen');
     expect(names(described)).not.toContain('add_known_gap');
 
@@ -694,7 +749,7 @@ describe('results in Claude, in a card only, or not in Claude (FR-CL-28)', () =>
     expect(rows.content[0]?.text).not.toContain(SECRET);
 
     const tools = await toolsOf(token);
-    expect(appOnly(tools)).toEqual(['confirm_publication', 'read_preview_choices', 'read_result_rows', 'run_lens_approved', 'run_preview_approved', 'run_query_approved', 'send_preview_request', 'send_query_request']);
+    expect(appOnly(tools)).toEqual(['confirm_publication', 'read_preview_choices', 'read_result_rows', 'run_lens_approved', 'run_preview_approved', 'run_query_approved', 'save_fields', 'send_preview_request', 'send_query_request']);
     expect(tools.find((item) => item.name === 'run_query')?._meta?.ui?.resourceUri).toBe(VIEW_URI);
   });
 
@@ -732,12 +787,12 @@ describe('results in Claude, in a card only, or not in Claude (FR-CL-28)', () =>
     expect(asked.some((call) => call.url.includes('/preview/'))).toBe(false);
     expect((await tool('get_result_page', { run: 'q-9', page: 1 }, token)).isError).toBe(true);
 
-    // No result opens the MCP App, and its buttons for a result are not there; a Resource, its publication, its journey
-    // and a Learning Card still show, as they hold no rows.
+    // No result opens the MCP App, and its buttons for a result are not there; a Resource, its publication, its journey,
+    // a Learning Card and the fields Claude suggests still show, as they hold no rows.
     const tools = await toolsOf(token);
     const shows = names(tools.filter((item) => item._meta?.ui?.resourceUri === VIEW_URI && !item._meta.ui.visibility));
-    expect(shows).toEqual(['guide_owner_journey', 'publish_resource', 'show_learning_card', 'show_resource']);
-    expect(appOnly(tools)).toEqual(['confirm_publication']);
+    expect(shows).toEqual(['guide_owner_journey', 'publish_resource', 'show_learning_card', 'show_resource', 'suggest_fields']);
+    expect(appOnly(tools)).toEqual(['confirm_publication', 'save_fields']);
   });
 
   it('says a run too large for the Permission group of the User cannot run, and offers no Request', async () => {
@@ -906,6 +961,16 @@ describe('a Learning Card in Claude (FR-LR-26, DEC-UX-261)', () => {
     expect(VIEW_PAGE).toContain("app.sendMessage({ role: 'user', content: [{ type: 'text', text: 'Show me the Learning Card '");
     expect(VIEW_PAGE).toContain("else if (view.view === 'journey') renderJourney(view);");
     expect(VIEW_PAGE).toContain("else if (view.view === 'card') renderCard(view);");
+  });
+
+  it('draws the fields Claude suggests to tick and edit, and saves only on the button of the User (FR-CL-38, DEC-UX-281)', () => {
+    expect(VIEW_PAGE).toContain("else if (view.view === 'fields') renderFields(view);");
+    expect(VIEW_PAGE).toContain('<input type="checkbox" data-key="');
+    expect(VIEW_PAGE).toContain('<textarea rows="3" data-text="');
+    expect(VIEW_PAGE).toContain("call('save_fields', fieldsArgs(), 'The User saved the fields in the card.');");
+    // A colleague's text stays until the User chooses: keep it, or save theirs over it.
+    expect(VIEW_PAGE).toContain('data-theirs="');
+    expect(VIEW_PAGE).toContain('data-mine="');
   });
 
   it('unfolds the definitions of the terms of a step under its title with a tap on the ⓘ, folded at first (FR-LR-44, DEC-UX-279)', () => {

@@ -537,7 +537,7 @@ At the steps Pitfalls and Known Gaps of the Owner Journey, the ⓘ after the tit
 <a id="fr-cl-38"></a>
 ### FR-CL-38 · Claude suggests the Key Fields and the descriptions of the fields, the User decides in a card
 
-**Status:** Specified · **Source:** Max, 2026-11-18 ([DEC-CL-22](#dec-cl-22)) · **Screens:** [mcp-fields](../../design/screens/mcp-fields.html)
+**Status:** Implemented · **Source:** Max, 2026-11-18 ([DEC-CL-22](#dec-cl-22)) · **Screens:** [mcp-fields](../../design/screens/mcp-fields.html)
 
 When the User describes the fields of a Resource they may describe, Claude suggests which fields are Key Fields and a Business Description for every field that has none, and shows them with `suggest_fields` in one MCP App: a row per field with its box "Key Field", its name, type and description from dbt, and its Business Description to edit, marked as suggested, on the card or edited ([DEC-UX-281](../../design/principles.md#dec-ux-281)). Nothing is written until the User clicks "Save to Data Hub" in the card, which writes the Key Fields and the descriptions as theirs, in the history with their name, with what the card showed as before: a field a colleague described meanwhile is not overwritten, and the card asks which text it keeps. Claude is told what was saved, and goes on, as at the steps Key Fields and Fields of the Owner Journey, where `guide_owner_journey` has Claude offer the card ([FR-CL-32](#fr-cl-32)). To suggest, Claude may read a small Preview of the Resource only where [DEC-CL-22](#dec-cl-22) lets it, and the card says what the suggestions are based on.
 
