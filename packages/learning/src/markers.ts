@@ -13,6 +13,12 @@ export const MARKERS = {
   modelType: ['2.3.6'],
   /** "Mark as seen" on a change since the last Confirmation. */
   changesSeen: ['4.3.2', '4.3.1'],
+  /** The terms of the dictionary on a Resource (DEC-UX-279): their marker shows their definition first (`terms.ts`). */
+  businessDescription: ['K5.14'],
+  keyField: ['K5.15'],
+  knownGap: ['K5.3'],
+  pitfall: ['K5.16'],
+  knownBehaviour: ['3.3.3'],
 } as const satisfies Readonly<Record<string, readonly string[]>>;
 
 export type MarkerPlace = keyof typeof MARKERS;
@@ -23,4 +29,9 @@ export const MARKER_PLACES = {
   grain: 'the grain of a Resource, on its overview',
   modelType: 'the model type of a Resource, on its overview',
   changesSeen: '"Mark as seen" on a change since the last Confirmation, on the page of a Resource',
+  businessDescription: 'the Business Description of a Resource and of its fields, on its overview, in its Columns and in the Owner Journey in Claude',
+  keyField: 'the Key Fields of a Resource, on its overview and in the Owner Journey in Claude',
+  knownGap: 'the Known Gaps of a Resource, on its overview and in the Owner Journey in Claude',
+  pitfall: 'the Pitfalls of a Resource, on its overview and in the Owner Journey in Claude',
+  knownBehaviour: 'Known behaviour of a Resource, on its overview',
 } as const satisfies Readonly<Record<MarkerPlace, string>>;

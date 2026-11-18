@@ -21,6 +21,7 @@ export const VIEW_PAGE = String.raw`<!doctype html>
 :root {
   --font-family: 'Poppins', system-ui, sans-serif;
   --font-mono: ui-monospace, Menlo, monospace;
+  --font-symbol: 'Segoe UI Symbol', 'Apple Symbols', 'Noto Sans Symbols 2', 'DejaVu Sans', sans-serif;
   --weight-medium: 500;
   --text-body: 13px;
   --text-small: 12px;
@@ -167,9 +168,13 @@ details[open] > summary .chev { transform: rotate(180deg); }
 .scope { display: inline-flex; gap: 5px; margin: 4px 4px 0 0; padding: 2px 9px; border-radius: var(--radius-pill); background: var(--surface-solid); font-size: var(--text-meta); color: var(--text-secondary); }
 .scope .k { color: var(--text-muted); }
 .none { color: var(--text-muted); font-style: italic; }
-.purpose { display: flex; align-items: flex-start; gap: 8px; margin: 0; padding: 8px 12px; border-radius: var(--radius-md); border: 1px dashed var(--tint-active); font-size: var(--text-small); color: var(--text-secondary); line-height: 1.5; }
-.purpose .ic { margin-top: 3px; color: var(--text-muted); }
-.purpose strong { color: var(--text-primary); font-weight: var(--weight-medium); }
+.term { display: inline-grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--text-muted); font-family: var(--font-symbol); font-size: 14px; cursor: pointer; }
+.term:hover, .term[aria-expanded="true"] { color: var(--text-primary); background: var(--tint-hover); }
+.term:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 1px; }
+.term-def { display: grid; gap: 6px; margin: -6px 0 0; padding: 10px 12px; border-radius: var(--radius-md); background: var(--surface-sub); font-size: var(--text-small); line-height: 1.5; color: var(--text-secondary); }
+.term-def p { margin: 0; }
+.term-def b { color: var(--text-primary); font-weight: var(--weight-medium); }
+@media (max-width: 520px) { .term { width: 44px; height: 44px; } }
 .gets { display: grid; gap: 8px; }
 .get { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 10px; align-items: start; font-size: var(--text-small); }
 .get > .ic, .get > .dh-mark { margin-top: 2px; font-size: 17px; color: var(--col-teal-ink); }
@@ -560,6 +565,8 @@ const helpCard = (c) => '<details class="help-card"><summary>' + ic('card') + '<
 // Whether the overview is open: unfolded at the start, folded on every other step, unless the User opened or folded
 // it on this step.
 let overviewAt = { step: null, open: false };
+// The step whose definitions the User unfolded with the ⓘ after its title, kept while the window draws again.
+let termsAt = null;
 
 function renderJourney(v) {
   const w = v.window || {};
@@ -581,16 +588,27 @@ function renderJourney(v) {
   const what = s ? '<div class="tile"><div class="label">What we are going to do</div><p style="margin:0 0 6px">' + esc(s.what) + '</p><p class="meta">' + esc(s.why) + '</p></div>' : '';
   const gets = s ? '<div class="tile gets"><div class="label">What you get on the way</div>' + s.gets.map((g) => '<div class="get">' + (g.kind === 'hub' ? MARK : ic(g.kind === 'cards' ? 'card' : 'final')) + '<p><b>' + esc(g.title) + '</b> ' + esc(g.text) + '</p></div>').join('') + '</div>' : '';
   const mark = v.next.mark ? '<span class="pill">' + esc(v.next.mark.charAt(0).toUpperCase() + v.next.mark.slice(1)) + '</span>' : '';
-  const now = start ? '' : '<div class="row"><span class="title">' + esc(v.next.name) + '</span>' + mark + '</div>';
-  const purpose = w.purpose ? '<p class="purpose">' + ic('info') + '<span>' + inline(w.purpose) + '</span></p>' : '';
+  // A term of the dictionary the step writes: the ⓘ after its title unfolds its definition (DEC-UX-279).
+  const terms = w.terms || [];
+  const shownTerms = termsAt === v.next.step;
+  const term = terms.length ? '<button class="term" type="button" data-term aria-expanded="' + shownTerms + '" aria-controls="term-def" aria-label="What it means" title="What it means">ⓘ</button>' : '';
+  const defs = terms.length ? '<div class="term-def" id="term-def"' + (shownTerms ? '' : ' hidden') + '>' + terms.map((one) => '<p><b>' + esc(one.name) + '</b> · ' + esc(one.definition) + '</p>').join('') + '</div>' : '';
+  const now = start ? '' : '<div class="row"><span class="title">' + esc(v.next.name) + '</span>' + term + mark + '</div>' + defs;
   const cards = (v.next.cards || []).length ? '<div class="help"><span class="label">' + ic('help') + 'How can we help with this step?</span>' + v.next.cards.map(helpCard).join('') + '</div>' : '';
   const collection = w.collection ? { ...w.collection, name: w.collection.name + ' · Owner: ' + w.collection.owner } : null;
   const note = v.next.writes ? 'Written with ' + v.next.writes + ', once you agree.' : start ? 'The journey is kept with the Resource: you, or a colleague of its Owner Unit, go on where it stopped.' : 'Nothing is written in this step.';
   const out = w.link || { url: r.page, label: 'Open the Resource in Data Hub' };
   root.innerHTML = head('Owner Journey', r.displayName, null, level(r.level), collection) + what + overview + gets + now +
-    '<div class="tile">' + (w.held || []).map(heldPart).join('') + '</div>' + purpose + cards + foot(note, out.url, out.label);
+    '<div class="tile">' + (w.held || []).map(heldPart).join('') + '</div>' + cards + foot(note, out.url, out.label);
   const details = root.querySelector('[data-overview]');
   details?.querySelector('summary')?.addEventListener('click', () => { overviewAt = { step: v.next.step, open: !details.open }; });
+  root.querySelector('[data-term]')?.addEventListener('click', (event) => {
+    const button = event.currentTarget;
+    const shown = button.getAttribute('aria-expanded') !== 'true';
+    button.setAttribute('aria-expanded', String(shown));
+    root.querySelector('#term-def')?.toggleAttribute('hidden', !shown);
+    termsAt = shown ? v.next.step : null;
+  });
 }
 
 // The five steps of a card, in the language of the card (FR-LR-26); its chart is on its page in Data Hub.

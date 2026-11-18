@@ -5,11 +5,11 @@
   Description as a field, and its description from dbt next to it, read-only (DEC-UX-61). Left empty, readers see the one
   from dbt alone (DEC-RC-02). A description from dbt that changed in the last 30 days says so, with the text before;
   the filter shows only those fields. Reached from the Columns tab and from the Message on a changed description (messages.html?msg=described).
-  One quiet line above the fields says what each description is for: dbt says how the data is made, the Business
-  Description what it represents and what it is used for (DEC-UX-275). What is in a field is not shown yet: it gets
+  The head "Business Description" carries the marker ⓘ: its pop-out gives the definition first, which says what it is
+  for next to the description from dbt, then its Learning Card (DEC-UX-279). What is in a field is not shown yet: it gets
   its own design first (DEC-RC-28, OP-RC-29).
-  Requirements: FR-SR-06, FR-RC-15, FR-RC-16, FR-RC-17, FR-RC-18
-  Decisions: DEC-UX-09, DEC-UX-61, DEC-RC-01, DEC-RC-02, DEC-RC-03, DEC-UX-275, DEC-RC-27.
+  Requirements: FR-SR-06, FR-RC-15, FR-RC-16, FR-RC-17, FR-RC-18, FR-LR-44
+  Decisions: DEC-UX-09, DEC-UX-61, DEC-RC-01, DEC-RC-02, DEC-RC-03, DEC-UX-279, DEC-RC-27.
   Related screens: resource-detail.html?tabs=columns (Cancel and Save go back there), resource-edit.html (the Overview).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -131,10 +131,9 @@
    <button class="seg on" type="button" data-target="all" role="tab" aria-selected="true">All fields<span class="count" style="margin-left:5px">4</span></button>
    <button class="seg" type="button" data-target="changed" role="tab" aria-selected="false">Changed in dbt, last 30 days<span class="count" style="margin-left:5px">1</span></button>
   </div>
-  <p class="purpose-line edit-purpose"><i class="ph ph-info" aria-hidden="true"></i><span><b>dbt</b> says how the data is made. <b>The Business Description</b> says what it represents and what it is used for, in the words of the business.</span></p>
-  <div class="fd-row fd-headrow" aria-hidden="true">
+  <div class="fd-row fd-headrow">
    <span class="label">Field</span>
-   <span class="desc-head"><span class="label">Business Description</span><span class="origin">From the Owner</span></span>
+   <span class="desc-head"><span class="label"><span class="lc-ref" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-term-businessDescription">Business Description<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (what it means)</span></span></span><span class="origin">From the Owner</span></span>
    <span class="desc-head"><span class="label">Description</span><span class="origin">From dbt</span></span>
   </div>
   <div class="fd-row" data-pane-group="fd" data-pane="all">
@@ -161,6 +160,7 @@
  </form>
 </main>
 </div>
+<div class="lc-pop" id="pop-term-businessDescription" role="dialog" aria-label="Business Description: what it means" hidden><div class="lc-pop-head"><span class="lc-mark" aria-hidden="true">ⓘ</span>What it means</div><p class="lc-pop-def"><b>Business Description</b>The description of a Resource or of one of its fields in the words of the business: what it represents and what it is used for, written by its Owner or the Data Team. It stands next to the description from dbt, which says how the data is made, and never replaces it.</p><div class="lc-pop-head">Explained in 1 Learning Card</div><div class="lc-pop-items"><div class="lc-pop-item"><button class="lc-pop-open" data-float-open data-num="K5.14" data-title="The Business Description"><span class="lc-pop-title"><i class="ph ph-compass" aria-hidden="true"></i><span><span class="lc-num">K5.14</span>The Business Description</span></span><span class="lc-pop-gain">You describe your table and each of its fields in the words of the business, so that colleagues outside your team understand them without asking you.</span><span class="lc-pop-seen">Not seen yet</span></button></div></div><div class="lc-pop-foot"><a class="text-link" href="learning-start.html"><span>Open the Learning Centre</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div>
 <script src="app.js"></script>
 </body>
 </html>

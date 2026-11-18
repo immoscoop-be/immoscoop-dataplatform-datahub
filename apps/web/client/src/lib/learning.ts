@@ -1,4 +1,4 @@
-import { type Card, type ChartRequest, LEVELS, shownIn, type LevelId, MARKERS, type MarkerPlace, parseCard, SECTIONS, type Thinking, type Topic, TOPICS, topicOf } from '@datahub/learning';
+import { type Card, type ChartRequest, LEVELS, shownIn, type LevelId, MARKERS, type MarkerPlace, parseCard, SECTIONS, type Term, termOf, type Thinking, type Topic, TOPICS, topicOf } from '@datahub/learning';
 import { createCall } from './api.js';
 import type { Config } from './config.js';
 import type { Session } from './session.js';
@@ -96,7 +96,7 @@ export async function cardsIn(language: Language, shown: ReadonlyMap<string, Car
 /** A sentence that follows a label, such as "You can now", as a sentence of its own: with a capital. */
 export const asSentence = (text: string): string => text.charAt(0).toUpperCase() + text.slice(1);
 
-export { LEVELS, MARKERS, SECTIONS, TOPICS, topicOf, type Card, type ChartRequest, type LevelId, type MarkerPlace, type Topic };
+export { LEVELS, MARKERS, SECTIONS, TOPICS, termOf, topicOf, type Card, type ChartRequest, type LevelId, type MarkerPlace, type Term, type Topic };
 
 /** The written cards a marker lists, most fitting first: a pop-out promises none it cannot open (DEC-LR-28). */
 export function cardsOf(place: MarkerPlace, shown: ReadonlyMap<string, Card>): Topic[] {
