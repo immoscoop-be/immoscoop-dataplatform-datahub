@@ -157,6 +157,18 @@ document.querySelectorAll('form.wl-find').forEach(f => f.addEventListener('submi
   const q = f.querySelector('input')?.value.trim().toLowerCase() || '';
   go(q.startsWith('how do agencies') ? 'search:none' : 'search:results');
 }));
+// Welcome (DEC-UX-287): pointing at a Lens in the list, or reaching it with the keyboard, shows its preview on the right;
+// ?preview=source shows that of another
+document.querySelectorAll('.wl-item[data-preview]').forEach(item => {
+  const show = () => {
+    item.closest('.wl-list').querySelectorAll('.wl-item').forEach(other => other.classList.toggle('on', other === item));
+    document.querySelectorAll('.wl-pv').forEach(pv => { pv.hidden = pv.id !== `pv-${item.dataset.preview}`; });
+  };
+  item.addEventListener('mouseenter', show);
+  item.addEventListener('focus', show);
+});
+const wlPreview = new URLSearchParams(location.search).get('preview');
+if (wlPreview) document.querySelector(`.wl-item[data-preview="${wlPreview}"]`)?.dispatchEvent(new Event('mouseenter'));
 // A group marked data-scroll brings what it switches back to the top
 document.querySelectorAll('[data-group][data-scroll]').forEach(g => g.querySelectorAll('[data-target]').forEach(b => b.addEventListener('click', () => {
   const box = g.closest('.float-win')?.querySelector('.float-body') || g.closest('.main');
