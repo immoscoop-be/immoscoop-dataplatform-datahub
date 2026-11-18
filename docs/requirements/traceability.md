@@ -9,14 +9,14 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 278 | 91 (22 open, 69 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 279 | 91 (22 open, 69 done) |
 | [Backlog](../overview/backlog.md) | – | – | – | 7 (5 open, 2 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 20 (1 proposed, 19 implemented) | 6 (1 specified, 5 implemented) | 13 | 12 (3 open, 9 done) |
 | [User management](functional/02-user-management.md) | 21 (14 implemented, 7 withdrawn) | 5 (1 implemented, 4 withdrawn) | 12 | 8 (1 open, 7 done) |
 | [Collections](functional/03-collections.md) | 45 (1 proposed, 40 implemented, 4 withdrawn) | 2 (2 specified) | 27 | 18 (1 open, 17 done) |
-| [Resources](functional/04-stacks-and-resources.md) | 62 (5 specified, 51 implemented, 6 withdrawn) | 4 (1 specified, 3 withdrawn) | 46 | 25 (4 open, 21 done) |
+| [Resources](functional/04-stacks-and-resources.md) | 62 (5 specified, 51 implemented, 6 withdrawn) | 5 (1 specified, 1 implemented, 3 withdrawn) | 46 | 25 (4 open, 21 done) |
 | [Resource card](functional/05-resource-card.md) | 30 (4 proposed, 2 specified, 22 implemented, 2 withdrawn) | 1 (1 implemented) | 28 | 29 (3 open, 26 done) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 19 (4 specified, 10 implemented, 5 withdrawn) | – | 17 | 8 (2 open, 6 done) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 7 (3 proposed, 4 implemented) | 1 (1 implemented) | 8 | 8 (8 done) |
@@ -452,7 +452,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-LR-41](functional/16-learning.md#fr-lr-41) | A card still to write shows as coming soon, and can be asked for | Proposed | – | [learning-family](../design/screens/learning-family.html) | – | [a3c5f6a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a3c5f6a8d3fc370ca9f1cdaeb2141adab0c9c1f4) refs, 2026-11-11 |
 | [FR-LR-42](functional/16-learning.md#fr-lr-42) | The situations that push a card are one list | Proposed | – | – | – | [a3c5f6a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a3c5f6a8d3fc370ca9f1cdaeb2141adab0c9c1f4) refs, 2026-11-11 |
 | [FR-LR-43](functional/16-learning.md#fr-lr-43) | An attention box asks whoever can act, with the card that says why | Proposed | – | [learning-attention](../design/screens/learning-attention.html), [learning-attention-resource](../design/screens/learning-attention-resource.html) | – | [a3c5f6a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a3c5f6a8d3fc370ca9f1cdaeb2141adab0c9c1f4) refs, 2026-11-11 |
-| [FR-LR-44](functional/16-learning.md#fr-lr-44) | A term of the dictionary on a screen gives its definition first | Implemented | – | [resource-overview](../design/screens/resource-overview.html), [resource-columns-edit](../design/screens/resource-columns-edit.html), [owner-journey](../design/screens/owner-journey.html) | [TR-LR-10](technical/16-learning.md#tr-lr-10) | [8a6aa08](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8a6aa08c96c494e823d41a785da476bd8040303f) implements, 2026-11-18 |
+| [FR-LR-44](functional/16-learning.md#fr-lr-44) | A term of the dictionary on a screen gives its definition first | Implemented | – | [resource-overview](../design/screens/resource-overview.html), [resource-columns-edit](../design/screens/resource-columns-edit.html), [owner-journey](../design/screens/owner-journey.html) | [TR-LR-10](technical/16-learning.md#tr-lr-10) | [846912f](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/846912f10e440d6445c6b668dc39e5f62e63f8e0) refs, 2026-11-18<br>[8a6aa08](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8a6aa08c96c494e823d41a785da476bd8040303f) implements, 2026-11-18 |
 
 ### [Claude](functional/17-claude.md)
 
@@ -534,6 +534,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [EC-SR-02](functional/04-stacks-and-resources.md#ec-sr-02) | A registered view disappears from the Artifacts | Withdrawn | – | – | – |
 | [EC-SR-03](functional/04-stacks-and-resources.md#ec-sr-03) | A view is renamed in BigQuery | Specified | – | – | [bcdef01](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/bcdef01d4dff9ce840b74a8594e8472fbda8260f) refs, 2026-10-28 |
 | [EC-SR-04](functional/04-stacks-and-resources.md#ec-sr-04) | A second Stack is added | Withdrawn | – | [TR-PF-13](technical/00-platform.md#tr-pf-13) | – |
+| [EC-SR-05](functional/04-stacks-and-resources.md#ec-sr-05) | A table read through a view requires a filter that the view does not name | Implemented | – | – | – |
 
 ### [Resource card](functional/05-resource-card.md)
 
@@ -767,7 +768,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [TR-LR-07](technical/16-learning.md#tr-lr-07) | A card opens in a floating window, in the same steps as its page | Implemented | [FR-LR-12](functional/16-learning.md#fr-lr-12), [FR-LR-27](functional/16-learning.md#fr-lr-27), [DEC-LR-08](functional/16-learning.md#dec-lr-08) | [aa4477e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/aa4477ee5aa712754e0ef19b3bb61a6c8ab7cec2) implements, 2026-10-29 |
 | [TR-LR-08](technical/16-learning.md#tr-lr-08) | What Data Hub writes carries the card of its type | Implemented | [FR-LR-38](functional/16-learning.md#fr-lr-38), [DEC-LR-29](functional/16-learning.md#dec-lr-29) | [aa4477e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/aa4477ee5aa712754e0ef19b3bb61a6c8ab7cec2) implements, 2026-10-29 |
 | [TR-LR-09](technical/16-learning.md#tr-lr-09) | A whole card in Claude, and the card of a step of the Owner Journey | Implemented | [FR-LR-26](functional/16-learning.md#fr-lr-26), [FR-CL-30](functional/17-claude.md#fr-cl-30), [DEC-UX-261](../design/principles.md#dec-ux-261) | [566da5d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/566da5dc376694beb0efc0596259f39895d225a8) implements, 2026-11-15 |
-| [TR-LR-10](technical/16-learning.md#tr-lr-10) | The definitions of the terms, beside the Learning Cards | Implemented | [FR-LR-44](functional/16-learning.md#fr-lr-44), [DEC-LR-39](functional/16-learning.md#dec-lr-39), [DEC-UX-279](../design/principles.md#dec-ux-279) | [8a6aa08](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8a6aa08c96c494e823d41a785da476bd8040303f) implements, 2026-11-18 |
+| [TR-LR-10](technical/16-learning.md#tr-lr-10) | The definitions of the terms, beside the Learning Cards | Implemented | [FR-LR-44](functional/16-learning.md#fr-lr-44), [DEC-LR-39](functional/16-learning.md#dec-lr-39), [DEC-UX-279](../design/principles.md#dec-ux-279) | [846912f](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/846912f10e440d6445c6b668dc39e5f62e63f8e0) refs, 2026-11-18<br>[8a6aa08](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8a6aa08c96c494e823d41a785da476bd8040303f) implements, 2026-11-18 |
 
 ## Non-functional requirements
 
