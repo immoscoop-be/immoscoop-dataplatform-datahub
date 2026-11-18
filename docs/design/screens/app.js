@@ -157,6 +157,15 @@ document.querySelectorAll('form.wl-find').forEach(f => f.addEventListener('submi
   const q = f.querySelector('input')?.value.trim().toLowerCase() || '';
   go(q.startsWith('how do agencies') ? 'search:none' : 'search:results');
 }));
+// Welcome (DEC-UX-297): the filter Recently used. Before a search it shows every Lens the User ran, or, off, leaves the
+// search alone in the middle; on the results it keeps only the Lenses the User ran. ?recent=off opens with it off
+document.querySelectorAll('[data-wl-recent]').forEach(btn => btn.addEventListener('click', () => {
+  const on = btn.getAttribute('aria-pressed') !== 'true';
+  btn.setAttribute('aria-pressed', String(on));
+  btn.closest('.wl-start')?.classList.toggle('recent-on', on);
+  btn.closest('.wl-results')?.classList.toggle('only-recent', on);
+}));
+if (new URLSearchParams(location.search).get('recent') === 'off') document.querySelector('.wl-start [data-wl-recent]')?.click();
 // A group marked data-scroll brings what it switches back to the top
 document.querySelectorAll('[data-group][data-scroll]').forEach(g => g.querySelectorAll('[data-target]').forEach(b => b.addEventListener('click', () => {
   const box = g.closest('.float-win')?.querySelector('.float-body') || g.closest('.main');
