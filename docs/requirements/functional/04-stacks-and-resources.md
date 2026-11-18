@@ -809,6 +809,16 @@ The service account of Data Hub gets read access to it, via Terraform. After tha
 
 *Withdrawn on 2026-10-19: a Resource no longer has to be in a Stack ([DEC-SR-23](#dec-sr-23)); reading its data is [OP-SR-10](#op-sr-10).*
 
+<a id="ec-sr-05"></a>
+### EC-SR-05 · A table read through a view requires a filter that the view does not name
+
+**Status:** Implemented · **Source:** Max, 2026-11-18, a query of a view of `colleciones_dbt` whose Pre-flight failed
+
+A query reads a view whose tables beneath require a filter on their partition column, such as the views over the atomic events of Snowplow. Its own SQL filters on that column, so BigQuery would run it; but to learn which tables the view reads, Data Hub looks at the view as a whole, without that filter, and BigQuery refuses that look. Data Hub then looks again with an empty filter on the column BigQuery names, one column at a time, so the Pre-flight still knows what the query reads. When even that does not tell, the Pre-flight says that Data Hub cannot tell which tables the view reads, with what BigQuery said, and the query does not run: never an error of the service that leaves the screen waiting ([TR-SR-15](../technical/04-stacks-and-resources.md#tr-sr-15)).
+
+**Makes easy:** querying a view over tables that guard their partitions, as the SQL already filters as it should.
+**Makes hard:** a query that reads tables Data Hub could not check.
+
 ## Out of scope
 
 How the Level evolves after Registration ([Maturity and release](06-maturity-and-release.md)), managing Collections ([Collections](03-collections.md)), the Message Centre and notifications ([Log and notifications](07-log-and-notifications.md)), fetching and comparing the Artifacts ([Artifact registry](01-artifact-registry.md)), and working out conversations and their notifications ([Conversations](14-conversations.md)).

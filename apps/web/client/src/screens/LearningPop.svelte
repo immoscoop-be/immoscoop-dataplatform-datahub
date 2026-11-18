@@ -4,14 +4,14 @@
   import type { IconName } from '@datahub/ui/foundations/icons.js';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import { ago, day } from '@datahub/ui/foundations/when.js';
-  import { cardsOf, type MarkerPlace, seenState, type Topic } from '../lib/learning.js';
+  import { cardsOf, type MarkerPlace, seenState, termOf, type Topic } from '../lib/learning.js';
   import { useLearning } from '../lib/learning-context.js';
   import { seePath } from '../lib/routes.js';
   import LearningText from './LearningText.svelte';
 
   /**
-   * What the pop-out of a marker holds (FR-LR-36, DEC-UX-57): on its head, quietly, how many cards explain the
-   * text; an item per written card, with its number and title, the gain of the card, the same sentence wherever
+   * What the pop-out of a marker holds (FR-LR-36, DEC-UX-57): for a term of the dictionary, first what it means, its
+   * definition (DEC-UX-279, FR-LR-44); on its head, quietly, how many cards explain the text; an item per written card, with its number and title, the gain of the card, the same sentence wherever
    * it appears, whether and when the User saw it, and "See it"; at its foot the way to the Learning Centre. A
    * click on an item opens the card in the floating window over the page.
    */
@@ -20,43 +20,52 @@
   const learning = useLearning();
   const language = $derived(currentLanguage());
   const topics = $derived(learning ? cardsOf(place, learning.shown) : []);
+  const term = $derived(termOf(place));
   onMount(() => learning?.want());
 
   const kindIcon = (topic: Topic): IconName => (topic.level === 'compass' ? 'compass' : topic.level === 'reading' ? 'chart-line' : 'book-open-text');
 </script>
 
 {#if learning}
-  <div class="head"><span class="mark" aria-hidden="true">ⓘ</span>{t('learning.pop.head', { count: topics.length })}</div>
-  <ul class="items">
-    {#each topics as topic (topic.number)}
-      {@const card = learning.cards.get(topic.number) ?? learning.shown.get(topic.number)}
-      {@const seen = seenState(topic.number, learning.progress)}
-      <li class="item">
-        <button
-          type="button"
-          class="open"
-          onclick={() => {
-            learning.open(topic.number, place);
-            close();
-          }}
-        >
-          <span class="title"><Icon name={kindIcon(topic)} /><span><span class="number">{topic.number}</span>{topic.title[language]}</span></span>
-          {#if card}<span class="gain"><LearningText text={card.gain} /></span>{/if}
-          <span class="seen">
-            {#if seen.kind === 'understood'}<Icon name="check-circle" />{t('learning.pop.understood', { day: day(seen.at, language) })}
-            {:else if seen.kind === 'seen'}<Icon name="eye" />{t('learning.pop.seen', { when: ago(seen.at, language) })}
-            {:else}{t('learning.pop.new')}{/if}
-          </span>
-        </button>
-        {#if card?.see}<a class="see" href={seePath(topic.number)} onclick={close}><span>{t('learning.step.see')}</span><Icon name="arrow-right" /></a>{/if}
-      </li>
-    {/each}
-  </ul>
+  {#if term}
+    <div class="head"><span class="mark" aria-hidden="true">ⓘ</span>{t('learning.pop.means')}</div>
+    <p class="definition"><b>{term.text[language].name}</b>{term.text[language].definition}</p>
+  {/if}
+  {#if topics.length > 0}
+    <div class="head">{#if !term}<span class="mark" aria-hidden="true">ⓘ</span>{/if}{t('learning.pop.head', { count: topics.length })}</div>
+    <ul class="items">
+      {#each topics as topic (topic.number)}
+        {@const card = learning.cards.get(topic.number) ?? learning.shown.get(topic.number)}
+        {@const seen = seenState(topic.number, learning.progress)}
+        <li class="item">
+          <button
+            type="button"
+            class="open"
+            onclick={() => {
+              learning.open(topic.number, place);
+              close();
+            }}
+          >
+            <span class="title"><Icon name={kindIcon(topic)} /><span><span class="number">{topic.number}</span>{topic.title[language]}</span></span>
+            {#if card}<span class="gain"><LearningText text={card.gain} /></span>{/if}
+            <span class="seen">
+              {#if seen.kind === 'understood'}<Icon name="check-circle" />{t('learning.pop.understood', { day: day(seen.at, language) })}
+              {:else if seen.kind === 'seen'}<Icon name="eye" />{t('learning.pop.seen', { when: ago(seen.at, language) })}
+              {:else}{t('learning.pop.new')}{/if}
+            </span>
+          </button>
+          {#if card?.see}<a class="see" href={seePath(topic.number)} onclick={close}><span>{t('learning.step.see')}</span><Icon name="arrow-right" /></a>{/if}
+        </li>
+      {/each}
+    </ul>
+  {/if}
   <div class="foot"><a class="centre" href="/learning" onclick={close}><span>{t('learning.pop.centre')}</span><Icon name="arrow-right" /></a></div>
 {/if}
 
 <style>
   .head { display: flex; align-items: center; gap: 6px; padding: 4px 6px 8px; font-size: var(--text-meta); color: var(--text-muted); }
+  .definition { margin: 0 6px 10px; font-size: var(--text-small); line-height: 1.5; color: var(--text-primary); }
+  .definition b { display: block; margin-bottom: 2px; font-weight: var(--weight-medium); }
   .mark { font-family: var(--font-symbol); font-size: 12px; line-height: 1; }
   .items { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
   .item { position: relative; border-radius: var(--radius-sm); background: var(--surface-sub); }

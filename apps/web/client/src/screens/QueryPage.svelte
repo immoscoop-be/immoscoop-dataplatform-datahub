@@ -209,6 +209,8 @@
   /** The SQL and Parameters the Pre-flight is of: its marks hold only while they are the same. */
   let checked = $state('');
   let checking = $state(false);
+  /** The Pre-flight could not be read: the bar says so, and Run checks again (DEC-UX-280). */
+  let checkFailed = $state(false);
   let run = $state<Run | null>(null);
   let page = $state<Page | null>(null);
   let expired = $state(false);
@@ -361,8 +363,6 @@
   let atOnce = true;
   /** The Pre-flight waiting for typing to pause, to ask it at once instead. */
   let pending: { timer: ReturnType<typeof setTimeout>; ask: () => void } | null = null;
-  /** Cmd+Enter came before the Pre-flight: it runs as soon as that comes back. */
-  let runWhenChecked = false;
   $effect(() => {
     const text = sql;
     const values = JSON.parse(JSON.stringify(parameters)) as Parameter[];
@@ -370,9 +370,9 @@
     const typed = !atOnce && askedText !== null && text !== askedText;
     atOnce = false;
     askedText = text;
-    runWhenChecked = false;
     const asked = ++sequence;
     checking = true;
+    checkFailed = false;
     const ask = () => {
       pending = null;
       client.check(id, text, values).then(
@@ -382,13 +382,9 @@
           checked = keyOf(text, values);
           checking = false;
           brokenNow(result.broken);
-          if (runWhenChecked) {
-            runWhenChecked = false;
-            runFromKeys();
-          }
         },
         (error: unknown) => {
-          if (asked === sequence) checking = false;
+          if (asked === sequence) [checking, checkFailed] = [false, true];
           console.error('The Pre-flight could not be read', error);
         },
       );
@@ -464,7 +460,30 @@
     if (changed) onran();
   }
 
-  const start = () => runWith(sql, parameters, current?.range !== 'free');
+  /**
+   * Run never waits for the Pre-flight (DEC-UX-280). With one of what is written now, it does what that says. Without,
+   * the run goes to query at once, which checks it first, as before every run: what reads up to 100 MB runs and shows
+   * its result; what needs an approval, goes to the Data Team or cannot run comes back as its Pre-flight, and the
+   * button says what is next, with the focus for the second click that approves it.
+   */
+  /** The Pre-flight of what is written now, as read again after a run (TypeScript keeps no track of a run changing it). */
+  const nowChecked = (): Preflight | null => current;
+
+  async function start(): Promise<void> {
+    if (current) return runWith(sql, parameters, current.range !== 'free');
+    // The Pre-flight waiting for typing to pause is asked now, to fill the bar; the run does not wait for it.
+    if (pending) {
+      clearTimeout(pending.timer);
+      pending.ask();
+    }
+    await runWith(sql, parameters, false);
+    // The run refused for an approval: its Pre-flight is shown now, with Approve and run.
+    const after = nowChecked();
+    if (after && after.runnable && after.range !== 'free') {
+      await tick();
+      runBar?.querySelector<HTMLButtonElement>('button.run')?.focus();
+    }
+  }
 
   // What its tab tells while the User is in another query: a run going, its last run failed, Broken (DEC-UX-236).
   $effect(() => {
@@ -638,9 +657,9 @@
       });
     }
     const approve = current?.range === 'approve' || current?.range === 'request';
-    // While the Pre-flight reads it, Run waits for it and then does what it says, as Cmd+Enter does (DEC-UX-154).
-    const why = broken !== null ? t('query.broken.run') : running ? t('quick.query.run.running') : checking ? null : !current ? t('quick.query.run.unchecked') : !current.runnable ? t('query.cannotRun') : null;
-    const meta = checking ? t('quick.query.run.checking') : reads ? t(approve ? 'quick.query.run.approve.meta' : 'quick.query.run.meta', { bytes: reads }) : null;
+    // Without a Pre-flight of what is written now, Run checks it first and then does what it says (DEC-UX-280).
+    const why = broken !== null ? t('query.broken.run') : running ? t('quick.query.run.running') : current && !current.runnable ? t('query.cannotRun') : null;
+    const meta = !current ? t('quick.query.run.checking') : reads ? t(approve ? 'quick.query.run.approve.meta' : 'quick.query.run.meta', { bytes: reads }) : null;
     return command('run', 'play-fill', t(approve ? 'run.approve' : 'run.run'), runFromKeys, { keys: mac ? '⌘↵' : 'Ctrl+Enter', words, ...(meta ? { meta } : {}), ...(why ? { why } : {}) });
   }
   let runBar = $state<HTMLElement | undefined>();
@@ -648,26 +667,16 @@
   /**
    * Cmd+Enter, or Ctrl+Enter, in the editor does what the button that runs it does (DEC-UX-142): it runs
    * what reads up to 100 MB; for more, it puts the focus on the button, which asks for the approval.
-   * What the Pre-flight blocks, or what goes to the Data Team, does not run.
+   * What the Pre-flight blocks, or what goes to the Data Team, does not run. Neither waits for the
+   * Pre-flight of what was typed: the run checks it first (DEC-UX-280).
    */
   function runFromKeys(): void {
-    if (!query?.mine || running) return;
-    // Typed just now: it is checked at once, and runs when the Pre-flight says it may (DEC-UX-154).
-    if (pending) {
-      clearTimeout(pending.timer);
-      runWhenChecked = true;
-      pending.ask();
+    if (!query?.mine || running || broken !== null) return;
+    if (!current || current.range === 'free') {
+      if (!current || current.runnable) void start();
       return;
     }
-    if (checking) {
-      runWhenChecked = true;
-      return;
-    }
-    if (!current?.runnable) return;
-    if (current.range === 'free') {
-      start();
-      return;
-    }
+    if (!current.runnable) return;
     if (current.range === 'approve' || query.request?.state === 'accepted') runBar?.querySelector<HTMLButtonElement>('button.run')?.focus();
   }
 
@@ -1240,7 +1249,10 @@
         <div class="status" class:stale={!current} aria-busy={checking} aria-live="polite">
           <span class="layer flight" class:shown={!failing} aria-hidden={failing} inert={failing}>
             <span class="meta">Pre-flight</span>
-            {#if flight?.bytes !== null && flight?.bytes !== undefined}
+            {#if checkFailed && !current}
+              <!-- What was written could not be checked: no gauge of before, and Run checks again (DEC-UX-280). -->
+              <span class="meta">{t('query.checkFailed')}</span>
+            {:else if flight?.bytes !== null && flight?.bytes !== undefined}
               <Gauge bytes={flight.bytes} approve={flight.thresholds.approve} request={flight.thresholds.request} />
               <span class="meta reads"
                 >{[
@@ -1293,9 +1305,9 @@
           <RunButton
             bytes={current?.bytes ?? null}
             approve={current?.range === 'approve' || current?.range === 'request'}
-            disabled={!current?.runnable || checking || broken !== null}
+            disabled={(current !== null && !current.runnable) || broken !== null}
             busy={running}
-            title={broken !== null ? t('query.broken.run') : !current?.runnable ? t('query.cannotRun') : undefined}
+            title={broken !== null ? t('query.broken.run') : current && !current.runnable ? t('query.cannotRun') : undefined}
             onclick={start}
           >
             {#snippet explain()}
@@ -1378,7 +1390,7 @@
     {:else if expired && run}
       <p class="empty">
         <Icon name="info" /><span><b>{t('query.expired')}</b> {t('query.expired.text')}</span>
-        {#if query.mine}<Button variant="outline" disabled={!current?.runnable} onclick={start}>{t('query.runAgain')}</Button>{/if}
+        {#if query.mine}<Button variant="outline" disabled={current !== null && !current.runnable} onclick={start}>{t('query.runAgain')}</Button>{/if}
       </p>
     {:else if page && run}
       {@render grid(run, page)}

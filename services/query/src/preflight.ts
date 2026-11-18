@@ -94,6 +94,9 @@ export const sound = (checked: Preflight): boolean => checked.range !== null && 
 
 /** BigQuery's own words for a table that requires a filter on its partition column. */
 const REQUIRES_FILTER = /without a filter over column\(s\) '([^']+)'/i;
+/** A column BigQuery names, as it may stand in SQL without quotes; and how often a look beneath tries again. */
+const COLUMN = /^[A-Za-z_][A-Za-z0-9_]*$/;
+const LOOKS = 3;
 
 /**
  * The tables beneath each Resource, as BigQuery reads them for `select *` of it: itself for a table, the
@@ -106,12 +109,22 @@ export function createBeneath(bigquery: BigQuery, ttl = 10 * 60_000, now: () => 
     const cached = cache.get(resource.key);
     if (cached && cached.until > now()) return cached.tables;
     const all = `select * from \`${resource.fullName}\``;
-    let referenced: string[];
-    try {
-      referenced = (await bigquery.dryRun(all)).referencedTables;
-    } catch (error) {
-      if (!(error instanceof BigQueryRefused) || !resource.partition) throw error;
-      referenced = (await bigquery.dryRun(`${all} where ${resource.partition.field} is null`)).referencedTables;
+    // A table beneath may require a filter on its partition column, which a look at the whole refuses: the look
+    // then filters on the column BigQuery names, one more each time, or else on the column of the Resource (EC-SR-05).
+    let guarded: string[] = [];
+    let referenced: string[] | undefined;
+    for (let tries = 0; referenced === undefined; tries += 1) {
+      const sql = guarded.length > 0 ? `${all} where ${guarded.map((column) => `${column} is null`).join(' and ')}` : all;
+      try {
+        referenced = (await bigquery.dryRun(sql)).referencedTables;
+      } catch (error) {
+        if (!(error instanceof BigQueryRefused) || tries >= LOOKS) throw error;
+        const named = REQUIRES_FILTER.exec(error.message)?.[1]?.split(',')[0]?.trim();
+        const own = resource.partition?.field;
+        if (named && COLUMN.test(named) && !guarded.includes(named)) guarded.push(named);
+        else if (own && !(guarded.length === 1 && guarded[0] === own)) guarded = [own];
+        else throw error;
+      }
     }
     const tables = [resource.fullName, ...referenced];
     cache.set(resource.key, { tables, until: now() + ttl });
@@ -226,7 +239,15 @@ export async function preflight(
   if (dry.statementType !== 'SELECT') return done({ problems: [{ kind: 'notSelect', statementType: dry.statementType }] });
 
   // And again by what BigQuery reads: only its Resources and the tables outside Data Hub it may read, or the tables beneath them.
-  const allowed = new Set((await Promise.all([...read, ...outside.values()].map((table) => beneath(table)))).flat().map((table) => table.toLowerCase()));
+  // What BigQuery will not tell about a table beneath keeps the query from running, as a problem of the Pre-flight (EC-SR-05).
+  let below: string[][];
+  try {
+    below = await Promise.all([...read, ...outside.values()].map((table) => beneath(table)));
+  } catch (error) {
+    if (!(error instanceof BigQueryRefused)) throw error;
+    return done({ problems: [{ kind: 'invalid', message: `Data Hub cannot tell which tables this query reads beneath the tables it names: ${error.message}` }] });
+  }
+  const allowed = new Set(below.flat().map((table) => table.toLowerCase()));
   for (const table of dry.referencedTables) {
     if (!allowed.has(table.toLowerCase())) problems.push({ kind: 'outside', name: table, start: null, end: null });
   }

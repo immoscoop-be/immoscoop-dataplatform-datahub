@@ -1,16 +1,17 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import Explained from '@datahub/ui/containers/Explained.svelte';
-  import { t } from '@datahub/ui/foundations/texts.svelte.js';
+  import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import Marker from '@datahub/ui/marks/Marker.svelte';
-  import { cardsOf, type MarkerPlace } from '../lib/learning.js';
+  import { cardsOf, type MarkerPlace, termOf } from '../lib/learning.js';
   import { useLearning } from '../lib/learning-context.js';
   import LearningPop from './LearningPop.svelte';
 
   /**
    * System text that the Learning Centre explains (FR-LR-35): it carries the marker and its pop-out once one of
-   * the cards of its place is written (DEC-LR-28), and stays tinted while a card it opened is open. What it
-   * explains places the marker right after its text.
+   * the cards of its place is written (DEC-LR-28), and stays tinted while a card it opened is open. A term of the
+   * dictionary carries it always, its definition first (DEC-UX-279, FR-LR-44). What it explains places the marker
+   * right after its text.
    */
   let {
     place,
@@ -28,13 +29,15 @@
 
   const learning = useLearning();
   const count = $derived(learning ? cardsOf(place, learning.shown).length : 0);
+  const term = $derived(termOf(place));
+  const label = $derived(term ? t('learning.pop.term', { term: term.text[currentLanguage()].name }) : t('learning.pop.head', { count }));
 </script>
 
 {#snippet mark()}<Marker />{/snippet}
 {#snippet pop(close: () => void)}<LearningPop {place} {close} />{/snippet}
 
-{#if learning && count > 0}
-  <Explained label={t('learning.pop.head', { count })} {shape} {focusable} active={learning.window?.from === place} {pop}>{@render children(mark)}</Explained>
+{#if learning && (count > 0 || term)}
+  <Explained {label} {shape} {focusable} active={learning.window?.from === place} {pop}>{@render children(mark)}</Explained>
 {:else}
   {@render children(undefined)}
 {/if}

@@ -1113,6 +1113,8 @@ function serve({
     }
     if (query && path.endsWith('/preflight')) {
       const body = JSON.parse(init.body as string) as { sql: string; parameters: { name: string }[] };
+      // query could not check it, as when BigQuery refused a look beneath a view (EC-SR-05, DEC-UX-280).
+      if (body.sql.includes('-- preflight fails')) return json({ statusCode: 500, error: 'Internal Server Error', message: 'BigQuery refused' }, 500);
       // What it ran before no longer finds a column: the query is Broken now, until a change no longer reads it (FR-SR-53).
       const lost = (query.loses ?? query.broken) as { name: string } | undefined;
       if (lost && body.sql.includes(lost.name)) {
@@ -3846,7 +3848,7 @@ describe('Query', () => {
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    await vi.waitFor(() => expect(main.getByRole('button', { name: /Uitvoeren/ }).hasAttribute('disabled')).toBe(false), { timeout: 3000 });
+    await main.findByRole('button', { name: /Uitvoeren\s*80 MB/ }, { timeout: 3000 });
     const run = await quickRow('Uitvoeren');
     expect(run.textContent).toContain('leest 80 MB');
     expect(run.textContent).toContain('Ctrl+Enter');
@@ -4282,6 +4284,52 @@ describe('Query', () => {
     await typeInEditor(main.getByRole('textbox', { name: /Leads per source name/ }), ' -- typed');
     await fireEvent.keyDown(main.getByRole('textbox', { name: /Leads per source name/ }), { key: 'Enter', ctrlKey: true });
     await vi.waitFor(() => expect(checks()).toBe(before + 1), { timeout: 800 });
+    await vi.waitFor(() => expect(calls.some((call) => call.method === 'POST' && call.path === '/queries/q1/runs')).toBe(true));
+  });
+
+  it('runs at once while the Pre-flight of what was typed has not come back: the run checks it first (DEC-UX-280)', async () => {
+    const calls = serve({ queries: [{ ...QUERY }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('button', { name: /Uitvoeren\s*80 MB/ }, { timeout: 3000 });
+    await typeInEditor(main.getByRole('textbox', { name: /Leads per source name/ }), ' -- typed');
+    // Typed just now: no Pre-flight of it yet, and Run is on, as "Run".
+    const run = main.getByRole('button', { name: /^Uitvoeren/ }) as HTMLButtonElement;
+    expect(run.disabled).toBe(false);
+    await fireEvent.click(run);
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/runs', body: expect.objectContaining({ sql: expect.stringContaining('-- typed'), approve: false }) }));
+  });
+
+  it('asks for the approval when a run without a Pre-flight reads more than 100 MB, and runs on the second click (DEC-UX-280)', async () => {
+    const calls = serve({ queries: [{ ...QUERY }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('button', { name: /Uitvoeren\s*80 MB/ }, { timeout: 3000 });
+    await typeInEditor(main.getByRole('textbox', { name: /Leads per source name/ }), ' -- all weeks');
+    await fireEvent.click(main.getByRole('button', { name: /^Uitvoeren/ }));
+    const approve = await vi.waitFor(() => main.getByRole('button', { name: /Goedkeuren en uitvoeren/ }) as HTMLButtonElement);
+    await vi.waitFor(() => expect(document.activeElement).toBe(approve));
+    const runs = () => calls.filter((call) => call.method === 'POST' && call.path === '/queries/q1/runs');
+    expect(runs()).toHaveLength(1);
+    expect(runs()[0]?.body).toMatchObject({ approve: false });
+    await fireEvent.click(approve);
+    await vi.waitFor(() => expect(runs()).toHaveLength(2));
+    expect(runs()[1]?.body).toMatchObject({ approve: true });
+  });
+
+  it('says when the Pre-flight could not be read, and still runs (DEC-UX-280, EC-SR-05)', async () => {
+    const calls = serve({ queries: [{ ...QUERY }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('button', { name: /Uitvoeren\s*80 MB/ }, { timeout: 3000 });
+    await typeInEditor(main.getByRole('textbox', { name: /Leads per source name/ }), ' -- preflight fails');
+    await main.findByText('kon niet nagekeken worden: Uitvoeren kijkt opnieuw na', undefined, { timeout: 3500 });
+    const run = main.getByRole('button', { name: /^Uitvoeren/ }) as HTMLButtonElement;
+    expect(run.disabled).toBe(false);
+    await fireEvent.click(run);
     await vi.waitFor(() => expect(calls.some((call) => call.method === 'POST' && call.path === '/queries/q1/runs')).toBe(true));
   });
 

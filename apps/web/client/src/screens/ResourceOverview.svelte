@@ -5,7 +5,6 @@
 
 <script lang="ts">
   import { tick } from 'svelte';
-  import PurposeLine from './PurposeLine.svelte';
   import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import type { GapScope } from '@datahub/contracts/gaps';
   import type { SummarySource } from '@datahub/contracts/summary';
@@ -27,11 +26,13 @@
   import Loading from '@datahub/ui/primitives/Loading.svelte';
   import type { CardChanges, DescribeAttribute, KnownGap, LogEntry, Related, ResourceDetail } from '../lib/catalogue.js';
   import { carriersOf, nounOf } from '../lib/grain.js';
+  import type { MarkerPlace } from '../lib/learning.js';
   import type { Conversation } from '../lib/messages.js';
   import type { Storage } from '../lib/query.js';
   import { sizeText } from '../lib/size.js';
   import { command, useScreenCommands, view } from '../lib/commands.svelte.js';
   import type { QuickRow } from '../lib/quick.js';
+  import LearningRef from './LearningRef.svelte';
   import OverviewDanger from './OverviewDanger.svelte';
   import OverviewGaps from './OverviewGaps.svelte';
   import OverviewMaturity from './OverviewMaturity.svelte';
@@ -280,14 +281,19 @@
   });
 </script>
 
-{#snippet head(title: string, lead: string, which?: Editable)}
+{#snippet head(title: string, lead: string, which?: Editable, place?: MarkerPlace)}
   <div class="head">
     <div class="what">
-      <h2>{title}</h2>
+      <h2>{#if place}{@render term(place, title)}{:else}{title}{/if}</h2>
       <p class="lead">{lead}</p>
     </div>
     {#if which && mayEdit(which) && editing !== which}<button type="button" class="edit" onclick={() => start(which)}><Icon name="pencil-simple-fill" />{t('resource.edit')}</button>{/if}
   </div>
+{/snippet}
+
+<!-- A term of the dictionary carries its marker, its definition first (DEC-UX-279). -->
+{#snippet term(place: MarkerPlace, text: string)}
+  <LearningRef {place}>{#snippet children(mark)}<span>{text}{@render mark?.()}</span>{/snippet}</LearningRef>
 {/snippet}
 
 {#snippet editBar()}
@@ -361,10 +367,9 @@
       {#if editing === 'description'}
         <form onsubmit={save} novalidate>
           {@render editBar()}
-          <PurposeLine kind="dbt" />
           <div class="side-by-side">
             <div>
-              <div class="tag-line"><span class="label">{t('description.business')}</span><OriginTag origin="owner" /></div>
+              <div class="tag-line"><span class="label">{@render term('businessDescription', t('description.business'))}</span><OriginTag origin="owner" /></div>
               <MarkdownEditor id="business-description" bind:value={draft.businessDescription} label={t('description.business')} note={t('overview.description.note')} maxlength={4000} />
             </div>
             {@render dbtDescription(true)}
@@ -373,7 +378,7 @@
       {:else}
         {#if card.businessDescription}
           <section class="business">
-            <div class="tag-line"><span class="label">{t('description.business')}</span><OriginTag origin="owner" /></div>
+            <div class="tag-line"><span class="label">{@render term('businessDescription', t('description.business'))}</span><OriginTag origin="owner" /></div>
             <div class="markdown"><MarkdownText source={card.businessDescription} /></div>
           </section>
         {:else if describes('description') && described}
@@ -385,16 +390,14 @@
         {@render modelAndGrain()}
       {/if}
     {:else if part === 'behaviour'}
-      {@render head(t('resource.behaviour'), t('overview.behaviour.lead'), 'behaviour')}
-      <!-- For who writes them, the test between a pitfall and a Known Gap (DEC-UX-275). -->
-      {#if describes('pitfalls') || describes('gaps')}<PurposeLine kind="gap" />{/if}
+      {@render head(t('resource.behaviour'), t('overview.behaviour.lead'), 'behaviour', 'knownBehaviour')}
       {#if editing === 'behaviour'}
         <form onsubmit={save} novalidate>
           {@render editBar()}
           <!-- Only what the User may describe is a field (DEC-PL-03). -->
           <div class="pair">
             {#if describes('behaviour')}<div><div class="label">{t('resource.intendedUse')}</div><MarkdownEditor id="intended-use" bind:value={draft.intendedUse} label={t('resource.intendedUse')} maxlength={2000} /></div>{/if}
-            {#if describes('pitfalls')}<div><div class="label">{t('resource.pitfalls')}</div><MarkdownEditor id="pitfalls" bind:value={draft.pitfalls} label={t('resource.pitfalls')} maxlength={2000} /></div>{/if}
+            {#if describes('pitfalls')}<div><div class="label">{@render term('pitfall', t('resource.pitfalls'))}</div><MarkdownEditor id="pitfalls" bind:value={draft.pitfalls} label={t('resource.pitfalls')} maxlength={2000} /></div>{/if}
           </div>
           {#if describes('availableSince')}<div class="reliable"><Field label={t('resource.reliableSince')}><input {...NO_PASSWORD_MANAGER} type="date" bind:value={draft.reliableSince} /></Field></div>{/if}
         </form>
@@ -405,7 +408,7 @@
             {#if card.intendedUse}<div class="markdown"><MarkdownText source={card.intendedUse} /></div>{:else}<p class="text">{t('resource.nothingYet')}</p>{/if}
           </SubTile>
           <SubTile>
-            <div class="said"><Icon name="warning-fill" />{t('resource.pitfalls')}</div>
+            <div class="said"><Icon name="warning-fill" />{@render term('pitfall', t('resource.pitfalls'))}</div>
             {#if card.pitfalls}
               <div class="markdown"><MarkdownText source={card.pitfalls} /></div>
             {:else if saidNothing('pitfalls')}
@@ -427,8 +430,7 @@
         </Grid>
       {/if}
     {:else if part === 'gaps'}
-      {@render head(t('resource.gaps'), t('overview.gaps.lead'))}
-      {#if describes('gaps') || describes('pitfalls')}<PurposeLine kind="gap" />{/if}
+      {@render head(t('resource.gaps'), t('overview.gaps.lead'), undefined, 'knownGap')}
       <OverviewGaps
         bind:adding={addingGap}
         gaps={card.knownGaps}
@@ -445,7 +447,8 @@
       {#if editing === 'querying'}
         <form onsubmit={save} novalidate>
           {@render editBar()}
-          <SubTile label={t('resource.keyFields')}>
+          <SubTile>
+            <div class="label">{@render term('keyField', t('resource.keyFields'))}</div>
             {@render chosen('keyFields')}
             <div class="label second">{t('resource.parameters')}</div>
             {@render chosen('parameters')}
@@ -484,7 +487,8 @@
               <p class="empty" class:cheap={size !== null}>{t('resource.notStored')}</p>
             {/if}
           </SubTile>
-          <SubTile label={t('resource.keyFields')}>
+          <SubTile>
+            <div class="label">{@render term('keyField', t('resource.keyFields'))}</div>
             <div class="chosen">{@render chips(card.keyFields)}</div>
             <div class="label second">{t('resource.parameters')}</div>
             <div class="chosen">{@render chips(card.parameters)}</div>

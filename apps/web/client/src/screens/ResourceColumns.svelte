@@ -1,6 +1,5 @@
 <script lang="ts">
   import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
-  import PurposeLine from './PurposeLine.svelte';
   import EditBar from '@datahub/ui/containers/EditBar.svelte';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
@@ -8,6 +7,7 @@
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import type { Field, KnownGap, ResourceDetail } from '../lib/catalogue.js';
   import { scopeLine } from '../lib/gaps.js';
+  import LearningRef from './LearningRef.svelte';
 
   /**
    * The Columns of a Resource (Columns table): each field with its type, its Business Description next
@@ -96,6 +96,11 @@
   }
 </script>
 
+<!-- The Business Description is a term of the dictionary: its marker gives its definition first (DEC-UX-279). -->
+{#snippet business()}
+  <LearningRef place="businessDescription">{#snippet children(mark)}<span>{t('description.business')}{@render mark?.()}</span>{/snippet}</LearningRef>
+{/snippet}
+
 {#snippet pills(field: Field)}
   {#each roles(field) as role (role.label)}<span class="pill" class:strong={role.strong} class:warn={role.warn}>{#if role.key}<Icon name="key" />{/if}{role.label}</span>{/each}
   {#if gapsOf.has(field.name)}
@@ -118,11 +123,10 @@
         surface="sub"
       />
     </div>
-    <PurposeLine kind="dbt" />
     <div class="rows">
       <div class="row headrow">
         <span class="label">{t('resource.column.field')}</span>
-        <span class="label">{t('description.business')} <OriginTag origin="owner" /></span>
+        <span class="label">{@render business()} <OriginTag origin="owner" /></span>
         <span class="label">{t('description.dbt')} <OriginTag origin="dbt" /></span>
       </div>
       {#each listed as field (field.name)}
@@ -156,7 +160,7 @@
         <tr>
           <th>{t('resource.column.name')}</th>
           <th>{t('resource.column.type')}</th>
-          <th>{t('description.business')} <OriginTag origin="owner" /></th>
+          <th>{@render business()} <OriginTag origin="owner" /></th>
           <th>{t('description.dbt')} <OriginTag origin="dbt" /></th>
           <th>{t('resource.column.entity')}</th>
           <th></th>

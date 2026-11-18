@@ -1,7 +1,7 @@
 import type { GapScope } from '@datahub/contracts/gaps';
 import { type Journey, type JourneyMissing, type JourneyStepId, type JourneyStepState, JOURNEY_STEPS, journeyStep } from '@datahub/contracts/journey';
 import type { ModelType } from '@datahub/contracts/model-types';
-import { shownIn, TOPICS } from '@datahub/learning';
+import { shownIn, TERMS, type TermKey, TOPICS } from '@datahub/learning';
 import { z } from 'zod';
 import { answer, attempt, refusal } from './answers.js';
 import { type Context, READ, SHOWS, WRITE } from './context.js';
@@ -204,10 +204,20 @@ const MARKS = { required: 'required to publish', eda: 'needed for the EDA, not t
 /** How the overview of the window names the mark of a step: an advised step is optional (DEC-UX-272). */
 const MARK_WORDS = { required: 'Required', eda: 'For the EDA', advised: 'Optional', none: '' } as const;
 
-/** Where a text is written, what it is for: the quiet line of a step (DEC-UX-275, DEC-RC-26, DEC-RC-27). */
-const DBT_OR_BUSINESS = '**dbt** says how the data is made. **The Business Description** says what it represents and what it is used for, in the words of the business.';
-const GAP_OR_PITFALL = '**A Known Gap** is in the data itself: it would go away if the data were repaired. **A Pitfall** is in how the data is read: it stays true even when every row is right.';
-const PURPOSE: Partial<Record<JourneyStepId, string>> = { businessDescription: DBT_OR_BUSINESS, fields: DBT_OR_BUSINESS, pitfalls: GAP_OR_PITFALL, gaps: GAP_OR_PITFALL };
+/**
+ * The terms of the dictionary a step writes, whose definitions the window unfolds under its title with a tap on the ⓘ
+ * after it (DEC-UX-279, FR-LR-44): at the Business Description and the fields, what the Business Description is beside
+ * the description from dbt; at the pitfalls and the Known Gaps, each, which holds the test that tells them apart.
+ */
+export const TERMS_OF: Partial<Record<JourneyStepId, readonly TermKey[]>> = {
+  businessDescription: ['businessDescription'],
+  keyFields: ['keyField'],
+  fields: ['businessDescription'],
+  pitfalls: ['pitfall', 'knownGap'],
+  gaps: ['knownGap', 'pitfall'],
+};
+/** The terms of a step with their definitions, in English as the conversation is (TR-LR-10). */
+const termsOf = (step: JourneyStepId) => (TERMS_OF[step] ?? []).map((key) => ({ name: TERMS[key].text.en.name, definition: TERMS[key].text.en.definition }));
 
 /** What the link of a step opens in Data Hub, in words: the part of the Overview or the tab it writes (DEC-CL-19). */
 const SPOT_NAMES: Record<string, string> = {
@@ -384,8 +394,8 @@ export function journeyTools({ server, hub, permits }: Context, read: (id: strin
         const spot = spotOf(next);
         const guided = {
           // The window of the step in the conversation (DEC-CL-18, FR-CL-33): the start says what and why; every step
-          // keeps the overview at hand, what it holds now, what its text is for, its Learning Cards folded, and the
-          // link to the spot in Data Hub that it writes.
+          // keeps the overview at hand, what it holds now, the definitions of its terms behind the ⓘ after its title, its
+          // Learning Cards folded, and the link to the spot in Data Hub that it writes.
           view: 'journey',
           window: {
             collection: resource.collection,
@@ -393,7 +403,7 @@ export function journeyTools({ server, hub, permits }: Context, read: (id: strin
             total: 12,
             overview: overviewOf(journey, next.id),
             ...(next.id === 'start' ? { start: startOf(resource) } : {}),
-            ...(PURPOSE[next.id] ? { purpose: PURPOSE[next.id] } : {}),
+            ...(TERMS_OF[next.id] ? { terms: termsOf(next.id) } : {}),
             link: { url: hub.page(pages.resource(resource.id, spot.at)), label: spot.label },
           },
           resource: { id: resource.id, displayName: resource.displayName, level: resource.levelName, collection: resource.collection?.name ?? null, owner, page: resource.page },

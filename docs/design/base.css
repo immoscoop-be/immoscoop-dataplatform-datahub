@@ -2457,11 +2457,16 @@ body.oj-plain .oj-tag { visibility: hidden; }
 .dh-link { display: inline-flex; align-items: center; gap: 6px; }
 .dh-link .dh-mark { flex: none; }
 /* Where a text is written, what it is for (DEC-UX-275) */
-.purpose-line { display: flex; align-items: flex-start; gap: 8px; margin: 0; padding: 8px 12px; border-radius: var(--radius-md); border: 1px dashed var(--tint-active); font-size: var(--text-small); color: var(--text-secondary); line-height: 1.5; }
-.purpose-line > i { margin-top: 2px; color: var(--text-muted); }
-.purpose-line b { color: var(--text-primary); font-weight: var(--weight-medium); }
-.edit-purpose { margin: 4px 0 8px; }
-.ov-purpose { margin: 0 0 14px; }
+/* A term of the dictionary explains itself: its definition first in the pop-out of its marker, and in Claude under the
+   title of the step, unfolded with the ⓘ after it (DEC-UX-279). */
+.lc-pop-def { margin: 0 6px 10px; font-size: var(--text-small); line-height: 1.5; color: var(--text-primary); }
+.lc-pop-def b { display: block; font-weight: var(--weight-medium); margin-bottom: 2px; }
+.oj-term { display: inline-grid; place-items: center; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--text-muted); font-family: var(--font-symbol); font-size: 14px; cursor: pointer; align-self: center; }
+.oj-term:hover, .oj-term[aria-expanded="true"] { color: var(--text-primary); background: var(--tint-hover); }
+.oj-term-def { display: grid; gap: 6px; margin: 6px 0 0; padding: 10px 12px; border-radius: var(--radius-md); background: var(--surface-sub); font-size: var(--text-small); line-height: 1.5; color: var(--text-secondary); }
+.oj-term-def p { margin: 0; }
+.oj-term-def b { color: var(--text-primary); font-weight: var(--weight-medium); }
+@media (max-width: 520px) { .oj-term { width: 44px; height: 44px; } }
 @media (max-width: 900px) {
   .oj-layout { grid-template-columns: minmax(0, 1fr); }
   .oj-map { position: static; max-height: none; }

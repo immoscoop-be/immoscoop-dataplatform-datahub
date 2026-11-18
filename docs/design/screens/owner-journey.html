@@ -22,14 +22,14 @@
   DEC-CL-20): the start says what and why, what you get on the way and that nothing but the publication is final; every
   step keeps the overview folded on top (where we are, done, still missing, required or optional); the Learning Cards
   fold under "How can we help with this step?"; every link to Data Hub has one form, with the mark of Data Hub, and
-  opens the spot the step writes; a quiet line says what dbt and the Business Description are for, and the test between
-  a Known Gap and a Pitfall; a Known Gap is written one at a time with where it holds (add_known_gap). What is in a
+  opens the spot the step writes; the ⓘ after the title of a step unfolds the definitions of its terms, such as the
+  Business Description beside dbt and the test between a Known Gap and a Pitfall (DEC-UX-279); a Known Gap is written one at a time with where it holds (add_known_gap). What is in a
   field is not shown yet: it gets its own design first (DEC-RC-28, OP-RC-29).
   The switches: the step, on the left; who asks (an Owner, a Business Analyst of the Owner Unit, or someone outside it);
   the case of step 11 (ready, or a required step still open); and the Annotations.
-  Requirements: FR-CL-30, FR-CL-33, FR-CL-34, FR-CL-35
-  Decisions: DEC-MR-15, DEC-MR-16, DEC-MR-17, DEC-UX-261, DEC-CL-07, DEC-CL-02, DEC-SR-28, DEC-MR-07, DEC-CL-18,
-  DEC-CL-19, DEC-CL-20, DEC-UX-271, DEC-UX-272, DEC-UX-273, DEC-UX-274, DEC-UX-275, DEC-UX-276, DEC-RC-26, DEC-RC-27,
+  Requirements: FR-CL-30, FR-CL-33, FR-CL-34, FR-CL-35, FR-LR-44
+  Decisions: DEC-MR-15, DEC-UX-279, DEC-MR-16, DEC-MR-17, DEC-UX-261, DEC-CL-07, DEC-CL-02, DEC-SR-28, DEC-MR-07, DEC-CL-18,
+  DEC-CL-19, DEC-CL-20, DEC-UX-271, DEC-UX-272, DEC-UX-273, DEC-UX-274, DEC-UX-276, DEC-RC-26, DEC-RC-27,
   DEC-RC-28.
   Open points: OP-CL-12. The EDA starts from the Key Fields (DEC-ED-07), and perhaps from the table type (OP-ED-03).
   Not in v1: Claude comes in version 2 (DEC-CH-02).
@@ -193,14 +193,14 @@
    <section class="mcp-app oj-win" aria-label="Owner Journey, step 2, from Data Hub">
     <div class="mcp-app-head"><i class="ph-fill ph-path" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">Owner Journey · Attraction · Owner: SEO</span><div class="float-title">Search Console impressions, whole site</div></div></div>
     <div class="oj-progress" data-at="2"></div>
-    <div class="oj-now"><h3>Business Description</h3><span class="oj-mark">Required to publish</span></div>
+    <div class="oj-now"><h3>Business Description</h3><button class="oj-term" type="button" data-term aria-expanded="false" aria-label="What it means" title="What it means">ⓘ</button><span class="oj-mark">Required to publish</span></div>
+    <div class="oj-term-def" hidden><p><b>Business Description</b> · The description of a Resource or of one of its fields in the words of the business: what it represents and what it is used for, written by its Owner or the Data Team. It stands next to the description from dbt, which says how the data is made, and never replaces it.</p></div>
     <div class="oj-held">
      <div class="desc-head"><span class="label">On the card now</span><span class="origin">From the Owner</span></div>
      <p class="none">Nothing yet.</p>
      <div class="desc-head" style="margin-top:4px"><span class="label">Next to it</span><span class="origin">From dbt</span></div>
      <p>Daily Search Console impressions and clicks for the whole site, from the bulk export.</p>
     </div>
-    <p class="purpose-line"><i class="ph ph-info" aria-hidden="true"></i><span><b>dbt</b> says how the data is made. <b>The Business Description</b> says what it represents and what it is used for, in the words of the business.</span></p>
     <div class="oj-help">
      <span class="label"><i class="ph ph-lifebuoy" aria-hidden="true"></i>How can we help with this step?</span>
      <details class="oj-help-card"><summary><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><span class="num">K5.14</span><span class="tt">The Business Description <span class="oj-towrite">To write</span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></summary>
@@ -235,7 +235,8 @@
    <section class="mcp-app oj-win" aria-label="Owner Journey, step 3, from Data Hub">
     <div class="mcp-app-head"><i class="ph-fill ph-path" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">Owner Journey · Attraction · Owner: SEO</span><div class="float-title">Search Console impressions, whole site</div></div></div>
     <div class="oj-progress" data-at="3"></div>
-    <div class="oj-now"><h3>Key Fields</h3><span class="oj-mark">Required to publish</span><span class="oj-mark eda">the EDA starts from them</span></div>
+    <div class="oj-now"><h3>Key Fields</h3><button class="oj-term" type="button" data-term aria-expanded="false" aria-label="What it means" title="What it means">ⓘ</button><span class="oj-mark">Required to publish</span><span class="oj-mark eda">the EDA starts from them</span></div>
+    <div class="oj-term-def" hidden><p><b>Key Field</b> · A field of a Resource that matters most, marked on its Resource Card by its Owner or the Data Team: most questions about the Resource go through it. Its Business Description is required before the Resource is published.</p></div>
     <div class="oj-held">
      <span class="label">On the card now: none · its 10 fields, by use in the last 30 days</span>
      <table>
@@ -294,9 +295,9 @@
    <section class="mcp-app oj-win" aria-label="Owner Journey, step 4, from Data Hub">
     <div class="mcp-app-head"><i class="ph-fill ph-path" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">Owner Journey · Attraction · Owner: SEO</span><div class="float-title">Search Console impressions, whole site</div></div></div>
     <div class="oj-progress" data-at="4"></div>
-    <div class="oj-now"><h3>Fields</h3><span class="oj-mark">Required for the 5 Key Fields</span><span class="oj-mark advised">advised for the other 5</span></div>
+    <div class="oj-now"><h3>Fields</h3><button class="oj-term" type="button" data-term aria-expanded="false" aria-label="What it means" title="What it means">ⓘ</button><span class="oj-mark">Required for the 5 Key Fields</span><span class="oj-mark advised">advised for the other 5</span></div>
+    <div class="oj-term-def" hidden><p><b>Business Description</b> · The description of a Resource or of one of its fields in the words of the business: what it represents and what it is used for, written by its Owner or the Data Team. It stands next to the description from dbt, which says how the data is made, and never replaces it.</p></div>
     <div class="oj-held"><dl><dt>Key Fields described</dt><dd>0 of 5</dd><dt>Other fields</dt><dd>0 of 5</dd><dt>Every field</dt><dd>has a description from dbt</dd></dl></div>
-    <p class="purpose-line"><i class="ph ph-info" aria-hidden="true"></i><span><b>dbt</b> says how the data is made. <b>The Business Description</b> says what it represents and what it is used for, in the words of the business.</span></p>
     <div class="oj-help">
      <span class="label"><i class="ph ph-lifebuoy" aria-hidden="true"></i>How can we help with this step?</span>
      <details class="oj-help-card"><summary><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><span class="num">K5.14</span><span class="tt">The Business Description <span class="oj-towrite">To write</span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></summary>
@@ -366,13 +367,13 @@
    <section class="mcp-app oj-win" aria-label="Owner Journey, step 6, from Data Hub">
     <div class="mcp-app-head"><i class="ph-fill ph-path" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">Owner Journey · Attraction · Owner: SEO</span><div class="float-title">Search Console impressions, whole site</div></div></div>
     <div class="oj-progress" data-at="6"></div>
-    <div class="oj-now"><h3>Pitfalls</h3><span class="oj-mark">Required to publish</span></div>
+    <div class="oj-now"><h3>Pitfalls</h3><button class="oj-term" type="button" data-term aria-expanded="false" aria-label="What it means" title="What it means">ⓘ</button><span class="oj-mark">Required to publish</span></div>
+    <div class="oj-term-def" hidden><p><b>Pitfall</b> · A way to read a Resource wrongly that looks right: what a field means, what a figure counts or when it is final. It is about how the data is read, not the data itself: it stays true even when every row is right. A gap in the data is a Known Gap.</p><p><b>Known Gap</b> · A gap in the data itself: a period, a field or rows that are missing or only partly there. It would go away if the data were repaired. What stays true even when every row is right is a Pitfall.</p></div>
     <div class="oj-held">
      <span class="label">On the card now</span>
      <p>Do not average the position.</p>
      <span class="before">Written before this journey, on 6 Nov 2026. "None" is an answer too: the journey keeps that you went through the step.</span>
     </div>
-    <p class="purpose-line"><i class="ph ph-info" aria-hidden="true"></i><span><b>A Known Gap</b> is in the data itself: it would go away if the data were repaired. <b>A Pitfall</b> is in how the data is read: it stays true even when every row is right.</span></p>
     <div class="oj-help">
      <span class="label"><i class="ph ph-lifebuoy" aria-hidden="true"></i>How can we help with this step?</span>
      <details class="oj-help-card"><summary><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><span class="num">K5.16</span><span class="tt">Pitfalls <span class="oj-towrite">To write</span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></summary>
@@ -403,7 +404,8 @@
    <section class="mcp-app oj-win" aria-label="Owner Journey, step 7, from Data Hub">
     <div class="mcp-app-head"><i class="ph-fill ph-path" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">Owner Journey · Attraction · Owner: SEO</span><div class="float-title">Search Console impressions, whole site</div></div></div>
     <div class="oj-progress" data-at="7"></div>
-    <div class="oj-now"><h3>Known Gaps and reliable since</h3><span class="oj-mark">Required to publish</span></div>
+    <div class="oj-now"><h3>Known Gaps and reliable since</h3><button class="oj-term" type="button" data-term aria-expanded="true" aria-label="What it means" title="What it means">ⓘ</button><span class="oj-mark">Required to publish</span></div>
+    <div class="oj-term-def"><p><b>Known Gap</b> · A gap in the data itself: a period, a field or rows that are missing or only partly there. It would go away if the data were repaired. What stays true even when every row is right is a Pitfall.</p><p><b>Pitfall</b> · A way to read a Resource wrongly that looks right: what a field means, what a figure counts or when it is final. It is about how the data is read, not the data itself: it stays true even when every row is right. A gap in the data is a Known Gap.</p></div>
     <div class="oj-held"><dl>
      <dt>Known Gaps</dt><dd class="none">None written</dd>
      <dt>Reliable since</dt><dd class="none">Not set</dd>
@@ -411,7 +413,6 @@
      <dt>Empty days since</dt><dd>None</dd>
      <dt>Rows without a query</dt><dd>24%, and 6% of the clicks</dd>
     </dl></div>
-    <p class="purpose-line"><i class="ph ph-info" aria-hidden="true"></i><span><b>A Known Gap</b> is in the data itself: it would go away if the data were repaired. <b>A Pitfall</b> is in how the data is read: it stays true even when every row is right.</span></p>
     <div class="oj-help">
      <span class="label"><i class="ph ph-lifebuoy" aria-hidden="true"></i>How can we help with this step?</span>
      <details class="oj-help-card"><summary><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><span class="num">K5.3</span><span class="tt">The Known Gaps of a Resource</span><i class="ph ph-caret-down chev" aria-hidden="true"></i></summary>
@@ -674,6 +675,8 @@
 </div>
 <script src="app.js"></script>
 <script>
+// The ⓘ after the title of a step unfolds the definitions of its terms (DEC-UX-279).
+document.addEventListener('click', (event) => { const b = event.target.closest('[data-term]'); if (!b) return; const d = b.closest('.oj-now').nextElementSibling; const open = d.hidden; d.hidden = !open; b.setAttribute('aria-expanded', String(open)); });
 // The bar of the journey in its window: one segment per step, from what each step asks (DEC-MR-16).
 // data-at="n": the steps before n are done, n is the one now. data-states: d done, n now, r required, e for the EDA,
 // q asked of the Data Team, a advised, - nothing asked.
