@@ -157,23 +157,6 @@ document.querySelectorAll('form.wl-find').forEach(f => f.addEventListener('submi
   const q = f.querySelector('input')?.value.trim().toLowerCase() || '';
   go(q.startsWith('how do agencies') ? 'search:none' : 'search:results');
 }));
-// Welcome (DEC-UX-287, DEC-UX-291): a click on a Lens in the list selects it and shows its preview on the right, into which
-// it flows; a click on the selected one opens it, as "Use this Lens" does. ?preview=source selects another
-const wlSelect = item => {
-  item.closest('.wl-list').querySelectorAll('.wl-item').forEach(other => {
-    other.classList.toggle('on', other === item);
-    if (other === item) other.setAttribute('aria-current', 'true'); else other.removeAttribute('aria-current');
-  });
-  document.querySelectorAll('.wl-pv').forEach(pv => { pv.hidden = pv.id !== `pv-${item.dataset.preview}`; });
-};
-document.querySelectorAll('.wl-item[data-preview]').forEach(item => item.addEventListener('click', e => {
-  if (item.classList.contains('on')) return;
-  e.preventDefault();
-  wlSelect(item);
-}));
-const wlPreview = new URLSearchParams(location.search).get('preview');
-const wlAsked = wlPreview && document.querySelector(`.wl-item[data-preview="${wlPreview}"]`);
-if (wlAsked) wlSelect(wlAsked);
 // A group marked data-scroll brings what it switches back to the top
 document.querySelectorAll('[data-group][data-scroll]').forEach(g => g.querySelectorAll('[data-target]').forEach(b => b.addEventListener('click', () => {
   const box = g.closest('.float-win')?.querySelector('.float-body') || g.closest('.main');

@@ -2521,11 +2521,28 @@ body.oj-plain .oj-tag { visibility: hidden; }
 
 }
 
+/* The example of a Lens (DEC-UX-294): rows of the result its query showed, confirmed by its author when making it; shown on
+   Welcome and, faded, on its page before its first run */
+.ex-field { margin-top: 18px; }
+.ex-check { display: flex; align-items: flex-start; gap: 10px; font-size: var(--text-small); cursor: pointer; }
+.ex-check input { margin-top: 3px; }
+.ex-check b { font-weight: var(--weight-medium); }
+.ex-check .meta { display: block; margin-top: 3px; line-height: 1.5; }
+.ex-rows { margin-top: 10px; padding: 10px 14px; border-radius: var(--radius-md); background: var(--surface-sub); overflow-x: auto; }
+.ex-rows table { width: 100%; border-collapse: collapse; font-size: var(--text-small); }
+.ex-rows th { padding: 2px 12px 7px 0; border-bottom: 1px solid var(--tint-active); text-align: left; font-weight: var(--weight-medium); color: var(--text-secondary); white-space: nowrap; }
+.ex-rows th small { display: block; font-size: var(--text-meta); font-weight: var(--weight-regular); color: var(--text-muted); }
+.ex-rows td { padding: 6px 12px 6px 0; border-bottom: 1px solid var(--tint-hover); white-space: nowrap; }
+.ex-rows tbody tr:last-child td { border-bottom: 0; }
+.ex-rows .num { text-align: right; font-variant-numeric: tabular-nums; }
+.ex-rows.faded { opacity: .55; }
+.result-bar .meta > i { font-size: 13px; }
+
 /* Welcome, where Data Hub opens (DEC-UX-282): no panel, a search for Lenses that takes the screen, and at its foot, small,
-   the Lenses the User used last and the newest. Searching opens the screen up, half and half: on the left the questions
-   Lenses answer, each with its Lens, Collection and Owner Unit as chips, how many colleagues use it and why it comes up
-   (DEC-UX-285, DEC-UX-286, DEC-UX-290); on the right the preview of the Lens selected (DEC-UX-287). The selected one flows
-   into the preview as the active icon of the rail flows into its panel, with a concave corner above and below (DEC-UX-291) */
+   the Lenses the User used last and the newest. A search opens the screen up into the Lenses that answer, as cards
+   (DEC-UX-295): the thin icon of their Collection in the upper right corner, the question with the words it shares with
+   the search in bold, the Lens with its Level, the searches of colleagues quoted (DEC-UX-296), and its Collection and use
+   as chips. No colour per Collection (DEC-CO-23) */
 .main.welcome { display: flex; flex-direction: column; }
 .wl-start { flex: 1; display: flex; flex-direction: column; min-height: 100%; }
 .wl-hero { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 48px 0 32px; }
@@ -2549,54 +2566,24 @@ body.oj-plain .oj-tag { visibility: hidden; }
 .wl-link .clip { flex: 1; }
 .wl-link .meta { flex: none; }
 .wl-results { width: min(1320px, 100%); margin: 0 auto; }
-.wl-summary { margin: 14px 6px 2px; }
-.wl-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--list-to-preview-gap); align-items: stretch; margin-top: 10px; }
-.wl-list { display: grid; align-content: start; gap: 6px; min-width: 0; }
-.wl-item { position: relative; display: block; padding: 14px 16px 12px; border-radius: var(--radius-md); background: var(--surface-soft); color: inherit; text-decoration: none; cursor: pointer; }
-.wl-item:hover { background: color-mix(in srgb, var(--surface-solid) 70%, var(--surface-soft)); }
-.wl-item.on { background: var(--surface-solid); border-radius: var(--radius-md) 0 0 var(--radius-md); }
-.wl-item.on::after { content: ''; position: absolute; left: 100%; top: 0; height: 100%; width: var(--list-to-preview-gap); background: var(--surface-solid); }
-.wl-flare { display: none; position: absolute; right: calc(-1 * var(--list-to-preview-gap)); width: var(--flare-list); height: var(--flare-list); pointer-events: none; }
-.wl-item.on .wl-flare { display: block; }
-.wl-flare.top { top: calc(-1 * var(--flare-list)); background: radial-gradient(circle at 0 0, transparent var(--flare-list), var(--surface-solid) calc(var(--flare-list) + .5px)); }
-.wl-flare.bottom { top: 100%; background: radial-gradient(circle at 0 100%, transparent var(--flare-list), var(--surface-solid) calc(var(--flare-list) + .5px)); }
-.wl-item.on:first-child .wl-flare.top { display: none; }
-.wl-item-head { display: flex; align-items: flex-start; gap: 10px; }
-.wl-item-q { flex: 1; min-width: 0; font-size: var(--text-section); font-weight: var(--weight-medium); line-height: 1.45; color: var(--text-primary); }
-.wl-item-head .pill { flex: none; margin-top: 2px; }
-.wl-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 10px 0 9px; }
-.wl-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px 4px 9px; border-radius: var(--radius-pill); background: var(--surface-sub); font-size: var(--text-small); color: var(--text-secondary); white-space: nowrap; }
-.wl-chip > i { font-size: 14px; color: var(--text-muted); }
-.wl-chip .maturity { margin-left: 2px; }
-.wl-chip.wl-used { margin-left: auto; }
-.wl-why { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin: 0; padding: 0; list-style: none; font-size: var(--text-meta); color: var(--text-muted); }
-.wl-why li { display: inline-flex; align-items: center; gap: 4px; }
-.wl-why li i { font-size: 13px; }
-.wl-why li.colleagues { color: var(--text-secondary); }
-.wl-why li.colleagues i { color: var(--col-teal-ink); }
-.wl-pane { border-radius: var(--radius-lg); background: var(--surface-solid); min-width: 0; }
-.wl-split:has(.wl-item.on:first-child) .wl-pane { border-top-left-radius: 0; }
-.wl-pane-inner { position: sticky; top: 0; padding: 18px 20px; }
-.wl-pv-head { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
-.wl-pv-head h2 { margin: 0; font-size: var(--text-section); font-weight: var(--weight-medium); }
-.wl-pv-head .wl-chips { margin: 6px 0 0; }
-.wl-pv-label { font-size: var(--text-meta); color: var(--text-muted); display: inline-flex; align-items: center; gap: 5px; }
-.wl-pv table { width: 100%; border-collapse: collapse; font-size: var(--text-small); }
-.wl-pv th { padding: 2px 10px 7px 0; border-bottom: 1px solid var(--tint-active); text-align: left; font-weight: var(--weight-medium); color: var(--text-secondary); white-space: nowrap; }
-.wl-pv th small { display: block; font-size: var(--text-meta); font-weight: var(--weight-regular); color: var(--text-muted); }
-.wl-pv td { padding: 6px 10px 6px 0; border-bottom: 1px solid var(--tint-hover); white-space: nowrap; color: var(--text-primary); }
-.wl-pv .num { text-align: right; font-variant-numeric: tabular-nums; }
-.wl-pv tbody tr:nth-last-child(2) td { opacity: .6; }
-.wl-pv tbody tr:last-child td { opacity: .3; border-bottom: 0; }
-.wl-pv-cap { display: block; margin: 12px 0 0; line-height: 1.5; }
-.wl-pv-foot { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
-.wl-pv-foot .btn-primary { text-decoration: none; padding: 7px 14px; }
-.wl-fields { display: grid; gap: 12px; }
-.wl-field { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font-size: var(--text-small); }
-.wl-field b { font-family: var(--font-mono); font-size: var(--text-small); font-weight: var(--weight-medium); color: var(--text-secondary); }
-.wl-field span { color: var(--text-muted); text-align: right; }
-.wl-field p { grid-column: 1 / -1; margin: 0; line-height: 1.45; color: var(--text-secondary); }
-.wl-shelves { margin-top: 10px; width: calc(50% - var(--list-to-preview-gap) / 2); }
+.wl-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }
+.wl-card { position: relative; display: flex; flex-direction: column; gap: 8px; min-height: 250px; padding: 22px 22px 18px; border-radius: var(--radius-lg); background: var(--surface-solid); color: inherit; text-decoration: none;
+  box-shadow: 0 18px 36px -28px color-mix(in srgb, var(--text-primary) 45%, transparent); transition: transform var(--motion-tooltip), box-shadow var(--motion-tooltip); }
+.wl-card:hover { transform: translateY(-2px); box-shadow: 0 22px 40px -24px color-mix(in srgb, var(--text-primary) 55%, transparent); }
+.wl-card-icon { position: absolute; top: 18px; right: 18px; font-size: 38px; color: var(--text-secondary); }
+.wl-qtitle { margin: 34px 44px 0 0; font-size: 18px; font-style: italic; font-weight: var(--weight-light); line-height: 1.4; }
+.wl-qtitle b { font-weight: var(--weight-semibold); }
+.wl-card-lens { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: var(--text-body); font-weight: var(--weight-semibold); }
+.wl-card-lens > i { font-size: 14px; color: var(--text-muted); }
+.wl-card-lens .maturity { margin-left: 4px; }
+.wl-qlevel { font-size: var(--text-meta); font-weight: var(--weight-regular); color: var(--text-muted); }
+.wl-quotes { display: flex; flex-direction: column; gap: 3px; margin: 4px 0 0; padding: 0; list-style: none; }
+.wl-quotes li { font-size: var(--text-small); color: var(--text-secondary); }
+.wl-quotes li.wl-qmore { color: var(--text-muted); }
+.wl-card-foot { display: flex; align-items: center; gap: 6px; margin-top: auto; padding-top: 14px; }
+.wl-qchip, .wl-qused { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: var(--radius-pill); background: var(--surface-sub); font-size: var(--text-meta); color: var(--text-secondary); white-space: nowrap; }
+.wl-qchip i, .wl-qused i { font-size: 13px; color: var(--text-muted); }
+.wl-shelves { margin-top: 18px; }
 .wl-shelf { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: var(--radius-md); background: var(--surface-soft); margin-bottom: 6px; color: inherit; text-decoration: none; font-size: var(--text-small); }
 .wl-shelf .wl-shelf-text { flex: 1; min-width: 0; }
 .wl-shelf .wl-shelf-text .meta { display: block; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -2610,71 +2597,10 @@ body.oj-plain .oj-tag { visibility: hidden; }
 .wl-domain > i { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--tint-active); font-size: 12px; }
 .wl-pop { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: var(--radius-pill); background: var(--surface-sub); font-size: var(--text-meta); color: var(--text-secondary); white-space: nowrap; }
 .wl-pop i { font-size: 13px; }
+@media (max-width: 1200px) { .wl-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 1000px) {
-  .wl-split { grid-template-columns: minmax(0, 1fr); row-gap: 12px; }
-  .wl-item.on { border-radius: var(--radius-md); }
-  .wl-item.on::after, .wl-item.on .wl-flare { display: none; }
-  .wl-split:has(.wl-item.on:first-child) .wl-pane { border-top-left-radius: var(--radius-lg); }
-  .wl-pane-inner { position: static; }
-  .wl-shelves { width: auto; }
   .wl-foot { grid-template-columns: minmax(0, 1fr); gap: 18px; }
   .wl-row { grid-template-columns: auto minmax(0, 1fr); }
   .wl-row > :nth-child(n+3) { grid-column: 2; }
 }
-
-/* The example of a Lens (DEC-UX-294): rows of the result its query showed, confirmed by its author when making it; shown on
-   Welcome and, faded, on its page before its first run */
-.ex-field { margin-top: 18px; }
-.ex-check { display: flex; align-items: flex-start; gap: 10px; font-size: var(--text-small); cursor: pointer; }
-.ex-check input { margin-top: 3px; }
-.ex-check b { font-weight: var(--weight-medium); }
-.ex-check .meta { display: block; margin-top: 3px; line-height: 1.5; }
-.ex-rows { margin-top: 10px; padding: 10px 14px; border-radius: var(--radius-md); background: var(--surface-sub); overflow-x: auto; }
-.ex-rows table { width: 100%; border-collapse: collapse; font-size: var(--text-small); }
-.ex-rows th { padding: 2px 12px 7px 0; border-bottom: 1px solid var(--tint-active); text-align: left; font-weight: var(--weight-medium); color: var(--text-secondary); white-space: nowrap; }
-.ex-rows th small { display: block; font-size: var(--text-meta); font-weight: var(--weight-regular); color: var(--text-muted); }
-.ex-rows td { padding: 6px 12px 6px 0; border-bottom: 1px solid var(--tint-hover); white-space: nowrap; }
-.ex-rows tbody tr:last-child td { border-bottom: 0; }
-.ex-rows .num { text-align: right; font-variant-numeric: tabular-nums; }
-.ex-rows.faded { opacity: .55; }
-.result-bar .meta > i { font-size: 13px; }
-
-/* A try for the results on Welcome (OP-UX-97): each Lens found as its question, its Collection by its icon, its name under
-   the question, and the searches colleagues found and used it with, quoted. No preview */
-.wl-qlist { display: grid; gap: 10px; width: min(860px, 100%); margin: 18px auto 0; }
-.wl-qcard { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 16px; align-items: start; padding: 18px 20px; border-radius: var(--radius-lg); background: var(--surface-solid); color: inherit; text-decoration: none; }
-.wl-qcard:hover { outline: 1.5px solid var(--text-muted); }
-.wl-qdomain { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
-.wl-qdomain i { display: grid; place-items: center; width: 52px; height: 48px; font-size: 40px; color: var(--text-primary); }
-.wl-qbody { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.wl-qtitle { font-size: 20px; font-style: italic; font-weight: var(--weight-light); line-height: 1.4; }
-/* The words the question shares with the search, in bold (OP-UX-97) */
-.wl-qtitle b { font-weight: var(--weight-semibold); }
-.wl-qlens { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: var(--text-body); font-weight: var(--weight-semibold); color: var(--text-primary); }
-.wl-qlens .maturity { margin-left: 4px; }
-.wl-qlevel { font-size: var(--text-meta); font-weight: var(--weight-regular); color: var(--text-muted); }
-.wl-qchip { margin-left: auto; display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: var(--radius-pill); background: var(--surface-sub); font-size: var(--text-small); font-weight: var(--weight-regular); color: var(--text-secondary); white-space: nowrap; }
-.wl-qchip i { font-size: 14px; color: var(--text-muted); }
-.wl-qused { display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px; border-radius: var(--radius-pill); background: var(--surface-sub); font-size: var(--text-small); font-weight: var(--weight-regular); color: var(--text-secondary); white-space: nowrap; }
-.wl-qused i { font-size: 14px; color: var(--text-muted); }
-.wl-qlens i { font-size: 14px; color: var(--text-muted); }
-.wl-quotes { display: flex; flex-wrap: wrap; gap: 4px 18px; margin: 10px 0 0; padding: 0; list-style: none; }
-.wl-quotes li { font-size: var(--text-small); color: var(--text-secondary); }
-.wl-quotes li.wl-qmore { color: var(--text-muted); }
-
-/* A try for the results on Welcome (OP-UX-97): the Lenses found as cards in a grid, the icon of their Collection, thin, in
-   the upper right corner; the question, its Lens with its Level, the searches of colleagues, and at the foot an arrow, its
-   Collection and how often it is used. No colour per Collection (DEC-CO-23) */
-.wl-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }
-.wl-card { position: relative; display: flex; flex-direction: column; gap: 8px; min-height: 250px; padding: 22px 22px 18px; border-radius: var(--radius-lg); background: var(--surface-solid); color: inherit; text-decoration: none;
-  box-shadow: 0 18px 36px -28px color-mix(in srgb, var(--text-primary) 45%, transparent); transition: transform var(--motion-tooltip), box-shadow var(--motion-tooltip); }
-.wl-card:hover { transform: translateY(-2px); box-shadow: 0 22px 40px -24px color-mix(in srgb, var(--text-primary) 55%, transparent); }
-.wl-card-icon { position: absolute; top: 18px; right: 18px; font-size: 38px; color: var(--text-secondary); }
-.wl-card .wl-qtitle { margin: 34px 44px 0 0; font-size: 18px; }
-.wl-card-lens { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: var(--text-body); font-weight: var(--weight-semibold); }
-.wl-card-lens > i { font-size: 14px; color: var(--text-muted); }
-.wl-card .wl-quotes { flex-direction: column; gap: 3px; margin-top: 4px; }
-.wl-card-foot { display: flex; align-items: center; gap: 6px; margin-top: auto; padding-top: 14px; }
-.wl-card-foot .wl-qchip, .wl-card-foot .wl-qused { margin-left: 0; font-size: var(--text-meta); padding: 3px 9px; }
-@media (max-width: 1200px) { .wl-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 700px) { .wl-cards { grid-template-columns: minmax(0, 1fr); } }

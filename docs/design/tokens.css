@@ -7,7 +7,7 @@
   --font-family: 'Poppins', system-ui, sans-serif;
   --font-mono: ui-monospace, Menlo, monospace;
   --font-symbol: 'Segoe UI Symbol', 'Apple Symbols', 'Noto Sans Symbols 2', 'DejaVu Sans', sans-serif; /* the marker ⓘ, which Poppins has not (OP-UX-22) */
-  --weight-light: 300;   /* the question of a Lens found on Welcome, in italic (OP-UX-97) */
+  --weight-light: 300;   /* the question of a Lens found on Welcome, in italic (DEC-UX-295) */
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-semibold: 600;
@@ -33,7 +33,6 @@
   --radius-sign-in: 32px;    /* the glass card of the sign-in */
   --flare-tab: 12px;   /* concave corner where an active tab meets its content */
   --flare-nav: 18px;   /* concave corner where the active nav icon meets the panel */
-  --flare-list: 14px;  /* concave corner where the selected item of a list meets its preview, as on Welcome */
 
   /* Layout */
   --space-frame: 20px;
@@ -42,7 +41,6 @@
   --nav-icon-size: 44px;
   --nav-rail-width: 52px;
   --nav-to-panel-gap: 8px;
-  --list-to-preview-gap: 10px;  /* the selected item of a list flows over it into its preview */
   --panel-width: 300px;
   --tile-min: 240px;          /* grid is always 100% wide; tiles grow until a column fits */
   --tile-min-compact: 190px;
