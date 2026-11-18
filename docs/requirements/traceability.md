@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 277 | 91 (22 open, 69 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 278 | 91 (22 open, 69 done) |
 | [Backlog](../overview/backlog.md) | – | – | – | 7 (5 open, 2 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
@@ -28,7 +28,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Channels](functional/13-channels.md) | 6 (5 proposed, 1 implemented) | – | 6 | 4 (2 open, 2 done) |
 | [Conversations](functional/14-conversations.md) | 16 (16 implemented) | 2 (2 implemented) | 13 | 9 (9 done) |
 | [EDA](functional/15-eda.md) | – | – | 16 | 8 (5 open, 3 done) |
-| [Learning](functional/16-learning.md) | 43 (13 proposed, 14 implemented, 16 withdrawn) | – | 38 | 40 (9 open, 31 done) |
+| [Learning](functional/16-learning.md) | 44 (13 proposed, 15 implemented, 16 withdrawn) | – | 39 | 40 (9 open, 31 done) |
 | [Claude](functional/17-claude.md) | 37 (1 proposed, 36 implemented) | 5 (5 implemented) | 21 | 12 (7 open, 5 done) |
 | [Localisation](non-functional/localisation.md) | 12 (8 specified, 3 implemented, 1 withdrawn) | – | – | – |
 | [Security](non-functional/security.md) | 4 (4 implemented) | – | – | – |
@@ -41,7 +41,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Lenses: technical requirements](technical/09-lenses.md) | 10 (10 implemented) | – | – | – |
 | [Permissions and Excel keys: technical requirements](technical/12-permissions-and-library-cards.md) | 9 (9 implemented) | – | – | – |
 | [Conversations: technical requirements](technical/14-conversations.md) | 3 (3 implemented) | – | – | – |
-| [Learning: technical requirements](technical/16-learning.md) | 9 (9 implemented) | – | – | – |
+| [Learning: technical requirements](technical/16-learning.md) | 10 (10 implemented) | – | – | – |
 
 ## Functional requirements
 
@@ -452,6 +452,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-LR-41](functional/16-learning.md#fr-lr-41) | A card still to write shows as coming soon, and can be asked for | Proposed | – | [learning-family](../design/screens/learning-family.html) | – | [a3c5f6a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a3c5f6a8d3fc370ca9f1cdaeb2141adab0c9c1f4) refs, 2026-11-11 |
 | [FR-LR-42](functional/16-learning.md#fr-lr-42) | The situations that push a card are one list | Proposed | – | – | – | [a3c5f6a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a3c5f6a8d3fc370ca9f1cdaeb2141adab0c9c1f4) refs, 2026-11-11 |
 | [FR-LR-43](functional/16-learning.md#fr-lr-43) | An attention box asks whoever can act, with the card that says why | Proposed | – | [learning-attention](../design/screens/learning-attention.html), [learning-attention-resource](../design/screens/learning-attention-resource.html) | – | [a3c5f6a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a3c5f6a8d3fc370ca9f1cdaeb2141adab0c9c1f4) refs, 2026-11-11 |
+| [FR-LR-44](functional/16-learning.md#fr-lr-44) | A term of the dictionary on a screen gives its definition first | Implemented | – | [resource-overview](../design/screens/resource-overview.html), [resource-columns-edit](../design/screens/resource-columns-edit.html), [owner-journey](../design/screens/owner-journey.html) | [TR-LR-10](technical/16-learning.md#tr-lr-10) | [8a6aa08](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8a6aa08c96c494e823d41a785da476bd8040303f) implements, 2026-11-18 |
 
 ### [Claude](functional/17-claude.md)
 
@@ -492,8 +493,8 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-CL-33](functional/17-claude.md#fr-cl-33) | The Owner Journey opens with what and why, keeps its overview at hand and folds its Learning Cards | Implemented | – | [owner-journey](../design/screens/owner-journey.html) | – | [4f4c224](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4f4c2243e83b2ad9d8f4565d93b6675f6135ce1e) implements, 2026-11-17<br>[bda9ac6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/bda9ac6e8dc1fd0a05c85333b9a24f5b447658f9) refs, 2026-11-17 |
 | [FR-CL-34](functional/17-claude.md#fr-cl-34) | Claude writes a Known Gap with its scope | Implemented | – | [owner-journey](../design/screens/owner-journey.html) | – | [4f4c224](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4f4c2243e83b2ad9d8f4565d93b6675f6135ce1e) implements, 2026-11-17<br>[bda9ac6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/bda9ac6e8dc1fd0a05c85333b9a24f5b447658f9) refs, 2026-11-17 |
 | [FR-CL-35](functional/17-claude.md#fr-cl-35) | Claude tells a Known Gap from a Pitfall | Implemented | – | [owner-journey](../design/screens/owner-journey.html) | – | [4f4c224](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4f4c2243e83b2ad9d8f4565d93b6675f6135ce1e) implements, 2026-11-17<br>[bda9ac6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/bda9ac6e8dc1fd0a05c85333b9a24f5b447658f9) refs, 2026-11-17 |
-| [FR-CL-36](functional/17-claude.md#fr-cl-36) | Claude runs a Lens, with its result in an MCP App | Implemented | – | [mcp-lens](../design/screens/mcp-lens.html) | – | – |
-| [FR-CL-37](functional/17-claude.md#fr-cl-37) | Claude reads a Lens before it runs it | Implemented | – | [mcp-lens](../design/screens/mcp-lens.html) | – | – |
+| [FR-CL-36](functional/17-claude.md#fr-cl-36) | Claude runs a Lens, with its result in an MCP App | Implemented | – | [mcp-lens](../design/screens/mcp-lens.html) | – | [416c40e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/416c40e4eda03544435722d24cb59504558cef76) implements, 2026-11-18 |
+| [FR-CL-37](functional/17-claude.md#fr-cl-37) | Claude reads a Lens before it runs it | Implemented | – | [mcp-lens](../design/screens/mcp-lens.html) | – | [416c40e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/416c40e4eda03544435722d24cb59504558cef76) implements, 2026-11-18 |
 
 ## Edge cases
 
@@ -766,6 +767,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [TR-LR-07](technical/16-learning.md#tr-lr-07) | A card opens in a floating window, in the same steps as its page | Implemented | [FR-LR-12](functional/16-learning.md#fr-lr-12), [FR-LR-27](functional/16-learning.md#fr-lr-27), [DEC-LR-08](functional/16-learning.md#dec-lr-08) | [aa4477e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/aa4477ee5aa712754e0ef19b3bb61a6c8ab7cec2) implements, 2026-10-29 |
 | [TR-LR-08](technical/16-learning.md#tr-lr-08) | What Data Hub writes carries the card of its type | Implemented | [FR-LR-38](functional/16-learning.md#fr-lr-38), [DEC-LR-29](functional/16-learning.md#dec-lr-29) | [aa4477e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/aa4477ee5aa712754e0ef19b3bb61a6c8ab7cec2) implements, 2026-10-29 |
 | [TR-LR-09](technical/16-learning.md#tr-lr-09) | A whole card in Claude, and the card of a step of the Owner Journey | Implemented | [FR-LR-26](functional/16-learning.md#fr-lr-26), [FR-CL-30](functional/17-claude.md#fr-cl-30), [DEC-UX-261](../design/principles.md#dec-ux-261) | [566da5d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/566da5dc376694beb0efc0596259f39895d225a8) implements, 2026-11-15 |
+| [TR-LR-10](technical/16-learning.md#tr-lr-10) | The definitions of the terms, beside the Learning Cards | Implemented | [FR-LR-44](functional/16-learning.md#fr-lr-44), [DEC-LR-39](functional/16-learning.md#dec-lr-39), [DEC-UX-279](../design/principles.md#dec-ux-279) | [8a6aa08](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8a6aa08c96c494e823d41a785da476bd8040303f) implements, 2026-11-18 |
 
 ## Non-functional requirements
 

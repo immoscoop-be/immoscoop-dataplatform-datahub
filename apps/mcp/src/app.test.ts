@@ -380,13 +380,15 @@ describe('Resources through Claude', () => {
       expect.objectContaining({ label: 'On the card now', origin: 'From the Owner', text: 'Credit leads per week.' }),
       expect.objectContaining({ label: 'Next to it', origin: 'From dbt' }),
     ]);
-    // The window keeps the overview at hand, says what the text of the step is for, and links to its spot (FR-CL-33, DEC-CL-19).
-    const shown = guided.structuredContent as { window: { overview: { steps: { number: number; state: string; mark: string; says: string }[]; done: number; open: number }; purpose: string; link: { url: string; label: string } } };
+    // The window keeps the overview at hand, the definitions of the terms of the step behind the ⓘ after its title, and
+    // links to its spot (FR-CL-33, FR-LR-44, DEC-CL-19).
+    const shown = guided.structuredContent as { window: { overview: { steps: { number: number; state: string; mark: string; says: string }[]; done: number; open: number }; terms: { name: string; definition: string }[]; link: { url: string; label: string } } };
     expect(shown.window.overview.open).toBe(5);
     expect(shown.window.overview.steps.find((step) => step.number === 1)).toMatchObject({ state: 'done', says: 'Done' });
     expect(shown.window.overview.steps.find((step) => step.number === 2)).toMatchObject({ state: 'now', mark: 'Required' });
     expect(shown.window.overview.steps.find((step) => step.number === 8)).toMatchObject({ state: 'optional', mark: 'Optional' });
-    expect(shown.window.purpose).toContain('**dbt** says how the data is made');
+    expect(shown.window.terms).toEqual([{ name: 'Business Description', definition: expect.stringContaining('the description from dbt, which says how the data is made') }]);
+    expect(shown.window).not.toHaveProperty('purpose');
     expect(shown.window.link).toEqual({ url: `${WEB}/resources/${RESOURCE_ID}/description`, label: 'Open the Description in Data Hub' });
     expect(guided.content[0]?.text).toContain('Step 2 of 12 is next: Business Description, required to publish.');
     expect(guided.content[0]?.text).toContain('Still open before it can be published: Business Description, Key Fields, Fields, Pitfalls, Known Gaps and reliable since.');
@@ -904,6 +906,14 @@ describe('a Learning Card in Claude (FR-LR-26, DEC-UX-261)', () => {
     expect(VIEW_PAGE).toContain("app.sendMessage({ role: 'user', content: [{ type: 'text', text: 'Show me the Learning Card '");
     expect(VIEW_PAGE).toContain("else if (view.view === 'journey') renderJourney(view);");
     expect(VIEW_PAGE).toContain("else if (view.view === 'card') renderCard(view);");
+  });
+
+  it('unfolds the definitions of the terms of a step under its title with a tap on the ⓘ, folded at first (FR-LR-44, DEC-UX-279)', () => {
+    expect(VIEW_PAGE).toContain('<button class="term" type="button" data-term aria-expanded="');
+    expect(VIEW_PAGE).toContain('<div class="term-def" id="term-def"');
+    expect(VIEW_PAGE).toContain("(shownTerms ? '' : ' hidden')");
+    expect(VIEW_PAGE).toContain("root.querySelector('#term-def')?.toggleAttribute('hidden', !shown);");
+    expect(VIEW_PAGE).not.toContain('class="purpose"');
   });
 });
 

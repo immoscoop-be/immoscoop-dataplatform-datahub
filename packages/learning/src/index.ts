@@ -2,3 +2,4 @@ export { CardError, parseCard, shownIn, versionOf, type Card, type CardStatus, t
 export { LEVELS, SECTIONS, TOPICS, topicOf, type Language, type Level, type LevelId, type Priority, type Section, type Text, type Thinking, type Topic } from './plan.js';
 export { type ExplainSource, explainWith, type Explanation, stem, stems } from './explain.js';
 export { MARKER_PLACES, MARKERS, type MarkerPlace } from './markers.js';
+export { type Term, type TermKey, TERMS, termOf } from './terms.js';
