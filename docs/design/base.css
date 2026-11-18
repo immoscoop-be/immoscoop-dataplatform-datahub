@@ -2472,3 +2472,48 @@ body.oj-plain .oj-tag { visibility: hidden; }
   .oj-map { position: static; max-height: none; }
   .oj-row { grid-template-columns: minmax(0, 1fr); gap: 4px; }
 }
+
+/* The fields of a Resource suggested by Claude, in an MCP App (DEC-UX-281): a row per field, the box "Key Field", the
+   name with its type and description from dbt, and the Business Description to edit, marked by where it comes from */
+.mf-basis { display: flex; gap: 8px; align-items: flex-start; margin: 0; font-size: var(--text-small); line-height: 1.5; color: var(--text-secondary); }
+.mf-basis > i { margin-top: 3px; color: var(--col-teal-ink); }
+.mf-done { display: flex; gap: 10px; align-items: flex-start; padding: 10px 14px; border-radius: var(--radius-md); background: var(--surface-sub); font-size: var(--text-small); }
+.mf-done > i { font-size: 18px; color: var(--col-teal-ink); }
+.mf-done b { font-weight: var(--weight-medium); }
+.mf-tools { display: flex; gap: 2px; flex-wrap: wrap; }
+.mf-tools .count { margin-left: 5px; color: var(--text-muted); }
+.mf-rows { display: grid; }
+.mf-row { display: grid; grid-template-columns: auto minmax(130px, .7fr) minmax(0, 1.3fr); gap: 6px 14px; align-items: start; padding: 12px 2px; border-top: 1px solid var(--tint-hover); }
+.mf-row[hidden] { display: none; }
+.mf-key { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px 4px 6px; border-radius: var(--radius-pill); font-size: var(--text-meta); color: var(--text-muted); cursor: pointer; white-space: nowrap; }
+.mf-key:hover { background: var(--tint-hover); }
+.mf-key input { margin: 0; accent-color: var(--text-primary); }
+.mf-key i { font-size: 13px; opacity: .35; }
+.mf-key:has(input:checked) { color: var(--text-primary); background: var(--surface-sub); }
+.mf-key:has(input:checked) i { opacity: 1; }
+.mf-name { display: grid; gap: 3px; min-width: 0; }
+.mf-name code { font: var(--weight-medium) var(--text-small) var(--font-mono); color: var(--text-primary); overflow-wrap: anywhere; }
+.mf-name .pill { display: inline-block; }
+.mf-dbt { margin-top: 3px; font-size: var(--text-meta); line-height: 1.45; color: var(--text-secondary); }
+.mf-dbt .origin { display: block; margin: 0 0 1px; padding: 0; }
+.mf-text { display: grid; gap: 4px; min-width: 0; }
+.mf-text textarea { width: 100%; box-sizing: border-box; resize: vertical; min-height: 54px; field-sizing: content; padding: 8px 10px; border: 1px solid var(--tint-active); border-radius: var(--radius-sm); background: var(--surface-solid); font: inherit; font-size: var(--text-small); line-height: 1.5; color: var(--text-primary); }
+.mf-text textarea:focus { outline: 2px solid var(--text-primary); outline-offset: -1px; }
+.mf-mark { justify-self: start; font-size: 10px; padding: 1px 7px; border-radius: var(--radius-pill); color: var(--text-secondary); background: var(--tint-hover); }
+.mf-mark.suggested { color: var(--col-teal-ink); background: color-mix(in srgb, var(--col-teal-ink) 12%, var(--surface-solid)); }
+.mf-mark.edited { color: var(--text-primary); background: var(--tint-active); }
+.mf-row.needs-text .mf-text::after { content: 'A Key Field needs a description to be published.'; font-size: var(--text-meta); color: var(--signal-warn); }
+.mf-theirs { grid-column: 2 / -1; display: grid; gap: 6px; padding: 10px 12px; border-radius: var(--radius-md); background: color-mix(in srgb, var(--signal-warn) 10%, var(--surface-solid)); font-size: var(--text-small); }
+.mf-theirs p { margin: 0; line-height: 1.5; }
+.mf-theirs b { font-weight: var(--weight-medium); color: var(--text-primary); }
+.mf-choose { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.mf-foot #mf-saves { flex: 1; min-width: 160px; }
+@container mcp (max-width: 560px) {
+  .mf-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .mf-row .mf-key { grid-column: 2; grid-row: 1; }
+  .mf-row .mf-name { grid-column: 1; grid-row: 1; }
+  .mf-row .mf-text, .mf-theirs { grid-column: 1 / -1; }
+  .mf-key { min-height: 44px; }
+  .mf-foot #mf-saves { flex: none; min-width: 0; }
+  .mf-foot .btn-primary { width: 100%; justify-content: center; min-height: 44px; }
+}

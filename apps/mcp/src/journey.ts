@@ -150,13 +150,13 @@ export const GUIDE: Readonly<Record<JourneyStepId, { say: string; present: strin
   },
   keyFields: {
     say: 'The few fields a colleague should look at first. The EDA, which takes a Resource to 4 · Explored, explores at least its Key Fields.',
-    present: 'Its fields, with how often the queries on it use each (get_resource_queries).',
-    ask: 'Which fields matter most. Propose some, with where the proposal comes from.',
+    present: 'Your suggestion of its Key Fields, in the card of suggest_fields, together with a description for every field that has none: the User ticks, edits and saves there (DEC-CL-22). Base it on its fields, how often the queries on it use each (get_resource_queries) and, where you may, a small Preview.',
+    ask: 'Whether the suggestion is right; the User saves it in the card.',
   },
   fields: {
     say: 'A Business Description for each field: the Key Fields first, which are required, then the others, which are advised. dbt says how a field is made; its Business Description says what it means and how it is used.',
-    present: 'Five fields at a time, each with what dbt says and your proposal.',
-    ask: 'What is off. When the User leaves the other fields for later, record the step gone through with record_journey_step.',
+    present: 'The card of suggest_fields, with a suggested description for every field that has none, the Key Fields first (DEC-CL-22). When the User saved them in the card at the step Key Fields already, the fields left without one.',
+    ask: 'What is off; the User edits and saves in the card. When the User leaves the other fields for later, record the step gone through with record_journey_step.',
   },
   intendedUse: {
     say: 'What it is meant for, and what it is not meant for.',
