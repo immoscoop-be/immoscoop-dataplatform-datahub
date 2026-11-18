@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<!--
+  Screen: Welcome, where Data Hub opens (DEC-UX-282)
+  Its one job is to bring people to Lenses through a search, which takes most of the screen. No panel. At its foot, small
+  and quiet: the three Lenses the User used last and the newest Lenses, each with "More". Under the search one line says
+  that searches are stored, to make Lenses easier to find (DEC-UX-288).
+  The rail starts with Welcome, a button that leads here, and has Messages and the Learning Centre at its foot (DEC-UX-283).
+  A question, sent with Enter, opens the screen up into the Lenses that answer it (DEC-UX-284). Each says why it comes up:
+  colleagues found it with a similar question, which weighs most, and the words of its author; and how many colleagues
+  used it this month, which pushes it up among the Lenses that match (DEC-UX-285). A colleague's search is never shown
+  (DEC-UX-286). Each shows a preview of what it gives: the example its author confirmed when making it, or its fields
+  when it has none (DEC-UX-287). Whoever may query also gets what on the shelves matches, and "New query with this
+  question"; a Lens user gets only Lenses (DEC-PL-07).
+  The switches at the bottom show the screen before a search, with results (?search=results), when nothing is found
+  (?search=none), and the two lists of "More" (?search=recent, ?search=new), seen as a Business analyst or a Lens user
+  (?role=lensuser). Typing a question and Enter shows the results; one that starts with "how do agencies" finds none.
+  Requirements: none yet; storing searches, popularity and the links between Lenses are written once this design is approved.
+  Builds on: FR-LE-06, FR-LE-11, FR-LE-19, FR-SR-48, FR-CO-37, FR-PL-14.
+  Decisions: DEC-UX-282, DEC-UX-283, DEC-UX-284, DEC-UX-285, DEC-UX-286, DEC-UX-287, DEC-UX-288, DEC-UX-126, DEC-UX-127, DEC-PL-07.
+  Open: OP-UX-92, OP-UX-93, OP-UX-94, OP-UX-95.
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="colleague">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Welcome</title>
+</head>
+<body>
+<div class="app">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <a class="nav-btn active" href="welcome.html" data-label="Welcome" aria-label="Welcome" aria-current="page"><i class="ph-fill ph-house-simple"></i></a>
+  <a class="nav-btn" href="collections-start.html" data-label="Collections" aria-label="Collections"><i class="ph-fill ph-stack"></i></a>
+  <a class="nav-btn" href="query.html" data-label="Query" aria-label="Query" data-for="colleague owner datateam"><i class="ph-fill ph-terminal-window"></i></a>
+  <a class="nav-btn" href="charts.html" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
+  <a class="nav-btn nav-admin" href="admin-webhooks.html" data-label="Admin" aria-label="Admin, for the Data Team" data-for="datateam"><i class="ph-fill ph-toolbox"></i></a>
+  <div class="spacer"></div>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">MP</a>
+</nav>
+<main class="main welcome">
+
+<!-- Before a search: the question takes the screen; at the foot, small, what the User used last and what is new -->
+<div class="wl-start" data-pane-group="search" data-pane="start">
+ <div class="wl-hero">
+  <h1>What do you want to know?</h1>
+  <p>Ask it as you would ask a colleague. Data Hub finds the Lenses that answer it.</p>
+  <form class="wl-find" role="search">
+   <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+   <input id="wl-q" name="q" placeholder="For example: how many credit leads came in this weekend?" aria-label="What do you want to know?" autocomplete="off" spellcheck="false">
+   <button class="btn-primary" type="submit"><span>Search</span><i class="ph ph-arrow-right" aria-hidden="true"></i></button>
+  </form>
+  <p class="meta wl-note"><i class="ph ph-clock-counter-clockwise" aria-hidden="true"></i>Your searches are stored, to make Lenses easier to find.</p>
+ </div>
+ <div class="wl-foot">
+  <section aria-label="Recently used">
+   <h2>Recently used <a class="text-link" href="welcome.html?search=recent" data-go="search:recent"><span>More</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a></h2>
+   <a class="wl-link" href="lens.html"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span class="clip">Credit leads per day</span><span class="maturity" data-level="4"></span><span class="meta">2 hours ago</span></a>
+   <a class="wl-link" href="lens.html"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span class="clip">Leads per source name</span><span class="maturity" data-level="4"></span><span class="meta">yesterday</span></a>
+   <a class="wl-link" href="lens.html"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span class="clip">Active listings per region</span><span class="maturity" data-level="3"></span><span class="meta">last week</span></a>
+  </section>
+  <section aria-label="New Lenses">
+   <h2>New <a class="text-link" href="welcome.html?search=new" data-go="search:new"><span>More</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a></h2>
+   <a class="wl-link" href="lens.html"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span class="clip">Credit funnel by region</span><span class="maturity" data-level="3"></span><span class="meta">3 days ago</span></a>
+   <a class="wl-link" href="lens.html"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span class="clip">Credit requests per session source</span><span class="maturity" data-level="2"></span><span class="meta">last week</span></a>
+   <a class="wl-link" href="lens.html"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span class="clip">Visit requests per broker</span><span class="maturity" data-level="4"></span><span class="meta">2 weeks ago</span></a>
+  </section>
+ </div>
+</div>
+
+<!-- A search: the Lenses that answer, each with why it comes up, its popularity and a preview of what it gives -->
+<div class="wl-results search-results" data-pane-group="search" data-pane="results" hidden>
+ <form class="wl-find top" role="search">
+  <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+  <input name="q" value="how many credit leads were there this weekend" aria-label="What do you want to know?" autocomplete="off" spellcheck="false">
+  <a class="text-link" href="welcome.html" data-go="search:start"><span>Clear</span></a>
+ </form>
+ <p class="meta wl-summary">3 Lenses answer your question, the best first · only Lenses you may use</p>
+
+ <article class="wl-hit best">
+  <div>
+   <div class="wl-hit-head"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><a class="item-title" href="lens.html">Credit leads per day</a><span class="maturity" data-level="4"></span><span class="pill pill-best">Best match</span><span class="wl-pop" title="Colleagues who ran it in the last 30 days"><i class="ph-fill ph-users-three" aria-hidden="true"></i>14 colleagues this month</span></div>
+   <p class="wl-q">How many <mark>credit</mark> <mark>leads</mark> came in, per day and per channel?</p>
+   <ul class="wl-why" aria-label="Why it comes up">
+    <li class="wl-why-label">Why</li>
+    <li class="colleagues"><i class="ph ph-users-three" aria-hidden="true"></i>6 colleagues found it with a similar question</li>
+    <li><i class="ph ph-pencil-simple-line" aria-hidden="true"></i>Its question says <mark>credit</mark> <mark>leads</mark></li>
+   </ul>
+   <div class="wl-hit-foot"><a class="btn-primary" href="lens.html">Use this Lens</a><span class="meta">Credit leads · by the credit team</span></div>
+  </div>
+  <figure class="wl-preview">
+   <table>
+    <thead><tr><th>day<small>Date</small></th><th>channel<small>Text</small></th><th class="num">credit_leads<small>Whole number</small></th></tr></thead>
+    <tbody>
+     <tr><td>1 Nov 2026</td><td>Website</td><td class="num">42</td></tr>
+     <tr><td>1 Nov 2026</td><td>App</td><td class="num">31</td></tr>
+     <tr><td>2 Nov 2026</td><td>Website</td><td class="num">38</td></tr>
+     <tr><td>2 Nov 2026</td><td>App</td><td class="num">27</td></tr>
+     <tr><td>3 Nov 2026</td><td>Website</td><td class="num">56</td></tr>
+    </tbody>
+   </table>
+   <figcaption><i class="ph ph-eye" aria-hidden="true"></i>An example of what you get, from 3 Nov</figcaption>
+  </figure>
+ </article>
+
+ <article class="wl-hit">
+  <div>
+   <div class="wl-hit-head"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><a class="item-title" href="lens.html">Leads per source name</a><span class="maturity" data-level="4"></span><span class="wl-pop" title="Colleagues who ran it in the last 30 days"><i class="ph-fill ph-users-three" aria-hidden="true"></i>9 colleagues this month</span></div>
+   <p class="wl-q">Which sources bring the most <mark>leads</mark>, and how big is their share?</p>
+   <ul class="wl-why" aria-label="Why it comes up">
+    <li class="wl-why-label">Why</li>
+    <li class="colleagues"><i class="ph ph-users-three" aria-hidden="true"></i>3 colleagues found it with a similar question</li>
+    <li><i class="ph ph-pencil-simple-line" aria-hidden="true"></i>Its question says <mark>leads</mark></li>
+    <li><i class="ph ph-link-simple" aria-hidden="true"></i>Often used with Credit leads per day</li>
+   </ul>
+   <div class="wl-hit-foot"><a class="btn-primary" href="lens.html">Use this Lens</a><span class="meta">Credit leads · by Mia Peeters</span></div>
+  </div>
+  <figure class="wl-preview">
+   <table>
+    <thead><tr><th>source_name<small>Text</small></th><th class="num">leads<small>Whole number</small></th><th class="num">share<small>Decimal number</small></th></tr></thead>
+    <tbody>
+     <tr><td>Website</td><td class="num">412</td><td class="num">38 %</td></tr>
+     <tr><td>Partner network</td><td class="num">260</td><td class="num">24 %</td></tr>
+     <tr><td>Newsletter</td><td class="num">133</td><td class="num">12 %</td></tr>
+     <tr><td>App</td><td class="num">98</td><td class="num">9 %</td></tr>
+     <tr><td>Social</td><td class="num">71</td><td class="num">7 %</td></tr>
+    </tbody>
+   </table>
+   <figcaption><i class="ph ph-eye" aria-hidden="true"></i>An example of what you get, from 21 Oct</figcaption>
+  </figure>
+ </article>
+
+ <article class="wl-hit">
+  <div>
+   <div class="wl-hit-head"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><a class="item-title" href="lens.html">Credit leads per week</a><span class="maturity" data-level="3"></span><span class="wl-pop" title="Colleagues who ran it in the last 30 days"><i class="ph-fill ph-users-three" aria-hidden="true"></i>5 colleagues this month</span></div>
+   <p class="wl-q">How many <mark>credit</mark> <mark>leads</mark> came in, week by week, against the week before?</p>
+   <ul class="wl-why" aria-label="Why it comes up">
+    <li class="wl-why-label">Why</li>
+    <li><i class="ph ph-pencil-simple-line" aria-hidden="true"></i>Its name and tags say <mark>credit</mark> <mark>leads</mark></li>
+   </ul>
+   <div class="wl-hit-foot"><a class="btn-primary" href="lens.html">Use this Lens</a><span class="meta">Credit leads · by Karel Leys</span></div>
+  </div>
+  <figure class="wl-preview">
+   <div class="wl-fields">
+    <div class="wl-field"><b>week</b><span>Date</span><p>The Monday the week starts on</p></div>
+    <div class="wl-field"><b>credit_leads</b><span>Whole number</span><p>Credit leads sent to the bank that week</p></div>
+    <div class="wl-field"><b>vs_last_week</b><span>Decimal number</span><p>The change against the week before, in %</p></div>
+   </div>
+   <figcaption><i class="ph ph-columns" aria-hidden="true"></i>No example yet: these are the fields you get</figcaption>
+  </figure>
+ </article>
+
+ <!-- Only for whoever may query (DEC-UX-284): the data itself, and a query of their own from the same question -->
+ <section class="wl-shelves" data-for="colleague owner datateam" aria-label="Also on the shelves">
+  <div class="section-head"><h2>Also on the shelves</h2><span class="meta">The data itself, because you may query it</span></div>
+  <a class="wl-shelf" href="resource-detail.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="wl-shelf-text">Weekly <mark>lead</mark> volume<span class="meta">How many <mark>leads</mark> came in per week, per source and channel · Credit leads</span></span><span class="maturity" data-level="4"></span></a>
+  <a class="wl-shelf" href="resource-detail.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="wl-shelf-text"><mark>Credit</mark> <mark>lead</mark> funnel<span class="meta">Every step of a <mark>credit</mark> request, from the form to the bank · Credit leads</span></span><span class="maturity" data-level="4"></span></a>
+  <a class="wl-shelf" href="collection-overview.html"><span class="item-icon"><i class="ph ph-coins"></i></span><span class="wl-shelf-text"><mark>Credit</mark> <mark>leads</mark><span class="meta">Collection · 6 Resources · 4 Lenses</span></span></a>
+  <div style="margin-top:12px"><a class="btn-quiet outline" href="query-new.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-terminal-window"></i>New query with this question</a></div>
+ </section>
+</div>
+
+<!-- Nothing found: one sentence for now; what more it does is open (OP-UX-93) -->
+<div class="wl-results search-results" data-pane-group="search" data-pane="none" hidden>
+ <form class="wl-find top" role="search">
+  <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+  <input name="q" value="how do agencies rate their brokers" aria-label="What do you want to know?" autocomplete="off" spellcheck="false">
+  <a class="text-link" href="welcome.html" data-go="search:start"><span>Clear</span></a>
+ </form>
+ <div class="result-empty" style="margin-top:16px"><i class="ph ph-magnifying-glass"></i><p><b>No Lens answers your question yet.</b> Try other words, as you would ask a colleague.</p><a class="btn-quiet outline" data-for="colleague owner datateam" href="query-new.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;align-self:center"><i class="ph-fill ph-terminal-window"></i>New query with this question</a></div>
+</div>
+
+<!-- More: every Lens the User ran, the last one first -->
+<div class="wl-results" data-pane-group="search" data-pane="recent" hidden>
+ <div class="wl-list-head"><a class="text-link" href="welcome.html" data-go="search:start"><i class="ph ph-arrow-left" aria-hidden="true"></i><span>Welcome</span></a><h1 class="page-title">Recently used</h1><span class="meta">The Lenses you ran, the last one first</span></div>
+ <a class="wl-row" href="lens.html"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><div><span class="item-title">Credit leads per day</span><p>How many credit leads came in, per day and per channel? · Credit leads</p></div><span class="wl-pop"><i class="ph-fill ph-users-three" aria-hidden="true"></i>14 this month</span><span class="meta">2 hours ago</span></a>
+ <a class="wl-row" href="lens.html"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><div><span class="item-title">Leads per source name</span><p>Which sources bring the most leads, and how big is their share? · Credit leads</p></div><span class="wl-pop"><i class="ph-fill ph-users-three" aria-hidden="true"></i>9 this month</span><span class="meta">yesterday</span></a>
+ <a class="wl-row" href="lens.html"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><div><span class="item-title">Active listings per region</span><p>How many listings are online today, per province? · Listings</p></div><span class="wl-pop"><i class="ph-fill ph-users-three" aria-hidden="true"></i>21 this month</span><span class="meta">last week</span></a>
+ <a class="wl-row" href="lens.html"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><div><span class="item-title">Contact requests per broker</span><p>Which brokers get the most contact requests? · Listing leads</p></div><span class="wl-pop"><i class="ph-fill ph-users-three" aria-hidden="true"></i>6 this month</span><span class="meta">2 weeks ago</span></a>
+ <a class="wl-row" href="lens.html"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><div><span class="item-title">Time on market by price class</span><p>How long does a listing stay online, per price class? · Listings</p></div><span class="wl-pop"><i class="ph-fill ph-users-three" aria-hidden="true"></i>3 this month</span><span class="meta">3 weeks ago</span></a>
+</div>
+
+<!-- More: the Lenses published lately in a public Collection, as DEC-UX-126 counts them -->
+<div class="wl-results" data-pane-group="search" data-pane="new" hidden>
+ <div class="wl-list-head"><a class="text-link" href="welcome.html" data-go="search:start"><i class="ph ph-arrow-left" aria-hidden="true"></i><span>Welcome</span></a><h1 class="page-title">New Lenses</h1><span class="meta">Published in the last 30 days, the newest first</span></div>
+ <a class="wl-row" href="lens.html"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><div><span class="item-title">Credit funnel by region</span><p>Where do credit requests drop out, per region? · Credit leads</p></div><span class="meta">by Mia Peeters</span><span class="meta">3 days ago</span></a>
+ <a class="wl-row" href="lens.html"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><div><span class="item-title">Credit requests per session source</span><p>Which first visits lead to a credit request? · Credit leads</p></div><span class="meta">by Karel Leys</span><span class="meta">last week</span></a>
+ <a class="wl-row" href="lens.html"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><div><span class="item-title">Visit requests per broker</span><p>Which brokers get the most visit requests, week by week? · Listing leads</p></div><span class="meta">by An Rombouts</span><span class="meta">2 weeks ago</span></a>
+ <a class="wl-row" href="lens.html"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><div><span class="item-title">Price changes per province</span><p>Where do asking prices go down most? · Listings</p></div><span class="meta">by Karel Leys</span><span class="meta">3 weeks ago</span></a>
+</div>
+
+</main>
+</div>
+<div class="role-switch" data-group="role" role="tablist" aria-label="Prototype: seen as" style="bottom:72px">Seen as
+ <button class="seg on" data-target="colleague" role="tab" aria-selected="true">Business analyst</button>
+ <button class="seg" data-target="lensuser" role="tab" aria-selected="false">Lens user</button>
+</div>
+<div class="proto-switch" data-group="search" role="tablist" aria-label="Prototype: the search">Search
+ <button class="seg on" data-target="start" role="tab" aria-selected="true">Not searched</button>
+ <button class="seg" data-target="results" role="tab" aria-selected="false">Results</button>
+ <button class="seg" data-target="none" role="tab" aria-selected="false">Nothing found</button>
+ <button class="seg" data-target="recent" role="tab" aria-selected="false">More: used</button>
+ <button class="seg" data-target="new" role="tab" aria-selected="false">More: new</button>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

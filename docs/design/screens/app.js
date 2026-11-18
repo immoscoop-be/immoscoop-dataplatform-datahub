@@ -150,6 +150,13 @@ document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', 
   e.preventDefault();
   if (b.getAttribute('aria-disabled') !== 'true') go(b.dataset.go);
 }));
+// Welcome (DEC-UX-282): a question sent with Enter opens the screen up into the Lenses that answer it; in the prototype
+// every question gives the same results, and one that starts with "how do agencies" finds none
+document.querySelectorAll('form.wl-find').forEach(f => f.addEventListener('submit', e => {
+  e.preventDefault();
+  const q = f.querySelector('input')?.value.trim().toLowerCase() || '';
+  go(q.startsWith('how do agencies') ? 'search:none' : 'search:results');
+}));
 // A group marked data-scroll brings what it switches back to the top
 document.querySelectorAll('[data-group][data-scroll]').forEach(g => g.querySelectorAll('[data-target]').forEach(b => b.addEventListener('click', () => {
   const box = g.closest('.float-win')?.querySelector('.float-body') || g.closest('.main');
