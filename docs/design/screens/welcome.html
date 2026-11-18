@@ -80,106 +80,124 @@
  </div>
 </div>
 
-<!-- A search: on the left a plain list of the Lenses that answer, each with its Collection, why it comes up and how many
-     colleagues use it; on the right the preview of the one pointed at, the first until then (DEC-UX-287) -->
+<!-- A search: half the screen a list of the questions Lenses answer, each with its Lens, Collection and Owner Unit as
+     chips, how many colleagues use it and why it comes up; half the preview of the Lens selected, into which it flows as
+     the rail flows into its panel. A click selects a Lens, a click on the selected one opens it (DEC-UX-287, DEC-UX-291) -->
 <div class="wl-results search-results" data-pane-group="search" data-pane="results" hidden>
  <form class="wl-find top" role="search">
   <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
   <input name="q" value="how many credit leads were there this weekend" aria-label="What do you want to know?" autocomplete="off" spellcheck="false">
   <a class="text-link" href="welcome.html" data-go="search:start"><span>Clear</span></a>
  </form>
- <p class="meta wl-summary">3 Lenses answer your question, the best first · only Lenses you may use · point at one to see what it gives</p>
+ <p class="meta wl-summary">3 Lenses answer your question, the best first · only Lenses you may use · click one to see what it gives, click it again to use it</p>
  <div class="wl-split">
   <div class="wl-list">
-   <a class="wl-item on" href="lens.html" data-preview="day">
-    <div class="wl-item-head"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span class="item-title">Credit leads per day</span><span class="maturity" data-level="4" data-name="4 · Explored"></span><span class="pill pill-best">Best match</span><span class="wl-pop" title="Colleagues who ran it in the last 30 days"><i class="ph-fill ph-users-three" aria-hidden="true"></i>14 this month</span></div>
-    <p class="wl-q">How many <mark>credit</mark> <mark>leads</mark> came in, per day and per channel?</p>
-    <div class="wl-item-foot">
-     <span class="wl-domain" title="The Collection it is in, and its Owner Unit"><i class="ph ph-coins" aria-hidden="true"></i>Credit leads<span class="meta">· the credit team</span></span>
-     <ul class="wl-why" aria-label="Why it comes up">
-      <li class="colleagues"><i class="ph ph-users-three" aria-hidden="true"></i>6 colleagues found it with a similar question</li>
-      <li><i class="ph ph-pencil-simple-line" aria-hidden="true"></i>Its question says <mark>credit</mark> <mark>leads</mark></li>
-     </ul>
+   <a class="wl-item on" href="lens.html" data-preview="day" aria-current="true">
+    <span class="wl-flare top" aria-hidden="true"></span><span class="wl-flare bottom" aria-hidden="true"></span>
+    <div class="wl-item-head"><span class="wl-item-q">How many <mark>credit</mark> <mark>leads</mark> came in, per day and per channel?</span><span class="pill pill-best">Best match</span></div>
+    <div class="wl-chips">
+     <span class="wl-chip" title="The Lens"><i class="ph ph-aperture" aria-hidden="true"></i>Credit leads per day<span class="maturity" data-level="4" data-name="4 · Explored"></span></span>
+     <span class="wl-chip" title="The Collection it is in"><i class="ph ph-coins" aria-hidden="true"></i>Credit leads</span>
+     <span class="wl-chip" title="Its Owner Unit"><i class="ph-fill ph-users-three" aria-hidden="true"></i>Owner: Credits</span>
+     <span class="wl-chip wl-used" title="Colleagues who ran it in the last 30 days"><i class="ph ph-trend-up" aria-hidden="true"></i>14 this month</span>
     </div>
+    <ul class="wl-why" aria-label="Why it comes up">
+     <li class="colleagues"><i class="ph ph-users-three" aria-hidden="true"></i>6 colleagues found it with a similar question</li>
+     <li><i class="ph ph-pencil-simple-line" aria-hidden="true"></i>Its question says <mark>credit</mark> <mark>leads</mark></li>
+    </ul>
    </a>
    <a class="wl-item" href="lens.html" data-preview="source">
-    <div class="wl-item-head"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span class="item-title">Leads per source name</span><span class="maturity" data-level="4" data-name="4 · Explored"></span><span class="wl-pop" title="Colleagues who ran it in the last 30 days"><i class="ph-fill ph-users-three" aria-hidden="true"></i>9 this month</span></div>
-    <p class="wl-q">Which sources bring the most <mark>leads</mark>, and how big is their share?</p>
-    <div class="wl-item-foot">
-     <span class="wl-domain" title="The Collection it is in, and its Owner Unit"><i class="ph ph-coins" aria-hidden="true"></i>Credit leads<span class="meta">· the credit team</span></span>
-     <ul class="wl-why" aria-label="Why it comes up">
-      <li class="colleagues"><i class="ph ph-users-three" aria-hidden="true"></i>3 colleagues found it with a similar question</li>
-      <li><i class="ph ph-pencil-simple-line" aria-hidden="true"></i>Its question says <mark>leads</mark></li>
-      <li><i class="ph ph-link-simple" aria-hidden="true"></i>Often used with Credit leads per day</li>
-     </ul>
+    <span class="wl-flare top" aria-hidden="true"></span><span class="wl-flare bottom" aria-hidden="true"></span>
+    <div class="wl-item-head"><span class="wl-item-q">Which sources bring the most <mark>leads</mark>, and how big is their share?</span></div>
+    <div class="wl-chips">
+     <span class="wl-chip" title="The Lens"><i class="ph ph-aperture" aria-hidden="true"></i>Leads per source name<span class="maturity" data-level="4" data-name="4 · Explored"></span></span>
+     <span class="wl-chip" title="The Collection it is in"><i class="ph ph-coins" aria-hidden="true"></i>Credit leads</span>
+     <span class="wl-chip" title="Its Owner Unit"><i class="ph-fill ph-users-three" aria-hidden="true"></i>Owner: Credits</span>
+     <span class="wl-chip wl-used" title="Colleagues who ran it in the last 30 days"><i class="ph ph-trend-up" aria-hidden="true"></i>9 this month</span>
     </div>
+    <ul class="wl-why" aria-label="Why it comes up">
+     <li class="colleagues"><i class="ph ph-users-three" aria-hidden="true"></i>3 colleagues found it with a similar question</li>
+     <li><i class="ph ph-pencil-simple-line" aria-hidden="true"></i>Its question says <mark>leads</mark></li>
+     <li><i class="ph ph-link-simple" aria-hidden="true"></i>Often used with Credit leads per day</li>
+    </ul>
    </a>
    <a class="wl-item" href="lens.html" data-preview="week">
-    <div class="wl-item-head"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span class="item-title">Credit leads per week</span><span class="maturity" data-level="3" data-name="3 · Confirmed"></span><span class="wl-pop" title="Colleagues who ran it in the last 30 days"><i class="ph-fill ph-users-three" aria-hidden="true"></i>5 this month</span></div>
-    <p class="wl-q">How many <mark>credit</mark> <mark>leads</mark> came in, week by week, against the week before?</p>
-    <div class="wl-item-foot">
-     <span class="wl-domain" title="The Collection it is in, and its Owner Unit"><i class="ph ph-chart-line-up" aria-hidden="true"></i>Sales reporting<span class="meta">· the sales team</span></span>
-     <ul class="wl-why" aria-label="Why it comes up">
-      <li><i class="ph ph-pencil-simple-line" aria-hidden="true"></i>Its name and tags say <mark>credit</mark> <mark>leads</mark></li>
-     </ul>
+    <span class="wl-flare top" aria-hidden="true"></span><span class="wl-flare bottom" aria-hidden="true"></span>
+    <div class="wl-item-head"><span class="wl-item-q">How many <mark>credit</mark> <mark>leads</mark> came in, week by week, against the week before?</span></div>
+    <div class="wl-chips">
+     <span class="wl-chip" title="The Lens"><i class="ph ph-aperture" aria-hidden="true"></i>Credit leads per week<span class="maturity" data-level="3" data-name="3 · Confirmed"></span></span>
+     <span class="wl-chip" title="The Collection it is in"><i class="ph ph-chart-line-up" aria-hidden="true"></i>Sales reporting</span>
+     <span class="wl-chip" title="Its Owner Unit"><i class="ph-fill ph-users-three" aria-hidden="true"></i>Owner: Sales</span>
+     <span class="wl-chip wl-used" title="Colleagues who ran it in the last 30 days"><i class="ph ph-trend-up" aria-hidden="true"></i>5 this month</span>
     </div>
+    <ul class="wl-why" aria-label="Why it comes up">
+     <li><i class="ph ph-pencil-simple-line" aria-hidden="true"></i>Its name and tags say <mark>credit</mark> <mark>leads</mark></li>
+    </ul>
    </a>
-   <!-- Only for whoever may query (DEC-UX-284): the data itself, and a query of their own from the same question -->
-   <section class="wl-shelves" data-for="colleague owner datateam" aria-label="Also on the shelves">
-    <div class="section-head"><h2>Also on the shelves</h2><span class="meta">The data itself, because you may query it</span></div>
-    <a class="wl-shelf" href="resource-detail.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="wl-shelf-text">Weekly <mark>lead</mark> volume<span class="meta">How many <mark>leads</mark> came in per week, per source and channel · Credit leads</span></span><span class="maturity" data-level="4"></span></a>
-    <a class="wl-shelf" href="resource-detail.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="wl-shelf-text"><mark>Credit</mark> <mark>lead</mark> funnel<span class="meta">Every step of a <mark>credit</mark> request, from the form to the bank · Credit leads</span></span><span class="maturity" data-level="4"></span></a>
-    <a class="wl-shelf" href="collection-overview.html"><span class="item-icon"><i class="ph ph-coins"></i></span><span class="wl-shelf-text"><mark>Credit</mark> <mark>leads</mark><span class="meta">Collection · 6 Resources · 4 Lenses</span></span></a>
-    <div style="margin-top:12px"><a class="btn-quiet outline" href="query-new.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-terminal-window"></i>New query with this question</a></div>
-   </section>
   </div>
   <aside class="wl-pane" aria-live="polite">
-  <section class="wl-pv" id="pv-day" aria-label="Preview of Credit leads per day">
-   <div class="wl-pv-head"><span class="wl-pv-label"><i class="ph ph-eye" aria-hidden="true"></i>Preview of what you get</span><h2>Credit leads per day</h2><span class="meta">Credit leads · 4 · Explored</span></div>
-   <table>
-    <thead><tr><th>day<small>Date</small></th><th>channel<small>Text</small></th><th class="num">credit_leads<small>Whole number</small></th></tr></thead>
-    <tbody>
-     <tr><td>1 Nov 2026</td><td>Website</td><td class="num">42</td></tr>
-     <tr><td>1 Nov 2026</td><td>App</td><td class="num">31</td></tr>
-     <tr><td>1 Nov 2026</td><td>Partner network</td><td class="num">12</td></tr>
-     <tr><td>2 Nov 2026</td><td>Website</td><td class="num">38</td></tr>
-     <tr><td>2 Nov 2026</td><td>App</td><td class="num">27</td></tr>
-     <tr><td>2 Nov 2026</td><td>Partner network</td><td class="num">9</td></tr>
-     <tr><td>3 Nov 2026</td><td>Website</td><td class="num">56</td></tr>
-     <tr><td>3 Nov 2026</td><td>App</td><td class="num">40</td></tr>
-    </tbody>
-   </table>
-   <span class="meta wl-pv-cap">An example of the rows it gives, from 3 Nov, when it was made; its author chose it. Run it for today's figures.</span>
-   <div class="wl-pv-foot"><a class="btn-primary" href="lens.html">Use this Lens</a></div>
-  </section>
-  <section class="wl-pv" id="pv-source" hidden aria-label="Preview of Leads per source name">
-   <div class="wl-pv-head"><span class="wl-pv-label"><i class="ph ph-eye" aria-hidden="true"></i>Preview of what you get</span><h2>Leads per source name</h2><span class="meta">Credit leads · 4 · Explored</span></div>
-   <table>
-    <thead><tr><th>source_name<small>Text</small></th><th class="num">leads<small>Whole number</small></th><th class="num">share<small>Decimal number</small></th></tr></thead>
-    <tbody>
-     <tr><td>Website</td><td class="num">412</td><td class="num">38 %</td></tr>
-     <tr><td>Partner network</td><td class="num">260</td><td class="num">24 %</td></tr>
-     <tr><td>Newsletter</td><td class="num">133</td><td class="num">12 %</td></tr>
-     <tr><td>App</td><td class="num">98</td><td class="num">9 %</td></tr>
-     <tr><td>Social</td><td class="num">71</td><td class="num">7 %</td></tr>
-     <tr><td>Print</td><td class="num">44</td><td class="num">4 %</td></tr>
-    </tbody>
-   </table>
-   <span class="meta wl-pv-cap">An example of the rows it gives, from 21 Oct, when it was made; its author chose it. Run it for today's figures.</span>
-   <div class="wl-pv-foot"><a class="btn-primary" href="lens.html">Use this Lens</a></div>
-  </section>
-  <section class="wl-pv" id="pv-week" hidden aria-label="Preview of Credit leads per week">
-   <div class="wl-pv-head"><span class="wl-pv-label"><i class="ph ph-columns" aria-hidden="true"></i>The fields you get</span><h2>Credit leads per week</h2><span class="meta">Sales reporting · 3 · Confirmed</span></div>
-   <div class="wl-fields">
-    <div class="wl-field"><b>week</b><span>Date</span><p>The Monday the week starts on</p></div>
-    <div class="wl-field"><b>credit_leads</b><span>Whole number</span><p>Credit leads sent to the bank that week</p></div>
-    <div class="wl-field"><b>vs_last_week</b><span>Decimal number</span><p>The change against the week before, in %</p></div>
+   <div class="wl-pane-inner">
+   <section class="wl-pv" id="pv-day" aria-label="Preview of Credit leads per day">
+    <div class="wl-pv-head"><span class="wl-pv-label"><i class="ph ph-eye" aria-hidden="true"></i>Preview of what you get</span><h2>Credit leads per day</h2>
+     <div class="wl-chips"><span class="wl-chip"><i class="ph ph-coins" aria-hidden="true"></i>Credit leads</span><span class="wl-chip"><i class="ph-fill ph-users-three" aria-hidden="true"></i>Owner: Credits</span><span class="wl-chip">4 · Explored</span></div>
+    </div>
+    <table>
+     <thead><tr><th>day<small>Date</small></th><th>channel<small>Text</small></th><th class="num">credit_leads<small>Whole number</small></th></tr></thead>
+     <tbody>
+      <tr><td>1 Nov 2026</td><td>Website</td><td class="num">42</td></tr>
+      <tr><td>1 Nov 2026</td><td>App</td><td class="num">31</td></tr>
+      <tr><td>1 Nov 2026</td><td>Partner network</td><td class="num">12</td></tr>
+      <tr><td>2 Nov 2026</td><td>Website</td><td class="num">38</td></tr>
+      <tr><td>2 Nov 2026</td><td>App</td><td class="num">27</td></tr>
+      <tr><td>2 Nov 2026</td><td>Partner network</td><td class="num">9</td></tr>
+      <tr><td>3 Nov 2026</td><td>Website</td><td class="num">56</td></tr>
+      <tr><td>3 Nov 2026</td><td>App</td><td class="num">40</td></tr>
+     </tbody>
+    </table>
+    <span class="meta wl-pv-cap">An example of the rows it gives, from 3 Nov, when it was made; its author chose it. Run it for today's figures.</span>
+    <div class="wl-pv-foot"><a class="btn-primary" href="lens.html">Use this Lens</a><span class="meta">or click it again in the list</span></div>
+   </section>
+   <section class="wl-pv" id="pv-source" hidden aria-label="Preview of Leads per source name">
+    <div class="wl-pv-head"><span class="wl-pv-label"><i class="ph ph-eye" aria-hidden="true"></i>Preview of what you get</span><h2>Leads per source name</h2>
+     <div class="wl-chips"><span class="wl-chip"><i class="ph ph-coins" aria-hidden="true"></i>Credit leads</span><span class="wl-chip"><i class="ph-fill ph-users-three" aria-hidden="true"></i>Owner: Credits</span><span class="wl-chip">4 · Explored</span></div>
+    </div>
+    <table>
+     <thead><tr><th>source_name<small>Text</small></th><th class="num">leads<small>Whole number</small></th><th class="num">share<small>Decimal number</small></th></tr></thead>
+     <tbody>
+      <tr><td>Website</td><td class="num">412</td><td class="num">38 %</td></tr>
+      <tr><td>Partner network</td><td class="num">260</td><td class="num">24 %</td></tr>
+      <tr><td>Newsletter</td><td class="num">133</td><td class="num">12 %</td></tr>
+      <tr><td>App</td><td class="num">98</td><td class="num">9 %</td></tr>
+      <tr><td>Social</td><td class="num">71</td><td class="num">7 %</td></tr>
+      <tr><td>Print</td><td class="num">44</td><td class="num">4 %</td></tr>
+     </tbody>
+    </table>
+    <span class="meta wl-pv-cap">An example of the rows it gives, from 21 Oct, when it was made; its author chose it. Run it for today's figures.</span>
+    <div class="wl-pv-foot"><a class="btn-primary" href="lens.html">Use this Lens</a><span class="meta">or click it again in the list</span></div>
+   </section>
+   <section class="wl-pv" id="pv-week" hidden aria-label="Preview of Credit leads per week">
+    <div class="wl-pv-head"><span class="wl-pv-label"><i class="ph ph-columns" aria-hidden="true"></i>The fields you get</span><h2>Credit leads per week</h2>
+     <div class="wl-chips"><span class="wl-chip"><i class="ph ph-chart-line-up" aria-hidden="true"></i>Sales reporting</span><span class="wl-chip"><i class="ph-fill ph-users-three" aria-hidden="true"></i>Owner: Sales</span><span class="wl-chip">3 · Confirmed</span></div>
+    </div>
+    <div class="wl-fields">
+     <div class="wl-field"><b>week</b><span>Date</span><p>The Monday the week starts on</p></div>
+     <div class="wl-field"><b>credit_leads</b><span>Whole number</span><p>Credit leads sent to the bank that week</p></div>
+     <div class="wl-field"><b>vs_last_week</b><span>Decimal number</span><p>The change against the week before, in %</p></div>
+    </div>
+    <span class="meta wl-pv-cap">No example yet: it was made before Lenses had one. Its fields say what you get.</span>
+    <div class="wl-pv-foot"><a class="btn-primary" href="lens.html">Use this Lens</a><span class="meta">or click it again in the list</span></div>
+   </section>
    </div>
-   <span class="meta wl-pv-cap">No example yet: it was made before Lenses had one. Its fields say what you get.</span>
-   <div class="wl-pv-foot"><a class="btn-primary" href="lens.html">Use this Lens</a></div>
-  </section>
   </aside>
  </div>
+ <!-- Only for whoever may query (DEC-UX-284): the data itself, and a query of their own from the same question -->
+ <section class="wl-shelves" data-for="colleague owner datateam" aria-label="Also on the shelves">
+  <div class="section-head"><h2>Also on the shelves</h2><span class="meta">The data itself, because you may query it</span></div>
+  <a class="wl-shelf" href="resource-detail.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="wl-shelf-text">Weekly <mark>lead</mark> volume<span class="meta">How many <mark>leads</mark> came in per week, per source and channel · Credit leads</span></span><span class="maturity" data-level="4"></span></a>
+  <a class="wl-shelf" href="resource-detail.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="wl-shelf-text"><mark>Credit</mark> <mark>lead</mark> funnel<span class="meta">Every step of a <mark>credit</mark> request, from the form to the bank · Credit leads</span></span><span class="maturity" data-level="4"></span></a>
+  <a class="wl-shelf" href="collection-overview.html"><span class="item-icon"><i class="ph ph-coins"></i></span><span class="wl-shelf-text"><mark>Credit</mark> <mark>leads</mark><span class="meta">Collection · 6 Resources · 4 Lenses</span></span></a>
+  <div style="margin-top:12px"><a class="btn-quiet outline" href="query-new.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-terminal-window"></i>New query with this question</a></div>
+ </section>
 </div>
 
 <!-- Nothing found: one sentence for now; what more it does is open (OP-UX-93) -->

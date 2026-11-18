@@ -13,11 +13,12 @@
   No SQL on this page and no adding of Parameters: both belong to editing, by the Owner Unit (DEC-UX-27).
   "Open in Excel" opens a sheet with the address of the Lens for Power Query and how to sign in with an Excel key
   (DEC-UX-159, DEC-CH-06): Excel gets its result as data, with the Parameters at their defaults, at most 10,000 rows.
+  Before its first run it shows its example, faded, with the day it is from (DEC-UX-294).
   The switches at the bottom show the result up to date, after a change, before the first run, while choosing a value, Broken (?state=broken, DEC-UX-81) and stopped, after a run with its defaults grew past 1 GB (?state=stopped, DEC-UX-125, DEC-LE-11), as the Owner Unit or a colleague.
   The page sits under Collections (DEC-UX-66): the panel is that of Collections, with Credit leads unfolded and this Lens
   marked as open; there is no section Lenses.
   Requirements: FR-LE-19, FR-CO-19, FR-SR-36, FR-SR-37, FR-SR-40, FR-SR-51, FR-LN-06, FR-LE-03, FR-LE-04, FR-LE-06, FR-LE-11, FR-LE-12, FR-LE-13, FR-LE-14, FR-LE-17, FR-CH-01, FR-CV-07
-  Decisions: DEC-UX-230, DEC-UX-162, DEC-UX-159, DEC-CH-03, DEC-CH-06, DEC-DH-79, DEC-UX-26, DEC-UX-27, DEC-UX-28, DEC-UX-66, DEC-UX-81, DEC-UX-83, DEC-UX-106, DEC-UX-121, DEC-UX-122, DEC-LE-08, DEC-LE-12, DEC-LE-16, DEC-LE-17, DEC-DH-10, DEC-CO-16.
+  Decisions: DEC-UX-294, DEC-UX-230, DEC-UX-162, DEC-UX-159, DEC-CH-03, DEC-CH-06, DEC-DH-79, DEC-UX-26, DEC-UX-27, DEC-UX-28, DEC-UX-66, DEC-UX-81, DEC-UX-83, DEC-UX-106, DEC-UX-121, DEC-UX-122, DEC-LE-08, DEC-LE-12, DEC-LE-16, DEC-LE-17, DEC-DH-10, DEC-CO-16.
   Related screens: lens-new.html (Make it a lens), query-new.html (Use this lens), collection-overview.html (its Lenses).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -245,7 +246,8 @@
     <div class="result-empty"><i class="ph ph-hourglass-medium"></i><p><b>Stopped.</b> The Lens waits for the Data Team. Its last result is not shown, so that nobody takes it for today's.</p></div>
    </div>
    <div data-pane-group="state" data-pane="notrun" hidden>
-    <div class="result-empty"><i class="ph ph-play-circle"></i><p><b>Not run yet.</b> Set the Parameters above and run the Lens. A Lens does not run by itself when you open it: every run is a query, with its Pre-flight.</p></div>
+    <div class="result-bar"><span class="meta"><i class="ph ph-eye"></i>An example of what it gives, from 21 Oct, when it was made. Run it for today's figures: a Lens does not run by itself when you open it, every run is a query with its Pre-flight.</span></div>
+    <div class="ex-rows faded" aria-label="An example of the rows it gives"><table><thead><tr><th>lead_source<small>STRING</small></th><th>source_name<small>STRING</small></th><th class="num">leads<small>INT64</small></th><th class="num">share_of_week<small>FLOAT64</small></th></tr></thead><tbody><tr><td>website</td><td>Website</td><td class="num">1,712</td><td class="num">71.9</td></tr><tr><td>app</td><td>App</td><td class="num">402</td><td class="num">16.9</td></tr><tr><td>partner</td><td>Partner network</td><td class="num">168</td><td class="num">7.1</td></tr><tr><td>mailing</td><td>Mailing</td><td class="num">99</td><td class="num">4.2</td></tr></tbody></table></div>
    </div>
   </section>
  </div>
