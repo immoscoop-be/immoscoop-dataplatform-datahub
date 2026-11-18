@@ -101,6 +101,16 @@ th small { display: block; font: 10px var(--font-mono); color: var(--text-muted)
 select, input, textarea { font: var(--text-small) var(--font-family); color: var(--text-primary); background: var(--surface-solid); border: 1px solid var(--tint-active); border-radius: var(--radius-sm); padding: 5px 8px; }
 textarea { width: 100%; resize: vertical; }
 .preflight { margin-left: auto; font-size: var(--text-meta); color: var(--text-secondary); background: var(--surface-solid); padding: 4px 10px; border-radius: var(--radius-pill); }
+.lp { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: var(--text-small); color: var(--text-muted); }
+.lp .several { display: inline-flex; gap: 10px; flex-wrap: wrap; color: var(--text-primary); }
+.lp .several label { display: inline-flex; align-items: center; gap: 4px; }
+.lp button.quiet { padding: 3px 10px; font-size: var(--text-meta); }
+.params button.primary:disabled { opacity: .45; cursor: default; }
+.lp select:disabled, .lp input:disabled { opacity: .55; }
+th .described { text-decoration: underline dotted; text-underline-offset: 3px; cursor: help; }
+details.fields dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; margin: 8px 0 0; font-size: var(--text-small); }
+details.fields dt { font-family: var(--font-mono); font-size: var(--text-meta); }
+details.fields dd { margin: 0; color: var(--text-secondary); }
 .foot { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border-top: 1px solid var(--tint-hover); padding-top: 12px; font-size: var(--text-meta); color: var(--text-muted); }
 .foot a { margin-left: auto; }
 a { color: var(--text-primary); cursor: pointer; }
@@ -244,6 +254,9 @@ blockquote.quote .meta { margin-top: 4px; }
   table.stack td[data-label]::before { content: attr(data-label); display: block; font-size: var(--text-meta); color: var(--text-muted); margin-top: 6px; }
   .params { flex-direction: column; align-items: stretch; }
   .params label { display: grid; grid-template-columns: auto minmax(0, 1fr); }
+  .lp { display: grid; grid-template-columns: auto minmax(0, 1fr); }
+  .lp button.quiet { grid-column: 2; justify-self: start; width: auto; }
+  .lp select, .lp input:not([type=checkbox]) { min-height: 40px; }
   .params select, .params input { min-height: 40px; }
   .preflight { margin-left: 0; align-self: flex-start; }
   .pager { margin-left: 0; width: 100%; justify-content: space-between; }
@@ -332,13 +345,13 @@ function partLines(lines) {
 }
 
 /** The rows of a run: 100 a page, read from the same run (FR-SR-51). */
-function grid(page, ref) {
+function grid(page, ref, described = new Map()) {
   if (!page || !page.columns) return '';
   const numeric = (type) => ['INT64', 'FLOAT64', 'NUMERIC', 'BIGNUMERIC'].includes(type);
   const cols = page.columns;
   const pages = Math.max(1, Math.ceil((page.totalRows ?? 0) / (page.size || 100)));
   const first = (page.number - 1) * (page.size || 100) + 1;
-  return '<div class="scroll"><table><thead><tr>' + cols.map((c) => '<th class="' + (numeric(c.type) ? 'num' : '') + '">' + esc(c.name) + '<small>' + esc(c.type) + '</small></th>').join('') + '</tr></thead><tbody>' +
+  return '<div class="scroll"><table><thead><tr>' + cols.map((c) => '<th class="' + (numeric(c.type) ? 'num' : '') + '">' + (described.get(c.name) ? '<span class="described" title="' + esc(described.get(c.name)) + '">' + esc(c.name) + '</span>' : esc(c.name)) + '<small>' + esc(c.type) + '</small></th>').join('') + '</tr></thead><tbody>' +
     (page.rows ?? []).map((row) => '<tr>' + row.map((value, i) => '<td class="' + (numeric(cols[i]?.type) ? 'num' : '') + '">' + (value === null ? '<span class="meta">null</span>' : esc(value)) + '</td>').join('') + '</tr>').join('') +
     '</tbody></table></div><div class="row meta"><span>' + esc(page.totalRows) + ' rows</span>' + (ref ? '<span>· Query ID <span class="mono">' + esc(ref) + '</span></span>' : '') +
     (pages > 1 && ref ? '<span class="pager">' + esc(first) + ' – ' + esc(Math.min(first + (page.size || 100) - 1, page.totalRows)) + ' <button class="quiet" data-page="' + (page.number - 1) + '"' + (page.number <= 1 ? ' disabled' : '') + '>‹</button><button class="quiet" data-page="' + (page.number + 1) + '"' + (page.number >= pages ? ' disabled' : '') + '>›</button></span>' : '') + '</div>';
@@ -350,7 +363,8 @@ const PRIVATE = '<p class="result-private">' + EYE_SLASH + 'Claude does not read
 
 /** The rows of a result that ran: in a card only read by the MCP App itself, until then a word that they come (FR-CL-28). */
 function rowsOf(v) {
-  if (v.page) return grid(v.page, v.run?.ref);
+  // The description of each field of a Lens on the head of its column (DEC-UX-230).
+  if (v.page) return grid(v.page, v.run?.ref, new Map((v.fields ?? []).filter((f) => f.description).map((f) => [f.name, f.description])));
   if (v.rowsError) return '<div class="error">' + esc(v.rowsError) + '</div>';
   return '<p class="meta">Reading the rows…</p>';
 }
@@ -475,6 +489,53 @@ function renderQuery(v) {
     '<details><summary>The SQL</summary><pre>' + esc(v.sql) + '</pre></details>' + foot('In your panel of Query', q.page, 'Open the query in Data Hub');
 }
 
+// A Lens in Claude: its page as it runs, its Parameters as controls the User changes and runs again (DEC-UX-278, DEC-CL-21).
+const isDayText = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value ?? ''));
+const sameSql = (a, b) => String(a).replace(/\s+/g, '').toUpperCase() === String(b).replace(/\s+/g, '').toUpperCase();
+const utcDay = (value, year = true) => (value ? new Date(value + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', ...(year ? { year: 'numeric' } : {}), timeZone: 'UTC' }) : '');
+const NO_FILL = ' data-1p-ignore data-lpignore="true" data-bwignore data-form-type="other"';
+// A date: the day itself, or a function with the day it gives today, or another date of the calendar (DEC-LE-14).
+function dateControl(v, p, end, off) {
+  const now = String(p[end] ?? '');
+  const fns = v.dateFunctions ?? [];
+  const known = fns.find((fn) => sameSql(fn.sql, now));
+  const own = isDayText(now) ? '<option value="' + esc(now) + '" selected>' + esc(utcDay(now)) + '</option>' : !known && now ? '<option value="' + esc(now) + '" selected>ƒ ' + esc(now) + '</option>' : '';
+  return '<select data-lens="' + esc(p.name) + '" data-end="' + end + '"' + off + '>' + own + '<optgroup label="A function, worked out at every run">' +
+    fns.map((fn) => '<option value="' + esc(fn.sql) + '"' + (known === fn ? ' selected' : '') + '>ƒ ' + esc(fn.label) + (fn.day ? ' · ' + esc(utcDay(fn.day, false)) : '') + '</option>').join('') +
+    '</optgroup><option value="">Another date…</option></select><input type="date" data-day-for="' + esc(p.name) + '/' + end + '" hidden' + off + NO_FILL + '>';
+}
+function lensControl(v, p, off) {
+  const name = esc(p.name);
+  if (p.kind === 'date') return dateControl(v, p, 'value', off);
+  if (p.kind === 'period') return dateControl(v, p, 'value', off) + '<span>to</span>' + dateControl(v, p, 'to', off);
+  if (p.kind === 'choice') return '<select data-lens="' + name + '" data-end="value"' + off + '>' + (p.list ?? []).map((item) => '<option value="' + esc(item) + '"' + (item === p.value ? ' selected' : '') + '>' + esc(item) + '</option>').join('') + '</select>';
+  if (p.kind === 'several') return '<span class="several">' + (p.list ?? []).map((item) => '<label><input type="checkbox" data-lens="' + name + '" data-several value="' + esc(item) + '"' + (Array.isArray(p.value) && p.value.includes(item) ? ' checked' : '') + off + '>' + esc(item) + '</label>').join('') + '</span>';
+  if (p.kind === 'yesno') return '<select data-lens="' + name + '" data-end="value"' + off + '><option value="true"' + (p.value === true ? ' selected' : '') + '>Yes</option><option value="false"' + (p.value === false ? ' selected' : '') + '>No</option></select>';
+  return '<input data-lens="' + name + '" data-end="value" value="' + esc(p.value) + '" size="12"' + (p.kind === 'number' || p.kind === 'decimal' ? ' inputmode="decimal"' : '') + off + NO_FILL + '>';
+}
+// What each field of a Lens holds, folded under its grid: on a phone too, where nothing shows on a hover (DEC-UX-180).
+const fieldsOf = (v) => {
+  const described = (v.fields ?? []).filter((f) => f.description);
+  return described.length ? '<details class="fields"><summary class="meta">What the fields hold</summary><dl>' + described.map((f) => '<dt>' + esc(f.name) + '</dt><dd>' + esc(f.description) + '</dd>').join('') + '</dl></details>' : '';
+};
+
+function renderLens(v) {
+  const l = v.lens;
+  const halted = v.outcome === 'halted';
+  const off = halted ? ' disabled' : '';
+  const reads = '<div class="row"><span class="meta" style="display:inline">Reads</span>' + (v.resources ?? []).map((r) => '<span class="status">' + (r.levelName ? bars(levelOf(r.levelName)) : '') + esc(r.displayName) + (r.levelName ? ' · ' + esc(r.levelName) : '') + '</span>').join('') + '</div>';
+  const alert = halted ? '<div class="alert"><span><b>It does not run now.</b> ' + esc(v.reason) + '</span></div>' : '';
+  const params = (v.parameters ?? []).map((p) => '<span class="lp"><span>' + esc(p.label) + '</span>' + lensControl(v, p, off) + (p.changed && !halted ? '<button class="quiet" data-default="' + esc(p.name) + '" title="Back to its default">Default</button>' : '') + '</span>').join('');
+  const pf = v.reads ? '<span class="preflight">' + (v.outcome === 'ran' ? 'Scanned ' : 'Reads about ') + esc(v.reads) + (v.preflight?.partitions !== null && v.preflight?.partitions !== undefined ? ' · ' + esc(v.preflight.partitions) + ' partitions' : '') + '</span>' : '';
+  const bar = params || !halted ? '<div class="params">' + params + pf + (halted ? '' : '<button class="primary" data-act="run-lens"' + (v.dirty ? '' : ' disabled') + ' title="Change a value to run it again">Run</button>') + '</div>' : '';
+  const body = v.outcome === 'ran' ? rowsOf(v) + privately(v) + fieldsOf(v)
+    : v.outcome === 'approve' ? approvePanel(v.reads, null, v.preflight)
+    : v.outcome === 'large' ? '<div class="tile"><b>With these values one run reads about ' + esc(v.reads) + ', more than ' + esc(largeOf(v.preflight)) + '.</b><p class="meta" style="margin:4px 0 0">Choose values that read less, such as a shorter period. A Lens does not go to the Data Team for one run.</p></div>'
+    : halted ? ''
+    : problems(v.preflight, v.problem);
+  root.innerHTML = head('Lens', l.name, l.question, '', v.collection) + reads + alert + bar + body + foot('In your Query Log, as a run of this Lens', l.page, 'Open the Lens in Data Hub');
+}
+
 // The scope of a Known Gap, as the Summary shows it after its text (FR-RC-25, FR-CL-34).
 const scopeChips = (scope) => {
   if (!scope) return '';
@@ -575,6 +636,7 @@ function render() {
   else if (view.view === 'preview') renderPreview(view);
   else if (view.view === 'publish') renderPublish(view);
   else if (view.view === 'query') renderQuery(view);
+  else if (view.view === 'lens') renderLens(view);
   else if (view.view === 'journey') renderJourney(view);
   else if (view.view === 'card') renderCard(view);
   else if (view.view === 'sent') root.innerHTML = '<div>Sent to the Data Team. Their answer comes in your Message Centre.</div>';
@@ -656,11 +718,42 @@ const previewArgs = () => {
   return { id: view.resource.id, window: size ? Number(size.value) : view.window, values };
 };
 const queryArgs = () => ({ id: view.query.id, sql: view.sql, parameters: view.parameters });
+// The values of a Lens in its card, by Parameter: a date from its list or the calendar, a period, a choice, several, yes or no.
+const lensValues = () => {
+  const out = {};
+  for (const p of view.parameters ?? []) {
+    const at = (end) => root.querySelector('[data-lens="' + p.name + '"][data-end="' + end + '"]');
+    const dateOf = (end) => {
+      const chosen = at(end);
+      if (!chosen) return undefined;
+      if (chosen.value !== '') return chosen.value;
+      const other = root.querySelector('[data-day-for="' + p.name + '/' + end + '"]');
+      return other && other.value ? other.value : undefined;
+    };
+    if (p.kind === 'several') out[p.name] = [...root.querySelectorAll('[data-lens="' + p.name + '"][data-several]')].filter((box) => box.checked).map((box) => box.value);
+    else if (p.kind === 'period') out[p.name] = { value: dateOf('value') ?? String(p.value ?? ''), to: dateOf('to') ?? String(p.to ?? '') };
+    else if (p.kind === 'date') { const chosen = dateOf('value'); if (chosen !== undefined) out[p.name] = chosen; }
+    else { const field = at('value'); if (field) out[p.name] = p.kind === 'yesno' ? field.value === 'true' : field.value; }
+  }
+  return out;
+};
+// The values of the card kept in the view, before it is drawn again, so that a change elsewhere stays.
+const keepLens = () => {
+  const now = lensValues();
+  view = { ...view, parameters: view.parameters.map((p) => (!(p.name in now) ? p : p.kind === 'period' ? { ...p, value: now[p.name].value, to: now[p.name].to } : { ...p, value: now[p.name] })) };
+};
 
 root.addEventListener('click', (event) => {
-  const target = event.target.closest('[data-open],[data-tab],[data-act],[data-page],[data-fold],[data-card],[data-step],[data-answer]');
+  const target = event.target.closest('[data-open],[data-tab],[data-act],[data-page],[data-fold],[data-card],[data-step],[data-answer],[data-default]');
   if (!target || target.disabled) return;
   if (target.dataset.fold !== undefined) { folded = !folded; setFold(); return; }
+  // A Parameter of a Lens back to its default, the other values kept; Run runs it (DEC-UX-278).
+  if (target.dataset.default !== undefined && view?.view === 'lens') {
+    keepLens();
+    view = { ...view, dirty: true, parameters: view.parameters.map((p) => (p.name === target.dataset.default ? { ...p, value: p.default.value, ...(p.default.to !== undefined ? { to: p.default.to } : {}), changed: false } : p)) };
+    render();
+    return;
+  }
   // The whole card opens as an MCP App of its own, only when the User asks for it: the button asks Claude, in their name (DEC-UX-261).
   if (target.dataset.card) {
     app.sendMessage({ role: 'user', content: [{ type: 'text', text: 'Show me the Learning Card ' + target.dataset.card + (target.dataset.title ? ', ' + target.dataset.title : '') + '.' }] }).catch(() => undefined);
@@ -692,6 +785,9 @@ root.addEventListener('click', (event) => {
   } else if (view.view === 'query') {
     if (act === 'approve') call('run_query_approved', queryArgs(), 'The User approved and ran the query in Data Hub.');
     if (act === 'request') call('send_query_request', { ...queryArgs(), text: word() }, 'The User sent the query to the Data Team as a Request.');
+  } else if (view.view === 'lens') {
+    if (act === 'run-lens') call('run_lens', { id: view.lens.id, values: lensValues() }, 'The User changed the values of the Lens in the card and ran it again.');
+    if (act === 'approve') call('run_lens_approved', { id: view.lens.id, values: view.given }, 'The User approved and ran the Lens in Data Hub.');
   } else if (view.view === 'publish' && act === 'publish') {
     call('confirm_publication', { id: view.resource.id, declaration: target.dataset.declaration || undefined }, 'The User published and confirmed the Resource in Data Hub.');
   }
@@ -701,6 +797,19 @@ root.addEventListener('click', (event) => {
 root.addEventListener('change', (event) => {
   if (view?.view === 'preview' && event.target.closest('[data-choice],[data-param]')) call('preview_resource', previewArgs());
 });
+// A value of a Lens changed in its card: Run runs it again; "Another date…" opens the calendar (DEC-UX-278).
+const lensChanged = (event) => {
+  const field = event.target.closest('[data-lens],[data-day-for]');
+  if (view?.view !== 'lens' || !field) return;
+  if (field.tagName === 'SELECT' && field.value === '' && field.dataset.end) {
+    const other = root.querySelector('[data-day-for="' + field.dataset.lens + '/' + field.dataset.end + '"]');
+    if (other) { other.hidden = false; other.focus(); }
+  }
+  view = { ...view, dirty: true };
+  root.querySelector('[data-act="run-lens"]')?.removeAttribute('disabled');
+};
+root.addEventListener('change', lensChanged);
+root.addEventListener('input', lensChanged);
 
 function applyTheme(context) {
   if (context?.theme) document.documentElement.dataset.theme = context.theme === 'dark' ? 'dark' : 'light';

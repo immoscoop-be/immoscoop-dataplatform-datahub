@@ -1,3 +1,4 @@
+import { DATE_FUNCTIONS, type DateFunction, dateFunctionOf, dayOf, isDay } from '@datahub/contracts/dates';
 import type { Language } from '@datahub/contracts/messages';
 import type { IconName } from '@datahub/ui/foundations/icons.js';
 import { t } from '@datahub/ui/foundations/texts.svelte.js';
@@ -23,15 +24,8 @@ export const namesOf = (parameter: Parameter): string[] => (parameter.kind === '
 /** An SQL name: a letter or _, then letters, digits or _. */
 export const NAME = /^[A-Za-z_][A-Za-z0-9_]{0,63}$/;
 
-const DAY = /^(\d{4})-(\d{2})-(\d{2})$/;
-
 /** Whether a text is a day of the calendar, as `2026-10-25`. */
-export function isDay(value: string): boolean {
-  const match = DAY.exec(value);
-  if (!match) return false;
-  const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
-  return date.toISOString().slice(0, 10) === value;
-}
+export { isDay };
 
 /** Whether a value is an SQL function rather than a value of its kind, as query tells them apart (DEC-LE-14). */
 export function isFunction(kind: ParameterKind, value: string): boolean {
@@ -50,46 +44,27 @@ export function isFunction(kind: ParameterKind, value: string): boolean {
   }
 }
 
-/** A day as `YYYY-MM-DD`, of a date in UTC, as BigQuery's CURRENT_DATE() is. */
-const iso = (date: Date) => date.toISOString().slice(0, 10);
-const utc = (year: number, month: number, day: number) => new Date(Date.UTC(year, month, day));
-
 /**
  * The functions the field suggests, each with what it gives on a day (DEC-LE-14, DEC-UX-118): Data Hub works
- * these out itself; any other function is worked out at every run.
+ * these out itself; any other function is worked out at every run. The list is shared with the MCP App of a Lens.
  */
-export const SUGGESTED: readonly { key: string; label: string; sql: string; on: (today: Date) => Date }[] = [
-  { key: 'today', label: 'param.fn.today', sql: 'CURRENT_DATE()', on: (today) => today },
-  { key: 'minus3', label: 'param.fn.minus3', sql: 'DATE_SUB(CURRENT_DATE(), INTERVAL 3 DAY)', on: (today) => utc(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - 3) },
-  {
-    key: 'week',
-    label: 'param.fn.week',
-    sql: 'DATE_TRUNC(CURRENT_DATE(), WEEK(MONDAY))',
-    on: (today) => utc(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - ((today.getUTCDay() + 6) % 7)),
-  },
-  { key: 'month', label: 'param.fn.month', sql: 'DATE_TRUNC(CURRENT_DATE(), MONTH)', on: (today) => utc(today.getUTCFullYear(), today.getUTCMonth(), 1) },
-  { key: 'quarter', label: 'param.fn.quarter', sql: 'DATE_TRUNC(CURRENT_DATE(), QUARTER)', on: (today) => utc(today.getUTCFullYear(), today.getUTCMonth() - (today.getUTCMonth() % 3), 1) },
-  { key: 'year', label: 'param.fn.year', sql: 'DATE_TRUNC(CURRENT_DATE(), YEAR)', on: (today) => utc(today.getUTCFullYear(), 0, 1) },
-  {
-    key: 'lastWeek',
-    label: 'param.fn.lastWeek',
-    sql: 'DATE_SUB(DATE_TRUNC(CURRENT_DATE(), WEEK(MONDAY)), INTERVAL 1 DAY)',
-    on: (today) => utc(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - ((today.getUTCDay() + 6) % 7) - 1),
-  },
-  { key: 'lastMonth', label: 'param.fn.lastMonth', sql: 'LAST_DAY(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))', on: (today) => utc(today.getUTCFullYear(), today.getUTCMonth(), 0) },
-];
-
-const plain = (sql: string) => sql.replace(/\s+/g, '').toUpperCase();
+const LABELS: Record<DateFunction['key'], string> = {
+  today: 'param.fn.today',
+  minus3: 'param.fn.minus3',
+  week: 'param.fn.week',
+  month: 'param.fn.month',
+  quarter: 'param.fn.quarter',
+  year: 'param.fn.year',
+  lastWeek: 'param.fn.lastWeek',
+  lastMonth: 'param.fn.lastMonth',
+};
+export const SUGGESTED: readonly { key: string; label: string; sql: string; on: (today: Date) => Date }[] = DATE_FUNCTIONS.map((fn) => ({ ...fn, label: LABELS[fn.key] }));
 
 /** The suggested function a value is, if it is one of them (DEC-LE-14). */
-export const suggestedOf = (value: string) => SUGGESTED.find((candidate) => plain(candidate.sql) === plain(value)) ?? null;
+export const suggestedOf = (value: string) => SUGGESTED.find((candidate) => candidate.key === dateFunctionOf(value)?.key) ?? null;
 
 /** The day a date value gives today: itself, or what a suggested function gives; null for any other function. */
-export function dayOf(value: string, today: Date = new Date()): string | null {
-  if (isDay(value)) return value;
-  const suggested = SUGGESTED.find((candidate) => plain(candidate.sql) === plain(value));
-  return suggested ? iso(suggested.on(today)) : null;
-}
+export { dayOf };
 
 const LOCALES: Record<Language, string> = { nl: 'nl-BE', en: 'en-GB' };
 
