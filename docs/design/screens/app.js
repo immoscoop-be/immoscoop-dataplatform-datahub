@@ -1084,6 +1084,38 @@ if (new URLSearchParams(location.search).get('pf') === 'request' && document.get
   });
 }
 
+// Run never waits for the Pre-flight (?pf=unchecked, DEC-UX-280): while the Pre-flight of what was just typed has not
+// come back, the bar says "not checked yet" and Run stays on as "Run". A click checks the query first and then does what
+// the Pre-flight says: here it reads 840 MB, so the button turns red to "Approve and run" with the focus, and a second
+// click runs it. Up to 100 MB the first click runs it and shows the result
+if (new URLSearchParams(location.search).get('pf') === 'unchecked' && document.getElementById('run-btn')) {
+  const btn = document.getElementById('run-btn'), pf = document.getElementById('run-pf');
+  const gauge = pf.querySelector('.run-gauge'), line = pf.querySelector('.meta:last-child');
+  const was = { btn: btn.innerHTML, line: line.innerHTML };
+  // Here @leadChannel is a Parameter already, so nothing else keeps the query from running
+  const data = document.getElementById('param-data');
+  data.textContent = JSON.stringify([...JSON.parse(data.textContent), { name: 'leadChannel', kind: 'choice', value: 'Form', list: ['Form', 'Phone', 'Email', 'Chat'] }]);
+  gauge.hidden = true;
+  line.textContent = 'not checked yet';
+  btn.classList.remove('high');
+  btn.innerHTML = '<i class="ph-fill ph-play" style="font-size:14px"></i>Run';
+  btn.addEventListener('click', (event) => {
+    if (btn.dataset.checked) return;
+    event.stopImmediatePropagation();
+    btn.dataset.checked = 'yes';
+    btn.disabled = true;
+    line.textContent = 'checking…';
+    setTimeout(() => {
+      gauge.hidden = false;
+      line.innerHTML = was.line;
+      btn.classList.add('high');
+      btn.innerHTML = was.btn;
+      btn.disabled = false;
+      btn.focus();
+    }, 600);
+  }, true);
+}
+
 // The Parameters of a query (Proposal). Each has a name, a kind from the standard list and a value: a value such as
 // 2026-10-25, or an SQL function such as DATE_TRUNC(CURRENT_DATE(), YEAR), worked out at every run. Under the query
 // they fold open and shut; they are made and changed in a floating window that moves by its head. A Parameter that is

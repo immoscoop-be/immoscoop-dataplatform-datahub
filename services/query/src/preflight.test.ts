@@ -236,4 +236,29 @@ describe('the tables beneath a Resource', () => {
     await beneath(weekly);
     expect(bigquery.asked).toHaveLength(4);
   });
+
+  it('filter on the columns BigQuery names, when a view reads tables that require a filter it does not have itself (EC-SR-05)', async () => {
+    const view = resource('listing_lead_events');
+    const refused = (column: string) => new BigQueryRefused(`Cannot query over table 'p.atomic.t_${column}' without a filter over column(s) '${column}' that can be used for partition elimination`);
+    const bigquery = fakeBigQuery((sql) =>
+      sql.endsWith('`') ? refused('collectorDatetime') : sql.endsWith('collectorDatetime is null') ? refused('loadDate') : dry(0, [`${PROJECT}.atomic.initiate`, `${PROJECT}.atomic.create`]),
+    );
+    expect(await createBeneath(bigquery)(view)).toEqual([view.fullName, `${PROJECT}.atomic.initiate`, `${PROJECT}.atomic.create`]);
+    expect(bigquery.asked).toEqual([
+      `select * from \`${view.key}\``,
+      `select * from \`${view.key}\` where collectorDatetime is null`,
+      `select * from \`${view.key}\` where collectorDatetime is null and loadDate is null`,
+    ]);
+  });
+
+  it('keep a query from running when BigQuery will not tell, as a problem of its Pre-flight and never an error (EC-SR-05)', async () => {
+    const view = resource('listing_lead_events');
+    const sql = `select * from \`${view.key}\` where date(collectorDatetime) > '2024-10-01'`;
+    const bigquery = fakeBigQuery((asked) =>
+      asked === sql ? dry(5_000_000, [`${PROJECT}.atomic.initiate`]) : new BigQueryRefused('Unrecognized name: collectorDatetime at [1:80]'),
+    );
+    const result = await check(sql, of(view), bigquery);
+    expect(result.runnable).toBe(false);
+    expect(result.problems).toEqual([{ kind: 'invalid', message: expect.stringContaining('Data Hub cannot tell which tables this query reads') }]);
+  });
 });
