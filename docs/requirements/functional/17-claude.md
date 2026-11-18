@@ -36,6 +36,7 @@ In library terms: Claude is an assistant in the reading room who carries the lib
 - <a id="dec-cl-18"></a>**DEC-CL-18** · The Owner Journey in Claude is calmer and says where it goes. Its first step says what the Owner is about to do and why, what they get on the way (the Learning Cards, behind their icon, and Data Hub one click away), the steps ahead, and that everything they write can be changed later, here or in Data Hub: only publishing is for good. Every step keeps an overview of the journey at hand, folded: where we are, what is done, what is still missing, what is required and what is optional. The Learning Cards of a step come folded, under "How can we help with this step?", one short line each with their icon and title, that unfolds to the core idea, what it gives and "Read the card" ([DEC-UX-271](../../design/principles.md#dec-ux-271) to [DEC-UX-273](../../design/principles.md#dec-ux-273)). It replaces the strip of [DEC-UX-261](../../design/principles.md#dec-ux-261). *Decided on 2026-11-17, by Max, after a session with business describing a Resource through Claude: "the cards are very large and overwhelming … I think we need some kind of folding states", "the flow kicks off by presenting to them what and why they are doing this", "where are we, what do we already have, what's still missing, what's really required, what's unnecessary", and "we need to point out that it isn't definitive, so they can always come back and change". The overview folded in Claude only, with optional steps shown as optional, was Claude's proposal, which Max agreed to.*
 - <a id="dec-cl-19"></a>**DEC-CL-19** · Every link from Claude to Data Hub looks the same and leads to the spot: the mark of Data Hub, "Open … in Data Hub" with what it opens, and the arrow of a link that leaves; in a step of the Owner Journey it opens the part of the Overview, or the tab, that the step writes ([DEC-UX-274](../../design/principles.md#dec-ux-274)). *Decided on 2026-11-17, by Max: "What's really good in the flow is the fact that you always have the link to the Data Hub. It makes it very clear that you can switch between the environments … Maybe, always for the links, we add an icon to it." Linking to the exact spot was Claude's proposal, which Max agreed to.*
 - <a id="dec-cl-20"></a>**DEC-CL-20** · Claude writes the Known Gaps of a Resource one by one, with their scope, as the web app does: a period, fields and rows where the gap holds ([FR-RC-24](05-resource-card.md#fr-rc-24)). Changing the text of a gap keeps its scope and who added it. The card tool no longer takes the Known Gaps as a list of texts. *Decided on 2026-11-17, by Max, who saw that "whenever gaps are being created through the MCP … it isn't filling in any of the" scopes; the tool for one gap at a time was Claude's proposal, which Max agreed to.*
+- <a id="dec-cl-21"></a>**DEC-CL-21** · Claude runs a Lens, and its result shows in an MCP App with its Parameters as on the page of the Lens: Claude chooses their values from the question, and the User can change them in the MCP App and run it again, as in the Preview ([FR-CL-09](#fr-cl-09)). A query keeps the MCP App without an editor ([FR-CL-21](#fr-cl-21), [OP-CL-09](#op-cl-09)). *Decided on 2026-11-18, by Max: "the mcp server does not have the run lens function. Can you implement it pls? Also including the card"; on its Parameters: "Editable, like Preview".*
 
 ## Terms
 
@@ -161,6 +162,25 @@ Free SQL over the Resources a User sees ([FR-SR-26](04-stacks-and-resources.md#f
 | query `PUT` and `DELETE /queries/:id/hidden` | Hiding a query from the panel of Query, and showing it again | A matter of the panel of Query |
 | query `GET /queries/days` | How many queries each day holds | The periods and chips of the panel of Query |
 | query and catalogue `/internal/…` | Calls between services and from Cloud Scheduler | No User calls them |
+
+## Lenses through the MCP
+
+A Lens answers a question that comes back ([DEC-CL-10](#dec-cl-10)): Claude offers it before it writes a query, reads what it asks, and runs it for the User with the values of their question. A run of a Lens is a run of the query of the User of that Lens, in their Query Log ([FR-LE-12](09-lenses.md#fr-le-12)), marked Claude ([FR-CL-22](#fr-cl-22)), within the same ranges as on the page of the Lens.
+
+| The User asks | Tool | Endpoint | Who | Answer |
+| --- | --- | --- | --- | --- |
+| "Is there a Lens for this?" | `suggest_lenses` | query `GET /lenses/suggestions` | Every User | Text ([FR-CL-17](#fr-cl-17)) |
+| "What does that Lens ask?" | `get_lens` | query `GET /lenses/:id` | Whoever sees the Lens | Text ([FR-CL-37](#fr-cl-37)) |
+| "Run it for last week" | `run_lens` | query `POST /lenses/:id/runs` | Whoever sees the Lens | MCP App: the result ([FR-CL-36](#fr-cl-36)) |
+| The button of the User, above 100 MB | `run_lens_approved` | query `POST /lenses/:id/runs`, approved | Whoever sees the Lens | MCP App: the result |
+
+### Not through the MCP, for Lenses
+
+| What | Why not |
+| --- | --- |
+| Making a Lens of a query, changing, updating and deleting it | The work of its Owner Unit, in the web app ([DEC-UX-27](../../design/principles.md#dec-ux-27)) |
+| A Request to the Data Team on a Lens | Part of making a Lens, by its author, in the web app; one run of a Lens above 1 GB does not go to the Data Team |
+| A Lens in Excel | Excel reads it itself, with an Excel key ([DEC-CH-06](13-channels.md#dec-ch-06)) |
 
 ## Requirements
 
@@ -495,6 +515,24 @@ At the steps Pitfalls and Known Gaps of the Owner Journey, the window shows the 
 
 **Makes easy:** a card where the gaps are in the data and the pitfalls in how it is read. **Makes hard:** a misreading filed as a gap, which nobody will ever repair, and a hole in the data filed as a pitfall, which nobody looks for in the data.
 
+<a id="fr-cl-36"></a>
+### FR-CL-36 · Claude runs a Lens, with its result in an MCP App
+
+**Status:** Implemented · **Source:** Max, 2026-11-18 ([DEC-CL-21](#dec-cl-21)) · **Screens:** [mcp-lens](../../design/screens/mcp-lens.html)
+
+`run_lens` runs a Lens the User sees with the values Claude chose from the question, each by the name of its Parameter; a Parameter it leaves out keeps its default. It runs within the ranges of the User, as on the page of the Lens ([FR-LE-13](09-lenses.md#fr-le-13)): up to 100 MB at once; from 100 MB to 1 GB only once the User approves it with the button in the MCP App ([DEC-CL-07](#dec-cl-07)); above 1 GB not at all with these values, and nothing goes to the Data Team. A Lens that waits for the Data Team, was refused, stopped or is Broken does not run, and says why. The result shows as an MCP App: the name and question of the Lens, its Collection, the Resources it reads with their Level, its Parameters with the values of this run, which the User can change and run again, the grid with the description of each field on the head of its column and folded under it ([FR-LE-19](09-lenses.md#fr-le-19)), what it read, its Query ID and "Open the Lens in Data Hub". No SQL, as on the page of a Lens. A run the User starts in the MCP App is told to Claude. The rows reach Claude as `claude.results` of the Permission group of the User says ([FR-CL-28](#fr-cl-28)): in Claude, in a card only, or not in Claude, when `run_lens` gives the link to the Lens in Data Hub and runs nothing.
+
+**Makes easy:** asking a question that comes back in plain words and getting the answer of the Lens made for it, for another period or channel in one change. **Makes hard:** a query of one's own where a Lens already answers the question, and a large run that nobody approved.
+
+<a id="fr-cl-37"></a>
+### FR-CL-37 · Claude reads a Lens before it runs it
+
+**Status:** Implemented · **Source:** Max, 2026-11-18 ([DEC-CL-21](#dec-cl-21)) · **Screens:** [mcp-lens](../../design/screens/mcp-lens.html)
+
+`get_lens` gives a Lens the User sees, as its tab About does: its name, question, what it shows and its steps; its Parameters, each with the name Users see, its kind, its default and, for a date, the day that default gives today, and the values a choice offers; its fields with their descriptions; the Resources it reads with their Level; whether it runs now, waits, was refused, stopped or is Broken; and its link. Claude chooses the values of a run from it, and tells the User what the Lens counts before it answers with it.
+
+**Makes easy:** a run with the values the question means, and an answer that says what the Lens counts. **Makes hard:** a guess at the name of a Parameter, and a figure of a Lens read as something it does not count.
+
 ## Edge cases
 
 <a id="ec-cl-01"></a>
@@ -535,7 +573,7 @@ BigQuery keeps a result for a limited time; a page asked after that answers that
 ## Out of scope
 
 - The work of the Data Admin ([DEC-CL-01](#dec-cl-01)): it stays in the web app.
-- Collections, Lenses, including making a query a Lens, the Message Centre and the Learning Centre: the next chapters of this file.
+- Collections; making, changing and deleting a Lens, including making a query a Lens (finding, reading and running one is in [Lenses through the MCP](#lenses-through-the-mcp)); the Message Centre and the Learning Centre: the next chapters of this file.
 - Excel and the HTML report: [Channels](13-channels.md).
 
 ## Open points
@@ -548,7 +586,7 @@ BigQuery keeps a result for a limited time; a page asked after that answers that
 - [x] <a id="op-cl-06"></a>**OP-CL-06** · Decide whether the rows of a Preview, and later of a query, may go into the conversation with Claude, and so to Anthropic, for every Resource, or not for some Collections or Levels. [FR-CH-03](13-channels.md#fr-ch-03) has Claude work with data through the MCP, but does not say which data. *Raised on 2026-10-30.* *Decided on 2026-10-31, by Max: yes, for every Resource the User sees ([DEC-CL-06](#dec-cl-06)).* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 - [ ] <a id="op-cl-07"></a>**OP-CL-07** · The Learning Centre has no service yet. Decide where `explain` and the concepts in the server instructions read from until it has one, and which Compass cards the Data Team writes for the concepts of [FR-CL-14](#fr-cl-14). Proposal: the server instructions are built from the core ideas of those cards; until they exist, from the Defined Terms. *Raised on 2026-10-30.* *Note of 2026-10-31: the Learning Centre is built. Its cards are files in `packages/learning` ([TR-LR-01](../technical/16-learning.md#tr-lr-01)), and the section K5 Data Hub of the Compass holds K5.1 What a resource is and K5.2 The Level of a Resource ([DEC-LR-30](16-learning.md#dec-lr-30)); the MCP server reads them from there. What stays open is which cards the Data Team writes for the other concepts.* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 - [ ] <a id="op-cl-08"></a>**OP-CL-08** · Confirm that Claude gets the concepts of Data Hub in its server instructions ([FR-CL-14](#fr-cl-14)) and explains them with the Learning Cards ([FR-CL-15](#fr-cl-15)). *Raised on 2026-10-30, by Max: "shouldn't the MCP add what the concepts are: Collection, Resource, Lens, the Learning Centre with its cards linked?"* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
-- [ ] <a id="op-cl-09"></a>**OP-CL-09** · Decide whether the MCP App of a result lets the User change the values of the Parameters and run again, as on the page of a Lens, or only shows the result ([FR-CL-21](#fr-cl-21)). Proposal: it only shows the result; a change goes through Claude or Query, so that the MCP App stays a window and does not become a second editor. *Raised on 2026-11-01.* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
+- [ ] <a id="op-cl-09"></a>**OP-CL-09** · Decide whether the MCP App of a result lets the User change the values of the Parameters and run again, as on the page of a Lens, or only shows the result ([FR-CL-21](#fr-cl-21)). Proposal: it only shows the result; a change goes through Claude or Query, so that the MCP App stays a window and does not become a second editor. *Raised on 2026-11-01.* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).* *Note of 2026-11-18: for a Lens decided by [DEC-CL-21](#dec-cl-21), its Parameters change in its MCP App; for a query it stays open.*
 - [x] <a id="op-cl-10"></a>**OP-CL-10** · query keeps no mark of where a query or a run came from: a query is a query, a preview or a Lens ([FR-CL-22](#fr-cl-22)). Decide where the mark lives: on the query, where it was made, and on each run, how it ran. Proposal: both; a query made through Claude and continued in Query keeps the label Claude, and each run says how it ran. *Raised on 2026-11-01.* *Decided on 2026-11-02, by Max: both, as proposed ([DEC-CL-15](#dec-cl-15)).* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 - [ ] <a id="op-cl-11"></a>**OP-CL-11** · Decide whether Claude can run the steps of an analysis without showing their result. Today every run through Claude opens the grid in the conversation ([FR-CL-21](#fr-cl-21)), so an analysis in five queries shows five grids. Proposal: `run_query` gets a choice not to show, for a step Claude reads itself; the result the User asks to see, and every run that needs their approval or a Request, still opens the MCP App ([DEC-CL-07](#dec-cl-07)). Each run stays a run of the User in the Query Log, with its Query ID ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)). *Raised on 2026-11-02, by Max, while trying the MCP: Claude gets the rows ([DEC-CL-06](#dec-cl-06)), but an analysis in several steps fills the conversation with grids.* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 - [x] <a id="op-cl-12"></a>**OP-CL-12** · Decide the Owner Journey: a guided flow in which Claude takes the Owner of a Resource from 2 · Described to its Publication, step by step, always in the same order, each step with its Learning Card. Drawn as a storyboard in [owner-journey](../../design/screens/owner-journey.html), from the brief of Max of 2026-11-15. Already decided: [DEC-MR-15](06-maturity-and-release.md#dec-mr-15), [DEC-MR-16](06-maturity-and-release.md#dec-mr-16), [DEC-MR-17](06-maturity-and-release.md#dec-mr-17) and [DEC-UX-261](../../design/principles.md#dec-ux-261). Proposal for the rest: one tool, `guide_owner_journey`, returns the steps with their state and the one that is next, from a definition of ready shared with the catalogue; the journey is kept with the Resource, so it resumes in any conversation, for any member of the Owner Unit; each step leaves a line in the Log; thirteen steps, the Key Fields before the fields, so that their Business Descriptions come first; a Business Analyst of the Owner Unit goes through every step and hands the publication over; eight Learning Cards to write, K5.12 The Owner Journey to K5.19 After publication, and 3.3.3 Reliable for which purpose extended for the intended use instead of a new card. *Raised on 2026-11-15, with the storyboard.* *Decided on 2026-11-15, by Max: "go, start the build", for the proposal as it stands; and that whoever wants to publish is led into the journey ([DEC-CL-17](#dec-cl-17)).*

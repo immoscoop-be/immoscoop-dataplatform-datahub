@@ -114,7 +114,7 @@ export function queryTools({ server, hub, user, permits }: Context): void {
         );
         const link = (lens: { id: string }) => ({ ...lens, page: hub.page(pages.lens(lens.id)) });
         const nothing = permits.query ? 'No Lens uses these Resources: a query of the User is the way.' : 'No Lens uses these Resources, and the User does not make queries: say so.';
-        return answer({ exact: found.exact.map(link), more: found.more.map(link) }, found.exact.length + found.more.length === 0 ? nothing : 'Offer the Lens that answers the question before you write a query.');
+        return answer({ exact: found.exact.map(link), more: found.more.map(link) }, found.exact.length + found.more.length === 0 ? nothing : 'Offer the Lens that answers the question before you write a query; once the User wants it, read its Parameters with get_lens and run it with run_lens.');
       }),
   );
 
@@ -334,15 +334,16 @@ export function queryTools({ server, hub, user, permits }: Context): void {
     );
   }
 
-  // The pages of a result, of a query or a Preview: for Claude only when results reach Claude (FR-CL-28).
-  if (permits.query || permits.preview) {
-    server.registerTool(
+  // The pages of a result, of a query, a Preview or a Lens, which every User may run: for Claude only when results
+  // reach Claude (FR-CL-28, FR-CL-36). A User who runs only Lenses gets it only when the rows reach Claude.
+  {
+    if (permits.query || permits.preview || permits.results === 'claude') server.registerTool(
       'get_result_page',
       {
         title: 'Read another page of a result',
         description:
           permits.results === 'claude'
-            ? 'Another page of 100 rows of a run, read from the same run without querying again. Only who ran it reads it.'
+            ? 'Another page of 100 rows of a run of a query, a Preview or a Lens, read from the same run without querying again. Only who ran it reads it.'
             : `Another page of 100 rows of a run: not for this User, whose Permission group ${card ? 'shows results in a card only' : 'does not show results in Claude'}; it refuses.`,
         inputSchema: { run: runRef, page: pageNumber },
         annotations: READ,
@@ -366,7 +367,7 @@ export function queryTools({ server, hub, user, permits }: Context): void {
         'read_result_rows',
         {
           title: 'Read the rows of a result for the card',
-          description: 'A page of 100 rows of a run of a query or a Preview, for the card only. Only the MCP App calls this.',
+          description: 'A page of 100 rows of a run of a query, a Preview or a Lens, for the card only. Only the MCP App calls this.',
           inputSchema: { run: runRef, page: pageNumber },
           annotations: READ,
           _meta: APP_ONLY,

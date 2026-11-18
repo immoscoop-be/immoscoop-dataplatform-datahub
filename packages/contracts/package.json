@@ -16,6 +16,10 @@
       "types": "./dist/collectionIcons.d.ts",
       "default": "./dist/collectionIcons.js"
     },
+    "./dates": {
+      "types": "./dist/dates.d.ts",
+      "default": "./dist/dates.js"
+    },
     "./permissions": {
       "types": "./dist/permissions.d.ts",
       "default": "./dist/permissions.js"
