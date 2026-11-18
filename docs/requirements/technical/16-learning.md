@@ -113,7 +113,7 @@ mcp offers `show_learning_card` (`number`, `language` en or nl) to every User wh
 `guide_owner_journey` opens the window of the step that is next (`renderJourney`): the progress over the twelve steps, the step and its mark, what the Resource holds for it now (`heldOf` in `src/journey.ts`: the text on the card from the Owner beside the description from dbt, the Key Fields, how many fields are described, the Known Gaps and reliable since, what a Data Admin recorded, or who said there is nothing to add), each of its Learning Cards as a strip with its core idea and gain, and the tool that writes it. "Read the card" asks Claude in the User's name, with `sendMessage` of the MCP Apps SDK, to show the whole card: it opens as its own MCP App, only when the User asks.
 
 <a id="tr-lr-10"></a>
-### TR-LR-10 · The definitions of the terms, in `packages/learning`
+### TR-LR-10 · The definitions of the terms, beside the Learning Cards
 
 **Status:** Implemented · **Realises:** [FR-LR-44](../functional/16-learning.md#fr-lr-44), [DEC-LR-39](../functional/16-learning.md#dec-lr-39), [DEC-UX-279](../../design/principles.md#dec-ux-279)
 
