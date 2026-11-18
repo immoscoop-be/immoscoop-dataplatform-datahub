@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 279 | 91 (22 open, 69 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 280 | 91 (22 open, 69 done) |
 | [Backlog](../overview/backlog.md) | – | – | – | 7 (5 open, 2 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
@@ -29,7 +29,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Conversations](functional/14-conversations.md) | 16 (16 implemented) | 2 (2 implemented) | 13 | 9 (9 done) |
 | [EDA](functional/15-eda.md) | – | – | 16 | 8 (5 open, 3 done) |
 | [Learning](functional/16-learning.md) | 44 (13 proposed, 15 implemented, 16 withdrawn) | – | 39 | 40 (9 open, 31 done) |
-| [Claude](functional/17-claude.md) | 37 (1 proposed, 36 implemented) | 5 (5 implemented) | 21 | 12 (7 open, 5 done) |
+| [Claude](functional/17-claude.md) | 38 (1 proposed, 37 implemented) | 5 (5 implemented) | 22 | 12 (7 open, 5 done) |
 | [Localisation](non-functional/localisation.md) | 12 (8 specified, 3 implemented, 1 withdrawn) | – | – | – |
 | [Security](non-functional/security.md) | 4 (4 implemented) | – | – | – |
 | [Platform: technical requirements](technical/00-platform.md) | 34 (3 specified, 30 implemented, 1 withdrawn) | – | 33 | 20 (6 open, 14 done) |
@@ -495,6 +495,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-CL-35](functional/17-claude.md#fr-cl-35) | Claude tells a Known Gap from a Pitfall | Implemented | – | [owner-journey](../design/screens/owner-journey.html) | – | [4f4c224](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4f4c2243e83b2ad9d8f4565d93b6675f6135ce1e) implements, 2026-11-17<br>[bda9ac6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/bda9ac6e8dc1fd0a05c85333b9a24f5b447658f9) refs, 2026-11-17 |
 | [FR-CL-36](functional/17-claude.md#fr-cl-36) | Claude runs a Lens, with its result in an MCP App | Implemented | – | [mcp-lens](../design/screens/mcp-lens.html) | – | [416c40e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/416c40e4eda03544435722d24cb59504558cef76) implements, 2026-11-18 |
 | [FR-CL-37](functional/17-claude.md#fr-cl-37) | Claude reads a Lens before it runs it | Implemented | – | [mcp-lens](../design/screens/mcp-lens.html) | – | [416c40e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/416c40e4eda03544435722d24cb59504558cef76) implements, 2026-11-18 |
+| [FR-CL-38](functional/17-claude.md#fr-cl-38) | Claude suggests the Key Fields and the descriptions of the fields, the User decides in a card | Implemented | – | [mcp-fields](../design/screens/mcp-fields.html) | – | [f079e71](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f079e719f9ee4b539aa54de2f22dbe1d98f7be2c) implements, 2026-11-18<br>[e716171](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/e716171c67750a2d704680b24acebb33d43b58f0) refs, 2026-11-18 |
 
 ## Edge cases
 
@@ -534,7 +535,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [EC-SR-02](functional/04-stacks-and-resources.md#ec-sr-02) | A registered view disappears from the Artifacts | Withdrawn | – | – | – |
 | [EC-SR-03](functional/04-stacks-and-resources.md#ec-sr-03) | A view is renamed in BigQuery | Specified | – | – | [bcdef01](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/bcdef01d4dff9ce840b74a8594e8472fbda8260f) refs, 2026-10-28 |
 | [EC-SR-04](functional/04-stacks-and-resources.md#ec-sr-04) | A second Stack is added | Withdrawn | – | [TR-PF-13](technical/00-platform.md#tr-pf-13) | – |
-| [EC-SR-05](functional/04-stacks-and-resources.md#ec-sr-05) | A table read through a view requires a filter that the view does not name | Implemented | – | – | [578d144](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/578d1442c56d3248e7a8fba3f75ee5208862c2a7) implements, 2026-11-18 |
+| [EC-SR-05](functional/04-stacks-and-resources.md#ec-sr-05) | A table read through a view requires a filter that the view does not name | Implemented | – | – | [389c1a3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/389c1a3429099d425374d988f192a63ada129e57) refs, 2026-11-18<br>[578d144](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/578d1442c56d3248e7a8fba3f75ee5208862c2a7) implements, 2026-11-18 |
 
 ### [Resource card](functional/05-resource-card.md)
 

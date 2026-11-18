@@ -6,6 +6,7 @@ import { type Context, READ, SHOWS } from './context.js';
 import { type DataHub, pages } from './datahub.js';
 import { howToUse, instructionsFor, mayDo } from './guide.js';
 import { cardFor, explain, topicTitle } from './learning.js';
+import { fieldTools } from './fields.js';
 import { lensTools } from './lenses.js';
 import { messageTools } from './messages.js';
 import { permitsOf } from './permits.js';
@@ -156,6 +157,7 @@ export function createMcpServer(user: AccessTokenClaims, options: ServerOptions)
   );
 
   resourceTools(context);
+  fieldTools(context);
   messageTools(context);
   queryTools(context);
   lensTools(context);

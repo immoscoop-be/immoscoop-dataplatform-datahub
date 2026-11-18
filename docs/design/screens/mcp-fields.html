@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<!--
+  Screen: the fields of a Resource suggested by Claude, as an MCP App (FR-CL-38, DEC-CL-22, DEC-UX-281)
+  A conversation in Claude, drawn plainly. The Owner asks Claude to describe a Resource, or reaches the steps Key Fields
+  and Fields of the Owner Journey (FR-CL-32). Claude reads the Resource: its fields, their types and descriptions from
+  dbt, its Business Description and grain; and, when it may, a small Preview, to see what each field holds (DEC-CL-22).
+  It then suggests which fields are Key Fields, and a Business Description for every field that has none, with
+  suggest_fields. Nothing is written yet: the suggestions show in one card, a row per field (DEC-UX-281):
+  · a box "Key Field", ticked where Claude suggests it or where the field is one already;
+  · the name of the field, its type and, quietly under it, its description from dbt;
+  · its Business Description in a box to edit: Claude's suggestion, marked "Suggested"; a text already on the card,
+    marked "On the card", which Claude never replaces; once the User changes a text, "Edited".
+  On top, what Claude based its suggestions on, and a filter: all fields, the suggested ones, the Key Fields. A Key
+  Field without a Business Description says it needs one to be published. At the foot, "Save to Data Hub", with what it
+  saves: only the User's click writes, never Claude (DEC-CL-07, rule 7 of the instructions); what the card showed goes
+  with it as before, so that a text a colleague wrote meanwhile is never overwritten.
+  The switch shows four cases:
+  · suggested: as the card opens; tick, untick and edit to see the counts and marks follow;
+  · saved: written; Claude is told what was saved, without a message (DEC-UX-261), and goes on;
+  · changed meanwhile: An Claes wrote the description of lead_channel since the card opened: the rest is saved, that
+    field waits for the choice of the User;
+  · without rows: the Permission group of the User shows results in a card only, so Claude read no rows and suggested
+    from the names and descriptions alone, and says so.
+  Requirements: FR-CL-38
+  Decisions: DEC-CL-07, DEC-CL-22, DEC-UX-164, DEC-UX-180, DEC-UX-181, DEC-UX-261, DEC-UX-266, DEC-UX-279, DEC-UX-281.
+  Not in v1: the whole screen, as Claude comes in version 2 (DEC-CH-02). Its rows are those of resource-columns-edit.html.
+  ?width=phone shows the frame as Claude on a phone shows it, at 390 px (DEC-UX-180).
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="colleague">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Fields suggested by Claude</title>
+</head>
+<body class="mcp-demo">
+<div class="mcp-page">
+ <p class="mcp-caption"><i class="ph ph-info" aria-hidden="true"></i>Prototype: how Claude suggests the Key Fields and the descriptions of the fields of a Resource, as an MCP App. Only the part inside the frame comes from Data Hub.</p>
+
+ <div class="mcp-msg user">I want to describe the fields of Weekly lead volume.</div>
+ <div class="mcp-tool"><i class="ph ph-plugs-connected" aria-hidden="true"></i>Data Hub · <span class="mono">get_resource</span> · <span class="mono" data-pane-group="f" data-pane="suggested saved changed">preview_resource</span> · <span class="mono">suggest_fields</span></div>
+ <div class="mcp-msg" data-pane-group="f" data-pane="suggested saved changed">
+  <p>I read its 7 fields, what dbt says of them, and 20 rows of the last 4 weeks to see what each holds. I suggest 3 more Key Fields, next to <span class="mono">lead_source</span>, and a description for the 6 fields that have none. Check them in the window, change what isn't right, and save: nothing is written before you do.</p>
+ </div>
+ <div class="mcp-msg" data-pane-group="f" data-pane="without" hidden>
+  <p>I read its 7 fields and what dbt says of them. Your Permission group shows results in a card only, so I didn't look at any rows: my suggestions come from the names and descriptions alone. Check them in the window, change what isn't right, and save.</p>
+ </div>
+
+ <section class="mcp-app" aria-label="The fields of Weekly lead volume, suggested by Claude">
+  <div class="mcp-app-head"><i class="ph-fill ph-rows" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">Fields · <i class="ph ph-coins" aria-hidden="true" style="vertical-align:-2px;margin-right:3px"></i>Credit leads · Owner: the credit team</span><div class="float-title">Weekly lead volume</div><span class="meta">Which fields matter most, and what each holds in the words of the business</span></div><span class="status"><span class="maturity" data-level="2" data-no-tooltip></span>2 · Described</span></div>
+
+  <p class="mf-basis"><i class="ph ph-sparkle" aria-hidden="true"></i><span data-pane-group="f" data-pane="suggested saved changed">Suggested by Claude from the names, the descriptions from dbt and 20 rows of a Preview of the last 4 weeks (2 MB, in your Query Log).</span><span data-pane-group="f" data-pane="without" hidden>Suggested by Claude from the names and the descriptions from dbt. Claude read no rows: your Permission group shows results in a card only.</span></p>
+
+  <div class="alert" data-pane-group="f" data-pane="changed" hidden><i class="ph-fill ph-warning" aria-hidden="true" style="color:var(--signal-warn)"></i><span><b>Saved, except one field.</b> An Claes wrote the description of <span class="mono">lead_channel</span> at 12:38, after this window opened. Choose which text it keeps.</span></div>
+  <div class="mf-done" data-pane-group="f" data-pane="saved" hidden><i class="ph-fill ph-check-circle" aria-hidden="true"></i><span><b>Saved to Data Hub</b> at 12:40: 3 Key Fields and 6 descriptions, with your name in its history.</span></div>
+
+  <div class="mf-tools" role="tablist" aria-label="Which fields">
+   <button class="seg on" type="button" data-show="all" role="tab" aria-selected="true">All fields<span class="count">7</span></button>
+   <button class="seg" type="button" data-show="suggested" role="tab" aria-selected="false">Suggested<span class="count" id="mf-n-suggested">6</span></button>
+   <button class="seg" type="button" data-show="key" role="tab" aria-selected="false">Key Fields<span class="count" id="mf-n-key">4</span></button>
+  </div>
+
+  <div class="mf-rows" id="mf-rows">
+   <div class="mf-row" data-suggested data-key>
+    <label class="mf-key" title="Key Field: a field that matters most"><input type="checkbox" checked><i class="ph-fill ph-key" aria-hidden="true"></i><span>Key Field</span></label>
+    <div class="mf-name"><code>week_start</code><span class="meta">DATE · <span class="pill pill-strong">Partition</span></span><span class="mf-dbt"><span class="origin">From dbt</span>Monday of the week the lead was submitted</span></div>
+    <label class="mf-text"><span class="mf-mark suggested">Suggested</span><span class="sr-only">Business Description of week_start</span><textarea rows="3">The Monday of the week the lead came in. A week runs from Monday to Sunday; the current week is complete only on Monday morning.</textarea></label>
+   </div>
+   <div class="mf-row" data-key data-was-key>
+    <label class="mf-key" title="Key Field: a field that matters most"><input type="checkbox" checked><i class="ph-fill ph-key" aria-hidden="true"></i><span>Key Field</span></label>
+    <div class="mf-name"><code>lead_source</code><span class="meta">STRING · <span class="pill pill-strong">Cluster 1</span></span><span class="mf-dbt"><span class="origin">From dbt</span>Where the lead came from</span></div>
+    <label class="mf-text"><span class="mf-mark">On the card</span><span class="sr-only">Business Description of lead_source</span><textarea rows="3">Where the lead came in: the website, the app, a partner or a mailing.</textarea></label>
+   </div>
+   <div class="mf-row" data-suggested data-key id="mf-channel">
+    <label class="mf-key" title="Key Field: a field that matters most"><input type="checkbox" checked><i class="ph-fill ph-key" aria-hidden="true"></i><span>Key Field</span></label>
+    <div class="mf-name"><code>lead_channel</code><span class="meta">STRING · <span class="pill pill-strong">Cluster 2</span></span><span class="mf-dbt"><span class="origin">From dbt</span>Channel of the first visit</span></div>
+    <label class="mf-text"><span class="mf-mark suggested">Suggested</span><span class="sr-only">Business Description of lead_channel</span><textarea rows="3">How the visitor first reached Immoscoop before asking for credit: search, social, direct or a partner site. In the rows: search, social, direct, partner.</textarea></label>
+    <div class="mf-theirs" data-pane-group="f" data-pane="changed" hidden>
+     <span class="meta"><b>An Claes wrote at 12:38</b></span>
+     <p>The channel of the first visit of the session in which the lead was asked: organic or paid search, social, direct, or a partner site.</p>
+     <div class="mf-choose"><button class="btn-quiet" type="button">Keep An's text</button><button class="btn-primary" type="button">Use mine</button></div>
+    </div>
+   </div>
+   <div class="mf-row" data-suggested data-key>
+    <label class="mf-key" title="Key Field: a field that matters most"><input type="checkbox" checked><i class="ph-fill ph-key" aria-hidden="true"></i><span>Key Field</span></label>
+    <div class="mf-name"><code>lead_count</code><span class="meta">INT64</span><span class="mf-dbt"><span class="origin">From dbt</span>Number of credit leads sent to KBC</span></div>
+    <label class="mf-text"><span class="mf-mark suggested">Suggested</span><span class="sr-only">Business Description of lead_count</span><textarea rows="3">How many credit leads went to KBC that week from this source. Someone who asks twice counts twice: for people, see unique_applicants.</textarea></label>
+   </div>
+   <div class="mf-row" data-suggested>
+    <label class="mf-key" title="Key Field: a field that matters most"><input type="checkbox"><i class="ph-fill ph-key" aria-hidden="true"></i><span>Key Field</span></label>
+    <div class="mf-name"><code>unique_applicants</code><span class="meta">INT64</span><span class="mf-dbt"><span class="origin">From dbt</span>count(distinct applicant_id)</span></div>
+    <label class="mf-text"><span class="mf-mark suggested">Suggested</span><span class="sr-only">Business Description of unique_applicants</span><textarea rows="3">How many different people asked for credit that week from this source. Never add weeks up: one person can ask in two weeks.</textarea></label>
+   </div>
+   <div class="mf-row" data-suggested>
+    <label class="mf-key" title="Key Field: a field that matters most"><input type="checkbox"><i class="ph-fill ph-key" aria-hidden="true"></i><span>Key Field</span></label>
+    <div class="mf-name"><code>kbc_accepted</code><span class="meta">INT64</span><span class="mf-dbt"><span class="origin">From dbt</span><i>No description in dbt</i></span></div>
+    <label class="mf-text"><span class="mf-mark suggested">Suggested</span><span class="sr-only">Business Description of kbc_accepted</span><textarea rows="3">How many of the leads of that week KBC accepted. KBC answers within two weeks, so the last two weeks are still low.</textarea></label>
+   </div>
+   <div class="mf-row" data-suggested>
+    <label class="mf-key" title="Key Field: a field that matters most"><input type="checkbox"><i class="ph-fill ph-key" aria-hidden="true"></i><span>Key Field</span></label>
+    <div class="mf-name"><code>loaded_at</code><span class="meta">TIMESTAMP</span><span class="mf-dbt"><span class="origin">From dbt</span>dbt load timestamp</span></div>
+    <label class="mf-text"><span class="mf-mark suggested">Suggested</span><span class="sr-only">Business Description of loaded_at</span><textarea rows="3">When this row was last loaded. Technical: not for analysis.</textarea></label>
+   </div>
+  </div>
+
+  <div class="mcp-app-foot mf-foot">
+   <span id="mf-saves">Saves 3 Key Fields and 6 descriptions, as yours.</span>
+   <button class="btn-primary" type="button" id="mf-save" data-pane-group="f" data-pane="suggested without"><i class="ph-fill ph-check" style="font-size:15px" aria-hidden="true"></i>Save to Data Hub</button>
+   <button class="btn-primary" type="button" disabled data-pane-group="f" data-pane="saved changed" hidden><i class="ph-fill ph-check" style="font-size:15px" aria-hidden="true"></i>Saved</button>
+   <a class="text-link open-dh" href="resource-columns.html"><span>Open the Columns in Data Hub</span><i class="ph ph-arrow-square-out"></i></a>
+  </div>
+ </section>
+
+ <div class="mcp-msg" data-pane-group="f" data-pane="saved" hidden>
+  <p>Saved: Weekly lead volume now has 4 Key Fields, each described, and every field has a description of its own. Next in the Owner Journey: what it is meant for. Shall we go on?</p>
+ </div>
+ <div class="mcp-msg" data-pane-group="f" data-pane="changed" hidden>
+  <p>Everything is saved except <span class="mono">lead_channel</span>: An Claes described it just before you saved. Her text says <i>organic or paid</i> search, which the rows show too, so I'd keep hers.</p>
+ </div>
+</div>
+<div class="proto-switch" data-group="f" role="tablist" aria-label="Prototype: the case">Case
+ <button class="seg on" data-target="suggested" role="tab" aria-selected="true">Suggested</button>
+ <button class="seg" data-target="saved" role="tab" aria-selected="false">Saved</button>
+ <button class="seg" data-target="changed" role="tab" aria-selected="false">Changed meanwhile</button>
+ <button class="seg" data-target="without" role="tab" aria-selected="false">Without rows</button>
+</div>
+<div class="proto-switch" data-group="width" role="tablist" aria-label="Prototype: Claude on a computer or a phone" style="top:16px;bottom:auto">Width
+ <button class="seg on" data-target="computer" role="tab" aria-selected="true">Computer</button>
+ <button class="seg" data-target="phone" role="tab" aria-selected="false">Phone</button>
+</div>
+<script src="app.js"></script>
+<script>
+// The fields of a Resource suggested by Claude (DEC-UX-281): the counts and marks follow what the User ticks and edits.
+(() => {
+  const rows = [...document.querySelectorAll('#mf-rows .mf-row')];
+  const was = new Map(rows.map((row) => [row, { key: row.querySelector('input').checked, text: row.querySelector('textarea').value }]));
+  const sync = () => {
+    let keys = 0, texts = 0;
+    rows.forEach((row) => {
+      const key = row.querySelector('input').checked, area = row.querySelector('textarea'), mark = row.querySelector('.mf-mark');
+      row.toggleAttribute('data-key', key);
+      // A Key Field needs its Business Description to be published (DEC-SR-19)
+      row.classList.toggle('needs-text', key && area.value.trim() === '');
+      if (area.value !== was.get(row).text) { mark.textContent = 'Edited'; mark.className = 'mf-mark edited'; }
+      // What it writes: a Key Field not on the card yet, a field no longer one, and every text new or changed
+      if (key !== row.hasAttribute('data-was-key')) keys += 1;
+      if (row.hasAttribute('data-suggested') ? area.value.trim() !== '' : area.value !== was.get(row).text) texts += 1;
+    });
+    const n = (count, one, many) => `${count} ${count === 1 ? one : many}`;
+    document.getElementById('mf-saves').textContent = keys + texts === 0 ? 'Nothing to save yet.' : `Saves ${n(keys, 'Key Field', 'Key Fields')} and ${n(texts, 'description', 'descriptions')}, as yours.`;
+    document.getElementById('mf-n-key').textContent = rows.filter((row) => row.hasAttribute('data-key')).length;
+  };
+  rows.forEach((row) => { row.querySelector('input').addEventListener('change', sync); row.querySelector('textarea').addEventListener('input', sync); });
+  document.querySelectorAll('.mf-tools [data-show]').forEach((button) => button.addEventListener('click', () => {
+    document.querySelectorAll('.mf-tools [data-show]').forEach((other) => { other.classList.toggle('on', other === button); other.setAttribute('aria-selected', String(other === button)); });
+    rows.forEach((row) => { row.hidden = button.dataset.show === 'suggested' ? !row.hasAttribute('data-suggested') : button.dataset.show === 'key' ? !row.hasAttribute('data-key') : false; });
+  }));
+  document.getElementById('mf-save').addEventListener('click', () => document.querySelector('[data-group="f"] [data-target="saved"]').click());
+  sync();
+})();
+</script>
+</body>
+</html>
