@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 280 | 91 (22 open, 69 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 287 | 104 (35 open, 69 done) |
 | [Backlog](../overview/backlog.md) | – | – | – | 7 (5 open, 2 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
@@ -495,7 +495,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-CL-35](functional/17-claude.md#fr-cl-35) | Claude tells a Known Gap from a Pitfall | Implemented | – | [owner-journey](../design/screens/owner-journey.html) | – | [4f4c224](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4f4c2243e83b2ad9d8f4565d93b6675f6135ce1e) implements, 2026-11-17<br>[bda9ac6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/bda9ac6e8dc1fd0a05c85333b9a24f5b447658f9) refs, 2026-11-17 |
 | [FR-CL-36](functional/17-claude.md#fr-cl-36) | Claude runs a Lens, with its result in an MCP App | Implemented | – | [mcp-lens](../design/screens/mcp-lens.html) | – | [416c40e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/416c40e4eda03544435722d24cb59504558cef76) implements, 2026-11-18 |
 | [FR-CL-37](functional/17-claude.md#fr-cl-37) | Claude reads a Lens before it runs it | Implemented | – | [mcp-lens](../design/screens/mcp-lens.html) | – | [416c40e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/416c40e4eda03544435722d24cb59504558cef76) implements, 2026-11-18 |
-| [FR-CL-38](functional/17-claude.md#fr-cl-38) | Claude suggests the Key Fields and the descriptions of the fields, the User decides in a card | Implemented | – | [mcp-fields](../design/screens/mcp-fields.html) | – | [f079e71](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f079e719f9ee4b539aa54de2f22dbe1d98f7be2c) implements, 2026-11-18<br>[e716171](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/e716171c67750a2d704680b24acebb33d43b58f0) refs, 2026-11-18 |
+| [FR-CL-38](functional/17-claude.md#fr-cl-38) | Claude suggests the Key Fields and the descriptions of the fields, the User decides in a card | Implemented | – | [mcp-fields](../design/screens/mcp-fields.html) | – | [988014f](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/988014fdebc272d631569490d49827aa7ad8b4f3) refs, 2026-11-18<br>[f079e71](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f079e719f9ee4b539aa54de2f22dbe1d98f7be2c) implements, 2026-11-18<br>[e716171](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/e716171c67750a2d704680b24acebb33d43b58f0) refs, 2026-11-18 |
 
 ## Edge cases
 
