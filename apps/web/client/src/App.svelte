@@ -62,7 +62,9 @@
   import MyPage from './screens/MyPage.svelte';
   import NotFound from './screens/NotFound.svelte';
   import QueryNew from './screens/QueryNew.svelte';
+  import { day } from '@datahub/ui/foundations/when.js';
   import QueryFlags from './screens/QueryFlags.svelte';
+  import ProjectPage from './screens/ProjectPage.svelte';
   import QueryPanel from './screens/QueryPanel.svelte';
   import QuickWindow from './screens/QuickWindow.svelte';
   import ResourcePage from './screens/ResourcePage.svelte';
@@ -694,6 +696,8 @@
                   ? t('query.new')
                   : page.kind === 'query'
                     ? (queryName?.id === page.id ? queryName.name : 'Query')
+                    : page.kind === 'project'
+                      ? (projectList?.find((one) => one.id === page.id)?.name ?? 'Query')
                     : page.kind === 'newLens'
                       ? t('lens.make.title')
                       : page.kind === 'lens'
@@ -731,6 +735,7 @@
       page.kind === 'newCollection' ||
       page.kind === 'newQuery' ||
       page.kind === 'query' ||
+      page.kind === 'project' ||
       page.kind === 'newLens' ||
       page.kind === 'lens' ||
       page.kind === 'editLens' ||
@@ -927,6 +932,16 @@
       refreshProjects();
     }
   }
+  /**
+   * New query on the page of a Project: an empty query in it, named "New query" and the date, opened at once without
+   * the screen of a new query (DEC-UX-290, OP-UX-105).
+   */
+  async function newEmptyQuery(projectId: string): Promise<void> {
+    const made = await queries.create({ name: t('query.empty.name', { date: day(new Date(), currentLanguage()) }), question: '', resources: [], sql: '', project: projectId });
+    refreshProjects();
+    await refreshQueries();
+    router.go(queryPath(made.id));
+  }
   /** New project: the User is in it alone, works in it, and the open query goes in when ticked (DEC-UX-282). */
   async function newProject(fields: { name: string; description: string; putCurrent: boolean }): Promise<void> {
     const made = await projectsClient.create({ name: fields.name, description: fields.description, queries: fields.putCurrent && openId ? [openId] : [] });
@@ -1115,7 +1130,7 @@
       : suggestedLevels({ dataAdmin: false, owner: false }),
   );
   /** A page of Query, which a User who may neither make queries nor Preview does not have (FR-PL-14). */
-  const queryPage = $derived(page.kind === 'newQuery' || page.kind === 'query' || page.kind === 'newLens' || (page.kind === 'start' && page.section.id === 'query'));
+  const queryPage = $derived(page.kind === 'newQuery' || page.kind === 'query' || page.kind === 'project' || page.kind === 'newLens' || (page.kind === 'start' && page.section.id === 'query'));
   /** The kinds of Message the User may write (`messages.write`, DEC-PL-04). */
   const writes = $derived.by(() => {
     const kinds = permissions['messages.write'].values.kinds;
@@ -1275,6 +1290,26 @@
       {/key}
     {:else if page.kind === 'query'}
       <!-- Its page lives below the others, where the flagged queries stay open (OP-UX-85). -->
+    {:else if page.kind === 'project'}
+      <!-- The page of a Project: its queries in one order, who is in it, Share, Leave and Delete (DEC-UX-285). -->
+      {#key page.id}
+        {@const projectId = page.id}
+        <ProjectPage
+          id={projectId}
+          projects={projectsClient}
+          {identity}
+          me={{ id: signedIn.me.sub, name: signedIn.me.name }}
+          canMake={can(permissions, 'queries.make')}
+          working={working === projectId}
+          onwork={(on) => workIn(on ? projectId : null)}
+          onnewquery={() => newEmptyQuery(projectId)}
+          onchanged={() => {
+            refreshProjects();
+            refreshQueries();
+          }}
+          go={(path) => router.go(path)}
+        />
+      {/key}
     {:else if page.kind === 'newLens'}
       {#key page.query}
         <LensNew
@@ -1657,6 +1692,12 @@
       version={queriesVersion}
       onhidden={(id, hidden) => (queryHidden = { id, hidden })}
       {flagged}
+      projects={projectList}
+      {working}
+      me={status.me.sub}
+      currentProject={page.kind === 'project' ? page.id : undefined}
+      loadProject={(id) => projectsClient.get(id)}
+      onnewproject={can(permissions, 'queries.make') ? () => (rowPop = 'newproj') : undefined}
     />
   {:else if section?.id === 'charts' && status.kind === 'signedIn'}
     <ChartsPanel overview={chartsShown} current={page.kind === 'chart' ? page.id : undefined} iconUrl={(id) => charts.iconUrl(id)} />

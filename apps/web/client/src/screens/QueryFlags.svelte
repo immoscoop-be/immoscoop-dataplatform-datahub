@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
   import { digitOf, type FlagMark, keyed, modLabel } from '../lib/flags.js';
@@ -342,7 +343,7 @@
       {/each}
       <label class="opt"><input type="radio" name="addp-to" value="new" bind:group={addTo} /><span class="grow"><span class="title">{t('row.newProject')}</span></span></label>
       {#if addTo === 'new'}
-        <div class="new"><input bind:value={addName} maxlength="80" placeholder={t('row.new.name.placeholder')} aria-label={t('row.new.name.label')} /></div>
+        <div class="new"><input {...NO_PASSWORD_MANAGER} bind:value={addName} maxlength="80" placeholder={t('row.new.name.placeholder')} aria-label={t('row.new.name.label')} /></div>
       {/if}
       <div class="pop-h spaced">{t('row.addp.queries')}</div>
       {#if current}
@@ -371,8 +372,8 @@
     <div class="pop" role="dialog" aria-label={t('row.newProject')}>
       <div class="pop-h">{t('row.newProject')}</div>
       <div class="fields">
-        <label class="field"><span>{t('row.new.name.label')}</span><input bind:value={newName} maxlength="80" placeholder={t('row.new.name.placeholder')} /></label>
-        <label class="field"><span>{t('row.new.what')}</span><textarea rows="2" maxlength="500" bind:value={newWhat} placeholder={t('row.new.what.placeholder')}></textarea></label>
+        <label class="field"><span>{t('row.new.name.label')}</span><input {...NO_PASSWORD_MANAGER} bind:value={newName} maxlength="80" placeholder={t('row.new.name.placeholder')} /></label>
+        <label class="field"><span>{t('row.new.what')}</span><textarea {...NO_PASSWORD_MANAGER} rows="2" maxlength="500" bind:value={newWhat} placeholder={t('row.new.what.placeholder')}></textarea></label>
       </div>
       {#if canAddToProject && current}
         <label class="opt"

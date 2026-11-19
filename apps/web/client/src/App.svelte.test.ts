@@ -4626,6 +4626,58 @@ describe('Query', () => {
     });
   });
 
+  it('holds the queries of the Project the User works in in the row on top, and takes one out with its × (DEC-UX-282, DEC-UX-291)', async () => {
+    const other = { ...QUERY, id: 'q2', name: 'Partner share per week' };
+    const credit = { id: 'p1', name: 'Credit leads Q4', description: 'The quarterly review.', members: [{ id: ME_ID, name: ME.name }, { id: '7', name: 'Karel Leys' }], queries: ['q1', 'q2'] };
+    const calls = serve({ queries: [{ ...QUERY }, other], projects: [credit], settings: { 'query.project': 'p1', 'query.flagged': [] } });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const row = within(await main.findByRole('navigation', { name: 'De queries van Credit leads Q4' }, { timeout: 3000 }));
+    // The switch names the Project, and how many are in it.
+    expect(row.getByRole('button', { name: /^Credit leads Q4/ }).textContent).toContain('2');
+    expect(row.getByRole('link', { name: /Partner share per week/ }).getAttribute('href')).toBe('/query/q2');
+    // The breadcrumb of the query names its Project.
+    expect((await main.findByRole('link', { name: 'Credit leads Q4' })).getAttribute('href')).toBe('/query/projects/p1');
+    // The × removes it from the Project, without asking (OP-UX-106).
+    await fireEvent.click(row.getByRole('button', { name: 'Partner share per week uit Credit leads Q4 halen' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/projects/p1/queries/q2' }));
+    expect(row.queryByRole('link', { name: /Partner share per week/ })).toBeNull();
+    // The panel lists the Project above the history, flagged as worked in.
+    const panel = within(screen.getByRole('complementary', { name: 'Query' }));
+    expect(panel.getByRole('link', { name: /Credit leads Q4/ }).textContent).toContain('met Karel Leys');
+  });
+
+  it('makes a Project from the row, with the open query in it, and works in it (FR-SR-63, DEC-UX-282)', async () => {
+    const calls = serve({ queries: [{ ...QUERY }], settings: { 'query.flagged': ['q1'] } });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const row = within(await main.findByRole('navigation', { name: 'Gemarkeerde queries' }, { timeout: 3000 }));
+    await fireEvent.click(row.getByRole('button', { name: /Gemarkeerd/ }));
+    await fireEvent.click(row.getByRole('menuitem', { name: 'Nieuw project' }));
+    const dialog = within(row.getByRole('dialog', { name: 'Nieuw project' }));
+    await fireEvent.input(dialog.getByRole('textbox', { name: 'Naam' }), { target: { value: 'Credit leads Q4' } });
+    await fireEvent.click(dialog.getByRole('button', { name: 'Maken' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/projects', body: { name: 'Credit leads Q4', description: '', queries: ['q1'] } }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/query.project', body: { value: 'p-1' } }));
+    expect(await main.findByRole('navigation', { name: 'De queries van Credit leads Q4' })).toBeTruthy();
+  });
+
+  it('opens the page of a Project, whose New query makes an empty query in it and opens it (FR-SR-68, DEC-UX-290)', async () => {
+    const credit = { id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: ['q1'] };
+    const calls = serve({ queries: [{ ...QUERY }], projects: [credit] });
+    open('/query/projects/p1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByRole('heading', { level: 1, name: /Credit leads Q4/ }, { timeout: 3000 })).toBeTruthy();
+    await fireEvent.click(main.getByRole('button', { name: /^Nieuwe query$/ }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/query/q-made'));
+    const made = calls.find((call) => call.method === 'POST' && call.path === '/queries')?.body as { name: string; resources: string[]; project: string };
+    expect(made).toMatchObject({ resources: [], project: 'p1' });
+    expect(made.name).toMatch(/^Nieuwe query, /);
+  });
+
   it('takes a Resource out of the query itself with Just take it out, which stays open (FR-SR-67, DEC-SR-48)', async () => {
     const sources = { ...QUERY.resources[0], id: 'r9', key: 'immoscoop-dataplatform-398214.dbt_prod_leads.lead_sources', displayName: 'Lead sources', partition: null };
     const calls = serve({ queries: [{ ...QUERY, resources: [QUERY.resources[0], sources], parameters: [dateFrom] }] });

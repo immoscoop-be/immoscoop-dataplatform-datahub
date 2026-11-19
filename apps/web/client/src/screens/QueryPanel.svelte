@@ -10,6 +10,8 @@
   import { isToday, isYesterday, type Period, periodOf, periodsOf } from '../lib/periods.js';
   import { type QueryClient, type QueryDay, type QueryItem, type Run, SHOWN, type Shown } from '../lib/query.js';
   import { lensPath, queryPath, queryRunsPath } from '../lib/routes.js';
+  import { digitOf, keyed } from '../lib/flags.js';
+  import { isDeleted, type ProjectItem, type ProjectPage, projectMatches, projectPath, withWhom } from '../lib/projects.js';
 
   /**
    * The panel of Query (DEC-UX-20): the queries that ran, one item per query (DEC-UX-74), each labelled
@@ -20,7 +22,11 @@
    * filter that folds open next to the search; folded, one line says what it adds (DEC-UX-137,
    * DEC-UX-150). The eye on a query hides it for this User alone (DEC-UX-138). The query that is open has an arrow
    * that unfolds its last runs, folded at first (DEC-UX-140). A User who sees every query (`queries.seeOthers`, every) also has All in the filter (DEC-UX-161): everyone's
-   * queries, with who ran them (DEC-LN-01). A new query is in it at once, as not run yet.
+   * queries, with who ran them (DEC-LN-01). A new query is in it at once, as not run yet. Above the history, the
+   * Projects the User is in (DEC-UX-285): each with how many queries and who is in it, the one they work in flagged; a
+   * click opens its page, the arrow unfolds its first queries with their keys. The first three, then "Show all". The
+   * search looks through Projects and queries together: a Project whose name matches stays, one with a matching query
+   * unfolds to it. The history lists the queries the User made and those they ran (OP-UX-103).
    */
   let {
     client,
@@ -31,6 +37,12 @@
     version,
     onhidden,
     flagged = [],
+    projects,
+    working = null,
+    me = '',
+    currentProject,
+    loadProject,
+    onnewproject,
   }: {
     client: Pick<QueryClient, 'list' | 'days' | 'hide'>;
     /** The User sees the queries of everyone (`queries.seeOthers`, every, FR-PL-14). */
@@ -47,7 +59,44 @@
     onhidden?: (id: string, hidden: boolean) => void;
     /** The queries the User flagged: each has the flag at its end (DEC-UX-236). */
     flagged?: readonly string[];
+    /** The Projects the User is in; undefined while they come (DEC-UX-285). */
+    projects?: readonly ProjectItem[];
+    /** The Project the User works in: it has the flag at its end. */
+    working?: string | null;
+    /** The ID of the User, for who else is in a Project. */
+    me?: string;
+    /** The Project whose page is open. */
+    currentProject?: string;
+    /** Reads a Project, to unfold its first queries. */
+    loadProject?: (id: string) => Promise<ProjectPage>;
+    /** New project, as its + does. */
+    onnewproject?: () => void;
   } = $props();
+
+  /** The Projects in view before "Show all" (DEC-UX-285). */
+  const FIRST_PROJECTS = 3;
+  /** The queries of a Project unfolded in the panel before "All 14, on its page". */
+  const FIRST_QUERIES = 3;
+  let allProjects = $state(false);
+  /** The Projects unfolded by their arrow, and their queries once read. */
+  let unfoldedProjects = $state<Record<string, boolean>>({});
+  let projectQueries = $state<Record<string, { id: string; name: string; locked: boolean }[] | null>>({});
+  function unfoldProject(id: string): void {
+    const open = !unfoldedProjects[id];
+    unfoldedProjects = { ...unfoldedProjects, [id]: open };
+    if (!open || !loadProject || id in projectQueries) return;
+    projectQueries = { ...projectQueries, [id]: null };
+    loadProject(id).then(
+      (found) => (projectQueries = { ...projectQueries, [id]: isDeleted(found) ? [] : found.queries.map(({ id: queryId, name, locked }) => ({ id: queryId, name, locked })) }),
+      (error: unknown) => console.error('The queries of the project could not be read', error),
+    );
+  }
+  function withWho(project: ProjectItem): string {
+    const shape = withWhom(project.members, me);
+    if (shape.kind === 'alone') return t('row.withNobody');
+    if (shape.kind === 'named') return t('row.withNames', { names: shape.names.join(t('row.and')) });
+    return t('row.withMany', { count: shape.count });
+  }
 
   /** How long typing pauses before the search asks for the queries. */
   const PAUSE = 250;
@@ -142,6 +191,15 @@
     }, PAUSE);
     return () => clearTimeout(timer);
   });
+
+  /** The Projects in view: those matching the search by their name or a query of theirs it found (DEC-UX-285). */
+  const projectsShown = $derived.by(() => {
+    const list = projects ?? [];
+    if (!words) return list;
+    return list.filter((project) => projectMatches(project, words) || (found?.items ?? []).some((item) => item.project?.id === project.id));
+  });
+  /** The queries the search found in a Project, which unfolds to them. */
+  const foundIn = (id: string) => (words ? (found?.items ?? []).filter((item) => item.project?.id === id) : []);
 
   /** What the search found, in the periods they belong to, all open. */
   const foundGroups = $derived.by(() => {
@@ -260,7 +318,56 @@
 </PanelFilter>
 
 
-<p class="label">{t(all ? 'query.everyone' : 'query.yours')}</p>
+{#if projects && !all && (projects.length > 0 || !words)}
+  <!-- The Projects, above the history (DEC-UX-285). -->
+  <div class="label with-add">
+    <span>{t('query.projects')}</span>
+    {#if onnewproject}<button type="button" class="add" aria-label={t('row.newProject')} title={t('row.newProject')} onclick={onnewproject}><Icon name="plus" /></button>{/if}
+  </div>
+  {#if projects.length === 0}
+    <p class="meta empty">{t('query.projects.none')}</p>
+  {:else if projectsShown.length === 0}
+    <p class="meta empty">{t('query.projects.noMatch')}</p>
+  {/if}
+  {#each words || allProjects ? projectsShown : projectsShown.slice(0, FIRST_PROJECTS) as project (project.id)}
+    {@const matched = foundIn(project.id)}
+    {@const open = unfoldedProjects[project.id] || matched.length > 0}
+    {@const listed = matched.length > 0 ? matched.map(({ id, name }) => ({ id, name, locked: false })) : projectQueries[project.id]}
+    <div class="entry">
+      <a class="item card" class:current={project.id === currentProject} href={projectPath(project.id)} aria-current={project.id === currentProject ? 'page' : undefined}>
+        <span class="kind"><Icon name="folders-fill" label="Project" /></span>
+        <span class="text"><span class="name" title={project.name}>{project.name}</span><span class="meta">{t('row.queries', { count: project.queries })} · {withWho(project)}</span></span>
+        {#if project.id === working}<span class="flag" title={t('query.projects.working')}><Icon name="flag-fill" label={t('query.projects.working')} /></span>{/if}
+      </a>
+      {#if project.queries > 0}
+        <span class="buttons">
+          <button type="button" class="unfold" aria-expanded={open} aria-label={t('query.projects.itsQueries', { name: project.name })} onclick={() => unfoldProject(project.id)}><Icon name="caret-down" /></button>
+        </span>
+      {/if}
+      {#if open}
+        <nav class="runs" aria-label={t('query.projects.itsQueries', { name: project.name })}>
+          {#if listed === null || listed === undefined}
+            <Loading />
+          {:else}
+            {#each matched.length > 0 ? listed : listed.slice(0, FIRST_QUERIES) as query, at (query.id)}
+              <a class="run" class:on={query.id === current} href={query.locked ? projectPath(project.id) : queryPath(query.id)}
+                ><span class="key">{matched.length === 0 && keyed(at) ? digitOf(at) : ''}</span><span class="clip">{query.name}</span>{#if query.locked}<Icon name="lock-simple" />{/if}</a
+              >
+            {/each}
+            {#if matched.length === 0 && listed.length > FIRST_QUERIES}
+              <a class="run all" href={projectPath(project.id)}><span>{t('query.projects.all', { count: listed.length })}</span><Icon name="arrow-right" /></a>
+            {/if}
+          {/if}
+        </nav>
+      {/if}
+    </div>
+  {/each}
+  {#if !words && !allProjects && projectsShown.length > FIRST_PROJECTS}
+    <button type="button" class="more" onclick={() => (allProjects = true)}>{t('query.projects.showAll', { count: projectsShown.length })}</button>
+  {/if}
+{/if}
+
+<p class="label">{t(all ? 'query.everyone' : 'query.history')}</p>
 
 {#if draft !== null && !all}
   <div class="item card current draft" aria-current="page">
@@ -309,6 +416,13 @@
 
 <style>
   .count { color: var(--text-muted); }
+  .with-add { display: flex; align-items: center; justify-content: space-between; }
+  .add { width: 24px; height: 24px; border: 0; border-radius: var(--radius-sm); background: none; color: var(--text-secondary); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+  .add:hover { background: var(--tint-hover); color: var(--text-primary); }
+  .more { all: unset; cursor: pointer; display: block; margin: 0 4px 10px; font-size: var(--text-meta); color: var(--text-secondary); text-decoration: underline; }
+  .more:hover { color: var(--text-primary); }
+  .key { min-width: 10px; font-size: var(--text-meta); color: var(--text-muted); flex: none; }
+  .clip { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   .label { margin: 4px 4px 8px; font-size: var(--text-meta); color: var(--text-muted); }
   .period { all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: 6px; width: 100%; padding: 8px 4px; font-size: var(--text-meta); color: var(--text-muted); border-radius: var(--radius-sm); }
   .period:hover { color: var(--text-primary); }
