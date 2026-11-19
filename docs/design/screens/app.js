@@ -111,8 +111,8 @@ document.getElementById('panel-search')?.addEventListener('input', e => {
   });
   document.querySelectorAll('.panel .list-item[data-name]').forEach(el => { const m = el.dataset.name.includes(q); el.hidden = !m; if (m) n++; });
   // The Projects of Query (DEC-UX-285): a Project goes with its item; one that matches unfolds while the search lasts
-  document.querySelectorAll('.proj-entry').forEach(en => { en.hidden = !!en.querySelector('.proj-item')?.hidden; if (q && !en.hidden) en.classList.add('open'); });
-  document.querySelectorAll('.proj-more').forEach(b => { b.hidden = !!q; });
+  document.querySelectorAll('.proj-entry').forEach(en => { en.hidden = !!en.querySelector('.proj-item')?.hidden || (!q && en.classList.contains('more') && !en.dataset.shown); if (q && !en.hidden) en.classList.add('open'); });
+  document.querySelectorAll('.proj-more').forEach(b => { b.hidden = !!q || !!document.querySelector('.proj-entry.more[data-shown]'); });
   // A heading such as "Shared resources" goes when nothing under it is left
   document.querySelectorAll('.panel-label').forEach(label => {
     let el = label.nextElementSibling, shown = false;
@@ -120,6 +120,15 @@ document.getElementById('panel-search')?.addEventListener('input', e => {
     label.hidden = !shown;
   });
   const empty = document.getElementById('no-results'); if (empty) empty.hidden = n > 0;
+});
+
+// The Projects of Query (DEC-UX-285): "Show all 5" shows the others in the panel itself, and an arrow unfolds the
+// queries of a Project, on every screen of Query
+document.querySelector('.proj-list')?.addEventListener('click', e => {
+  const more = e.target.closest('.proj-more');
+  if (more) { document.querySelectorAll('.proj-entry.more').forEach(en => { en.hidden = false; en.dataset.shown = '1'; }); more.hidden = true; return; }
+  const unfold = e.target.closest('.proj-entry > .q-unfold');
+  if (unfold && !document.getElementById('q-scope')) { const en = unfold.closest('.proj-entry'); en.classList.toggle('open'); unfold.setAttribute('aria-expanded', en.classList.contains('open')); }
 });
 
 // Segmented controls and tabs: show the matching [data-pane]
@@ -1608,7 +1617,7 @@ if (scopeBox) {
 
   // One more Resource or one less: in this query, or in a new one (DEC-UX-287)
   const sheet = $('newq-sheet');
-  let mode = 'add', removing = null, where = 'here';
+  let mode = 'add', removing = null;
   const picks = () => [...sheet.querySelectorAll('input[name="newq-pick"]:checked')].map(i => i.value);
   const newSet = () => {
     const cur = scopeNow();
@@ -1658,23 +1667,24 @@ if (scopeBox) {
   const nameFor = set => { const n = set.map((r, i) => i ? NAMES[r].toLowerCase() : NAMES[r]); return (n.length > 1 ? n.slice(0, -1).join(', ') + ' and ' + n.at(-1) : n[0]) + ', 27 Oct'; };
   const update = () => {
     const set = newSet(), cur = scopeNow(), n = set.length, these = n === 1 ? 'this resource' : `these ${n} resources`;
-    const here = where === 'here', title = $('q-title').textContent;
-    $('newq-why-here').hidden = !here; $('newq-why-new').hidden = here;
-    sheet.querySelector('[data-newq-new]').hidden = here;
-    $('newq-where').querySelectorAll('[data-where]').forEach(b => { const on = b.dataset.where === where; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); });
-    $('newq-where').hidden = mode === 'same';
-    $('newq-start-icon').className = here ? (mode === 'remove' ? 'ph ph-minus' : 'ph ph-plus') : 'ph ph-git-branch';
-    $('newq-icon').className = here ? (mode === 'remove' ? 'ph ph-minus-circle' : 'ph ph-plus-circle') : 'ph ph-git-branch';
-    $('newq-kicker').textContent = here ? title : `A new query, from ${title}`;
-    $('newq-foot').textContent = here ? (mode === 'remove' ? `The next run of ${title} no longer reads it.` : `The next run of ${title} reads them.`) : `${title} stays as it is.`;
+    const title = $('q-title').textContent;
+    // Two buttons, side by side (DEC-UX-289): Just add, or New query; "New query from this one" has the second only
+    $('newq-here').hidden = mode === 'same';
+    $('newq-new').className = mode === 'same' ? 'btn-primary' : 'btn-quiet outline';
+    $('newq-here-icon').className = mode === 'remove' ? 'ph ph-minus' : 'ph ph-plus';
+    $('newq-icon').className = mode === 'remove' ? 'ph ph-minus-circle' : mode === 'same' ? 'ph ph-git-branch' : 'ph ph-plus-circle';
+    $('newq-kicker').textContent = title;
+    $('newq-why').innerHTML = mode === 'same' ? `A new query with the same Resources, its SQL and Parameters along. ${title} stays as it is.`
+      : mode === 'remove' ? `<b>Just take it out</b> changes ${title}: its next run no longer reads it. <b>New query</b> starts another without it, and ${title} stays as it is.`
+      : `<b>Just add</b> changes ${title}: its next run reads them, and its history keeps what each run read. <b>New query</b> starts another with them, its SQL and Parameters along, and ${title} stays as it is.`;
     $('newq-set').innerHTML = [...new Set([...cur, ...set])].map(r => `<span class="use-chip on${set.includes(r) ? '' : ' removed'}"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>${cur.includes(r) ? '' : '+ '}${NAMES[r]}</span>`).join('');
-    $('newq-name').value = nameFor(set);
     const added = set.filter(r => !cur.includes(r));
     if (mode === 'add') {
       $('newq-ctes').textContent = added.map(r => cteText(SOURCES[r])).join(',\n\n') || 'Tick a Resource to add.';
-      $('newq-title').textContent = here ? (added.length > 1 ? `Add ${added.length} Resources` : 'Add a Resource') : added.length > 1 ? `With ${added.length} more resources` : 'With one more resource';
-      $('newq-start-text').textContent = here ? (added.length > 1 ? `Add ${added.length} to this query` : 'Add to this query') : 'Start the new query';
-      $('newq-start').disabled = !added.length;
+      $('newq-title').textContent = added.length > 1 ? `Add ${added.length} Resources` : 'Add a Resource';
+      $('newq-here-text').textContent = 'Just add';
+      $('newq-new-text').textContent = 'New query';
+      $('newq-here').disabled = $('newq-new').disabled = !added.length;
       sheet.querySelectorAll('.pick').forEach(p => p.classList.toggle('on', p.querySelector('input').checked));
     }
     const l = LENSES(set), list = l.names.length ? `<ul>${l.names.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '';
@@ -1683,17 +1693,15 @@ if (scopeBox) {
       : l.more ? `No lens uses exactly ${these} yet; <b>${l.more}</b> use${l.more > 1 ? '' : 's'} them and more.` : `No lens uses ${these} yet.`)
       + (mode === 'remove' ? ' A different list from that of Leads per source name.' : '') + list + '</div>';
     if (mode === 'remove') sheet.querySelector('[data-newq="remove"]').hidden = !document.querySelector(`.sql-editor .sql-key[data-table="${removing}"]`);
-    if (mode === 'remove') $('newq-start-text').textContent = here ? 'Take it out' : 'Start the new query';
-    if (mode === 'same') $('newq-start-text').textContent = 'Start the new query';
+    if (mode === 'remove') { $('newq-here-text').textContent = 'Just take it out'; $('newq-new-text').textContent = 'New query'; }
+    if (mode === 'same') $('newq-new-text').textContent = 'Start the new query';
   };
   const openNew = (m, res) => {
     mode = m; removing = m === 'remove' ? res : null;
     // "New query from this one", in the quick window (DEC-UX-237): the same Resources, the SQL and Parameters along;
-    // adding or taking out changes this query, unless "Start a new query" is chosen (DEC-UX-287)
-    where = m === 'same' ? 'new' : 'here';
+    // adding or taking out offers both: Just add, or New query (DEC-UX-287, DEC-UX-289)
     $('newq-title').textContent = m === 'add' ? 'Add Resources' : m === 'same' ? 'With the same resources' : `Take out ${NAMES[res]}`;
-    $('newq-why-what').textContent = m === 'add' ? 'Adding Resources' : m === 'same' ? 'Starting from this one' : 'Removing one';
-    $('newq-start').disabled = false;
+    $('newq-here').disabled = $('newq-new').disabled = false;
     sheet.querySelector('[data-newq="add"]').hidden = m !== 'add';
     sheet.querySelector('[data-newq="remove"]').hidden = m !== 'remove';
     if (m === 'add') sheet.querySelectorAll('input[name="newq-pick"]').forEach(i => { i.checked = res ? i.value === res : i.value === 'listings'; });
@@ -1701,12 +1709,6 @@ if (scopeBox) {
     update(); sheet.hidden = false;
   };
   sheet.querySelectorAll('input[name="newq-pick"]').forEach(i => i.addEventListener('change', update));
-  $('newq-where').addEventListener('click', e => {
-    const b = e.target.closest('[data-where]'); if (!b) return;
-    where = b.dataset.where;
-    if (mode === 'remove') $('newq-title').textContent = where === 'here' ? `Take out ${NAMES[removing]}` : `Without ${NAMES[removing]}`;
-    update();
-  });
   window.quickNewSame = () => openNew('same');
   document.addEventListener('click', e => {
     const add = e.target.closest('[data-add-res]'), remove = e.target.closest('[data-remove-res]');
@@ -1714,8 +1716,8 @@ if (scopeBox) {
     if (remove) openNew('remove', remove.dataset.removeRes);
     if (e.target.closest('#lenses-btn')) lensButton();
   });
-  $('newq-start').addEventListener('click', () => {
-    const set = newSet(), name = $('newq-name').value.trim() || nameFor(set), from = $('q-title').textContent, added = set.filter(r => !scopeNow().includes(r));
+  const finish = where => {
+    const set = newSet(), name = nameFor(set), from = $('q-title').textContent, added = set.filter(r => !scopeNow().includes(r));
     // In this query: its Resources change, each one added comes as a CTE at the start of its SQL, and its name, its
     // question, its result and its history stay (DEC-UX-287)
     if (where === 'here') {
@@ -1737,7 +1739,6 @@ if (scopeBox) {
     // The page: its name and its question, its Resources; no result and no history yet. Where it came from is in its
     // History, not under its question (DEC-UX-250)
     $('q-title').textContent = name; $('q-title').title = name;
-    $('q-question').textContent = $('newq-question').value;
     document.querySelectorAll('#scope-chips [data-res]').forEach(c => { c.hidden = !set.includes(c.dataset.res); });
     removedRes = mode === 'remove' ? removing : null;
     const card = document.querySelector('.result-card');
@@ -1750,10 +1751,13 @@ if (scopeBox) {
     // Each Resource added comes as a CTE at the start of its SQL (DEC-UX-225)
     if (mode === 'add') addCtes(added.map(r => ({ ...SOURCES[r], key: r })));
     lensButton(); syncRun();
-  });
+  };
+  // Two buttons side by side (DEC-UX-289): Just add changes this query, New query starts another
+  $('newq-here').addEventListener('click', () => finish('here'));
+  $('newq-new').addEventListener('click', () => finish('new'));
 
   // Find a table, for a power user (DEC-UX-224): the tables Data Hub knows from the dbt projects it follows, ticked one
-  // or more at once and added as CTEs at the start of the SQL of this query; a Resource starts a new query with it
+  // or more at once and added as CTEs at the start of the SQL of this query; a Resource is added to it (DEC-UX-287)
   const find = $('find-sheet');
   if (find) {
     const TABLES = [

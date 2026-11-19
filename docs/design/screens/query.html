@@ -5,11 +5,11 @@
   everyone's under "All" (DEC-UX-20); a click opens one. Resources come in through the suggestions, or from "Query" on a Resource.
   A query is bounded by its Resources (DEC-UX-73, DEC-UX-74): on top of its frame "Reads only" and its Resources, a click on one opening its Summary as a double-click on its name
   does (DEC-UX-259); the editor suggests only their columns, and a table in the SQL outside them is an error, with
-  "Add it to this query". Adding or taking out a Resource changes this query, in a sheet (DEC-UX-287): it reads the new
-  set from its next run, each Resource added coming as a CTE at the start of its SQL, and its history keeps what each
-  run read. "Start a new query" in the same sheet still makes a new one: the new set, the name suggested from it and
-  the date, the question, the lenses on the new set; the SQL and the Parameters come along, the old query stays, and
-  the new one says where it started from. "3 Lenses", how many Lenses use them (DEC-UX-260), opens the overview of a new query while writing. Several
+  "Add it to this query". Adding or taking out a Resource opens a sheet that ends in two buttons side by side
+  (DEC-UX-287, DEC-UX-289): "Just add" (or "Just take it out") changes this query, which reads the new set from its
+  next run, each Resource added coming as a CTE at the start of its SQL, its history keeping what each run read; "New
+  query" starts another with the new set, named after its Resources and the date, the question, SQL and Parameters
+  along; the old query stays, and the new one says where it started from. "3 Lenses", how many Lenses use them (DEC-UX-260), opens the overview of a new query while writing. Several
   queries may share a set: a query is its name, its question and its Resources. The panel has one item per query, with
   how many runs, unfolding to its last runs; the result card has a tab History: every run is a variation, a row with when it ran, Preview and Apply (DEC-UX-88), of its
   values, its SQL or both. The switch "SQL" shows a table outside the Resources.
@@ -40,7 +40,7 @@
   Run is off, a callout on top names what is missing, and the query has the red dot in the panel; its SQL can still be
   changed, and a change that runs makes it work again, as does the return of what it reads.
   Requirements: FR-SR-62, FR-SR-61, FR-SR-60, FR-SR-59, FR-SR-58, FR-SR-57, FR-SR-56, FR-SR-53, FR-SR-36, FR-SR-37, FR-SR-40, FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-45, FR-SR-47, FR-SR-48, FR-SR-51, FR-LN-05, FR-LN-06, FR-LE-07, FR-LE-08, FR-LE-16, FR-RC-18
-  Decisions: DEC-UX-288, DEC-UX-287, DEC-UX-286, DEC-UX-285, DEC-UX-284, DEC-UX-283, DEC-UX-282, DEC-UX-238, DEC-UX-237, DEC-UX-236, DEC-UX-235, DEC-UX-234, DEC-UX-225, DEC-UX-224, DEC-UX-223, DEC-UX-222, DEC-UX-221, DEC-UX-220, DEC-UX-219, DEC-UX-218, DEC-UX-163, DEC-UX-17, DEC-UX-20, DEC-UX-70, DEC-UX-71, DEC-UX-72, DEC-UX-73, DEC-UX-74, DEC-UX-76, DEC-UX-77, DEC-UX-88, DEC-UX-97, DEC-UX-99, DEC-UX-115, DEC-SR-29, DEC-SR-35, DEC-LN-01.
+  Decisions: DEC-UX-289, DEC-UX-288, DEC-UX-287, DEC-UX-286, DEC-UX-285, DEC-UX-284, DEC-UX-283, DEC-UX-282, DEC-UX-238, DEC-UX-237, DEC-UX-236, DEC-UX-235, DEC-UX-234, DEC-UX-225, DEC-UX-224, DEC-UX-223, DEC-UX-222, DEC-UX-221, DEC-UX-220, DEC-UX-219, DEC-UX-218, DEC-UX-163, DEC-UX-17, DEC-UX-20, DEC-UX-70, DEC-UX-71, DEC-UX-72, DEC-UX-73, DEC-UX-74, DEC-UX-76, DEC-UX-77, DEC-UX-88, DEC-UX-97, DEC-UX-99, DEC-UX-115, DEC-SR-29, DEC-SR-35, DEC-LN-01.
   Not in v1: the label "Claude" on a query in the panel (FR-SR-26, DEC-CH-02); leave it out.
   "Make it a lens" turns the query into a Lens (FR-LE-07, DEC-UX-25). The query stays, used as the Lens: then "Update the lens"
   takes its place and overwrites the Lens after a size check, and "Lenses on these resources" goes (DEC-LE-03, DEC-LE-04,
@@ -169,6 +169,16 @@
    </div>
    <div class="proj-entry" data-proj="listings">
     <a class="list-item card proj-item" href="query-project.html" data-name="listings audit listings price"><i class="ph-fill ph-folders kind-icon" role="img" aria-label="Project"></i><span><span class="item-title">Listings audit</span><span class="meta">6 queries · with 4 colleagues</span></span></a>
+    <button class="icon-btn q-unfold" aria-expanded="false" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
+    <div class="proj-queries" aria-label="Its queries"></div>
+   </div>
+   <div class="proj-entry more" data-proj="broker" hidden>
+    <a class="list-item card proj-item" href="query-project.html" data-name="broker follow-up response time broker contacts"><i class="ph-fill ph-folders kind-icon" role="img" aria-label="Project"></i><span><span class="item-title">Broker follow-up</span><span class="meta">3 queries · with Lotte Dewulf</span></span></a>
+    <button class="icon-btn q-unfold" aria-expanded="false" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
+    <div class="proj-queries" aria-label="Its queries"></div>
+   </div>
+   <div class="proj-entry more" data-proj="search" hidden>
+    <a class="list-item card proj-item" href="query-project.html" data-name="search behaviour saved searches"><i class="ph-fill ph-folders kind-icon" role="img" aria-label="Project"></i><span><span class="item-title">Search behaviour</span><span class="meta">2 queries · only you</span></span></a>
     <button class="icon-btn q-unfold" aria-expanded="false" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
     <div class="proj-queries" aria-label="Its queries"></div>
    </div>
@@ -686,8 +696,9 @@
 
 <div class="sheet-wrap" id="newq-sheet" hidden>
 <div class="sheet-backdrop" data-sheet-close></div>
-<!-- Adding or taking out a Resource changes this query (DEC-UX-287): it reads the new set from its next run, and its
-     history keeps what each run read. A new query with them stays possible, no longer the required route. -->
+<!-- Adding or taking out a Resource (DEC-UX-287, DEC-UX-289): two buttons at the foot, "Just add", which changes this
+     query, its next run reading the new set and its history keeping what each run read, and "New query", which starts
+     another with them. -->
 <section class="sheet newq-sheet" role="dialog" aria-modal="true" aria-labelledby="newq-title">
  <div style="display:flex;align-items:flex-start;gap:10px">
   <i class="ph ph-plus-circle" id="newq-icon" style="font-size:22px;color:var(--text-secondary);margin-top:2px" aria-hidden="true"></i>
@@ -695,12 +706,8 @@
   <button class="icon-btn" data-sheet-close aria-label="Close"><i class="ph ph-x"></i></button>
  </div>
  <div class="sheet-list newq-body">
-  <div class="mc-chips" role="radiogroup" aria-label="Where" id="newq-where" style="margin:4px 0 10px">
-   <button class="seg on" type="button" role="radio" aria-checked="true" data-where="here">Change this query</button>
-   <button class="seg" type="button" role="radio" aria-checked="false" data-where="new">Start a new query</button>
-  </div>
-  <p class="newq-why" id="newq-why-here">Leads per source name reads them from its next run. Its history keeps what each run read, so an earlier run still shows its own Resources.</p>
-  <p class="newq-why" id="newq-why-new" hidden><span id="newq-why-what">With them</span>, a new query takes the SQL and its Parameters along. Leads per source name stays as it is, with its history; the new query remembers where it came from.</p>
+  <!-- Two ways, side by side at the foot (DEC-UX-289): "Just add" changes this query, "New query" starts another -->
+  <p class="newq-why" id="newq-why"><b>Just add</b> changes Leads per source name: its next run reads them, and its history keeps what each run read. <b>New query</b> starts another with them, its SQL and Parameters along, and Leads per source name stays as it is.</p>
   <div data-newq="add">
    <div class="label">Add</div>
    <label class="search" style="background:var(--surface-sub);margin-bottom:6px"><i class="ph ph-magnifying-glass" style="font-size:15px"></i><input placeholder="Search the Resources you may see"></label>
@@ -714,14 +721,10 @@
   </div>
   <div class="label" style="margin-top:14px">Its Resources</div>
   <div class="use-chips" id="newq-set"></div>
-  <div data-newq-new hidden>
-   <label class="field" style="margin-top:14px"><span>Name</span><input id="newq-name" value="Weekly lead volume, lead sources and listings, 27 Oct"></label>
-   <label class="field"><span>What do you want to know?</span><textarea id="newq-question" rows="2">Which sources bring our leads, week by week?</textarea></label>
-  </div>
   <div class="newq-lenses" id="newq-lenses"></div>
   <div data-newq="add"><div class="label" style="margin-top:14px">At the start of the SQL</div><pre class="cte-preview" id="newq-ctes"></pre></div>
  </div>
- <div class="sheet-foot"><p class="meta" id="newq-foot">The next run of Leads per source name reads them.</p><button class="btn-quiet" data-sheet-close>Cancel</button><button class="btn-primary" id="newq-start" type="button"><i class="ph ph-plus" id="newq-start-icon"></i><span id="newq-start-text">Add to this query</span></button></div>
+ <div class="sheet-foot"><p class="meta" id="newq-foot">A new query is named after its Resources and the date; rename it in place.</p><button class="btn-quiet" data-sheet-close>Cancel</button><button class="btn-quiet outline" id="newq-new" type="button"><i class="ph ph-git-branch"></i><span id="newq-new-text">New query</span></button><button class="btn-primary" id="newq-here" type="button"><i class="ph ph-plus" id="newq-here-icon"></i><span id="newq-here-text">Just add</span></button></div>
 </section>
 </div>
 

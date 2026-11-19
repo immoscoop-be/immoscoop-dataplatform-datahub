@@ -2366,6 +2366,11 @@ svg.mp, svg.mp-g { display: block; width: 100%; height: auto; overflow: visible;
 .proj-people { display: flex; align-items: center; }
 .proj-people .mini-avatar { width: 26px; height: 26px; font-size: 9px; outline: 2px solid var(--surface-solid); margin-left: -6px; display: inline-flex; align-items: center; justify-content: center; }
 .proj-people .mini-avatar:first-child { margin-left: 0; }
+.proj-people .mini-avatar { position: relative; }
+.proj-people .mini-avatar:nth-child(1) { z-index: 4; }
+.proj-people .mini-avatar:nth-child(2) { z-index: 3; }
+.proj-people .mini-avatar:nth-child(3) { z-index: 2; }
+.proj-people .mini-avatar:nth-child(4) { z-index: 1; }
 .proj-table td { padding-top: 9px; padding-bottom: 9px; }
 .proj-table .proj-key { width: 1%; white-space: nowrap; }
 .proj-table .proj-key .kbd { background: var(--tint-hover); }
