@@ -7,18 +7,18 @@
   import KindIcon from '@datahub/ui/marks/KindIcon.svelte';
   import MaturityIcon from '@datahub/ui/marks/MaturityIcon.svelte';
   import Button from '@datahub/ui/primitives/Button.svelte';
-  import Field from '@datahub/ui/primitives/Field.svelte';
   import type { Collection } from '../lib/catalogue.js';
   import type { LensSuggestions, NewQuery, Parameter, Query } from '../lib/query.js';
 
   /**
-   * Another set of Resources is a new query, made in a sheet (DEC-UX-73): to add, a search over the
-   * Resources the User may see; to remove, a warning when the SQL still reads it. Then the new set, its
-   * name suggested from its Resources and the date (DEC-UX-21), the question carried along, and the Lenses
-   * on the new set, which can be a very different list (DEC-UX-114). "Start the new query" takes the SQL and
-   * its Parameters along; the old query stays as it was, with its history. Resources are ticked one or more at once,
-   * up to ten in all, and each comes as a CTE at the start of the SQL, shown before (DEC-UX-225, FR-SR-59). "New query
-   * from this one", in the quick window, starts one with the same Resources (DEC-UX-237).
+   * Adding Resources to a query, or taking one out, in a sheet (DEC-UX-287): to add, a search over the Resources the
+   * User may see; to take out, a warning when the SQL still reads it. Then the new set and the Lenses on it, which can
+   * be a very different list (DEC-UX-114). It ends in two buttons side by side (DEC-UX-289): "Just add", or "Just take
+   * it out", which changes this query, its next run reading the new set and its history keeping what each run read;
+   * and "New query", which starts another with the new set, the SQL and its Parameters along, named after its Resources
+   * and the date and renamed in place (DEC-UX-21), and leaves this one as it was. Resources are ticked one or more at
+   * once, up to ten in all, and each comes as a CTE at the start of the SQL, shown before (DEC-UX-225, FR-SR-59). "New
+   * query from this one", in the quick window, starts one with the same Resources (DEC-UX-237).
    */
   let {
     query,
@@ -29,6 +29,7 @@
     resource,
     onclose,
     onstart,
+    onchange,
     lensesOn,
     ctesOf,
   }: {
@@ -42,6 +43,8 @@
     resource: string | null;
     onclose: () => void;
     onstart: (fields: NewQuery) => Promise<boolean>;
+    /** Changes the Resources of this query, with the SQL that then has their CTEs; without it, only New query. */
+    onchange?: (resources: string[], sql: string) => Promise<boolean>;
     /** The Lenses on a set of Resources, by the words of the question (FR-SR-47). */
     lensesOn: (resources: readonly string[], question: string) => Promise<LensSuggestions>;
     /** The SQL with a CTE at its start for each Resource added, and those CTEs (FR-SR-59). */
@@ -61,10 +64,7 @@
   const initialPicks = () => (mode === 'add' && resource ? [resource] : []);
   let picks = $state<string[]>(initialPicks());
   let search = $state('');
-  let named = $state(false);
-  let name = $state('');
-  const initialQuestion = () => query.question;
-  let question = $state(initialQuestion());
+  const question = $derived(query.question);
   let busy = $state(false);
   let failed = $state(false);
 
@@ -110,14 +110,12 @@
     return text.includes(removed.key) || text.includes(short) ? (removed.key.split('.').at(-1) ?? removed.key) : null;
   });
 
-  const suggested = $derived.by(() => {
+  /** A new query is named after its Resources and the date, and renamed in place (DEC-UX-289). */
+  const name = $derived.by(() => {
     const names = set.map(nameOf).filter(Boolean);
     if (names.length === 0) return '';
     const list = names.length === 1 ? (names[0] as string) : `${names.slice(0, -1).join(', ')} ${t('query.and')} ${names.at(-1)}`;
     return t('query.name.suggested', { names: list, date: day(new Date(), currentLanguage()) });
-  });
-  $effect(() => {
-    if (!named) name = suggested;
   });
 
   // The Lenses on the new set, once typing the question pauses.
@@ -144,27 +142,32 @@
     return more ? `${first}${t('newSet.lenses.more', { count: more })}` : `${first}.`;
   });
 
-  async function start(): Promise<void> {
+  async function finish(where: 'here' | 'new'): Promise<void> {
     busy = true;
     try {
       const ids = mode === 'add' ? picks.filter((id) => !inSql(id)) : [];
       const withThem = ids.length === 0 ? sql : (added?.sql ?? (await ctesOf(sql, ids)).sql);
-      failed = !(await onstart({ name: name.trim(), question: question.trim(), resources: set, sql: withThem, parameters, startedFrom: query.id }));
+      failed =
+        where === 'here' && onchange
+          ? !(await onchange(set, withThem))
+          : !(await onstart({ name: name.trim(), question: question.trim(), resources: set, sql: withThem, parameters, startedFrom: query.id }));
     } catch (error) {
-      console.error('The new query could not be started', error);
+      console.error(where === 'here' ? 'The Resources of the query could not be changed' : 'The new query could not be started', error);
       failed = true;
     }
     busy = false;
   }
+  /** Nothing to add yet, or nothing left. */
+  const ready = $derived(!busy && (mode !== 'add' || picks.length > 0) && (mode === 'add' || set.length > 0 || !!onchange));
 </script>
 
 <Sheet
   title={mode === 'add' ? t('newSet.addMany', { count: Math.max(1, picks.length) }) : mode === 'same' ? t('newSet.sameTitle') : t('newSet.removeTitle', { name: removed?.displayName ?? '' })}
   {onclose}
 >
-  {#snippet top()}<div class="meta from"><Icon name="git-branch" />{t('newSet.from', { name: query.name })}</div>{/snippet}
+  {#snippet top()}<div class="meta from">{query.name}</div>{/snippet}
   <div class="body">
-    <p class="why">{t(mode === 'add' ? 'newSet.why.add' : mode === 'same' ? 'newSet.why.same' : 'newSet.why.remove', { name: query.name })}</p>
+    <p class="why">{t(mode === 'same' ? 'newSet.why.same' : !onchange ? (mode === 'add' ? 'newSet.why.add.new' : 'newSet.why.remove.new') : mode === 'add' ? 'newSet.why.add' : 'newSet.why.remove', { name: query.name })}</p>
     {#if mode === 'add'}
       <div class="label">{t('newSet.add')}</div>
       <input {...NO_PASSWORD_MANAGER} type="search" data-autofocus class="search" bind:value={search} placeholder={t('query.resources.search')} aria-label={t('query.resources.search')} />
@@ -197,14 +200,6 @@
       {/each}
     </div>
 
-    <div class="fields">
-      <Field label={t('query.name')} hint={named ? undefined : t('query.name.hint')}>
-        <input {...NO_PASSWORD_MANAGER} type="text" bind:value={() => name, (value) => ((name = value), (named = true))} maxlength="120" required />
-      </Field>
-      <Field label={t('query.question')}>
-        <textarea {...NO_PASSWORD_MANAGER} bind:value={question} rows="2" maxlength="500"></textarea>
-      </Field>
-    </div>
     {#if lensLine}
       <div class="lenses">
         <Icon name="aperture" />
@@ -220,9 +215,15 @@
 
   {#snippet foot()}
     {#if failed}<p class="failed" role="alert">{t('newSet.failed')}</p>{/if}
-    <span class="meta stays">{t('newSet.stays', { name: query.name })}</span>
+    <span class="meta stays">{t('newSet.foot')}</span>
     <Button variant="quiet" onclick={onclose}>{t('newSet.cancel')}</Button>
-    <Button disabled={busy || !name.trim() || set.length === 0 || (mode === 'add' && picks.length === 0)} onclick={start}><Icon name="git-branch" />{t('newSet.start')}</Button>
+    <!-- Two buttons side by side (DEC-UX-289): New query starts another, Just add changes this one. -->
+    <Button variant={mode === 'same' || !onchange ? 'primary' : 'outline'} disabled={!ready || set.length === 0} onclick={() => finish('new')}
+      ><Icon name="git-branch" />{mode === 'same' ? t('newSet.start') : t('newSet.new')}</Button
+    >
+    {#if mode !== 'same' && onchange}
+      <Button disabled={!ready} onclick={() => finish('here')}><Icon name={mode === 'remove' ? 'minus' : 'plus'} />{t(mode === 'remove' ? 'newSet.here.remove' : 'newSet.here.add')}</Button>
+    {/if}
   {/snippet}
 </Sheet>
 
@@ -249,10 +250,6 @@
   .set { display: flex; flex-wrap: wrap; gap: 6px; }
   .chip { display: inline-flex; align-items: center; gap: 5px; font-size: var(--text-meta); padding: 3px 9px; border-radius: var(--radius-pill); color: var(--text-primary); background: var(--surface-sub); }
   .chip.removed { text-decoration: line-through; color: var(--text-muted); background: none; outline: 1px dashed var(--tint-active); }
-  .fields { display: grid; gap: 12px; margin-top: 14px; }
-  .fields input, .fields textarea { width: 100%; box-sizing: border-box; font: var(--text-small) var(--font-family); line-height: 1.5; color: var(--text-primary);
-    background: var(--surface-solid); border: 1px solid var(--tint-active); border-radius: var(--radius-field); padding: 8px 10px; }
-  .fields textarea { resize: vertical; }
   .lenses { display: flex; gap: 10px; align-items: flex-start; margin: 14px 0 4px; padding: 12px; border-radius: var(--radius-md); background: var(--surface-sub); font-size: var(--text-small); line-height: 1.5; }
   .lenses :global(.icon) { font-size: 16px; color: var(--text-secondary); margin-top: 2px; }
   .lenses ul { margin: 6px 0 0; padding-left: 18px; color: var(--text-secondary); }

@@ -48,6 +48,7 @@
     recent: 'quick.group.recent',
     commands: 'quick.group.commands',
     flagged: 'quick.group.flagged',
+    projects: 'quick.group.projects',
     resources: 'quick.group.resources',
     collections: 'quick.group.collections',
     lenses: 'quick.group.lenses',

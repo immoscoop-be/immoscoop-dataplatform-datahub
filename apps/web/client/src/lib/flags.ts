@@ -1,11 +1,18 @@
 /**
  * Flagged queries (DEC-UX-236): the queries a User keeps in a row on top of every screen of Query, to work on several
- * side by side and jump between them with Cmd+1 to Cmd+0, Ctrl on Windows and Linux. At most ten, one for each key,
- * kept in their order with the settings of the User, so they follow them to every computer (OP-UX-84).
+ * side by side and jump between them with Cmd+1 to Cmd+0, Ctrl on Windows and Linux. Kept in their order with the
+ * settings of the User, so they follow them to every computer (OP-UX-84). The row holds up to 50, in a Project too:
+ * the first ten keep a key, any further one has none (DEC-UX-283, OP-UX-96).
  */
 
-/** At most ten: an eleventh would have no key (OP-UX-84). */
-export const MOST_FLAGGED = 10;
+/** At most 50 in the row (OP-UX-96). */
+export const MOST_FLAGGED = 50;
+
+/** How many in the row have a key: Cmd+1 to Cmd+9, then Cmd+0 (DEC-UX-283). */
+export const KEYED = 10;
+
+/** Whether the query at a place in the row has a key. */
+export const keyed = (at: number): boolean => at >= 0 && at < KEYED;
 
 /** The key of the query at a place in the row: 1 to 9, then 0 for the tenth. */
 export const digitOf = (at: number): string => String((at + 1) % 10);
