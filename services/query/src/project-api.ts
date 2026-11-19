@@ -2,7 +2,7 @@ import { can } from '@datahub/contracts';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { forbidden, permissionsOf } from './access.js';
 import type { Catalogue, ProjectNotice } from './catalogue.js';
-import { PROJECT_QUERIES, type Project, type Projects } from './projects.js';
+import type { Project, Projects } from './projects.js';
 import type { Queries, Query, Viewer } from './queries.js';
 
 export interface ProjectRouteOptions {
@@ -38,8 +38,9 @@ export function parseProject(body: unknown, creating: boolean): { name?: string;
   }
   if (fields.queries !== undefined) {
     const ids = fields.queries;
-    if (!Array.isArray(ids) || ids.length > PROJECT_QUERIES || !ids.every((id) => typeof id === 'string' && UUID.test(id)) || new Set(ids).size !== ids.length) {
-      return `A Project starts with at most ${PROJECT_QUERIES} queries, each named once by its ID.`;
+    // Any number of them: a Project holds any number of queries (DEC-SR-49).
+    if (!Array.isArray(ids) || !ids.every((id) => typeof id === 'string' && UUID.test(id)) || new Set(ids).size !== ids.length) {
+      return 'A Project starts with queries, each named once by its ID.';
     }
     result.queries = (ids as string[]).map((id) => id.toLowerCase());
   }
@@ -218,16 +219,15 @@ export async function projectRoutes(app: FastifyInstance, options: ProjectRouteO
     return { left, deleted: left === 0 };
   });
 
-  // A query put in the Project, at its end, out of any other (OP-UX-93); only a query the User writes.
+  // A query put in the Project, at its end, out of any other (OP-UX-93); only a query the User writes. A Project holds
+  // any number of queries, so it is never full (DEC-SR-49).
   app.put<{ Params: { id: string; queryId: string } }>('/projects/:id/queries/:queryId', async (request, reply) => {
     if (!can(permissionsOf(request), 'queries.make')) return forbidden(reply, 'queries.make', NEEDS_QUERIES);
     const project = await member(request, reply);
     if (!project) return reply;
     const query = UUID.test(request.params.queryId) ? await queries.get(request.params.queryId.toLowerCase()) : undefined;
     if (!query || query.kind !== 'query' || !(await writable(request, query))) return reply.code(404).send({ error: 'not_found', message: 'There is no such query, or you do not write it.' });
-    if (!(await projects.addQuery(project.id, query.id, viewer(request)))) {
-      return reply.code(409).send({ error: 'full', message: `A Project holds at most ${PROJECT_QUERIES} queries.` });
-    }
+    await projects.addQuery(project.id, query.id, viewer(request));
     return { added: true };
   });
 
@@ -240,11 +240,11 @@ export async function projectRoutes(app: FastifyInstance, options: ProjectRouteO
     return { removed };
   });
 
-  // One order for everyone in it, and so one key for each query (OP-UX-95).
+  // One order for everyone in it, and so one key for each of its first ten queries (OP-UX-95), of any number (DEC-SR-49).
   app.put<{ Params: { id: string }; Body: unknown }>('/projects/:id/order', async (request, reply) => {
     const ids = ((request.body ?? {}) as Record<string, unknown>).queries;
-    if (!Array.isArray(ids) || ids.length > PROJECT_QUERIES || !ids.every((id) => typeof id === 'string' && UUID.test(id))) {
-      return reply.code(400).send({ error: 'invalid_request', message: `The order is a list of at most ${PROJECT_QUERIES} queries, by their ID.` });
+    if (!Array.isArray(ids) || !ids.every((id) => typeof id === 'string' && UUID.test(id))) {
+      return reply.code(400).send({ error: 'invalid_request', message: 'The order is a list of queries, by their ID.' });
     }
     const project = await member(request, reply);
     if (!project) return reply;

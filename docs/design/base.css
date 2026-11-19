@@ -592,6 +592,11 @@ button.ln-fold i { transition: transform 200ms ease; }
    (Proposal) */
 .result-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
 .result-head h2 { font-size: var(--text-body); font-weight: var(--weight-medium); margin: 0; }
+/* Copy as JSON and Copy as CSV, in the upper right corner of the result (DEC-UX-292) */
+.result-copy { margin-left: auto; display: inline-flex; gap: 4px; flex-shrink: 0; }
+.result-head:has(.result-copy:not([hidden])) { flex-wrap: nowrap; }
+.result-head:has(.result-copy:not([hidden])) > .meta { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.result-copy[hidden] { display: none; }
 .rgrid-scroll { overflow: auto; max-height: min(620px, calc(100vh - 220px)); border-radius: var(--radius-md); outline: 1px solid var(--tint-active); background: var(--surface-solid); }
 .rgrid-scroll:focus-visible { outline: 2px solid var(--text-secondary); }
 .rgrid { table-layout: fixed; border-collapse: separate; border-spacing: 0; width: auto; font-size: var(--text-small); font-variant-numeric: tabular-nums; }

@@ -10,6 +10,7 @@ import { fieldTools } from './fields.js';
 import { lensTools } from './lenses.js';
 import { messageTools } from './messages.js';
 import { permitsOf } from './permits.js';
+import { projectTools } from './projects.js';
 import { queryTools } from './queries.js';
 import { resourceTools } from './resources.js';
 import { registerView } from './view.js';
@@ -160,6 +161,7 @@ export function createMcpServer(user: AccessTokenClaims, options: ServerOptions)
   fieldTools(context);
   messageTools(context);
   queryTools(context);
+  projectTools(context);
   lensTools(context);
   registerView(server, options.viewHtml, options.serverUrl);
   return server;

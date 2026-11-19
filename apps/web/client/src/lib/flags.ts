@@ -1,11 +1,11 @@
 /**
  * Flagged queries (DEC-UX-236): the queries a User keeps in a row on top of every screen of Query, to work on several
  * side by side and jump between them with Cmd+1 to Cmd+0, Ctrl on Windows and Linux. Kept in their order with the
- * settings of the User, so they follow them to every computer (OP-UX-84). The row holds up to 50, in a Project too:
- * the first ten keep a key, any further one has none (DEC-UX-283, OP-UX-96).
+ * settings of the User, so they follow them to every computer (OP-UX-84). The row holds up to 50 flagged queries, and
+ * in a Project all its queries (DEC-SR-49): the first ten keep a key, any further one has none (DEC-UX-283, OP-UX-96).
  */
 
-/** At most 50 in the row (OP-UX-96). */
+/** At most 50 flagged queries in the row (OP-UX-96); a Project has no limit (DEC-SR-49). */
 export const MOST_FLAGGED = 50;
 
 /** How many in the row have a key: Cmd+1 to Cmd+9, then Cmd+0 (DEC-UX-283). */

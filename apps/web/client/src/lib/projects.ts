@@ -6,11 +6,8 @@ import type { Session } from './session.js';
 /**
  * Projects (FR-SR-63, DEC-UX-282): a set of queries Users work on together, alone or with colleagues. Its queries are
  * the row on top of Query while the User works in it (OP-UX-94); a query is in one Project at most (OP-UX-93), in one
- * order for everyone in it (OP-UX-95), 50 at most (OP-UX-96).
+ * order for everyone in it (OP-UX-95), as many as the work needs (DEC-SR-49).
  */
-
-/** At most this many queries in a Project, as in the row on top (OP-UX-96). */
-export const MOST_IN_PROJECT = 50;
 
 /** A Project as the panel and "Work in" list it (DEC-UX-285). */
 export interface ProjectItem {
@@ -130,7 +127,7 @@ export function createProjects(config: Config, session: Pick<Session, 'accessTok
     async removeMember(id: string, userId: string): Promise<{ left: number; deleted: boolean }> {
       return (await (await call(`${project(id)}/members/${encodeURIComponent(userId)}`, { method: 'DELETE' })).json()) as { left: number; deleted: boolean };
     },
-    /** Puts a query at the end of it, out of any other (OP-UX-93); refused as full at 50. */
+    /** Puts a query at the end of it, out of any other (OP-UX-93); a Project holds any number (DEC-SR-49). */
     async addQuery(id: string, queryId: string): Promise<void> {
       await call(`${project(id)}/queries/${encodeURIComponent(queryId)}`, { method: 'PUT' });
     },

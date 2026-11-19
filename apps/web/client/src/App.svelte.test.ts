@@ -3630,6 +3630,13 @@ async function quickRow(title: string): Promise<HTMLElement> {
   if (!row) throw new Error(`No row ${title}`);
   return row;
 }
+/** The titles of the rows of the quick window once these words are typed. */
+async function quickTitles(words: string): Promise<string[]> {
+  await fireEvent.keyDown(document.body, { key: 'k', code: 'KeyK', ctrlKey: true });
+  const quick = within(await screen.findByRole('dialog', { name: 'Snelvenster' }));
+  await fireEvent.input(quick.getByRole('combobox'), { target: { value: words } });
+  return quick.getAllByRole('option').map((option) => option.querySelector('.title')?.textContent ?? '');
+}
 const closeQuick = async () => {
   await fireEvent.keyDown(screen.getByRole('combobox', { name: 'Snelvenster' }), { key: 'Escape' });
   await vi.waitFor(() => expect(screen.queryByRole('dialog', { name: 'Snelvenster' })).toBeNull());
@@ -3979,6 +3986,37 @@ describe('Query', () => {
     await vi.waitFor(() => expect(main.getByRole('radio', { name: /Geschiedenis/ }).getAttribute('aria-checked')).toBe('true'));
     await quickDo('resultaat tonen');
     await vi.waitFor(() => expect(main.getByRole('radio', { name: /Resultaat/ }).getAttribute('aria-checked')).toBe('true'));
+  });
+
+  it('copies the first 100 rows of the result as JSON or CSV from its upper right corner, also from another page (DEC-UX-292)', async () => {
+    const writeText = vi.fn(async (_text: string) => undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    const calls = serve({ queries: [{ ...QUERY, lastRun: RUN, runs: 1, lastRunAt: RUN.startedAt }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const json = await main.findByRole('button', { name: /Kopieer als JSON/ }, { timeout: 3000 });
+    expect(json.getAttribute('title')).toBe('Kopieert de eerste 100 van 210 rijen als JSON, met de namen van de velden');
+    await fireEvent.click(json);
+    const [first, second] = RUN.columns.map((column) => column.name);
+    await vi.waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
+    expect(JSON.parse(writeText.mock.calls[0]![0])).toEqual([
+      { [first!]: PAGE.rows[0]![0], [second!]: Number(PAGE.rows[0]![1]) },
+      { [first!]: PAGE.rows[1]![0], [second!]: null },
+    ]);
+    expect(await screen.findByText('De eerste 2 van 210 rijen gekopieerd als JSON')).toBeTruthy();
+    // On another page, the first 100 rows all the same, read again from the same run.
+    await fireEvent.click(main.getByRole('button', { name: /Volgende pagina/ }));
+    await main.findByText('2026-08-03', {}, { timeout: 3000 });
+    const pages = calls.filter((call) => call.path === `/runs/${RUN.ref}/rows?page=1`).length;
+    await fireEvent.click(main.getByRole('button', { name: /Kopieer als CSV/ }));
+    await vi.waitFor(() => expect(writeText).toHaveBeenCalledTimes(2));
+    expect(writeText.mock.calls[1]![0]).toBe(`${first},${second}\r\n${PAGE.rows[0]!.join(',')}\r\n${PAGE.rows[1]![0]},`);
+    expect(calls.filter((call) => call.path === `/runs/${RUN.ref}/rows?page=1`).length).toBe(pages + 1);
+    // And from the quick window, as its buttons do.
+    const row = await quickRow('Kopieer het resultaat als CSV');
+    expect(row.textContent).toContain('de eerste 100 van 210 rijen, van uitvoering 1');
+    await closeQuick();
   });
 
   it('greys Make it a Lens in the quick window on a Resource not published yet, with why (DEC-UX-239, DEC-UX-218)', async () => {
@@ -4676,6 +4714,53 @@ describe('Query', () => {
     const made = calls.find((call) => call.method === 'POST' && call.path === '/queries')?.body as { name: string; resources: string[]; project: string };
     expect(made).toMatchObject({ resources: [], project: 'p1' });
     expect(made.name).toMatch(/^Nieuwe query, /);
+  });
+
+  it('starts an empty query in each Project from the quick window, and the User then works in it (DEC-UX-293)', async () => {
+    const credit = { id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: ['q1'] };
+    const partner = { id: 'p2', name: 'Partner review', description: '', members: [{ id: ME_ID, name: ME.name }], queries: [] };
+    const calls = serve({ queries: [{ ...QUERY }], projects: [credit, partner], settings: { 'query.project': 'p2', 'query.flagged': [] } });
+    open('/collections');
+    render(App, { config: CONFIG });
+    await screen.findByRole('complementary', { name: 'Collections' });
+    // On every screen: New query, and New query in each Project, the one worked in first; no blank query for a business analyst.
+    await vi.waitFor(() => expect(calls.some((call) => call.path === '/projects')).toBe(true));
+    const shown = await quickTitles('nieuwe');
+    expect(shown).toContain('Nieuwe query');
+    expect(shown.filter((title) => title.startsWith('Nieuwe query in '))).toEqual(['Nieuwe query in Partner review', 'Nieuwe query in Credit leads Q4']);
+    expect(shown).not.toContain('Nieuwe lege query');
+    await closeQuick();
+    await quickDo('nieuwe query in credit');
+    await vi.waitFor(() => expect(location.pathname).toBe('/query/q-made'));
+    const made = calls.find((call) => call.method === 'POST' && call.path === '/queries')?.body as { name: string; resources: string[]; project: string };
+    expect(made).toMatchObject({ resources: [], project: 'p1', sql: '' });
+    expect(made.name).toMatch(/^Nieuwe query, /);
+    expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/query.project', body: { value: 'p1' } });
+  });
+
+  it('offers a power user a blank query in no Project from the quick window (DEC-UX-293, DEC-SR-46)', async () => {
+    const calls = serve({ as: 'admin', queries: [{ ...QUERY }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    await screen.findByRole('main');
+    expect(await quickTitles('nieuwe lege')).toContain('Nieuwe lege query');
+    await closeQuick();
+    await quickDo('nieuwe lege query');
+    await vi.waitFor(() => expect(location.pathname).toBe('/query/q-made'));
+    const made = calls.find((call) => call.method === 'POST' && call.path === '/queries')?.body as Record<string, unknown>;
+    expect(made).toMatchObject({ resources: [], sql: '' });
+    expect(made).not.toHaveProperty('project');
+  });
+
+  it('adds a query to a Project of 50 already: a Project has no limit, unlike the flagged queries (DEC-SR-49)', async () => {
+    const many = Array.from({ length: 50 }, (_, at) => ({ ...QUERY, id: `f${String(at).padStart(2, '0')}`, name: `Query ${at}` }));
+    const credit = { id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: many.map((query) => query.id) };
+    const calls = serve({ queries: [{ ...QUERY }, ...many], projects: [credit], settings: { 'query.project': 'p1', 'query.flagged': [] } });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    await screen.findByRole('main');
+    await quickDo('toevoegen aan credit');
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/projects/p1/queries/q1', body: undefined }));
   });
 
   it('takes a Resource out of the query itself with Just take it out, which stays open (FR-SR-67, DEC-SR-48)', async () => {

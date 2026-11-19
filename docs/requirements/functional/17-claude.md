@@ -38,6 +38,7 @@ In library terms: Claude is an assistant in the reading room who carries the lib
 - <a id="dec-cl-20"></a>**DEC-CL-20** · Claude writes the Known Gaps of a Resource one by one, with their scope, as the web app does: a period, fields and rows where the gap holds ([FR-RC-24](05-resource-card.md#fr-rc-24)). Changing the text of a gap keeps its scope and who added it. The card tool no longer takes the Known Gaps as a list of texts. *Decided on 2026-11-17, by Max, who saw that "whenever gaps are being created through the MCP … it isn't filling in any of the" scopes; the tool for one gap at a time was Claude's proposal, which Max agreed to.*
 - <a id="dec-cl-21"></a>**DEC-CL-21** · Claude runs a Lens, and its result shows in an MCP App with its Parameters as on the page of the Lens: Claude chooses their values from the question, and the User can change them in the MCP App and run it again, as in the Preview ([FR-CL-09](#fr-cl-09)). A query keeps the MCP App without an editor ([FR-CL-21](#fr-cl-21), [OP-CL-09](#op-cl-09)). *Decided on 2026-11-18, by Max: "the mcp server does not have the run lens function. Can you implement it pls? Also including the card"; on its Parameters: "Editable, like Preview".*
 - <a id="dec-cl-22"></a>**DEC-CL-22** · Claude may suggest the Key Fields of a Resource and a Business Description for its fields, and shows them in one MCP App where the User ticks, edits and saves ([FR-CL-38](#fr-cl-38), [DEC-UX-281](../../design/principles.md#dec-ux-281)): one card for both, Key Fields and descriptions; a suggestion only for a field that has no Business Description, as a text on the card is kept; and to suggest, Claude reads the fields, their types, their descriptions from dbt, the Business Description and grain of the Resource and, where it may, a small Preview of its rows: only when the Permission group of the User lets Claude read rows, and a Preview runs without an approval, up to 100 MB. Otherwise it suggests from the names and descriptions alone, and says so. Only the click of the User on "Save to Data Hub" writes, never Claude ([DEC-CL-07](#dec-cl-07)). *Decided on 2026-11-18, by Max: "when describing a resource trough the mcp, is it possible to 'ask claude' to do a suggestion on which fields to declare as important and create a description for each field BUT to visualize all this in a card and enable the user to check/uncheck fields as important and to 'edit' the description claude has suggested? I think this is much user friendly instead of typing it"; then, of the choices put to him: one card for both, Key Fields and descriptions; a suggestion only for a field without a description, as a text on the card is kept; and Claude may also read a small Preview of rows.*
+- <a id="dec-cl-23"></a>**DEC-CL-23** · Claude sets up and manages a Project for the User: it makes one, makes queries in it, adds a query of the User to it or moves one there from another Project, takes one out, renames and describes it and orders its queries ([FR-CL-39](#fr-cl-39)). Sharing a Project with colleagues, taking someone out of it, leaving it and deleting it stay with the User in Data Hub: each tells or changes it for others ([FR-SR-65](04-stacks-and-resources.md#fr-sr-65), [FR-SR-66](04-stacks-and-resources.md#fr-sr-66)). *Decided on 2026-11-19, by Max: "add on the mcp the ability to add queries to a project (i want claude to do so)", and "when I analyze a project … there are a lot of queries that we need to run, and what I want is that, within this analysis, Claude is able to set up and manage an entire project"; of the tools put to him, all four: add or move a query, make a query in a Project, take a query out, make a new Project. Leaving sharing and deleting to the User is proposed.*
 
 ## Terms
 
@@ -163,6 +164,25 @@ Free SQL over the Resources a User sees ([FR-SR-26](04-stacks-and-resources.md#f
 | query `PUT` and `DELETE /queries/:id/hidden` | Hiding a query from the panel of Query, and showing it again | A matter of the panel of Query |
 | query `GET /queries/days` | How many queries each day holds | The periods and chips of the panel of Query |
 | query and catalogue `/internal/…` | Calls between services and from Cloud Scheduler | No User calls them |
+
+### Projects
+
+A Project keeps the queries of one piece of work together ([FR-SR-63](04-stacks-and-resources.md#fr-sr-63)); Claude sets one up and keeps the queries of an analysis in it ([FR-CL-39](#fr-cl-39), [DEC-CL-23](#dec-cl-23)).
+
+| The User asks | Tool | Endpoint | Who | Answer |
+| --- | --- | --- | --- | --- |
+| "Which projects am I in?" | `list_projects` | query `GET /projects` | Who may make queries | Text |
+| "What is in Credit leads Q4?" | `get_project` | query `GET /projects/:id` | Who is in it | Text |
+| "Set up a project for this analysis" | `create_project` | query `POST /projects` | Who may make queries | Text |
+| "Make a query for it in the project" | `create_query` with `project` | query `POST /queries` | Who is in it | Text |
+| "Put that query in the project" | `add_query_to_project` | query `GET /queries/:id`, `PUT /projects/:id/queries/:queryId` | Who is in it, for a query they write | Text |
+| "Take it out of the project" | `remove_query_from_project` | query `DELETE /projects/:id/queries/:queryId` | Who is in it | Text |
+| "Rename it", "put the funnel queries first" | `update_project` | query `PATCH /projects/:id`, `PUT /projects/:id/order` | Who is in it | Text |
+
+| Endpoint | What it does | Why not through the MCP |
+| --- | --- | --- |
+| query `PUT` and `DELETE /projects/:id/members/:userId` | Sharing a Project with a colleague, taking someone out of it, and leaving it | It tells colleagues, and changes who works on it: the User does it on its page ([DEC-CL-23](#dec-cl-23)) |
+| query `DELETE /projects/:id` | Deleting a Project for everyone in it | It is gone for all of them: the User does it on its page |
 
 ## Lenses through the MCP
 
@@ -542,6 +562,15 @@ At the steps Pitfalls and Known Gaps of the Owner Journey, the ⓘ after the tit
 When the User describes the fields of a Resource they may describe, Claude suggests which fields are Key Fields and a Business Description for every field that has none, and shows them with `suggest_fields` in one MCP App: a row per field with its box "Key Field", its name, type and description from dbt, and its Business Description to edit, marked as suggested, on the card or edited ([DEC-UX-281](../../design/principles.md#dec-ux-281)). Nothing is written until the User clicks "Save to Data Hub" in the card, which writes the Key Fields and the descriptions as theirs, in the history with their name, with what the card showed as before: a field a colleague described meanwhile is not overwritten, and the card asks which text it keeps. Claude is told what was saved, and goes on, as at the steps Key Fields and Fields of the Owner Journey, where `guide_owner_journey` has Claude offer the card ([FR-CL-32](#fr-cl-32)). To suggest, Claude may read a small Preview of the Resource only where [DEC-CL-22](#dec-cl-22) lets it, and the card says what the suggestions are based on.
 
 **Makes easy:** describing every field of a table in one go, by reading, ticking and correcting instead of typing. **Makes hard:** a suggestion saved unread over a text on the card, and a write the User did not click.
+
+<a id="fr-cl-39"></a>
+### FR-CL-39 · Claude sets up and manages a Project of the User
+
+**Status:** Implemented · **Source:** Max, 2026-11-19 ([DEC-CL-23](#dec-cl-23))
+
+For a User who may make queries, Claude lists the Projects they are in, reads one with its queries in their order and who is in it, and, where the User asks, sets one up for an analysis: it makes a Project with a name and a sentence on what it is for, makes its queries in it with `create_query`, an empty one too, at the end of its row, adds a query the User writes, renames and describes it, puts its queries in order and takes one out, which stays with whoever made it. A query is in one Project at most: adding it to another moves it, and Claude says so to the User before it does, naming the Project it leaves. A query locked to the User in a Project, as it reads a Resource they may not see, shows only what the page of the Project shows of it ([FR-SR-65](04-stacks-and-resources.md#fr-sr-65)). Every answer links to the page of the Project in Data Hub, where the User shares it with colleagues, leaves it or deletes it: Claude does none of these ([DEC-CL-23](#dec-cl-23)). A Project holds any number of queries ([DEC-SR-49](04-stacks-and-resources.md#dec-sr-49)).
+
+**Makes easy:** keeping the many queries of one analysis together while Claude makes them, and finding them again in Data Hub under the name of that analysis. **Makes hard:** a query moved out of another Project without the User knowing, and colleagues added to or told about a Project by Claude rather than by the User.
 
 ## Edge cases
 
