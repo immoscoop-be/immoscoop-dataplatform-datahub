@@ -59,6 +59,7 @@ In library terms: a book is only in the library once the librarian registers it.
 
 - <a id="dec-sr-47"></a>**DEC-SR-47** · A query is no longer only its maker's: in a Project, everyone in it may open, change and run it, each with their own rights, and a query that reads a Resource someone may not see stays locked to them ([FR-SR-65](#fr-sr-65), [DEC-UX-286](../../design/principles.md#dec-ux-286)). Outside a Project, a query is still its maker's, and seen by who sees the queries of others ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)). *Decided on 2026-11-19, by Max: "a project can be shared amoung other users (we don't care if they have query rights but we signal it)" and "anybody who has access to the query has full edit privileges".*
 - <a id="dec-sr-48"></a>**DEC-SR-48** · The Resources of a query change in it: adding or taking out a Resource changes the query, and starting a new query with the new set is no longer the required route ([FR-SR-67](#fr-sr-67), [DEC-UX-287](../../design/principles.md#dec-ux-287), [DEC-UX-289](../../design/principles.md#dec-ux-289)). Each run keeps the Resources it read. *Decided on 2026-11-19, by Max: "when adding a resource or table to a query, the 'start a new query' isn't the required route any more", and "it should be both buttons 'new query' or 'just add'".*
+- <a id="dec-sr-49"></a>**DEC-SR-49** · A Project holds any number of queries: the limit of 50 goes, so that the queries of a whole analysis, many of them made by Claude, sit together in one Project ([FR-SR-63](#fr-sr-63), [FR-CL-39](17-claude.md#fr-cl-39)). Its row on top holds them all, the first ten with a key; the User's own flagged queries, in no Project, stay at 50 ([FR-SR-64](#fr-sr-64)). *Decided on 2026-11-19, by Max: "Now we've limited to 50 queries in a project. Remove the limit."; it replaces the limit of 50 of [OP-UX-96](../../design/principles.md#op-ux-96) for a Project.*
 
 Further decisions on using a Resource are under [Using a Resource](#using-a-resource).
 
@@ -527,12 +528,14 @@ A User makes a Project, a set of queries with a name and a sentence on what it i
 
 **Makes easy:** keeping the queries of one piece of work together, finding them again by the name of that work, and coming back to all of them at once. **Makes hard:** a piece of work scattered over the history, and the same query counted in two pieces of work.
 
+*Note of 2026-11-19, later: a Project holds any number of queries ([DEC-SR-49](#dec-sr-49)), and Claude sets one up and keeps its queries in it ([FR-CL-39](17-claude.md#fr-cl-39)).*
+
 <a id="fr-sr-64"></a>
 ### FR-SR-64 · The row on top holds what the User works in, more than ten
 
 **Status:** Implemented · **Source:** Max, 2026-11-19 ([DEC-UX-282](../../design/principles.md#dec-ux-282), [DEC-UX-283](../../design/principles.md#dec-ux-283), [DEC-UX-284](../../design/principles.md#dec-ux-284), [OP-UX-94](../../design/principles.md#op-ux-94), [OP-UX-95](../../design/principles.md#op-ux-95), [OP-UX-96](../../design/principles.md#op-ux-96)) · **Screens:** [query](../../design/screens/query.html)
 
-The row on top of Query holds the queries of the Project the User works in, or, in none, their own flagged queries ([FR-SR-60](#fr-sr-60)); a switch at its start names which and changes it. The User works in one Project at a time, or none, kept with their settings on every computer, and it changes only when they choose ([OP-UX-94](../../design/principles.md#op-ux-94)). In a Project, flagging a query adds it to the Project, and unflagging removes it. The row holds up to 50 queries: the first ten keep Cmd+1 to Cmd+0, any further one has no key, and "All 14" at its end lists them all ([OP-UX-96](../../design/principles.md#op-ux-96)). The order of a Project is one for everyone in it ([OP-UX-95](../../design/principles.md#op-ux-95)). The row has no button for the quick window.
+The row on top of Query holds the queries of the Project the User works in, or, in none, their own flagged queries ([FR-SR-60](#fr-sr-60)); a switch at its start names which and changes it. The User works in one Project at a time, or none, kept with their settings on every computer, and it changes only when they choose ([OP-UX-94](../../design/principles.md#op-ux-94)). In a Project, flagging a query adds it to the Project, and unflagging removes it. The row holds up to 50 queries: the first ten keep Cmd+1 to Cmd+0, any further one has no key, and "All 14" at its end lists them all ([OP-UX-96](../../design/principles.md#op-ux-96)). *Note of 2026-11-19, later: in a Project the row holds all its queries, with no limit; only the flagged queries stay at 50 ([DEC-SR-49](#dec-sr-49)).* The order of a Project is one for everyone in it ([OP-UX-95](../../design/principles.md#op-ux-95)). The row has no button for the quick window.
 
 **Makes easy:** switching from one piece of work to another with all its queries at hand, and saying "Cmd+3" to a colleague in the same Project. **Makes hard:** losing the keys of the queries that matter most to a long row, and a row that changes under the User without their choosing.
 
@@ -580,6 +583,26 @@ Adding a Resource or a table to a query, or taking a Resource out, offers two bu
 The quick window, Cmd+Shift+P or Cmd+K, holds every command of Projects ([FR-SR-61](#fr-sr-61)): on a query, in a Project, Add this query to it or Remove this query from it, Move it there from another, Work in another project, Stop working in it, Open its page and Share it; in none, Flag or Unflag, Add this query to a project and Work in a project; New project on every screen of Query; on the page of a Project, Work in it or Stop, Share it, New query in it, Rename it, Change the order of its queries, Leave it and Delete it. It finds the Projects the User is in.
 
 **Makes easy:** working in Projects from the keyboard. **Makes hard:** a Project command that only the mouse reaches.
+
+*Note of 2026-11-19, later: the quick window also starts a new query in each Project, and a blank one for a power user ([FR-SR-71](#fr-sr-71)).*
+
+<a id="fr-sr-70"></a>
+### FR-SR-70 · The first 100 rows of a result are copied as JSON or CSV
+
+**Status:** Implemented · **Source:** Max, 2026-11-19 ([DEC-UX-292](../../design/principles.md#dec-ux-292)) · **Screens:** [query](../../design/screens/query.html)
+
+In the upper right corner of the result of a query in Query, "Copy as JSON" and "Copy as CSV" put the first 100 rows of the result shown on the clipboard, with the names of its fields, whichever page shows, and a toast says how many of how many rows were copied. JSON is a list with an object a row, numbers, true and false, lists and records as JSON, and a NUMERIC as text; CSV has a header row, a comma between values, quotes where a value needs them and an empty value for null. The quick window has both, as commands of the query ([FR-SR-61](#fr-sr-61)). Nothing beyond the first 100 rows is copied: the rest is read page by page in Data Hub, and a structural export goes to the Data Team ([FR-CH-01](13-channels.md#fr-ch-01), [FR-CH-02](13-channels.md#fr-ch-02)). The Preview of a Resource and the result of a Lens are not copied this way ([DEC-UX-120](../../design/principles.md#dec-ux-120), [DEC-LE-17](09-lenses.md#dec-le-17)).
+
+**Makes easy:** taking a handful of rows into a message, a test or a script, in a format a tool reads, without retyping them. **Makes hard:** moving a whole table out of Data Hub by the clipboard, and a copy that loses digits or the names of its fields.
+
+<a id="fr-sr-71"></a>
+### FR-SR-71 · The quick window starts a new query, blank for a power user and in each Project
+
+**Status:** Implemented · **Source:** Max, 2026-11-19 ([DEC-UX-293](../../design/principles.md#dec-ux-293)) · **Screens:** [query](../../design/screens/query.html)
+
+On every screen, the quick window offers, to who may make queries: "New query", which opens the screen of a new query, to choose its Resources with the Lenses on them first ([FR-SR-47](#fr-sr-47)); and "New query in" each Project the User is in, the one they work in first, which makes an empty query at the end of its row, opens it at once and makes it the Project they work in ([FR-SR-68](#fr-sr-68)). Only to a power user ([FR-SR-56](#fr-sr-56)), it also offers "New blank query": an empty query in no Project, named "New query" and the date, without Resources, opened at once, for SQL on the tables Data Hub knows or to add a Resource to.
+
+**Makes easy:** starting the next query from the keyboard, where the work is. **Makes hard:** a blank query outside any Project for a User whose query must start from Resources and the Lenses on them.
 
 <a id="fr-sr-35"></a>
 ### FR-SR-35 · A new Resource waits for a Collection

@@ -34,12 +34,14 @@
   them here); beside the list, the selected one shows the type of its field and its descriptions (DEC-UX-115). The result is a grid like that of BigQuery: the row number, then a column per field with its
   type under its name, a row on one line, alternate rows lightly shaded; the edge of a column head makes it narrower or wider, a double click fits it;
   100 rows a page, read from the same run (FR-SR-51); the menu of a column sorts this page only; a click selects a cell,
-  Ctrl+C copies it; null in grey. Every result carries its Query ID (DEC-UX-72).
+  Ctrl+C copies it; null in grey. Every result carries its Query ID (DEC-UX-72). In the upper right corner of the result,
+  Copy as JSON and Copy as CSV copy its first 100 rows, whichever page shows, with the names of its fields; a toast says
+  how many were copied (DEC-UX-292).
   The icon of each query in the panel says whether it ran on Resources (a table) or on a Lens (an aperture); "All" is for the Data Team only.
   The switch "Query" shows it Broken (DEC-UX-160, FR-SR-53, DEC-UX-81): a table or column it reads no longer exists, so
   Run is off, a callout on top names what is missing, and the query has the red dot in the panel; its SQL can still be
   changed, and a change that runs makes it work again, as does the return of what it reads.
-  Requirements: FR-SR-69, FR-SR-68, FR-SR-67, FR-SR-64, FR-SR-63, FR-SR-62, FR-SR-61, FR-SR-60, FR-SR-59, FR-SR-58, FR-SR-57, FR-SR-56, FR-SR-53, FR-SR-36, FR-SR-37, FR-SR-40, FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-45, FR-SR-47, FR-SR-48, FR-SR-51, FR-LN-05, FR-LN-06, FR-LE-07, FR-LE-08, FR-LE-16, FR-RC-18
+  Requirements: FR-SR-71, FR-SR-70, FR-SR-69, FR-SR-68, FR-SR-67, FR-SR-64, FR-SR-63, FR-SR-62, FR-SR-61, FR-SR-60, FR-SR-59, FR-SR-58, FR-SR-57, FR-SR-56, FR-SR-53, FR-SR-36, FR-SR-37, FR-SR-40, FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-45, FR-SR-47, FR-SR-48, FR-SR-51, FR-LN-05, FR-LN-06, FR-LE-07, FR-LE-08, FR-LE-16, FR-RC-18
   Decisions: DEC-UX-290, DEC-UX-289, DEC-UX-288, DEC-UX-287, DEC-UX-286, DEC-UX-285, DEC-UX-284, DEC-UX-283, DEC-UX-282, DEC-UX-238, DEC-UX-237, DEC-UX-236, DEC-UX-235, DEC-UX-234, DEC-UX-225, DEC-UX-224, DEC-UX-223, DEC-UX-222, DEC-UX-221, DEC-UX-220, DEC-UX-219, DEC-UX-218, DEC-UX-163, DEC-UX-17, DEC-UX-20, DEC-UX-70, DEC-UX-71, DEC-UX-72, DEC-UX-73, DEC-UX-74, DEC-UX-76, DEC-UX-77, DEC-UX-88, DEC-UX-97, DEC-UX-99, DEC-UX-115, DEC-SR-29, DEC-SR-35, DEC-LN-01.
   Not in v1: the label "Claude" on a query in the panel (FR-SR-26, DEC-CH-02); leave it out.
   "Make it a lens" turns the query into a Lens (FR-LE-07, DEC-UX-25). The query stays, used as the Lens: then "Update the lens"
@@ -398,7 +400,13 @@
    <button class="seg" data-target="history" role="tab" aria-selected="false" id="hist-tab">History · 14 runs</button>
   </div>
   <span class="meta" data-pane-group="rtab" data-pane="result">2 minutes ago, with <span class="mono">@dateFrom</span> 1 Jan 2026, <span class="mono">@dateTo</span> 25 Oct 2026, <span class="mono">@leadChannel</span> Form</span>
+  <!-- Copy the result, in the upper right corner (DEC-UX-292): its first 100 rows, with the names of its fields -->
+  <span class="result-copy" data-pane-group="rtab" data-pane="result">
+   <button class="btn-quiet" type="button" data-copy-result="json" title="Copies the first 100 of 210 rows as JSON, one object a row"><i class="ph ph-brackets-curly"></i><span>Copy as JSON</span></button>
+   <button class="btn-quiet" type="button" data-copy-result="csv" title="Copies the first 100 of 210 rows as CSV, with a comma and a header row"><i class="ph ph-file-csv"></i><span>Copy as CSV</span></button>
+  </span>
  </div>
+ <div class="moved-toast card" id="copy-toast" role="status" hidden><i class="ph ph-check"></i><span></span></div>
  <div data-pane-group="rtab" data-pane="result" id="result-pane">
   <span data-group="hprev" hidden><button data-target="off"></button><button data-target="p13"></button><button data-target="p12"></button><button data-target="p11"></button><button data-target="p10"></button></span>
   <div class="size-state caution hist-preview" data-pane-group="hprev" data-pane="p13" hidden><i class="ph-fill ph-eye"></i><p><b>Preview of run 13, today, 08:05.</b> Its SQL and values, read only; the query has not changed. Apply takes them into the query, and its next run is a new variation.</p><button class="btn-quiet outline" type="button" data-go="hprev:off">Close</button><button class="btn-primary" type="button" data-go="hprev:off"><i class="ph ph-arrow-counter-clockwise"></i>Apply</button></div>
@@ -1049,6 +1057,9 @@
           ? { icon: 'ph ph-table', title: 'Show the result', meta: 'of run 14', click: '[data-target="result"][role="tab"]', words: 'result rows grid tab' }
           : { icon: 'ph ph-clock-counter-clockwise', title: 'Show the history', meta: '14 runs, each a variation', click: '#hist-tab', words: 'history runs earlier tab' },
         { icon: 'ph ph-copy', title: 'Copy the Query ID', meta: 'q-20261027-4c2e1a, of run 14', click: '.query-id .icon-btn', words: 'copy id reference ref share' },
+        // The two copy buttons of the result (DEC-UX-292): its first 100 rows
+        { icon: 'ph ph-brackets-curly', title: 'Copy the result as JSON', meta: 'the first 100 of 210 rows, of run 14', click: '[data-copy-result="json"]', words: 'copy json export clipboard rows result' },
+        { icon: 'ph ph-file-csv', title: 'Copy the result as CSV', meta: 'the first 100 of 210 rows, of run 14', click: '[data-copy-result="csv"]', words: 'copy csv export clipboard rows result excel' },
         hidden
           ? { icon: 'ph ph-eye', title: 'Show this query again', meta: 'in your panel', run: () => window.toggleHidden(), words: 'unhide show' }
           : { icon: 'ph ph-eye-slash', title: 'Hide this query', meta: 'from your panel; Hidden shows it again', run: () => window.toggleHidden(), words: 'hide remove' },
@@ -1087,8 +1098,23 @@
     const today = document.querySelector('.q-group.open'), old = document.querySelector('.q-item.current');
     old?.classList.remove('current'); old?.removeAttribute('aria-current');
     today?.querySelector('.q-period')?.insertAdjacentHTML('afterend', `<div class="q-entry"><a class="list-item card q-item current" aria-current="page" href="query.html?empty=1" data-name="new query"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><span class="item-title">${name}</span><span class="meta">Credit leads Q4 · not run yet</span></span></a></div>`);
-    window.rowAdd?.(name);
+    // In the row only in a Project: a blank query is in none
+    if (!new URLSearchParams(location.search).has('blank')) window.rowAdd?.(name);
+    // "New blank query" in the quick window, for a power user (DEC-UX-293): ?empty=1&blank=1, the same empty query in
+    // no Project, written on tables outside Data Hub or given a Resource with the + above.
+    if (new URLSearchParams(location.search).has('blank')) {
+      document.querySelector('.sql-editor .sql-comment').textContent = '-- Write SQL on a table Data Hub knows, or add a Resource with the + above';
+      $('run-note-text').textContent = 'Write the SQL first: this query reads nothing yet.';
+      document.querySelector('.q-item.current .meta').textContent = 'not run yet';
+    }
   }
+  // Copy as JSON and Copy as CSV (DEC-UX-292): the first 100 rows of the result, whichever page shows; the toast says
+  // how many, and of how many.
+  document.querySelectorAll('[data-copy-result]').forEach(b => b.addEventListener('click', () => {
+    const toast = document.getElementById('copy-toast');
+    toast.querySelector('span').textContent = `Copied the first 100 of 210 rows as ${b.dataset.copyResult.toUpperCase()}`;
+    toast.hidden = false; clearTimeout(toast.timer); toast.timer = setTimeout(() => { toast.hidden = true; }, 2500);
+  }));
 </script>
 </body>
 </html>

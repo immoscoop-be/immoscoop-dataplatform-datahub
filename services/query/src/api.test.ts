@@ -1679,6 +1679,28 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
       expect((await call(an, 'GET', `/projects/${projectId}`)).json().project.queries.at(-1).id).toBe(onlyWeekly);
     });
 
+    it('holds any number of queries, more than 50 too, in one order (DEC-SR-49)', async () => {
+      const queries = createQueries(database.db);
+      const week = (n: number) => queries.create({ owner: { id: '102', name: 'Karel Leys' }, name: `Week ${n}`, question: '', resources: [], sql: '' });
+      const many = await Promise.all(Array.from({ length: 51 }, (_, n) => week(n + 1)));
+      const made = await call(karel, 'POST', '/projects', { name: 'Every week of the year', queries: many.map((query) => query.id) });
+      expect(made.statusCode).toBe(201);
+      const big = made.json().project.id as string;
+      expect(made.json().project.queries).toHaveLength(51);
+      // One more put in it, and one more made in it, each at the end of its row.
+      const extra = await week(52);
+      expect((await call(karel, 'PUT', `/projects/${big}/queries/${extra.id}`)).json()).toEqual({ added: true });
+      const empty = await call(karel, 'POST', '/queries', { name: 'Week 53', resources: [], sql: '', project: big });
+      expect(empty.statusCode).toBe(201);
+      const ids: string[] = (await call(karel, 'GET', `/projects/${big}`)).json().project.queries.map((query: { id: string }) => query.id);
+      expect(ids).toHaveLength(53);
+      expect(ids.slice(-2)).toEqual([extra.id, empty.json().query.id]);
+      // Its order names them all.
+      expect((await call(karel, 'PUT', `/projects/${big}/order`, { queries: [...ids].reverse() })).json().queries).toEqual([...ids].reverse());
+      expect((await call(karel, 'GET', '/projects')).json().projects.find((one: { id: string }) => one.id === big)).toMatchObject({ queries: 53 });
+      expect((await call(karel, 'DELETE', `/projects/${big}`)).statusCode).toBe(204);
+    });
+
     it('lets a colleague who cannot run queries in, to read, rename and share, not to change its queries (OP-UX-98)', async () => {
       const lotte = await userOf('108', 'Lotte Dewulf', 'lensUser', undefined, [], [WEEKLY.id]);
       await call(an, 'PUT', `/projects/${projectId}/members/108`, { name: 'Lotte Dewulf' });

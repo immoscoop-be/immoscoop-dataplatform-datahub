@@ -445,7 +445,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
         startedFrom,
         forCollection: fields.forCollection,
       });
-      // At the end of the row of its Project (FR-SR-68); a full Project keeps the query out of it.
+      // At the end of the row of its Project (FR-SR-68), which holds any number of queries (DEC-SR-49).
       if (fields.project) await projects.addQuery(fields.project, query.id, who);
       return reply.code(201).send({ query: await queryView(request, query) });
     } catch (error) {

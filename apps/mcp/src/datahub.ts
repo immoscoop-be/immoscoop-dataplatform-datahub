@@ -90,6 +90,8 @@ export const pages = {
   lens: (id: string) => `/lenses/${encodeURIComponent(id)}`,
   query: (id: string) => `/query/${encodeURIComponent(id)}`,
   newQuery: (resource?: string) => (resource ? `/query/new/${encodeURIComponent(resource)}` : '/query/new'),
+  /** A Project, with its queries in their order (FR-SR-63). */
+  project: (id: string) => `/query/projects/${encodeURIComponent(id)}`,
   message: (id: string) => `/messages/${encodeURIComponent(id)}`,
   learningCard: (number: string) => `/learning/${encodeURIComponent(number)}`,
 };

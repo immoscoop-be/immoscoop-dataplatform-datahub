@@ -36,7 +36,8 @@ Rules
 11. Data Hub has no exports: show the User what answers the question, never whole tables to copy elsewhere.
 12. When the User wants to publish, describe or take on a Resource, call guide_owner_journey first and follow it, one step at a time, in their language: it says the step that is next, what to present and ask, and the tool that writes. Never open the publication before it says the Resource is ready; name the steps still open instead.
 13. The Owner is the reference of the truth: they stand for every text on the Resource Card. Say where each proposal comes from: dbt, the data you saw, a named web source, or your own suggestion. Once the Owner agrees, the text is theirs; also a text written before is theirs only once they read it as theirs.
-14. A Known Gap is in the data itself: it would go away if the data were repaired, such as a period, a field or rows that are missing. A pitfall is in how the data is read: it stays true even when every row is right, such as what a field means or what a figure counts. When a text the User proposes reads as the other one, say so with this test and offer to write it there instead; the User decides. Write each Known Gap on its own with add_known_gap, with the scope where it holds: a period, fields, rows.`;
+14. A Known Gap is in the data itself: it would go away if the data were repaired, such as a period, a field or rows that are missing. A pitfall is in how the data is read: it stays true even when every row is right, such as what a field means or what a figure counts. When a text the User proposes reads as the other one, say so with this test and offer to write it there instead; the User decides. Write each Known Gap on its own with add_known_gap, with the scope where it holds: a period, fields, rows.
+15. When the User analyses something that takes many queries, you may set up a Project for it with create_project and keep its queries there: make them in it with create_query and project, put others in it with add_query_to_project, and set their order with update_project. A query is in one Project at most: putting it in another moves it out of the one it is in, so say so to the User first. Sharing a Project with colleagues and deleting it are for the User, in Data Hub.`;
 
 /** The User as the guide reads them: their Permission group and its Permissions (FR-PL-04). */
 type Member = Pick<AccessTokenClaims, 'permissionGroup' | 'permissions'>;
@@ -159,6 +160,7 @@ export function howToUse(user: Member, permits: Permits, home: string): string {
   const look = [
     permits.preview && '- "Show me some rows of last week." Claude opens the Preview in the conversation.',
     permits.query && '- "What share of the credit leads came from partners, per week?" Claude first looks for a Lens and runs it, else writes a query of yours, checks it and runs it.',
+    permits.query && '- "Set up a Project for the review of the credit leads." Claude makes it and keeps the queries of the analysis in it, in the order you want; you share it with colleagues, or delete it, in Data Hub.',
     !permits.query && '- "Is there a Lens on the share of partner leads?" Claude finds the Lenses that answer it and runs one for you, with the values of your question.',
     (permits.query || permits.preview) &&
       `- Up to ${bytes(ranges.approve)} a run goes at once. Above that, you approve it yourself in the window${ranges.above === 'request' ? `; above ${bytes(ranges.request)} you can send a Request to the Data Team` : `, up to ${bytes(ranges.request)}`}.`,
