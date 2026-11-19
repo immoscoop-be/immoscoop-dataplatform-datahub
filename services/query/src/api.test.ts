@@ -17,6 +17,7 @@ import type { QueryDatabase } from './database.js';
 import { migrations } from './migrations/index.js';
 import { createBeneath } from './preflight.js';
 import { createStorage } from './preview.js';
+import { createProjects } from './projects.js';
 import { createQueries, queryRefOf } from './queries.js';
 
 const url = process.env.DATAHUB_TEST_DATABASE_URL;
@@ -155,10 +156,12 @@ describe('the fields of a query, in a request', () => {
     expect(parseQuery({ forCollection: CREDIT }, false)).toBe('A query has no field forCollection here.');
   });
 
-  it('change at least one of its name, question and SQL, never its Resources (DEC-UX-73)', () => {
+  it('change at least one of its name, question, SQL and Resources, which change in it (DEC-SR-48)', () => {
     expect(parseQuery({ sql: 'select 1' }, false)).toEqual({ sql: 'select 1' });
     expect(parseQuery({}, false)).toBe('Send at least one field to change.');
-    expect(parseQuery({ resources: [SOURCES.id] }, false)).toBe('A query has no field resources here.');
+    expect(parseQuery({ resources: [SOURCES.id] }, false)).toEqual({ resources: [SOURCES.id] });
+    expect(parseQuery({ resources: 'all' }, false)).toBe('A query reads 1 to 10 Resources, each named once by its ID.');
+    expect(parseQuery({ project: SOURCES.id }, false)).toBe('A query has no field project here.');
     expect(parseQuery({ name: ' ' }, false)).toBe('The name has 1 to 120 characters.');
   });
 
@@ -406,6 +409,7 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
       logger: false,
       api: {
         queries: createQueries(database.db),
+        projects: createProjects(database.db),
         lenses: createLenses(database.db),
         catalogue,
         bigquery: fake.bigquery,
@@ -1579,5 +1583,109 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
       expect((await call(dataTeam, 'GET', '/outside-table?key=dbt_prod_staging.stg_oltp__leads')).statusCode).toBe(400);
     });
   });
-});
 
+  describe('Projects: queries worked on together (FR-SR-63 to FR-SR-68, DEC-SR-47, DEC-SR-48)', () => {
+    let projectId: string;
+    let both: string;
+    let onlyWeekly: string;
+
+    it('makes a Project with queries of its maker, and lists it with how many queries and who is in it (FR-SR-63)', async () => {
+      both = (await call(an, 'POST', '/queries', { name: 'Leads per source, Q4', resources: [WEEKLY.id, SOURCES.id] })).json().query.id;
+      onlyWeekly = (await call(an, 'POST', '/queries', { name: 'Weekly leads, Q4', resources: [WEEKLY.id] })).json().query.id;
+      const made = await call(an, 'POST', '/projects', { name: ' Credit leads Q4 ', description: 'The quarterly review.', queries: [both, onlyWeekly] });
+      expect(made.statusCode).toBe(201);
+      projectId = made.json().project.id;
+      expect(made.json().project).toMatchObject({ name: 'Credit leads Q4', description: 'The quarterly review.', madeBy: { id: '101', name: 'An Claes' }, members: [{ id: '101', name: 'An Claes', queriesMade: 2 }] });
+      expect(made.json().project.queries.map((query: { name: string; locked: boolean }) => [query.name, query.locked])).toEqual([
+        ['Leads per source, Q4', false],
+        ['Weekly leads, Q4', false],
+      ]);
+      expect((await call(an, 'GET', '/projects')).json().projects).toMatchObject([{ id: projectId, name: 'Credit leads Q4', queries: 2, members: [{ id: '101', name: 'An Claes' }] }]);
+      // Only queries its maker writes; a name is required.
+      const karels = (await call(karel, 'POST', '/queries', { name: 'Karel alone', resources: [WEEKLY.id] })).json().query.id;
+      expect((await call(an, 'POST', '/projects', { name: 'Not mine', queries: [karels] })).statusCode).toBe(400);
+      expect((await call(an, 'POST', '/projects', { name: ' ' })).statusCode).toBe(400);
+      // The history names the Project of a query (OP-UX-103).
+      expect((await call(an, 'GET', '/queries')).json().queries.find((query: { id: string }) => query.id === both).project).toEqual({ id: projectId, name: 'Credit leads Q4' });
+    });
+
+    it('is shared: who is in it reads, changes and runs its queries, locked where they may not see a Resource (FR-SR-65, OP-UX-97)', async () => {
+      expect((await call(karel, 'GET', `/projects/${projectId}`)).statusCode).toBe(404);
+      expect((await call(an, 'PUT', `/projects/${projectId}/members/102`, { name: 'Karel Leys' })).statusCode).toBe(201);
+      const seenByKarel = (await call(karel, 'GET', `/projects/${projectId}`)).json().project;
+      // Karel does not see Lead sources: that query is locked to him, its name and what he may not see only.
+      expect(seenByKarel.queries[0]).toEqual({ id: both, name: 'Leads per source, Q4', owner: { id: '101', name: 'An Claes' }, lastRun: null, position: 0, locked: true, notSeen: ['Lead sources'] });
+      expect(seenByKarel.queries[1]).toMatchObject({ id: onlyWeekly, locked: false, resources: [{ id: WEEKLY.id, displayName: 'Weekly lead volume' }] });
+      expect((await call(karel, 'GET', `/queries/${both}`)).statusCode).toBe(404);
+      const opened = (await call(karel, 'GET', `/queries/${onlyWeekly}`)).json().query;
+      expect(opened).toMatchObject({ mine: false, editable: true, project: { id: projectId, name: 'Credit leads Q4' } });
+      // He changes and runs it, with his own rights; the run says who ran it.
+      expect((await call(karel, 'PATCH', `/queries/${onlyWeekly}`, { name: 'Weekly leads, Q4, by source' })).statusCode).toBe(200);
+      const ran = await call(karel, 'POST', `/queries/${onlyWeekly}/runs`, { sql: weekly });
+      expect(ran.statusCode).toBe(201);
+      expect(ran.json().run.userName).toBe('Karel Leys');
+      expect(fake.runs.at(-1)?.options).toMatchObject({ labels: { 'datahub-user': '102' } });
+      // A query he ran is in his history, with its Project (OP-UX-103).
+      expect((await call(karel, 'GET', '/queries')).json().queries.find((query: { id: string }) => query.id === onlyWeekly)).toMatchObject({ ownerName: 'An Claes', project: { name: 'Credit leads Q4' } });
+      expect((await call(karel, 'PATCH', `/queries/${both}`, { name: 'Mine now' })).statusCode).toBe(404);
+    });
+
+    it('changes the Resources of a query in it, each run keeping those it read (FR-SR-67, DEC-SR-48)', async () => {
+      const changed = await call(an, 'PATCH', `/queries/${onlyWeekly}`, { resources: [WEEKLY.id, SOURCES.id] });
+      expect(changed.statusCode).toBe(200);
+      expect(changed.json().query.resources.map((resource: { displayName: string }) => resource.displayName)).toEqual(['Weekly lead volume', 'Lead sources']);
+      const runs = (await call(an, 'GET', `/queries/${onlyWeekly}/runs`)).json().runs;
+      expect(runs[0].number).toBe(1);
+      // Only Resources the User sees; Karel no longer reads it now that it reads Lead sources.
+      expect((await call(karel, 'PATCH', `/queries/${onlyWeekly}`, { resources: [WEEKLY.id, SECRET.id] })).statusCode).toBe(404);
+      expect((await call(an, 'PATCH', `/queries/${onlyWeekly}`, { resources: [WEEKLY.id, SECRET.id] })).statusCode).toBe(400);
+      await call(an, 'PATCH', `/queries/${onlyWeekly}`, { resources: [WEEKLY.id] });
+    });
+
+    it('makes an empty query in it, at the end of its row (FR-SR-68)', async () => {
+      const empty = await call(karel, 'POST', '/queries', { name: 'New query, 19 Nov', resources: [], sql: '', project: projectId });
+      expect(empty.statusCode).toBe(201);
+      expect(empty.json().query).toMatchObject({ resources: [], project: { id: projectId }, editable: true });
+      const { queries } = (await call(an, 'GET', `/projects/${projectId}`)).json().project;
+      expect(queries.at(-1)).toMatchObject({ name: 'New query, 19 Nov', owner: { name: 'Karel Leys' } });
+      // Not without a Project, and not in one the User is not in.
+      expect((await call(karel, 'POST', '/queries', { name: 'Empty', resources: [] })).statusCode).toBe(400);
+      expect((await call(mia, 'POST', '/queries', { name: 'Empty', resources: [], project: projectId })).statusCode).toBe(404);
+    });
+
+    it('keeps one order for everyone, and removes a query without asking (OP-UX-95, FR-SR-66)', async () => {
+      const ids = (await call(an, 'GET', `/projects/${projectId}`)).json().project.queries.map((query: { id: string }) => query.id);
+      const ordered = await call(karel, 'PUT', `/projects/${projectId}/order`, { queries: [...ids].reverse() });
+      expect(ordered.json().queries).toEqual([...ids].reverse());
+      expect((await call(an, 'DELETE', `/projects/${projectId}/queries/${onlyWeekly}`)).json()).toEqual({ removed: true });
+      // It stays with An, who made it; Karel no longer reads it.
+      expect((await call(an, 'GET', `/queries/${onlyWeekly}`)).json().query.project).toBeNull();
+      expect((await call(karel, 'GET', `/queries/${onlyWeekly}`)).statusCode).toBe(404);
+      // Put back in, at the end.
+      expect((await call(an, 'PUT', `/projects/${projectId}/queries/${onlyWeekly}`)).json()).toEqual({ added: true });
+      expect((await call(an, 'GET', `/projects/${projectId}`)).json().project.queries.at(-1).id).toBe(onlyWeekly);
+    });
+
+    it('lets a colleague who cannot run queries in, to read, rename and share, not to change its queries (OP-UX-98)', async () => {
+      const lotte = await userOf('108', 'Lotte Dewulf', 'lensUser', undefined, [], [WEEKLY.id]);
+      await call(an, 'PUT', `/projects/${projectId}/members/108`, { name: 'Lotte Dewulf' });
+      expect((await call(lotte, 'GET', `/projects/${projectId}`)).statusCode).toBe(200);
+      expect((await call(lotte, 'PATCH', `/projects/${projectId}`, { name: 'Credit leads, Q4' })).json().project).toMatchObject({ name: 'Credit leads, Q4' });
+      expect((await call(lotte, 'DELETE', `/projects/${projectId}/queries/${onlyWeekly}`)).json()).toMatchObject({ permission: 'queries.make' });
+      expect((await call(lotte, 'PATCH', `/queries/${onlyWeekly}`, { name: 'x' })).json()).toMatchObject({ permission: 'queries.make' });
+      expect((await call(lotte, 'DELETE', `/projects/${projectId}/members/108`)).json()).toEqual({ left: 2, deleted: false });
+    });
+
+    it('is left and deleted: its queries stay with whoever made them, and it says who deleted it (FR-SR-66, OP-UX-100)', async () => {
+      expect((await call(karel, 'DELETE', `/projects/${projectId}`, { reason: 'The quarter is closed.' })).statusCode).toBe(204);
+      expect((await call(an, 'GET', '/projects')).json().projects).toEqual([]);
+      expect((await call(an, 'GET', `/projects/${projectId}`)).json().project).toMatchObject({ name: 'Credit leads, Q4', deleted: { by: 'Karel Leys', reason: 'The quarter is closed.' } });
+      expect((await call(an, 'GET', `/queries/${both}`)).json().query).toMatchObject({ mine: true, project: null });
+      expect((await call(mia, 'GET', `/projects/${projectId}`)).statusCode).toBe(404);
+      // The last one out of a Project deletes it.
+      const alone = (await call(mia, 'POST', '/projects', { name: 'Alone' })).json().project.id;
+      expect((await call(mia, 'DELETE', `/projects/${alone}/members/104`)).json()).toEqual({ left: 0, deleted: true });
+      expect((await call(mia, 'GET', '/projects')).json().projects).toEqual([]);
+    });
+  });
+});

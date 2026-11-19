@@ -10,6 +10,7 @@ import { createBeneath } from './preflight.js';
 import { createRegistry } from './registry.js';
 import { createStorage } from './preview.js';
 import { createLenses } from './lenses.js';
+import { createProjects } from './projects.js';
 import { createQueries } from './queries.js';
 
 const database = await connectCloudSql<QueryDatabase>(cloudSqlOptionsFromEnv('query'));
@@ -23,6 +24,7 @@ const app = await buildApp({
   verifier,
   api: {
     queries: createQueries(database.db),
+    projects: createProjects(database.db),
     lenses: createLenses(database.db),
     // What the User may see, asked with their own token (FR-SR-41); about the Lenses as query itself (DEC-PF-30).
     catalogue: createCatalogue(required('DATAHUB_CATALOGUE_URL'), fetch, metadataIdToken()),

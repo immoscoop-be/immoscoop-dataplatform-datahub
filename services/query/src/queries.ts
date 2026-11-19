@@ -50,6 +50,8 @@ export interface QueryItem extends Pick<Query, 'id' | 'name' | 'ownerName' | 'ki
   runs: number;
   /** Whether the User who asks hid it from their panel (DEC-UX-138). */
   hidden: boolean;
+  /** The Project it is in, named in its line (OP-UX-103). */
+  project: { id: string; name: string } | null;
 }
 
 /** What the panel of Query leaves out until its chip is on (DEC-UX-137): a hidden query counts as hidden, whatever its kind. */
@@ -146,7 +148,7 @@ export interface Queries {
   /** Whether this User hid the query. */
   hidden(queryId: string, userId: string): Promise<boolean>;
   get(id: string): Promise<Query | undefined>;
-  update(id: string, fields: Partial<Pick<Query, 'name' | 'question' | 'sql' | 'parameters'>>): Promise<Query | undefined>;
+  update(id: string, fields: Partial<Pick<Query, 'name' | 'question' | 'sql' | 'parameters' | 'resources'>>): Promise<Query | undefined>;
   /** The previews of a Resource by this User, made the first time they are asked for (FR-SR-38). */
   previewFor(owner: Viewer, resource: NamedResource, name: string): Promise<Query>;
   /** The previews of a Resource by this User, if there are. */
@@ -251,7 +253,11 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
         .select(['q.id', 'q.name', 'q.ownerName', 'q.through', 'q.kind', 'q.lensOf', 'q.resources', 'q.createdAt', 'q.lastRunAt', 'q.broken'])
         .select((eb) => eb.selectFrom('runs').whereRef('runs.queryId', '=', 'q.id').where('runs.purpose', '=', 'run').select(sql<string>`count(*)`.as('count')).as('runs'))
         .select(hidden.as('hidden'))
-        .$if(!all, (query) => query.where('q.ownerId', '=', viewer.id))
+        .select(
+          sql<{ id: string; name: string } | null>`(select json_build_object('id', p.id, 'name', p.name) from project_queries pq join projects p on p.id = pq.project_id where pq.query_id = q.id and p.deleted_at is null)`.as('project'),
+        )
+        // Their own queries, and those of others they ran, such as in a Project (OP-UX-103).
+        .$if(!all, (query) => query.where((eb) => eb.or([eb('q.ownerId', '=', viewer.id), sql<boolean>`exists (select 1 from runs r where r.query_id = q.id and r.user_id = ${viewer.id})`])))
         .$if(from !== undefined, (query) => query.where(sql<boolean>`coalesce(q.last_run_at, q.created_at) >= ${from}`))
         .$if(to !== undefined, (query) => query.where(sql<boolean>`coalesce(q.last_run_at, q.created_at) < ${to}`))
         // The plain queries, and of what the panel leaves out only what is asked for (DEC-UX-137).
@@ -280,6 +286,7 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
         resources: row.resources.map(({ id, displayName }) => ({ id, displayName })),
         runs: Number(row.runs ?? 0),
         hidden: row.hidden === true,
+        project: row.project ?? null,
       }));
     },
 
@@ -290,7 +297,7 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
             case when exists (select 1 from hidden_queries h where h.query_id = q.id and h.user_id = ${viewer.id}) then 'hidden'
               when q.kind = 'preview' then 'previews' when q.kind = 'lens' then 'lenses' else 'queries' end as shown
           from queries q
-          where ${all} or q.owner_id = ${viewer.id}
+          where ${all} or q.owner_id = ${viewer.id} or exists (select 1 from runs r where r.query_id = q.id and r.user_id = ${viewer.id})
         )
         select day,
           count(*) filter (where shown = 'queries') as queries,
@@ -312,11 +319,11 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
 
     get: queryById,
 
-    async update(id, { parameters, ...fields }) {
+    async update(id, { parameters, resources, ...fields }) {
       if (!(await queryById(id))) return undefined;
       return db
         .updateTable('queries')
-        .set({ ...fields, ...(parameters ? { parameters: JSON.stringify(parameters) } : {}), updatedAt: new Date() })
+        .set({ ...fields, ...(parameters ? { parameters: JSON.stringify(parameters) } : {}), ...(resources ? { resources: JSON.stringify(resources) } : {}), updatedAt: new Date() })
         .where('id', '=', id)
         .returningAll()
         .executeTakeFirstOrThrow();

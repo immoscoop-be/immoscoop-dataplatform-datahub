@@ -199,6 +199,37 @@ export interface QueryDatabase {
     startedAt: Timestamp;
     finishedAt: Date | null;
   };
+  /** A Project: a set of queries Users work on together (FR-SR-63); deleted, it keeps when, by whom and why (OP-UX-100). */
+  projects: {
+    id: Generated<string>;
+    name: string;
+    description: Generated<string>;
+    madeById: string;
+    madeByName: string;
+    createdAt: Timestamp;
+    updatedAt: Timestamp;
+    deletedAt: ColumnType<Date | null, Date | null | undefined, Date | null>;
+    deletedById: ColumnType<string | null, string | null | undefined, string | null>;
+    deletedByName: ColumnType<string | null, string | null | undefined, string | null>;
+    deletedReason: ColumnType<string | null, string | null | undefined, string | null>;
+  };
+  /** Who is in a Project, and who added them (FR-SR-65). */
+  projectMembers: {
+    projectId: string;
+    userId: string;
+    userName: string;
+    addedById: string | null;
+    addedByName: string | null;
+    addedAt: Timestamp;
+  };
+  /** The queries of a Project, in one order for everyone in it (OP-UX-95); a query is in one Project at most (OP-UX-93). */
+  projectQueries: {
+    projectId: string;
+    queryId: string;
+    position: number;
+    addedById: string;
+    addedAt: Timestamp;
+  };
   /** The queries a User hid from their panel of Query, for them alone (DEC-UX-138). */
   hiddenQueries: {
     queryId: string;
