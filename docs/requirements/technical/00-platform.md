@@ -53,7 +53,7 @@ Decided on 2026-10-17, on the proposal for the architecture and technology.
 
 **Status:** Implemented · **Realises:** [DEC-PF-01](#dec-pf-01), [DEC-DH-53](../../overview/data-hub.md#dec-dh-53), [DEC-DH-54](../../overview/data-hub.md#dec-dh-54)
 
-Every backend service and client application is a TypeScript Node.js application in its own container, deployed as its own Cloud Run service. In v1: the services identity, catalogue, registry and query, and the applications web and mcp. See the [service map](../../architecture/README.md#services).
+Every backend service and client application is a TypeScript Node.js application in its own container, deployed as its own Cloud Run service. In v1: the services identity, catalogue, registry and query, and the applications web and mcp. See the [service map](../../architecture/README.md#services). *Note of 2026-11-19: a new revision gets two minutes to answer `/health` (`startup_probe` in `infra/services.tf`, five seconds apart, 24 tries). With the default of three tries ten seconds apart, a cold instance of web, which reads every file of the web app as it starts, and of query, which first connects to Cloud SQL, did not answer in time; the revision was never given traffic and the one before it kept serving.*
 
 <a id="tr-pf-02"></a>
 ### TR-PF-02 · identity issues short-lived Access Tokens
