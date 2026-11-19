@@ -1702,7 +1702,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     to: ['author'],
     when: 'Someone in a Project of Query adds a colleague to it (FR-SR-65).',
     per: 'One per colleague added; only they see it.',
-    status: 'Specified',
+    status: 'Implemented',
     sources: ['FR-SR-65', 'DEC-SR-47', 'DEC-UX-286', 'OP-UX-101'],
     parameters: [
       { name: 'actor', type: 'person', about: 'Who added them' },
@@ -1746,7 +1746,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     to: ['author'],
     when: 'Someone in a Project of Query takes a colleague out of it; leaving it oneself sends none (FR-SR-65).',
     per: 'One per colleague taken out; only they see it.',
-    status: 'Specified',
+    status: 'Implemented',
     sources: ['FR-SR-65', 'OP-UX-101'],
     parameters: [
       { name: 'actor', type: 'person', about: 'Who took them out' },
@@ -1775,7 +1775,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     to: ['author'],
     when: 'Someone in a Project of Query deletes it; everyone else in it gets one (FR-SR-66).',
     per: 'One per colleague in the Project, besides who deleted it.',
-    status: 'Specified',
+    status: 'Implemented',
     sources: ['FR-SR-66', 'OP-UX-100'],
     parameters: [
       { name: 'actor', type: 'person', about: 'Who deleted it' },

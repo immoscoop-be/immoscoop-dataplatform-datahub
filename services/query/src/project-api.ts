@@ -1,7 +1,7 @@
 import { can } from '@datahub/contracts';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { forbidden, permissionsOf } from './access.js';
-import type { Catalogue } from './catalogue.js';
+import type { Catalogue, ProjectNotice } from './catalogue.js';
 import { PROJECT_QUERIES, type Project, type Projects } from './projects.js';
 import type { Queries, Query, Viewer } from './queries.js';
 
@@ -64,6 +64,18 @@ export async function projectRoutes(app: FastifyInstance, options: ProjectRouteO
       return undefined;
     }
     return found;
+  }
+
+  /**
+   * Tells a colleague what happened to them in a Project (MSG-QRY-03 to MSG-QRY-05, OP-UX-101). The Project never waits
+   * on it: when catalogue does not answer, the change stands and nobody is told.
+   */
+  async function tell(request: FastifyRequest, notices: ProjectNotice[]): Promise<void> {
+    if (!catalogue.projectNotice || notices.length === 0) return;
+    const results = await Promise.allSettled(notices.map((notice) => catalogue.projectNotice?.(notice)));
+    for (const result of results) {
+      if (result.status === 'rejected') request.log.warn({ err: result.reason }, 'a Message about a Project was not sent');
+    }
   }
 
   /** A Project as its page shows it: who is in it, and its queries in their order, locked where the User may not see a Resource. */
@@ -146,28 +158,63 @@ export async function projectRoutes(app: FastifyInstance, options: ProjectRouteO
     if (reason !== undefined && (typeof reason !== 'string' || reason.trim().length > 500)) return reply.code(400).send({ error: 'invalid_request', message: 'The reason has at most 500 characters.' });
     const project = await member(request, reply);
     if (!project) return reply;
-    await projects.delete(project.id, viewer(request), typeof reason === 'string' && reason.trim() ? reason.trim() : null);
+    const who = viewer(request);
+    const why = typeof reason === 'string' && reason.trim() ? reason.trim() : null;
+    // Read before it goes: who else is in it, and how many of its queries each made, which stay theirs.
+    const [members, list] = await Promise.all([projects.members(project.id), projects.queries(project.id)]);
+    await projects.delete(project.id, who, why);
+    await tell(
+      request,
+      members
+        .filter((one) => one.userId !== who.id)
+        .map((one) => ({
+          type: 'MSG-QRY-05' as const,
+          recipient: { id: one.userId, name: one.userName },
+          projectId: project.id,
+          project: project.name,
+          actor: who.name,
+          mine: list.filter((query) => query.ownerId === one.userId).length,
+          ...(why ? { reason: why } : {}),
+        })),
+    );
     return reply.code(204).send();
   });
 
-  // Shared with a colleague, by anyone in it (FR-SR-65): who cannot run queries is added all the same (OP-UX-98).
+  // Shared with a colleague, by anyone in it (FR-SR-65): who cannot run queries is added all the same (OP-UX-98), and
+  // told so; whoever is added is told (MSG-QRY-03, OP-UX-101).
   app.put<{ Params: { id: string; userId: string }; Body: unknown }>('/projects/:id/members/:userId', async (request, reply) => {
-    const name = ((request.body ?? {}) as Record<string, unknown>).name;
+    const { name, canQuery } = (request.body ?? {}) as Record<string, unknown>;
     const userId = request.params.userId;
     if (typeof name !== 'string' || !name.trim() || name.trim().length > 200 || !userId || userId.length > 128) {
       return reply.code(400).send({ error: 'invalid_request', message: 'A colleague, by their ID and name.' });
     }
+    if (canQuery !== undefined && typeof canQuery !== 'boolean') {
+      return reply.code(400).send({ error: 'invalid_request', message: 'Whether the colleague may make and run queries is true or false.' });
+    }
     const project = await member(request, reply);
     if (!project) return reply;
-    const added = await projects.addMember(project.id, { id: userId, name: name.trim() }, viewer(request));
+    const who = viewer(request);
+    const added = await projects.addMember(project.id, { id: userId, name: name.trim() }, who);
+    if (added && userId !== who.id) {
+      const queries = (await projects.queries(project.id)).length;
+      await tell(request, [
+        { type: 'MSG-QRY-03', recipient: { id: userId, name: name.trim() }, projectId: project.id, project: project.name, actor: who.name, queries, canRun: canQuery !== false },
+      ]);
+    }
     return reply.code(added ? 201 : 200).send({ added });
   });
 
-  // Taken out by someone in it, or left: the last one out deletes it (OP-UX-100).
+  // Taken out by someone in it, who is told (MSG-QRY-04), or left, which tells nobody: the last one out deletes it
+  // (OP-UX-100).
   app.delete<{ Params: { id: string; userId: string } }>('/projects/:id/members/:userId', async (request, reply) => {
     const project = await member(request, reply);
     if (!project) return reply;
-    const left = await projects.removeMember(project.id, request.params.userId, viewer(request));
+    const who = viewer(request);
+    const out = request.params.userId === who.id ? undefined : (await projects.members(project.id)).find((one) => one.userId === request.params.userId);
+    const left = await projects.removeMember(project.id, request.params.userId, who);
+    if (out) {
+      await tell(request, [{ type: 'MSG-QRY-04', recipient: { id: out.userId, name: out.userName }, projectId: project.id, project: project.name, actor: who.name }]);
+    }
     return { left, deleted: left === 0 };
   });
 

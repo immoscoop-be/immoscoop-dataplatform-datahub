@@ -66,9 +66,9 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | [MSG-USR-03](#msg-usr-03) | A new User signed in for the first time | User | Data Hub → Data Team | Nothing | Named: K5.10 | Implemented |
 | [MSG-QRY-01](#msg-qry-01) | Request to run a very large query | query | User → Data Team | A decision | By the writer | Implemented |
 | [MSG-QRY-02](#msg-qry-02) | A query is Broken | query | Data Hub → Owner | Something to do | Named: K5.7 | Implemented |
-| [MSG-QRY-03](#msg-qry-03) | A Project is shared with you | User | Data Hub → its author | Nothing | Proposed: K5.8 | Specified |
-| [MSG-QRY-04](#msg-qry-04) | You were taken out of a Project | User | Data Hub → its author | Nothing | Proposed: K5.8 | Specified |
-| [MSG-QRY-05](#msg-qry-05) | A Project you are in was deleted | User | Data Hub → its author | Nothing | Proposed: K5.8 | Specified |
+| [MSG-QRY-03](#msg-qry-03) | A Project is shared with you | User | Data Hub → its author | Nothing | Proposed: K5.8 | Implemented |
+| [MSG-QRY-04](#msg-qry-04) | You were taken out of a Project | User | Data Hub → its author | Nothing | Proposed: K5.8 | Implemented |
+| [MSG-QRY-05](#msg-qry-05) | A Project you are in was deleted | User | Data Hub → its author | Nothing | Proposed: K5.8 | Implemented |
 | [MSG-RPT-01](#msg-rpt-01) | A Report is Broken | Report | Data Hub → Owner | Something to do | Named: K5.7 | Proposed |
 | [MSG-LRN-01](#msg-lrn-01) | A colleague wants a card | Learning Card | User → Owner | An answer | By the writer | Proposed |
 
@@ -3226,7 +3226,7 @@ One item of `missing`, English, laid out:
 | From → to | Data Hub → its author |
 | When | Someone in a Project of Query adds a colleague to it ([FR-SR-65](04-stacks-and-resources.md#fr-sr-65)). |
 | How many | One per colleague added; only they see it. |
-| Status | Specified |
+| Status | Implemented |
 | Comes from | [FR-SR-65](04-stacks-and-resources.md#fr-sr-65), [DEC-SR-47](04-stacks-and-resources.md#dec-sr-47), [DEC-UX-286](../../design/principles.md#dec-ux-286), [OP-UX-101](../../design/principles.md#op-ux-101) |
 
 **What it asks:** Nothing. The colleague opens the Project, and may work in it: its queries are then the row on top of Query.
@@ -3314,7 +3314,7 @@ It holds {queries, plural, one {# query} other {# queries}}. Everyone in it open
 | From → to | Data Hub → its author |
 | When | Someone in a Project of Query takes a colleague out of it; leaving it oneself sends none ([FR-SR-65](04-stacks-and-resources.md#fr-sr-65)). |
 | How many | One per colleague taken out; only they see it. |
-| Status | Specified |
+| Status | Implemented |
 | Comes from | [FR-SR-65](04-stacks-and-resources.md#fr-sr-65), [OP-UX-101](../../design/principles.md#op-ux-101) |
 
 **What it asks:** Nothing. Nothing: whoever needs it again asks someone in it to add them.
@@ -3396,7 +3396,7 @@ You no longer see it, nor the queries of others in it. The queries you made your
 | From → to | Data Hub → its author |
 | When | Someone in a Project of Query deletes it; everyone else in it gets one ([FR-SR-66](04-stacks-and-resources.md#fr-sr-66)). |
 | How many | One per colleague in the Project, besides who deleted it. |
-| Status | Specified |
+| Status | Implemented |
 | Comes from | [FR-SR-66](04-stacks-and-resources.md#fr-sr-66), [OP-UX-100](../../design/principles.md#op-ux-100) |
 
 **What it asks:** Nothing. Nothing: their own queries are in their history.
