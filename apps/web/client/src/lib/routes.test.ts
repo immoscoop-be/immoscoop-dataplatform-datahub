@@ -128,6 +128,11 @@ describe('the addresses of the web app', () => {
   it('leads a Message about a User to My page, and one to the Data Team to that User on Users (FR-PL-12)', () => {
     expect(objectPath({ kind: 'user', id: '42' }, 'MSG-USR-01')).toBe('/me');
     expect(objectPath({ kind: 'user', id: '42' }, 'MSG-USR-02')).toBe('/admin/users/42');
+    // A Project shared with the User, or deleted, opens its page; taken out of it, Query (MSG-QRY-03 to MSG-QRY-05).
+    expect(objectPath({ kind: 'user', id: '42' }, 'MSG-QRY-03', { projectId: 'p1' })).toBe('/query/projects/p1');
+    expect(objectPath({ kind: 'user', id: '42' }, 'MSG-QRY-05', { projectId: 'p1' })).toBe('/query/projects/p1');
+    expect(objectPath({ kind: 'user', id: '42' }, 'MSG-QRY-04', { projectId: 'p1' })).toBe('/query');
+    expect(route('/query/projects/p1')).toMatchObject({ kind: 'project', id: 'p1' });
     expect(objectPath({ kind: 'user', id: '42' }, 'MSG-USR-03')).toBe('/admin/users/42');
   });
 

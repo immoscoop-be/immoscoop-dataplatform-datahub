@@ -83,7 +83,7 @@
   function opener(message: Conversation): { label: string; href: string } {
     const context = CONTEXT_BUTTON;
     // A Message about a User has no page to open over: it leads to My page, or to the User on Users (FR-PL-12).
-    const href = message.subject.kind === 'user' ? objectPath(message.subject, message.type) : contextPath(message.subject, message.id);
+    const href = message.subject.kind === 'user' ? objectPath(message.subject, message.type, message.params) : contextPath(message.subject, message.id);
     return { label: context?.label[language] ?? message.subject.name, href };
   }
 

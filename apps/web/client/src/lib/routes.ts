@@ -99,8 +99,11 @@ export const usersPath = (googleId?: string): string => (googleId ? `/admin/user
  * leads that User to My page, and the Data Team to that User on Users when Admin was given back (MSG-USR-02) or
  * when they are new (MSG-USR-03).
  */
-export function objectPath(subject: { kind: string; id: string }, type?: string): string {
+export function objectPath(subject: { kind: string; id: string }, type?: string, params?: Readonly<Record<string, string>>): string {
   if (subject.kind === 'user') {
+    // A Project shared with the User, or deleted, opens its page; taken out of one, Query (MSG-QRY-03 to MSG-QRY-05).
+    if ((type === 'MSG-QRY-03' || type === 'MSG-QRY-05') && params?.projectId) return `/query/projects/${encodeURIComponent(params.projectId)}`;
+    if (type === 'MSG-QRY-04') return '/query';
     return type === 'MSG-USR-02' || type === 'MSG-USR-03' ? usersPath(subject.id) : myPagePath('profile');
   }
   return subject.kind === 'resource'
