@@ -171,6 +171,8 @@ import flagFill from '@phosphor-icons/core/assets/fill/flag-fill.svg?raw';
 import arrowsInLineVertical from '@phosphor-icons/core/assets/regular/arrows-in-line-vertical.svg?raw';
 import circleNotch from '@phosphor-icons/core/assets/regular/circle-notch.svg?raw';
 import linkBreak from '@phosphor-icons/core/assets/regular/link-break.svg?raw';
+import signOutFill from '@phosphor-icons/core/assets/fill/sign-out-fill.svg?raw';
+import shareNetwork from '@phosphor-icons/core/assets/regular/share-network.svg?raw';
 
 export const ICONS = {
   'archive-fill': archiveFill,
@@ -341,6 +343,8 @@ export const ICONS = {
   'arrows-in-line-vertical': arrowsInLineVertical,
   'circle-notch': circleNotch,
   'link-break': linkBreak,
+  'sign-out-fill': signOutFill,
+  'share-network': shareNetwork,
 } as const;
 
 export type IconName = keyof typeof ICONS;
