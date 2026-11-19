@@ -110,6 +110,9 @@ document.getElementById('panel-search')?.addEventListener('input', e => {
     if (!q) unfolded.delete(g);
   });
   document.querySelectorAll('.panel .list-item[data-name]').forEach(el => { const m = el.dataset.name.includes(q); el.hidden = !m; if (m) n++; });
+  // The Projects of Query (DEC-UX-285): a Project goes with its item; one that matches unfolds while the search lasts
+  document.querySelectorAll('.proj-entry').forEach(en => { en.hidden = !!en.querySelector('.proj-item')?.hidden; if (q && !en.hidden) en.classList.add('open'); });
+  document.querySelectorAll('.proj-more').forEach(b => { b.hidden = !!q; });
   // A heading such as "Shared resources" goes when nothing under it is left
   document.querySelectorAll('.panel-label').forEach(label => {
     let el = label.nextElementSibling, shown = false;
@@ -1029,8 +1032,8 @@ if (sqlEditor) {
 
 // What keeps a query from running (Proposal): an @name in the SQL that is not a Parameter, or a table that is not one of
 // the Resources of the query. Both stand out in the SQL, a folded CTE shows it on its "⋯ n lines", and the bar at the
-// foot says so in place of the Pre-flight, with Run off. A table outside the Resources also shows next to them, with a
-// new query to start with it
+// foot says so in place of the Pre-flight, with Run off. A table outside the Resources also shows next to them, with
+// "Add it to this query" (DEC-UX-287)
 let removedRes = null;
 // A Resource that requires a partition filter blocks a query without one, and offers to add it (?pf=nofilter)
 let noFilter = new URLSearchParams(location.search).get('pf') === 'nofilter';
@@ -1048,7 +1051,7 @@ const syncRun = () => {
     [...editor.querySelectorAll(`[data-fold-in="${st.dataset.foldStart}"]:not(.off)`)].some(l => l.querySelector('.sql-key.outside, .sql-param.undefined'))));
   const out = document.getElementById('scope-outside');
   if (out) out.innerHTML = tables.map(t => `<span class="scope-chip outside"><i class="ph-fill ph-warning"></i><span class="mono">${t}</span> is not a resource of this query`
-    + (t === removedRes ? '' : `<button class="text-link" type="button" data-add-res="${t}">Start a new query with it</button>`) + '</span>').join('')
+    + (t === removedRes ? '' : `<button class="text-link" type="button" data-add-res="${t}">Add it to this query</button>`) + '</span>').join('')
     + known.map(([t, layer]) => `<span class="scope-chip known" title="${layer} · a table Data Hub knows from a dbt project it follows; no Resource, so no Owner, Level or Publication. Double-click its name in the SQL for what dbt and BigQuery know of it"><i class="ph ph-cube kind-icon" role="img" aria-label="Model"></i><span class="mono">${t}</span></span>`).join('');
   const knownLine = document.getElementById('q-known');
   if (knownLine) knownLine.hidden = !known.length;
@@ -1407,7 +1410,7 @@ if (document.querySelector('.sql-editor')) colourSql(document.querySelector('.sq
       if (FIELDS[word] && sel.rangeCount) showField(word, sel.getRangeAt(0).getBoundingClientRect());
     });
     // A click on a Resource on top of the frame opens what a double-click on its name opens; a table outside Data Hub
-    // its window (DEC-UX-259). The × on it still starts a new query without it
+    // its window (DEC-UX-259). The × on it takes it out of this query (DEC-UX-287)
     document.getElementById('scope-chips')?.addEventListener('click', e => {
       if (e.target.closest('.scope-x')) return;
       const chip = e.target.closest('.scope-chip');
@@ -1570,9 +1573,10 @@ if (grid) {
   document.fonts.ready.then(() => COLS.forEach((c, i) => fit(i)));
 }
 
-// A query is bounded by its Resources (Proposal): it reads only those, on top of its frame. Adding or removing one
-// starts a new query in a sheet, which takes the SQL and its Parameters along and remembers where it came from; the old
-// query stays as it was. "Lenses on these resources" shows the lenses that already use them, as for a new query. The
+// A query is bounded by its Resources (DEC-UX-73): it reads only those, on top of its frame. Adding or taking out one
+// changes this query, in a sheet (DEC-UX-287): it reads the new set from its next run, and its history keeps what each
+// run read. "Start a new query" in the same sheet still makes a new one, which takes the SQL and its Parameters along
+// and remembers where it came from, the old query staying as it was. "Lenses on these resources" shows the lenses that already use them, as for a new query. The
 // panel lists one item per query, with its last runs; the history holds every run, each a variation
 const scopeBox = document.getElementById('q-scope');
 if (scopeBox) {
@@ -1602,9 +1606,9 @@ if (scopeBox) {
     syncRun();
   }));
 
-  // A new query, with one more Resource or one less
+  // One more Resource or one less: in this query, or in a new one (DEC-UX-287)
   const sheet = $('newq-sheet');
-  let mode = 'add', removing = null;
+  let mode = 'add', removing = null, where = 'here';
   const picks = () => [...sheet.querySelectorAll('input[name="newq-pick"]:checked')].map(i => i.value);
   const newSet = () => {
     const cur = scopeNow();
@@ -1654,12 +1658,22 @@ if (scopeBox) {
   const nameFor = set => { const n = set.map((r, i) => i ? NAMES[r].toLowerCase() : NAMES[r]); return (n.length > 1 ? n.slice(0, -1).join(', ') + ' and ' + n.at(-1) : n[0]) + ', 27 Oct'; };
   const update = () => {
     const set = newSet(), cur = scopeNow(), n = set.length, these = n === 1 ? 'this resource' : `these ${n} resources`;
+    const here = where === 'here', title = $('q-title').textContent;
+    $('newq-why-here').hidden = !here; $('newq-why-new').hidden = here;
+    sheet.querySelector('[data-newq-new]').hidden = here;
+    $('newq-where').querySelectorAll('[data-where]').forEach(b => { const on = b.dataset.where === where; b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); });
+    $('newq-where').hidden = mode === 'same';
+    $('newq-start-icon').className = here ? (mode === 'remove' ? 'ph ph-minus' : 'ph ph-plus') : 'ph ph-git-branch';
+    $('newq-icon').className = here ? (mode === 'remove' ? 'ph ph-minus-circle' : 'ph ph-plus-circle') : 'ph ph-git-branch';
+    $('newq-kicker').textContent = here ? title : `A new query, from ${title}`;
+    $('newq-foot').textContent = here ? (mode === 'remove' ? `The next run of ${title} no longer reads it.` : `The next run of ${title} reads them.`) : `${title} stays as it is.`;
     $('newq-set').innerHTML = [...new Set([...cur, ...set])].map(r => `<span class="use-chip on${set.includes(r) ? '' : ' removed'}"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>${cur.includes(r) ? '' : '+ '}${NAMES[r]}</span>`).join('');
     $('newq-name').value = nameFor(set);
     const added = set.filter(r => !cur.includes(r));
     if (mode === 'add') {
       $('newq-ctes').textContent = added.map(r => cteText(SOURCES[r])).join(',\n\n') || 'Tick a Resource to add.';
-      $('newq-title').textContent = added.length > 1 ? `With ${added.length} more resources` : 'With one more resource';
+      $('newq-title').textContent = here ? (added.length > 1 ? `Add ${added.length} Resources` : 'Add a Resource') : added.length > 1 ? `With ${added.length} more resources` : 'With one more resource';
+      $('newq-start-text').textContent = here ? (added.length > 1 ? `Add ${added.length} to this query` : 'Add to this query') : 'Start the new query';
       $('newq-start').disabled = !added.length;
       sheet.querySelectorAll('.pick').forEach(p => p.classList.toggle('on', p.querySelector('input').checked));
     }
@@ -1669,11 +1683,15 @@ if (scopeBox) {
       : l.more ? `No lens uses exactly ${these} yet; <b>${l.more}</b> use${l.more > 1 ? '' : 's'} them and more.` : `No lens uses ${these} yet.`)
       + (mode === 'remove' ? ' A different list from that of Leads per source name.' : '') + list + '</div>';
     if (mode === 'remove') sheet.querySelector('[data-newq="remove"]').hidden = !document.querySelector(`.sql-editor .sql-key[data-table="${removing}"]`);
+    if (mode === 'remove') $('newq-start-text').textContent = here ? 'Take it out' : 'Start the new query';
+    if (mode === 'same') $('newq-start-text').textContent = 'Start the new query';
   };
   const openNew = (m, res) => {
     mode = m; removing = m === 'remove' ? res : null;
-    // "New query from this one", in the quick window (DEC-UX-237): the same Resources, the SQL and Parameters along
-    $('newq-title').textContent = m === 'add' ? 'With more resources' : m === 'same' ? 'With the same resources' : `Without ${NAMES[res]}`;
+    // "New query from this one", in the quick window (DEC-UX-237): the same Resources, the SQL and Parameters along;
+    // adding or taking out changes this query, unless "Start a new query" is chosen (DEC-UX-287)
+    where = m === 'same' ? 'new' : 'here';
+    $('newq-title').textContent = m === 'add' ? 'Add Resources' : m === 'same' ? 'With the same resources' : `Take out ${NAMES[res]}`;
     $('newq-why-what').textContent = m === 'add' ? 'Adding Resources' : m === 'same' ? 'Starting from this one' : 'Removing one';
     $('newq-start').disabled = false;
     sheet.querySelector('[data-newq="add"]').hidden = m !== 'add';
@@ -1683,6 +1701,12 @@ if (scopeBox) {
     update(); sheet.hidden = false;
   };
   sheet.querySelectorAll('input[name="newq-pick"]').forEach(i => i.addEventListener('change', update));
+  $('newq-where').addEventListener('click', e => {
+    const b = e.target.closest('[data-where]'); if (!b) return;
+    where = b.dataset.where;
+    if (mode === 'remove') $('newq-title').textContent = where === 'here' ? `Take out ${NAMES[removing]}` : `Without ${NAMES[removing]}`;
+    update();
+  });
   window.quickNewSame = () => openNew('same');
   document.addEventListener('click', e => {
     const add = e.target.closest('[data-add-res]'), remove = e.target.closest('[data-remove-res]');
@@ -1692,6 +1716,16 @@ if (scopeBox) {
   });
   $('newq-start').addEventListener('click', () => {
     const set = newSet(), name = $('newq-name').value.trim() || nameFor(set), from = $('q-title').textContent, added = set.filter(r => !scopeNow().includes(r));
+    // In this query: its Resources change, each one added comes as a CTE at the start of its SQL, and its name, its
+    // question, its result and its history stay (DEC-UX-287)
+    if (where === 'here') {
+      document.querySelectorAll('#scope-chips [data-res]').forEach(c => { c.hidden = !set.includes(c.dataset.res); });
+      removedRes = null;
+      sheet.hidden = true;
+      if (mode === 'add') addCtes(added.map(r => ({ ...SOURCES[r], key: r })));
+      lensButton(); syncRun();
+      return;
+    }
     // The panel: the new query on top, open; the old one stays, folded
     const old = document.querySelector('.q-item.current');
     old.classList.remove('current'); old.removeAttribute('aria-current'); old.closest('.q-entry').classList.remove('open');
@@ -1746,7 +1780,7 @@ if (scopeBox) {
         + (t.resource ? '<i class="ph ph-table" style="margin-top:3px;color:var(--text-secondary)" aria-label="Resource"></i>' : `<input type="checkbox" aria-label="Add ${t.name}"${picked.has(t.name) ? ' checked' : ''}>`)
         + `<button type="button" class="ft-open" aria-expanded="${unfolded.has(t.name)}"><i class="ph ph-caret-right"></i><span class="ft-name">${t.name}</span><span class="pill">${LAYER[t.layer]}</span><span class="ft-where">${t.project} · ${t.dataset}</span></button>`
         + `<p class="ft-desc">${esc(t.desc)}</p>`
-        + (t.resource ? `<div class="ft-res"><span class="pill pill-strong">Resource</span>${t.resource.collection} · Level ${t.resource.level}<button class="text-link" type="button" data-add-res="${t.name}">Start a new query with it</button></div>` : '')
+        + (t.resource ? `<div class="ft-res"><span class="pill pill-strong">Resource</span>${t.resource.collection} · Level ${t.resource.level}<button class="text-link" type="button" data-add-res="${t.name}">Add it to this query</button></div>` : '')
         + (unfolded.has(t.name) ? `<div class="ft-cols">${t.cols.map(([c, type, role, d]) => `<div class="ft-col"><span><span class="mono">${c}</span>${role ? `<span class="pill pill-strong">${role}</span>` : ''}</span><span class="meta">${type}</span><span class="muted">${esc(d)}</span></div>`).join('')}</div>` : '')
         + '</div>').join('') || '<p class="meta" style="padding:10px">No table Data Hub knows by these words.</p>';
       const list = TABLES.filter(t => picked.has(t.name));
@@ -1785,7 +1819,7 @@ if (scopeBox) {
   // The panel: a query unfolds to its last runs; a run opens in its history
   document.querySelector('.panel').addEventListener('click', e => {
     const unfold = e.target.closest('.q-unfold');
-    if (unfold) { const entry = unfold.closest('.q-entry'); entry.classList.toggle('open'); unfold.setAttribute('aria-expanded', entry.classList.contains('open')); return; }
+    if (unfold) { const entry = unfold.closest('.q-entry, .proj-entry'); entry.classList.toggle('open'); unfold.setAttribute('aria-expanded', entry.classList.contains('open')); return; }
     const run = e.target.closest('.q-run'); if (!run) return;
     document.querySelector('[data-group="rtab"] [data-target="history"]').click();
     const row = document.querySelector(`.hist-run[data-run="${run.dataset.run}"]`);
@@ -1969,6 +2003,8 @@ document.addEventListener('click', e => {
     // The panel, on every screen that has one, and on Query reading the queries again (DEC-UX-254)
     { icon: 'ph ph-sidebar-simple', title: 'Hide the panel', run: () => document.querySelector('.panel')?.toggleAttribute('hidden'), words: 'toggle side menu sidebar collapse expand panel' },
     ...(location.pathname.includes('query') ? [{ icon: 'ph ph-arrows-clockwise', title: 'Refresh the queries', meta: 'reads them again, such as those Claude made', run: () => {}, words: 'reload update refresh claude' }] : []),
+    // On the screens of Query, a new Project, as the + over the Projects in the panel does (DEC-UX-288)
+    ...(location.pathname.includes('query') && !location.pathname.includes('query.html') ? [{ icon: 'ph ph-folder-simple-plus', title: 'New project', meta: 'a set of queries to work on, alone or together', run: () => window.openRowPop?.('newproj'), words: 'project create make folder' }] : []),
   ];
   const ITEMS = [
     { group: 'Resources', icon: 'ph ph-table', title: 'Weekly lead volume', meta: 'Credit leads · 4 · Explored', href: 'resource-overview.html' },
@@ -1980,13 +2016,17 @@ document.addEventListener('click', e => {
     { group: 'Collections', icon: 'ph ph-house-line', title: 'Listings and sales', meta: '9 Resources', href: 'collection-overview.html' },
     { group: 'Lenses', icon: 'ph ph-aperture', title: 'Leads per source name', meta: 'Credit leads', href: 'lens.html' },
     { group: 'Lenses', icon: 'ph ph-aperture', title: 'Lead quality by partner', meta: 'Credit leads', href: 'lens.html' },
+    // The Projects the User is in (DEC-UX-285, DEC-UX-288)
+    { group: 'Projects', icon: 'ph-fill ph-folders', title: 'Credit leads Q4', meta: '14 queries · with 3 colleagues', href: 'query-project.html', words: 'project' },
+    { group: 'Projects', icon: 'ph-fill ph-folders', title: 'Partner review', meta: '4 queries · only you', href: 'query-project.html', words: 'project' },
+    { group: 'Projects', icon: 'ph-fill ph-folders', title: 'Listings audit', meta: '6 queries · with 4 colleagues', href: 'query-project.html', words: 'project' },
     { group: 'Your queries', icon: 'ph ph-table', title: 'Lead volume per province', meta: 'Mon 26 Oct', href: 'query.html' },
     { group: 'Your queries', icon: 'ph ph-table', title: 'Leads that came back within a week', meta: 'yesterday', href: 'query.html' },
     { group: 'Learning Cards', icon: 'ph ph-graduation-cap', title: 'What one row stands for', meta: '2.1.3 · grain', href: 'learning-card.html' },
     { group: 'Learning Cards', icon: 'ph ph-graduation-cap', title: 'When a figure is final', meta: 'K5.4', href: 'learning-card.html' },
   ];
-  const KIND = { Resources: 'Resource', Collections: 'Collection', Lenses: 'Lens', 'Your queries': 'Query', 'Learning Cards': 'Learning Card' };
-  const ORDER = ['Commands', 'Flagged queries', 'Resources', 'Collections', 'Lenses', 'Your queries', 'Learning Cards', 'Go to'];
+  const KIND = { Resources: 'Resource', Collections: 'Collection', Lenses: 'Lens', Projects: 'Project', 'Your queries': 'Query', 'Learning Cards': 'Learning Card' };
+  const ORDER = ['Commands', 'Flagged queries', 'Projects', 'Resources', 'Collections', 'Lenses', 'Your queries', 'Learning Cards', 'Go to'];
   const back = document.createElement('div');
   back.className = 'quick-backdrop'; back.hidden = true;
   const win = document.createElement('section');

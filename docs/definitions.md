@@ -87,6 +87,7 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="permission-group"></a>**Permission group** | The set of Permissions a User has. Every User is in one; a new User gets the default. The Data Team gives it on Users, in Admin, and changes it on Permission groups. Not a Group: a Group is who you work with, a Permission group what you may do. | [DEC-PL-01](requirements/functional/12-permissions-and-library-cards.md#dec-pl-01) |
 | <a id="pitfall"></a>**Pitfall** | A way to read a Resource wrongly that looks right, written on its Resource Card by its Owner: what a field means, what a figure counts, or when it is final. It is about how the data is read, its metadata, not about the data itself: it stays true even when every row is right. A gap in the data is a [Known Gap](#known-gap). Part of the Known Behaviour. | [FR-RC-04](requirements/functional/05-resource-card.md#fr-rc-04), [DEC-RC-26](requirements/functional/05-resource-card.md#dec-rc-26) |
 | <a id="pre-flight"></a>**Pre-flight** | What Data Hub shows before a query runs: the volume it will process, against the thresholds for approval and for a block. | [FR-SR-36](requirements/functional/04-stacks-and-resources.md#fr-sr-36), [FR-SR-37](requirements/functional/04-stacks-and-resources.md#fr-sr-37) |
+| <a id="project"></a>**Project** | A set of queries a User works on, alone or with colleagues they share it with, with a name and a sentence on what it is for. Everyone in it may open, change and run its queries; while a User works in it, its queries are the row on top of Query. Not a dbt project, nor a project of Google Cloud, which stay lowercase. | [Projects](design/principles.md#projects), [DEC-UX-282](design/principles.md#dec-ux-282) |
 | <a id="promotion-loop"></a>**Promotion Loop** | Hardening a Beta Concept into a Resource, with the beta query as its specification. | [The promotion loop](overview/open-themes.md#3-the-promotion-loop) |
 | <a id="publication"></a>**Publication** | The switch with which the Owner makes a Resource visible to everyone who sees its Collection: the whole company when the Collection is public. | [Resources](requirements/functional/04-stacks-and-resources.md#terms) |
 | <a id="quarantine"></a>**Quarantine** | The Action that reaches furthest: the whole Resource is no longer served until its Owner lifts it. | [DEC-CM-10](requirements/functional/08-checks-and-monitoring.md#dec-cm-10), [FR-CM-25](requirements/functional/08-checks-and-monitoring.md#fr-cm-25) |
@@ -223,6 +224,7 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | opportuniteit, informatief, aandacht, probleem | opportunity, informative, attention, problem |
 | owner, owner unit (in the Dutch texts of the app) | Owner, Owner Unit |
 | pre-flight | Pre-flight |
+| project (van queries) | Project |
 | promotielus | Promotion Loop |
 | quarantaine | Quarantine |
 | query-ID, SQL-log | Query ID, Query Log |

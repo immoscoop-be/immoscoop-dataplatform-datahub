@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<!--
+  Screen: the page of a Project, in Query (DEC-UX-282, DEC-UX-285)
+  A Project is a set of queries a User works on, alone or with colleagues: its queries are the row on top while they
+  work in it, the first ten with ⌘1 to ⌘0 (DEC-UX-283). Its page, opened from the panel, the switch of the row or the
+  quick window, holds:
+  - its head: its name and what it is for, changed in place by anyone in it; Share, New query in it, and "Work in it",
+    which puts its queries in the row on top, or "You work in it" while they are;
+  - a line of facts: how many queries, who is in it, who made it and when, and its last run, by whom;
+  - its queries, one row each in the order of the row, with its key, its name and question, what it reads, who made
+    it and its last run, marked as in the row (running, a result not seen yet, failed, Broken); a row is dragged to
+    change its place and its key, for everyone in it (OP-UX-95); the × takes a query out of it, and it stays with whoever
+    made it;
+  - who is in it, with who added them: a colleague whose Permission group does not let them make or run queries is
+    in it all the same, marked "cannot run queries" (DEC-UX-286, OP-UX-98); a query that reads a Resource someone may
+    not see shows locked to them, its name and what they may not see, never its SQL or rows (OP-UX-97);
+  - the Danger zone: Leave it, and Delete it, which anyone in it may do; its queries stay, each with whoever made it,
+    and the others are told (OP-UX-100).
+  Share opens a sheet: a search over the colleagues of Immoscoop, each with their Permission group, marked when they
+  cannot run queries, with what that means; everyone in it, with × to take them out. Whoever is added gets a Message
+  (OP-UX-101). Everyone in a Project has every right on it and on its queries (DEC-UX-286); a query runs with the
+  rights of whoever runs it.
+  The switches at the bottom: the Project as it is, just made and deleted (?proj=new, ?proj=deleted); seen by you or
+  by Lotte Dewulf, who cannot run queries (?seen=lotte); working in it or not (?work=out); ?share=open opens the share
+  sheet, ?delete=open the delete sheet. The quick window holds every command of the page (DEC-UX-288).
+  Requirements: none yet: they follow once the design is approved, and the panel of Query changes with them.
+  Decisions: DEC-UX-282, DEC-UX-283, DEC-UX-285, DEC-UX-286, DEC-UX-288.
+  Related screens: query.html (the row on top, the panel, Add to a project).
+  Rules: ../principles.md#projects  ·  Placeholder content only.
+-->
+<html lang="en" data-role="colleague">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Query — a Project</title>
+</head>
+<body>
+<div class="app panel-open">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <a class="nav-btn" href="collections-start.html" data-label="Collections" aria-label="Collections"><i class="ph-fill ph-stack"></i></a>
+  <button class="nav-btn active" data-label="Query" aria-label="Query" aria-current="page"><i class="ph-fill ph-terminal-window"></i><span class="flare top"></span><span class="flare bottom"></span></button>
+  <a class="nav-btn" href="#" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <a class="nav-btn nav-admin" href="admin-webhooks.html" data-label="Admin" aria-label="Admin, for the Data Team" data-for="datateam"><i class="ph-fill ph-toolbox"></i></a>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">MP</a>
+</nav>
+<aside class="panel" aria-label="Queries that ran">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:4px">
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Query</h1>
+   <button class="icon-btn" type="button" aria-label="Refresh the list of queries" title="Refresh the list of queries, such as those Claude made meanwhile (DEC-UX-163)"><i class="ph ph-arrows-clockwise"></i></button>
+   <a class="icon-btn" href="query-new.html" aria-label="New query"><i class="ph-fill ph-plus-circle"></i></a>
+   <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
+  </div>
+  <!-- Previews, the queries of Lenses and hidden queries are left out until they are ticked in the filter, which folds open
+       under the search; folded, one line says what it adds (DEC-UX-137, DEC-UX-150). ?filter=open shows it open. -->
+  <div class="q-search-row">
+   <label class="search card"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search projects and queries"></label>
+   <button class="icon-btn q-filter-toggle" aria-expanded="false" aria-controls="q-filter" aria-label="Filter: also show previews, Lenses or hidden queries" title="Filter"><i class="ph ph-sliders-horizontal"></i><span class="q-filter-count">1</span></button>
+  </div>
+  <form class="q-filter card" id="q-filter" hidden>
+   <fieldset data-for="datateam">
+    <legend>Whose queries</legend>
+    <label class="q-option"><input type="radio" name="whose" checked onchange="document.querySelector('[data-group=scope] [data-target=yours]').click()"><span class="q-option-text"><span>Yours</span><span class="meta">the queries you ran</span></span></label>
+    <label class="q-option"><input type="radio" name="whose" onchange="document.querySelector('[data-group=scope] [data-target=all]').click()"><span class="q-option-text"><span>All</span><span class="meta">everyone's, for the Data Team only</span></span></label>
+   </fieldset>
+   <fieldset>
+    <legend>Also show</legend>
+    <label class="q-option"><input type="checkbox" checked><span class="q-option-text"><span>Previews</span><span class="meta">of Resources, from their Preview tab</span></span><span class="count">6</span></label>
+    <label class="q-option"><input type="checkbox"><span class="q-option-text"><span>Lenses</span><span class="meta">your runs of a Lens</span></span><span class="count">2</span></label>
+    <label class="q-option"><input type="checkbox"><span class="q-option-text"><span>Hidden</span><span class="meta">queries you hid with the eye</span></span><span class="count">3</span></label>
+   </fieldset>
+   <div class="q-filter-foot"><button type="reset" class="text-link">Reset</button><span class="meta">Only your panel changes</span></div>
+  </form>
+  <p class="q-filter-on"><span>Also showing: Previews</span><button class="q-filter-x" aria-label="Stop showing Previews"><i class="ph ph-x"></i></button></p>
+  <div data-group="scope" hidden><button data-target="yours"></button><button data-target="all"></button></div>
+  <!-- The Projects, above the history (DEC-UX-285): each with how many queries it holds and who is in it; the one the
+       User works in has the flag of the row. A click opens its page; the arrow unfolds its queries, with their keys.
+       The search looks through both: a Project whose name matches stays, one with a matching query unfolds to it. -->
+  <div class="proj-list" id="proj-list">
+   <div class="panel-label with-add"><span>Projects</span><button class="icon-btn" type="button" data-row-pop="newproj" aria-label="New project" title="New project"><i class="ph ph-plus"></i></button></div>
+   <div class="proj-entry open" data-proj="credit">
+    <a class="list-item card proj-item current" aria-current="page" href="query-project.html" data-name="credit leads q4 leads per source name partner share per week weekly lead volume lead sources listings saved searches"><i class="ph-fill ph-folders kind-icon" role="img" aria-label="Project"></i><span><span class="item-title">Credit leads Q4</span><span class="meta">14 queries · with 3 colleagues</span></span><i class="ph-fill ph-flag flag-mark" role="img" aria-label="You work in it" title="You work in it: its queries are in the row on top"></i></a>
+    <button class="icon-btn q-unfold" aria-expanded="true" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
+    <div class="proj-queries" aria-label="Its queries">
+     <a href="query.html"><span class="kbd">1</span><span class="clip">Leads per source name</span></a>
+     <a href="query.html"><span class="kbd">2</span><span class="clip">Partner share per week</span><i class="ph ph-circle-notch q-flag-spin" role="img" aria-label="Running"></i></a>
+     <a href="query.html"><span class="kbd">3</span><span class="clip">Listings per postal code, last 28 days</span></a>
+     <a href="query-project.html" class="text-link" style="color:var(--text-muted)"><span class="kbd"></span><span class="clip">All 14, on its page</span><i class="ph ph-arrow-right"></i></a>
+    </div>
+   </div>
+   <div class="proj-entry" data-proj="partner">
+    <a class="list-item card proj-item" href="query-project.html" data-name="partner review partner contracts"><i class="ph-fill ph-folders kind-icon" role="img" aria-label="Project"></i><span><span class="item-title">Partner review</span><span class="meta">4 queries · only you</span></span></a>
+    <button class="icon-btn q-unfold" aria-expanded="false" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
+    <div class="proj-queries" aria-label="Its queries"></div>
+   </div>
+   <div class="proj-entry" data-proj="listings">
+    <a class="list-item card proj-item" href="query-project.html" data-name="listings audit listings price"><i class="ph-fill ph-folders kind-icon" role="img" aria-label="Project"></i><span><span class="item-title">Listings audit</span><span class="meta">6 queries · with 4 colleagues</span></span></a>
+    <button class="icon-btn q-unfold" aria-expanded="false" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
+    <div class="proj-queries" aria-label="Its queries"></div>
+   </div>
+   <button class="text-link proj-more" type="button"><span>Show all 5</span></button>
+  </div>
+  <div class="panel-label" data-for="owner colleague">History</div>
+  <div data-pane-group="scope" data-pane="yours">
+  <!-- Per day this week, per week back to the start of last month, then per month; only today is open, the others load when opened (DEC-UX-139). -->
+  <div class="q-group open">
+   <button class="q-period" aria-expanded="true"><i class="ph ph-caret-down"></i><span>Today</span><span class="count">2</span></button>
+   <div class="q-entry">
+    <a class="list-item card q-item" href="query.html" data-name="leads per source name weekly lead volume lead sources"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources" data-pane-group="qstate" data-pane="works"></i><i class="ph ph-table kind-icon broken-mark" role="img" aria-label="On Resources, broken" title="Broken: the column lead_channel of Weekly lead volume no longer exists" data-pane-group="qstate" data-pane="broken" hidden></i><span><span class="item-title">Leads per source name</span><span class="meta">Weekly lead volume +1 · 14 runs · 08:12</span></span></a>
+    <button class="icon-btn q-unfold" aria-expanded="false" aria-label="Its runs"><i class="ph ph-caret-down"></i></button>
+    <div class="q-runs" aria-label="Its last runs">
+     <button class="q-run on" data-run="14"><span>Run 14</span><span class="meta">today, 08:12</span></button>
+     <button class="q-run" data-run="13"><span>Run 13</span><span class="meta">today, 08:05</span></button>
+     <button class="q-run" data-run="12"><span>Run 12</span><span class="meta">yesterday, 17:40</span></button>
+     <button class="q-run q-run-all" data-run="all"><span>All 14 runs</span><i class="ph ph-arrow-right"></i></button>
+    </div>
+   </div>
+   <div class="q-entry">
+    <a class="list-item card q-item" href="query.html" data-name="partner share per week weekly lead volume lead sources"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><span class="item-title">Partner share per week</span><span class="meta">Weekly lead volume +1 · 3 runs · 07:58</span></span></a><button class="icon-btn q-hide" aria-label="Hide this query" title="Hide this query; Hidden shows it again"><i class="ph ph-eye-slash"></i></button>
+   </div>
+  </div>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>Yesterday</span><span class="count">4</span></button>
+  </div>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>Wed 28 Oct</span><span class="count">2</span></button>
+  </div>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>Mon 26 Oct</span><span class="count">1</span></button>
+  </div>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>19 – 25 Oct</span><span class="count">6</span></button>
+  </div>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>12 – 18 Oct</span><span class="count">3</span></button>
+  </div>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>5 – 11 Oct</span><span class="count">2</span></button>
+  </div>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>28 Sep – 4 Oct</span><span class="count">4</span></button>
+  </div>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>21 – 27 Sep</span><span class="count">3</span></button>
+  </div>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>1 – 6 Sep</span><span class="count">2</span></button>
+  </div>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>August</span><span class="count">9</span></button>
+  </div>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>July</span><span class="count">14</span></button>
+  </div>
+  </div>
+  <div data-pane-group="scope" data-pane="all" data-for="datateam" hidden>
+  <p class="meta" style="margin:12px 4px 0;line-height:1.5;display:block">Everyone's queries, with their SQL. Only the Data Team sees them.</p>
+  <div class="panel-label">Today</div>
+  <a class="list-item card q-item current" aria-current="page" href="query.html" data-name="you leads per source name weekly lead volume lead sources"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><span class="item-title">Leads per source name</span><span class="meta">You · Weekly lead volume +1 · 80 MB</span></span></a>
+  <a class="list-item card q-item" href="query.html" data-name="dirk vos saved searches per week"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><span class="item-title">Saved searches per week</span><span class="meta">Dirk Vos · Saved searches · 340 MB</span></span></a>
+  <a class="list-item card q-item" href="query.html" data-name="you preview weekly lead volume"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><span class="item-title">Preview · Weekly lead volume</span><span class="meta">You · Weekly lead volume · 980 MB</span></span><span class="pill">Preview</span></a>
+  <div class="panel-label">Yesterday</div>
+  <a class="list-item card q-item" href="query.html" data-name="karel leys partner share per month weekly lead volume"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><span class="item-title">Partner share per month</span><span class="meta">Karel Leys · Weekly lead volume · 640 MB</span></span><span class="pill">Claude</span></a>
+  <a class="list-item card q-item" href="query.html" data-name="ruth aerts lens response time by broker"><i class="ph ph-aperture kind-icon" role="img" aria-label="On a Lens"></i><span><span class="item-title">Response time by broker</span><span class="meta">Ruth Aerts · Lens · 640 MB</span></span></a>
+  <a class="list-item card q-item" href="query.html" data-name="an claes weekly volume since 2024"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><span class="item-title">Weekly volume since 2024</span><span class="meta">An Claes · Weekly lead volume · 2.9 GB</span></span><span class="pill">Accepted</span></a>
+  </div>
+  <p id="no-results" class="meta" style="padding:8px 4px" hidden>No queries match your search.</p>
+ </div>
+</aside>
+<main class="main">
+<!-- The row on top, while the User works in this Project: its queries, the first ten with ⌘1 to ⌘0 (DEC-UX-283). In
+     query.html it is drawn with every case; here as it stands. -->
+<nav class="q-flags" aria-label="The queries of Credit leads Q4" data-pane-group="work" data-pane="in">
+ <a class="q-proj" href="query.html?rowpop=work" title="You work in Credit leads Q4: its queries are in this row. Click to work in another"><i class="ph-fill ph-folders" aria-hidden="true"></i><span class="clip">Credit leads Q4</span><span class="q-proj-people" title="4 in it"><i class="ph ph-users"></i>4</span><i class="ph ph-caret-down caret" aria-hidden="true"></i></a>
+ <span class="q-flags-mod" title="Hold ⌘ and press the number of a query to open it">⌘</span>
+ <div class="q-flags-tabs many"><a class="q-flag" href="query.html" title="Leads per source name · ⌘1"><span class="kbd">1</span><span class="q-flag-name">Leads per source name</span></a><a class="q-flag" href="query.html" title="Partner share per week · ⌘2"><span class="kbd">2</span><span class="q-flag-name">Partner share per week</span><i class="ph ph-circle-notch q-flag-spin" role="img" aria-label="Running"></i></a><a class="q-flag" href="query.html" title="Listings per postal code, last 28 days · ⌘3"><span class="kbd">3</span><span class="q-flag-name">Listings per postal code, last 28 days</span><span class="q-flag-mark seen-not" role="img" aria-label="A result you have not seen yet"></span></a><a class="q-flag" href="query.html" title="Saved searches by price band · ⌘4"><span class="kbd">4</span><span class="q-flag-name">Saved searches by price band</span><span class="q-flag-mark failed" role="img" aria-label="Its last run failed"></span></a><a class="q-flag" href="query.html" title="Leads that came back within a week · ⌘5"><span class="kbd">5</span><span class="q-flag-name">Leads that came back within a week</span></a><a class="q-flag" href="query.html" title="Credit leads per partner, this year · ⌘6"><span class="kbd">6</span><span class="q-flag-name">Credit leads per partner, this year</span></a><a class="q-flag" href="query.html" title="Price per m² by province · ⌘7"><span class="kbd">7</span><span class="q-flag-name">Price per m² by province</span><i class="ph ph-link-break q-flag-broken" role="img" aria-label="Broken"></i></a><a class="q-flag" href="query.html" title="New listings per day · ⌘8"><span class="kbd">8</span><span class="q-flag-name">New listings per day</span></a><a class="q-flag" href="query.html" title="Leads without a source · ⌘9"><span class="kbd">9</span><span class="q-flag-name">Leads without a source</span></a><a class="q-flag" href="query.html" title="Partner contracts ending soon · ⌘0"><span class="kbd">0</span><span class="q-flag-name">Partner contracts ending soon</span></a><a class="q-flag" href="query.html" title="Searches per user, last week"><span class="nokey" aria-hidden="true"></span><span class="q-flag-name">Searches per user, last week</span></a><a class="q-flag" href="query.html" title="Response time per broker"><span class="nokey" aria-hidden="true"></span><span class="q-flag-name">Response time per broker</span></a><a class="q-flag" href="query.html" title="Leads per postal code"><span class="nokey" aria-hidden="true"></span><span class="q-flag-name">Leads per postal code</span></a><a class="q-flag" href="query.html" title="Conversion per channel"><span class="nokey" aria-hidden="true"></span><span class="q-flag-name">Conversion per channel</span></a></div>
+ <div class="q-flags-end"><a class="q-flags-all" href="query.html?rowpop=all"><span>All 14</span><i class="ph ph-caret-down"></i></a></div>
+</nav>
+<nav class="q-flags" aria-label="Your flagged queries" data-pane-group="work" data-pane="out" hidden>
+ <a class="q-proj mine" href="query.html?flags=this&amp;rowpop=work"><i class="ph-fill ph-flag" aria-hidden="true"></i><span class="clip">Flagged</span><i class="ph ph-caret-down caret" aria-hidden="true"></i></a>
+ <span class="q-flags-mod">⌘</span>
+ <div class="q-flags-tabs"><a class="q-flag" href="query.html"><span class="kbd">1</span><span class="q-flag-name">Leads per source name</span></a><a class="q-flag" href="query.html"><span class="kbd">2</span><span class="q-flag-name">Partner share per week</span></a><a class="q-flag" href="query.html"><span class="kbd">3</span><span class="q-flag-name">Lead volume per province</span></a></div>
+</nav>
+<div class="breadcrumb crumbs"><a href="query.html">Query</a> / <span>Credit leads Q4</span></div>
+
+<div data-pane-group="proj" data-pane="shared new">
+<div class="coll-head">
+ <span class="item-icon large"><i class="ph-fill ph-folders"></i></span>
+ <div style="flex:1;min-width:0">
+  <!-- Its name and what it is for, changed in place by anyone in it (DEC-UX-285, DEC-UX-286) -->
+  <div data-head-view>
+   <h1 class="page-title"><span class="in-place" data-edit title="Click to rename it">Credit leads Q4</span></h1>
+   <p class="lead-text"><span class="in-place" data-edit title="Click to change it">The queries behind the quarterly review of credit leads: volume, sources, partners and how fast brokers answer.</span></p>
+  </div>
+  <form class="in-place-form" data-head-edit hidden>
+   <label class="field"><span>Name</span><input value="Credit leads Q4" maxlength="80"></label>
+   <label class="field"><span>What it is for · optional</span><textarea rows="2" maxlength="500">The queries behind the quarterly review of credit leads: volume, sources, partners and how fast brokers answer.</textarea></label>
+   <span class="in-place-actions"><button class="btn-primary" type="button" data-edit-done>Save</button><button class="btn-quiet" type="button" data-edit-done>Cancel</button></span>
+  </form>
+ </div>
+ <div class="coll-actions">
+  <button class="btn-quiet outline" type="button" data-sheet-open="share-sheet" style="display:inline-flex;align-items:center;gap:8px" title="Who is in it, and add a colleague"><span class="proj-people" aria-hidden="true"><span class="mini-avatar">MP</span><span class="mini-avatar">KL</span><span class="mini-avatar">AC</span><span class="mini-avatar">LD</span></span>Share</button>
+  <a class="btn-quiet outline" href="query-new.html" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none" title="A new query, in this Project from the start" data-pane-group="seen" data-pane="me"><i class="ph ph-plus"></i>New query in it</a>
+  <span class="proj-here" data-pane-group="work" data-pane="in" title="Its queries are in the row on top"><i class="ph-fill ph-flag"></i>You work in it</span>
+  <button class="btn-primary" type="button" data-pane-group="work" data-pane="out" hidden data-go="work:in" title="Put its queries in the row on top"><i class="ph ph-flag" style="font-size:15px"></i>Work in it</button>
+ </div>
+</div>
+<div class="status-row">
+ <span class="status"><i class="ph ph-table kind-icon"></i><span data-pane-group="proj" data-pane="shared">14 queries</span><span data-pane-group="proj" data-pane="new" hidden>No queries yet</span></span>
+ <span class="status"><i class="ph ph-users"></i><span data-pane-group="proj" data-pane="shared">4 people in it</span><span data-pane-group="proj" data-pane="new" hidden>Only you</span></span>
+ <span class="status"><span>Made by <span data-pane-group="seen" data-pane="me">you</span><span data-pane-group="seen" data-pane="lotte" hidden>Maxime Passenier</span>, 12 Nov 2026</span></span>
+ <span class="status" data-pane-group="proj" data-pane="shared">Last run 08:12, by Karel Leys</span>
+</div>
+<!-- Seen by a colleague whose Permission group does not let them make or run queries: in it all the same, told why (DEC-UX-286, OP-UX-98) -->
+<div class="notice" data-pane-group="seen" data-pane="lotte" hidden><i class="ph-fill ph-info"></i><p><b>You can open these queries and read their SQL, but not run or change them.</b> Your Permission group, Reader, does not let you make or run queries; the Data Team changes it, in Admin. One query reads a Resource you may not see: it shows locked.</p></div>
+
+<div class="section-head"><h2>Its queries</h2><span class="meta" data-pane-group="proj" data-pane="shared">In the order of the row on top. Drag a row to change its place and its key, for everyone in it</span></div>
+<div class="table-card card files proj-table" data-pane-group="proj" data-pane="shared"><table>
+ <thead><tr><th aria-label="Place"></th><th>Key</th><th>Query</th><th class="hide-narrow">Reads</th><th class="hide-narrow">Made by</th><th>Last run</th><th aria-label="Take out"></th></tr></thead>
+ <tbody>
+  <tr draggable="true"><td class="proj-drag" title="Drag to change its place and its key"><i class="ph ph-dots-six-vertical"></i></td><td class="proj-key"><span class="kbd">⌘1</span></td><td><span class="q-cell"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><a href="query.html">Leads per source name</a><span class="meta">Which sources bring our leads, week by week?</span></span></span></td><td class="hide-narrow">Weekly lead volume +1</td><td class="hide-narrow">You</td><td><span class="marks"><span>08:12 · Karel Leys</span></span></td><td><button class="icon-btn row-x" type="button" aria-label="Take Leads per source name out of Credit leads Q4" title="Take it out of Credit leads Q4: it stays with you, who made it"><i class="ph ph-x"></i></button></td></tr>
+  <tr draggable="true"><td class="proj-drag" title="Drag to change its place and its key"><i class="ph ph-dots-six-vertical"></i></td><td class="proj-key"><span class="kbd">⌘2</span></td><td><span class="q-cell"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><a href="query.html">Partner share per week</a><span class="meta">What share of our leads comes through partners?</span></span></span></td><td class="hide-narrow">Weekly lead volume +1</td><td class="hide-narrow">Karel Leys</td><td><span class="marks"><i class="ph ph-circle-notch q-flag-spin" role="img" aria-label="Running"></i><span>now · Karel Leys</span></span></td><td><button class="icon-btn row-x" type="button" aria-label="Take Partner share per week out of Credit leads Q4" title="Take it out of Credit leads Q4: it stays with Karel Leys, who made it"><i class="ph ph-x"></i></button></td></tr>
+  <tr draggable="true"><td class="proj-drag" title="Drag to change its place and its key"><i class="ph ph-dots-six-vertical"></i></td><td class="proj-key"><span class="kbd">⌘3</span></td><td><span class="q-cell"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><a href="query.html">Listings per postal code, last 28 days</a><span class="meta">Where do new listings come in?</span></span></span></td><td class="hide-narrow">Listings</td><td class="hide-narrow">An Claes</td><td><span class="marks"><span class="q-flag-mark seen-not" role="img" aria-label="A result you have not seen yet"></span><span>07:58 · An Claes</span></span></td><td><button class="icon-btn row-x" type="button" aria-label="Take Listings per postal code, last 28 days out of Credit leads Q4" title="Take it out of Credit leads Q4: it stays with An Claes, who made it"><i class="ph ph-x"></i></button></td></tr>
+  <tr draggable="true"><td class="proj-drag" title="Drag to change its place and its key"><i class="ph ph-dots-six-vertical"></i></td><td class="proj-key"><span class="kbd">⌘4</span></td><td><span class="q-cell"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><a href="query.html">Saved searches by price band</a><span class="meta">In which price bands do people save searches?</span></span></span></td><td class="hide-narrow">Saved searches</td><td class="hide-narrow">You</td><td><span class="marks"><span class="q-flag-mark failed" role="img" aria-label="Its last run failed"></span><span>07:40 · you</span></span></td><td><button class="icon-btn row-x" type="button" aria-label="Take Saved searches by price band out of Credit leads Q4" title="Take it out of Credit leads Q4: it stays with you, who made it"><i class="ph ph-x"></i></button></td></tr>
+  <tr draggable="true"><td class="proj-drag" title="Drag to change its place and its key"><i class="ph ph-dots-six-vertical"></i></td><td class="proj-key"><span class="kbd">⌘5</span></td><td><span class="q-cell"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><a href="query.html">Leads that came back within a week</a><span class="meta">How many leads come back within seven days?</span></span></span></td><td class="hide-narrow">Weekly lead volume</td><td class="hide-narrow">Karel Leys</td><td><span class="marks"><span>yesterday · Karel Leys</span></span></td><td><button class="icon-btn row-x" type="button" aria-label="Take Leads that came back within a week out of Credit leads Q4" title="Take it out of Credit leads Q4: it stays with Karel Leys, who made it"><i class="ph ph-x"></i></button></td></tr>
+  <tr draggable="true"><td class="proj-drag" title="Drag to change its place and its key"><i class="ph ph-dots-six-vertical"></i></td><td class="proj-key"><span class="kbd">⌘6</span></td><td><span class="q-cell"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><a href="query.html">Credit leads per partner, this year</a><span class="meta">Which partners bring credit leads this year?</span></span></span></td><td class="hide-narrow">Weekly lead volume +1</td><td class="hide-narrow">You</td><td><span class="marks"><span>yesterday · you</span></span></td><td><button class="icon-btn row-x" type="button" aria-label="Take Credit leads per partner, this year out of Credit leads Q4" title="Take it out of Credit leads Q4: it stays with you, who made it"><i class="ph ph-x"></i></button></td></tr>
+  <tr draggable="true"><td class="proj-drag" title="Drag to change its place and its key"><i class="ph ph-dots-six-vertical"></i></td><td class="proj-key"><span class="kbd">⌘7</span></td><td><span class="q-cell"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><a href="query.html">Price per m² by province</a><span class="meta">What does a m² cost per province?</span></span></span></td><td class="hide-narrow">Listings</td><td class="hide-narrow">An Claes</td><td><span class="marks"><i class="ph ph-link-break q-flag-broken" role="img" aria-label="Broken"></i><span>Mon · An Claes</span></span></td><td><button class="icon-btn row-x" type="button" aria-label="Take Price per m² by province out of Credit leads Q4" title="Take it out of Credit leads Q4: it stays with An Claes, who made it"><i class="ph ph-x"></i></button></td></tr>
+  <tr draggable="true"><td class="proj-drag" title="Drag to change its place and its key"><i class="ph ph-dots-six-vertical"></i></td><td class="proj-key"><span class="kbd">⌘8</span></td><td><span class="q-cell"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><a href="query.html">New listings per day</a><span class="meta">How many listings come in each day?</span></span></span></td><td class="hide-narrow">Listings</td><td class="hide-narrow">You</td><td><span class="marks"><span>Mon · you</span></span></td><td><button class="icon-btn row-x" type="button" aria-label="Take New listings per day out of Credit leads Q4" title="Take it out of Credit leads Q4: it stays with you, who made it"><i class="ph ph-x"></i></button></td></tr>
+  <tr draggable="true"><td class="proj-drag" title="Drag to change its place and its key"><i class="ph ph-dots-six-vertical"></i></td><td class="proj-key"><span class="kbd">⌘9</span></td><td><span class="q-cell"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><a href="query.html">Leads without a source</a><span class="meta">How many leads have no source?</span></span></span></td><td class="hide-narrow">Weekly lead volume</td><td class="hide-narrow">Karel Leys</td><td><span class="marks"><span>16 Nov · Karel Leys</span></span></td><td><button class="icon-btn row-x" type="button" aria-label="Take Leads without a source out of Credit leads Q4" title="Take it out of Credit leads Q4: it stays with Karel Leys, who made it"><i class="ph ph-x"></i></button></td></tr>
+  <tr draggable="true"><td class="proj-drag" title="Drag to change its place and its key"><i class="ph ph-dots-six-vertical"></i></td><td class="proj-key"><span class="kbd">⌘0</span></td><td><span class="q-cell"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><a href="query.html">Partner contracts ending soon</a><span class="meta">Which partner contracts end this quarter?</span></span></span></td><td class="hide-narrow">Partner contracts</td><td class="hide-narrow">You</td><td><span class="marks"><span>15 Nov · you</span></span></td><td><button class="icon-btn row-x" type="button" aria-label="Take Partner contracts ending soon out of Credit leads Q4" title="Take it out of Credit leads Q4: it stays with you, who made it"><i class="ph ph-x"></i></button></td></tr>
+  <tr draggable="true"><td class="proj-drag" title="Drag to change its place and its key"><i class="ph ph-dots-six-vertical"></i></td><td class="proj-key"><span class="meta" title="Only the first ten have a key">—</span></td><td><span class="q-cell"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><a href="query.html">Searches per user, last week</a><span class="meta">How many searches does a user run?</span></span></span></td><td class="hide-narrow">Saved searches</td><td class="hide-narrow">An Claes</td><td><span class="marks"><span>14 Nov · An Claes</span></span></td><td><button class="icon-btn row-x" type="button" aria-label="Take Searches per user, last week out of Credit leads Q4" title="Take it out of Credit leads Q4: it stays with An Claes, who made it"><i class="ph ph-x"></i></button></td></tr>
+  <tr draggable="true" data-pane-group="seen" data-pane="me"><td class="proj-drag" title="Drag to change its place and its key"><i class="ph ph-dots-six-vertical"></i></td><td class="proj-key"><span class="meta" title="Only the first ten have a key">—</span></td><td><span class="q-cell"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><a href="query.html">Response time per broker</a><span class="meta">How fast do brokers answer a lead?</span></span></span></td><td class="hide-narrow">Broker contacts</td><td class="hide-narrow">Karel Leys</td><td><span class="marks"><span>14 Nov · Karel Leys</span></span></td><td><button class="icon-btn row-x" type="button" aria-label="Take Response time per broker out of Credit leads Q4" title="Take it out of Credit leads Q4: it stays with Karel Leys, who made it"><i class="ph ph-x"></i></button></td></tr>
+  <tr class="locked" data-pane-group="seen" data-pane="lotte" hidden><td class="proj-drag"><i class="ph ph-dots-six-vertical"></i></td><td class="proj-key"><span class="meta" title="Only the first ten have a key">—</span></td><td><span class="q-cell"><i class="ph ph-lock-simple kind-icon" role="img" aria-label="Locked"></i><span><span class="item-title">Response time per broker</span><span class="meta">Reads Broker contacts, in Brokers, a private Collection you do not see: you cannot open it.</span></span></span></td><td class="hide-narrow">—</td><td class="hide-narrow">Karel Leys</td><td><span class="marks"><span>14 Nov · Karel Leys</span></span></td><td></td></tr>
+  <tr draggable="true"><td class="proj-drag" title="Drag to change its place and its key"><i class="ph ph-dots-six-vertical"></i></td><td class="proj-key"><span class="meta" title="Only the first ten have a key">—</span></td><td><span class="q-cell"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><a href="query.html">Leads per postal code</a><span class="meta">Where do our leads live?</span></span></span></td><td class="hide-narrow">Weekly lead volume</td><td class="hide-narrow">You</td><td><span class="marks"><span>13 Nov · you</span></span></td><td><button class="icon-btn row-x" type="button" aria-label="Take Leads per postal code out of Credit leads Q4" title="Take it out of Credit leads Q4: it stays with you, who made it"><i class="ph ph-x"></i></button></td></tr>
+  <tr draggable="true"><td class="proj-drag" title="Drag to change its place and its key"><i class="ph ph-dots-six-vertical"></i></td><td class="proj-key"><span class="meta" title="Only the first ten have a key">—</span></td><td><span class="q-cell"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><a href="query.html">Conversion per channel</a><span class="meta">Which channel turns leads into credits?</span></span></span></td><td class="hide-narrow">Weekly lead volume +1</td><td class="hide-narrow">An Claes</td><td><span class="marks"><span>not run yet</span></span></td><td><button class="icon-btn row-x" type="button" aria-label="Take Conversion per channel out of Credit leads Q4" title="Take it out of Credit leads Q4: it stays with An Claes, who made it"><i class="ph ph-x"></i></button></td></tr>
+ </tbody>
+</table></div>
+<div class="card proj-empty" data-pane-group="proj" data-pane="new" hidden><i class="ph ph-folders"></i>Nothing in it yet.<br>Open a query and press "Add to Credit leads Q4" at the end of the row on top, or start a new one here.<br><a class="btn-quiet outline" href="query-new.html" style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;text-decoration:none"><i class="ph ph-plus"></i>New query in it</a></div>
+
+<div class="section-head"><h2>In it</h2><button class="btn-quiet outline" type="button" data-sheet-open="share-sheet" style="display:inline-flex;align-items:center;gap:6px"><i class="ph ph-user-plus"></i>Share</button></div>
+<div class="card" style="padding:6px;border-radius:var(--radius-lg)" data-pane-group="proj" data-pane="shared">
+<div class="me-row"><span class="mini-avatar" aria-hidden="true" style="width:30px;height:30px;font-size:10px;display:inline-flex;align-items:center;justify-content:center">MP</span><span style="flex:1;min-width:0"><span class="item-title">Maxime Passenier<span data-pane-group="seen" data-pane="me"> (you)</span></span><span class="meta" style="display:block">made it, 12 Nov 2026 · made 6 of its queries</span></span><button class="text-link" type="button" data-go="proj:shared" onclick="document.getElementById('leave').scrollIntoView({block:'center',behavior:'smooth'})"><span>Leave</span></button></div>
+<div class="me-row"><span class="mini-avatar" aria-hidden="true" style="width:30px;height:30px;font-size:10px;display:inline-flex;align-items:center;justify-content:center">KL</span><span style="flex:1;min-width:0"><span class="item-title">Karel Leys</span><span class="meta" style="display:block">since 12 Nov, added by you · made 4 of its queries</span></span><button class="icon-btn" type="button" aria-label="Take Karel Leys out of Credit leads Q4" title="Take Karel Leys out of it: the queries they made stay in it"><i class="ph ph-x"></i></button></div>
+<div class="me-row"><span class="mini-avatar" aria-hidden="true" style="width:30px;height:30px;font-size:10px;display:inline-flex;align-items:center;justify-content:center">AC</span><span style="flex:1;min-width:0"><span class="item-title">An Claes</span><span class="meta" style="display:block">since 13 Nov, added by Karel Leys · made 4 of its queries</span></span><button class="icon-btn" type="button" aria-label="Take An Claes out of Credit leads Q4" title="Take An Claes out of it: the queries they made stay in it"><i class="ph ph-x"></i></button></div>
+<div class="me-row"><span class="mini-avatar" aria-hidden="true" style="width:30px;height:30px;font-size:10px;display:inline-flex;align-items:center;justify-content:center">LD</span><span style="flex:1;min-width:0"><span class="item-title">Lotte Dewulf<span data-pane-group="seen" data-pane="lotte" hidden> (you)</span></span> <span class="pill warn"><i class="ph-fill ph-warning"></i>cannot run queries</span><span class="meta" style="display:block">since today, added by An Claes</span><span class="meta proj-member-note warn">Her Permission group, Reader, does not let her make or run queries: she opens the queries and reads their SQL, but does not run or change them. She does not see Response time per broker, which reads a Resource of Brokers, a private Collection.</span></span><button class="icon-btn" type="button" aria-label="Take Lotte Dewulf out of Credit leads Q4" title="Take Lotte Dewulf out of it: the queries they made stay in it"><i class="ph ph-x"></i></button></div>
+</div>
+<div class="card" style="padding:6px;border-radius:var(--radius-lg)" data-pane-group="proj" data-pane="new" hidden>
+<div class="me-row"><span class="mini-avatar" aria-hidden="true" style="width:30px;height:30px;font-size:10px;display:inline-flex;align-items:center;justify-content:center">MP</span><span style="flex:1;min-width:0"><span class="item-title">Maxime Passenier<span data-pane-group="seen" data-pane="me"> (you)</span></span><span class="meta" style="display:block">made it, just now</span></span><button class="text-link" type="button" data-go="proj:shared" onclick="document.getElementById('leave').scrollIntoView({block:'center',behavior:'smooth'})"><span>Leave</span></button></div>
+ <p class="meta" style="display:block;padding:4px 6px 6px;line-height:1.5">Only you see it. Share it to work on it together: everyone in it may open, change and run its queries.</p>
+</div>
+
+<div class="section-head"><h2>Danger zone</h2></div>
+<section class="danger proj-danger" id="leave">
+ <div class="danger-head"><i class="ph-fill ph-sign-out" aria-hidden="true"></i><div><h3>Leave it</h3><p>When you no longer work on it. The others keep it, with the queries you made in it.</p></div></div>
+ <div class="danger-foot"><span class="meta">Someone in it can add you again.</span><button class="btn-quiet outline" type="button">Leave Credit leads Q4</button></div>
+</section>
+<section class="danger proj-danger">
+ <div class="danger-head"><i class="ph-fill ph-trash" aria-hidden="true"></i><div><h3>Delete it</h3><p>When its work is done. Anyone in it may delete it, for everyone. It cannot be undone.</p></div></div>
+ <div class="danger-what">
+  <p class="line"><i class="ph-fill ph-folders" aria-hidden="true"></i><span><b>It is gone for the 4 people in it:</b> from their panel and from the row on top. Whoever worked in it works in their flagged queries again.</span></p>
+  <p class="line"><i class="ph-fill ph-table" aria-hidden="true"></i><span><b>Its 14 queries stay, each with whoever made it:</b> in their history, with every run. Who did not make a query no longer sees it.</span></p>
+  <p class="line"><i class="ph-fill ph-chat-circle-text" aria-hidden="true"></i><span><b>The others are told:</b> Karel Leys, An Claes and Lotte Dewulf get a Message that you deleted it, with your reason.</span></p>
+ </div>
+ <div class="danger-foot"><span class="meta">Data Hub keeps who deleted it, when and why.</span><button class="btn-primary danger" type="button" data-sheet-open="delete-sheet" style="display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-trash"></i>Delete the project</button></div>
+</section>
+</div>
+
+<!-- Deleted: its address says so, by whom, when and why; the queries stay with whoever made them (OP-UX-100) -->
+<div data-pane-group="proj" data-pane="deleted" hidden>
+ <div class="coll-head"><span class="item-icon large"><i class="ph ph-folders"></i></span><div style="flex:1;min-width:0"><h1 class="page-title" style="color:var(--text-muted)">Credit leads Q4</h1><p class="lead-text">This project was deleted.</p></div></div>
+ <div class="notice"><i class="ph-fill ph-trash"></i><p><b>An Claes deleted it today at 09:30:</b> "The review is done; the quarter is closed." Its queries stay with whoever made them: your 6 are in your history, in the panel.</p><a class="text-link" href="query.html"><span>To your queries</span></a></div>
+</div>
+</main>
+</div>
+
+<!-- Share (DEC-UX-286): a search over the colleagues of Immoscoop, each with their Permission group, marked when they
+     cannot run queries; everyone in it, with × to take them out. Whoever is added gets a Message (OP-UX-101). -->
+<div class="sheet-wrap" id="share-sheet" hidden>
+<div class="sheet-backdrop" data-sheet-close></div>
+<section class="sheet share-sheet" role="dialog" aria-modal="true" aria-labelledby="share-title">
+ <div style="display:flex;align-items:flex-start;gap:10px">
+  <i class="ph ph-share-network" style="font-size:22px;color:var(--text-secondary);margin-top:2px" aria-hidden="true"></i>
+  <div style="flex:1;min-width:0"><div class="meta">Credit leads Q4</div><h2 id="share-title">Share</h2></div>
+  <button class="icon-btn" data-sheet-close aria-label="Close"><i class="ph ph-x"></i></button>
+ </div>
+ <div class="sheet-list">
+  <p class="meta" style="display:block;line-height:1.5;margin:6px 0 4px">Everyone in a project may open, change and run its queries, add and take out queries, rename it, share it and delete it. A query runs with the rights of whoever runs it.</p>
+  <div class="share-who">
+   <label class="search card" style="max-width:none;background:var(--surface-sub)"><i class="ph ph-user-plus" style="font-size:15px"></i><input value="jo" placeholder="Add a colleague, by name or address" aria-label="Add a colleague"></label>
+   <div class="card share-sugg">
+    <a class="me-row" href="#"><span class="mini-avatar" aria-hidden="true" style="width:30px;height:30px;font-size:10px;display:inline-flex;align-items:center;justify-content:center">JP</span><span style="flex:1;min-width:0"><span class="item-title">Jonas Peeters</span><span class="meta" style="display:block">jonas.peeters@immoscoop.be · Analyst</span></span><i class="ph ph-plus" style="color:var(--text-muted)"></i></a>
+    <a class="me-row" href="#"><span class="mini-avatar" aria-hidden="true" style="width:30px;height:30px;font-size:10px;display:inline-flex;align-items:center;justify-content:center">JV</span><span style="flex:1;min-width:0"><span class="item-title">Joke Vermeulen</span> <span class="pill warn"><i class="ph-fill ph-warning"></i>cannot run queries</span><span class="meta" style="display:block">joke.vermeulen@immoscoop.be · Reader</span><span class="meta proj-member-note warn">Reader does not let her make or run queries: she can open the queries and read their SQL, not run or change them. She can be added all the same, and Data Hub tells her why.</span></span><i class="ph ph-plus" style="color:var(--text-muted)"></i></a>
+    <p class="meta" style="display:block;padding:6px 6px 2px;line-height:1.5">Colleagues of the Immoscoop domains who have signed in. A query that reads a Resource someone may not see shows locked to them.</p>
+   </div>
+  </div>
+  <div class="label" style="margin-top:16px">In it · 4</div>
+  <div class="me-row"><span class="mini-avatar" aria-hidden="true" style="width:30px;height:30px;font-size:10px;display:inline-flex;align-items:center;justify-content:center">MP</span><span style="flex:1;min-width:0"><span class="item-title">Maxime Passenier<span data-pane-group="seen" data-pane="me"> (you)</span></span><span class="meta" style="display:block">made it, 12 Nov 2026</span></span><button class="text-link" type="button" data-sheet-close onclick="document.getElementById('leave').scrollIntoView({block:'center',behavior:'smooth'})"><span>Leave</span></button></div>
+  <div class="me-row"><span class="mini-avatar" aria-hidden="true" style="width:30px;height:30px;font-size:10px;display:inline-flex;align-items:center;justify-content:center">KL</span><span style="flex:1;min-width:0"><span class="item-title">Karel Leys</span><span class="meta" style="display:block">since 12 Nov, added by you</span></span><button class="icon-btn" type="button" aria-label="Take Karel Leys out of Credit leads Q4" title="Take Karel Leys out of it: the queries they made stay in it"><i class="ph ph-x"></i></button></div>
+  <div class="me-row"><span class="mini-avatar" aria-hidden="true" style="width:30px;height:30px;font-size:10px;display:inline-flex;align-items:center;justify-content:center">AC</span><span style="flex:1;min-width:0"><span class="item-title">An Claes</span><span class="meta" style="display:block">since 13 Nov, added by Karel Leys</span></span><button class="icon-btn" type="button" aria-label="Take An Claes out of Credit leads Q4" title="Take An Claes out of it: the queries they made stay in it"><i class="ph ph-x"></i></button></div>
+  <div class="me-row"><span class="mini-avatar" aria-hidden="true" style="width:30px;height:30px;font-size:10px;display:inline-flex;align-items:center;justify-content:center">LD</span><span style="flex:1;min-width:0"><span class="item-title">Lotte Dewulf<span data-pane-group="seen" data-pane="lotte" hidden> (you)</span></span> <span class="pill warn"><i class="ph-fill ph-warning"></i>cannot run queries</span><span class="meta" style="display:block">since today, added by An Claes</span><span class="meta proj-member-note warn">Reader does not let her make or run queries. She does not see 1 of the 14 queries: it reads a Resource of Brokers, a private Collection.</span></span><button class="icon-btn" type="button" aria-label="Take Lotte Dewulf out of Credit leads Q4" title="Take Lotte Dewulf out of it: the queries they made stay in it"><i class="ph ph-x"></i></button></div>
+ </div>
+ <div class="sheet-foot"><p class="meta">Whoever you add gets a Message, with a link to it.</p><button class="btn-primary" type="button" data-sheet-close>Done</button></div>
+</section>
+</div>
+
+<!-- Delete: anyone in it may; the queries stay, each with whoever made it, and the others are told (OP-UX-100) -->
+<div class="sheet-wrap" id="delete-sheet" hidden>
+<div class="sheet-backdrop" data-sheet-close></div>
+<section class="sheet" role="dialog" aria-modal="true" aria-labelledby="delete-title">
+ <div style="display:flex;align-items:flex-start;gap:10px">
+  <i class="ph-fill ph-trash" style="font-size:22px;color:var(--text-secondary);margin-top:2px" aria-hidden="true"></i>
+  <div style="flex:1;min-width:0"><div class="meta">Credit leads Q4</div><h2 id="delete-title">Delete this project</h2></div>
+  <button class="icon-btn" data-sheet-close aria-label="Close"><i class="ph ph-x"></i></button>
+ </div>
+ <div class="sheet-list">
+  <p class="meta" style="display:block;line-height:1.5;margin-top:4px">For everyone in it. Deleting is for good: it cannot be undone.</p>
+  <div class="danger-what">
+   <p class="line"><i class="ph-fill ph-folders" aria-hidden="true"></i><span><b>It is gone for the 4 people in it,</b> from their panel and from the row on top.</span></p>
+   <p class="line"><i class="ph-fill ph-table" aria-hidden="true"></i><span><b>Its 14 queries stay, each with whoever made it:</b> your 6 stay yours. Who did not make a query no longer sees it.</span></p>
+   <p class="line"><i class="ph-fill ph-chat-circle-text" aria-hidden="true"></i><span><b>Karel Leys, An Claes and Lotte Dewulf are told,</b> with your reason.</span></p>
+  </div>
+  <form class="danger-form" onsubmit="return false">
+   <label class="field"><span class="field-label">Why you delete it · optional</span><textarea rows="3" placeholder="The review is done; the quarter is closed."></textarea></label>
+  </form>
+ </div>
+ <div class="sheet-foot">
+  <p class="meta">Data Hub keeps who deleted it, when and why.</p>
+  <button class="btn-quiet" data-sheet-close>Keep it</button>
+  <button class="btn-primary danger" type="button" data-go="proj:deleted" data-sheet-close style="display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-trash"></i>Delete for good</button>
+ </div>
+</section>
+</div>
+
+<div class="proto-switch" data-group="proj" role="tablist" aria-label="Prototype: the Project" style="bottom:24px;top:auto;right:24px">Project
+ <button class="seg on" data-target="shared" role="tab" aria-selected="true">As it is</button>
+ <button class="seg" data-target="new" role="tab" aria-selected="false">Just made</button>
+ <button class="seg" data-target="deleted" role="tab" aria-selected="false">Deleted</button>
+</div>
+<div class="proto-switch" data-group="seen" role="tablist" aria-label="Prototype: seen by" style="bottom:68px;top:auto;right:24px">Seen by
+ <button class="seg on" data-target="me" role="tab" aria-selected="true">You</button>
+ <button class="seg" data-target="lotte" role="tab" aria-selected="false">Lotte, who cannot run queries</button>
+</div>
+<div class="proto-switch" data-group="work" role="tablist" aria-label="Prototype: working in it" style="bottom:112px;top:auto;right:24px">Row
+ <button class="seg on" data-target="in" role="tab" aria-selected="true">You work in it</button>
+ <button class="seg" data-target="out" role="tab" aria-selected="false">You work in another</button>
+</div>
+<style>
+  /* Seen by a colleague who cannot run queries: no query to add, change or take out (OP-UX-98) */
+  body[data-seen="lotte"] .row-x { visibility: hidden; }
+</style>
+<script>
+  document.querySelectorAll('[data-group="seen"] [data-target]').forEach(b => b.addEventListener('click', () => { document.body.dataset.seen = b.dataset.target; }));
+  // Its name and what it is for, in place, by anyone in it
+  const $ = s => document.querySelector(s);
+  const editing = on => { $('[data-head-view]').hidden = on; $('[data-head-edit]').hidden = !on; };
+  document.querySelectorAll('[data-edit]').forEach(t => t.addEventListener('click', () => editing(true)));
+  document.querySelectorAll('[data-edit-done]').forEach(b => b.addEventListener('click', () => editing(false)));
+  // The prototype: ?share=open and ?delete=open open their sheet; a button that closes a sheet and switches a state
+  const ask = new URLSearchParams(location.search);
+  if (ask.get('share') === 'open') $('#share-sheet').hidden = false;
+  if (ask.get('delete') === 'open') $('#delete-sheet').hidden = false;
+  if (ask.has('edit')) editing(true);
+  // Every command of the page in the quick window (DEC-UX-240, DEC-UX-288)
+  const working = () => document.querySelector('[data-group="work"] .seg.on')?.dataset.target === 'in';
+  window.QUICK = {
+    group: 'This project',
+    where: 'Query · Credit leads Q4',
+    get commands() {
+      return [
+        working()
+          ? { icon: 'ph ph-flag', title: 'Stop working in Credit leads Q4', meta: 'the row shows your flagged queries again', run: () => document.querySelector('[data-group="work"] [data-target="out"]').click(), words: 'project leave row flagged' }
+          : { icon: 'ph-fill ph-flag', title: 'Work in Credit leads Q4', meta: 'its queries in the row on top', run: () => document.querySelector('[data-group="work"] [data-target="in"]').click(), words: 'project row open switch' },
+        { icon: 'ph ph-share-network', title: 'Share Credit leads Q4', meta: '4 in it', click: '[data-sheet-open="share-sheet"]', words: 'share people colleague invite add member' },
+        { icon: 'ph ph-plus', title: 'New query in Credit leads Q4', meta: 'in it from the start', run: () => { location.href = 'query-new.html'; }, for: 'colleague datateam owner', words: 'query new create start' },
+        { icon: 'ph ph-pencil-simple', title: 'Rename Credit leads Q4', meta: 'its name and what it is for, in place', run: () => editing(true), words: 'rename name description edit' },
+        { icon: 'ph ph-arrows-down-up', title: 'Change the order of its queries', meta: 'drag a row; the keys follow, for everyone', run: () => document.querySelector('.proj-drag')?.focus(), words: 'order sort move key' },
+        { icon: 'ph ph-sign-out', title: 'Leave Credit leads Q4', meta: 'the others keep it', run: () => document.getElementById('leave').scrollIntoView({ block: 'center', behavior: 'smooth' }), words: 'leave quit exit' },
+        { icon: 'ph ph-trash', title: 'Delete Credit leads Q4', meta: 'for everyone in it; its queries stay with whoever made them', click: '[data-sheet-open="delete-sheet"]', words: 'delete remove project' },
+      ];
+    },
+  };
+</script>
+<script src="app.js"></script>
+</body>
+</html>
