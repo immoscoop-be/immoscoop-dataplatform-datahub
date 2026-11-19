@@ -2002,7 +2002,11 @@ document.addEventListener('click', e => {
     { icon: 'ph-fill ph-toolbox', title: 'Admin · Permission groups', href: 'admin-permission-groups.html', for: 'datateam' },
   ];
   const COMMANDS = [
-    { icon: 'ph-fill ph-plus-circle', title: 'New query', href: 'query-new.html', words: 'start sql' },
+    { icon: 'ph-fill ph-plus-circle', title: 'New query', meta: 'choose its Resources, the Lenses on them first', href: 'query-new.html', words: 'start sql' },
+    // A blank query, without Resources, only for a power user, who may write SQL on tables outside Data Hub (DEC-UX-293)
+    { icon: 'ph ph-file-plus', title: 'New blank query', meta: 'no Resources yet: SQL on any table Data Hub knows', href: 'query.html?empty=1&blank=1', for: 'datateam', words: 'empty blank sql outside power start' },
+    // An empty query in a Project, one row for each, the Project worked in first (DEC-UX-293, DEC-UX-290)
+    ...['Credit leads Q4', 'Partner review', 'Listings audit'].map(name => ({ icon: 'ph ph-folders', title: `New query in ${name}`, meta: 'an empty query at the end of its row; you work in it', href: 'query.html?empty=1', words: 'project new empty blank start' })),
     { icon: 'ph ph-moon', title: 'Switch light or dark', run: () => document.getElementById('theme')?.click(), words: 'theme day night' },
     // The panel, on every screen that has one, and on Query reading the queries again (DEC-UX-254)
     { icon: 'ph ph-sidebar-simple', title: 'Hide the panel', run: () => document.querySelector('.panel')?.toggleAttribute('hidden'), words: 'toggle side menu sidebar collapse expand panel' },

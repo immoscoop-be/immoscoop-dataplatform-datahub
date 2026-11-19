@@ -161,6 +161,10 @@ import plugsConnectedFill from '@phosphor-icons/core/assets/fill/plugs-connected
 import shieldCheckFill from '@phosphor-icons/core/assets/fill/shield-check-fill.svg?raw';
 import browser from '@phosphor-icons/core/assets/regular/browser.svg?raw';
 import copy from '@phosphor-icons/core/assets/regular/copy.svg?raw';
+// Copy as JSON and Copy as CSV on a result, and New blank query (DEC-UX-292, DEC-UX-293).
+import bracketsCurly from '@phosphor-icons/core/assets/regular/brackets-curly.svg?raw';
+import fileCsv from '@phosphor-icons/core/assets/regular/file-csv.svg?raw';
+import filePlus from '@phosphor-icons/core/assets/regular/file-plus.svg?raw';
 import pencilSimple from '@phosphor-icons/core/assets/regular/pencil-simple.svg?raw';
 import plugsConnected from '@phosphor-icons/core/assets/regular/plugs-connected.svg?raw';
 import shieldCheck from '@phosphor-icons/core/assets/regular/shield-check.svg?raw';
@@ -334,6 +338,9 @@ export const ICONS = {
   'shield-check-fill': shieldCheckFill,
   browser: browser,
   copy: copy,
+  'brackets-curly': bracketsCurly,
+  'file-csv': fileCsv,
+  'file-plus': filePlus,
   'pencil-simple': pencilSimple,
   'plugs-connected': plugsConnected,
   'shield-check': shieldCheck,

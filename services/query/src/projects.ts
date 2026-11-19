@@ -2,10 +2,7 @@ import { type Kysely, sql } from 'kysely';
 import type { Missing, NamedResource, QueryDatabase, RunState } from './database.js';
 import type { Viewer } from './queries.js';
 
-/** At most this many queries in a Project, as in the row on top (OP-UX-96). */
-export const PROJECT_QUERIES = 50;
-
-/** A Project: a set of queries Users work on together (FR-SR-63, DEC-UX-282). */
+/** A Project: a set of queries Users work on together (FR-SR-63, DEC-UX-282), any number of them (DEC-SR-49). */
 export interface Project {
   id: string;
   name: string;
@@ -68,8 +65,8 @@ export interface Projects {
   removeMember(id: string, userId: string, by: Viewer): Promise<number>;
   /** Its queries in their order, for everyone in it the same (OP-UX-95). */
   queries(id: string): Promise<ProjectQuery[]>;
-  /** Puts a query at the end of a Project, out of any other (OP-UX-93); false when it is full. */
-  addQuery(id: string, queryId: string, by: Viewer): Promise<boolean>;
+  /** Puts a query at the end of a Project, out of any other (OP-UX-93); a Project holds any number (DEC-SR-49). */
+  addQuery(id: string, queryId: string, by: Viewer): Promise<void>;
   removeQuery(id: string, queryId: string): Promise<boolean>;
   /** The order of its queries, the ones named first in this order, any others after them as they were. */
   order(id: string, queryIds: string[]): Promise<void>;
@@ -155,7 +152,7 @@ export function createProjects(db: Kysely<QueryDatabase>): Projects {
           await trx.deleteFrom('projectQueries').where('queryId', 'in', queryIds).execute();
           await trx
             .insertInto('projectQueries')
-            .values(queryIds.slice(0, PROJECT_QUERIES).map((queryId, position) => ({ projectId: project.id, queryId, position, addedById: by.id })))
+            .values(queryIds.map((queryId, position) => ({ projectId: project.id, queryId, position, addedById: by.id })))
             .execute();
         }
         return project;
@@ -238,17 +235,14 @@ export function createProjects(db: Kysely<QueryDatabase>): Projects {
     },
 
     async addQuery(id, queryId, by) {
-      return db.transaction().execute(async (trx) => {
+      await db.transaction().execute(async (trx) => {
         const here = await trx.selectFrom('projectQueries').select('projectId').where('queryId', '=', queryId).executeTakeFirst();
-        if (here?.projectId === id) return true;
-        const count = Number((await trx.selectFrom('projectQueries').select(sql<string>`count(*)`.as('n')).where('projectId', '=', id).executeTakeFirstOrThrow()).n);
-        if (count >= PROJECT_QUERIES) return false;
+        if (here?.projectId === id) return;
         const last = await trx.selectFrom('projectQueries').select(sql<number | null>`max(position)`.as('max')).where('projectId', '=', id).executeTakeFirstOrThrow();
         // It leaves the Project it was in: a query is in one at most (OP-UX-93).
         if (here) await trx.deleteFrom('projectQueries').where('queryId', '=', queryId).execute();
         await trx.insertInto('projectQueries').values({ projectId: id, queryId, position: (last.max ?? -1) + 1, addedById: by.id }).execute();
         await trx.updateTable('projects').set({ updatedAt: new Date() }).where('id', '=', id).execute();
-        return true;
       });
     },
 

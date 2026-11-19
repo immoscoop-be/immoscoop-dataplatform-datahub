@@ -882,7 +882,8 @@
   }
   /** What the button after the tabs does for the open query (DEC-UX-241, DEC-UX-282). */
   const rowAdd = $derived.by(() => {
-    if (page.kind !== 'query' || !openId || row.includes(openId) || row.length >= MOST_FLAGGED) return null;
+    // Flagged queries stop at 50; a Project takes any number (DEC-SR-49).
+    if (page.kind !== 'query' || !openId || row.includes(openId) || (!working && row.length >= MOST_FLAGGED)) return null;
     if (!working) return { kind: 'flag' as const };
     if (!openWritable) return null;
     const now = projectOfQuery(openId);
@@ -936,11 +937,17 @@
    * New query on the page of a Project: an empty query in it, named "New query" and the date, opened at once without
    * the screen of a new query (DEC-UX-290, OP-UX-105).
    */
-  async function newEmptyQuery(projectId: string): Promise<void> {
-    const made = await queries.create({ name: t('query.empty.name', { date: day(new Date(), currentLanguage()) }), question: '', resources: [], sql: '', project: projectId });
-    refreshProjects();
+  async function newEmptyQuery(projectId: string | null): Promise<void> {
+    const name = t('query.empty.name', { date: day(new Date(), currentLanguage()) });
+    const made = await queries.create({ name, question: '', resources: [], sql: '', ...(projectId ? { project: projectId } : {}) });
+    if (projectId) refreshProjects();
     await refreshQueries();
     router.go(queryPath(made.id));
+  }
+  /** New query in a Project, from the quick window: an empty query in it, and the User works in it (DEC-UX-293). */
+  function newQueryIn(projectId: string): void {
+    workIn(projectId);
+    void newEmptyQuery(projectId).catch((error: unknown) => console.error('The query could not be made', error));
   }
   /** New project: the User is in it alone, works in it, and the open query goes in when ticked (DEC-UX-282). */
   async function newProject(fields: { name: string; description: string; putCurrent: boolean }): Promise<void> {
@@ -1010,7 +1017,16 @@
     const rows: QuickRow[] = [...(page.kind === 'query' ? (queryCommands[page.id] ?? []) : screenCommands.rows)];
     const command = t('quick.kind.command');
     if (mayQuery(permissions) && can(permissions, 'queries.make')) {
-      rows.push({ key: 'new-query', group: 'commands', icon: 'plus-circle-fill', title: t('query.new'), kind: command, words: t('quick.new.words'), does: 'do', run: () => router.go(NEW_QUERY) });
+      rows.push({ key: 'new-query', group: 'commands', icon: 'plus-circle-fill', title: t('query.new'), meta: t('quick.new.meta'), kind: command, words: t('quick.new.words'), does: 'do', run: () => router.go(NEW_QUERY) });
+      // A blank query, in no Project, only for a power user, who may write SQL without Resources (DEC-UX-293, DEC-SR-46).
+      if (can(permissions, 'queries.outside')) {
+        rows.push({ key: 'new-blank', group: 'commands', icon: 'file-plus', title: t('quick.newBlank'), meta: t('quick.newBlank.meta'), kind: command, words: t('quick.newBlank.words'), does: 'do', run: () => void newEmptyQuery(null).catch((error: unknown) => console.error('The query could not be made', error)) });
+      }
+      // An empty query in each Project the User is in, the one they work in first (DEC-UX-293).
+      const ins = [...(projectList ?? [])].sort((a, b) => Number(b.id === working) - Number(a.id === working));
+      for (const one of ins) {
+        rows.push({ key: `new-in:${one.id}`, group: 'commands', icon: 'folders-fill', title: t('quick.newIn', { name: one.name }), meta: t('quick.newIn.meta'), kind: command, words: t('quick.newIn.words'), does: 'do', run: () => newQueryIn(one.id) });
+      }
     }
     rows.push({ key: 'theme', group: 'commands', icon: theme === 'dark' ? 'sun-fill' : 'moon-fill', title: t('quick.theme'), kind: command, words: t('quick.theme.words'), does: 'do', run: () => themeOnScreen.switch() });
     // The panel, on every screen that has one, as « in its head does; one key for both, as a pair (DEC-UX-254).

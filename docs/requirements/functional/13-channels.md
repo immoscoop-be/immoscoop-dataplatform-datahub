@@ -59,6 +59,8 @@ Large or frequent, structural exports do not run through Data Hub: not through t
 
 *Note of 2026-10-29, later: the result of a Lens has no download in v1 either ([DEC-LE-17](09-lenses.md#dec-le-17)).*
 
+*Note of 2026-11-19: the result of a query in Query is copied as JSON or CSV up to its first 100 rows, its row limit ([FR-SR-70](04-stacks-and-resources.md#fr-sr-70)).*
+
 <a id="fr-ch-02"></a>
 ### FR-CH-02 · A structural export goes to the Data Team
 

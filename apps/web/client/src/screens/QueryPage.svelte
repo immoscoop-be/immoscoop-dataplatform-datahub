@@ -22,8 +22,10 @@
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import Callout from '@datahub/ui/containers/Callout.svelte';
   import Sheet from '@datahub/ui/containers/Sheet.svelte';
+  import Toast from '@datahub/ui/components/Toast.svelte';
   import { NotFound as Missing } from '../lib/api.js';
   import { missingOfQuery } from '../lib/broken.js';
+  import { asCsv, asJson, type CopyFormat, ROWS_COPIED } from '../lib/copyResult.js';
   import type { Collection } from '../lib/catalogue.js';
   import { clock, when as whenIn } from '../lib/moment.js';
   import { dayOf, describe, formatDay, isFunction, kindOf, lineOf, namesOf } from '../lib/parameters.js';
@@ -615,6 +617,44 @@
     }
   }
 
+  /** What the last copy of the result held, for its toast (DEC-UX-292). */
+  let copied = $state<{ key: number; format: CopyFormat; count: number; total: number; failed: boolean }>({ key: 0, format: 'json', count: 0, total: 0, failed: false });
+
+  /** The result shown, of the last run or of a run previewed from the history, with its page. */
+  const shownPage = $derived(preview ? preview.page : expired ? null : page);
+
+  /**
+   * Copy as JSON or as CSV: the first 100 rows of the result shown, whichever page shows, with the names of its fields
+   * (DEC-UX-292, FR-SR-70); its first page is read again from the same run when another page shows.
+   */
+  async function copyResult(format: CopyFormat): Promise<void> {
+    const of = shownRun;
+    const shown = shownPage;
+    if (!of || !shown) return;
+    const fail = (): void => {
+      copied = { ...copied, key: copied.key + 1, format, failed: true };
+    };
+    const first = shown.number === 1 ? shown : await client.rows(of.ref, 1).catch(() => null);
+    if (!first) {
+      fail();
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(format === 'json' ? asJson(first.columns, first.rows) : asCsv(first.columns, first.rows));
+      copied = { key: copied.key + 1, format, count: Math.min(first.rows.length, ROWS_COPIED), total: first.totalRows, failed: false };
+    } catch (error) {
+      console.error('The result could not be copied', error);
+      fail();
+    }
+  }
+
+  /** How much a copy takes: the first 100 of all, or all of them when they are fewer. */
+  const copyCount = $derived(shownPage ? Math.min(shownPage.totalRows, ROWS_COPIED) : 0);
+  const copyTitle = (format: CopyFormat): string =>
+    shownPage && shownPage.totalRows > ROWS_COPIED
+      ? t('query.copy.titleFirst', { count: ROWS_COPIED, total: shownPage.totalRows, format: format.toUpperCase() })
+      : t('query.copy.titleAll', { count: copyCount, format: format.toUpperCase() });
+
   /**
    * What can be done to it now, for the quick window (DEC-UX-237, DEC-UX-239): a command for every button of the page
    * that does something to it, of each pair only the one that applies, under one key, so that Recently used keeps it
@@ -716,6 +756,16 @@
     if (shownRun) {
       const ref = shownRun.ref;
       rows.push(command('ref', 'copy', t('query.copyRef'), () => void copyRef(ref), { meta: t('quick.query.ref.meta', { ref, number: shownRun.number }), words: t('quick.query.ref.words') }));
+    }
+    // Its two copy buttons, while a result shows (DEC-UX-292).
+    if (shownRun && shownPage && tab === 'result') {
+      const total = shownPage.totalRows;
+      const meta =
+        total > ROWS_COPIED
+          ? t('quick.query.copyResult.metaFirst', { count: ROWS_COPIED, total, number: shownRun.number })
+          : t('quick.query.copyResult.metaAll', { count: total, number: shownRun.number });
+      rows.push(command('copy-json', 'brackets-curly', t('quick.query.copyJson'), () => void copyResult('json'), { meta, words: t('quick.query.copyResult.words') }));
+      rows.push(command('copy-csv', 'file-csv', t('quick.query.copyCsv'), () => void copyResult('csv'), { meta, words: t('quick.query.copyResult.words') }));
     }
     rows.push(
       hidden
@@ -1467,6 +1517,13 @@
         surface="sub"
       />
       {#if tab === 'result' && shownRun}<span class="meta">{ago(shownRun.startedAt, language)}{valuesOf(shownRun)}</span>{/if}
+      {#if tab === 'result' && shownRun && shownPage && shownRun.state !== 'failed' && !running}
+        <!-- Copy the result, in its upper right corner: its first 100 rows (DEC-UX-292) -->
+        <span class="copy-result">
+          <Button variant="quiet" title={copyTitle('json')} onclick={() => void copyResult('json')}><Icon name="brackets-curly" />{t('query.copy.json')}</Button>
+          <Button variant="quiet" title={copyTitle('csv')} onclick={() => void copyResult('csv')}><Icon name="file-csv" />{t('query.copy.csv')}</Button>
+        </span>
+      {/if}
     </div>
     {#if tab === 'history'}
       <QueryHistory
@@ -1605,6 +1662,11 @@
       }}
     />
   {/if}
+  <Toast key={copied.key} tone={copied.failed ? 'failed' : 'done'}>
+    {#if copied.failed}{t('query.copied.failed')}
+    {:else if copied.total > copied.count}{t('query.copied.first', { count: copied.count, total: copied.total, format: copied.format.toUpperCase() })}
+    {:else}{t('query.copied.all', { count: copied.count, format: copied.format.toUpperCase() })}{/if}
+  </Toast>
 {:else}
   <Loading />
 {/if}
@@ -1742,6 +1804,11 @@
   .result > :global(*) { flex: none; }
   .result > :global(.wrap.fill) { flex: 1 1 auto; }
   .result-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+  /* Copy as JSON and Copy as CSV, in the upper right corner of the result (DEC-UX-292): the line of its tabs keeps them
+     there, its facts giving way. */
+  .result-head:has(.copy-result) { flex-wrap: nowrap; }
+  .result-head:has(.copy-result) > .meta { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .copy-result { margin-left: auto; display: inline-flex; gap: 4px; flex-shrink: 0; }
   .preview-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 10px; padding: 12px 14px; border-radius: var(--radius-md);
     background: color-mix(in srgb, var(--signal-warn) 10%, var(--surface-solid)); font-size: var(--text-small); line-height: 1.5; }
   .preview-bar > :global(.icon) { font-size: 18px; color: var(--signal-warn); }

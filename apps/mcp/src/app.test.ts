@@ -156,6 +156,9 @@ describe('mcp', () => {
     // Whoever wants to publish is led into the Owner Journey, and the Owner stands for every text (DEC-CL-17, OP-CL-12).
     expect(result.instructions).toContain('call guide_owner_journey first and follow it, one step at a time');
     expect(result.instructions).toContain('The Owner is the reference of the truth');
+    // An analysis of many queries may get a Project; a query moves only once the User knows (DEC-SR-49).
+    expect(result.instructions).toContain('you may set up a Project for it with create_project');
+    expect(result.instructions).toContain('putting it in another moves it out of the one it is in, so say so to the User first');
   });
 
   it('offers who_am_i, which answers as the User of the token, with their Permission group and what it lets them do (TR-PL-09)', async () => {
@@ -213,10 +216,12 @@ describe('mcp', () => {
     const analyst = (await tool('how_to_use', {}, await issuer.sign())).content[0]?.text ?? '';
     expect(analyst).toContain('"Which queries ran on this Resource?"');
     expect(analyst).not.toContain('What did everyone query');
+    expect(analyst).toContain('"Set up a Project for the review of the credit leads."');
     const lens = (await tool('how_to_use', {}, await issuer.sign({ as: 'lensUser' }))).content[0]?.text ?? '';
     expect(lens).toContain('"Is there a Lens on the share of partner leads?"');
     expect(lens).not.toContain('Claude opens the Preview');
     expect(lens).not.toContain('"Publish it"');
+    expect(lens).not.toContain('Set up a Project');
   });
 });
 
@@ -577,11 +582,156 @@ describe('queries through Claude', () => {
   });
 });
 
+describe('Projects through Claude (FR-SR-63 to FR-SR-68, DEC-SR-49)', () => {
+  const PROJECT_ID = '5c2d1e0f-3a4b-4c5d-8e6f-7a8b9c0d1e2f';
+  const OTHER_ID = '6d3e2f10-4b5c-4d6e-9f70-8b9c0d1e2f30';
+  const PAGE = `${WEB}/query/projects/${PROJECT_ID}`;
+  const mine = { id: QUERY_ID, name: 'Partner share per week', owner: { id: '101', name: 'An Claes' }, lastRun: null, position: 0, locked: false, question: '', resources: [{ id: RESOURCE_ID, displayName: 'Weekly lead volume' }], broken: null };
+  const project = (queries: object[] = [mine]) => ({
+    id: PROJECT_ID,
+    name: 'Credit leads Q4',
+    description: 'The quarterly review.',
+    madeBy: { id: '101', name: 'An Claes' },
+    members: [{ id: '101', name: 'An Claes', addedBy: null, queriesMade: 1 }],
+    queries,
+  });
+  /** A query of the User, in the Project given, or in none. */
+  const queryIn = (inProject: { id: string; name: string } | null) => () => [200, { query: { id: QUERY_ID, name: 'Partner share per week', project: inProject } }] as [number, unknown];
+
+  it('lists the Projects of the User, each with its page (FR-SR-63)', async () => {
+    answers[`GET ${QUERY}/projects`] = () => [
+      200,
+      { projects: [{ id: PROJECT_ID, name: 'Credit leads Q4', description: 'The quarterly review.', updatedAt: '2026-11-19T10:00:00Z', queries: 51, members: [{ id: '101', name: 'An Claes' }, { id: '102', name: 'Karel Leys' }] }] },
+    ];
+    const result = await tool('list_projects', {}, await issuer.sign());
+    expect(result.structuredContent).toEqual({
+      projects: [{ id: PROJECT_ID, name: 'Credit leads Q4', description: 'The quarterly review.', updatedAt: '2026-11-19T10:00:00Z', queries: 51, members: [{ id: '101', name: 'An Claes' }, { id: '102', name: 'Karel Leys' }], page: PAGE }],
+    });
+    answers[`GET ${QUERY}/projects`] = () => [200, { projects: [] }];
+    expect((await tool('list_projects', {}, await issuer.sign())).content[0]?.text).toContain('The User is in no Project');
+  });
+
+  it('reads a Project with its queries in their order, a locked one without its SQL, and says when it was deleted (OP-UX-97, OP-UX-100)', async () => {
+    const locked = { id: 'q-2', name: 'Salaries per team', owner: { id: '102', name: 'Karel Leys' }, lastRun: null, position: 1, locked: true, notSeen: ['Salaries'] };
+    answers[`GET ${QUERY}/projects/${PROJECT_ID}`] = () => [200, { project: project([mine, locked]) }];
+    const read = await tool('get_project', { id: PROJECT_ID }, await issuer.sign());
+    expect(read.structuredContent).toMatchObject({ project: { page: PAGE, queries: [{ id: QUERY_ID, page: `${WEB}/query/${QUERY_ID}` }, { id: 'q-2', locked: true, page: `${WEB}/query/q-2` }] } });
+    expect(read.content[0]?.text).toContain('Salaries per team reads Salaries, which they may not see. Say so; never guess at their SQL.');
+
+    answers[`GET ${QUERY}/projects/${PROJECT_ID}`] = () => [200, { project: { id: PROJECT_ID, name: 'Credit leads Q4', deleted: { at: '2026-11-19T10:00:00Z', by: 'Karel Leys', reason: 'The quarter is closed.' } } }];
+    const deleted = await tool('get_project', { id: PROJECT_ID }, await issuer.sign());
+    expect(deleted.content[0]?.text).toMatch(/^The Project Credit leads Q4 was deleted by Karel Leys on 2026-11-19T10:00:00Z, because: The quarter is closed\./);
+  });
+
+  it('makes a Project with queries of the User, says which moved out of another, and that only the User is in it (FR-SR-63, OP-UX-93)', async () => {
+    let sent: unknown;
+    answers[`GET ${QUERY}/queries/${QUERY_ID}`] = queryIn({ id: OTHER_ID, name: 'Old review' });
+    answers[`POST ${QUERY}/projects`] = (body) => ((sent = body), [201, { project: project() }]);
+    const made = await tool('create_project', { name: 'Credit leads Q4', description: 'The quarterly review.', queries: [QUERY_ID] }, await issuer.sign());
+    expect(sent).toEqual({ name: 'Credit leads Q4', description: 'The quarterly review.', queries: [QUERY_ID] });
+    expect(made.structuredContent).toMatchObject({ project: { id: PROJECT_ID, page: PAGE, queries: [{ id: QUERY_ID, page: `${WEB}/query/${QUERY_ID}` }] }, movedFrom: [{ query: QUERY_ID, project: { id: OTHER_ID, name: 'Old review' } }] });
+    expect(made.content[0]?.text).toContain(`The Project Credit leads Q4 is made, with 1 query: ${PAGE}.`);
+    expect(made.content[0]?.text).toContain('Partner share per week (from Old review)');
+    expect(made.content[0]?.text).toContain('Only the User is in it: they share it with colleagues themselves, on its page in Data Hub.');
+
+    // Without queries, nothing to read first.
+    asked = [];
+    await tool('create_project', { name: 'Empty' }, await issuer.sign());
+    expect(asked.map((call) => `${call.method} ${call.url}`)).toEqual([`POST ${QUERY}/projects`]);
+    expect(sent).toEqual({ name: 'Empty', queries: [] });
+  });
+
+  it('puts a query in a Project: not again when it is in it, and says from which Project it moved (OP-UX-93)', async () => {
+    const token = await issuer.sign();
+    const put = `${QUERY}/projects/${PROJECT_ID}/queries/${QUERY_ID}`;
+    answers[`PUT ${put}`] = () => [200, { added: true }];
+
+    answers[`GET ${QUERY}/queries/${QUERY_ID}`] = queryIn({ id: PROJECT_ID, name: 'Credit leads Q4' });
+    const already = await tool('add_query_to_project', { id: PROJECT_ID, query: QUERY_ID }, token);
+    expect(already.content[0]?.text).toContain('is in this Project already: nothing changed');
+    expect(asked.some((call) => call.method === 'PUT')).toBe(false);
+
+    answers[`GET ${QUERY}/queries/${QUERY_ID}`] = queryIn(null);
+    const added = await tool('add_query_to_project', { id: PROJECT_ID, query: QUERY_ID }, token);
+    expect(asked.filter((call) => call.method === 'PUT').map((call) => call.url)).toEqual([put]);
+    expect(added.structuredContent).toMatchObject({ added: true, movedFrom: null, project: { page: PAGE } });
+    expect(added.content[0]?.text).toBe(`The query Partner share per week is in the Project now, at the end of its row.\n${JSON.stringify(added.structuredContent)}`);
+
+    answers[`GET ${QUERY}/queries/${QUERY_ID}`] = queryIn({ id: OTHER_ID, name: 'Old review' });
+    const moved = await tool('add_query_to_project', { id: PROJECT_ID, query: QUERY_ID }, token);
+    expect(moved.structuredContent).toMatchObject({ added: true, movedFrom: { id: OTHER_ID, name: 'Old review', page: `${WEB}/query/projects/${OTHER_ID}` } });
+    expect(moved.content[0]?.text).toContain('moved out of the Project Old review into this one');
+  });
+
+  it('takes a query out of a Project, where it stays with whoever made it (FR-SR-66)', async () => {
+    let removed = true;
+    answers[`DELETE ${QUERY}/projects/${PROJECT_ID}/queries/${QUERY_ID}`] = () => [200, { removed }];
+    const out = await tool('remove_query_from_project', { id: PROJECT_ID, query: QUERY_ID }, await issuer.sign());
+    expect(out.content[0]?.text).toContain('The query stays with whoever made it, in their history of Query.');
+    removed = false;
+    expect((await tool('remove_query_from_project', { id: PROJECT_ID, query: QUERY_ID }, await issuer.sign())).content[0]?.text).toContain('was not in this Project');
+  });
+
+  it('changes a Project and the order of its queries, one for everyone in it (OP-UX-95)', async () => {
+    const token = await issuer.sign();
+    const second = { ...mine, id: 'q-2', name: 'Leads per source', position: 1 };
+    let order: unknown;
+    answers[`PUT ${QUERY}/projects/${PROJECT_ID}/order`] = (body) => ((order = body), [200, { queries: ['q-2', QUERY_ID] }]);
+    answers[`PATCH ${QUERY}/projects/${PROJECT_ID}`] = () => [200, { project: { id: PROJECT_ID, name: 'Credit leads, Q4' } }];
+    answers[`GET ${QUERY}/projects/${PROJECT_ID}`] = () => [200, { project: project([second, mine]) }];
+
+    expect((await tool('update_project', { id: PROJECT_ID }, token)).isError).toBe(true);
+    expect(asked).toHaveLength(0);
+
+    const ordered = await tool('update_project', { id: PROJECT_ID, order: ['q-2', 'q-gone'] }, token);
+    expect(order).toEqual({ queries: ['q-2', 'q-gone'] });
+    expect(asked.some((call) => call.method === 'PATCH')).toBe(false);
+    expect(ordered.structuredContent).toMatchObject({ project: { page: PAGE, queries: [{ id: 'q-2' }, { id: QUERY_ID }] } });
+    expect(ordered.content[0]?.text).toContain('its first ten queries have the keys Cmd+1 to Cmd+0');
+    expect(ordered.content[0]?.text).toContain('Not in this Project, so passed over: q-gone.');
+
+    asked = [];
+    await tool('update_project', { id: PROJECT_ID, name: 'Credit leads, Q4' }, token);
+    expect(asked.find((call) => call.method === 'PATCH')?.body).toEqual({ name: 'Credit leads, Q4' });
+    expect(asked.some((call) => call.url.endsWith('/order'))).toBe(false);
+  });
+
+  it('makes a query in a Project, also an empty one without Resources, and none without either (FR-SR-68)', async () => {
+    let made: unknown;
+    answers[`POST ${QUERY}/queries`] = (body) => ((made = body), [201, { query: { id: QUERY_ID, name: 'New query', resources: [], project: { id: PROJECT_ID, name: 'Credit leads Q4' } } }]);
+    const token = await issuer.sign();
+    const empty = await tool('create_query', { name: 'New query', resources: [], project: PROJECT_ID }, token);
+    expect(made).toEqual({ name: 'New query', resources: [], project: PROJECT_ID });
+    expect(empty.content[0]?.text).toContain(`It is in the Project Credit leads Q4, at the end of its row: ${PAGE}.`);
+    expect(empty.content[0]?.text).toContain('It has no Resources yet: they come later, added by the User in Data Hub, or with a new query on them');
+    expect(empty.content[0]?.text).not.toContain('check_query');
+    expect(empty.structuredContent).toMatchObject({ query: { page: `${WEB}/query/${QUERY_ID}` }, project: { id: PROJECT_ID, page: PAGE } });
+
+    // Without a Project, a query of a User who is no power user needs a Resource: refused before Data Hub is asked.
+    made = undefined;
+    const refused = await tool('create_query', { name: 'New query', resources: [] }, token);
+    expect(refused).toMatchObject({ isError: true });
+    expect(refused.content[0]?.text).toContain('Only an empty query in a Project, made with project, starts without them.');
+    expect(made).toBeUndefined();
+  });
+
+  it('offers the Project tools only to a User who may make queries (queries.make)', async () => {
+    const PROJECT_TOOLS = ['add_query_to_project', 'create_project', 'get_project', 'list_projects', 'remove_query_from_project', 'update_project'];
+    expect(names(await toolsOf(await issuer.sign()))).toEqual(expect.arrayContaining(PROJECT_TOOLS));
+    const noQueries = names(await toolsOf(await issuer.sign({ permissions: permissionsOf('businessAnalyst', (permissions) => (permissions['queries.make'].on = false)) })));
+    for (const name of PROJECT_TOOLS) expect(noQueries).not.toContain(name);
+    // Sharing, leaving and deleting a Project stay in Data Hub.
+    expect(names(await toolsOf(await issuer.sign({ as: 'admin' }))).filter((name) => /project/.test(name))).toEqual(PROJECT_TOOLS);
+  });
+});
+
 describe('the Permissions of the User in Claude (TR-PL-09)', () => {
   const READS = ['explain', 'get_lens', 'get_messages', 'get_related_resources', 'get_resource', 'get_resource_lineage', 'get_resource_log', 'guide_owner_journey', 'how_to_use', 'list_resources', 'search', 'show_learning_card', 'show_resource', 'suggest_lenses', 'who_am_i'];
   // Every User who sees a Lens may run it, through Claude too (FR-CL-36).
   const LENS_RUNS = ['run_lens', 'run_lens_approved'];
   const QUERY_TOOLS = ['check_query', 'create_query', 'get_query', 'get_result_page', 'list_queries', 'run_query', 'run_query_approved', 'send_query_request', 'show_query', 'update_query'];
+  // A Project holds queries, so its tools come with queries.make (DEC-SR-49).
+  const PROJECT_TOOLS = ['add_query_to_project', 'create_project', 'get_project', 'list_projects', 'remove_query_from_project', 'update_project'];
   const PREVIEW_TOOLS = ['preview_resource', 'run_preview_approved', 'send_preview_request'];
   const WRITES = ['add_known_gap', 'change_known_gap', 'deprecate_resource', 'describe_fields', 'mark_changes_seen', 'record_journey_step', 'remove_known_gap', 'reply_to_message', 'undeprecate_resource', 'update_resource_card', 'write_message'];
   // The fields suggested by Claude, decided by the User in a card: only for who may describe them (FR-CL-38).
@@ -589,14 +739,14 @@ describe('the Permissions of the User in Claude (TR-PL-09)', () => {
 
   it('offers an Admin every tool, the queries of others included', async () => {
     const tools = names(await toolsOf(await issuer.sign({ as: 'admin' })));
-    expect(tools).toEqual([...READS, ...LENS_RUNS, ...QUERY_TOOLS, ...PREVIEW_TOOLS, ...WRITES, ...FIELDS, 'confirm_publication', 'get_resource_queries', 'publish_resource'].sort());
+    expect(tools).toEqual([...READS, ...LENS_RUNS, ...QUERY_TOOLS, ...PROJECT_TOOLS, ...PREVIEW_TOOLS, ...WRITES, ...FIELDS, 'confirm_publication', 'get_resource_queries', 'publish_resource'].sort());
   });
 
   it('offers a Lens user no query tools and no Preview, and lets Claude write only their Questions and Signals', async () => {
     const tools = await toolsOf(await issuer.sign({ as: 'lensUser' }));
     // They run the Lenses they see, in a card only, whose rows the MCP App reads itself (FR-CL-28, FR-CL-36).
     expect(names(tools)).toEqual([...READS, ...LENS_RUNS, 'read_result_rows', 'reply_to_message', 'write_message'].sort());
-    for (const name of [...QUERY_TOOLS, ...PREVIEW_TOOLS, 'read_preview_choices', 'publish_resource', 'get_resource_queries']) expect(names(tools)).not.toContain(name);
+    for (const name of [...QUERY_TOOLS, ...PROJECT_TOOLS, ...PREVIEW_TOOLS, 'read_preview_choices', 'publish_resource', 'get_resource_queries']) expect(names(tools)).not.toContain(name);
     expect(tools.find((item) => item.name === 'write_message')?.inputSchema.properties.kind?.enum).toEqual(['question', 'signal']);
     // The instructions tell Claude from the start that they make no queries and see results in a card only.
     const { result } = (await call('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'test', version: '1' } }, await issuer.sign({ as: 'lensUser' }))).json();
