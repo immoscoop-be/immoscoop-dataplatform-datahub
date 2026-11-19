@@ -1845,6 +1845,50 @@ describe.skipIf(!url)('the routes of Collections', () => {
       expect((await mo('GET', '/messages?view=everything')).json().messages.map((message: { id: string }) => message.id)).not.toContain(fresh.json().id);
       expect((await (await user('Paul', [PLANNING]))('GET', `/messages/${fresh.json().id}`)).statusCode).toBe(404);
     });
+
+    it('puts what query tells about a Project to the colleague it is about alone (FR-SR-65, FR-SR-66, MSG-QRY-03 to MSG-QRY-05)', async () => {
+      const notice = (payload: object, token = 'query-token') =>
+        app.inject({ method: 'POST', url: '/internal/projects/notices', headers: { authorization: `Bearer ${token}` }, payload });
+      const mo = await user('Mo', [PLANNING]);
+      const paul = await user('Paul', [PLANNING]);
+      const projectId = '7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d';
+      const shared = { type: 'MSG-QRY-03', recipient: { id: 'u-Mo', name: 'Mo' }, projectId, project: 'Credit leads Q4', actor: 'Paul', queries: 3, canRun: false };
+      expect((await notice(shared, 'identity-token')).statusCode).toBe(401);
+      expect((await paul('POST', '/internal/projects/notices', shared)).statusCode).toBe(401);
+      expect((await notice({ ...shared, type: 'MSG-QRY-02' })).statusCode).toBe(400);
+      expect((await notice({ ...shared, recipient: { id: 'u-Mo' } })).statusCode).toBe(400);
+      expect((await notice({ ...shared, projectId: 'p-1' })).statusCode).toBe(400);
+      expect((await notice({ ...shared, canRun: 'no' })).statusCode).toBe(400);
+      expect((await notice({ ...shared, queries: -1 })).statusCode).toBe(400);
+
+      const told = await notice(shared);
+      expect(told.statusCode).toBe(201);
+      const id = told.json().message.id as string;
+      const forMo = (await mo('GET', '/messages?view=forYou')).json().messages.find((message: { id: string }) => message.id === id);
+      expect(forMo).toMatchObject({
+        type: 'MSG-QRY-03',
+        kind: 'dataHub',
+        writer: null,
+        subject: { kind: 'user', id: 'u-Mo', exists: true },
+        params: { actor: 'Paul', project: 'Credit leads Q4', projectId, queries: '3', canRun: 'no' },
+        mayReply: false,
+      });
+      // Only Mo sees it, not who shared the Project with him.
+      expect((await paul('GET', `/messages/${id}`)).statusCode).toBe(404);
+
+      const out = await notice({ type: 'MSG-QRY-04', recipient: { id: 'u-Mo', name: 'Mo' }, projectId, project: 'Credit leads Q4', actor: 'Paul' });
+      expect(out.statusCode).toBe(201);
+      expect((await mo('GET', `/messages/${out.json().message.id}`)).statusCode).toBe(200);
+
+      const deleted = { type: 'MSG-QRY-05', recipient: { id: 'u-Mo', name: 'Mo' }, projectId, project: 'Credit leads Q4', actor: 'Paul', mine: 2, reason: 'The quarter is closed.' };
+      expect((await notice({ ...deleted, mine: undefined })).statusCode).toBe(400);
+      expect((await notice({ ...deleted, reason: 'x'.repeat(501) })).statusCode).toBe(400);
+      const gone = await notice(deleted);
+      expect(gone.statusCode).toBe(201);
+      const lost = (await mo('GET', `/messages/${gone.json().message.id}`)).json();
+      expect(JSON.stringify(lost)).toContain('The quarter is closed.');
+      expect(JSON.stringify(lost)).toContain('"mine":"2"');
+    });
   });
 
   it('answers 503 rather than guess when identity cannot tell the groups', async () => {

@@ -21,6 +21,7 @@ import folderFill from '@phosphor-icons/core/assets/fill/folder-fill.svg?raw';
 import folderOpenFill from '@phosphor-icons/core/assets/fill/folder-open-fill.svg?raw';
 import folderPlusFill from '@phosphor-icons/core/assets/fill/folder-plus-fill.svg?raw';
 import folderSimplePlusFill from '@phosphor-icons/core/assets/fill/folder-simple-plus-fill.svg?raw';
+import foldersFill from '@phosphor-icons/core/assets/fill/folders-fill.svg?raw';
 import gaugeFill from '@phosphor-icons/core/assets/fill/gauge-fill.svg?raw';
 import globeSimpleFill from '@phosphor-icons/core/assets/fill/globe-simple-fill.svg?raw';
 import graduationCapFill from '@phosphor-icons/core/assets/fill/graduation-cap-fill.svg?raw';
@@ -101,6 +102,7 @@ import rows from '@phosphor-icons/core/assets/regular/rows.svg?raw';
 import cube from '@phosphor-icons/core/assets/regular/cube.svg?raw';
 import database from '@phosphor-icons/core/assets/regular/database.svg?raw';
 import dotsSixVertical from '@phosphor-icons/core/assets/regular/dots-six-vertical.svg?raw';
+import folderSimplePlus from '@phosphor-icons/core/assets/regular/folder-simple-plus.svg?raw';
 import dotsThree from '@phosphor-icons/core/assets/regular/dots-three.svg?raw';
 import eye from '@phosphor-icons/core/assets/regular/eye.svg?raw';
 import fileText from '@phosphor-icons/core/assets/regular/file-text.svg?raw';
@@ -169,6 +171,8 @@ import flagFill from '@phosphor-icons/core/assets/fill/flag-fill.svg?raw';
 import arrowsInLineVertical from '@phosphor-icons/core/assets/regular/arrows-in-line-vertical.svg?raw';
 import circleNotch from '@phosphor-icons/core/assets/regular/circle-notch.svg?raw';
 import linkBreak from '@phosphor-icons/core/assets/regular/link-break.svg?raw';
+import signOutFill from '@phosphor-icons/core/assets/fill/sign-out-fill.svg?raw';
+import shareNetwork from '@phosphor-icons/core/assets/regular/share-network.svg?raw';
 
 export const ICONS = {
   'archive-fill': archiveFill,
@@ -191,6 +195,8 @@ export const ICONS = {
   'folder-open-fill': folderOpenFill,
   'folder-plus-fill': folderPlusFill,
   'folder-simple-plus-fill': folderSimplePlusFill,
+  'folders-fill': foldersFill,
+  'folder-simple-plus': folderSimplePlus,
   'gauge-fill': gaugeFill,
   'globe-simple-fill': globeSimpleFill,
   'graduation-cap-fill': graduationCapFill,
@@ -337,6 +343,8 @@ export const ICONS = {
   'arrows-in-line-vertical': arrowsInLineVertical,
   'circle-notch': circleNotch,
   'link-break': linkBreak,
+  'sign-out-fill': signOutFill,
+  'share-network': shareNetwork,
 } as const;
 
 export type IconName = keyof typeof ICONS;

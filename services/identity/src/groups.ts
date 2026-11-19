@@ -319,16 +319,23 @@ export function createGroups(db: Kysely<IdentityDatabase>, now: () => Date = () 
     },
 
     /** Users whose name or address holds the text, to suggest while adding a member (FR-UM-15). */
-    async people(q: string): Promise<{ email: string; name: string }[]> {
+    /**
+     * Colleagues by words of their name or address, or by their IDs: with their ID, their Permission group and whether
+     * it lets them make and run queries, for sharing a Project, which says so (DEC-UX-286, OP-UX-98).
+     */
+    async people(q: string, ids: readonly string[] = []): Promise<{ id: string; email: string; name: string; permissionGroup: string; canQuery: boolean }[]> {
       const like = `%${q.replace(/[\\%_]/g, (match) => `\\${match}`)}%`;
-      return db
-        .selectFrom('users')
-        .select([sql<string>`lower(email)`.as('email'), 'name'])
-        .where('active', '=', true)
-        .where((eb) => eb.or([sql<SqlBool>`name ilike ${like}`, sql<SqlBool>`email ilike ${like}`]))
-        .orderBy('name')
-        .limit(8)
+      const rows = await db
+        .selectFrom('users as u')
+        .innerJoin('permissionGroups as g', 'g.id', 'u.permissionGroupId')
+        .select(['u.googleId', sql<string>`lower(u.email)`.as('email'), 'u.name', 'g.name as permissionGroup', 'g.permissions'])
+        .where('u.active', '=', true)
+        .$if(ids.length > 0, (query) => query.where('u.googleId', 'in', [...ids]))
+        .$if(ids.length === 0, (query) => query.where((eb) => eb.or([sql<SqlBool>`u.name ilike ${like}`, sql<SqlBool>`u.email ilike ${like}`])))
+        .orderBy('u.name')
+        .limit(ids.length > 0 ? 100 : 8)
         .execute();
+      return rows.map((row) => ({ id: row.googleId, email: row.email, name: row.name, permissionGroup: row.permissionGroup, canQuery: can(row.permissions, 'queries.make') }));
     },
   };
 }
@@ -455,8 +462,11 @@ export async function groupRoutes(app: FastifyInstance, options: GroupRouteOptio
     }
   });
 
-  // Colleagues to suggest while adding a member: only to who may change a Group (FR-UM-15).
-  app.get<{ Querystring: { q?: string } }>('/people', async (request) => {
+  // Colleagues to suggest while adding a member to a Group or a Project (FR-UM-15, FR-SR-65), or the colleagues in a
+  // Project by their IDs, each with whether they may run queries (OP-UX-98).
+  app.get<{ Querystring: { q?: string; ids?: string } }>('/people', async (request) => {
+    const ids = typeof request.query.ids === 'string' ? request.query.ids.split(',').map((id) => id.trim()).filter((id) => id.length > 0 && id.length <= 128).slice(0, 100) : [];
+    if (ids.length > 0) return { people: await groups.people('', ids) };
     const q = typeof request.query.q === 'string' ? request.query.q.trim().slice(0, 80) : '';
     return { people: q.length < 2 ? [] : await groups.people(q) };
   });

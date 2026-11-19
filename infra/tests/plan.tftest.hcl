@@ -715,6 +715,19 @@ run "no_service_keeps_an_instance_running_and_none_is_kept_warm_unless_the_envir
   }
 }
 
+run "every_new_revision_gets_two_minutes_to_answer_its_health_check" {
+  command = plan
+
+  assert {
+    condition = alltrue([
+      for service in google_cloud_run_v2_service.service :
+      service.template[0].containers[0].startup_probe[0].http_get[0].path == "/health"
+      && service.template[0].containers[0].startup_probe[0].period_seconds * service.template[0].containers[0].startup_probe[0].failure_threshold >= 120
+    ])
+    error_message = "A cold instance of web or query needs more than the 20 seconds of the default probe: every service gets at least two minutes to answer /health (TR-PF-01)."
+  }
+}
+
 run "the_services_kept_warm_are_called_on_their_health_check_in_office_hours" {
   command = plan
 

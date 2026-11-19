@@ -40,6 +40,8 @@ export type Route =
   | { readonly kind: 'newQuery'; readonly resource: string | null; readonly forCollection?: string; readonly section: Section }
   /** A query, in the section Query (FR-SR-41); with `run`, its history, at one run or at all (DEC-UX-74). */
   | ({ readonly kind: 'query'; readonly id: string; readonly run: number | 'all' | null; readonly section: Section } & Talk)
+  /** The page of a Project, in the section Query (DEC-UX-285). */
+  | { readonly kind: 'project'; readonly id: string; readonly section: Section }
   /** Make it a lens, from a query, in the section Query (DEC-UX-25). */
   | { readonly kind: 'newLens'; readonly query: string; readonly section: Section }
   /** The page of a Lens, in the section Collections (DEC-UX-66). */
@@ -97,8 +99,11 @@ export const usersPath = (googleId?: string): string => (googleId ? `/admin/user
  * leads that User to My page, and the Data Team to that User on Users when Admin was given back (MSG-USR-02) or
  * when they are new (MSG-USR-03).
  */
-export function objectPath(subject: { kind: string; id: string }, type?: string): string {
+export function objectPath(subject: { kind: string; id: string }, type?: string, params?: Readonly<Record<string, string>>): string {
   if (subject.kind === 'user') {
+    // A Project shared with the User, or deleted, opens its page; taken out of one, Query (MSG-QRY-03 to MSG-QRY-05).
+    if ((type === 'MSG-QRY-03' || type === 'MSG-QRY-05') && params?.projectId) return `/query/projects/${encodeURIComponent(params.projectId)}`;
+    if (type === 'MSG-QRY-04') return '/query';
     return type === 'MSG-USR-02' || type === 'MSG-USR-03' ? usersPath(subject.id) : myPagePath('profile');
   }
   return subject.kind === 'resource'
@@ -222,7 +227,11 @@ export function route(path: string, adminTools: readonly AdminTool[] = ADMIN_TOO
   const [, newOn] = /^\/query\/new\/([^/]+)$/.exec(clean) ?? [];
   const [, newFor] = /^\/query\/new\/for\/([^/]+)$/.exec(clean) ?? [];
   const [, lensFrom] = /^\/query\/([^/]+)\/lens$/.exec(clean) ?? [];
+  const [, projectId] = /^\/query\/projects\/([^/]+)$/.exec(clean) ?? [];
   try {
+    if (query && projectId) {
+      return { kind: 'project', id: decodeURIComponent(projectId), section: query };
+    }
     if (query && clean === NEW_QUERY) {
       return { kind: 'newQuery', resource: null, section: query };
     }

@@ -19,6 +19,7 @@ const CONFIG: Config = {
 const WHY = 'Wat ontbreekt of maar deels aanwezig is, en waarom · gewone tekst';
 
 const ME = { sub: '1', email: 'max@thenextimmoscoop.be', name: 'Max Verstraete', groups: [] as string[] };
+const ME_ID = ME.sub;
 
 /** A Question on Credit leads, unread for its Owner Unit (MSG-CNV-01). */
 const QUESTION = {
@@ -637,6 +638,10 @@ function serve({
   meanwhile = undefined as JourneyFacts | undefined,
   /** The Resources whose model type is incomplete, as catalogue lists them to a Data Admin (FR-CO-45). */
   toComplete = [] as Record<string, unknown>[],
+  /** The Projects of Query, as query keeps them, changed by what the page asks (FR-SR-63). */
+  projects = [] as FakeProject[],
+  /** Who else is in a query of a Project, and who changed its SQL last (OP-UX-99). */
+  presence = { others: [], sqlChanged: null } as Record<string, unknown>,
 } = {}): Saved[] {
   const calls: Saved[] = [];
   // The Users and Permission groups as identity keeps them, changed by what the page asks (TR-PL-07).
@@ -1103,9 +1108,53 @@ function serve({
       queries.unshift(made);
       return json({ query: made }, 201);
     }
+    // The Projects of Query (TR-SR-33).
+    const listItem = (one: FakeProject) => ({ id: one.id, name: one.name, description: one.description, updatedAt: '2026-11-19T09:00:00Z', queries: one.queries.length, members: one.members.map(({ id, name }) => ({ id, name })) });
+    if (path === '/projects' && method === 'GET') return json({ projects: projects.map(listItem) });
+    if (path === '/projects' && method === 'POST') {
+      const body = JSON.parse(init.body as string) as { name: string; description?: string; queries?: string[] };
+      for (const one of projects) one.queries = one.queries.filter((id) => !(body.queries ?? []).includes(id));
+      const made: FakeProject = { id: `p-${projects.length + 1}`, name: body.name, description: body.description ?? '', members: [{ id: ME_ID, name: ME.name }], queries: [...(body.queries ?? [])] };
+      projects.push(made);
+      return json({ project: projectView(made, queries) }, 201);
+    }
+    const [, projectId, rest] = /^\/projects\/([^/]+)(\/.*)?$/.exec(path) ?? [];
+    const project = projects.find((one) => one.id === projectId);
+    if (projectId && !project) return json({ error: 'not_found' }, 404);
+    if (project && !rest && method === 'GET') return json({ project: projectView(project, queries) });
+    if (project && !rest && method === 'PATCH') {
+      Object.assign(project, JSON.parse(init.body as string));
+      return json({ project: projectView(project, queries) });
+    }
+    if (project && !rest && method === 'DELETE') {
+      projects.splice(projects.indexOf(project), 1);
+      return new Response(null, { status: 204 });
+    }
+    const [, inQueries, queryId] = /^\/(queries)\/([^/]+)$/.exec(rest ?? '') ?? [];
+    if (project && inQueries && method === 'PUT') {
+      for (const one of projects) one.queries = one.queries.filter((id) => id !== queryId);
+      project.queries.push(queryId as string);
+      return json({ added: true });
+    }
+    if (project && inQueries && method === 'DELETE') {
+      project.queries = project.queries.filter((id) => id !== queryId);
+      return json({ removed: true });
+    }
+    if (project && rest === '/order' && method === 'PUT') {
+      const order = (JSON.parse(init.body as string) as { queries: string[] }).queries;
+      project.queries = [...order.filter((id) => project.queries.includes(id)), ...project.queries.filter((id) => !order.includes(id))];
+      return json({ queries: project.queries });
+    }
     const query = queries.find((candidate) => path.startsWith(`/queries/${candidate.id as string}`));
+    if (query && path === `/queries/${query.id as string}/presence` && method === 'PUT') return json(presence);
     if (query && path === `/queries/${query.id as string}` && method === 'PATCH') {
-      Object.assign(query, JSON.parse(init.body as string));
+      const changes = JSON.parse(init.body as string) as Record<string, unknown>;
+      // Its Resources change in it, by their IDs (FR-SR-67).
+      if (Array.isArray(changes.resources)) {
+        const known = [...(query.resources as { id: string }[]), ...CREDIT.resources.map((resource) => ({ ...QUERY.resources[0], ...resource, visible: true }))];
+        changes.resources = (changes.resources as string[]).map((id) => known.find((resource) => resource.id === id) ?? { id, displayName: id, visible: false });
+      }
+      Object.assign(query, changes);
       return json({ query });
     }
     if (query && path === `/queries/${query.id as string}`) {
@@ -3760,19 +3809,20 @@ describe('Query', () => {
     await vi.waitFor(() => expect(location.pathname).toBe('/query/q3'));
   });
 
-  it('has no Flag in the row at ten flagged queries, and greys it in the quick window with why (OP-UX-84, DEC-UX-241)', async () => {
-    const ten = Array.from({ length: 10 }, (_, at) => ({ ...QUERY, id: `f${at}`, name: `Flagged ${at}` }));
+  it('has no Flag in the row at 50 flagged queries, and greys it in the quick window with why (OP-UX-96, DEC-UX-241)', async () => {
+    // Two digits, so that no ID starts another, as the fake service finds a query by the start of its path.
+    const ten = Array.from({ length: 50 }, (_, at) => ({ ...QUERY, id: `f${String(at).padStart(2, '0')}`, name: `Flagged ${at}` }));
     serve({ queries: [QUERY, ...ten], settings: { 'query.flagged': ten.map((query) => query.id) } });
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
     const flags = within(await main.findByRole('navigation', { name: 'Gemarkeerde queries' }));
     await main.findByRole('heading', { level: 1, name: 'Leads per source name' }, { timeout: 3000 });
-    await flags.findByRole('link', { name: /Flagged 9/ });
+    await flags.findByRole('link', { name: /Flagged 49/ }, { timeout: 3000 });
     expect(flags.queryByRole('button', { name: /^Markeer deze query/ })).toBeNull();
     const row = await quickRow('Markeer deze query');
     expect(row.getAttribute('aria-disabled')).toBe('true');
-    expect(row.nextElementSibling?.textContent).toBe('Tien queries zijn gemarkeerd. Haal er eerst één weg.');
+    expect(row.nextElementSibling?.textContent).toBe('De rij houdt 50 queries. Haal er eerst één uit.');
   });
 
   it('opens the quick window with Ctrl+K and Ctrl+Shift+P, with the commands of the query first, and does one (DEC-UX-237, OP-UX-87)', async () => {
@@ -4514,7 +4564,9 @@ describe('Query', () => {
     expect(dialog.getAttribute('aria-label') ?? within(dialog).getByRole('heading', { level: 2 }).textContent).toMatch(/Met 2 Resources meer/);
     // The CTEs that come at the start of the SQL, before the new query starts.
     expect(await sheet.findByText(/listings as \(/, {}, { timeout: 3000 })).toBeTruthy();
-    await fireEvent.click(sheet.getByRole('button', { name: /De nieuwe query starten/ }));
+    // Two buttons side by side: Just add changes this query, New query starts another (DEC-UX-289).
+    expect(sheet.getByRole('button', { name: 'Gewoon toevoegen' })).toBeTruthy();
+    await fireEvent.click(sheet.getByRole('button', { name: 'Nieuwe query' }));
     await vi.waitFor(() => expect(location.pathname).toBe('/query/q-made'));
     expect(calls).toContainEqual({ method: 'POST', path: '/queries/ctes', body: { sql: QUERY.sql, resources: ['r5', 'r6'], tables: [] } });
     const made = calls.find((call) => call.method === 'POST' && call.path === '/queries')?.body as { resources: string[]; sql: string };
@@ -4560,16 +4612,85 @@ describe('Query', () => {
     const main = within(await screen.findByRole('main'));
     await fireEvent.click(await main.findByRole('button', { name: 'Lead sources weghalen' }));
     const sheet = within(await screen.findByRole('dialog', { name: 'Zonder Lead sources' }));
-    const name = sheet.getByRole('textbox', { name: /Naam/ }) as HTMLInputElement;
-    expect(name.value).toMatch(/^Weekly lead volume, \d+ /);
+    // No name to fill in: a new query is named after its Resources and the date, and renamed in place (DEC-UX-289).
+    expect(sheet.queryByRole('textbox', { name: /Naam/ })).toBeNull();
     expect(await sheet.findByText('Nog geen Lens gebruikt deze Resources.', {}, { timeout: 3000 })).toBeTruthy();
-    await fireEvent.click(sheet.getByRole('button', { name: /De nieuwe query starten/ }));
+    await fireEvent.click(sheet.getByRole('button', { name: 'Nieuwe query' }));
     await vi.waitFor(() => expect(location.pathname).toBe('/query/q-made'));
+    const made = calls.find((call) => call.method === 'POST' && call.path === '/queries')?.body as { name: string };
+    expect(made.name).toMatch(/^Weekly lead volume, \d+ /);
     expect(calls).toContainEqual({
       method: 'POST',
       path: '/queries',
-      body: { name: name.value, question: QUERY.question, resources: ['r2'], sql: QUERY.sql, parameters: [dateFrom], startedFrom: 'q1' },
+      body: { name: made.name, question: QUERY.question, resources: ['r2'], sql: QUERY.sql, parameters: [dateFrom], startedFrom: 'q1' },
     });
+  });
+
+  it('holds the queries of the Project the User works in in the row on top, and takes one out with its × (DEC-UX-282, DEC-UX-291)', async () => {
+    const other = { ...QUERY, id: 'q2', name: 'Partner share per week' };
+    const credit = { id: 'p1', name: 'Credit leads Q4', description: 'The quarterly review.', members: [{ id: ME_ID, name: ME.name }, { id: '7', name: 'Karel Leys' }], queries: ['q1', 'q2'] };
+    const calls = serve({ queries: [{ ...QUERY }, other], projects: [credit], settings: { 'query.project': 'p1', 'query.flagged': [] } });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const row = within(await main.findByRole('navigation', { name: 'De queries van Credit leads Q4' }, { timeout: 3000 }));
+    // The switch names the Project, and how many are in it.
+    expect(row.getByRole('button', { name: /^Credit leads Q4/ }).textContent).toContain('2');
+    expect(row.getByRole('link', { name: /Partner share per week/ }).getAttribute('href')).toBe('/query/q2');
+    // The breadcrumb of the query names its Project.
+    expect((await main.findByRole('link', { name: 'Credit leads Q4' })).getAttribute('href')).toBe('/query/projects/p1');
+    // The × removes it from the Project, without asking (OP-UX-106).
+    await fireEvent.click(row.getByRole('button', { name: 'Partner share per week uit Credit leads Q4 halen' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/projects/p1/queries/q2' }));
+    expect(row.queryByRole('link', { name: /Partner share per week/ })).toBeNull();
+    // The panel lists the Project above the history, flagged as worked in.
+    const panel = within(screen.getByRole('complementary', { name: 'Query' }));
+    expect(panel.getByRole('link', { name: /Credit leads Q4/ }).textContent).toContain('met Karel Leys');
+  });
+
+  it('makes a Project from the row, with the open query in it, and works in it (FR-SR-63, DEC-UX-282)', async () => {
+    const calls = serve({ queries: [{ ...QUERY }], settings: { 'query.flagged': ['q1'] } });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const row = within(await main.findByRole('navigation', { name: 'Gemarkeerde queries' }, { timeout: 3000 }));
+    await fireEvent.click(row.getByRole('button', { name: /Gemarkeerd/ }));
+    await fireEvent.click(row.getByRole('menuitem', { name: 'Nieuw project' }));
+    const dialog = within(row.getByRole('dialog', { name: 'Nieuw project' }));
+    await fireEvent.input(dialog.getByRole('textbox', { name: 'Naam' }), { target: { value: 'Credit leads Q4' } });
+    await fireEvent.click(dialog.getByRole('button', { name: 'Maken' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/projects', body: { name: 'Credit leads Q4', description: '', queries: ['q1'] } }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/query.project', body: { value: 'p-1' } }));
+    expect(await main.findByRole('navigation', { name: 'De queries van Credit leads Q4' })).toBeTruthy();
+  });
+
+  it('opens the page of a Project, whose New query makes an empty query in it and opens it (FR-SR-68, DEC-UX-290)', async () => {
+    const credit = { id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: ['q1'] };
+    const calls = serve({ queries: [{ ...QUERY }], projects: [credit] });
+    open('/query/projects/p1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByRole('heading', { level: 1, name: /Credit leads Q4/ }, { timeout: 3000 })).toBeTruthy();
+    await fireEvent.click(main.getByRole('button', { name: /^Nieuwe query$/ }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/query/q-made'));
+    const made = calls.find((call) => call.method === 'POST' && call.path === '/queries')?.body as { name: string; resources: string[]; project: string };
+    expect(made).toMatchObject({ resources: [], project: 'p1' });
+    expect(made.name).toMatch(/^Nieuwe query, /);
+  });
+
+  it('takes a Resource out of the query itself with Just take it out, which stays open (FR-SR-67, DEC-SR-48)', async () => {
+    const sources = { ...QUERY.resources[0], id: 'r9', key: 'immoscoop-dataplatform-398214.dbt_prod_leads.lead_sources', displayName: 'Lead sources', partition: null };
+    const calls = serve({ queries: [{ ...QUERY, resources: [QUERY.resources[0], sources], parameters: [dateFrom] }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('button', { name: 'Lead sources weghalen' }));
+    const sheet = within(await screen.findByRole('dialog', { name: 'Zonder Lead sources' }));
+    await fireEvent.click(sheet.getByRole('button', { name: 'Gewoon weglaten' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/queries/q1', body: { resources: ['r2'] } }));
+    await vi.waitFor(() => expect(screen.queryByRole('dialog', { name: 'Zonder Lead sources' })).toBeNull());
+    expect(location.pathname).toBe('/query/q1');
+    expect(calls.some((call) => call.method === 'POST' && call.path === '/queries')).toBe(false);
   });
 });
 
@@ -5702,3 +5823,29 @@ describe('the quick window on every screen (DEC-UX-240)', () => {
     await vi.waitFor(() => expect(location.pathname).toBe('/me/keys'));
   });
 });
+
+/** A Project as the fake query service keeps it: who is in it, and its queries by their IDs in their order. */
+interface FakeProject {
+  id: string;
+  name: string;
+  description: string;
+  members: { id: string; name: string }[];
+  queries: string[];
+}
+
+/** The page of a Project, as query answers it (TR-SR-33). */
+function projectView(project: FakeProject, queries: Record<string, unknown>[]) {
+  return {
+    id: project.id,
+    name: project.name,
+    description: project.description,
+    madeBy: project.members[0],
+    createdAt: '2026-11-19T09:00:00Z',
+    updatedAt: '2026-11-19T09:00:00Z',
+    members: project.members.map((member) => ({ ...member, addedBy: null, addedAt: '2026-11-19T09:00:00Z', queriesMade: 0 })),
+    queries: project.queries.flatMap((id, position) => {
+      const query = queries.find((candidate) => candidate.id === id);
+      return query ? [{ id, name: query.name, owner: { id: ME_ID, name: query.ownerName }, lastRun: null, position, locked: false, question: query.question, resources: [] }] : [];
+    }),
+  };
+}
