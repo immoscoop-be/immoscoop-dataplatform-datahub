@@ -60,7 +60,15 @@ resource "google_cloud_run_v2_service" "service" {
         }
       }
 
+      # A new revision gets two minutes to answer its health check: a cold instance first reads its image and,
+      # for web, every file of the web app, or for query, its connection to Cloud SQL. The default of three tries
+      # ten seconds apart left about 20 seconds, which web and query outgrew on 2026-11-19; a revision that
+      # does not answer in time is never given traffic, and the one before it keeps serving.
       startup_probe {
+        timeout_seconds   = 3
+        period_seconds    = 5
+        failure_threshold = 24
+
         http_get {
           path = "/health"
         }
