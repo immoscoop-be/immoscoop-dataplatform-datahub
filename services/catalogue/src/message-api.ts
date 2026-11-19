@@ -10,6 +10,7 @@ import {
   type FilterOn,
   type LensFacts,
   type Messages,
+  type ProjectNotice,
   type Sight,
   type UserNotice,
   VIEWS,
@@ -127,6 +128,37 @@ export function parseUserNotice(body: unknown): UserNotice | string {
     deleted: input.deleted,
     ...(input.name === undefined ? {} : { name: (input.name as string).trim() }),
   };
+}
+
+/** What query tells about a Project (MSG-QRY-03 to MSG-QRY-05), checked; the problem as a sentence when there is one. */
+export function parseProjectNotice(body: unknown): ProjectNotice | string {
+  const input = (body ?? {}) as Record<string, unknown>;
+  const text = (value: unknown, max: number) => typeof value === 'string' && value.trim().length > 0 && value.length <= max;
+  const count = (value: unknown) => typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
+  const recipient = (input.recipient ?? {}) as Record<string, unknown>;
+  if (input.type !== 'MSG-QRY-03' && input.type !== 'MSG-QRY-04' && input.type !== 'MSG-QRY-05') return 'A notice about a Project names its type, MSG-QRY-03, MSG-QRY-04 or MSG-QRY-05.';
+  if (!text(recipient.id, 128) || !text(recipient.name, 200)) return 'A notice about a Project is for a colleague, by their ID and name.';
+  if (typeof input.projectId !== 'string' || !UUID.test(input.projectId) || !text(input.project, 80) || !text(input.actor, 200)) {
+    return 'A notice about a Project names the Project, by its ID and name, and who did it.';
+  }
+  const notice: ProjectNotice = {
+    type: input.type,
+    recipient: { id: recipient.id as string, name: (recipient.name as string).trim() },
+    projectId: input.projectId.toLowerCase(),
+    project: (input.project as string).trim(),
+    actor: (input.actor as string).trim(),
+  };
+  if (input.type === 'MSG-QRY-03') {
+    if (!count(input.queries) || typeof input.canRun !== 'boolean') return 'A colleague added to a Project is told how many queries it holds, and whether they may run them.';
+    return { ...notice, queries: input.queries as number, canRun: input.canRun };
+  }
+  if (input.type === 'MSG-QRY-05') {
+    if (!count(input.mine)) return 'A colleague whose Project was deleted is told how many of its queries they made.';
+    if (input.reason !== undefined && !(typeof input.reason === 'string' && input.reason.length <= 500)) return 'Why it was deleted is a text of at most 500 characters.';
+    const reason = typeof input.reason === 'string' ? input.reason.trim() : '';
+    return { ...notice, mine: input.mine as number, ...(reason ? { reason } : {}) };
+  }
+  return notice;
 }
 
 /**
@@ -330,6 +362,14 @@ export async function messageRoutes(app: FastifyInstance, options: MessageRouteO
       return reply.code(201).send(await messages.userNotice(notice));
     });
   }
+
+  // query tells about a Project of Query (FR-SR-65, FR-SR-66): a colleague added to it, taken out of it, or losing it as
+  // it was deleted, each a Message only they see (MSG-QRY-03 to MSG-QRY-05).
+  app.post<{ Body: unknown }>('/internal/projects/notices', { config: { public: true }, onRequest: onlyQuery }, async (request, reply) => {
+    const notice = parseProjectNotice(request.body);
+    if (typeof notice === 'string') return reply.code(400).send({ error: 'invalid_request', message: notice });
+    return reply.code(201).send({ message: await messages.projectNotice(notice) });
+  });
 
   // query tells what it keeps about a Lens whenever it changes, and all of them once a day (DEC-PF-30).
   app.put<{ Params: { id: string }; Body: unknown }>('/internal/lenses/:id', { config: { public: true }, onRequest: onlyQuery }, async (request, reply) => {

@@ -29,12 +29,13 @@
   import { dayOf, describe, formatDay, isFunction, kindOf, lineOf, namesOf } from '../lib/parameters.js';
   import type { Lens, LensSuggestions as Found, Missing as Lost, NewQuery, Page, Parameter, Preflight, Problem, Query, QueryClient, Run, Warning } from '../lib/query.js';
   import { lensPath, newLensPath, resourcePath } from '../lib/routes.js';
+  import { projectPath } from '../lib/projects.js';
   import NewSetSheet from './NewSetSheet.svelte';
   import NotFound from './NotFound.svelte';
   import FieldExplain from './FieldExplain.svelte';
   import FindTableSheet from './FindTableSheet.svelte';
   import type { KnownTable } from '../lib/registry.js';
-  import { digitOf, modLabel, type QueryStatus } from '../lib/flags.js';
+  import { digitOf, keyed, modLabel, type QueryStatus } from '../lib/flags.js';
   import type { QuickRow } from '../lib/quick.js';
   import ParameterWindow from './ParameterWindow.svelte';
   import OutsideTableWindow from './OutsideTableWindow.svelte';
@@ -78,6 +79,11 @@
     oncommands,
     go,
     mac = false,
+    shown = true,
+    me = '',
+    projectNow,
+    working = null,
+    onworkin,
   }: {
     id: string;
     /** Its history opened from the panel, at one of its runs or at all of them. */
@@ -117,6 +123,16 @@
     go?: (path: string) => void;
     /** Cmd on a Mac, Ctrl elsewhere, as its keys are written. */
     mac?: boolean;
+    /** It is the page on screen, not one kept below (OP-UX-85). */
+    shown?: boolean;
+    /** The ID of the User, to tell their own change of the SQL from another's (OP-UX-99). */
+    me?: string;
+    /** The Project it is in now, as the row knows it after a change there; undefined: as it was read. */
+    projectNow?: { id: string; name: string } | null;
+    /** The Project the User works in, if any (OP-UX-94). */
+    working?: string | null;
+    /** Work in its Project, from its breadcrumb (OP-UX-94). */
+    onworkin?: (id: string) => void;
   } = $props();
   /** Several queries stay open at once (OP-UX-85): what one names by an id is its own. */
   const uid = $props.id();
@@ -184,6 +200,11 @@
   const PAUSE = 2000;
 
   let query = $state<Query | null | undefined>();
+  /** Whether the User writes and runs it: theirs, or of a Project they are in (DEC-SR-47). */
+  const editable = $derived(query ? (query.editable ?? query.mine) : false);
+  /** The Project it is in, named in its breadcrumb (OP-UX-94). */
+  const projectShown = $derived(projectNow !== undefined ? projectNow : (query?.project ?? null));
+
   /** Its Resources not published yet: they grey "Make it a lens", with why (DEC-LE-22, DEC-UX-218). */
   const unpublished = $derived((query?.resources ?? []).flatMap((resource) => (resource.visible && resource.published === false ? [resource] : [])));
   /** Whether the User hid it from their panel: as it was read, or as changed since (DEC-UX-138). */
@@ -202,6 +223,8 @@
     }
   }
   let sql = $state('');
+  /** It reads nothing yet: an empty query of a Project, whose Run waits for a Resource (FR-SR-68, OP-UX-105). */
+  const empty = $derived(!!query && query.resources.length === 0 && !/\bfrom\b/i.test(sql));
   let parameters = $state<Parameter[]>([]);
   let preflight = $state<Preflight | null>(null);
   /** What it misses while it is Broken: Run is off and a callout names it, until a change runs or it comes back (FR-SR-53). */
@@ -303,7 +326,7 @@
         run = found.lastRun;
         failure = found.lastRun?.state === 'failed' ? found.lastRun.error : null;
         loadHistory();
-        if (found.mine && found.lastRun?.state === 'done') {
+        if ((found.editable ?? found.mine) && found.lastRun?.state === 'done') {
           const rows = await rowsOf(found.lastRun, 1);
           if (rows !== undefined && loadedId === id) [page, expired] = [rows, rows === null];
         }
@@ -314,6 +337,79 @@
       },
     );
   });
+
+  /** Reads it again after its Resources changed in it, keeping what is written (FR-SR-67). */
+  async function reread(): Promise<void> {
+    const found = await client.get(id);
+    if (loadedId !== id || !query) return;
+    query = { ...found, sql: query.sql };
+    broken = found.broken ?? null;
+  }
+  /** Changes its Resources in it: "Just add" or "Just take it out" (DEC-UX-287, DEC-UX-289). */
+  async function changeResources(resources: string[], next: string): Promise<boolean> {
+    try {
+      await client.changeResources(id, resources);
+      if (next !== sql) {
+        atOnce = true;
+        sql = next;
+      }
+      await reread();
+      newSet = null;
+      onran();
+      return true;
+    } catch (error) {
+      console.error('The Resources of the query could not be changed', error);
+      return false;
+    }
+  }
+
+  // Two in one query of a Project at once (OP-UX-99): who else is in it, every ten seconds while it is on screen; a
+  // change of the SQL by another while the User types waits behind "Show it", never replacing what is typed.
+  let others = $state<{ id: string; name: string }[]>([]);
+  let theirChange = $state<{ at: string; by: string } | null>(null);
+  let knownChange: string | null = null;
+  let lastTyped = 0;
+  const PRESENCE = 10_000;
+  $effect(() => {
+    const of = query?.id;
+    if (!of || !shown || !projectShown) {
+      others = [];
+      return;
+    }
+    knownChange = untrack(() => query?.sqlChanged?.at ?? null);
+    const beat = async () => {
+      try {
+        const now = await client.presence(of);
+        if (query?.id !== of) return;
+        others = now.others;
+        const changed = now.sqlChanged;
+        if (!changed || changed.at === knownChange) return;
+        knownChange = changed.at;
+        if (changed.by.id === me) return;
+        if (Date.now() - lastTyped < PRESENCE || pending) theirChange = { at: changed.at, by: changed.by.name };
+        else void takeTheirs();
+      } catch (error) {
+        console.error('Who else is in this query could not be read', error);
+      }
+    };
+    void beat();
+    const timer = setInterval(() => void beat(), PRESENCE);
+    return () => clearInterval(timer);
+  });
+  /** Takes the SQL as another in the query wrote it (OP-UX-99). */
+  async function takeTheirs(): Promise<void> {
+    theirChange = null;
+    try {
+      const found = await client.get(id);
+      if (loadedId !== id || !query) return;
+      query = { ...query, sql: found.sql, parameters: found.parameters, sqlChanged: found.sqlChanged ?? null };
+      atOnce = true;
+      sql = formatted(found.sql);
+      parameters = found.parameters;
+    } catch (error) {
+      console.error('Their change of the SQL could not be read', error);
+    }
+  }
 
   // The Lenses on its Resources, by the words of its question, for "Lenses on these Resources" (FR-SR-47).
   const lensKey = $derived(query && query.kind === 'query' && !query.lens ? `${query.id}\u0000${visibleIds().join(',')}\u0000${query.question}` : null);
@@ -366,8 +462,9 @@
   $effect(() => {
     const text = sql;
     const values = JSON.parse(JSON.stringify(parameters)) as Parameter[];
-    if (!query?.mine) return;
+    if (!editable) return;
     const typed = !atOnce && askedText !== null && text !== askedText;
+    if (typed) lastTyped = Date.now();
     atOnce = false;
     askedText = text;
     const asked = ++sequence;
@@ -532,9 +629,9 @@
       untrack(() => tell(id, []));
       return;
     }
-    const own = found.mine && found.kind === 'query' && !preview;
+    const own = (found.editable ?? found.mine) && found.kind === 'query' && !preview;
     /** Its maker, on the query itself rather than on a past run: they write and run it. */
-    const writes = found.mine && !preview;
+    const writes = (found.editable ?? found.mine) && !preview;
     const command = (key: string, icon: IconName, title: string, run: () => void, more: Partial<QuickRow> = {}): QuickRow => ({
       key: `query:${key}`,
       group: 'screen',
@@ -585,10 +682,10 @@
       rows.push(
         flagAt === null
           ? command('flag', 'flag', t('quick.query.flag'), () => flag(true), flagsFull ? { why: t('flags.full.short'), words: t('quick.query.flag.words') } : { meta: t('quick.query.flag.meta'), words: t('quick.query.flag.words') })
-          : command('flag', 'flag-fill', t('quick.query.unflag'), () => flag(false), { meta: t('quick.query.unflag.meta', { key: `${modLabel(mac)}${digitOf(flagAt)}` }), words: t('quick.query.flag.words') }),
+          : command('flag', 'flag-fill', t('quick.query.unflag'), () => flag(false), { ...(keyed(flagAt) ? { meta: t('quick.query.unflag.meta', { key: `${modLabel(mac)}${digitOf(flagAt)}` }) } : {}), words: t('quick.query.flag.words') }),
       );
     }
-    if (found.mine) rows.push(command('rename', 'pencil-simple', t('quick.query.rename'), () => void startRename(), { meta: t('quick.query.rename.meta'), words: t('quick.query.rename.words') }));
+    if ((found.editable ?? found.mine)) rows.push(command('rename', 'pencil-simple', t('quick.query.rename'), () => void startRename(), { meta: t('quick.query.rename.meta'), words: t('quick.query.rename.words') }));
     rows.push(command('fold', 'arrows-in-line-vertical', t('quick.query.fold'), () => editor?.foldAll(), { meta: t('quick.query.fold.meta'), words: t('quick.query.fold.words') }));
     if (own) rows.push(command('format', 'text-align-left', t('quick.query.format'), () => editor?.formatSql(), { meta: t('quick.query.format.meta'), keys: mac ? '⇧⌥F' : 'Shift+Alt+F', words: t('quick.query.format.words') }));
     if (writes) rows.push(command('parameter', 'function', t('quick.query.parameter'), () => openParameter(null), { meta: t('quick.query.parameter.meta'), words: t('quick.query.parameter.words') }));
@@ -671,7 +768,7 @@
    * Pre-flight of what was typed: the run checks it first (DEC-UX-280).
    */
   function runFromKeys(): void {
-    if (!query?.mine || running || broken !== null) return;
+    if (!query || !editable || running || broken !== null || empty) return;
     if (!current || current.range === 'free') {
       if (!current || current.runnable) void start();
       return;
@@ -684,7 +781,7 @@
   async function openPreview(of: Run): Promise<void> {
     tab = 'result';
     preview = { run: of, page: null, expired: false };
-    if (of.state !== 'done' || !query?.mine) return;
+    if (of.state !== 'done' || !editable) return;
     const found = await rowsOf(of, 1);
     // Unless another run is previewed by now.
     if (found !== undefined && preview?.run.ref === of.ref) preview = { run: of, page: found, expired: found === null };
@@ -899,7 +996,7 @@
   const tables: TableSuggestion[] = $derived.by(() => {
     if (!query) return [];
     const own = query.resources.flatMap((resource) => (resource.visible ? [{ id: resource.id, name: resource.displayName, fullName: resource.fullName ?? resource.key }] : []));
-    if (!query.mine || query.resources.length >= 10) return [...own, ...outsideTables];
+    if (!editable || query.resources.length >= 10) return [...own, ...outsideTables];
     const taken = new Set(query.resources.map((resource) => resource.id));
     const others = (collections ?? [])
       .flatMap((collection) => collection.resources)
@@ -994,7 +1091,11 @@
   <div class="page">
   <header class="head">
     <div class="titles">
-      <div class="meta">Query</div>
+      <!-- A query of a Project names it, as a link to its page; in another, "Work in it" follows (OP-UX-94). -->
+      <div class="meta crumb">
+        Query{#if projectShown}{@const inIt = projectShown}<span aria-hidden="true">/</span><a class="crumb-project" href={projectPath(inIt.id)}><Icon name="folders-fill" />{inIt.name}</a
+          >{#if working !== inIt.id && onworkin}<button type="button" class="text-link" onclick={() => onworkin(inIt.id)}>{t('query.workInIt')}</button>{/if}{/if}
+      </div>
       {#if renaming}
         <form class="rename" onsubmit={rename}>
           <Field label={t('query.name')}><input {...NO_PASSWORD_MANAGER} bind:this={renameField} type="text" bind:value={renaming.name} maxlength="120" required /></Field>
@@ -1005,7 +1106,7 @@
             {#if renameFailed}<span class="rename-failed" role="alert">{t('query.renameFailed')}</span>{/if}
           </span>
         </form>
-      {:else if query.mine}
+      {:else if editable}
         {@const start = () => query && ((renaming = { name: query.name, question: query.question }), (renameFailed = false))}
         <!-- On one line, ending in … when longer; the whole name on a hover (DEC-UX-251). -->
         <h1 class="page-title one-line"><button type="button" class="in-place" title={`${query.name}\n${t('query.rename')}`} onclick={start}>{query.name}</button></h1>
@@ -1046,7 +1147,18 @@
           >
         </p>
       {/if}
-      {#if !query.mine}<p class="meta">{t('query.of', { name: query.ownerName })}</p>{/if}
+      {#if !editable}<p class="meta">{t('query.of', { name: query.ownerName })}</p>{:else if !query.mine}<p class="meta">{t('query.madeBy', { name: query.ownerName })}</p>{/if}
+      {#if others.length > 0}
+        <!-- Two in one query at once see each other (OP-UX-99). -->
+        <p class="meta presence"><Icon name="users" />{t('query.presence', { names: others.map((one) => one.name).join(', '), count: others.length })}</p>
+      {/if}
+      {#if theirChange}
+        {@const change = theirChange}
+        <p class="meta presence changed" role="status">
+          <Icon name="pencil-simple" />{t('query.presence.changed', { name: change.by })}
+          <button type="button" class="text-link" onclick={() => void takeTheirs()}>{t('query.presence.show')}</button>
+        </p>
+      {/if}
     </div>
     <div class="actions">
       <span class="layouts" role="group" aria-label={t('query.layout')}>
@@ -1137,7 +1249,7 @@
             {:else}
               <span title={t('query.problem.notVisible', { name: resource.displayName })}><Icon name="lock-simple" />{resource.displayName}</span>
             {/if}
-            {#if query.mine && !preview && query.resources.length > 1}
+            {#if editable && !preview && query.resources.length > 1}
               <button type="button" class="x" aria-label={t('query.remove', { name: resource.displayName })} onclick={() => (newSet = { mode: 'remove', resource: resource.id })}><Icon name="x" /></button>
             {/if}
           </span>
@@ -1151,7 +1263,7 @@
         {#each outside as table (table.name)}
           <span class="chip outside">
             <Icon name="warning-fill" />{t('query.problem.outside', { name: table.name })}
-            {#if table.resource && query.mine}
+            {#if table.resource && editable}
               {@const add = table.resource}
               <button type="button" class="text-link" onclick={() => (newSet = { mode: 'add', resource: add })}>{t('query.startWith')}</button>
             {/if}
@@ -1159,10 +1271,10 @@
         {/each}
       </span>
       <!-- On one line: the chips scroll sideways, these stay in view, as icons with their name on a hover (DEC-UX-249). -->
-      {#if query.mine && !preview && query.resources.length < 10}
+      {#if editable && !preview && query.resources.length < 10}
         <button type="button" class="add" aria-label={t('query.resources.add')} title={t('query.resources.add')} onclick={() => (newSet = { mode: 'add', resource: null })}><Icon name="plus" /></button>
       {/if}
-      {#if query.mine && !preview && query.kind === 'query' && findTables}
+      {#if editable && !preview && query.kind === 'query' && findTables}
         <!-- A power user also finds tables Data Hub knows outside its Resources (DEC-UX-224). -->
         <button type="button" class="add" aria-label={t('find.button')} title={`${t('find.button')}\n${t('find.button.hint')}`} onclick={() => (finding = true)}><Icon name="magnifying-glass" /></button>
       {/if}
@@ -1200,7 +1312,7 @@
             parameters={parameterSuggestions}
             {tables}
             {outsideFields}
-            onnewtable={query.mine && query.resources.length < 10 ? () => (newSet = { mode: 'add', resource: null }) : undefined}
+            onnewtable={editable && query.resources.length < 10 ? () => (newSet = { mode: 'add', resource: null }) : undefined}
             onothertable={(table) => (newSet = { mode: 'add', resource: table.id })}
             {marks}
             onmark={(mark) => {
@@ -1211,7 +1323,7 @@
             onexplain={explain}
             oncursor={(word) => (atCursor = word)}
             label={t('query.sql', { name: query.name })}
-            readonly={!query.mine}
+            readonly={!editable}
             {nonce}
           />
         {/if}
@@ -1225,7 +1337,7 @@
       unused={preview ? [] : (current?.unused ?? [])}
       missing={preview ? [] : missing}
       bind:open={parametersOpen}
-      readonly={!query.mine || !!preview}
+      readonly={!editable || !!preview}
       onedit={(name) => openParameter(shownParameters.find((parameter) => parameter.name === name) ?? null)}
       ondefine={(entry) => openParameter(null, entry)}
       onadd={() => openParameter(null)}
@@ -1233,7 +1345,7 @@
     </div>
     </div>
 
-    {#if query.mine && !preview}
+    {#if editable && !preview}
       <div class="run-bar" bind:this={runBar}>
         {#snippet fixOf(note: Problem | Warning)}
           {#if (note.kind === 'filterRequired' || note.kind === 'noPartitionFilter') && note.fix}
@@ -1265,6 +1377,8 @@
               {#each flight.warnings.slice(0, 1) as warning, index (index)}
                 <span class="warning" title={said(warning)}><Icon name="warning-fill" /><span class="said">{said(warning)}</span>{@render fixOf(warning)}</span>
               {/each}
+            {:else if empty}
+              <span class="meta">{t('query.empty.run')}</span>
             {:else}
               <span class="meta">{t(checking ? 'query.checking' : 'query.notChecked')}</span>
             {/if}
@@ -1305,9 +1419,9 @@
           <RunButton
             bytes={current?.bytes ?? null}
             approve={current?.range === 'approve' || current?.range === 'request'}
-            disabled={(current !== null && !current.runnable) || broken !== null}
+            disabled={(current !== null && !current.runnable) || broken !== null || empty}
             busy={running}
-            title={broken !== null ? t('query.broken.run') : current && !current.runnable ? t('query.cannotRun') : undefined}
+            title={empty ? t('query.empty.run') : broken !== null ? t('query.broken.run') : current && !current.runnable ? t('query.cannotRun') : undefined}
             onclick={start}
           >
             {#snippet explain()}
@@ -1359,7 +1473,7 @@
         runs={history}
         shown={shownRun?.number ?? null}
         flash={typeof opened === 'number' ? opened : null}
-        readonly={!query.mine}
+        readonly={!editable}
         loading={loadingHistory}
         start={startLine}
         {when}
@@ -1373,14 +1487,14 @@
         <Icon name="eye-fill" />
         <p><b>{t('history.previewOf', { number: shown.run.number, when: when(shown.run.startedAt) })}</b> {t(shown.expired ? 'history.preview.expired' : 'history.preview.kept')}</p>
         <Button variant="outline" onclick={() => (preview = null)}>{t('history.close')}</Button>
-        {#if shown.expired && query.mine}<Button variant="outline" onclick={() => runAgain(shown.run)}><Icon name="play-fill" />{t('query.runAgain')}</Button>{/if}
-        {#if query.mine}<Button onclick={() => apply(shown.run)}><Icon name="arrow-counter-clockwise" />{t('history.apply')}</Button>{/if}
+        {#if shown.expired && editable}<Button variant="outline" onclick={() => runAgain(shown.run)}><Icon name="play-fill" />{t('query.runAgain')}</Button>{/if}
+        {#if editable}<Button onclick={() => apply(shown.run)}><Icon name="arrow-counter-clockwise" />{t('history.apply')}</Button>{/if}
       </div>
       {#if shown.run.state === 'failed'}
         <p class="empty failed" role="alert"><Icon name="warning-fill" /><span><b>{t('query.failed')}</b> {shown.run.error}</span></p>
       {:else if shown.page}
         {@render grid(shown.run, shown.page)}
-      {:else if !query.mine}
+      {:else if !editable}
         <p class="empty"><Icon name="info" /><span>{t('query.notYours', { name: shown.run.userName, ref: shown.run.ref })}</span></p>
       {/if}
     {:else if running}
@@ -1390,11 +1504,11 @@
     {:else if expired && run}
       <p class="empty">
         <Icon name="info" /><span><b>{t('query.expired')}</b> {t('query.expired.text')}</span>
-        {#if query.mine}<Button variant="outline" disabled={current !== null && !current.runnable} onclick={start}>{t('query.runAgain')}</Button>{/if}
+        {#if editable}<Button variant="outline" disabled={current !== null && !current.runnable} onclick={start}>{t('query.runAgain')}</Button>{/if}
       </p>
     {:else if page && run}
       {@render grid(run, page)}
-    {:else if run && !query.mine}
+    {:else if run && !editable}
       <p class="empty"><Icon name="info" /><span>{t('query.notYours', { name: run.userName, ref: run.ref })}</span></p>
     {:else if !run}
       <p class="empty"><Icon name="play-fill" /><span><b>{t('query.notRun')}</b> {t('query.notRun.text')}</span></p>
@@ -1425,7 +1539,7 @@
         defines={parameterWindow.defines}
         others={parameters}
         sql={shownSql}
-        readonly={!query.mine || !!preview}
+        readonly={!editable || !!preview}
         onsave={saveParameter}
         onremove={removeParameter}
         onclose={() => (parameterWindow = null)}
@@ -1443,6 +1557,7 @@
       resource={newSet.resource}
       onclose={() => (newSet = null)}
       onstart={startNew}
+      onchange={editable && query.kind === 'query' ? changeResources : undefined}
       lensesOn={(on, words) => client.suggestions(on, words)}
       ctesOf={(text, ids) => client.ctes(text, { resources: ids })}
     />
@@ -1641,4 +1756,8 @@
   .dot { color: var(--tint-active); }
   .ref { display: inline-flex; align-items: center; gap: 4px; color: var(--text-secondary); }
   .pager { margin-left: auto; }
+  .crumb { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .crumb-project { display: inline-flex; align-items: center; gap: 4px; color: inherit; }
+  .presence { display: flex; align-items: center; gap: 6px; margin: 4px 0 0; }
+  .presence.changed { color: var(--text-secondary); }
 </style>

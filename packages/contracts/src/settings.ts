@@ -19,8 +19,13 @@ export const USER_SETTINGS = {
   'panel.open': z.boolean(),
   /** The layout of the page of a query: the query above the result, or next to it (DEC-UX-143). */
   'query.layout': z.enum(['horizontal', 'sideBySide']),
-  /** The queries the User flagged, in their order on top of Query: at most ten, one for each key (DEC-UX-236, OP-UX-84). */
-  'query.flagged': z.array(z.string().uuid()).max(10).refine((ids) => new Set(ids).size === ids.length, 'a query is flagged once'),
+  /**
+   * The queries the User flagged, in their order on top of Query when they work in no Project: at most 50, the first
+   * ten with a key (DEC-UX-236, DEC-UX-283, OP-UX-96).
+   */
+  'query.flagged': z.array(z.string().uuid()).max(50).refine((ids) => new Set(ids).size === ids.length, 'a query is flagged once'),
+  /** The Project the User works in, whose queries are the row on top of Query; none when null (DEC-UX-282, OP-UX-94). */
+  'query.project': z.string().uuid().nullable(),
 } as const;
 
 /** An intro dismissed on the start screen of a section, with the version that was dismissed. */

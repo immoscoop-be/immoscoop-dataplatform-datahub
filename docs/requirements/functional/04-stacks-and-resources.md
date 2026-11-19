@@ -57,6 +57,9 @@ In library terms: a book is only in the library once the librarian registers it.
 - <a id="dec-sr-45"></a>**DEC-SR-45** · A withdrawn Resource without a Collection is not in the list of Resources without a Collection ([FR-SR-35](#fr-sr-35)): it waits for nothing, as no exposure depends on it. It is held as [DEC-SR-26](#dec-sr-26) says, and the Data Team still opens it by its link; it is back in the list when an exposure with the tag `datahub` depends on it again. A withdrawn Resource in a Collection stays in its Collection, marked as withdrawn. It refines [DEC-SR-26](#dec-sr-26). *Decided on 2026-11-11, by Max (the nested models of the credits stopped being exposed in favour of their flat models, and would otherwise have waited for good).*
 - <a id="dec-sr-46"></a>**DEC-SR-46** · A power user may query tables outside Data Hub: whose Permission group has `queries.outside` ([DEC-PL-09](12-permissions-and-library-cards.md#dec-pl-09)) reads in a query, besides its Resources, every table Data Hub knows that is no Resource, the models, seeds, snapshots and sources of the dbt projects it follows through their Source Jobs, and may start a query from SQL, without Resources. A table that is a Resource is read as that Resource, with its rules: Data Hub prefers the Resource to the table typed by hand, and a Resource the User may not see stays refused. A table of no dbt project Data Hub follows stays an error. A query that reads a table outside Data Hub cannot become a Lens ([DEC-LE-22](09-lenses.md#dec-le-22)). In Claude the same holds as in the web app. Only Admin has it to start; a group of power users is made in Admin. *Decided on 2026-11-13, by Max.*
 
+- <a id="dec-sr-47"></a>**DEC-SR-47** · A query is no longer only its maker's: in a Project, everyone in it may open, change and run it, each with their own rights, and a query that reads a Resource someone may not see stays locked to them ([FR-SR-65](#fr-sr-65), [DEC-UX-286](../../design/principles.md#dec-ux-286)). Outside a Project, a query is still its maker's, and seen by who sees the queries of others ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)). *Decided on 2026-11-19, by Max: "a project can be shared amoung other users (we don't care if they have query rights but we signal it)" and "anybody who has access to the query has full edit privileges".*
+- <a id="dec-sr-48"></a>**DEC-SR-48** · The Resources of a query change in it: adding or taking out a Resource changes the query, and starting a new query with the new set is no longer the required route ([FR-SR-67](#fr-sr-67), [DEC-UX-287](../../design/principles.md#dec-ux-287), [DEC-UX-289](../../design/principles.md#dec-ux-289)). Each run keeps the Resources it read. *Decided on 2026-11-19, by Max: "when adding a resource or table to a query, the 'start a new query' isn't the required route any more", and "it should be both buttons 'new query' or 'just add'".*
+
 Further decisions on using a Resource are under [Using a Resource](#using-a-resource).
 
 ## Terms
@@ -465,6 +468,8 @@ On a query, a User with `queries.outside` ([FR-SR-56](#fr-sr-56)) finds a table 
 
 **Makes easy:** a power user finding the right staging or source table, and what is in it, without leaving the query or knowing its full name by heart. **Makes hard:** reading a raw table where a Resource exists, which the search names as a Resource, and guessing at a table name that the Pre-flight then refuses.
 
+*Note of 2026-11-19: a Resource found there is added to this query, or starts a new one ([FR-SR-67](#fr-sr-67), [DEC-SR-48](#dec-sr-48)).*
+
 <a id="fr-sr-59"></a>
 ### FR-SR-59 · What is added to a query comes in as CTEs at its start
 
@@ -486,6 +491,8 @@ A User flags a query, theirs or one they may read, to keep it in a row on top of
 **Makes easy:** working on several questions at once, letting a long run go on in one query while writing another, and coming back to each as it was. **Makes hard:** losing a query among the many in the panel, and losing what was typed or run by going to another query.
 
 *Note of 2026-11-14: with no query flagged the row is not shown, and the quick window flags the first ([DEC-UX-253](../../design/principles.md#dec-ux-253)).*
+
+*Note of 2026-11-19: the row holds the queries of the Project the User works in, or their flagged queries, up to 50, the first ten with a key ([FR-SR-64](#fr-sr-64)).*
 
 <a id="fr-sr-61"></a>
 ### FR-SR-61 · The quick window does the commands of a query, and goes anywhere
@@ -510,6 +517,69 @@ In the SQL of a query, a User with `queries.outside` ([FR-SR-56](#fr-sr-56)) dou
 **Makes easy:** a power user knowing how to read a staging or source table, its partition column first, what its columns hold and whether it is a view over something larger, at the moment of writing SQL on it. **Makes hard:** a full scan of a table whose partitioning nobody looked up, guessing at what a raw column means, and learning through Data Hub about tables of projects it does not follow.
 
 *Note of 2026-11-14, on building it: query reads it from registry and from BigQuery by its metadata ([TR-SR-31](../technical/04-stacks-and-resources.md#tr-sr-31)).*
+
+<a id="fr-sr-63"></a>
+### FR-SR-63 · A User works on queries together in a Project
+
+**Status:** Implemented · **Source:** Max, 2026-11-19 ([DEC-UX-282](../../design/principles.md#dec-ux-282), [DEC-UX-285](../../design/principles.md#dec-ux-285), [OP-UX-92](../../design/principles.md#op-ux-92), [OP-UX-93](../../design/principles.md#op-ux-93)) · **Screens:** [query](../../design/screens/query.html), [query-project](../../design/screens/query-project.html)
+
+A User makes a Project, a set of queries with a name and a sentence on what it is for, and puts queries in it: from the row on top with "Add to a project", which also makes a new one, or from the quick window. A query is in one Project at most; adding it to another moves it ([OP-UX-93](../../design/principles.md#op-ux-93)). The panel of Query lists the Projects the User is in above the history, each with how many queries and who is in it, and its search looks through Projects and queries together. A Project has a page: its name and what it is for, changed in place; its queries in their order, each with its key, what it reads, who made it and its last run; who is in it; Share; New query; Work in it; Leave it and Delete it.
+
+**Makes easy:** keeping the queries of one piece of work together, finding them again by the name of that work, and coming back to all of them at once. **Makes hard:** a piece of work scattered over the history, and the same query counted in two pieces of work.
+
+<a id="fr-sr-64"></a>
+### FR-SR-64 · The row on top holds what the User works in, more than ten
+
+**Status:** Implemented · **Source:** Max, 2026-11-19 ([DEC-UX-282](../../design/principles.md#dec-ux-282), [DEC-UX-283](../../design/principles.md#dec-ux-283), [DEC-UX-284](../../design/principles.md#dec-ux-284), [OP-UX-94](../../design/principles.md#op-ux-94), [OP-UX-95](../../design/principles.md#op-ux-95), [OP-UX-96](../../design/principles.md#op-ux-96)) · **Screens:** [query](../../design/screens/query.html)
+
+The row on top of Query holds the queries of the Project the User works in, or, in none, their own flagged queries ([FR-SR-60](#fr-sr-60)); a switch at its start names which and changes it. The User works in one Project at a time, or none, kept with their settings on every computer, and it changes only when they choose ([OP-UX-94](../../design/principles.md#op-ux-94)). In a Project, flagging a query adds it to the Project, and unflagging removes it. The row holds up to 50 queries: the first ten keep Cmd+1 to Cmd+0, any further one has no key, and "All 14" at its end lists them all ([OP-UX-96](../../design/principles.md#op-ux-96)). The order of a Project is one for everyone in it ([OP-UX-95](../../design/principles.md#op-ux-95)). The row has no button for the quick window.
+
+**Makes easy:** switching from one piece of work to another with all its queries at hand, and saying "Cmd+3" to a colleague in the same Project. **Makes hard:** losing the keys of the queries that matter most to a long row, and a row that changes under the User without their choosing.
+
+<a id="fr-sr-65"></a>
+### FR-SR-65 · A Project is shared, and everyone in it has every right on its queries
+
+**Status:** Implemented · **Source:** Max, 2026-11-19 ([DEC-UX-286](../../design/principles.md#dec-ux-286), [OP-UX-97](../../design/principles.md#op-ux-97), [OP-UX-98](../../design/principles.md#op-ux-98), [OP-UX-99](../../design/principles.md#op-ux-99), [OP-UX-101](../../design/principles.md#op-ux-101)) · **Screens:** [query-project](../../design/screens/query-project.html)
+
+Anyone in a Project shares it with colleagues of Immoscoop who have signed in, and takes them out. Everyone in it opens, changes and runs its queries, adds and removes queries, changes their order, renames, describes, shares and deletes it ([DEC-SR-47](#dec-sr-47)). A query runs with the rights of whoever runs it: their Pre-flight thresholds, their approval and their Request. A colleague whose Permission group does not let them make or run queries can be added, and is marked "cannot run queries": they read the queries and their SQL but do not change, run, add or remove one ([OP-UX-98](../../design/principles.md#op-ux-98)). A query that reads a Resource someone in the Project may not see is locked to them: its name, who made it, its last run and which Resource they may not see, never its SQL or rows ([OP-UX-97](../../design/principles.md#op-ux-97)). Whoever is added or taken out gets a Message ([MSG-QRY-03](message-catalogue.md#msg-qry-03), [MSG-QRY-04](message-catalogue.md#msg-qry-04)).
+
+**Makes easy:** working on the same queries as a team, each running them as far as their own rights go. **Makes hard:** reading through a colleague's Project what one's own access does not allow, and changing a query without its runs keeping what each one read and who ran it.
+
+<a id="fr-sr-66"></a>
+### FR-SR-66 · A query is removed from a Project, and a Project left or deleted
+
+**Status:** Implemented · **Source:** Max, 2026-11-19 ([DEC-UX-291](../../design/principles.md#dec-ux-291), [OP-UX-100](../../design/principles.md#op-ux-100), [OP-UX-106](../../design/principles.md#op-ux-106)) · **Screens:** [query-project](../../design/screens/query-project.html)
+
+"Remove from project", on every query of the page of a Project, and the × on its tab, take a query out of the Project without asking, with Undo; it stays with whoever made it, found again in the history of Query ([OP-UX-106](../../design/principles.md#op-ux-106)). A User leaves a Project: the others keep it, with the queries the leaver made in it; the last one to leave deletes it. Anyone in a Project deletes it for everyone, with an optional reason: its queries stay with whoever made them, the others lose them, and each gets a Message ([MSG-QRY-05](message-catalogue.md#msg-qry-05)). A deleted Project says by whom, when and why ([OP-UX-100](../../design/principles.md#op-ux-100)).
+
+**Makes easy:** tidying a Project as the work moves on, and closing it when the work is done. **Makes hard:** losing a query by removing it, and deleting the work of others without them knowing.
+
+<a id="fr-sr-67"></a>
+### FR-SR-67 · Adding or taking out a Resource changes the query
+
+**Status:** Implemented · **Source:** Max, 2026-11-19 ([DEC-UX-287](../../design/principles.md#dec-ux-287), [DEC-UX-289](../../design/principles.md#dec-ux-289), [OP-UX-102](../../design/principles.md#op-ux-102)) · **Screens:** [query](../../design/screens/query.html)
+
+Adding a Resource or a table to a query, or taking a Resource out, offers two buttons side by side: "Just add", or "Just take it out", which changes this query, and "New query", which starts another with the new set and leaves this one as it was ([DEC-SR-48](#dec-sr-48)). Changed in place, the query keeps its name, question, result and history; its next run reads the new set, each run keeps the Resources it read, and a run that read another set than the one before says what changed ([OP-UX-102](../../design/principles.md#op-ux-102)). Each Resource added comes as a CTE at the start of the SQL ([FR-SR-59](#fr-sr-59)); taking out one the SQL still reads warns that it then is an error. A query reads ten Resources at most.
+
+**Makes easy:** growing a query as the question grows, without a trail of nearly equal queries. **Makes hard:** losing track of what an earlier run read, and changing a query by accident when another was meant.
+
+<a id="fr-sr-68"></a>
+### FR-SR-68 · New query in a Project is an empty query
+
+**Status:** Implemented · **Source:** Max, 2026-11-19 ([DEC-UX-290](../../design/principles.md#dec-ux-290), [OP-UX-105](../../design/principles.md#op-ux-105)) · **Screens:** [query-project](../../design/screens/query-project.html), [query](../../design/screens/query.html)
+
+"New query" on the page of a Project makes an empty query in it and opens it at once: named "New query" and the date, renamed in place, at the end of the row of the Project, with no Resources yet, an empty editor, and Run waiting for a Resource. It skips the screen of a new query and its Lenses ([FR-SR-47](#fr-sr-47)); once a Resource is added, the Lenses on its Resources show on top of it, as on any query ([OP-UX-105](../../design/principles.md#op-ux-105)).
+
+**Makes easy:** starting the next query of a piece of work in one click, where the work is. **Makes hard:** an empty query outside any Project, and running a query before it says what it reads.
+
+<a id="fr-sr-69"></a>
+### FR-SR-69 · Every command of Projects is in the quick window
+
+**Status:** Implemented · **Source:** Max, 2026-11-19 ([DEC-UX-288](../../design/principles.md#dec-ux-288), [OP-UX-104](../../design/principles.md#op-ux-104)) · **Screens:** [query](../../design/screens/query.html), [query-project](../../design/screens/query-project.html)
+
+The quick window, Cmd+Shift+P or Cmd+K, holds every command of Projects ([FR-SR-61](#fr-sr-61)): on a query, in a Project, Add this query to it or Remove this query from it, Move it there from another, Work in another project, Stop working in it, Open its page and Share it; in none, Flag or Unflag, Add this query to a project and Work in a project; New project on every screen of Query; on the page of a Project, Work in it or Stop, Share it, New query in it, Rename it, Change the order of its queries, Leave it and Delete it. It finds the Projects the User is in.
+
+**Makes easy:** working in Projects from the keyboard. **Makes hard:** a Project command that only the mouse reaches.
 
 <a id="fr-sr-35"></a>
 ### FR-SR-35 · A new Resource waits for a Collection
@@ -596,6 +666,8 @@ Data Hub has a section Query, next to Collections, in which a User writes SQL ov
 
 *Note of 2026-10-29, on building it: Query, its panel, a new query and the page of a query, reading only its own Resources ([TR-SR-15](../technical/04-stacks-and-resources.md#tr-sr-15) to [TR-SR-17](../technical/04-stacks-and-resources.md#tr-sr-17)); Lenses come with part 6 of the [build order](../../design/build-order.md), Claude in version 2.*
 
+*Note of 2026-11-19: another set of Resources no longer has to be another query: adding or taking out a Resource changes the query, or starts a new one ([FR-SR-67](#fr-sr-67), [DEC-SR-48](#dec-sr-48)).*
+
 <a id="fr-sr-42"></a>
 ### FR-SR-42 · The editor formats and suggests
 
@@ -623,6 +695,8 @@ The panel of Query lists the queries a User ran, through Query, a preview or Cla
 *Note of 2026-10-30: the panel groups them per day in this week, per week back to the first of last month, then per month, and reads a period only when it is opened; previews, the queries of Lenses and hidden queries show only when they are ticked in the filter next to the search ([DEC-UX-150](../../design/principles.md#dec-ux-150)), and a User hides a query for themselves alone ([DEC-UX-137](../../design/principles.md#dec-ux-137), [DEC-UX-138](../../design/principles.md#dec-ux-138), [DEC-UX-139](../../design/principles.md#dec-ux-139)).*
 
 *Note of 2026-10-31, on checking what was built: built as the notes above say; the queries of Claude come with Claude, in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
+
+*Note of 2026-11-19: above the history, the Projects the User is in, searched together with the queries ([FR-SR-63](#fr-sr-63)); a query of a Project is seen by everyone in it ([DEC-SR-47](#dec-sr-47)).*
 
 <a id="fr-sr-44"></a>
 ### FR-SR-44 · The page of a Resource lists the queries on it

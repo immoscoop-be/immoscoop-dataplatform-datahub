@@ -215,6 +215,11 @@ export interface Messages {
    * Data Team.
    */
   userNotice(notice: UserNotice): Promise<{ id: string }>;
+  /**
+   * What query tells about a Project of Query (FR-SR-65, FR-SR-66): a colleague was added to it, taken out of it, or it
+   * was deleted; a personal notice on that colleague, which only they see (MSG-QRY-03 to MSG-QRY-05).
+   */
+  projectNotice(notice: ProjectNotice): Promise<{ id: string }>;
 }
 
 /** What identity tells about an Excel key (MSG-KEY-01, MSG-KEY-02): only its User sees the Message. */
@@ -237,6 +242,23 @@ export type UserNotice =
   | { type: 'MSG-USR-01'; userId: string; actor: string; from: string; to: string; gains: string[]; losses: string[]; deleted: boolean; name?: string }
   | { type: 'MSG-USR-02'; userId: string; name: string }
   | { type: 'MSG-USR-03'; userId: string; name: string; email: string; group: string };
+
+/**
+ * What query tells about a Project (MSG-QRY-03 to MSG-QRY-05): who it is for, the Project by its ID, to open it from the
+ * Message, and its name, and who did it; for a colleague added, how many queries it holds and whether they may run them;
+ * for a Project deleted, why, and how many of its queries they made.
+ */
+export interface ProjectNotice {
+  type: 'MSG-QRY-03' | 'MSG-QRY-04' | 'MSG-QRY-05';
+  recipient: { id: string; name: string };
+  projectId: string;
+  project: string;
+  actor: string;
+  queries?: number;
+  canRun?: boolean;
+  reason?: string;
+  mine?: number;
+}
 
 /**
  * Who decides on a Request through query, as their decision is shown back to query (FR-LE-09): someone who decides on
@@ -881,6 +903,24 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
       return db
         .insertInto('messages')
         .values({ type: notice.type, subjectKind: 'user', subjectId: notice.userId, writerId: null, params, state: null })
+        .returning('id')
+        .executeTakeFirstOrThrow();
+    },
+
+    async projectNotice(notice) {
+      // On the colleague it is for, named as `user`: only they see it, and they get it because it is about them.
+      const params: Record<string, string> = { subject: notice.recipient.name, user: notice.recipient.id, projectId: notice.projectId, project: notice.project, actor: notice.actor };
+      if (notice.type === 'MSG-QRY-03') {
+        params.queries = String(notice.queries ?? 0);
+        params.canRun = notice.canRun === false ? 'no' : 'yes';
+      }
+      if (notice.type === 'MSG-QRY-05') {
+        params.mine = String(notice.mine ?? 0);
+        if (notice.reason) params.reason = notice.reason;
+      }
+      return db
+        .insertInto('messages')
+        .values({ type: notice.type, subjectKind: 'user', subjectId: notice.recipient.id, writerId: null, params, state: null })
         .returning('id')
         .executeTakeFirstOrThrow();
     },

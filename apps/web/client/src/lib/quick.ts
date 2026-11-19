@@ -27,7 +27,7 @@ export interface QuickRow {
 }
 
 /** The groups, in the order the window shows them when something is typed (OP-UX-88). */
-export const QUICK_GROUPS = ['screen', 'commands', 'flagged', 'resources', 'collections', 'lenses', 'queries', 'cards', 'goTo'] as const;
+export const QUICK_GROUPS = ['screen', 'commands', 'flagged', 'projects', 'resources', 'collections', 'lenses', 'queries', 'cards', 'goTo'] as const;
 /** Recently used comes on top when nothing is typed (DEC-UX-242). */
 export type QuickGroup = 'recent' | (typeof QUICK_GROUPS)[number];
 

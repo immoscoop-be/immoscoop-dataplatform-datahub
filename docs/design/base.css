@@ -2291,6 +2291,123 @@ svg.mp, svg.mp-g { display: block; width: 100%; height: auto; overflow: visible;
 /* A flagged query in the panel has the flag at its end */
 .q-item .flag-mark { margin-left: auto; font-size: 13px; color: var(--text-muted); flex: none; }
 
+/* Projects (DEC-UX-282): the row on top holds what the User works in, a Project or their own flagged queries, named
+   by the switch at its start. More than ten fit (DEC-UX-283): the first ten keep ⌘1 to ⌘0, the rest have no key, and
+   the tabs scroll sideways behind "All 14". No quick-window button in the row (DEC-UX-284). */
+.q-flags { position: relative; }
+.q-proj, .q-flags-all { text-decoration: none; }
+.q-proj { display: inline-flex; align-items: center; gap: 7px; flex: none; max-width: 240px; border: 0; background: var(--card); color: var(--text-primary);
+  font: var(--weight-medium) var(--text-small) var(--font-family); padding: 6px 8px 6px 9px; border-radius: 9px; cursor: pointer; }
+.q-proj:hover { background: var(--surface-float-hover); }
+.q-proj > i:first-child { font-size: 15px; flex: none; }
+.q-proj .clip { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.q-proj .q-proj-people { display: inline-flex; align-items: center; gap: 3px; color: var(--text-muted); font-weight: var(--weight-regular); font-size: var(--text-meta); flex: none; }
+.q-proj .caret { font-size: 11px; color: var(--text-muted); flex: none; }
+.q-proj.mine { background: none; color: var(--text-secondary); }
+.q-proj.mine:hover { background: var(--tint-hover); color: var(--text-primary); }
+.q-flags-tabs { display: flex; align-items: center; gap: 4px; flex: 1 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: none; scroll-behavior: smooth; }
+.q-flags-tabs::-webkit-scrollbar { display: none; }
+.q-flags-tabs .q-flag { flex: 0 1 190px; min-width: 124px; }
+/* Past what fits, the tabs scroll sideways, their edges fading */
+.q-flags-tabs.many { mask-image: linear-gradient(to right, transparent, #000 14px, #000 calc(100% - 14px), transparent); padding: 0 6px; }
+.q-flag .nokey { width: 8px; flex: none; }
+.q-flags-end { display: flex; align-items: center; gap: 2px; flex: none; margin-left: auto; }
+.q-flags-all { display: inline-flex; align-items: center; gap: 5px; border: 0; background: none; color: var(--text-secondary); font: var(--text-meta) var(--font-family); padding: 6px 8px; border-radius: 9px; cursor: pointer; white-space: nowrap; }
+.q-flags-all:hover, .q-flags-all[aria-expanded="true"] { background: var(--tint-hover); color: var(--text-primary); }
+.q-flags-sep { width: 1px; align-self: stretch; margin: 6px 2px; background: var(--tint-active); flex: none; }
+/* The pop-outs of the row: what to work in, the whole list, and Add to a project */
+.q-pop { position: absolute; top: calc(100% + 6px); left: 4px; z-index: 40; width: 360px; max-height: min(520px, 70vh); overflow: auto; padding: 8px;
+  border-radius: var(--radius-md); background: var(--surface-solid); box-shadow: var(--sheet-shadow); font-size: var(--text-small); }
+.q-pop.end { left: auto; right: 4px; }
+.q-pop-h { font-size: var(--text-meta); color: var(--text-muted); margin: 6px 8px 4px; display: flex; align-items: center; gap: 6px; }
+.q-pop-h:first-child { margin-top: 2px; }
+.q-pop-opt { display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 8px; border: 0; border-radius: 9px; background: none; color: var(--text-primary);
+  font: inherit; text-align: left; cursor: pointer; text-decoration: none; }
+.q-pop-opt:hover, .q-pop-opt.on { background: var(--tint-hover); }
+.q-pop-opt > i { font-size: 16px; color: var(--text-secondary); flex: none; }
+.q-pop-opt input { accent-color: var(--text-primary); margin: 0; flex: none; }
+.q-pop-opt .grow { flex: 1; min-width: 0; }
+.q-pop-opt .grow > span { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.q-pop-opt .meta { display: block; }
+.q-pop-opt .kbd { background: var(--tint-hover); }
+.q-pop-opt[aria-current="true"] .item-title { font-weight: var(--weight-medium); }
+.q-pop-opt .q-pop-check { margin-left: auto; font-size: 14px; color: var(--text-primary); }
+.q-pop-sep { height: 1px; background: var(--tint-hover); margin: 6px 4px; }
+.q-pop-new { display: flex; gap: 6px; align-items: center; padding: 4px 8px 2px 34px; }
+.q-pop-new input { flex: 1; min-width: 0; font: inherit; padding: 6px 9px; border-radius: var(--radius-field); border: 1px solid var(--tint-active); background: var(--surface-sub); color: var(--text-primary); }
+.q-pop-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; padding: 8px 4px 2px; border-top: 1px solid var(--tint-hover); }
+.q-pop-foot .meta { flex: 1 1 100%; line-height: 1.45; }
+.q-pop-foot .btn-quiet { margin-left: auto; }
+.q-pop-opt .kbd.none { visibility: hidden; }
+/* A query of a Project, opened while the User works in another: its breadcrumb names its Project */
+.crumb-proj { display: inline-flex; align-items: center; gap: 4px; }
+.crumb-proj i { font-size: 13px; }
+
+/* The panel of Query: the Projects above the history (DEC-UX-285) */
+.panel-label.with-add { display: flex; align-items: center; gap: 4px; }
+.panel-label.with-add span { flex: 1; }
+.panel-label.with-add .icon-btn { width: 24px; height: 24px; font-size: 14px; }
+.proj-entry { position: relative; margin-bottom: 7px; }
+.proj-entry > .proj-item { position: relative; margin-bottom: 0; padding-right: 40px; }
+.proj-item .kind-icon { font-size: 18px; color: var(--text-secondary); }
+.proj-item .flag-mark { position: absolute; right: 42px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--text-muted); }
+.proj-entry > .q-unfold { position: absolute; right: 8px; top: 9px; }
+.proj-entry:not(.open) .q-unfold i { transform: rotate(-90deg); }
+.proj-entry:not(.open) .proj-queries { display: none; }
+.proj-queries { margin: 4px 0 0 22px; padding-left: 10px; border-left: 1px solid var(--tint-active); }
+.proj-queries a { display: flex; align-items: center; gap: 8px; padding: 5px 6px; border-radius: 8px; color: var(--text-secondary); text-decoration: none; font-size: var(--text-small); }
+.proj-queries a:hover { background: var(--tint-hover); color: var(--text-primary); }
+.proj-queries a .kbd { background: none; padding: 0; min-width: 10px; }
+.proj-queries a .clip { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.proj-queries a.locked { color: var(--text-muted); }
+.proj-more { display: block; margin: 0 4px 8px; }
+
+/* The page of a Project (DEC-UX-285): its head, who is in it, its queries and its Danger zone */
+.proj-people { display: flex; align-items: center; }
+.proj-people .mini-avatar { width: 26px; height: 26px; font-size: 9px; outline: 2px solid var(--surface-solid); margin-left: -6px; display: inline-flex; align-items: center; justify-content: center; }
+.proj-people .mini-avatar:first-child { margin-left: 0; }
+.proj-people .mini-avatar { position: relative; }
+.proj-people .mini-avatar:nth-child(1) { z-index: 4; }
+.proj-people .mini-avatar:nth-child(2) { z-index: 3; }
+.proj-people .mini-avatar:nth-child(3) { z-index: 2; }
+.proj-people .mini-avatar:nth-child(4) { z-index: 1; }
+.proj-table td { padding-top: 9px; padding-bottom: 9px; }
+.proj-table .proj-key { width: 1%; white-space: nowrap; }
+.proj-table .proj-key .kbd { background: var(--tint-hover); }
+.proj-table .proj-drag { width: 1%; color: var(--text-muted); cursor: grab; font-size: 15px; }
+.proj-table .q-cell { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.proj-table .q-cell .kind-icon { font-size: 16px; color: var(--text-secondary); flex: none; }
+.proj-table .q-cell a { color: var(--text-primary); text-decoration: none; font-weight: var(--weight-medium); }
+.proj-table .q-cell a:hover { text-decoration: underline; }
+.proj-table .q-cell .meta { display: block; font-weight: var(--weight-regular); }
+.proj-table tr.locked td { color: var(--text-muted); }
+.proj-table tr.locked .q-cell .kind-icon { color: var(--text-muted); }
+/* "Remove from project" on every query, always in view (DEC-UX-291); quiet, its text on one line */
+.proj-table .proj-remove { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; font-size: var(--text-meta); color: var(--text-secondary); padding: 5px 9px; }
+.proj-table .proj-remove i { font-size: 14px; }
+.proj-table .proj-remove:hover { color: var(--text-primary); }
+.proj-undo { position: sticky; bottom: 12px; z-index: 5; box-shadow: var(--sheet-shadow); }
+.proj-table td:nth-child(5), .proj-table td:nth-child(6) { white-space: nowrap; }
+.proj-table .marks { display: inline-flex; align-items: center; gap: 6px; }
+.pill.warn { color: var(--signal-warn); background: color-mix(in srgb, var(--signal-warn) 14%, transparent); }
+.pill.warn i { font-size: 11px; }
+.proj-member-note { display: block; margin-top: 2px; line-height: 1.45; }
+.proj-member-note.warn { color: var(--signal-warn); }
+.proj-here { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-small); color: var(--text-secondary); background: var(--card); padding: 7px 12px; border-radius: var(--radius-pill); }
+.proj-here i { font-size: 14px; }
+.proj-empty { padding: 26px 16px; text-align: center; color: var(--text-secondary); font-size: var(--text-small); line-height: 1.6; }
+.proj-empty .ph { font-size: 26px; color: var(--text-muted); display: block; margin: 0 auto 6px; }
+.share-sheet .sheet-list { padding-top: 4px; }
+.share-who { position: relative; margin: 8px 0 6px; }
+.share-sugg { margin-top: 6px; padding: 6px; border-radius: var(--radius-md); background: var(--surface-sub); }
+@media (max-width: 720px) {
+  .q-flags-tabs .q-flag { width: 128px; }
+  .q-pop { width: calc(100vw - 32px); left: 0; }
+  .q-pop.end { right: 0; }
+  .proj-table .hide-narrow { display: none; }
+  .proj-table .proj-remove span { display: none; }
+}
+
 /* The quick window (DEC-UX-237): Cmd+Shift+P (Ctrl+Shift+P) anywhere in Data Hub. A search over the commands of the
    screen, then Go to: every section, and every Resource, Collection, Lens, query and Learning Card the User may see.
    It floats over the top of the window, the page lightly dimmed; Escape, the shortcut again, or a click beside it closes it. */
@@ -2517,3 +2634,8 @@ body.oj-plain .oj-tag { visibility: hidden; }
   .mf-foot #mf-saves { flex: none; min-width: 0; }
   .mf-foot .btn-primary { width: 100%; justify-content: center; min-height: 44px; }
 }
+
+/* The page of a Project: the foot of its Danger zone */
+.proj-danger .danger-foot { display: flex; align-items: center; gap: 10px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--tint-hover); }
+.proj-danger .danger-foot .meta { flex: 1; }
+.proj-danger + .proj-danger { margin-top: 14px; }
