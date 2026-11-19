@@ -98,6 +98,10 @@ export interface QueryDatabase {
     checkSql: ColumnType<string | null, string | null | undefined, string | null>;
     /** The Parameters that SQL was checked with. */
     checkParameters: ColumnType<Parameter[], string | undefined, string>;
+    /** Who changed its SQL last, and when; null before anyone did (OP-UX-99). */
+    sqlChangedById: Generated<string | null>;
+    sqlChangedByName: Generated<string | null>;
+    sqlChangedAt: Generated<Date | null>;
   };
   /** One row per Lens: a query with its Parameters, in a Collection (DEC-LE-06, DEC-CO-20). */
   lenses: {
@@ -229,6 +233,13 @@ export interface QueryDatabase {
     position: number;
     addedById: string;
     addedAt: Timestamp;
+  };
+  /** Who has a query of a Project open now, as their page tells every few seconds (OP-UX-99). */
+  queryPresence: {
+    queryId: string;
+    userId: string;
+    userName: string;
+    seenAt: Timestamp;
   };
   /** The queries a User hid from their panel of Query, for them alone (DEC-UX-138). */
   hiddenQueries: {

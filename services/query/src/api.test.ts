@@ -1642,6 +1642,19 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
       await call(an, 'PATCH', `/queries/${onlyWeekly}`, { resources: [WEEKLY.id] });
     });
 
+    it('says who else is in a query, and who changed its SQL last (OP-UX-99)', async () => {
+      expect((await call(an, 'PUT', `/queries/${onlyWeekly}/presence`)).json()).toMatchObject({ others: [] });
+      const present = (await call(karel, 'PUT', `/queries/${onlyWeekly}/presence`)).json();
+      expect(present.others).toEqual([{ id: '101', name: 'An Claes' }]);
+      await call(karel, 'POST', `/queries/${onlyWeekly}/preflight`, { sql: `${weekly}\n-- by Karel` });
+      const seenByAn = (await call(an, 'PUT', `/queries/${onlyWeekly}/presence`)).json();
+      expect(seenByAn).toMatchObject({ others: [{ id: '102', name: 'Karel Leys' }], sqlChanged: { by: { id: '102', name: 'Karel Leys' } } });
+      expect((await call(an, 'GET', `/queries/${onlyWeekly}`)).json().query.sqlChanged).toMatchObject({ by: { name: 'Karel Leys' } });
+      // Who only reads it, as the Data Team may, sees them without being seen.
+      expect((await call(mia, 'PUT', `/queries/${onlyWeekly}/presence`)).json().others).toHaveLength(2);
+      expect((await call(an, 'PUT', `/queries/${onlyWeekly}/presence`)).json().others).toEqual([{ id: '102', name: 'Karel Leys' }]);
+    });
+
     it('makes an empty query in it, at the end of its row (FR-SR-68)', async () => {
       const empty = await call(karel, 'POST', '/queries', { name: 'New query, 19 Nov', resources: [], sql: '', project: projectId });
       expect(empty.statusCode).toBe(201);

@@ -42,6 +42,10 @@ export interface Query {
   /** Its SQL as BigQuery reads it, and its Parameters, kept at its last Pre-flight that passed, for a dry run without its User (DEC-SR-44). */
   checkSql: string | null;
   checkParameters: Parameter[];
+  /** Who changed its SQL last, and when; null before anyone did (OP-UX-99). */
+  sqlChangedById?: string | null;
+  sqlChangedByName?: string | null;
+  sqlChangedAt?: Date | null;
 }
 
 /** A query in the panel of Query: one item per query, with how many runs (DEC-UX-74). */
@@ -148,7 +152,13 @@ export interface Queries {
   /** Whether this User hid the query. */
   hidden(queryId: string, userId: string): Promise<boolean>;
   get(id: string): Promise<Query | undefined>;
-  update(id: string, fields: Partial<Pick<Query, 'name' | 'question' | 'sql' | 'parameters' | 'resources'>>): Promise<Query | undefined>;
+  /** Changes it; with who changes it, a new SQL says who changed it last (OP-UX-99). */
+  update(id: string, fields: Partial<Pick<Query, 'name' | 'question' | 'sql' | 'parameters' | 'resources'>>, by?: Viewer): Promise<Query | undefined>;
+  /**
+   * Marks the User as having the query open now, unless mark is false, and answers the others who had it open in the
+   * last 40 seconds (OP-UX-99).
+   */
+  present(queryId: string, viewer: Viewer, mark?: boolean): Promise<{ id: string; name: string }[]>;
   /** The previews of a Resource by this User, made the first time they are asked for (FR-SR-38). */
   previewFor(owner: Viewer, resource: NamedResource, name: string): Promise<Query>;
   /** The previews of a Resource by this User, if there are. */
@@ -319,14 +329,37 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
 
     get: queryById,
 
-    async update(id, { parameters, resources, ...fields }) {
-      if (!(await queryById(id))) return undefined;
+    async update(id, { parameters, resources, ...fields }, by) {
+      const found = await queryById(id);
+      if (!found) return undefined;
+      const now = new Date();
+      // A new SQL says who wrote it, so that someone else in it sees who changed it (OP-UX-99).
+      const changed = by && fields.sql !== undefined && fields.sql !== found.sql ? { sqlChangedById: by.id, sqlChangedByName: by.name, sqlChangedAt: now } : {};
       return db
         .updateTable('queries')
-        .set({ ...fields, ...(parameters ? { parameters: JSON.stringify(parameters) } : {}), ...(resources ? { resources: JSON.stringify(resources) } : {}), updatedAt: new Date() })
+        .set({ ...fields, ...changed, ...(parameters ? { parameters: JSON.stringify(parameters) } : {}), ...(resources ? { resources: JSON.stringify(resources) } : {}), updatedAt: now })
         .where('id', '=', id)
         .returningAll()
         .executeTakeFirstOrThrow();
+    },
+
+    async present(queryId, viewer, mark = true) {
+      if (mark) {
+        await db
+        .insertInto('queryPresence')
+        .values({ queryId, userId: viewer.id, userName: viewer.name, seenAt: new Date() })
+          .onConflict((conflict) => conflict.columns(['queryId', 'userId']).doUpdateSet({ userName: viewer.name, seenAt: new Date() }))
+          .execute();
+      }
+      const rows = await db
+        .selectFrom('queryPresence')
+        .select(['userId', 'userName'])
+        .where('queryId', '=', queryId)
+        .where('userId', '!=', viewer.id)
+        .where('seenAt', '>', new Date(Date.now() - 40_000))
+        .orderBy('seenAt', 'desc')
+        .execute();
+      return rows.map((row) => ({ id: row.userId, name: row.userName }));
     },
 
     async previewFor(owner, resource, name) {

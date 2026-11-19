@@ -331,6 +331,8 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       mine: query.ownerId === viewer(request).id,
       // The Project it is in, and whether the User writes and runs it: theirs, or of a Project they are in (DEC-SR-47).
       project: inProject ? { id: inProject.id, name: inProject.name } : null,
+      // Who changed its SQL last, and when, so that two in it at once see each other's changes (OP-UX-99).
+      sqlChanged: query.sqlChangedAt ? { at: query.sqlChangedAt, by: { id: query.sqlChangedById, name: query.sqlChangedByName } } : null,
       editable: mayWrite && can(permissionsOf(request), 'queries.make'),
       // Whether the User hid it from their panel (DEC-UX-138).
       hidden,
@@ -374,6 +376,19 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
   });
 
   // How many queries each day holds, in the time zone of the User, for the periods and chips of the panel (DEC-UX-137, DEC-UX-139).
+
+  // Who else has a query of a Project open, while the User has it open too; and who changed its SQL last (OP-UX-99).
+  app.put<{ Params: { id: string } }>('/queries/:id/presence', async (request, reply) => {
+    const query = await seen(request, reply);
+    if (!query) return reply;
+    // Only who writes it is in it; who only reads it, as the Data Team may, sees them without being seen.
+    const others = (await queries.present(query.id, viewer(request), await writable(request, query))).filter((one) => one.id !== viewer(request).id);
+    const now = await queries.get(query.id);
+    return {
+      others,
+      sqlChanged: now?.sqlChangedAt ? { at: now.sqlChangedAt, by: { id: now.sqlChangedById, name: now.sqlChangedByName } } : null,
+    };
+  });
   app.get<{ Querystring: { all?: string; tz?: string } }>('/queries/days', async (request, reply) => {
     const who = viewer(request);
     const all = request.query.all === 'true';
@@ -532,7 +547,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
         return unavailable(error, reply, request);
       }
     }
-    const query = await queries.update(request.params.id, { ...rest, ...(resources ? { resources } : {}) });
+    const query = await queries.update(request.params.id, { ...rest, ...(resources ? { resources } : {}) }, viewer(request));
     return { query: query && shown(query) };
   });
 
@@ -576,7 +591,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     if (!query) return reply;
     try {
       const changed = body.sql !== query.sql || !same(body.parameters, query.parameters);
-      const current = changed ? ((await queries.update(query.id, { sql: body.sql, parameters: body.parameters })) ?? query) : query;
+      const current = changed ? ((await queries.update(query.id, { sql: body.sql, parameters: body.parameters }, viewer(request))) ?? query) : query;
       const resources = await resourcesOf(request, current);
       const checked = await check(body.sql, body.parameters, resources, rangesFor(request, current.kind), request);
       // Whether it is Broken now, for the callout on top of it and Run (FR-SR-53, DEC-UX-160).
@@ -700,7 +715,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       const checked = await check(body.sql, body.parameters, await resourcesOf(request, query), ranges, request);
       if (!checked.runnable) return reply.code(409).send({ error: 'not_runnable', message: 'This query cannot run as it is.', preflight: checked });
       if (checked.range !== 'request') return reply.code(409).send({ error: 'not_needed', message: 'This query runs without the Data Team.', preflight: checked });
-      if (body.sql !== query.sql || !same(body.parameters, query.parameters)) await queries.update(query.id, { sql: body.sql, parameters: body.parameters });
+      if (body.sql !== query.sql || !same(body.parameters, query.parameters)) await queries.update(query.id, { sql: body.sql, parameters: body.parameters }, viewer(request));
       const sent = await catalogue.sendRequest({ queryId: query.id, name: query.name, reads: checked.bytes ?? 0, threshold: ranges.request, text: body.text }, authorization(request));
       return reply.code(201).send({ request: requestView(sent), preflight: checked, queryId: query.id });
     } catch (error) {
