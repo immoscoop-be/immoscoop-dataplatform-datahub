@@ -2382,8 +2382,12 @@ svg.mp, svg.mp-g { display: block; width: 100%; height: auto; overflow: visible;
 .proj-table .q-cell .meta { display: block; font-weight: var(--weight-regular); }
 .proj-table tr.locked td { color: var(--text-muted); }
 .proj-table tr.locked .q-cell .kind-icon { color: var(--text-muted); }
-.proj-table .row-x { visibility: hidden; }
-.proj-table tr:hover .row-x, .proj-table tr:focus-within .row-x { visibility: visible; }
+/* "Remove from project" on every query, always in view (DEC-UX-291); quiet, its text on one line */
+.proj-table .proj-remove { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; font-size: var(--text-meta); color: var(--text-secondary); padding: 5px 9px; }
+.proj-table .proj-remove i { font-size: 14px; }
+.proj-table .proj-remove:hover { color: var(--text-primary); }
+.proj-undo { position: sticky; bottom: 12px; z-index: 5; box-shadow: var(--sheet-shadow); }
+.proj-table td:nth-child(5), .proj-table td:nth-child(6) { white-space: nowrap; }
 .proj-table .marks { display: inline-flex; align-items: center; gap: 6px; }
 .pill.warn { color: var(--signal-warn); background: color-mix(in srgb, var(--signal-warn) 14%, transparent); }
 .pill.warn i { font-size: 11px; }
@@ -2401,6 +2405,7 @@ svg.mp, svg.mp-g { display: block; width: 100%; height: auto; overflow: visible;
   .q-pop { width: calc(100vw - 32px); left: 0; }
   .q-pop.end { right: 0; }
   .proj-table .hide-narrow { display: none; }
+  .proj-table .proj-remove span { display: none; }
 }
 
 /* The quick window (DEC-UX-237): Cmd+Shift+P (Ctrl+Shift+P) anywhere in Data Hub. A search over the commands of the

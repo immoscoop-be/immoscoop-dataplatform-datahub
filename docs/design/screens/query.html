@@ -40,7 +40,7 @@
   Run is off, a callout on top names what is missing, and the query has the red dot in the panel; its SQL can still be
   changed, and a change that runs makes it work again, as does the return of what it reads.
   Requirements: FR-SR-62, FR-SR-61, FR-SR-60, FR-SR-59, FR-SR-58, FR-SR-57, FR-SR-56, FR-SR-53, FR-SR-36, FR-SR-37, FR-SR-40, FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-45, FR-SR-47, FR-SR-48, FR-SR-51, FR-LN-05, FR-LN-06, FR-LE-07, FR-LE-08, FR-LE-16, FR-RC-18
-  Decisions: DEC-UX-289, DEC-UX-288, DEC-UX-287, DEC-UX-286, DEC-UX-285, DEC-UX-284, DEC-UX-283, DEC-UX-282, DEC-UX-238, DEC-UX-237, DEC-UX-236, DEC-UX-235, DEC-UX-234, DEC-UX-225, DEC-UX-224, DEC-UX-223, DEC-UX-222, DEC-UX-221, DEC-UX-220, DEC-UX-219, DEC-UX-218, DEC-UX-163, DEC-UX-17, DEC-UX-20, DEC-UX-70, DEC-UX-71, DEC-UX-72, DEC-UX-73, DEC-UX-74, DEC-UX-76, DEC-UX-77, DEC-UX-88, DEC-UX-97, DEC-UX-99, DEC-UX-115, DEC-SR-29, DEC-SR-35, DEC-LN-01.
+  Decisions: DEC-UX-290, DEC-UX-289, DEC-UX-288, DEC-UX-287, DEC-UX-286, DEC-UX-285, DEC-UX-284, DEC-UX-283, DEC-UX-282, DEC-UX-238, DEC-UX-237, DEC-UX-236, DEC-UX-235, DEC-UX-234, DEC-UX-225, DEC-UX-224, DEC-UX-223, DEC-UX-222, DEC-UX-221, DEC-UX-220, DEC-UX-219, DEC-UX-218, DEC-UX-163, DEC-UX-17, DEC-UX-20, DEC-UX-70, DEC-UX-71, DEC-UX-72, DEC-UX-73, DEC-UX-74, DEC-UX-76, DEC-UX-77, DEC-UX-88, DEC-UX-97, DEC-UX-99, DEC-UX-115, DEC-SR-29, DEC-SR-35, DEC-LN-01.
   Not in v1: the label "Claude" on a query in the panel (FR-SR-26, DEC-CH-02); leave it out.
   "Make it a lens" turns the query into a Lens (FR-LE-07, DEC-UX-25). The query stays, used as the Lens: then "Update the lens"
   takes its place and overwrites the Lens after a size check, and "Lenses on these resources" goes (DEC-LE-03, DEC-LE-04,
@@ -67,7 +67,7 @@
   A tab per query in the order of the row; the first ten carry ⌘1 to ⌘9 and ⌘0 (Ctrl on Windows), from anywhere in
   Query, also while typing in the SQL; any further one has no key, and the tabs scroll sideways, with "All 14" at the
   end, which lists them all (DEC-UX-283). In a Project, "Add to Credit leads Q4" adds the open query to it, "Move to"
-  when it is in another (OP-UX-93), and the × on a tab takes a query out of it; in none, "Flag this query" and "Add to
+  when it is in another (OP-UX-93), and the × on a tab removes a query from it; in none, "Flag this query" and "Add to
   a project", which puts the open query, and flagged ones ticked, into a Project or a new one, and the User then works
   in it. No quick-window button in the row (DEC-UX-284). A query keeps what was done in it while the User is in
   another one: its result, its tab, a run still going (OP-UX-85). Its tab marks a run going, a result not seen yet, a
@@ -77,11 +77,13 @@
   The panel (DEC-UX-285): the Projects above the history, each with how many queries and who is in it, the one the
   User works in flagged; the arrow unfolds its queries with their keys; a click opens its page (query-project.html).
   The search looks through Projects and queries together.
+  An empty query (DEC-UX-290, OP-UX-105): ?empty=1 shows the query "New query" on the page of a Project makes: in the
+  Project, at the end of its row, no Resources yet, an empty editor, and Run waiting for a Resource.
   The quick window (DEC-UX-237): Cmd+Shift+P or Cmd+K, anywhere in Data Hub (app.js draws it on every screen). On a
   query it lists first what can be done to this query now, a command for every button of the page that does something
   to it (DEC-UX-239): Show info when the cursor is on a field, Parameter or Resource (DEC-UX-238); Run as ⌘↵ does,
   which above 100 MB puts the focus on the red button, where Enter approves; Add the partition filter (with
-  ?pf=nofilter); Make it a Lens or Update the Lens; in a Project, Add this query to it or Take it out, Work in another
+  ?pf=nofilter); Make it a Lens or Update the Lens; in a Project, Add this query to it or Remove it from it, Work in another
   project, Stop working in it, Open its page and Share it; in none, Flag or Unflag, Add this query to a project and Work
   in a project; New project (DEC-UX-288); Rename; Fold all; Format the SQL; Add a Parameter; Add a Resource; Remove
   each Resource; Add a table (a power user); New query from this one; Lenses on these Resources; Show the history or
@@ -798,7 +800,7 @@
   // The row on top (DEC-UX-236, DEC-UX-282): the queries of the Project the User works in, or, in none, their own
   // flagged queries; the switch at its start says which, and changes it. A tab each, in the order of the row; the first
   // ten carry ⌘1 to ⌘9 and ⌘0, any further one no key (DEC-UX-283), and the tabs scroll sideways behind "All 14". In a
-  // Project, Flag is "Add to Credit leads Q4" and the × on a tab takes the query out of it; in none, "Add to a project"
+  // Project, Flag is "Add to Credit leads Q4" and the × on a tab removes the query from it; in none, "Add to a project"
   // puts the open query, and any flagged one ticked, into a Project, and the User then works in it. No quick-window
   // button in the row (DEC-UX-284): ⌘⇧P and ⌘K open it. A tab marks a run still going (the turning circle), a result
   // not seen yet (a dot), a run that failed (a red dot) and a query that is Broken (the red mark of the panel). Hovered,
@@ -844,7 +846,7 @@
     const chip = p
       ? `<button class="q-proj" type="button" data-row-pop="work" aria-haspopup="menu" aria-expanded="false" title="You work in ${esc2(p.name)}: its queries are in this row. Click to work in another"><i class="ph-fill ph-folders" aria-hidden="true"></i><span class="clip">${esc2(p.name)}</span><span class="q-proj-people" title="${p.people.length} in it"><i class="ph ph-users"></i>${p.people.length}</span><i class="ph ph-caret-down caret" aria-hidden="true"></i></button>`
       : `<button class="q-proj mine" type="button" data-row-pop="work" aria-haspopup="menu" aria-expanded="false" title="Your flagged queries: only you see them. Click to work in a project"><i class="ph-fill ph-flag" aria-hidden="true"></i><span class="clip">Flagged</span><i class="ph ph-caret-down caret" aria-hidden="true"></i></button>`;
-    const tabs = list.map((f, i) => `<a class="q-flag${f.title === here() ? ' current' : ''}" href="query.html" draggable="true" data-i="${i}"${f.title === here() ? ' aria-current="page"' : ''} title="${esc2(f.title)}${i < 10 ? ' · ' + keyOf(i) : ''}${p ? ' · by ' + PEOPLE[f.by] : ''}${what[f.state] || ''}">${i < 10 ? `<span class="kbd">${keyNo(i)}</span>` : '<span class="nokey" aria-hidden="true"></span>'}<span class="q-flag-name">${esc2(f.title)}</span>${mark(f)}<button class="q-flag-x" type="button" aria-label="${p ? `Take ${esc2(f.title)} out of ${esc2(p.name)}` : `Unflag ${esc2(f.title)}`}" title="${p ? `Take it out of ${esc2(p.name)}: the query stays with ${PEOPLE[f.by]}, who made it` : 'Unflag it: the query stays as it is'}"><i class="ph ph-x"></i></button></a>`).join('');
+    const tabs = list.map((f, i) => `<a class="q-flag${f.title === here() ? ' current' : ''}" href="query.html" draggable="true" data-i="${i}"${f.title === here() ? ' aria-current="page"' : ''} title="${esc2(f.title)}${i < 10 ? ' · ' + keyOf(i) : ''}${p ? ' · by ' + PEOPLE[f.by] : ''}${what[f.state] || ''}">${i < 10 ? `<span class="kbd">${keyNo(i)}</span>` : '<span class="nokey" aria-hidden="true"></span>'}<span class="q-flag-name">${esc2(f.title)}</span>${mark(f)}<button class="q-flag-x" type="button" aria-label="${p ? `Remove ${esc2(f.title)} from ${esc2(p.name)}` : `Unflag ${esc2(f.title)}`}" title="${p ? `Remove it from ${esc2(p.name)}: the query stays with ${PEOPLE[f.by]}, who made it` : 'Unflag it: the query stays as it is'}"><i class="ph ph-x"></i></button></a>`).join('');
     // Flag, in the row itself, for the open query while it is not in the row (DEC-UX-241): in a Project it adds the
     // query to it, and a query of another Project moves (OP-UX-93); with no Project, "Add to a project" too
     const add = at >= 0 ? '' : p
@@ -911,6 +913,7 @@
     drawFlags();
   };
   window.workIn = k => { work = k || null; openPop = null; drawFlags(); };
+  window.rowAdd = title => { if (!row().some(f => f.title === title)) row().push(q(title)); drawFlags(); };
   window.openRowPop = name => { openPop = name; if (name === 'addp' && work) openPop = 'work'; drawFlags(); document.querySelector(`#pop-${openPop} input, #pop-${openPop} button`)?.focus(); };
   // No Hide in the head of the page (DEC-UX-246): the eye in the panel and the quick window hide it
   window.queryHidden = false;
@@ -988,7 +991,7 @@
   // The commands of a query in the quick window (DEC-UX-237, DEC-UX-239): a command for every button of the page that
   // does something to it, only what applies now, such as Flag or Unflag, Hide or Show again; Add a table only for a
   // power user; what cannot be done now greyed, with why. Every command of Projects too (DEC-UX-288): in a Project,
-  // Add this query to it or Take it out, Work in another project, Stop working in it, Open its page and Share it; in
+  // Add this query to it or Remove it from it, Work in another project, Stop working in it, Open its page and Share it; in
   // none, Flag or Unflag, Add this query to a project and Work in a project; New project in both.
   window.QUICK = {
     group: 'This query',
@@ -1018,7 +1021,7 @@
         // The row: in a Project, adding the query to it and taking it out; in none, flagging it (DEC-UX-282, DEC-UX-288)
         ...(p ? [
           at >= 0
-            ? { icon: 'ph ph-minus-circle', title: `Take this query out of ${p.name}`, meta: `takes ${at < 10 ? keyOf(at) : 'its tab'} away; the query stays with ${PEOPLE[list[at].by]}`, run: () => window.toggleFlag(), words: 'project remove unflag flag pin row' }
+            ? { icon: 'ph ph-minus-circle', title: `Remove this query from ${p.name}`, meta: `takes ${at < 10 ? keyOf(at) : 'its tab'} away; the query stays with ${PEOPLE[list[at].by]}`, run: () => window.toggleFlag(), words: 'project remove unflag flag pin row' }
             : { icon: 'ph ph-plus-circle', title: `${from ? 'Move' : 'Add'} this query to ${p.name}`, meta: from ? `it leaves ${PROJECTS[from].name}` : `everyone in it can open, change and run it${list.length < 10 ? ', as ' + keyOf(list.length) : ''}`, run: () => window.toggleFlag(), words: 'project add flag pin row move' },
           { icon: 'ph ph-folders', title: 'Work in another project', meta: 'or in your flagged queries', run: () => window.openRowPop('work'), words: 'project switch change row flagged' },
           { icon: 'ph ph-flag', title: `Stop working in ${p.name}`, meta: 'the row shows your flagged queries again', run: () => window.workIn(''), words: 'project leave close row flagged' },
@@ -1058,5 +1061,34 @@
 })();
 </script>
 <script src="app.js"></script>
+<script>
+  // An empty query, made with "New query" on the page of a Project (DEC-UX-290, OP-UX-105): ?empty=1. It is in the
+  // Project at once, at the end of its row; it has no Resources yet, so it reads none, and Run waits for one; its name
+  // is renamed in place, as any query's.
+  if (new URLSearchParams(location.search).has('empty')) {
+    const $ = id => document.getElementById(id), name = 'New query, 19 Nov';
+    $('q-title').textContent = name; $('q-title').title = name;
+    $('q-question').innerHTML = '<span class="muted">What do you want to know?</span>';
+    document.querySelectorAll('.q-origin, [data-pane-group="lens"]').forEach(el => { el.hidden = true; });
+    document.querySelectorAll('#scope-chips [data-res]').forEach(c => { c.hidden = true; });
+    $('scope-outside').innerHTML = '<span class="meta">No Resources yet</span>';
+    document.querySelector('.sql-editor').innerHTML = '<div class="ln"><span class="ln-no">1</span><span class="ln-fold"></span><span class="ln-code"><span class="text-cursor"></span><span class="sql-comment">-- Add a Resource with the + above; after from, the editor suggests it</span></span></div>';
+    document.querySelector('.sql-summary').textContent = 'empty';
+    $('ptiles').innerHTML = ''; $('pbox-summary').textContent = 'none yet';
+    $('run-pf').classList.remove('shown'); $('run-note').classList.add('shown');
+    $('run-note-text').textContent = 'Add a Resource first: this query reads none yet.';
+    document.querySelectorAll('[data-define-first], [data-add-filter]').forEach(b => { b.hidden = true; });
+    $('run-btn').disabled = true; $('run-btn').classList.remove('high');
+    $('run-btn').innerHTML = '<i class="ph-fill ph-play" style="font-size:14px"></i>Run';
+    document.querySelector('.result-card').classList.add('not-run');
+    $('not-run').hidden = false; $('no-history').hidden = false; $('hist-tab').textContent = 'History · no runs';
+    document.querySelector('[data-group="rtab"] [data-target="result"]').textContent = 'Result';
+    // In the panel, on top of today, not run yet; in the row, at the end of the Project
+    const today = document.querySelector('.q-group.open'), old = document.querySelector('.q-item.current');
+    old?.classList.remove('current'); old?.removeAttribute('aria-current');
+    today?.querySelector('.q-period')?.insertAdjacentHTML('afterend', `<div class="q-entry"><a class="list-item card q-item current" aria-current="page" href="query.html?empty=1" data-name="new query"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><span class="item-title">${name}</span><span class="meta">Credit leads Q4 · not run yet</span></span></a></div>`);
+    window.rowAdd?.(name);
+  }
+</script>
 </body>
 </html>
