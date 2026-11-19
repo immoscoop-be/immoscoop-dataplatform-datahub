@@ -73,6 +73,8 @@ export interface QueryItem {
   request: QueryRequest | null;
   /** Whether the User hid it from their panel (DEC-UX-138). */
   hidden?: boolean;
+  /** The Project it is in, named in its line in the history (OP-UX-103). */
+  project?: { id: string; name: string } | null;
   /** Made through Claude, which it keeps once its User goes on in Query (DEC-CL-11). */
   through?: 'claude' | null;
   /** What it misses while it is Broken, for the red dot in the panel (FR-SR-53, DEC-UX-81). */
@@ -158,6 +160,18 @@ export interface Query {
   forCollection: string | null;
   /** What it misses while it is Broken: Run is off, and a callout names it (FR-SR-53, DEC-UX-160). */
   broken?: Missing | null;
+  /** The Project it is in, if any (FR-SR-63). */
+  project?: { id: string; name: string } | null;
+  /** Whether the User writes and runs it: theirs, or of a Project they are in, and they may make queries (DEC-SR-47). */
+  editable?: boolean;
+  /** Who changed its SQL last, and when (OP-UX-99). */
+  sqlChanged?: { at: string; by: { id: string; name: string } } | null;
+}
+
+/** Who else is in a query of a Project now, and who changed its SQL last (OP-UX-99). */
+export interface Presence {
+  others: { id: string; name: string }[];
+  sqlChanged: { at: string; by: { id: string; name: string } } | null;
 }
 
 /**
@@ -438,6 +452,8 @@ export interface NewQuery {
   startedFrom?: string;
   /** Started from "New Lens" on this Collection (DEC-UX-123). */
   forCollection?: string;
+  /** Made in this Project, at the end of its row; then also without Resources (FR-SR-68). */
+  project?: string;
 }
 
 /** A run of a Lens that did not run because the Lens stopped or is Broken: its page reads it again. */
@@ -512,6 +528,17 @@ export function createQuery(config: Config, session: Pick<Session, 'accessToken'
     },
     async get(id: string): Promise<Query> {
       return ((await (await call(query(id))).json()) as { query: Query }).query;
+    },
+    /**
+     * Changes its Resources in it (FR-SR-67, DEC-SR-48): it reads the new set from its next run, each run keeping
+     * those it read.
+     */
+    async changeResources(id: string, resources: readonly string[]): Promise<void> {
+      await call(query(id), { method: 'PATCH', body: { resources } });
+    },
+    /** Says the User has it open, and answers who else does, and who changed its SQL last (OP-UX-99). */
+    async presence(id: string): Promise<Presence> {
+      return (await (await call(`${query(id)}/presence`, { method: 'PUT' })).json()) as Presence;
     },
     /** Changes its name or question, for who made it (DEC-UX-119). */
     async rename(id: string, fields: { name: string; question: string }): Promise<void> {

@@ -118,6 +118,10 @@ export interface GroupDetail extends GroupSummary {
 export interface Person {
   email: string;
   name: string;
+  /** Their fixed ID, their Permission group and whether it lets them make and run queries, for sharing a Project (OP-UX-98). */
+  id?: string;
+  permissionGroup?: string;
+  canQuery?: boolean;
 }
 
 /** What a change of a Group sends: `itself` lets it manage itself (FR-UM-13, FR-UM-14). */
@@ -195,6 +199,11 @@ export function createIdentity(config: Config, session: Pick<Session, 'accessTok
     /** Colleagues whose name or address holds what was typed, from two characters on (FR-UM-15). */
     async people(q: string): Promise<Person[]> {
       return ((await (await call(`/people?${new URLSearchParams({ q })}`)).json()) as { people: Person[] }).people;
+    },
+    /** Colleagues by their IDs, at most 100, each with whether they may make queries (OP-UX-98). */
+    async peopleByIds(ids: readonly string[]): Promise<Person[]> {
+      if (ids.length === 0) return [];
+      return ((await (await call(`/people?${new URLSearchParams({ ids: ids.slice(0, 100).join(',') })}`)).json()) as { people: Person[] }).people;
     },
     /** The Excel keys of the User (FR-PL-02). */
     async excelKeys(): Promise<ExcelKey[]> {
