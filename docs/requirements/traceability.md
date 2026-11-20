@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 297 | 110 (22 open, 88 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 303 | 114 (26 open, 88 done) |
 | [Backlog](../overview/backlog.md) | – | – | – | 7 (5 open, 2 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
@@ -18,7 +18,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Collections](functional/03-collections.md) | 45 (1 proposed, 40 implemented, 4 withdrawn) | 2 (2 specified) | 27 | 18 (1 open, 17 done) |
 | [Resources](functional/04-stacks-and-resources.md) | 71 (5 specified, 60 implemented, 6 withdrawn) | 5 (1 specified, 1 implemented, 3 withdrawn) | 49 | 25 (4 open, 21 done) |
 | [Resource card](functional/05-resource-card.md) | 34 (4 proposed, 2 specified, 26 implemented, 2 withdrawn) | 1 (1 implemented) | 33 | 31 (3 open, 28 done) |
-| [Maturity and release](functional/06-maturity-and-release.md) | 19 (4 specified, 10 implemented, 5 withdrawn) | – | 19 | 9 (2 open, 7 done) |
+| [Maturity and release](functional/06-maturity-and-release.md) | 21 (6 specified, 10 implemented, 5 withdrawn) | – | 20 | 9 (2 open, 7 done) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 7 (3 proposed, 4 implemented) | 1 (1 implemented) | 8 | 8 (8 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | 39 (39 specified) | 4 (4 proposed) | 30 | 15 (15 open) |
 | [Lenses](functional/09-lenses.md) | 19 (16 implemented, 3 withdrawn) | – | 22 | 10 (10 done) |
@@ -281,9 +281,11 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-MR-14](functional/06-maturity-and-release.md#fr-mr-14) | Described: the table, a field, its model type and grain | Withdrawn | – | – | – | – |
 | [FR-MR-15](functional/06-maturity-and-release.md#fr-mr-15) | Described: the table and a field, described in dbt | Implemented | – | [resource-publish](../design/screens/resource-publish.html) | [TR-SR-13](technical/04-stacks-and-resources.md#tr-sr-13) | [c1e99e6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c1e99e6e756f1185032566a11ad8bf1e127e70fd) implements, 2026-10-28<br>[66d0345](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/66d03455af6f15c9fabbcd3e3ded1d0bd4b77dea) refs, 2026-10-28 |
 | [FR-MR-16](functional/06-maturity-and-release.md#fr-mr-16) | The Overview explains every Level, passed or what it takes | Implemented | – | [resource-overview](../design/screens/resource-overview.html) | – | [5f6ade1](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/5f6ade114ccb2067e6225ad7637ce93a7ae161af) implements, 2026-11-04<br>[58d1f94](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/58d1f9476abff62db312642188815e1de0f5e517) refs, 2026-11-04 |
-| [FR-MR-17](functional/06-maturity-and-release.md#fr-mr-17) | A Publication waits for the steps required to publish | Implemented | – | [resource-publish](../design/screens/resource-publish.html), [mcp-resource-publish](../design/screens/mcp-resource-publish.html), [resource-overview](../design/screens/resource-overview.html) | [TR-SR-32](technical/04-stacks-and-resources.md#tr-sr-32) | [9de162d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9de162d97314cbb96e4b78cf551d024001dc2cdc) refs, 2026-11-15<br>[67c2e14](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/67c2e14c21c77636ce4e4b7fc046f4d5f0f0374c) implements, 2026-11-15 |
+| [FR-MR-17](functional/06-maturity-and-release.md#fr-mr-17) | A Publication waits for the steps required to publish | Implemented | – | [resource-publish](../design/screens/resource-publish.html), [mcp-resource-publish](../design/screens/mcp-resource-publish.html), [resource-overview](../design/screens/resource-overview.html), [flow-box](../design/screens/flow-box.html) | [TR-SR-32](technical/04-stacks-and-resources.md#tr-sr-32) | [9de162d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9de162d97314cbb96e4b78cf551d024001dc2cdc) refs, 2026-11-15<br>[67c2e14](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/67c2e14c21c77636ce4e4b7fc046f4d5f0f0374c) implements, 2026-11-15 |
 | [FR-MR-18](functional/06-maturity-and-release.md#fr-mr-18) | None is an answer, kept with who gave it and when | Implemented | – | [resource-overview](../design/screens/resource-overview.html) | [TR-SR-32](technical/04-stacks-and-resources.md#tr-sr-32) | [67c2e14](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/67c2e14c21c77636ce4e4b7fc046f4d5f0f0374c) implements, 2026-11-15 |
 | [FR-MR-19](functional/06-maturity-and-release.md#fr-mr-19) | The declaration is kept as the Owner ticked it | Implemented | – | – | [TR-SR-32](technical/04-stacks-and-resources.md#tr-sr-32) | [67c2e14](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/67c2e14c21c77636ce4e4b7fc046f4d5f0f0374c) implements, 2026-11-15 |
+| [FR-MR-20](functional/06-maturity-and-release.md#fr-mr-20) | The Flow Box takes the Owner Unit through the steps required to publish | Specified | – | [flow-box](../design/screens/flow-box.html) | – | [86c27ed](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/86c27edcae36ce737275acd44478aece8ad8ffcf) refs, 2026-11-20 |
+| [FR-MR-21](functional/06-maturity-and-release.md#fr-mr-21) | Publish warns while a step is open, and offers to guide | Specified | – | [flow-box](../design/screens/flow-box.html), [resource-publish](../design/screens/resource-publish.html) | – | [86c27ed](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/86c27edcae36ce737275acd44478aece8ad8ffcf) refs, 2026-11-20 |
 
 ### [Log and notifications](functional/07-log-and-notifications.md)
 
