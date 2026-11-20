@@ -1855,7 +1855,7 @@ button.lin-node:hover { box-shadow: 0 0 0 1.5px var(--tint-active); }
 .gap-pill > .ph-fill { font-size: 12px; color: var(--text-muted); }
 
 /* Reliable since, its own tile on top of Known Gaps (DEC-UX-296): what it means, its day on the date field of the Resource
-   and why not earlier; under it the time of its data as a line, before that day shaded, a gap with a period a numbered hole */
+   and why not earlier; under it the time of its data as a line, before that day shaded, with no Known Gaps */
 .rs-tile { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
 .rs-head { display: flex; align-items: center; gap: 10px; }
 .rs-head .said { flex: 1; margin: 0; }
@@ -1869,22 +1869,13 @@ button.lin-node:hover { box-shadow: 0 0 0 1.5px var(--tint-active); }
 .rs-line { margin-top: 4px; }
 .rs-track { position: relative; height: 16px; border-radius: var(--radius-pill); background: var(--text-secondary); overflow: hidden; }
 .rs-before { position: absolute; inset: 0 auto 0 0; background: repeating-linear-gradient(135deg, var(--tint-active) 0 4px, var(--surface-solid) 4px 8px); }
-.rs-gap { position: absolute; top: 0; bottom: 0; min-width: 12px; box-sizing: border-box; background: var(--surface-solid); border: 1.5px dashed var(--text-secondary); border-radius: 3px;
-  display: flex; align-items: center; justify-content: center; }
-.rs-gap b { font-size: 10px; font-weight: var(--weight-medium); line-height: 1; color: var(--text-primary); }
 .rs-ticks { position: relative; height: 36px; margin-top: 6px; }
 .rs-tick { position: absolute; top: 0; display: flex; flex-direction: column; font-size: var(--text-meta); color: var(--text-muted); white-space: nowrap; }
 .rs-tick b { font-weight: var(--weight-medium); color: var(--text-secondary); }
 .rs-tick-mark { padding-left: 8px; border-left: 1.5px solid var(--text-primary); margin-top: -18px; padding-top: 18px; }
 .rs-tick-mark b { color: var(--text-primary); }
-.rs-key { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: var(--text-meta); color: var(--text-secondary); }
-.rs-key li { display: flex; align-items: flex-start; gap: 8px; line-height: 1.45; }
-.rs-key b { font-weight: var(--weight-medium); color: var(--text-primary); }
-.rs-key .gap-n { margin-top: 0; }
-.rs-key-where { display: block; }
+.rs-key { display: flex; align-items: flex-start; gap: 8px; margin: 4px 0 0; font-size: var(--text-meta); line-height: 1.45; color: var(--text-secondary); }
 .rs-key-before { flex: none; width: 18px; height: 12px; margin-top: 2px; border-radius: 3px; background: repeating-linear-gradient(135deg, var(--tint-active) 0 4px, var(--surface-solid) 4px 8px); }
-.rs-key-pad { flex: none; width: 18px; }
-.rs-key-none { color: var(--text-muted); }
 .rs-form { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; border-radius: var(--radius-md); background: var(--surface-solid);
   outline: 1.5px solid var(--text-secondary); outline-offset: -1.5px; }
 .rs-form .field { margin: 0; }
@@ -1899,15 +1890,16 @@ button.lin-node:hover { box-shadow: 0 0 0 1.5px var(--tint-active); }
 .rs-odd b { font-weight: var(--weight-medium); color: var(--text-primary); }
 .rs-req { margin-right: 4px; }
 .gaps-label { margin: 0 0 8px; }
-.gap-n { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; margin-top: 2px; border-radius: 4px;
-  box-shadow: inset 0 0 0 1.5px var(--text-secondary); font-size: 10px; font-weight: var(--weight-medium); color: var(--text-primary); }
-.gap-n + .ph-fill { display: none; }
 .lvl-step-val { margin-left: 4px; }
 /* The period of a gap: one day or a period (OP-UX-110) */
-.gap-when { display: inline-flex; gap: 2px; margin-bottom: 10px; }
-.gap-day { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); align-items: end; }
-.gap-reads { display: block; margin: 6px 0 0; }
-.gap-day .gap-reads { margin: 0 0 10px; }
+.gap-when-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.gap-when { display: inline-flex; gap: 2px; }
+.gap-when-in { display: inline-flex; align-items: center; gap: 8px; }
+.gap-when-in input { font: var(--text-small)/1.5 var(--font-family); color: var(--text-primary); background: var(--surface-solid);
+  border: 1px solid var(--tint-active); border-radius: var(--radius-sm); padding: 6px 10px; }
+.gap-when-in input:focus { outline: 2px solid var(--text-secondary); outline-offset: 1px; }
+.gap-field { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); margin-top: 12px; }
+.scope-on { padding-left: 6px; margin-left: 2px; border-left: 1px solid var(--tint-active); color: var(--text-muted); }
 
 /* Charts, the gallery of semgraph (a proposal): the charts in the panel by the question they answer, one opened on the
    right with its examples and what it is for */
