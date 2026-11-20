@@ -282,6 +282,8 @@ html[data-role="colleague"] [data-for]:not([data-for~="colleague"]) { display: n
 .muted { color: var(--text-muted); }
 .warn { color: var(--signal-warn); }
 .lens-icon { font-size: 15px; color: var(--text-muted); flex: none; }
+/* A Resource not published yet, in a table of a Collection, in a lighter grey */
+.files tr.quiet td, .files tr.quiet .name-cell span { color: var(--text-muted); }
 
 /* A sheet slides in from the right over the whole window, for a task that belongs to the page, such as adding Resources:
    everything behind it deeply dimmed, half the window wide (DEC-UX-174) */
