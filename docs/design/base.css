@@ -2774,7 +2774,7 @@ html[data-bg] :is(.flowbox, .flowstrip) { -webkit-backdrop-filter: var(--blur-fr
 .fs-label { all: unset; flex: 1; margin-top: 4px; writing-mode: vertical-rl; white-space: nowrap; font-size: var(--text-meta); color: var(--text-secondary); cursor: pointer; }
 .fs-label:hover { color: var(--text-primary); }
 /* Arrived from the Flow Box: the place opens for editing, its field in focus and marked for a moment (DEC-UX-303) */
-.fb-target { box-shadow: 0 0 0 2px var(--text-secondary); animation: fb-mark 2.4s ease 1s forwards; }
+.fb-target { box-shadow: 0 0 0 2px var(--text-secondary); animation: fb-mark var(--motion-flow-mark) var(--delay-flow-mark) forwards; }
 @keyframes fb-mark { to { box-shadow: 0 0 0 2px transparent; } }
 @media (prefers-reduced-motion: reduce) { .fb-target { animation: none; } }
 .fb-from { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; font-size: var(--text-meta); font-weight: var(--weight-regular); color: var(--text-muted); }

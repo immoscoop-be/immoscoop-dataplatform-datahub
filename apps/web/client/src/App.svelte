@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
   import DragGhost from '@datahub/ui/components/DragGhost.svelte';
   import EnvRibbon from '@datahub/ui/marks/EnvRibbon.svelte';
   import type { RailItem } from '@datahub/ui/components/Rail.svelte';
   import Toast from '@datahub/ui/components/Toast.svelte';
   import { addTexts, setLanguage, currentLanguage, type Language } from '@datahub/ui/foundations/texts.svelte.js';
+  import { tokenPixels } from '@datahub/ui/foundations/tokens.js';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
   import IconButton from '@datahub/ui/primitives/IconButton.svelte';
   import { levelName } from '@datahub/ui/foundations/levels.js';
@@ -67,6 +68,9 @@
   import ProjectPage from './screens/ProjectPage.svelte';
   import QueryPanel from './screens/QueryPanel.svelte';
   import QuickWindow from './screens/QuickWindow.svelte';
+  import PublishFlow from './screens/PublishFlow.svelte';
+  import { flowBox } from './lib/flowBox.svelte.js';
+  import { FLOW_PLACES, type FlowStepId } from './lib/flowBox.js';
   import ResourcePage from './screens/ResourcePage.svelte';
   import AppShell from './templates/AppShell.svelte';
   import SignIn from './templates/SignIn.svelte';
@@ -480,6 +484,52 @@
     catalogue.resource(id).then((resource) => opened?.id === id && (opened = { ...opened, resource }), missing);
     catalogue.log(id).then((log) => opened?.id === id && (opened = { ...opened, log }), missing);
   });
+
+  /**
+   * The Resource of the Flow Box (DEC-UX-299), read afresh each time it opens and each time the User goes elsewhere,
+   * and taken from the page of the Resource while that is open, so that a step ticks as soon as it is saved. Nothing of
+   * it is stored (DEC-UX-306).
+   */
+  let flowResource: ResourceDetail | undefined = $state();
+  $effect(() => {
+    const id = flowBox.open?.resource;
+    void router.path;
+    if (!id) {
+      flowResource = undefined;
+      return;
+    }
+    const shown = untrack(() => opened);
+    if (shown?.id === id && shown.resource) {
+      flowResource = shown.resource;
+      return;
+    }
+    catalogue.resource(id).then(
+      (found) => flowBox.open?.resource === id && (flowResource = found),
+      (error: unknown) => {
+        if (error instanceof Missing && flowBox.open?.resource === id) flowBox.close();
+        else console.error(`The Resource ${id} of the Flow Box could not be read`, error);
+      },
+    );
+  });
+  $effect(() => {
+    if (opened?.resource && opened.id === flowBox.open?.resource) flowResource = opened.resource;
+  });
+
+  /** Opens the Flow Box on a Resource; in a narrow window the panel folds to make room (DEC-UX-307). */
+  function guide(id: string): void {
+    flowBox.show(id);
+    if (matchMedia(`(max-width: ${tokenPixels('--flow-box-fold-below') - 0.02}px)`).matches) settings?.set('panel.open', false);
+  }
+
+  /** A step of the Flow Box: its place on the page of its Resource, opened for editing (DEC-UX-303). */
+  function toStep(step: FlowStepId): void {
+    const id = flowBox.open?.resource;
+    if (!id) return;
+    flowBox.aimAt(id, step);
+    const place = FLOW_PLACES[step];
+    if (page.kind === 'resource' && page.id === id && (place === null || page.at === place)) return;
+    router.go(resourcePath(id, place ?? undefined));
+  }
   $effect(() => {
     if (status.kind !== 'signedIn' || (page.kind !== 'lens' && page.kind !== 'editLens') || openedLens?.id === page.id) {
       return;
@@ -1028,6 +1078,11 @@
         rows.push({ key: `new-in:${one.id}`, group: 'commands', icon: 'folders-fill', title: t('quick.newIn', { name: one.name }), meta: t('quick.newIn.meta'), kind: command, words: t('quick.newIn.words'), does: 'do', run: () => newQueryIn(one.id) });
       }
     }
+    if (flowBox.open) {
+      const minimized = flowBox.open.minimized;
+      rows.push({ key: 'flowbox:size', group: 'commands', icon: minimized ? 'arrows-out-simple' : 'arrows-in-simple', title: t(minimized ? 'quick.flow.maximize' : 'quick.flow.minimize'), kind: command, words: t('quick.flow.words'), does: 'do', run: () => flowBox.minimize(!minimized) });
+      rows.push({ key: 'flowbox:close', group: 'commands', icon: 'x', title: t('quick.flow.close'), kind: command, words: t('quick.flow.words'), does: 'do', run: () => flowBox.close() });
+    }
     rows.push({ key: 'theme', group: 'commands', icon: theme === 'dark' ? 'sun-fill' : 'moon-fill', title: t('quick.theme'), kind: command, words: t('quick.theme.words'), does: 'do', run: () => themeOnScreen.switch() });
     // The panel, on every screen that has one, as « in its head does; one key for both, as a pair (DEC-UX-254).
     if (section) {
@@ -1196,6 +1251,7 @@
     oncollapse={() => signedIn.settings.set('panel.open', false)}
     panel={section ? panel : undefined}
     panelActions={section?.id === 'collections' && can(permissions, 'collections.make') ? newCollection : section?.id === 'query' && can(permissions, 'queries.make') ? newQuery : undefined}
+    side={flowBox.open && flowResource ? flowSide : undefined}
   >
     {#if inQuery && page.kind !== 'query'}
       <!-- The flagged queries on top of every screen of Query (DEC-UX-236). -->
@@ -1485,6 +1541,7 @@
             refresh();
           }}
           onrun={() => refreshQueries()}
+          onguide={() => guide(resource.id)}
         />
       {:else if opened?.resource === null}
         <NotFound />
@@ -1666,6 +1723,24 @@
   <!-- A service refused for a Permission the User no longer has: the page follows what they may do now (EC-PL-01). -->
   <Toast key={lost.key} tone="failed">{t('permissions.changed', { permission: lost.name })}</Toast>
 {/if}
+
+{#snippet flowSide()}
+  {#if flowBox.open && flowResource}
+    {@const resource = flowResource}
+    <PublishFlow
+      {resource}
+      collection={collections?.find((collection) => collection.id === resource.collectionId)?.name ?? ''}
+      minimized={flowBox.open.minimized}
+      here={page.kind === 'resource' && page.id === resource.id ? (page.at ?? null) : null}
+      cardTitle={(card) => (localCards.has(card) ? topicOf(card)?.title[currentLanguage()] : undefined)}
+      onstep={toStep}
+      oncard={(card) => (windowCard = { card, from: 'flow' })}
+      onobject={() => router.go(resourcePath(resource.id))}
+      onminimize={(minimized) => flowBox.minimize(minimized)}
+      onclose={() => flowBox.close()}
+    />
+  {/if}
+{/snippet}
 
 {#snippet panel()}
   {#if section?.id === 'collections' && status.kind === 'signedIn'}

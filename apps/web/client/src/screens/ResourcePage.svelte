@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { untrack } from 'svelte';
+  import { tick, untrack } from 'svelte';
   import type { GapScope } from '@datahub/contracts/gaps';
   import Breadcrumb from '@datahub/ui/components/Breadcrumb.svelte';
   import ObjectHeader from '@datahub/ui/components/ObjectHeader.svelte';
@@ -24,6 +24,9 @@
   import type { IconName } from '@datahub/ui/foundations/icons.js';
   import type { QuickRow } from '../lib/quick.js';
   import { Refused } from '../lib/api.js';
+  import { checklistOf } from '../lib/journey.js';
+  import { FLOW_PLACES, type FlowStepId, isFlowStep } from '../lib/flowBox.js';
+  import { flowBox } from '../lib/flowBox.svelte.js';
   import type { requestOf } from '../lib/grain.js';
   import { missingWords, roleWords } from '../lib/typeFields.js';
   import AddResources from './AddResources.svelte';
@@ -65,6 +68,7 @@
     messages,
     threads,
     at,
+    onguide,
   }: {
     resource: ResourceDetail;
     log: readonly LogEntry[] | undefined;
@@ -89,6 +93,8 @@
     threads?: readonly Conversation[];
     /** The spot its address opens on: a tab, or a part of its Overview, as a link from Claude names it (DEC-CL-19). */
     at?: ResourceSpot;
+    /** Opens the Flow Box on it, which takes whoever may describe it through the steps required to publish (FR-MR-20). */
+    onguide?: () => void;
   } = $props();
 
   // The tabs of a Resource (DEC-UX-90).
@@ -178,6 +184,35 @@
   /** Only its Owner publishes it: a member of the Owner Unit of its Collection, who may publish (FR-SR-16, DEC-PL-06). */
   const isOwner = $derived(collection !== undefined && (collection.owned ?? groups.includes(collection.ownerUnit.id)));
   const mayPublish = $derived(resource.canPublish ?? (isOwner && can(permissions, 'resources.publish')));
+  /** The Flow Box guides whoever may describe it while it is not published (FR-MR-20, DEC-UX-302). */
+  const guides = $derived(
+    onguide !== undefined && !resource.published && resource.collectionId !== null && (['description', 'keyFields', 'behaviour', 'pitfalls', 'availableSince', 'gaps'] as const).some((attribute) => describes(attribute)),
+  );
+  /** While a step required to publish is open, Publish warns first, with the open steps and "Guide me" (DEC-MR-20, FR-MR-21). */
+  let warning = $state(false);
+  const openSteps = $derived(resource.journey ? checklistOf(resource.journey).open : []);
+  function publish() {
+    if (resource.journey && !resource.journey.ready) warning = true;
+    else sheet = 'publish';
+  }
+  /** A step of the warning, or of the Flow Box: its place, opened for editing (DEC-UX-303). */
+  function toStep(step: FlowStepId) {
+    warning = false;
+    flowBox.aimAt(resource.id, step);
+    const place = FLOW_PLACES[step];
+    if (place) goTo(place);
+  }
+  // The Flow Box led here to publish: the publication, or the warning while a step is still open.
+  $effect(() => {
+    if (flowBox.aim?.resource !== resource.id) return;
+    untrack(() => {
+      if (flowBox.take(resource.id, ['publish'])) publish();
+    });
+  });
+  let warningBox: HTMLElement | undefined = $state();
+  $effect(() => {
+    if (warning) void tick().then(() => warningBox?.querySelector<HTMLElement>('button')?.focus());
+  });
   /** Adding it to a Collection, and its grain and model type, are the work of a Data Admin (`resources.assign`). */
   const assigns = $derived(resource.canAssign ?? can(permissions, 'resources.assign'));
   /** Taking it out of its Collection (`resources.remove`, DEC-PL-08): every one, or one of their Owner Units while not published. */
@@ -351,7 +386,8 @@
   useScreenCommands((go) => {
     const rows: QuickRow[] = [];
     if (can(permissions, 'queries.make')) rows.push(place('resource:query', 'terminal-window-fill', t('quick.resource.query'), () => go(newQueryPath(resource.id)), { meta: t('quick.resource.query.meta'), words: t('quick.resource.query.words') }));
-    if (!resource.published && mayPublish) rows.push(command('resource:publish', 'globe-simple-fill', t('quick.resource.publish'), () => (sheet = 'publish'), { meta: t('quick.resource.publish.meta'), words: t('quick.resource.publish.words') }));
+    if (!resource.published && mayPublish) rows.push(command('resource:publish', 'globe-simple-fill', t('quick.resource.publish'), publish, { meta: t('quick.resource.publish.meta'), words: t('quick.resource.publish.words') }));
+    if (guides && onguide) rows.push(command('resource:guide', 'signpost-fill', t('quick.resource.guide'), onguide, { meta: t('quick.resource.guide.meta'), words: t('quick.resource.guide.words') }));
     if (messages) {
       const href = messages.href;
       rows.push(place('resource:ask', 'chat-circle-dots-fill', t('resource.ask'), () => go(href), { meta: t('quick.messages.meta', { count: messages.count ?? 0 }), words: t('quick.messages.words') }));
@@ -382,6 +418,8 @@
     collection ? { label: collection.name, href: collectionPath(collection.id) } : { label: t('collections.unassigned') },
   ]}
 />
+<svelte:document onclick={(event) => warning && !(event.target as Element).closest('.publish') && (warning = false)} />
+
 <div class="head">
   <div class="name">
     <!-- Its full name in its own case, as BigQuery knows it: the Key is kept in lower case. -->
@@ -392,7 +430,32 @@
     {#if messages}<MessagesButton href={messages.href} count={messages.count} />{/if}
     {#if !resource.published && mayPublish}
       <!-- For its Owner, while it is not published, "Publish" takes the place of "Ask a question" (DEC-UX-31). -->
-      <Button onclick={() => (sheet = 'publish')}><Icon name="globe-simple-fill" />{t('resource.publish')}</Button>
+      <span class="publish">
+        <Button onclick={publish}><Icon name="globe-simple-fill" />{t('resource.publish')}</Button>
+        {#if warning}
+          <!-- Not ready yet: what is open, each with the way to its place, and "Guide me" (DEC-MR-20, FR-MR-21). -->
+          <div class="warning" role="dialog" aria-labelledby="publish-warning" tabindex="-1" bind:this={warningBox} onkeydown={(event) => event.key === 'Escape' && (warning = false)}>
+            <p class="warning-title" id="publish-warning"><Icon name="warning-circle-fill" />{t('publish.warn.title')}</p>
+            <p class="warning-lead">{t('publish.warn.lead', { count: openSteps.length, total: resource.journey?.steps.filter((step) => step.mark === 'required' && step.id !== 'publish').length ?? openSteps.length })}</p>
+            <ul class="warning-steps">
+              {#each openSteps as line (line.step)}
+                <li><button type="button" onclick={() => isFlowStep(line.step) && toStep(line.step)}><b>{line.name}</b><span>{line.what}</span></button></li>
+              {/each}
+            </ul>
+            <div class="warning-acts">
+              {#if guides && onguide}
+                {@const open = onguide}
+                <Button onclick={() => {
+                  warning = false;
+                  open();
+                }}><Icon name="signpost-fill" />{t('publish.warn.guide')}</Button>
+              {/if}
+              <Button variant="quiet" onclick={() => (warning = false)}>{t('publish.warn.myself')}</Button>
+            </div>
+            <p class="warning-claude">{t('publish.warn.claude')}</p>
+          </div>
+        {/if}
+      </span>
     {:else}
       <!-- "Ask a question" opens the slide-in with Question chosen (DEC-UX-29). -->
       {#if messages}<Button href={messages.href}><Icon name="chat-circle-dots-fill" />{t('resource.ask')}</Button>{/if}
@@ -501,7 +564,7 @@
       {gaps}
       {nothing}
       oncolumns={() => (tab = 'columns')}
-      onpublish={!resource.published && mayPublish && collection ? () => (sheet = 'publish') : undefined}
+      onpublish={!resource.published && mayPublish && collection ? publish : undefined}
       {others}
       ondeprecate={(why, instead) => mark(() => catalogue.deprecate(resource.id, why, instead))}
       onundeprecate={() => mark(() => catalogue.undeprecate(resource.id))}
@@ -565,5 +628,19 @@
   .head { display: flex; align-items: flex-start; gap: 14px; }
   .name { flex: 1; min-width: 0; }
   .actions { display: flex; gap: 8px; align-items: center; flex: none; margin-top: 10px; }
+  /* Publish while a step is open: a pop-out under the button (DEC-MR-20). */
+  .publish { position: relative; display: inline-flex; }
+  .warning { position: absolute; top: calc(100% + 8px); right: 0; z-index: 12; width: 340px; display: grid; gap: 10px; padding: 16px; border-radius: var(--radius-lg); background: var(--surface-solid); outline: 1px solid var(--tint-active); box-shadow: var(--sheet-shadow); }
+  .warning-title { display: flex; align-items: center; gap: 8px; margin: 0; font-size: var(--text-section); font-weight: var(--weight-medium); }
+  .warning-title :global(.icon) { color: var(--signal-warn); font-size: 18px; }
+  .warning-lead { margin: 0; font-size: var(--text-small); color: var(--text-secondary); }
+  .warning-steps { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+  .warning-steps button { all: unset; box-sizing: border-box; width: 100%; display: grid; gap: 1px; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--surface-sub); font-size: var(--text-small); cursor: pointer; }
+  .warning-steps button:hover { outline: 1px solid var(--tint-active); }
+  .warning-steps button:focus-visible { outline: 2px solid var(--text-secondary); }
+  .warning-steps b { font-weight: var(--weight-medium); }
+  .warning-steps span { font-size: var(--text-meta); color: var(--text-muted); }
+  .warning-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+  .warning-claude { margin: 0; font-size: var(--text-meta); line-height: 1.5; color: var(--text-muted); }
   .failed { margin: 8px 0 0; font-size: var(--text-small); color: var(--signal-urgent); }
 </style>

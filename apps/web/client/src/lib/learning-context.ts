@@ -1,8 +1,8 @@
 import { getContext, setContext } from 'svelte';
 import type { Card, MarkerPlace, Progress } from './learning.js';
 
-/** Where a card in the floating window was opened from: the pop-out of a marker, or a Message. */
-export type OpenedFrom = MarkerPlace | 'message';
+/** Where a card in the floating window was opened from: the pop-out of a marker, a Message, or a step of the Flow Box. */
+export type OpenedFrom = MarkerPlace | 'message' | 'flow';
 
 /**
  * What the Learning Centre lends to every page that explains its system text (FR-LR-35 to FR-LR-38): the written

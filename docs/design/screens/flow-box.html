@@ -257,11 +257,11 @@
 </aside>
 
 <!-- Minimized: a strip on the right edge with the progress; the strip opens it again (DEC-UX-301) -->
-<aside class="flowstrip" aria-label="Flow Box, minimized: describe and publish Weekly lead volume, 4 of 7 steps done" data-pane-group="flow" data-pane="min" hidden>
+<aside class="flowstrip" aria-label="Flow Box, minimized: describe and publish Weekly lead volume, 5 of 7 steps done" data-pane-group="flow" data-pane="min" hidden>
  <button class="icon-btn" type="button" data-go="flow:open" aria-label="Maximize" title="Maximize"><i class="ph ph-arrows-out-simple"></i></button>
  <span class="fb-icon" aria-hidden="true"><i class="ph-fill ph-signpost"></i></span>
- <span class="fs-count" aria-hidden="true"><b>4</b>/7</span>
- <ol class="fs-dots" aria-hidden="true"><li class="done"></li><li class="done"></li><li class="done"></li><li class="now"></li><li class="done"></li><li></li><li></li></ol>
+ <span class="fs-count" aria-hidden="true"><b>5</b>/7</span>
+ <ol class="fs-dots" aria-hidden="true"><li class="done"></li><li class="done"></li><li class="done"></li><li class="done"></li><li class="now"></li><li class="done"></li><li></li></ol>
  <button class="fs-label" type="button" data-go="flow:open">Describe and publish · Weekly lead volume</button>
 </aside>
 </div>
@@ -288,11 +288,15 @@ const STEPS = [
     what: 'In a few sentences: what this table is, and what one row stands for, in the words of the business.',
     why: 'The description from dbt says how the table is made, not what it means. Without yours, a colleague guesses, or asks you.',
     how: 'On Description, Edit: write it in Markdown, with the description from dbt beside it.' },
-  { name: 'Key Fields, each described', done: 'week_start and lead_count, each described', missing: 'No Key Fields chosen', card: ['K5.15', 'Key Fields and Parameters'], go: 'Go to Querying',
-    what: 'The two to five fields a reader starts from, each with a Business Description.',
-    why: 'Most tables hold more fields than anyone reads. The Key Fields say where to start, and what they mean.',
-    how: 'Choose them on Querying, then describe each one on Columns. Describing the other fields is advised, not required.' },
-  { name: 'Intended use', done: 'Written by An Claes, 12 Nov', missing: 'Not written yet', card: ['3.3.3', 'Reliable for which purpose'], go: 'Go to Known behaviour',
+  { name: 'Key Fields', done: 'week_start', missing: 'No Key Fields chosen', card: ['K5.15', 'Key Fields and Parameters'], go: 'Go to Querying',
+    what: 'The two to five fields a reader starts from.',
+    why: 'Most tables hold more fields than anyone reads. The Key Fields say where to start.',
+    how: 'On Querying, Edit: choose them from its fields.' },
+  { name: 'Fields', done: 'Every Key Field described; 3 other fields without a Business Description', missing: 'A Key Field without a Business Description', card: ['K5.14', 'The Business Description'], go: 'Go to Columns',
+    what: 'A Business Description for each Key Field: what it holds, in the words of the business.',
+    why: 'A field name says little to a colleague outside your team, and the Key Fields are where they start.',
+    how: 'On Columns, Edit: describe each Key Field. Describing the other fields is advised, not required.' },
+  { name: 'Intended use', done: 'Written by An Claes, 12 Nov', missing: 'Not written yet', card: ['3.3.3', 'Reliable for which purpose'], go: 'Go to Known Behaviour',
     what: 'What the table is meant for, and what it is not meant for.',
     why: 'A table answers some questions well and others badly. A colleague who knows which uses it for the right one.',
     how: 'On Known behaviour, Edit the intended use, in Markdown.' },
@@ -314,12 +318,12 @@ const STEPS = [
     how: 'Publish opens the card read back, with the declaration to tick.' },
 ];
 // What is done, and which step is open, in each state of the prototype: on the page of the Resource the User is writing
-// the pitfalls (step 4); in Query they wrote them and look for the Known Gaps (step 6)
+// the pitfalls (step 5); in Query they wrote them and look for the Known Gaps (step 7)
 const STATES = {
-  resource: { done: [0, 1, 2, 4], now: 3, here: 3 },
-  query: { done: [0, 1, 2, 3, 4], now: 5, here: -1 },
-  ready: { done: [0, 1, 2, 3, 4, 5], now: 6, here: -1 },
-  published: { done: [0, 1, 2, 3, 4, 5, 6], now: -1, here: -1 },
+  resource: { done: [0, 1, 2, 3, 5], now: 4, here: 4 },
+  query: { done: [0, 1, 2, 3, 4, 5], now: 6, here: -1 },
+  ready: { done: [0, 1, 2, 3, 4, 5, 6], now: 7, here: -1 },
+  published: { done: [0, 1, 2, 3, 4, 5, 6, 7], now: -1, here: -1 },
 };
 let page = 'resource', flow = 'open', opened = null;
 const esc = s => s.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
@@ -327,10 +331,11 @@ const mono = s => esc(s).replace(/(week_start|lead_count)/g, '<span class="mono"
 function state() { return flow === 'ready' ? STATES.ready : flow === 'published' ? STATES.published : STATES[page]; }
 function render() {
   const s = state(), done = new Set(s.done), at = opened ?? s.now;
-  const n = done.size;
+  // The steps required to publish are counted; reading it back and publishing ends the flow (DEC-UX-304)
+  const required = STEPS.length - 1, n = [...done].filter(i => i < required).length;
   document.getElementById('fb-progress').innerHTML =
     `<div class="fb-bar" aria-hidden="true">${STEPS.map((_, i) => `<span class="${done.has(i) ? 'done' : i === s.now ? 'now' : ''}"></span>`).join('')}</div>` +
-    `<span class="meta">${n} of ${STEPS.length} steps required to publish done</span>`;
+    `<span class="meta">${n} of ${required} steps required to publish done</span>`;
   document.getElementById('fb-steps').hidden = flow === 'published';
   document.getElementById('fb-done').hidden = flow !== 'published';
   document.getElementById('fb-steps').innerHTML = STEPS.map((step, i) => {
@@ -349,10 +354,10 @@ function render() {
        ${last && !isNow ? '' : `<a class="${isNow ? 'btn-primary' : 'btn-quiet outline'} fb-go" href="${last ? 'resource-publish.html' : '?page=resource'}">${esc(goLabel)}<i class="ph ph-arrow-right" aria-hidden="true"></i></a>`}
       </div></li>`;
   }).join('');
-  const open = STEPS.length - n;
+  const open = required - n;
   document.getElementById('fb-foot').innerHTML = flow === 'published' ? '' : flow === 'ready'
     ? '<span class="meta">Every step required to publish is done. Publish reads the whole card back first.</span>'
-    : `<span class="meta">${open - 1} ${open - 1 === 1 ? 'step' : 'steps'} to go, then read it back and publish. Everything you write can change later; only publishing is for good.</span>`;
+    : `<span class="meta">${open} ${open === 1 ? 'step' : 'steps'} to go, then read it back and publish. Everything you write can change later; only publishing is for good.</span>`;
   document.querySelectorAll('.fb-row').forEach(b => b.addEventListener('click', () => { const i = +b.dataset.step; opened = opened === i ? -1 : i; render(); }));
 }
 document.querySelectorAll('[data-group="page"] [data-target]').forEach(b => b.addEventListener('click', () => { page = b.dataset.target; opened = null; render(); }));

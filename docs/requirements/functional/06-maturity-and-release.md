@@ -228,7 +228,7 @@ Once every step required to publish is done, the publication reads the whole car
 <a id="fr-mr-20"></a>
 ### FR-MR-20 · The Flow Box takes the Owner Unit through the steps required to publish
 
-**Status:** Specified · **Source:** Max, 2026-11-20 ([DEC-UX-299](../../design/principles.md#dec-ux-299), [DEC-UX-300](../../design/principles.md#dec-ux-300), [DEC-UX-301](../../design/principles.md#dec-ux-301), [DEC-UX-302](../../design/principles.md#dec-ux-302), [DEC-UX-303](../../design/principles.md#dec-ux-303), [DEC-UX-304](../../design/principles.md#dec-ux-304), [DEC-UX-305](../../design/principles.md#dec-ux-305), [DEC-UX-306](../../design/principles.md#dec-ux-306), [DEC-UX-307](../../design/principles.md#dec-ux-307), [DEC-UX-308](../../design/principles.md#dec-ux-308)) · **Screens:** [flow-box](../../design/screens/flow-box.html)
+**Status:** Implemented · **Source:** Max, 2026-11-20 ([DEC-UX-299](../../design/principles.md#dec-ux-299), [DEC-UX-300](../../design/principles.md#dec-ux-300), [DEC-UX-301](../../design/principles.md#dec-ux-301), [DEC-UX-302](../../design/principles.md#dec-ux-302), [DEC-UX-303](../../design/principles.md#dec-ux-303), [DEC-UX-304](../../design/principles.md#dec-ux-304), [DEC-UX-305](../../design/principles.md#dec-ux-305), [DEC-UX-306](../../design/principles.md#dec-ux-306), [DEC-UX-307](../../design/principles.md#dec-ux-307), [DEC-UX-308](../../design/principles.md#dec-ux-308)) · **Screens:** [flow-box](../../design/screens/flow-box.html)
 
 While a Resource is not published, whoever may describe it can follow its steps required to publish in a [Flow Box](../../definitions.md#flow-box): the same steps as its Maturity shows, each done or open with what it holds or what it misses, and the step to do now with what it asks, why and how, its Learning Card, and the way to its place in Data Hub, which opens that place for editing. The Flow Box reads the journey of the Resource, as Maturity, the publication and Claude do ([DEC-MR-15](#dec-mr-15)), and ticks a step as soon as it is done; it writes nothing itself and keeps nothing of its own: it opens from the beginning, at the first step still open. There is one at a time. It stays open on every page of Data Hub until it is closed, folds to a strip with Minimize, and comes back with Publish.
 
@@ -237,7 +237,7 @@ While a Resource is not published, whoever may describe it can follow its steps 
 <a id="fr-mr-21"></a>
 ### FR-MR-21 · Publish warns while a step is open, and offers to guide
 
-**Status:** Specified · **Source:** Max, 2026-11-20 ([DEC-MR-20](#dec-mr-20)) · **Screens:** [flow-box](../../design/screens/flow-box.html), [resource-publish](../../design/screens/resource-publish.html)
+**Status:** Implemented · **Source:** Max, 2026-11-20 ([DEC-MR-20](#dec-mr-20)) · **Screens:** [flow-box](../../design/screens/flow-box.html), [resource-publish](../../design/screens/resource-publish.html)
 
 While a step required to publish is open, Publish on a Resource does not open the publication: it says that the Resource is not ready to publish yet, lists each open step with what it misses and a link to its place, and offers "Guide me", which opens the Flow Box at the first open step, and "I'll do it myself". Once every step is done, Publish opens the publication, which reads the whole card back ([FR-MR-19](#fr-mr-19)).
 
