@@ -530,6 +530,7 @@ button.ln-fold i { transition: transform 200ms ease; }
 .q-period:hover { color: var(--text-primary); }
 .q-period i { transition: transform 200ms ease; }
 .q-group:not(.open) .q-period i { transform: rotate(-90deg); }
+.q-group:not(.open) > .q-entry { display: none; }
 .q-hide { position: absolute; top: 9px; right: 6px; width: 26px; height: 26px; font-size: 14px; opacity: 0; }
 .q-entry:hover .q-hide, .q-hide:focus-visible { opacity: 1; }
 .q-runs { display: flex; flex-direction: column; gap: 1px; margin: 4px 0 2px 30px; }

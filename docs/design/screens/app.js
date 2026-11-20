@@ -2148,3 +2148,9 @@ document.addEventListener('click', e => {
   const params = new URLSearchParams(location.search);
   if (params.get('quick') === 'open') { open(); if (params.get('q')) { input.value = params.get('q'); draw(); } }
 })();
+
+// A period of the history of Query folds open and shut with a click on its name (DEC-UX-139).
+document.querySelectorAll('.q-period').forEach(b => b.addEventListener('click', () => {
+  const group = b.closest('.q-group'), on = !group.classList.contains('open');
+  group.classList.toggle('open', on); b.setAttribute('aria-expanded', String(on));
+}));
