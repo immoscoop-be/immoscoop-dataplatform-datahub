@@ -349,7 +349,7 @@ While a field is described, Data Hub shows what is in it. For every field: how m
 <a id="fr-rc-31"></a>
 ### FR-RC-31 · Reliable Since: a later day with why, or from its first row
 
-**Status:** Specified · **Source:** Max, 2026-11-20 ([DEC-RC-29](#dec-rc-29), [DEC-UX-296](../../design/principles.md#dec-ux-296)) · **Screens:** [resource-overview](../../design/screens/resource-overview.html), [owner-journey](../../design/screens/owner-journey.html), [resource-publish](../../design/screens/resource-publish.html), [mcp-resource-publish](../../design/screens/mcp-resource-publish.html)
+**Status:** Implemented · **Source:** Max, 2026-11-20 ([DEC-RC-29](#dec-rc-29), [DEC-UX-296](../../design/principles.md#dec-ux-296)) · **Screens:** [resource-overview](../../design/screens/resource-overview.html), [owner-journey](../../design/screens/owner-journey.html), [resource-publish](../../design/screens/resource-publish.html), [mcp-resource-publish](../../design/screens/mcp-resource-publish.html)
 
 The Owner Unit and the Data Team set the [Reliable Since](../../definitions.md#reliable-since) of a Resource in one of two ways: **from its first row**, or **from a later day**, with why not earlier, which is required. Until one of them is chosen, it is not set: empty, which is never read as from its first row, and nothing is chosen for them; Data Hub keeps which of the two was chosen. It shows on the Known Gaps part of the Overview, in a tile of its own above the gaps: its day, or "From its first row" with the day of that row; the Date Field it is read on; why not earlier; who set it and when; and the time of its data as a line, from its first row to today, the time before Reliable Since shaded; the line draws no Known Gaps ([OP-RC-31](#op-rc-31)). The Summary, the publication and Claude read it with its why and its Date Field. Setting or changing it goes into the Log. It is required to publish, as a step of its own ([DEC-MR-18](06-maturity-and-release.md#dec-mr-18)).
 
@@ -358,7 +358,7 @@ The Owner Unit and the Data Team set the [Reliable Since](../../definitions.md#r
 <a id="fr-rc-32"></a>
 ### FR-RC-32 · The Date Field of a Resource, from its table type
 
-**Status:** Specified · **Source:** Max, 2026-11-20 ([DEC-RC-29](#dec-rc-29)) · **Screens:** [resource-overview](../../design/screens/resource-overview.html), [owner-journey](../../design/screens/owner-journey.html)
+**Status:** Implemented · **Source:** Max, 2026-11-20 ([DEC-RC-29](#dec-rc-29)) · **Screens:** [resource-overview](../../design/screens/resource-overview.html), [owner-journey](../../design/screens/owner-journey.html)
 
 A Resource has one [Date Field](../../definitions.md#date-field), a field of type DATE, DATETIME or TIMESTAMP, which its Reliable Since is read on. Data Hub takes it from its table type: the field of the role happened at of an `event`, occurred at of a `fact`, period of an `aggregate`; for a `state`, its created at or its updated at, which the Owner picks. For a `dimension`, another table type, or while no table type is recorded, the Owner chooses one of its date fields ([OP-RC-30](#op-rc-30)). The Owner Unit and the Data Team may choose another date field than its table type gives; Data Hub then warns, where it is chosen and on the tile of Reliable Since, that it is unusual for its table type and what it changes: Reliable Since then says when a row was made, not the time it counts. The warning also shows when the table type is changed later, or its field goes.
 
@@ -367,7 +367,7 @@ A Resource has one [Date Field](../../definitions.md#date-field), a field of typ
 <a id="fr-rc-33"></a>
 ### FR-RC-33 · A Known Gap of one day
 
-**Status:** Specified · **Source:** Max, 2026-11-20 ([DEC-RC-30](#dec-rc-30)) · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
+**Status:** Implemented · **Source:** Max, 2026-11-20 ([DEC-RC-30](#dec-rc-30)) · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
 
 The period of a Known Gap ([FR-RC-24](#fr-rc-24)) is one day or a period. One day is entered as one date, right behind the choice, and reads "on 14 Sep 2025" on the chip, in the Summary and in Claude; a period has From and until right behind it; it is kept as a period whose from and to are that day, so that everything that reads a period reads it unchanged. A period keeps its two sides, one of them open if need be. Claude's `add_known_gap` and `change_known_gap` take one day as a period with both sides the same.
 
@@ -376,7 +376,7 @@ The period of a Known Gap ([FR-RC-24](#fr-rc-24)) is one day or a period. One da
 <a id="fr-rc-34"></a>
 ### FR-RC-34 · The period of a Known Gap names its date field
 
-**Status:** Specified · **Source:** Max, 2026-11-20 ([DEC-RC-31](#dec-rc-31)) · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
+**Status:** Implemented · **Source:** Max, 2026-11-20 ([DEC-RC-31](#dec-rc-31)) · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
 
 The period of a Known Gap ([FR-RC-24](#fr-rc-24)) may name one date field of the Resource it holds on, a field of type DATE, DATETIME or TIMESTAMP. It is optional: the form offers "The Date Field of the Resource" first, which names none, and the gap then follows the [Date Field](../../definitions.md#date-field), also when it changes; every gap written before keeps following it. A gap that names another field says so on its chip, "on `loaded_at`", in the Summary and in Claude, as `[period: 2026-10-21 on loaded_at]`; one that follows the Date Field adds nothing. Claude's `add_known_gap` and `change_known_gap` take the field as an optional `dateField`. When the field leaves the Resource, the gap shows so, as for a field it names ([EC-RC-01](#ec-rc-01)).
 

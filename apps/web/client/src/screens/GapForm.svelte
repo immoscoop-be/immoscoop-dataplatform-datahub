@@ -1,22 +1,27 @@
 <script lang="ts">
   import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
-  import { fieldsOf, type GapScope, hasScope } from '@datahub/contracts/gaps';
+  import { fieldsOf, type GapScope, hasScope, oneDay } from '@datahub/contracts/gaps';
+  import { kindOf } from '@datahub/contracts/model-types';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
   import Button from '@datahub/ui/primitives/Button.svelte';
+  import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import IconButton from '@datahub/ui/primitives/IconButton.svelte';
   import type { Field } from '../lib/catalogue.js';
 
   /**
    * Adding or changing a Known Gap (FR-RC-24, DEC-UX-177): its why in plain text, then what narrows it down, each
-   * optional and combined: a period, from and to, with no field of its own, as Fields says which it concerns
-   * (DEC-UX-178); fields, empty or unreliable; and rows, a field with one of some values, typed, or empty. Each kind is a block of its own, taken
-   * away with its ×. A field the gap named that left the Resource since stays to choose, marked so (EC-RC-01).
+   * optional and combined: a period, One day or A period with its dates right behind the choice (FR-RC-33, DEC-UX-298),
+   * and the date field it holds on, optional, the Date Field of the Resource first (FR-RC-34); fields, empty or
+   * unreliable, as Fields says which it concerns (DEC-UX-178); and rows, a field with one of some values, typed, or
+   * empty. Each kind is a block of its own, taken away with its ×. A field the gap named that left the Resource since
+   * stays to choose, marked so (EC-RC-01).
    */
   let {
     text: given = '',
     scope: before = null,
     fields,
+    dateField = null,
     busy,
     label,
     saveLabel,
@@ -26,6 +31,8 @@
     text?: string;
     scope?: GapScope | null;
     fields: readonly Field[];
+    /** The Date Field of the Resource, which a period follows unless it names another; null while it has none. */
+    dateField?: string | null;
     busy: boolean;
     /** What the form is called, such as "A new Known Gap". */
     label: string;
@@ -39,7 +46,11 @@
   // svelte-ignore state_referenced_locally
   let text = $state(given);
   // svelte-ignore state_referenced_locally
-  let period = $state(before?.period ? { from: before.period.from ?? '', to: before.period.to ?? '' } : null);
+  let period = $state(
+    before?.period
+      ? { when: oneDay(before.period) ? ('day' as const) : ('period' as const), day: oneDay(before.period) ? (before.period.from ?? '') : '', from: before.period.from ?? '', to: before.period.to ?? '', on: before.period.dateField ?? '' }
+      : null,
+  );
   // svelte-ignore state_referenced_locally
   let chosen: string[] | null = $state(before?.fields ? [...before.fields] : null);
   // svelte-ignore state_referenced_locally
@@ -54,8 +65,10 @@
   const nameOf = (name: string) => (known.has(name) ? name : t('gaps.gone', { name }));
 
   function addPeriod() {
-    period = { from: '', to: '' };
+    period = { when: 'period', day: '', from: '', to: '', on: '' };
   }
+  /** The date fields a period may be read on: its date fields, and one it named that left it since. */
+  const dateFields = $derived([...fields.filter((field) => kindOf(field.dataType) === 'date').map((field) => field.name), ...gone.filter((name) => name === before?.period?.dateField)]);
   function addRows() {
     rows = { field: names[0] ?? '', is: 'oneOf', values: [] };
   }
@@ -70,15 +83,19 @@
   /** The scope as it would be saved, or why it cannot be yet. */
   const scope = $derived.by((): GapScope | null => {
     const made: GapScope = {};
-    if (period) made.period = { from: period.from || null, to: period.to || null };
+    if (period) {
+      const [from, to] = period.when === 'day' ? [period.day || null, period.day || null] : [period.from || null, period.to || null];
+      made.period = { from, to, ...(period.on ? { dateField: period.on } : {}) };
+    }
     if (chosen && chosen.length > 0) made.fields = [...chosen];
     if (rows) made.rows = rows.is === 'empty' ? { field: rows.field, is: 'empty' } : { field: rows.field, is: 'oneOf', values: [...rows.values] };
     return hasScope(made) ? made : null;
   });
   const problem = $derived.by(() => {
     if (!text.trim()) return 'text';
-    if (period && !period.from && !period.to) return t('gaps.problem.open');
-    if (period && period.from && period.to && period.from > period.to) return t('gaps.problem.order');
+    if (period && period.when === 'day' && !period.day) return t('gaps.problem.day');
+    if (period && period.when === 'period' && !period.from && !period.to) return t('gaps.problem.open');
+    if (period && period.when === 'period' && period.from && period.to && period.from > period.to) return t('gaps.problem.order');
     if (rows && rows.is === 'oneOf' && rows.values.length === 0) return t('gaps.problem.values');
     return null;
   });
@@ -105,10 +122,25 @@
   {#if period}
     <section class="block" aria-label={t('gaps.period')}>
       <div class="head"><Icon name="calendar-blank" /><b>{t('gaps.period')}</b><span class="meta">{t('gaps.period.hint')}</span><IconButton icon="x" label={t('gaps.remove.period')} onclick={() => (period = null)} /></div>
-      <div class="grid">
-        <label class="field"><span>{t('gaps.from')}</span><input {...NO_PASSWORD_MANAGER} type="date" bind:value={period.from} /></label>
-        <label class="field"><span>{t('gaps.to')}</span><input {...NO_PASSWORD_MANAGER} type="date" bind:value={period.to} /></label>
+      <!-- One day or a period, the dates right behind the choice (DEC-UX-298). -->
+      <div class="when">
+        <Segmented options={[{ value: 'day', label: t('gaps.oneDay') }, { value: 'period', label: t('gaps.aPeriod') }]} bind:value={period.when} label={t('gaps.when')} />
+        {#if period.when === 'day'}
+          <input {...NO_PASSWORD_MANAGER} class="date" type="date" aria-label={t('gaps.day')} bind:value={period.day} />
+        {:else}
+          <input {...NO_PASSWORD_MANAGER} class="date" type="date" aria-label={t('gaps.from')} title={t('gaps.from.empty')} bind:value={period.from} />
+          <span class="meta">{t('gaps.until')}</span>
+          <input {...NO_PASSWORD_MANAGER} class="date" type="date" aria-label={t('gaps.to')} title={t('gaps.to.empty')} bind:value={period.to} />
+        {/if}
       </div>
+      <!-- The date field it holds on, optional: the Date Field of the Resource first, which names none (FR-RC-34). -->
+      <label class="field on"
+        ><span>{t('gaps.onField.label')}</span>
+        <select bind:value={period.on}>
+          <option value="">{dateField ? t('gaps.onField.dateField', { name: dateField }) : t('gaps.onField.none')}</option>
+          {#each dateFields.filter((name) => name !== dateField || period?.on === name) as name (name)}<option value={name}>{nameOf(name)}</option>{/each}
+        </select></label
+      >
     </section>
   {/if}
   {#if chosen}
@@ -175,6 +207,9 @@
   .head b { font-weight: var(--weight-medium); }
   .head .meta { flex: 1; }
   .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .when { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+  .when .date { width: auto; }
+  .on { max-width: 360px; margin-top: 12px; }
   .values { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 5px 8px; border-radius: var(--radius-field); border: 1px solid var(--tint-active); background: var(--surface-solid); }
   .values input, .values select { flex: 1; width: auto; min-width: 100px; border: 0; padding: 2px 0; background: none; }
   .values input:focus, .values select:focus { outline: none; }

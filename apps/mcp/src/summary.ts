@@ -1,5 +1,7 @@
 import { type GapScope, hasScope, scopeText } from '@datahub/contracts/gaps';
-import type { ModelType } from '@datahub/contracts/model-types';
+import type { FieldOfType, ModelType, TypeField } from '@datahub/contracts/model-types';
+import { dateFieldOf, reliableText } from '@datahub/contracts/reliable';
+import { reliableOf } from './journey.js';
 import { curate, SUMMARY, type SummaryPart, WEIGHT_MEANS, type Weight, WEIGHTS } from '@datahub/contracts/summary';
 
 /** What the Summary of a Resource is made of, as the MCP reads it from catalogue and query. */
@@ -11,14 +13,17 @@ export interface SummaryFacts {
   page: string;
   collection: { name: string; owner: string } | null;
   description: string;
-  fields: { name: string }[];
+  fields: { name: string; dataType?: string | null }[];
   card: {
     businessDescription: string;
     intendedUse: string;
     pitfalls: string;
     /** Each with where it holds, when narrowed down (FR-RC-24). */
     knownGaps: { text: string; scope?: GapScope | null }[];
-    reliableSince: string | null;
+    /** From its first row, or from a later day with why not earlier; null while not set (FR-RC-31). */
+    reliableSince: { from: 'firstRow' | 'day'; day: string | null; why: string } | null;
+    /** The Date Field chosen; null takes the one its table type gives (FR-RC-32). */
+    dateField?: string | null;
     keyFields: string[];
     parameters: string[];
   };
@@ -29,6 +34,8 @@ export interface SummaryFacts {
     grainSentence: string;
     /** One of the six, `other` among them (DEC-RC-21). */
     modelType: ModelType | null;
+    /** The fields that hold a role of its model type, its Date Field among them (FR-CO-44, FR-RC-32). */
+    typeFields?: TypeField[];
   };
   storage: { size?: string; partitions?: number | null } | null;
   publication: { publishedAt: string; publishedBy: string; confirmedAt: string; confirmedBy: string } | null;
@@ -106,7 +113,7 @@ const TITLE: Record<SummaryPart, string> = {
   joins: 'What it joins',
   fields: 'Its fields',
   watchOut: 'Watch out',
-  knownGaps: 'Known Gaps',
+  knownGaps: 'Reliable since, Known Gaps',
   qa: 'Q&A of the Owner and the Data Team',
   standing: 'Where it stands',
   colleagues: 'What colleagues noted',
@@ -132,6 +139,9 @@ export function summaryParts(given: SummaryFacts): SummaryBlock[] {
   const plain = (text: string): SummaryLine => ({ text });
   const item = (text: string): SummaryLine => ({ kind: 'item', text });
   const gap: SummaryLine = { text: '' };
+  // Reliable Since, read on its Date Field, stands first in the part of the Known Gaps (DEC-UX-296, FR-RC-31).
+  const reliable = reliableOf(card.reliableSince);
+  const dateField = dateFieldOf(card.dateField ?? null, details.modelType, details.typeFields ?? [], facts.fields.map((field) => ({ name: field.name, dataType: field.dataType ?? null })) as FieldOfType[]).field;
   const body: Record<SummaryPart, SummaryLine[]> = {
     deprecated: facts.deprecation ? [plain(`${facts.deprecation.reason}${facts.deprecation.insteadOf ? ` Use ${facts.deprecation.insteadOf.displayName} instead.` : ''} It still works.`)] : [],
     whatItIs: [
@@ -165,10 +175,12 @@ export function summaryParts(given: SummaryFacts): SummaryBlock[] {
       .map((entry) => item(`${entry.identity} on ${entry.field}: ${[...new Set(entry.resources.map((resource) => resource.displayName))].join(', ')}`)),
     fields: facts.fields.length ? [plain(`${facts.fields.length} fields, each in \`fields\` with its type, its Business Description and its description from dbt.`)] : [],
     watchOut: [
-      ...(card.pitfalls ? [{ kind: 'label', text: 'Pitfalls, from the Owner, in Markdown:' } as SummaryLine, { kind: 'markdown', text: card.pitfalls } as SummaryLine, gap] : []),
-      ...(card.reliableSince ? [plain(`Reliable since ${card.reliableSince}: do not read earlier data as reliable.`)] : []),
+      ...(card.pitfalls ? [{ kind: 'label', text: 'Pitfalls, from the Owner, in Markdown:' } as SummaryLine, { kind: 'markdown', text: card.pitfalls } as SummaryLine] : []),
     ],
-    knownGaps: card.knownGaps.map((known) => item(`${known.text}${hasScope(known.scope) ? ` ${scopeText(known.scope)}` : ''}`)),
+    knownGaps: [
+      ...(reliable ? [plain(`Reliable since: ${reliableText(reliable, dateField).replace(/\.$/, '')}.${reliable.from === 'day' ? ' Do not read earlier data as reliable.' : ''}`)] : []),
+      ...card.knownGaps.map((known) => item(`${known.text}${hasScope(known.scope) ? ` ${scopeText(known.scope)}` : ''}`)),
+    ],
     qa: qa.flatMap(threadLines),
     standing: [
       plain(

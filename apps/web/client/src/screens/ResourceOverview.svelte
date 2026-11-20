@@ -5,8 +5,8 @@
 
 <script lang="ts">
   import { tick } from 'svelte';
-  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import type { GapScope } from '@datahub/contracts/gaps';
+  import { dateFieldOf } from '@datahub/contracts/reliable';
   import type { SummarySource } from '@datahub/contracts/summary';
   import FactsList from '@datahub/ui/components/FactsList.svelte';
   import LogList from '@datahub/ui/components/LogList.svelte';
@@ -22,13 +22,12 @@
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import OriginTag from '@datahub/ui/marks/OriginTag.svelte';
   import Button from '@datahub/ui/primitives/Button.svelte';
-  import Field from '@datahub/ui/primitives/Field.svelte';
   import Loading from '@datahub/ui/primitives/Loading.svelte';
   import type { CardChanges, DescribeAttribute, KnownGap, LogEntry, Related, ResourceDetail } from '../lib/catalogue.js';
   import { carriersOf, nounOf } from '../lib/grain.js';
   import type { MarkerPlace } from '../lib/learning.js';
   import type { Conversation } from '../lib/messages.js';
-  import type { Storage } from '../lib/query.js';
+  import type { FirstRow, Storage } from '../lib/query.js';
   import { sizeText } from '../lib/size.js';
   import { command, useScreenCommands, view } from '../lib/commands.svelte.js';
   import type { QuickRow } from '../lib/quick.js';
@@ -36,6 +35,7 @@
   import OverviewDanger from './OverviewDanger.svelte';
   import OverviewGaps from './OverviewGaps.svelte';
   import OverviewMaturity from './OverviewMaturity.svelte';
+  import OverviewReliable from './OverviewReliable.svelte';
   import OverviewRow from './OverviewRow.svelte';
   import OverviewSummary from './OverviewSummary.svelte';
 
@@ -71,6 +71,7 @@
     removeLater = null,
     onremove,
     onchangetype,
+    firstRowOf,
     part = $bindable('summary'),
   }: {
     resource: ResourceDetail;
@@ -111,6 +112,8 @@
     onremove?: () => Promise<boolean>;
     /** Opens the steps of its relations from the model type on, for a Data Admin (FR-RC-28); undefined for anyone else. */
     onchangetype?: () => void;
+    /** Reads its first row on a date field, for the line under Reliable since (DEC-RC-33). */
+    firstRowOf?: (field: string) => Promise<FirstRow | null>;
     /** The part on screen, which the page can open, such as the Danger zone from a deprecation. */
     part?: Part;
   } = $props();
@@ -133,8 +136,8 @@
   /** The Danger zone shows for whoever may deprecate it, or take it out of its Collection (DEC-UX-176, DEC-UX-212). */
   const dangers = $derived(canDeprecate || (removeFrom !== null && onremove !== undefined) || removeLater !== null);
   const shown = $derived(PARTS.filter((one) => one.id !== 'danger' || dangers));
-  /** Which attributes each part edits: Known Behaviour holds the intended use, the pitfalls and since when it is reliable. */
-  const EDITS: Record<Editable, readonly DescribeAttribute[]> = { description: ['description'], behaviour: ['behaviour', 'pitfalls', 'availableSince'], querying: ['keyFields'] };
+  /** Which attributes each part edits: Known Behaviour holds the intended use and the pitfalls; Reliable since is on Known Gaps (DEC-UX-296). */
+  const EDITS: Record<Editable, readonly DescribeAttribute[]> = { description: ['description'], behaviour: ['behaviour', 'pitfalls'], querying: ['keyFields'] };
   const mayEdit = (which: Editable) => EDITS[which].some((attribute) => describes(attribute));
   /** Who said there is nothing to add to a step, and when, from the journey of the Resource (DEC-MR-16). */
   const saidNothing = (step: 'pitfalls' | 'gaps') => resource.journey?.steps.find((one) => one.id === step)?.records.find((record) => record.answer === 'nothing');
@@ -191,14 +194,13 @@
   // Editing in place, one part at a time.
   let saving = $state(false);
   let failed = $state(false);
-  let draft = $state({ businessDescription: '', intendedUse: '', pitfalls: '', reliableSince: '' as string, keyFields: [] as string[], parameters: [] as string[] });
+  let draft = $state({ businessDescription: '', intendedUse: '', pitfalls: '', keyFields: [] as string[], parameters: [] as string[] });
 
   function start(which: Editable) {
     draft = {
       businessDescription: card.businessDescription,
       intendedUse: card.intendedUse,
       pitfalls: card.pitfalls,
-      reliableSince: card.reliableSince ?? '',
       keyFields: [...card.keyFields],
       parameters: [...card.parameters],
     };
@@ -215,7 +217,6 @@
           ? {
               ...(describes('behaviour') ? { intendedUse: draft.intendedUse } : {}),
               ...(describes('pitfalls') ? { pitfalls: draft.pitfalls } : {}),
-              ...(describes('availableSince') ? { reliableSince: draft.reliableSince || null } : {}),
             }
           : { keyFields: draft.keyFields, parameters: draft.parameters };
     saving = true;
@@ -399,7 +400,6 @@
             {#if describes('behaviour')}<div><div class="label">{t('resource.intendedUse')}</div><MarkdownEditor id="intended-use" bind:value={draft.intendedUse} label={t('resource.intendedUse')} maxlength={2000} /></div>{/if}
             {#if describes('pitfalls')}<div><div class="label">{@render term('pitfall', t('resource.pitfalls'))}</div><MarkdownEditor id="pitfalls" bind:value={draft.pitfalls} label={t('resource.pitfalls')} maxlength={2000} /></div>{/if}
           </div>
-          {#if describes('availableSince')}<div class="reliable"><Field label={t('resource.reliableSince')}><input {...NO_PASSWORD_MANAGER} type="date" bind:value={draft.reliableSince} /></Field></div>{/if}
         </form>
       {:else}
         <Grid min="var(--tile-min)" tight>
@@ -423,18 +423,26 @@
               {/if}
             {/if}
           </SubTile>
-          <SubTile>
-            <div class="said"><Icon name="calendar-blank-fill" />{t('resource.reliableSince')}</div>
-            <p class="text">{card.reliableSince ? day(card.reliableSince) : t('resource.nothingYet')}</p>
-          </SubTile>
         </Grid>
       {/if}
     {:else if part === 'gaps'}
       {@render head(t('resource.gaps'), t('overview.gaps.lead'), undefined, 'knownGap')}
+      <!-- Reliable since, a tile of its own on top of the Known Gaps (DEC-UX-296). -->
+      <OverviewReliable
+        reliable={card.reliableSince}
+        chosen={card.dateField}
+        type={details.modelType}
+        typeFields={(details.typeFields ?? []).map(({ field, role }) => ({ field, role }))}
+        fields={resource.fields}
+        canEdit={describes('availableSince')}
+        {onsave}
+        {firstRowOf}
+      />
       <OverviewGaps
         bind:adding={addingGap}
         gaps={card.knownGaps}
         fields={resource.fields}
+        dateField={dateFieldOf(card.dateField, details.modelType, details.typeFields ?? [], resource.fields).field}
         canEdit={describes('gaps')}
         onadd={gaps.add}
         onchange={gaps.change}
@@ -581,7 +589,6 @@
   .side-by-side { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(240px, 1fr); gap: 16px; align-items: start; }
   .pair .label { margin-bottom: 6px; }
   .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
-  .reliable { max-width: 240px; margin-top: 14px; }
   .row { margin-top: 12px; }
   .code { display: inline-flex; align-items: center; gap: 4px; font: var(--text-meta) var(--font-mono); color: var(--text-secondary); background: var(--surface-solid); padding: 3px 8px; border-radius: var(--radius-chip); }
   .code button { all: unset; cursor: pointer; color: var(--text-muted); }
@@ -609,8 +616,6 @@
   .identity-name { fill: var(--text-secondary); font-size: 8.5px; }
   .other { fill: var(--surface-solid); }
   .other-name { fill: var(--text-primary); font-size: 10px; }
-  input { width: 100%; box-sizing: border-box; font: var(--text-small) var(--font-family); line-height: 1.5; color: var(--text-primary); background: var(--surface-solid); border: 1px solid var(--tint-active); border-radius: var(--radius-field); padding: 8px 10px; resize: vertical; }
-  input:focus { outline: 2px solid var(--text-secondary); outline-offset: 1px; }
   .hint { margin: 8px 0 0; font-size: var(--text-meta); color: var(--text-muted); line-height: 1.5; }
   .failed { margin: 8px 0; font-size: var(--text-small); color: var(--signal-urgent); }
   form { display: block; }

@@ -21,6 +21,7 @@ export const CARD_ATTRIBUTES = {
   intendedUse: 'behaviour',
   pitfalls: 'pitfalls',
   reliableSince: 'availableSince',
+  dateField: 'availableSince',
   keyFields: 'keyFields',
   parameters: 'keyFields',
 } as const;

@@ -2,6 +2,7 @@ import type { ServiceCallerVerifier } from '@datahub/auth';
 import { canWith, type CollectionIcon, type CollectionVisibility, NO_PERMISSIONS, permissionValue, reach } from '@datahub/contracts';
 import { isCollectionIcon } from '@datahub/contracts/collection-icons';
 import { type GapScope, gapScopeSchema } from '@datahub/contracts/gaps';
+import { reliableSinceOf, reliableSinceSchema } from '@datahub/contracts/reliable';
 import { isJourneyStep, type JourneyStepId } from '@datahub/contracts/journey';
 import { MODEL_TYPES, type ModelType, TYPE_ROLES } from '@datahub/contracts/model-types';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
@@ -125,6 +126,7 @@ const CARD_ATTRIBUTES: Record<CardKey, Attribute> = {
   pitfalls: 'pitfalls',
   knownGaps: 'gaps',
   reliableSince: 'availableSince',
+  dateField: 'availableSince',
   keyFields: 'keyFields',
   parameters: 'keyFields',
 };
@@ -138,6 +140,7 @@ const STEP_ATTRIBUTES: Record<JourneyStepId, Attribute> = {
   fields: 'description',
   intendedUse: 'behaviour',
   pitfalls: 'pitfalls',
+  since: 'availableSince',
   gaps: 'gaps',
   parameters: 'keyFields',
   admin: 'description',
@@ -1044,12 +1047,12 @@ export function parseRequest(body: unknown): RequestFields | string {
 }
 
 const TEXT_LIMITS = { businessDescription: 4000, intendedUse: 2000, pitfalls: 2000 } as const;
-const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
  * Checks what changes about a Resource (FR-RC-15): its Business Description, intended use and pitfalls
- * as texts, its Known Gaps as a list of texts, since when it is reliable as a day or null, and its key
- * fields and Parameters as lists of fields. Returns the problem as a sentence when there is one.
+ * as texts, its Known Gaps as a list of texts, its Reliable Since from its first row or from a later day
+ * with why, or null (FR-RC-31), its Date Field as a field or null (FR-RC-32), and its key fields and
+ * Parameters as lists of fields. Returns the problem as a sentence when there is one.
  */
 export function parseCard(body: unknown): CardChanges | string {
   if (body === null || typeof body !== 'object' || Array.isArray(body)) {
@@ -1079,11 +1082,21 @@ export function parseCard(body: unknown): CardChanges | string {
     card.knownGaps = (gaps as string[]).map((gap) => gap.trim()).filter(Boolean);
   }
   if (input.reliableSince !== undefined) {
-    const day = input.reliableSince;
-    if (day !== null && !(typeof day === 'string' && DAY.test(day) && !Number.isNaN(Date.parse(day)) && new Date(day).toISOString().startsWith(day))) {
-      return 'Since when it is reliable is a day, as YYYY-MM-DD, or null.';
+    if (input.reliableSince === null) {
+      card.reliableSince = null;
+    } else {
+      const parsed = reliableSinceSchema.safeParse(input.reliableSince);
+      if (!parsed.success) {
+        return `Reliable since is {"from":"firstRow"}, {"from":"day","day":"YYYY-MM-DD","why":"…"} or null: ${parsed.error.issues[0]?.message ?? 'not that'}.`;
+      }
+      card.reliableSince = reliableSinceOf(parsed.data);
     }
-    card.reliableSince = day as string | null;
+  }
+  if (input.dateField !== undefined) {
+    if (input.dateField !== null && !NAME(input.dateField)) {
+      return 'The Date Field is a field of the Resource, or null for the one its table type gives.';
+    }
+    card.dateField = input.dateField as string | null;
   }
   for (const key of ['keyFields', 'parameters'] as const) {
     const value = input[key];

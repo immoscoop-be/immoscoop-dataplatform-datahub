@@ -19,6 +19,8 @@ export const MARKERS = {
   knownGap: ['K5.3'],
   pitfall: ['K5.16'],
   knownBehaviour: ['3.3.3'],
+  reliableSince: ['K5.17'],
+  dateField: ['K5.17'],
 } as const satisfies Readonly<Record<string, readonly string[]>>;
 
 export type MarkerPlace = keyof typeof MARKERS;
@@ -34,4 +36,6 @@ export const MARKER_PLACES = {
   knownGap: 'the Known Gaps of a Resource, on its overview and in the Owner Journey in Claude',
   pitfall: 'the Pitfalls of a Resource, on its overview and in the Owner Journey in Claude',
   knownBehaviour: 'Known behaviour of a Resource, on its overview',
+  reliableSince: 'Reliable since of a Resource, on top of its Known Gaps and in the Owner Journey in Claude',
+  dateField: 'the Date Field of a Resource, where Reliable since is set and in the Owner Journey in Claude',
 } as const satisfies Readonly<Record<MarkerPlace, string>>;

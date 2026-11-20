@@ -56,6 +56,7 @@ Its service account may read every table of the project ([DEC-SR-32](../../requi
 | `POST /queries/{id}/requests` | Sends it to the Data Team above 1 GB, through catalogue ([TR-SR-18](../../requirements/technical/04-stacks-and-resources.md#tr-sr-18)) |
 | `GET /runs/{queryId}/rows?page=n` | A page of 100 rows of a run, from the same job, for who ran it |
 | `GET /resources/{id}/storage` | Its size, rows and partitions, from the metadata of its table in BigQuery; for a view, of the table beneath it ([TR-SR-20](../../requirements/technical/04-stacks-and-resources.md#tr-sr-20)) |
+| `GET /resources/{id}/first-row?field=` | The day of its first row on a date field, from its oldest partition or a small query of at most 100 MB, kept a day ([TR-SR-35](../../requirements/technical/04-stacks-and-resources.md#tr-sr-35)) |
 | `POST /resources/{id}/preview/choices` | The window of its Preview and its choices, with their values read in the values query ([TR-SR-19](../../requirements/technical/04-stacks-and-resources.md#tr-sr-19)) |
 | `POST /resources/{id}/preview/preflight`, `…/preview/runs`, `…/preview/requests` | The Pre-flight of a Preview, a run of it, and above 1 GB its Request, as for a query |
 | `GET /resources/{id}/queries` | The queries on it, for its Owner Unit and the Data Team ([TR-SR-21](../../requirements/technical/04-stacks-and-resources.md#tr-sr-21)) |

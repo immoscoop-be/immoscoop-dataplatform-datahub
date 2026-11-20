@@ -1,4 +1,4 @@
-import { type BigQuery, BigQueryRefused, type TableFacts } from './bigquery.js';
+import { type BigQuery, BigQueryRefused, lowestDaySql, type TableFacts } from './bigquery.js';
 import type { QueryResource } from './catalogue.js';
 import type { Parameter, ParameterKind } from './parameters.js';
 
@@ -129,6 +129,15 @@ export function chosenParameters(choices: readonly Choice[], values: unknown): P
   return parameters;
 }
 
+/** The first row of a Resource on its Date Field, and where it came from (DEC-RC-33): none when Data Hub cannot tell cheaply. */
+export interface FirstRow {
+  day: string | null;
+  from: 'partitions' | 'lowest' | null;
+}
+
+/** The most a read of the lowest value of a Date Field may bill: the first threshold of the Pre-flight (DEC-RC-33). */
+export const FIRST_ROW_BYTES = 100_000_000;
+
 /** Where the size and partitions of a Resource come from: its own table, or for a view the table beneath it. */
 export interface Storage extends TableFacts {
   key: string;
@@ -142,6 +151,7 @@ export interface Storage extends TableFacts {
 export function createStorage(bigquery: BigQuery, beneath: (resource: QueryResource) => Promise<string[]>, ttl = 10 * 60_000, now: () => number = Date.now) {
   const facts = new Map<string, { value: Promise<TableFacts>; until: number }>();
   const lists = new Map<string, { value: Promise<string[]>; until: number }>();
+  const firsts = new Map<string, { value: Promise<FirstRow>; until: number }>();
   const kept = <T>(cache: Map<string, { value: Promise<T>; until: number }>, key: string, read: () => Promise<T>): Promise<T> => {
     const found = cache.get(key);
     if (found && found.until > now()) return found.value;
@@ -161,8 +171,35 @@ export function createStorage(bigquery: BigQuery, beneath: (resource: QueryResou
     return (field ? candidates.find((candidate) => candidate.partitionField === field) : candidates.length === 1 ? candidates[0] : undefined) ?? null;
   }
 
+  /**
+   * The first row of a Resource on a date field (DEC-RC-33): from the partitions BigQuery keeps when it is partitioned on
+   * that field; otherwise the lowest value of the field, when a dry run says it reads at most 100 MB; otherwise none.
+   * Read once a day.
+   */
+  async function readFirst(resource: QueryResource, field: string): Promise<FirstRow> {
+    const storage = await of(resource);
+    if (storage?.partitionField && storage.partitionField !== '_PARTITIONTIME' && storage.partitionField.toLowerCase() === field.toLowerCase()) {
+      const id = await bigquery.firstPartition(storage.key);
+      return { day: id ? (partitionStart(id)?.slice(0, 10) ?? null) : null, from: 'partitions' };
+    }
+    const dry = await bigquery.dryRun(lowestDaySql(resource.fullName, field));
+    if (dry.bytes > FIRST_ROW_BYTES) return { day: null, from: null };
+    return { day: await bigquery.lowestDay(resource.fullName, field, FIRST_ROW_BYTES), from: 'lowest' };
+  }
+
   return {
     of,
+    async firstRow(resource: QueryResource, field: string): Promise<FirstRow> {
+      const found = firsts.get(`${resource.id}:${field}`);
+      if (found && found.until > now()) return found.value;
+      const value = readFirst(resource, field).catch((error: unknown) => {
+        firsts.delete(`${resource.id}:${field}`);
+        if (error instanceof BigQueryRefused) return { day: null, from: null } satisfies FirstRow;
+        throw error;
+      });
+      firsts.set(`${resource.id}:${field}`, { value, until: now() + 24 * 60 * 60_000 });
+      return value;
+    },
     /** The first moment of the newest partitions of its window that hold rows; null where Data Hub cannot tell. */
     async newest(resource: QueryResource, window: Window): Promise<string | null> {
       try {

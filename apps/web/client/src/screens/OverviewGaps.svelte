@@ -18,6 +18,7 @@
   let {
     gaps,
     fields,
+    dateField = null,
     canEdit,
     onadd,
     onchange,
@@ -29,6 +30,8 @@
     gaps: readonly KnownGap[];
     /** The fields of the Resource, to narrow a gap down by. */
     fields: readonly Field[];
+    /** The Date Field of the Resource, which a period follows unless it names another (FR-RC-34). */
+    dateField?: string | null;
     canEdit: boolean;
     /** Each answers whether it worked. */
     onadd: (text: string, scope: GapScope | null) => Promise<boolean>;
@@ -70,6 +73,7 @@
 </script>
 
 {#if gaps.length > 0}
+  <p class="label">{t('gaps.listLabel')}</p>
   <ul class="gaps">
     {#each gaps as gap (gap.id)}
       <li class="gap" class:open={changing === gap.id}>
@@ -79,6 +83,7 @@
               text={gap.text}
               scope={gap.scope}
               {fields}
+              {dateField}
               {busy}
               label={t('gaps.change')}
               saveLabel={t('collection.save')}
@@ -124,7 +129,7 @@
 {#if canEdit}
   {#if adding}
     <div class="adding">
-      <GapForm {fields} {busy} label={t('gaps.new')} saveLabel={t('gaps.add')} onsave={add} oncancel={() => (adding = false)} />
+      <GapForm {fields} {dateField} {busy} label={t('gaps.new')} saveLabel={t('gaps.add')} onsave={add} oncancel={() => (adding = false)} />
     </div>
   {:else}
     <button
@@ -141,6 +146,7 @@
 {/if}
 
 <style>
+  .label { margin: 0 0 8px; font-size: var(--text-meta); color: var(--text-muted); }
   .gaps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
   .gap { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface-sub); }
   .gap.open { padding: 0; background: none; }

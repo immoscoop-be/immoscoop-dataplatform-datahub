@@ -2,6 +2,8 @@ import { z } from 'zod';
 import { answer, attempt, firstSentence, levelName, plain, refusal } from './answers.js';
 import { rangesOf } from '@datahub/contracts';
 import { type GapScope, gapScopeSchema } from '@datahub/contracts/gaps';
+import type { FieldOfType, ModelType, TypeField } from '@datahub/contracts/model-types';
+import { dateFieldOf, reliableSinceSchema } from '@datahub/contracts/reliable';
 import { APP_ONLY, bytes, type Context, READ, SHARE, SHOWS, WRITE } from './context.js';
 import { pages, Refused } from './datahub.js';
 import { collectionIcon } from './icons.js';
@@ -166,8 +168,17 @@ export function resourceTools(context: Context): void {
     ]);
     // Its icon goes with the card, as the MCP App loads nothing from outside (DEC-UX-164).
     const icon = collection ? await collectionIcon(collection.icon) : '';
+    // The Date Field Reliable Since is read on: the one chosen, else the one its table type gives (FR-RC-32).
+    const details = (resource.details ?? null) as { modelType?: ModelType | null; typeFields?: TypeField[] } | null;
+    const dateField = dateFieldOf(
+      typeof resource.card.dateField === 'string' ? resource.card.dateField : null,
+      details?.modelType ?? null,
+      details?.typeFields ?? [],
+      resource.fields as FieldOfType[],
+    );
     return {
       ...resource,
+      dateField,
       levelName: levelName(resource.level),
       storage,
       collection: collection ? { id: collection.id, name: collection.name, icon, owner: collection.ownerUnit.name, visibility: collection.visibility } : null,
@@ -318,7 +329,18 @@ export function resourceTools(context: Context): void {
     businessDescription: z.string().max(4000).optional().describe('The Business Description of the table, next to the one from dbt, in Markdown.'),
     intendedUse: z.string().max(2000).optional().describe('What it is meant for, in Markdown (FR-RC-23).'),
     pitfalls: z.string().max(2000).optional().describe('Where it trips people up, in Markdown (FR-RC-23).'),
-    reliableSince: z.string().nullable().optional().describe('Since when its data is reliable: YYYY-MM-DD, or null.'),
+    reliableSince: reliableSinceSchema
+      .nullable()
+      .optional()
+      .describe(
+        'Reliable since: from which day the whole table can be relied on, read on its Date Field: {"from":"day","day":"YYYY-MM-DD","why":"why not earlier"}, or {"from":"firstRow"} when it can be relied on as far back as it goes; null clears it. Never set it without the Owner choosing one of the two.',
+      ),
+    dateField: z
+      .string()
+      .min(1)
+      .nullable()
+      .optional()
+      .describe('The Date Field Reliable since is read on: one of its fields of type DATE, DATETIME or TIMESTAMP; null takes the one its table type gives (dateField.typeField of get_resource).'),
     keyFields: z.array(z.string()).max(50).optional(),
     parameters: z.array(z.string()).max(50).optional().describe('The fields a Preview offers to choose by.'),
   };
@@ -326,10 +348,22 @@ export function resourceTools(context: Context): void {
     businessDescription: 'the Business Description',
     intendedUse: 'intended use',
     pitfalls: 'pitfalls',
-    reliableSince: 'since when it is reliable',
+    reliableSince: 'Reliable since',
+    dateField: 'its Date Field',
     keyFields: 'key fields',
     parameters: 'Parameters',
   };
+  /**
+   * A value of the card as it is compared with what Claude showed: Reliable Since without who set it and when, and
+   * From its first row with no day nor why, as the catalogue compares it (FR-RC-31).
+   */
+  const comparable = (key: string, value: unknown): unknown => {
+    if (key !== 'reliableSince' || value === null || typeof value !== 'object') return value ?? null;
+    const given = value as { from?: unknown; day?: unknown; why?: unknown };
+    return given.from === 'firstRow' ? { from: 'firstRow', day: null, why: '' } : { from: given.from, day: given.day ?? null, why: typeof given.why === 'string' ? given.why.trim() : '' };
+  };
+  const RELIABLE =
+    'Reliable since is the day from which the whole table can be relied on, read on its Date Field, with why not earlier; or from its first row. The Date Field comes from its table type: happened at of an event, occurred at of a fact, the period of an aggregate, created at or updated at of a state; another one is unusual, so say so. Show what the data says, ask the Owner for one of the two answers, and never set it by default.';
   // Only the parts of the card the Permission group lets Claude write for the User (claude.use, resources.describe).
   const writable = Object.fromEntries(permits.card.map((key) => [key, card[key]])) as typeof card;
 
@@ -338,7 +372,7 @@ export function resourceTools(context: Context): void {
       'update_resource_card',
       {
         title: 'Describe a Resource',
-        description: `Writes what Data Hub keeps about a Resource the User may describe: ${permits.card.map((key) => CARD_NAMES[key]).join(', ')}. Show the User what you will write first, and call this only once they agree. Pass in before the values you showed as they were.`,
+        description: `Writes what Data Hub keeps about a Resource the User may describe: ${permits.card.map((key) => CARD_NAMES[key]).join(', ')}. Show the User what you will write first, and call this only once they agree. Pass in before the values you showed as they were.${permits.card.includes('reliableSince') ? ` ${RELIABLE}` : ''}`,
         inputSchema: {
           id,
           ...writable,
@@ -353,7 +387,7 @@ export function resourceTools(context: Context): void {
           if (before) {
             const { resource } = await hub.get<{ resource: Detail }>('catalogue', `/resources/${enc(resourceId)}`);
             const now = (key: string) => resource.card[key];
-            const moved = Object.entries(before).filter(([key, value]) => JSON.stringify(now(key) ?? null) !== JSON.stringify(value ?? null));
+            const moved = Object.entries(before).filter(([key, value]) => JSON.stringify(comparable(key, now(key))) !== JSON.stringify(comparable(key, value)));
             if (moved.length > 0) {
               return refusal(
                 `Changed since you showed it, by someone else: ${moved.map(([key]) => `${key} is now ${JSON.stringify(now(key) ?? null)}`).join('; ')}. Show the User the new text, and ask again before you write.`,
@@ -381,7 +415,7 @@ export function resourceTools(context: Context): void {
       .nullable()
       .optional()
       .describe(
-        'Where the gap holds, each part optional and combined as they apply: period {from, to} as YYYY-MM-DD, one side null when it is open; fields, the fields that are empty or unreliable in it; rows, the rows it holds for: {field, is: "oneOf", values} or {field, is: "empty"}. Propose one from what you found in the data. null takes it away.',
+        'Where the gap holds, each part optional and combined as they apply: period {from, to} as YYYY-MM-DD, one side null when it is open, both the same day for one day, and dateField, optional, the date field it holds on when it is another than the Date Field of the Resource, such as when rows were loaded; fields, the fields that are empty or unreliable in it; rows, the rows it holds for: {field, is: "oneOf", values} or {field, is: "empty"}. Propose one from what you found in the data. null takes it away.',
       );
     const gapsOf = async (resourceId: string) => {
       const { resource } = await hub.get<{ resource: Detail }>('catalogue', `/resources/${enc(resourceId)}`);
