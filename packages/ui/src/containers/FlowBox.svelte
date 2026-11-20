@@ -196,10 +196,11 @@
   .said :global(.icon) { flex: none; position: relative; top: 1px; font-size: 12px; color: var(--signal-warn); }
   .chev { margin-top: 3px; color: var(--text-muted); display: inline-flex; transition: transform var(--motion-fade); }
   .step.open .chev { transform: rotate(180deg); }
-  .detail { display: grid; gap: 10px; padding: 0 14px 14px 40px; }
+  .detail { display: grid; gap: 12px; padding: 4px 18px 18px 40px; }
   .detail[hidden] { display: none; }
   .here { display: inline-flex; align-items: center; gap: 5px; font-size: var(--text-meta); color: var(--text-secondary); }
-  .wwh { display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 6px 10px; margin: 0; font-size: var(--text-small); line-height: 1.5; }
+  /* The labels take the room their longest needs, "Waarom" too, and keep apart from their texts. */
+  .wwh { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 10px 16px; margin: 0; font-size: var(--text-small); line-height: 1.5; }
   .wwh dt { padding-top: 2px; font-size: var(--text-meta); color: var(--text-muted); }
   .wwh dd { margin: 0; color: var(--text-primary); }
   .card { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--surface-sub); font-size: var(--text-small); cursor: pointer; }
