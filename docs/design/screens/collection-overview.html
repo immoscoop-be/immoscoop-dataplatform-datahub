@@ -5,15 +5,16 @@
   What it is, its intro, what needs attention, and one table of what sits at its top: its folders first, then its Resources
   and Lenses together, A to Z (DEC-UX-311). The rest sits in its folders (collection-folder.html, DEC-UX-156); the intro is
   Markdown its Owner Unit writes (DEC-UX-158). Its history is no part of the page: the quick window opens it (DEC-UX-312).
+  The page of a folder is laid out the same way: the same head with New, the same table (DEC-UX-315).
   Prototype: the switch at the bottom right shows the page as a Data Admin, the Owner or a colleague; ?loading shows the
   page while it is read: three dots going back and forth where it will show (DEC-UX-165); Cmd+K opens the quick window.
   Requirements: FR-CO-38, FR-CO-41, FR-CO-11, FR-CO-13, FR-CO-14, FR-CO-25, FR-CO-26, FR-CO-27, FR-CO-28, FR-CO-29, FR-CO-31, FR-SR-31, FR-MR-10, FR-LE-17, FR-CO-45
-  Decisions: DEC-UX-309, DEC-UX-310, DEC-UX-311, DEC-UX-312, DEC-UX-265, DEC-UX-162, DEC-UX-165, DEC-UX-13, DEC-UX-14, DEC-UX-105, DEC-CO-15, DEC-CO-18, DEC-DH-10.
-  Open points: OP-UX-115 (the columns of the table), OP-UX-116 (no link to edit the intro), OP-UX-117 (the history in a sheet).
+  Decisions: DEC-UX-309, DEC-UX-310, DEC-UX-311, DEC-UX-312, DEC-UX-313, DEC-UX-314, DEC-UX-315, DEC-UX-212, DEC-UX-214, DEC-UX-265, DEC-UX-162, DEC-UX-165, DEC-UX-13, DEC-UX-14, DEC-UX-105, DEC-CO-15, DEC-CO-18, DEC-DH-10.
   Not in v1: the checks and the EDA named in the column "Last change" (DEC-MR-13, OP-MR-01).
-  Head: Messages, and one "New" with its menu: Message for everyone, Folder and Lens for the Owner Unit and the Data Team,
-  Resources for the Data Admins (DEC-UX-310). For the Owner Unit and the Data Team a click on the name or the description
-  opens both as fields, with "Edit more" for every field (DEC-UX-309); there is no Edit button.
+  Head: Messages, and one "New" with its menu: Folder and Lens for the Owner Unit and the Data Team, Resources for
+  the Data Admins (DEC-UX-310); a Message is written under Messages (DEC-UX-313). For the Owner Unit and the Data
+  Team a click on the name or the description opens both as fields, with "Edit more" for every field (DEC-UX-309);
+  there is no Edit button.
   Related screens: collection-edit.html (Edit more), collection-add-resources.html (New › Resources), collection-folder.html (a name and description in place, ?edit).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -184,15 +185,14 @@
  </div>
  <div class="coll-actions">
   <a class="btn-quiet outline" href="collection-messages.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" title="Messages on this Collection"><i class="ph-fill ph-chat-circle-text"></i>Messages<span class="count">2</span></a>
-  <!-- One button to make something here, its menu per role: a Message for everyone; a folder and a Lens for the Owner
-       Unit and the Data Team; Resources for the Data Admins (DEC-UX-310). -->
-  <span class="new-menu" style="position:relative">
+  <!-- One button to make something here, its menu per role: a folder and a Lens for the Owner Unit and the Data Team,
+       Resources for the Data Admins; a Message is written under Messages (DEC-UX-310, DEC-UX-313). -->
+  <span class="new-menu" style="position:relative" data-for="owner datateam">
    <button class="btn-primary" type="button" id="new-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="new-menu" style="display:inline-flex;align-items:center;gap:6px"><i class="ph ph-plus"></i>New<i class="ph ph-caret-down" style="font-size:11px" aria-hidden="true"></i></button>
    <div class="rg-menu btn-menu" id="new-menu" role="menu" aria-label="New" hidden>
-    <a class="menu-item" role="menuitem" href="collection-messages.html" style="text-decoration:none;color:inherit"><i class="ph ph-chat-circle-text"></i><span>Message</span><span class="meta">a Question, Remark or Signal</span></a>
-    <button class="menu-item" type="button" role="menuitem" data-for="owner datateam" data-new-folder><i class="ph ph-folder-simple-plus"></i><span>Folder</span><span class="meta">at the top of Credit leads</span></button>
+    <button class="menu-item" type="button" role="menuitem" data-new-folder><i class="ph ph-folder-simple-plus"></i><span>Folder</span><span class="meta">at the top of Credit leads</span></button>
     <a class="menu-item" role="menuitem" href="collection-add-resources.html" data-for="datateam" style="text-decoration:none;color:inherit"><i class="ph ph-table"></i><span>Resources</span><span class="meta">from Without a Collection</span></a>
-    <a class="menu-item" role="menuitem" href="query-new.html" data-for="owner datateam" style="text-decoration:none;color:inherit"><i class="ph ph-aperture"></i><span>Lens</span><span class="meta">start with a query</span></a>
+    <a class="menu-item" role="menuitem" href="query-new.html" style="text-decoration:none;color:inherit"><i class="ph ph-aperture"></i><span>Lens</span><span class="meta">start with a query</span></a>
    </div>
   </span>
  </div>
@@ -216,21 +216,24 @@
  <div class="label">Needs attention</div>
  <div class="attention-line"><i class="ph-fill ph-warning-circle"></i><p><b style="font-weight:500">Weekly lead volume</b> changed since it was confirmed: the field <span class="mono">lead_channel</span> was added. Mark it as seen on its page.</p><a class="text-link" href="resource-detail.html"><span>Open</span></a></div>
  <div class="attention-line"><i class="ph-fill ph-warning-circle"></i><p>1 open signal on <b style="font-weight:500">Weekly lead volume</b>: the count for the source partner dropped to zero.</p><a class="text-link" href="resource-messages.html"><span>Open</span></a></div>
- <div class="attention-line"><i class="ph-fill ph-eye-slash"></i><p>2 Resources are not published yet: <b style="font-weight:500">Rejected leads</b> and <b style="font-weight:500">KBC follow-up</b>. Until the Owner publishes them, only the credit team and the Data Team see them.</p></div>
+ <!-- Each Resource that is not published yet on a line of its own, as the other lines are (DEC-UX-314) -->
+ <div class="attention-line"><i class="ph-fill ph-eye-slash"></i><p><b style="font-weight:500">KBC follow-up</b> is not published yet: only the credit team and the Data Team see it.</p><a class="text-link" href="resource-overview.html"><span>Open</span></a></div>
+ <div class="attention-line"><i class="ph-fill ph-eye-slash"></i><p><b style="font-weight:500">Rejected leads</b> is not published yet: only the credit team and the Data Team see it.</p><a class="text-link" href="resource-overview.html"><span>Open</span></a></div>
 </section>
 <!-- One table of what sits at the top of the Collection: its folders first, then its Resources and Lenses together, A to
      Z, each with the icon of its kind (DEC-UX-311, OP-UX-115). A whole row opens what it is with a click and moves with a
-     drag onto a folder, for the Owner Unit and the Data Team (DEC-UX-157). No heading and no explanation under it. -->
+     drag onto a folder, for the Owner Unit and the Data Team (DEC-UX-157). No heading and no explanation under it. The
+     page of a folder has the same table (DEC-UX-315). -->
 <div class="table-card card files" style="margin-top:18px"><table aria-label="In Credit leads">
- <thead><tr><th>Name</th><th>Level</th><th>Status</th><th>Last change</th></tr></thead>
+ <thead><tr><th>Name</th><th>Level</th><th>Status</th><th>Last change</th><th data-for="owner datateam" style="width:1%"></th></tr></thead>
  <tbody>
-  <tr class="row new-folder" data-new-folder-row hidden><td colspan="4"><span class="name-cell"><i class="ph-fill ph-folder folder-icon" aria-hidden="true"></i><input aria-label="Name of the new folder" placeholder="Name of the new folder" style="font:inherit;border:0;background:var(--surface-sub);border-radius:6px;padding:4px 8px;width:260px"></span></td></tr>
-  <tr class="row folder-row" draggable="true" tabindex="0" role="link"><td><span class="name-cell" data-href="collection-folder.html"><i class="ph-fill ph-folder folder-icon" role="img" aria-label="Folder"></i><span>Funnel and KBC</span></span></td><td class="muted"></td><td class="muted">1 folder · 1 Resource</td><td class="muted">Made by An Claes · 2 weeks ago</td></tr>
-  <tr class="row folder-row" draggable="true" tabindex="0" role="link"><td><span class="name-cell" data-href="collection-folder.html"><i class="ph-fill ph-folder folder-icon" role="img" aria-label="Folder"></i><span>Leads in</span></span></td><td class="muted"></td><td class="muted">1 folder · 3 Resources · 2 Lenses</td><td class="muted">Weekly lead volume moved in by An Claes · today</td></tr>
-  <tr class="row folder-row" draggable="true" tabindex="0" role="link"><td><span class="name-cell" data-href="collection-folder.html"><i class="ph-fill ph-folder folder-icon" role="img" aria-label="Folder"></i><span>Response</span></span></td><td class="muted"></td><td class="muted">1 Lens</td><td class="muted">Made by Dirk Vos · 3 weeks ago</td></tr>
-  <tr class="row" draggable="true" tabindex="0" role="link"><td><span class="name-cell" data-href="resource-overview.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span>Credit simulations</span></span></td><td><span class="level-cell"><span class="maturity" data-level="2"></span>2 · Described</span></td><td>Published</td><td class="muted">Added by Dirk Vos · 3 days ago</td></tr>
-  <tr class="row" draggable="true" tabindex="0" role="link"><td><span class="name-cell" data-href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span>Monthly credit simulations</span></span></td><td><span class="level-cell"><span class="maturity" data-level="2"></span>2 · Described</span></td><td class="muted">Lens on Credit simulations</td><td class="muted">Made by Mia Peeters · last week</td></tr>
-  <tr class="row quiet" draggable="true" tabindex="0" role="link" data-for="owner datateam"><td><span class="name-cell" data-href="resource-overview.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span>Rejected leads</span></span></td><td><span class="level-cell"><span class="maturity" data-level="1"></span>1 · Available</span></td><td>Not published</td><td class="muted">Added by Dirk Vos · 5 days ago</td></tr>
+  <tr class="new-folder" data-new-folder-row data-for="owner datateam" hidden><td colspan="5"><span class="name-cell"><i class="ph-fill ph-folder-simple-plus folder-icon" aria-hidden="true"></i><input class="rename" value="New folder" aria-label="Name of the new folder"><span class="meta">Enter to make it, Esc to cancel</span></span></td></tr>
+  <tr class="row folder-row" draggable="true" tabindex="0" role="link"><td><span class="name-cell" data-href="collection-folder.html"><i class="ph-fill ph-folder folder-icon" role="img" aria-label="Folder"></i><span>Funnel and KBC</span></span></td><td class="muted"></td><td class="muted">1 folder · 1 Resource</td><td class="muted">Made by An Claes · 2 weeks ago</td><td data-for="owner datateam"></td></tr>
+  <tr class="row folder-row" draggable="true" tabindex="0" role="link"><td><span class="name-cell" data-href="collection-folder.html"><i class="ph-fill ph-folder folder-icon" role="img" aria-label="Folder"></i><span>Leads in</span></span></td><td class="muted"></td><td class="muted">1 folder · 3 Resources · 2 Lenses</td><td class="muted">Weekly lead volume moved in by An Claes · today</td><td data-for="owner datateam"></td></tr>
+  <tr class="row folder-row" draggable="true" tabindex="0" role="link"><td><span class="name-cell" data-href="collection-folder.html"><i class="ph-fill ph-folder folder-icon" role="img" aria-label="Folder"></i><span>Response</span></span></td><td class="muted"></td><td class="muted">1 Lens</td><td class="muted">Made by Dirk Vos · 3 weeks ago</td><td data-for="owner datateam"></td></tr>
+  <tr class="row" draggable="true" tabindex="0" role="link"><td><span class="name-cell" data-href="resource-overview.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span>Credit simulations</span></span></td><td><span class="level-cell"><span class="maturity" data-level="2"></span>2 · Described</span></td><td>Published</td><td class="muted">Added by Dirk Vos · 3 days ago</td><td data-for="owner datateam" style="width:1%"><span data-for="datateam"><button class="icon-btn" aria-label="Remove Credit simulations from the Collection" title="Remove from the Collection"><i class="ph ph-minus-circle"></i></button></span></td></tr>
+  <tr class="row" draggable="true" tabindex="0" role="link"><td><span class="name-cell" data-href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span>Monthly credit simulations</span></span></td><td><span class="level-cell"><span class="maturity" data-level="2"></span>2 · Described</span></td><td class="muted">Lens on Credit simulations</td><td class="muted">Made by Mia Peeters · last week</td><td data-for="owner datateam"></td></tr>
+  <tr class="row quiet" draggable="true" tabindex="0" role="link" data-for="owner datateam"><td><span class="name-cell" data-href="resource-overview.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span>Rejected leads</span></span></td><td><span class="level-cell"><span class="maturity" data-level="1"></span>1 · Available</span></td><td>Not published</td><td class="muted">Added by Dirk Vos · 5 days ago</td><td data-for="owner datateam" style="width:1%"><button class="icon-btn" aria-label="Remove Rejected leads from the Collection" title="Remove from the Collection"><i class="ph ph-minus-circle"></i></button></td></tr>
  </tbody></table></div>
 <!-- The history of the Collection is no part of the page: the quick window opens it, in a sheet (DEC-UX-312, OP-UX-117). -->
 <div class="sheet-wrap" id="history" hidden>
@@ -280,7 +283,7 @@
   document.addEventListener('click', (event) => { if (!event.target.closest('.new-menu')) openNew(false); });
   document.addEventListener('keydown', (event) => { if (event.key === 'Escape') openNew(false); });
   // A new folder starts as a row on top of the table, its name in focus.
-  const newFolder = () => { openNew(false); const row = document.querySelector('[data-new-folder-row]'); row.hidden = false; row.querySelector('input').focus(); };
+  const newFolder = () => { openNew(false); const row = document.querySelector('[data-new-folder-row]'); row.hidden = false; row.querySelector('input').select(); };
   document.querySelectorAll('[data-new-folder]').forEach((button) => button.addEventListener('click', newFolder));
   const showHistory = () => { document.getElementById('history').hidden = false; };
   // The commands of the page in the quick window, the history among them (DEC-UX-240, DEC-UX-312).
@@ -291,7 +294,6 @@
       { icon: 'ph ph-pencil-simple', title: 'Change the name and description', meta: 'in place, with Edit more', run: () => editing(true), for: 'owner datateam', words: 'edit rename name description' },
       { icon: 'ph-fill ph-pencil-simple', title: 'Edit more', meta: 'every field of Credit leads', href: 'collection-edit.html', for: 'owner datateam', words: 'edit all owner icon visibility private public intro dissolve' },
       { icon: 'ph ph-text-align-left', title: 'Edit the intro', meta: 'About this Collection, in Markdown', href: 'collection-edit.html#intro', for: 'owner datateam', words: 'intro about markdown' },
-      { icon: 'ph ph-chat-circle-text', title: 'New Message', meta: 'a Question, Remark or Signal', href: 'collection-messages.html', words: 'message question remark signal write' },
       { icon: 'ph ph-folder-simple-plus', title: 'New folder', meta: 'at the top of Credit leads', run: newFolder, for: 'owner datateam', words: 'folder map' },
       { icon: 'ph ph-table', title: 'Add Resources', meta: 'from Without a Collection', href: 'collection-add-resources.html', for: 'datateam', words: 'resource add assign' },
       { icon: 'ph ph-aperture', title: 'New Lens', meta: 'start with a query', href: 'query-new.html', for: 'owner datateam', words: 'lens' },
