@@ -316,11 +316,22 @@ The lead source is set by the form the visitor used: website, app, partner or ma
        <p class="prose">The whole table can be relied on, as far back as it goes.</p>
        <span class="meta">Said by An Claes · 15 Nov 2026</span>
       </div>
-      <!-- Not set yet: required to publish -->
+      <!-- Not set yet: empty, which is never one of the two answers (FR-RC-31). The question asks for one explicitly:
+           both choices unchosen, Save off until one is chosen; the rest of the form opens with the choice. -->
       <div data-pane-group="rs" data-pane="empty" hidden>
        <p class="prose none">Not set yet.</p>
-       <p class="meta nothing-why" data-for="owner datateam">Required to publish: from which day can its data be relied on?</p>
-       <div class="rs-actions" data-for="owner datateam"><button class="btn-quiet outline sm" type="button" data-go="rs:start"><i class="ph ph-check" aria-hidden="true"></i>From its first row</button><button class="btn-quiet outline sm" type="button" data-go="rs:edit"><i class="ph ph-calendar-blank" aria-hidden="true"></i>Set a later day</button></div>
+       <p class="meta nothing-why" data-for="colleague">Its Owner has not said yet from which day its data can be relied on.</p>
+       <form class="rs-form rs-ask" data-for="owner datateam" onsubmit="return false" aria-label="Set Reliable since">
+        <p class="rs-q">From which day can its data be relied on? Choose one.</p>
+        <label class="rs-choice"><input type="radio" name="rs-new" value="first"><span><b>From its first row</b><span class="meta">6 Jan 2024: the whole table can be relied on, as far back as it goes</span></span></label>
+        <label class="rs-choice"><input type="radio" name="rs-new" value="later"><span><b>From a later day</b><span class="meta">rows before it stay, but are not to be read as reliable</span></span></label>
+        <div class="scope-row rs-later" data-rs-show="first later" hidden>
+         <label class="field" data-rs-show="later" hidden><span>Day</span><input type="date"></label>
+         <label class="field"><span>On the date field</span><select><option selected>week_start · its period, as an aggregate</option><option>created_at</option><option>loaded_at</option></select></label>
+        </div>
+        <label class="field" data-rs-show="later" hidden><span>Why not earlier · required</span><textarea rows="2" placeholder="Why can the rows before that day not be relied on?"></textarea></label>
+        <div class="gap-form-foot"><span class="meta rs-none-yet">Nothing is chosen yet: choose one to save.</span><span class="meta" data-rs-show="first later" hidden>Goes into the history, with your name.</span><button class="btn-primary sm rs-save" type="submit" disabled>Save</button></div>
+       </form>
       </div>
 
       <!-- The time of its data, as a line: before the day shaded, the gaps with a period as numbered holes -->
@@ -337,7 +348,13 @@ The lead source is set by the form the visitor used: website, app, partner or ma
         <span class="rs-tick rs-tick-mark" data-pane-group="rs" data-pane="start" hidden style="left:0">Reliable since its first row<b>6 Jan 2024</b></span>
         <span class="rs-tick" style="right:0;text-align:right">Today<b>20 Nov 2026</b></span>
        </div>
-       <p class="meta rs-legend">On <span class="mono">week_start</span>.<span data-pane-group="rs" data-pane="later edit odd"> Shaded: before the day it is reliable since.</span> Numbered: the Known Gaps below that have a period; gaps 2 and 4 have none and hold over the whole line.</p>
+       <!-- The key of the line: what the shading is, and each numbered hole named, with its period and where it holds -->
+       <ul class="rs-key" aria-label="What the line shows">
+        <li data-pane-group="rs" data-pane="later edit odd"><span class="rs-key-before" aria-hidden="true"></span><span>Before Reliable since: rows that are there, but not to be read as reliable</span></li>
+        <li><span class="gap-n" aria-hidden="true">1</span><span><b>Gap 1</b> · until 28 Feb 2025 · no leads from the source <span class="mono">partner</span><span class="meta rs-key-where">only the rows where <span class="mono">lead_source</span> is <span class="mono">partner</span></span></span></li>
+        <li><span class="gap-n" aria-hidden="true">3</span><span><b>Gap 3</b> · 2 Sep 2025 – 8 Sep 2025 · app leads of iOS miss their channel<span class="meta rs-key-where">only the field <span class="mono">lead_channel</span>, where <span class="mono">lead_source</span> is <span class="mono">app</span></span></span></li>
+        <li class="rs-key-none"><span class="rs-key-pad" aria-hidden="true"></span><span>Gaps 2 and 4 have no period: they hold over the whole line, so it does not draw them.</span></li>
+       </ul>
       </div>
 
       <!-- Edit: from its first row, or a later day with why; on the date field of the Resource -->
@@ -354,7 +371,7 @@ The lead source is set by the form the visitor used: website, app, partner or ma
        <div class="gap-form-foot"><span class="meta">Goes into the history, with your name.</span><button class="btn-quiet" type="button" data-go="rs:later">Cancel</button><button class="btn-primary sm" type="submit" data-go="rs:later">Save</button></div>
       </form>
      </div>
-     <p class="label gaps-label">The gaps, one per line</p>
+     <p class="label gaps-label">The gaps, one per line, with the number the line gives them</p>
      <div class="gaps-none" data-pane-group="cardfill" data-pane="empty nothing" hidden>
       <p class="prose" data-pane-group="cardfill" data-pane="empty">No Known Gap written yet.</p>
       <p class="meta nothing-why" data-pane-group="cardfill" data-pane="empty" data-for="owner datateam">Required to publish: add the gaps you know of, or say there are none.</p>
@@ -822,5 +839,19 @@ The lead source is set by the form the visitor used: website, app, partner or ma
  <button class="seg" data-target="missing" role="tab" aria-selected="false">Missing</button>
 </div>
 <script src="app.js"></script>
+<script>
+// Reliable since not set (FR-RC-31): nothing is chosen until the Owner chooses; the choice opens the rest of the form
+// and switches Save on.
+document.querySelectorAll('.rs-ask').forEach((form) => {
+  const sync = () => {
+    const chosen = form.querySelector('input[name="rs-new"]:checked')?.value;
+    form.querySelectorAll('[data-rs-show]').forEach((el) => { el.hidden = !chosen || !el.dataset.rsShow.split(' ').includes(chosen); });
+    form.querySelector('.rs-none-yet').hidden = Boolean(chosen);
+    form.querySelector('.rs-save').disabled = !chosen;
+  };
+  form.addEventListener('change', sync);
+  sync();
+});
+</script>
 </body>
 </html>

@@ -1864,20 +1864,27 @@ button.lin-node:hover { box-shadow: 0 0 0 1.5px var(--tint-active); }
 .rs-value b { font-size: var(--text-section); font-weight: var(--weight-medium); color: var(--text-primary); }
 .rs-why { display: flex; flex-direction: column; gap: 2px; margin: 8px 0 4px; max-width: 720px; }
 .rs-why-k { font-size: var(--text-meta); color: var(--text-muted); }
-.rs-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.rs-actions .btn-quiet { display: inline-flex; align-items: center; gap: 6px; }
+.rs-q { margin: 0; font-size: var(--text-small); font-weight: var(--weight-medium); }
+.rs-save:disabled { opacity: .45; cursor: default; }
 .rs-line { margin-top: 4px; }
-.rs-track { position: relative; height: 12px; border-radius: var(--radius-pill); background: var(--text-secondary); overflow: hidden; }
+.rs-track { position: relative; height: 16px; border-radius: var(--radius-pill); background: var(--text-secondary); overflow: hidden; }
 .rs-before { position: absolute; inset: 0 auto 0 0; background: repeating-linear-gradient(135deg, var(--tint-active) 0 4px, var(--surface-solid) 4px 8px); }
-.rs-gap { position: absolute; top: 0; bottom: 0; min-width: 12px; background: var(--surface-solid); box-shadow: inset 0 0 0 1.5px var(--text-secondary); border-radius: 3px;
+.rs-gap { position: absolute; top: 0; bottom: 0; min-width: 12px; box-sizing: border-box; background: var(--surface-solid); border: 1.5px dashed var(--text-secondary); border-radius: 3px;
   display: flex; align-items: center; justify-content: center; }
-.rs-gap b { font-size: 9px; font-weight: var(--weight-medium); line-height: 1; color: var(--text-primary); }
+.rs-gap b { font-size: 10px; font-weight: var(--weight-medium); line-height: 1; color: var(--text-primary); }
 .rs-ticks { position: relative; height: 36px; margin-top: 6px; }
 .rs-tick { position: absolute; top: 0; display: flex; flex-direction: column; font-size: var(--text-meta); color: var(--text-muted); white-space: nowrap; }
 .rs-tick b { font-weight: var(--weight-medium); color: var(--text-secondary); }
 .rs-tick-mark { padding-left: 8px; border-left: 1.5px solid var(--text-primary); margin-top: -18px; padding-top: 18px; }
 .rs-tick-mark b { color: var(--text-primary); }
-.rs-legend { display: block; margin: 6px 0 0; }
+.rs-key { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: var(--text-meta); color: var(--text-secondary); }
+.rs-key li { display: flex; align-items: flex-start; gap: 8px; line-height: 1.45; }
+.rs-key b { font-weight: var(--weight-medium); color: var(--text-primary); }
+.rs-key .gap-n { margin-top: 0; }
+.rs-key-where { display: block; }
+.rs-key-before { flex: none; width: 18px; height: 12px; margin-top: 2px; border-radius: 3px; background: repeating-linear-gradient(135deg, var(--tint-active) 0 4px, var(--surface-solid) 4px 8px); }
+.rs-key-pad { flex: none; width: 18px; }
+.rs-key-none { color: var(--text-muted); }
 .rs-form { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; border-radius: var(--radius-md); background: var(--surface-solid);
   outline: 1.5px solid var(--text-secondary); outline-offset: -1.5px; }
 .rs-form .field { margin: 0; }
