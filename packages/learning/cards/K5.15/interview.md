@@ -1,10 +1,10 @@
-# Interview record · K5.15 Key Fields and Parameters
+# Interview record · K5.15 Key Fields
 
 The input of the card as the drafting gave it: nobody was interviewed, so each answer is what Claude brought, from which requirement, and where it went in the card. It is what the fact check reads the card against.
 
 | | |
 | --- | --- |
-| Card | K5.15 Key Fields and Parameters (Compass, section K5 Data Hub) |
+| Card | K5.15 Key Fields (Compass, section K5 Data Hub) |
 | Author | Max |
 | Interviewed | Not interviewed: drafted by Claude on 2026-11-15, with the learning-card skill |
 | Fact check | Claude, a review against the requirements and the code on 2026-11-15; Max reviews it in prod |
@@ -85,8 +85,8 @@ Published without a review first, at the author's request on 2026-11-15: "You ma
 - [ ] Max reviews the card in prod, as he asked on 2026-11-15
 - [ ] Fact check: someone of the Data Team reads the card against this record and the requirements
 - [ ] Test reader: a colleague outside data reads the card in prod and says in their own words what they learned (DEC-LR-38)
-- [ ] The Parameters of a Resource, the fields its Preview offers to filter on (DEC-SR-19, FR-SR-38), are not the Defined Term Parameter, the input of a Lens (DEC-DH-11); the card writes both with a capital, as the web app does: record it as an open point, raised in the review of this card
+- [x] The Parameters of a Resource, the fields its Preview offers to filter on (DEC-SR-19, FR-SR-38), are not the Defined Term Parameter, the input of a Lens (DEC-DH-11); the card writes both with a capital, as the web app does: record it as an open point, raised in the review of this card *Resolved on 2026-11-20: Parameters folded into the Key Fields (DEC-RC-34), and the card was rewritten to explain the Key Fields only, the Preview offering those of text or yes/no. Its rule, example, second question and You can now changed; the Data Team reads it again.*
 - [ ] The Dutch web app calls the Key Fields "Sleutelvelden", while the Defined Term, the plan and this card keep Key Field (DEC-DH-65): one of them is to change
-- [ ] A marker on Key fields and Parameters under Querying on the Overview listing this card: to design first (DEC-LR-22)
+- [ ] A marker on Key Fields under Querying on the Overview listing this card: to design first (DEC-LR-22)
 - [ ] `node scripts/learning-card.ts links` does not count the steps of the Owner Journey (`packages/contracts/src/journey.ts`) as a place that meets a card; this card is met there, at Key Fields and Parameters
 - [ ] Consider 2.3.5 under Where to next, for the reader who takes Key Fields for the key

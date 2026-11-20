@@ -131,7 +131,6 @@ export interface CatalogueDatabase {
     /** The Date Field its Owner Unit or the Data Team chose; null takes the one its table type gives (FR-RC-32). */
     dateField: string | null;
     keyFields: ColumnType<string[], string[] | undefined, string[]>;
-    parameters: ColumnType<string[], string[] | undefined, string[]>;
     /** Published, by name; the first Publication is the first Confirmation (DEC-SR-07). */
     publishedAt: Date | null;
     publishedBy: string | null;

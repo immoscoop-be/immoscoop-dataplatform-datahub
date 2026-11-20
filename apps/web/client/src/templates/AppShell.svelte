@@ -71,7 +71,7 @@
       return;
     }
     const target = event.target as Element;
-    tapped = target.closest('.panel') ? 'panel' : target.closest('main') ? 'main' : target.closest('.side') ? 'side' : tapped;
+    tapped = target.closest('.app > .panel') ? 'panel' : target.closest('.app > main') ? 'main' : target.closest('.app > .side') ? 'side' : tapped;
   }
 
   /** Over a picture or a flowing background, the frames blur it lightly (DEC-UX-34). */
@@ -104,16 +104,18 @@
 <style>
   .app { height: 100vh; display: flex; gap: var(--space-gap); padding: var(--space-frame); }
   .main { --card: var(--surface-solid); flex: 1; min-width: 0; background: var(--surface-glass); border-radius: var(--radius-xl); padding: 26px 30px; overflow: auto; }
-  @media (hover: hover) { .app:has(:global(.panel:hover)) .main { --card: var(--surface-soft); } }
+  /* Only the frames themselves count, the children of .app: a page may use the same class names inside, such as the
+     work area of a query side by side. */
+  @media (hover: hover) { .app:has(> :global(.panel:hover)) .main { --card: var(--surface-soft); } }
   .app[data-focus='panel'] .main, .app[data-focus='side'] .main { --card: var(--surface-soft); }
-  @media (hover: hover) { .app:has(:global(.side:hover)) .main { --card: var(--surface-soft); } }
+  @media (hover: hover) { .app:has(> .side:hover) .main { --card: var(--surface-soft); } }
   .side { display: flex; flex-shrink: 0; border-radius: var(--radius-xl); }
   .side.blur :global(aside) { -webkit-backdrop-filter: var(--blur-frame); backdrop-filter: var(--blur-frame); }
   /* Out of focus, the main area fades whole, its text with it (DEC-UX-146). */
   .main > :global(*) { transition: opacity var(--motion-focus) var(--delay-focus); }
-  @media (hover: hover) { .app:has(:global(.panel:hover)) .main > :global(*) { opacity: var(--opacity-out-of-focus); } }
+  @media (hover: hover) { .app:has(> :global(.panel:hover)) .main > :global(*) { opacity: var(--opacity-out-of-focus); } }
   .app[data-focus='panel'] .main > :global(*), .app[data-focus='side'] .main > :global(*) { opacity: var(--opacity-out-of-focus); }
-  @media (hover: hover) { .app:has(:global(.side:hover)) .main > :global(*) { opacity: var(--opacity-out-of-focus); } }
+  @media (hover: hover) { .app:has(> .side:hover) .main > :global(*) { opacity: var(--opacity-out-of-focus); } }
   .main.blur { -webkit-backdrop-filter: var(--blur-frame); backdrop-filter: var(--blur-frame); }
   .narrow { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; }
   .narrow p { margin: 18px 0 0; max-width: 360px; font-size: var(--text-body); line-height: 1.6; color: var(--text-secondary); }

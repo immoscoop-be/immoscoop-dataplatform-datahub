@@ -44,7 +44,7 @@
    * The Overview of a Resource, in parts, each a page of its own, with a navigation on the left under the tabs
    * (DEC-UX-168): the Summary first, which it opens on (FR-RC-19); then its Description, with the Business Description
    * in Markdown (FR-RC-20); its Known behaviour; its Known Gaps, one by one (FR-RC-21); how to query it, with its size
-   * and partitions from BigQuery (FR-SR-39), key fields and Parameters; the Entities it relates to; its maturity and
+   * and partitions from BigQuery (FR-SR-39), and its Key Fields; the Entities it relates to; its maturity and
    * Publication; and its recent history. Who may describe it edits each part in place, on its own page, attribute by
    * attribute as their Permission group allows (FR-RC-15, DEC-PL-03); what comes from dbt, and what the Data Team gave when adding it, stands next to it, read-only.
    * The Messages are no part of their own: "Messages" in the header opens them, and the Summary takes them (FR-RC-22).
@@ -224,7 +224,7 @@
   // Editing in place, one part at a time.
   let saving = $state(false);
   let failed = $state(false);
-  let draft = $state({ businessDescription: '', intendedUse: '', pitfalls: '', keyFields: [] as string[], parameters: [] as string[] });
+  let draft = $state({ businessDescription: '', intendedUse: '', pitfalls: '', keyFields: [] as string[] });
 
   function start(which: Editable) {
     draft = {
@@ -232,7 +232,6 @@
       intendedUse: card.intendedUse,
       pitfalls: card.pitfalls,
       keyFields: [...card.keyFields],
-      parameters: [...card.parameters],
     };
     failed = false;
     editing = which;
@@ -248,7 +247,7 @@
               ...(describes('behaviour') ? { intendedUse: draft.intendedUse } : {}),
               ...(describes('pitfalls') ? { pitfalls: draft.pitfalls } : {}),
             }
-          : { keyFields: draft.keyFields, parameters: draft.parameters };
+          : { keyFields: draft.keyFields };
     saving = true;
     const ok = await onsave(changes);
     saving = false;
@@ -297,7 +296,6 @@
     if (describes('pitfalls')) rows.push(command('overview:pitfalls', 'warning-fill', t('quick.overview.pitfalls'), () => void editAt('behaviour', '#pitfalls'), { words: t('quick.overview.pitfalls.words') }));
     if (describes('keyFields')) {
       rows.push(command('overview:keyField', 'key', t('quick.overview.keyField'), () => void editAt('querying', 'select[data-pick="keyFields"]'), { words: t('quick.overview.keyField.words') }));
-      rows.push(command('overview:parameter', 'sliders-horizontal', t('quick.overview.parameter'), () => void editAt('querying', 'select[data-pick="parameters"]'), { words: t('quick.overview.parameter.words') }));
     }
     if (describes('gaps')) {
       rows.push(
@@ -336,7 +334,7 @@
   {#each names as name (name)}<span class="code">{name}</span>{:else}<p class="empty">{t('resource.noneChosen')}</p>{/each}
 {/snippet}
 
-{#snippet chosen(key: 'keyFields' | 'parameters')}
+{#snippet chosen(key: 'keyFields')}
   <div class="chosen">
     {#each draft[key] as name (name)}
       <span class="code">{name}<button type="button" aria-label={t('resource.removeField', { name })} onclick={() => (draft[key] = draft[key].filter((other) => other !== name))}>×</button></span>
@@ -344,7 +342,7 @@
     <select
       class="add"
       data-pick={key}
-      aria-label={key === 'keyFields' ? t('resource.keyFields') : t('resource.parameters')}
+      aria-label={t('resource.keyFields')}
       value=""
       onchange={(event) => {
         const name = (event.currentTarget as HTMLSelectElement).value;
@@ -488,8 +486,6 @@
           <SubTile>
             <div class="label">{@render term('keyField', t('resource.keyFields'))}</div>
             {@render chosen('keyFields')}
-            <div class="label second">{t('resource.parameters')}</div>
-            {@render chosen('parameters')}
           </SubTile>
         </form>
       {:else}
@@ -528,8 +524,6 @@
           <SubTile>
             <div class="label">{@render term('keyField', t('resource.keyFields'))}</div>
             <div class="chosen">{@render chips(card.keyFields)}</div>
-            <div class="label second">{t('resource.parameters')}</div>
-            <div class="chosen">{@render chips(card.parameters)}</div>
           </SubTile>
         </Grid>
       {/if}
@@ -624,7 +618,6 @@
   .code button { all: unset; cursor: pointer; color: var(--text-muted); }
   .code button:focus-visible { outline: 2px solid var(--text-secondary); }
   .chosen { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-  .second { margin-top: 12px; margin-bottom: 8px; }
   .add { font: var(--text-meta) var(--font-family); color: var(--text-secondary); background: transparent; border: 1px dashed var(--tint-active); border-radius: var(--radius-chip); padding: 3px 6px; }
   .said { display: flex; align-items: center; gap: 6px; font-size: var(--text-small); font-weight: var(--weight-medium); margin-bottom: 6px; }
   .said :global(.icon) { color: var(--text-secondary); }

@@ -192,9 +192,10 @@
   </div>
   <div class="panel-label" data-for="owner colleague">History</div>
   <div data-pane-group="scope" data-pane="yours">
-  <!-- Per day this week, per week back to the start of last month, then per month; only today is open, the others load when opened (DEC-UX-139). -->
-  <div class="q-group open">
-   <button class="q-period" aria-expanded="true"><i class="ph ph-caret-down"></i><span>Today</span><span class="count">2</span></button>
+  <!-- Per day this week, per week back to the start of last month, then per month; every period starts folded, today
+       too, and loads when opened (DEC-UX-139). -->
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>Today</span><span class="count">2</span></button>
    <div class="q-entry" id="q-current">
     <a class="list-item card q-item current" aria-current="page" href="query.html" data-name="leads per source name weekly lead volume lead sources"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources" data-pane-group="qstate" data-pane="works"></i><i class="ph ph-table kind-icon broken-mark" role="img" aria-label="On Resources, broken" title="Broken: the column lead_channel of Weekly lead volume no longer exists" data-pane-group="qstate" data-pane="broken" hidden></i><span><span class="item-title">Leads per source name</span><span class="meta">Weekly lead volume +1 · 14 runs · 08:12</span></span></a>
     <button class="icon-btn q-unfold" aria-expanded="false" aria-label="Its runs"><i class="ph ph-caret-down"></i></button>
@@ -1108,7 +1109,8 @@
     $('not-run').hidden = false; $('no-history').hidden = false; $('hist-tab').textContent = 'History · no runs';
     document.querySelector('[data-group="rtab"] [data-target="result"]').textContent = 'Result';
     // In the panel, on top of today, not run yet; in the row, at the end of the Project
-    const today = document.querySelector('.q-group.open'), old = document.querySelector('.q-item.current');
+    const today = document.querySelector('.q-group'), old = document.querySelector('.q-item.current');
+    today?.classList.add('open'); today?.querySelector('.q-period')?.setAttribute('aria-expanded', 'true');
     old?.classList.remove('current'); old?.removeAttribute('aria-current');
     today?.querySelector('.q-period')?.insertAdjacentHTML('afterend', `<div class="q-entry"><a class="list-item card q-item current" aria-current="page" href="query.html?empty=1" data-name="new query"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><span class="item-title">${name}</span><span class="meta">Credit leads Q4 · not run yet</span></span></a></div>`);
     // In the row only in a Project: a blank query is in none

@@ -114,6 +114,7 @@ export default {
   'inPlace.addDescription': 'Een beschrijving toevoegen',
   'inPlace.save': 'Bewaren',
   'inPlace.cancel': 'Annuleren',
+  'inPlace.more': 'Meer bewerken',
   'inPlace.failed': 'Het kon niet bewaard worden. Probeer het zo meteen opnieuw.',
   'environment.ribbon': 'Dit is Data Hub {environment}, om in te testen: niet prod',
 } as const;

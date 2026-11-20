@@ -648,6 +648,9 @@ The Preview offers a choice per Parameter of the Resource, such as the weeks or 
 
 *Note of 2026-10-29, on building the third piece of part 5: the Preview offers its partition column, its first cluster column and the Parameters of its Card that are text, a number, a date or yes or no, up to six; a preview runs as a query of its own per User and Resource, by itself up to 100 MB, and goes to the Data Team above 1 GB ([TR-SR-19](../technical/04-stacks-and-resources.md#tr-sr-19)). It has no export ([DEC-UX-120](../../design/principles.md#dec-ux-120)).*
 
+*Note of 2026-11-20: a Resource has no Parameters of its own any more; its Preview offers its Key Fields of text or yes/no, no identifier, to choose by ([DEC-RC-34](05-resource-card.md#dec-rc-34)).*
+
+
 <a id="fr-sr-39"></a>
 ### FR-SR-39 · A Resource shows how it is partitioned and clustered
 

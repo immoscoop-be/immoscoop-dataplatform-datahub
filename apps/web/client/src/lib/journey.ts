@@ -12,7 +12,6 @@ const NAMES: Partial<Record<JourneyStepId, string>> = {
   pitfalls: 'journey.step.pitfalls',
   since: 'journey.step.since',
   gaps: 'journey.step.gaps',
-  parameters: 'journey.step.parameters',
   admin: 'journey.step.admin',
   messages: 'journey.step.messages',
 };
@@ -25,7 +24,6 @@ const PLACES: Partial<Record<JourneyStepId, StepPlace>> = {
   pitfalls: 'behaviour',
   since: 'gaps',
   gaps: 'gaps',
-  parameters: 'querying',
   admin: 'entities',
 };
 
@@ -36,7 +34,6 @@ const MISSING: Partial<Record<JourneyMissing, string>> = {
   pitfalls: 'journey.missing.pitfalls',
   knownGaps: 'journey.missing.knownGaps',
   reliableSince: 'journey.missing.reliableSince',
-  parameters: 'journey.missing.parameters',
   modelType: 'journey.missing.modelType',
   grain: 'journey.missing.grain',
   mappings: 'journey.missing.mappings',

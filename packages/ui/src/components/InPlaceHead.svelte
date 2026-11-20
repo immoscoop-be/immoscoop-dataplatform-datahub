@@ -9,7 +9,9 @@
    * The name of an object at the top of its page, with its description under it, edited in place (InPlaceHead,
    * DEC-UX-119, DEC-UX-162), as the name and question of a query are: for whoever may change them, a click on
    * either turns both into fields, with Save and Cancel; Escape cancels too, and a name stays required. Without
-   * a description, an editor sees "Add a description" in its place. For everyone else both are plain text.
+   * a description, an editor sees "Add a description" in its place. For everyone else both are plain text. Where the
+   * object has more to change, "Edit more" beside Save and Cancel opens all of it, with what was typed (DEC-UX-309);
+   * `edit()` starts editing from elsewhere, such as the quick window.
    */
   let {
     name,
@@ -23,6 +25,7 @@
     level = 1,
     lead,
     trail,
+    onmore,
   }: {
     name: string;
     /** Left out for an object whose name alone is edited here, such as a Lens. */
@@ -39,6 +42,8 @@
     /** Marks in the heading before and after the name, such as the kind and Level of a Lens; never part of what is edited. */
     lead?: Snippet;
     trail?: Snippet;
+    /** "Edit more": every field of the object, starting from what was typed here. */
+    onmore?: (typed: { name: string; description: string }) => void;
   } = $props();
 
   let editing: { name: string; description: string; at: 'name' | 'description' } | null = $state(null);
@@ -48,6 +53,18 @@
   function start(at: 'name' | 'description') {
     editing = { name, description: description ?? '', at };
     problem = '';
+  }
+
+  /** Starts editing in place from elsewhere, such as the quick window, the focus in the name. */
+  export function edit(): void {
+    if (canEdit) start('name');
+  }
+
+  function more() {
+    if (!editing || !onmore) return;
+    const typed = { name: editing.name.trim() || name, description: editing.description.trim() };
+    editing = null;
+    onmore(typed);
   }
 
   /** The field that was clicked is ready to type in. */
@@ -98,6 +115,7 @@
     <span class="actions">
       <Button type="submit" disabled={saving || editing.name.trim() === ''}>{t('inPlace.save')}</Button>
       <Button variant="quiet" onclick={() => (editing = null)}>{t('inPlace.cancel')}</Button>
+      {#if onmore}<button type="button" class="more" onclick={more}>{t('inPlace.more')}</button>{/if}
       {#if problem}<span class="problem" role="alert">{problem}</span>{/if}
     </span>
   </form>
@@ -129,4 +147,7 @@
   .edit { max-width: 640px; margin-top: 6px; }
   .actions { display: flex; align-items: center; gap: 8px; }
   .problem { font-size: var(--text-small); color: var(--signal-urgent); }
+  .more { all: unset; margin-left: 4px; cursor: pointer; font-size: var(--text-small); color: var(--text-secondary); text-decoration: underline; text-underline-offset: 3px; }
+  .more:hover { color: var(--text-primary); }
+  .more:focus-visible { outline: 2px solid var(--text-secondary); outline-offset: 2px; }
 </style>

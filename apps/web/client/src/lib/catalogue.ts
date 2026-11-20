@@ -122,7 +122,6 @@ export interface Card {
   /** The Date Field its Owner Unit or the Data Team chose; null takes the one its table type gives (FR-RC-32). */
   dateField: string | null;
   keyFields: string[];
-  parameters: string[];
 }
 
 /** A Resource with its fields, and the columns of its table left out of it (DEC-SR-33). */

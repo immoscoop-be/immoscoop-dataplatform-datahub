@@ -109,7 +109,7 @@ const ATTRIBUTE_NAMES: Record<Attribute, string> = {
   pitfalls: 'pitfalls',
   availableSince: 'available since',
   gaps: 'Known Gaps',
-  keyFields: 'key fields and Parameters',
+  keyFields: 'Key Fields',
   entityMapping: 'Entity mapping',
 };
 
@@ -128,7 +128,6 @@ const CARD_ATTRIBUTES: Record<CardKey, Attribute> = {
   reliableSince: 'availableSince',
   dateField: 'availableSince',
   keyFields: 'keyFields',
-  parameters: 'keyFields',
 };
 
 /** The attribute who answers in a step of the Owner Journey may describe (DEC-PL-03, DEC-MR-16). */
@@ -142,7 +141,6 @@ const STEP_ATTRIBUTES: Record<JourneyStepId, Attribute> = {
   pitfalls: 'pitfalls',
   since: 'availableSince',
   gaps: 'gaps',
-  parameters: 'keyFields',
   admin: 'description',
   messages: 'description',
   publish: 'description',
@@ -1098,15 +1096,12 @@ export function parseCard(body: unknown): CardChanges | string {
     }
     card.dateField = input.dateField as string | null;
   }
-  for (const key of ['keyFields', 'parameters'] as const) {
-    const value = input[key];
-    if (value === undefined) {
-      continue;
-    }
+  if (input.keyFields !== undefined) {
+    const value = input.keyFields;
     if (!Array.isArray(value) || value.length > 50 || !value.every((name) => NAME(name)) || new Set(value).size !== value.length) {
-      return `The ${key} are a list of at most 50 different fields.`;
+      return 'The keyFields are a list of at most 50 different fields.';
     }
-    card[key] = value as string[];
+    card.keyFields = value as string[];
   }
   if (Object.keys(card).length === 0) {
     return 'Send at least one thing to change.';

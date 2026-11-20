@@ -58,14 +58,13 @@
   let show = $state<'all' | 'changed'>('all');
   const listed = $derived(show === 'changed' ? resource.fields.filter((field) => changedInDbt.has(field.name)) : resource.fields);
 
-  /** What a field serves as, in the order of the design: a Key Field first (DEC-UX-266), the partition, a cluster column, a Parameter. */
+  /** What a field serves as, in the order of the design: a Key Field first (DEC-UX-266), the partition, a cluster column. */
   function roles(field: Field): { label: string; strong: boolean; warn?: boolean; key?: boolean }[] {
     const cluster = details.clusterBy.indexOf(field.name);
     return [
       ...(resource.card.keyFields.includes(field.name) ? [{ label: t('resource.role.keyField'), strong: false, key: true }] : []),
       ...(details.partition?.field === field.name ? [{ label: t('resource.role.partition'), strong: true }] : []),
       ...(cluster >= 0 ? [{ label: t('resource.role.cluster', { number: cluster + 1 }), strong: true }] : []),
-      ...(resource.card.parameters.includes(field.name) ? [{ label: t('resource.role.parameter'), strong: false }] : []),
       ...(added.has(field.name) ? [{ label: t('resource.role.new'), strong: false, warn: true }] : []),
     ];
   }

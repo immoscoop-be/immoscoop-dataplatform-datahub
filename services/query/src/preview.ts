@@ -47,11 +47,11 @@ export function windowFilter(field: string, dataType: string | null, unit: strin
   return null;
 }
 
-/** A column a Preview offers to choose by: its first cluster column, then the Parameters of its Card (FR-SR-38). */
+/** A column a Preview offers to choose by: its first cluster column, then the Key Fields of its Card that sort its rows (FR-SR-38, DEC-RC-34). */
 export interface Choice {
   field: string;
   dataType: string;
-  role: 'cluster' | 'parameter';
+  role: 'cluster' | 'keyField';
   kind: ParameterKind;
 }
 
@@ -66,17 +66,23 @@ function kindOfType(dataType: string | null): ParameterKind | null {
   return null;
 }
 
+/** An identifier by the naming of the dbt projects (`...Id`, `...Uid`, `..._id`): a list of its values sorts nothing. */
+const IDENTIFIER = /(?:^id|_id|Id|Uid)$/;
+
+/** What a Key Field must be for a Preview to offer it: text or yes/no, which sort its rows into a few kinds. */
+const SORTS: readonly ParameterKind[] = ['choice', 'yesno'];
+
 export function choicesOf(resource: QueryResource): Choice[] {
   const wanted: { field: string; role: Choice['role'] }[] = [
     ...(resource.clusterBy[0] ? [{ field: resource.clusterBy[0], role: 'cluster' as const }] : []),
-    ...resource.parameters.map((field) => ({ field, role: 'parameter' as const })),
+    ...resource.keyFields.filter((field) => !IDENTIFIER.test(field)).map((field) => ({ field, role: 'keyField' as const })),
   ];
   const choices: Choice[] = [];
   for (const { field, role } of wanted) {
     if (field === resource.partition?.field || choices.some((choice) => choice.field === field) || !NAME.test(field)) continue;
     const dataType = resource.fields.find((candidate) => candidate.name === field)?.dataType ?? null;
     const kind = kindOfType(dataType);
-    if (kind && dataType) choices.push({ field, dataType, role, kind });
+    if (kind && dataType && (role === 'cluster' || SORTS.includes(kind))) choices.push({ field, dataType, role, kind });
   }
   return choices.slice(0, CHOICES);
 }

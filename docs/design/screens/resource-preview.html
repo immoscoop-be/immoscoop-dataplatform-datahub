@@ -1,6 +1,6 @@
 <!--
   Screen: Resource detail, the Preview tab
-  The first rows of the Resource, with its Parameters to choose which rows, and nothing to type: no SQL, no query builder.
+  The first rows of the Resource, with its choices to filter which rows: its window, its first cluster column and its Key Fields of text or yes/no (DEC-RC-34); nothing to type: no SQL, no query builder.
   Every preview is a query: a Pre-flight says what it scans, and the result carries its Query ID, kept in the Query Log.
   The weeks are the partition column and the lead source the first cluster column, so a preview reads only what it shows.
   A result shows 100 rows a page; a page is read from the same run, never a new query (FR-SR-51, DEC-SR-30).
@@ -128,9 +128,10 @@
  </div>
  <div class="tab-content card">
   <div class="param-bar">
-   <span class="label" style="margin:0">Parameters</span>
+   <span class="label" style="margin:0">Filter</span>
    <label class="param"><span>Weeks</span><span class="pill pill-strong" title="The partition column: choosing weeks reads only those partitions">Partition</span><select><option>Last 4 weeks</option><option>Last 8 weeks</option><option>This year</option></select></label>
    <label class="param"><span>Lead source</span><span class="pill pill-strong" title="The first cluster column: choosing a source reads less">Cluster</span><select><option>All sources</option><option>website</option><option>app</option><option>partner</option><option>mail</option></select></label>
+   <label class="param"><span>Lead channel</span><span class="pill" title="A Key Field of text: choosing a channel shows only its rows">Key Field</span><select><option>All channels</option><option>search</option><option>push</option><option>email</option></select></label>
    <span style="flex:1"></span>
    <span class="preflight ok"><i class="ph-fill ph-gauge"></i>Scans about 80 MB · 4 of 312 partitions</span>
   </div>
