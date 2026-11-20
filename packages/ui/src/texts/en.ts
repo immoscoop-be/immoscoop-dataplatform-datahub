@@ -116,6 +116,7 @@ export default {
   'inPlace.addDescription': 'Add a description',
   'inPlace.save': 'Save',
   'inPlace.cancel': 'Cancel',
+  'inPlace.more': 'Edit more',
   'inPlace.failed': 'It could not be saved. Try again in a moment.',
   'environment.ribbon': 'This is Data Hub {environment}, to test in: not prod',
 } as const satisfies Record<keyof typeof nl, string>;

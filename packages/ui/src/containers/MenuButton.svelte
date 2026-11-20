@@ -21,7 +21,8 @@
    * Space or the down arrow opens the menu on its first choice, the up arrow on its last; the arrows move through the
    * choices, Home and End jump, Enter or a click does one and closes the menu. Escape, Tab or a click beside it closes
    * the menu, and the focus goes back to the button, except after Tab or a click elsewhere. A line on top may say what
-   * the choices act on.
+   * the choices act on. With words of its own, it is a primary button with them, such as "New" on the page of a
+   * Collection (DEC-UX-310).
    */
   let {
     icon,
@@ -29,6 +30,7 @@
     caption,
     choices,
     align = 'end',
+    text,
   }: {
     icon: IconName;
     /** Its name, on hover and for a screen reader. */
@@ -38,6 +40,8 @@
     choices: readonly MenuChoice[];
     /** The edge the menu is aligned to: the end of the button, at the right of the page, or its start. */
     align?: 'start' | 'end';
+    /** Its words, on the button itself: a primary button, its name these words. */
+    text?: string;
   } = $props();
 
   let open = $state(false);
@@ -106,15 +110,16 @@
     bind:this={button}
     type="button"
     class="opener"
-    aria-label={label}
-    title={label}
+    class:primary={text !== undefined}
+    aria-label={text === undefined ? label : undefined}
+    title={text === undefined ? label : undefined}
     aria-haspopup="menu"
     aria-expanded={open}
     aria-controls={id}
     onclick={() => (open ? close() : void show())}
     onkeydown={onbuttonkey}
   >
-    <Icon name={icon} /><span class="caret"><Icon name="caret-down" /></span>
+    <Icon name={icon} />{#if text !== undefined}<span>{text}</span>{/if}<span class="caret"><Icon name="caret-down" /></span>
   </button>
   {#if open}
     <div bind:this={menu} {id} class="menu" class:start={align === 'start'} role="menu" aria-label={label} tabindex="-1" onkeydown={onmenukey}>
@@ -135,6 +140,10 @@
   .opener:hover { background: var(--tint-hover); color: var(--text-primary); }
   .opener[aria-expanded='true'] { background: var(--tint-active); color: var(--text-primary); }
   .caret { display: inline-flex; font-size: 10px; color: var(--text-muted); }
+  .opener.primary { height: auto; gap: 6px; padding: 9px 13px 9px 15px; border-radius: var(--radius-pill); background: var(--text-primary); color: var(--surface-solid);
+    font: var(--weight-medium) var(--text-small) var(--font-family); }
+  .opener.primary:hover, .opener.primary[aria-expanded='true'] { background: var(--text-primary); color: var(--surface-solid); opacity: .88; }
+  .opener.primary .caret { color: inherit; margin-left: 2px; }
   .menu { position: absolute; z-index: 30; top: calc(100% + 6px); right: 0; width: max-content; min-width: 260px; padding: 6px; border-radius: var(--radius-md);
     background: var(--surface-solid); outline: 1px solid var(--tint-active); box-shadow: var(--sheet-shadow); }
   .menu.start { right: auto; left: 0; }
