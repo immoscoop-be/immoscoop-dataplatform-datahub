@@ -17,7 +17,7 @@
   What Data Hub checked in the frame is the one list of what makes a Resource ready, and what the User confirms is the
   whole card, read back; the declaration accepts every text on it (DEC-MR-17).
   The button is the User's alone: Claude cannot use it (DEC-CL-07). The Log says it was published through Claude (DEC-CL-08).
-  Requirements: FR-CL-01, FR-CL-03, FR-CL-05, FR-CL-06, FR-CL-12, FR-CL-27, FR-CL-32, FR-MR-17
+  Requirements: FR-CL-01, FR-CL-03, FR-CL-05, FR-CL-06, FR-CL-12, FR-CL-27, FR-CL-32, FR-MR-17, FR-RC-31
   Decisions: DEC-UX-164, DEC-CL-01, DEC-CL-02, DEC-CL-07, DEC-CL-08, DEC-SR-28, DEC-MR-07, DEC-MR-10, DEC-UX-31, DEC-UX-63, DEC-DH-15, DEC-MR-15, DEC-MR-16, DEC-MR-17, DEC-CL-17.
   Open points: OP-CL-01.
   Not in v1: the whole screen, as Claude comes in version 2 (DEC-CH-02). Its blocks are those of resource-publish.html.
@@ -59,7 +59,7 @@
     <div class="label">What Data Hub checked</div>
     <div class="check-line"><i class="ph-fill ph-check-circle"></i><span>In Credit leads, owned by the credit team: you may publish it.</span></div>
     <div class="check-line" data-pane-group="pub" data-pane="ready"><i class="ph-fill ph-check-circle"></i><span><b>Described in dbt:</b> the view and its 4 columns have a description.</span></div>
-    <div class="check-line" data-pane-group="pub" data-pane="ready"><i class="ph-fill ph-check-circle"></i><span><b>Required to publish, all done:</b> its Business Description; 2 Key Fields, each described; its intended use; its pitfalls; 1 Known Gap; reliable since 1 Jan 2025.</span></div>
+    <div class="check-line" data-pane-group="pub" data-pane="ready"><i class="ph-fill ph-check-circle"></i><span><b>Required to publish, all done:</b> its Business Description; 2 Key Fields, each described; its intended use; its pitfalls; reliable since 1 Jan 2025, on <span class="mono">week_start</span>; 1 Known Gap.</span></div>
     <div class="check-line" data-pane-group="pub" data-pane="ready"><i class="ph ph-circle"></i><span><b>Advised:</b> 2 fields without a Business Description; no Parameters. <b>For the EDA, later:</b> its table type and grain.</span></div>
     <div class="check-line missing" data-pane-group="pub" data-pane="notready" hidden><i class="ph-fill ph-warning-circle"></i><span><b>Not described in dbt:</b> the view has no description yet, and none of its columns has one. The Data Team describes it in dbt; until then the Resource stays 1 · Available and cannot be published.</span></div>
    </div><div class="pub-block" data-pane-group="pub" data-pane="ready">
@@ -72,7 +72,9 @@
      <p>One row per week and lead source with the number of credit leads sent to KBC. A lead counts in the week it was first submitted, not when it was followed up. Test and duplicate requests are excluded.</p>
      <div class="desc-head"><span class="label">Intended use · Pitfalls</span></div>
      <p>Weekly trends, and comparing lead sources. The current week is incomplete until Monday morning; don't sum across sources for unique people.</p>
-     <div class="desc-head"><span class="label">Known Gaps · reliable since 1 Jan 2025</span></div>
+     <div class="desc-head"><span class="label">Reliable since · 1 Jan 2025, on <span class="mono">week_start</span></span></div>
+     <p>2024 was loaded once from the old CRM export: its weeks are incomplete, and the sources are not split.</p>
+     <div class="desc-head"><span class="label">Known Gaps</span></div>
      <p>No leads from the source partner before March 2025: the partner feed started then.</p>
      <a class="text-link" href="mcp-resource.html"><span>And its 4 fields, each with a description</span><i class="ph ph-arrow-right"></i></a>
     </div>
@@ -108,7 +110,7 @@
   <p>Shall I ask the Data Team with a Question on the Resource?</p>
  </div>
  <div class="mcp-msg" data-pane-group="pub" data-pane="steps" hidden>
-  <p>Not yet: two steps required to publish are still open, <b>Pitfalls</b> and <b>Known Gaps and reliable since</b>. The publication opens once they are done, in Data Hub as here.</p>
+  <p>Not yet: two steps required to publish are still open, <b>Pitfalls</b> and <b>Known Gaps</b>. The publication opens once they are done, in Data Hub as here.</p>
   <p>Shall we do them now? I'll take you through them one at a time: first the pitfalls, where colleagues trip up on the weekly figures.</p>
  </div>
  <div class="mcp-msg" data-pane-group="pub" data-pane="notowner" hidden>

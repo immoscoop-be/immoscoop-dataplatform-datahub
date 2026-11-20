@@ -26,8 +26,8 @@
   Business Description beside dbt and the test between a Known Gap and a Pitfall (DEC-UX-279); a Known Gap is written one at a time with where it holds (add_known_gap). What is in a
   field is not shown yet: it gets its own design first (DEC-RC-28, OP-RC-29).
   The switches: the step, on the left; who asks (an Owner, a Business Analyst of the Owner Unit, or someone outside it);
-  the case of step 11 (ready, or a required step still open); and the Annotations.
-  Requirements: FR-CL-30, FR-CL-33, FR-CL-34, FR-CL-35, FR-LR-44
+  the case of step 12 (ready, or a required step still open); and the Annotations.
+  Requirements: FR-CL-30, FR-CL-33, FR-CL-34, FR-CL-35, FR-LR-44, FR-RC-31, FR-RC-32
   Decisions: DEC-MR-15, DEC-UX-279, DEC-MR-16, DEC-MR-17, DEC-UX-261, DEC-CL-07, DEC-CL-02, DEC-SR-28, DEC-MR-07, DEC-CL-18,
   DEC-CL-19, DEC-CL-20, DEC-UX-271, DEC-UX-272, DEC-UX-273, DEC-UX-274, DEC-UX-276, DEC-RC-26, DEC-RC-27,
   DEC-RC-28.
@@ -67,12 +67,13 @@
   <button data-target="s4" role="tab" aria-selected="false"><span class="n">4</span><span>Fields</span><span class="oj-mark" title="Required for the Key Fields, advised for the others">Required</span><span class="cards">K5.14</span></button>
   <button data-target="s5" role="tab" aria-selected="false"><span class="n">5</span><span>Intended use</span><span class="oj-mark" title="Required to publish">Required</span><span class="cards">3.3.3, extended</span></button>
   <button data-target="s6" role="tab" aria-selected="false"><span class="n">6</span><span>Pitfalls</span><span class="oj-mark" title="Required to publish">Required</span><span class="cards">K5.16</span></button>
-  <button data-target="s7" role="tab" aria-selected="false"><span class="n">7</span><span>Known Gaps, reliable since</span><span class="oj-mark" title="Required to publish">Required</span><span class="cards">K5.3 · K5.17</span></button>
-  <button data-target="s8" role="tab" aria-selected="false"><span class="n">8</span><span>Parameters</span><span class="oj-mark advised" title="Advised">Advised</span><span class="cards">K5.15</span></button>
-  <button data-target="s9" role="tab" aria-selected="false"><span class="n">9</span><span>Table type, grain, mappings</span><span class="oj-mark eda" title="Table type and grain needed for the EDA; mappings advised">EDA</span><span class="cards">2.3.6 · K5.18</span></button>
-  <button data-target="s10" role="tab" aria-selected="false"><span class="n">10</span><span>Questions and Signals</span><span class="oj-mark advised" title="Advised">Advised</span><span class="cards">4.7.1</span></button>
-  <button data-target="s11" role="tab" aria-selected="false"><span class="n">11</span><span>Read it back and publish</span><span class="oj-mark" title="Required: only the Owner publishes">Required</span><span class="cards">K5.13 · K5.2</span></button>
-  <button data-target="s12" role="tab" aria-selected="false"><span class="n">12</span><span>After</span><span class="oj-mark bare"></span><span class="cards">K5.19 · K5.2</span></button>
+  <button data-target="s7" role="tab" aria-selected="false"><span class="n">7</span><span>Reliable since</span><span class="oj-mark" title="Required to publish">Required</span><span class="cards">K5.17</span></button>
+  <button data-target="s8" role="tab" aria-selected="false"><span class="n">8</span><span>Known Gaps</span><span class="oj-mark" title="Required to publish">Required</span><span class="cards">K5.3</span></button>
+  <button data-target="s9" role="tab" aria-selected="false"><span class="n">9</span><span>Parameters</span><span class="oj-mark advised" title="Advised">Advised</span><span class="cards">K5.15</span></button>
+  <button data-target="s10" role="tab" aria-selected="false"><span class="n">10</span><span>Table type, grain, mappings</span><span class="oj-mark eda" title="Table type and grain needed for the EDA; mappings advised">EDA</span><span class="cards">2.3.6 · K5.18</span></button>
+  <button data-target="s11" role="tab" aria-selected="false"><span class="n">11</span><span>Questions and Signals</span><span class="oj-mark advised" title="Advised">Advised</span><span class="cards">4.7.1</span></button>
+  <button data-target="s12" role="tab" aria-selected="false"><span class="n">12</span><span>Read it back and publish</span><span class="oj-mark" title="Required: only the Owner publishes">Required</span><span class="cards">K5.13 · K5.2</span></button>
+  <button data-target="s13" role="tab" aria-selected="false"><span class="n">13</span><span>After</span><span class="oj-mark bare"></span><span class="cards">K5.19 · K5.2</span></button>
   <div class="sep" role="presentation"></div>
   <button data-target="resume" role="tab" aria-selected="false"><span class="n"><i class="ph ph-arrow-counter-clockwise" aria-hidden="true"></i></span><span>Picked up again, in a new conversation</span><span class="oj-mark bare"></span></button>
  </nav>
@@ -105,7 +106,7 @@
     <div class="oj-held">
      <span class="label">You</span>
      <p data-pane-group="who" data-pane="owner">You are in SEO, the Owner Unit of Attraction: you may describe this Resource and publish it.</p>
-     <p data-pane-group="who" data-pane="analyst" hidden>You are a Business Analyst in SEO: you may describe this Resource with Claude, step by step. Publishing it is for an Owner of SEO; you hand it over at step 11.</p>
+     <p data-pane-group="who" data-pane="analyst" hidden>You are a Business Analyst in SEO: you may describe this Resource with Claude, step by step. Publishing it is for an Owner of SEO; you hand it over at step 12.</p>
      <span class="label" style="margin-top:6px">Publishing it</span>
      <div class="check-line"><i class="ph-fill ph-globe-simple" aria-hidden="true"></i><span><b>Everyone who sees Attraction sees it,</b> the whole company. Now only SEO and the Data Team do.</span></div>
      <div class="check-line"><i class="ph-fill ph-seal-check" aria-hidden="true"></i><span><b>It is the first Confirmation:</b> for SEO, you vouch for what it is and what it stands for, and every text on its card is yours. The Level rises to 3 · Confirmed.</span></div>
@@ -124,7 +125,7 @@
    </section>
   </div>
   <div class="oj-row" data-pane-group="who" data-pane="owner"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg">
-   <p>You're in SEO, so this one is yours to publish. We go through its card first: twelve steps, seven of them required before the publication opens. Nothing you write is final, you can change it later, here or in Data Hub; only the publication can't be undone. And you can stop at any step and pick it up later.</p>
+   <p>You're in SEO, so this one is yours to publish. We go through its card first: thirteen steps, eight of them required before the publication opens. Nothing you write is final, you can change it later, here or in Data Hub; only the publication can't be undone. And you can stop at any step and pick it up later.</p>
    <p>Intended use and pitfalls are already on the card. Someone wrote them before, so I'll ask you to read them as your own.</p>
    <p>Shall we start by looking at the data together? (<a class="text-link" style="display:inline"><span>K5.12 The Owner Journey</span></a>)</p>
   </div></div>
@@ -162,10 +163,10 @@
     <div class="oj-now"><h3>Know the data</h3></div>
     <div class="oj-held"><dl>
      <dt>One row, says dbt</dt><dd>One day × query × country × device × search type, from the Search Console bulk export.</dd>
-     <dt>Grain</dt><dd class="none">Not recorded by a Data Admin yet: step 9.</dd>
+     <dt>Grain</dt><dd class="none">Not recorded by a Data Admin yet: step 10.</dd>
      <dt>Comes from</dt><dd><span class="mono">searchdata_site_impression</span>, the export of Google, loaded daily.</dd>
      <dt>Used by</dt><dd>3 colleagues, 31 queries in the last 30 days.</dd>
-     <dt>Messages</dt><dd>1 open Question: step 10.</dd>
+     <dt>Messages</dt><dd>1 open Question: step 11.</dd>
     </dl></div>
     <div class="oj-help">
      <span class="label"><i class="ph ph-lifebuoy" aria-hidden="true"></i>How can we help with this step?</span>
@@ -182,7 +183,7 @@
   </div></div>
   <div class="oj-row"><span class="oj-tag cui">CUI · you</span><div class="mcp-msg user">Yes. The empty queries are the ones Google anonymises.</div></div>
   <div class="oj-row"><span class="oj-tag cui">CUI · tool</span><div class="mcp-tool"><i class="ph ph-plugs-connected" aria-hidden="true"></i>Data Hub · <span class="mono">guide_owner_journey</span> · step 1 gone through</div></div>
-  <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg"><p>Noted: the anonymised queries come back under Known Gaps, in step 7. Next is step 2, the Business Description.</p></div></div>
+  <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg"><p>Noted: the anonymised queries come back under Known Gaps, in step 8. Next is step 2, the Business Description.</p></div></div>
  </div>
 
  <!-- ===================== 2 · Business Description ===================== -->
@@ -396,20 +397,59 @@
   <div class="oj-row"><span class="oj-tag cui">CUI · tool</span><div class="mcp-tool"><i class="ph ph-plugs-connected" aria-hidden="true"></i>Data Hub · <span class="mono">update_resource_card</span> · pitfalls, before: the text of 6 Nov · then <span class="mono">guide_owner_journey</span></div></div>
  </div>
 
- <!-- ===================== 7 · Known Gaps and reliable since ===================== -->
+ <!-- ===================== 7 · Reliable since ===================== -->
  <div data-pane-group="step" data-pane="s7" hidden style="display:contents">
-  <p class="oj-step-head">Step 7 · Known Gaps and reliable since: Claude looks for holes in the data, the Owner says what they mean; one gap at a time, with where it holds, and a misreading moved to the pitfalls</p>
-  <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg"><p><b>Step 7 · Known Gaps and reliable since</b>, required. Where data is missing, and from which date it can be relied on. A gap is in the data itself; how it is misread belongs to the pitfalls. (<a class="text-link" style="display:inline"><span>K5.3 The Known Gaps of a Resource</span></a>, <a class="text-link" style="display:inline"><span>K5.17 Reliable since</span></a>)</p></div></div>
+  <p class="oj-step-head">Step 7 · Reliable since: from which day the whole table can be relied on, read on its one date field; or from its first row. Claude shows what the data says, the Owner decides and says why not earlier</p>
+  <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg"><p><b>Step 7 · Reliable since</b>, required. The day from which the whole table can be relied on: rows before it stay, but nobody should read them as reliable, so a trend or a comparison starts there. It may simply be its first row. A hole after that day, or in part of the rows, is a Known Gap: that's the next step. (<a class="text-link" style="display:inline"><span>K5.17 Reliable since</span></a>)</p></div></div>
   <div class="oj-row oj-app"><span class="oj-tag oj-mcp">MCP App</span>
    <section class="mcp-app oj-win" aria-label="Owner Journey, step 7, from Data Hub">
     <div class="mcp-app-head"><i class="ph-fill ph-path" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">Owner Journey · Attraction · Owner: SEO</span><div class="float-title">Search Console impressions, whole site</div></div></div>
     <div class="oj-progress" data-at="7"></div>
-    <div class="oj-now"><h3>Known Gaps and reliable since</h3><button class="oj-term" type="button" data-term aria-expanded="true" aria-label="What it means" title="What it means">ⓘ</button><span class="oj-mark">Required to publish</span></div>
+    <div class="oj-now"><h3>Reliable since</h3><button class="oj-term" type="button" data-term aria-expanded="true" aria-label="What it means" title="What it means">ⓘ</button><span class="oj-mark">Required to publish</span></div>
+    <div class="oj-term-def"><p><b>Reliable Since</b> · The day from which the whole table of a Resource can be relied on, read on its Date Field, with why not earlier; or from its first row. Rows before it stay, but are not to be read as reliable. A hole after that day, or in part of the rows, is a Known Gap.</p><p><b>Date Field</b> · The one date field of a Resource that Reliable Since and the periods of its Known Gaps are read on. Its table type gives it: the event date of an event, the date of a fact, the period of an aggregate.</p></div>
+    <div class="oj-held"><dl>
+     <dt>Reliable since</dt><dd class="none">Not set</dd>
+     <dt>Read on</dt><dd><span class="mono">data_date</span>, its only date field: no table type is recorded yet (step 10). For an aggregate it is its period.</dd>
+     <dt>Its first row</dt><dd>14 Feb 2025</dd>
+     <dt>Rows per day</dt><dd>14–28 Feb 2025: about a third of March</dd>
+    </dl></div>
+    <div class="oj-help">
+     <span class="label"><i class="ph ph-lifebuoy" aria-hidden="true"></i>How can we help with this step?</span>
+     <details class="oj-help-card"><summary><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><span class="num">K5.17</span><span class="tt">Reliable since <span class="oj-towrite">To write</span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></summary>
+      <div class="body"><p class="rule"><b>Reliable since</b> is the day from which the whole table can be relied on; a Known Gap is a hole after that day, or in part of the rows.</p><p class="gain">Nobody compares this year with a start-up period that was never complete.</p><div class="acts"><a class="text-link dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open the card in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div></div>
+     </details>
+    </div>
+    <div class="mcp-app-foot"><span>Written with <span class="mono">update_resource_card</span>: the day, or from its first row; why not earlier; and the date field. Once you agree.</span><a class="text-link open-dh dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open Reliable since in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
+   </section>
+  </div>
+  <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg">
+   <p>The export starts on 14 Feb 2025, but its first two weeks hold about a third of the rows per day of March. Two ways to answer:</p>
+   <p>1. <b>From its first row</b>, if those weeks are complete and the drop is real.<br>2. <b>From a later day</b>, if they aren't: then I need why not earlier, in a sentence a colleague understands.</p>
+   <p class="src">I'd read it on <code>data_date</code>, the day Google counted: the only date field, and the period of an aggregate, which it looks like.</p>
+  </div></div>
+  <div class="oj-row"><span class="oj-tag cui">CUI · you</span><div class="mcp-msg user">From 1 March 2025: February was a test of the export.</div></div>
+  <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg">
+   <p>Then I write:</p>
+   <blockquote><b>Reliable since 1 Mar 2025</b>, on <code>data_date</code>. Why not earlier: February 2025 was a test of the export; its days are incomplete.</blockquote>
+   <p>The rows of February stay; the card tells everyone not to compare with them.</p>
+  </div></div>
+  <div class="oj-row"><span class="oj-tag cui">CUI · you</span><div class="mcp-msg user">Yes, write it.</div></div>
+  <div class="oj-row"><span class="oj-tag cui">CUI · tool</span><div class="mcp-tool"><i class="ph ph-plugs-connected" aria-hidden="true"></i>Data Hub · <span class="mono">update_resource_card</span> · reliableSince 2025-03-01, why, on <span class="mono">data_date</span>, before: not set · then <span class="mono">guide_owner_journey</span></div></div>
+ </div>
+
+ <!-- ===================== 8 · Known Gaps ===================== -->
+ <div data-pane-group="step" data-pane="s8" hidden style="display:contents">
+  <p class="oj-step-head">Step 8 · Known Gaps: Claude looks for holes after the day it is reliable since, the Owner says what they mean; one gap at a time, with where it holds, and a misreading moved to the pitfalls</p>
+  <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg"><p><b>Step 8 · Known Gaps</b>, required. Where data is missing after 1 Mar 2025, or only for part of the rows. A gap is in the data itself; how it is misread belongs to the pitfalls. (<a class="text-link" style="display:inline"><span>K5.3 The Known Gaps of a Resource</span></a>)</p></div></div>
+  <div class="oj-row oj-app"><span class="oj-tag oj-mcp">MCP App</span>
+   <section class="mcp-app oj-win" aria-label="Owner Journey, step 8, from Data Hub">
+    <div class="mcp-app-head"><i class="ph-fill ph-path" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">Owner Journey · Attraction · Owner: SEO</span><div class="float-title">Search Console impressions, whole site</div></div></div>
+    <div class="oj-progress" data-at="8"></div>
+    <div class="oj-now"><h3>Known Gaps</h3><button class="oj-term" type="button" data-term aria-expanded="true" aria-label="What it means" title="What it means">ⓘ</button><span class="oj-mark">Required to publish</span></div>
     <div class="oj-term-def"><p><b>Known Gap</b> · A gap in the data itself: a period, a field or rows that are missing or only partly there. It would go away if the data were repaired. What stays true even when every row is right is a Pitfall.</p><p><b>Pitfall</b> · A way to read a Resource wrongly that looks right: what a field means, what a figure counts or when it is final. It is about how the data is read, not the data itself: it stays true even when every row is right. A gap in the data is a Known Gap.</p></div>
     <div class="oj-held"><dl>
      <dt>Known Gaps</dt><dd class="none">None written</dd>
-     <dt>Reliable since</dt><dd class="none">Not set</dd>
-     <dt>First day of data</dt><dd>14 Feb 2025</dd>
+     <dt>Reliable since</dt><dd>1 Mar 2025, on <span class="mono">data_date</span></dd>
      <dt>Empty days since</dt><dd>None</dd>
      <dt>Rows without a query</dt><dd>24%, and 6% of the clicks</dd>
     </dl></div>
@@ -418,39 +458,34 @@
      <details class="oj-help-card"><summary><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><span class="num">K5.3</span><span class="tt">The Known Gaps of a Resource</span><i class="ph ph-caret-down chev" aria-hidden="true"></i></summary>
       <div class="body"><p class="rule">A hole in the data is not the problem, a hole nobody wrote down is: write it down as a <b>Known Gap</b> of its Resource.</p><div class="acts"><a class="text-link"><i class="ph ph-book-open" aria-hidden="true"></i><span>Read the card</span></a><a class="text-link dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open the card in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div></div>
      </details>
-     <details class="oj-help-card"><summary><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><span class="num">K5.17</span><span class="tt">Reliable since <span class="oj-towrite">To write</span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></summary>
-      <div class="body"><p class="rule"><b>Reliable since</b> is the day from which the whole table can be relied on; a Known Gap is a hole after that day, or in part of the rows.</p><p class="gain">Nobody compares this year with a start-up period that was never complete.</p><div class="acts"><a class="text-link dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open the card in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div></div>
-     </details>
     </div>
-    <div class="mcp-app-foot"><span>Written with <span class="mono">add_known_gap</span>, one gap with its scope, and <span class="mono">update_resource_card</span>, once you agree.</span><a class="text-link open-dh dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open the Known Gaps in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
+    <div class="mcp-app-foot"><span>Written with <span class="mono">add_known_gap</span>, one gap with its scope, once you agree; a period is read on <span class="mono">data_date</span>.</span><a class="text-link open-dh dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open the Known Gaps in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
    </section>
   </div>
   <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg">
-   <p>Two questions only you can answer:</p>
-   <p>1. Is the anonymised share a Known Gap you want written down? I'd propose:</p>
+   <p>No empty days since 1 March. One thing only you can answer: is the anonymised share a Known Gap you want written down? I'd propose:</p>
    <blockquote>Queries Google anonymises have no query text: about a quarter of the rows, and 6% of the clicks. Their impressions and clicks are in the totals of the site.</blockquote>
    <p class="src">Where it holds: the rows where <code>query</code> is empty, on every day. From the Preview at step 1.</p>
-   <p>2. From which day can it be relied on? The export started on 14 Feb 2025: was its first stretch complete?</p>
   </div></div>
-  <div class="oj-row"><span class="oj-tag cui">CUI · you</span><div class="mcp-msg user">Write the gap. Reliable since 1 March 2025: February was a test. And add one: Discover and web search added up give the wrong total.</div></div>
+  <div class="oj-row"><span class="oj-tag cui">CUI · you</span><div class="mcp-msg user">Write the gap. And add one: Discover and web search added up give the wrong total.</div></div>
   <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg">
    <p>That last one reads as a pitfall rather than a Known Gap: every row of Discover is right, the mistake is in adding it to web search. A Known Gap would go away if the data were repaired; this stays true even when every row is right. Shall I put it under the pitfalls instead?</p>
    <blockquote>Do not add Discover to web search: they count different things. Filter on <code>search_type</code> before you compare.</blockquote>
-   <p>Then I write three things: the Known Gap above, with where it holds; reliable since 1 Mar 2025; and this pitfall next to the two of step 6.</p>
+   <p>Then I write two things: the Known Gap above, with where it holds, and this pitfall next to the two of step 6.</p>
   </div></div>
   <div class="oj-row"><span class="oj-tag cui">CUI · you</span><div class="mcp-msg user">Yes, under the pitfalls. Write them.</div></div>
   <div class="oj-row"><span class="oj-tag cui">CUI · tool</span><div class="mcp-tool"><i class="ph ph-plugs-connected" aria-hidden="true"></i>Data Hub · <span class="mono">add_known_gap</span> · text, rows: <span class="mono">query</span> is empty</div></div>
-  <div class="oj-row"><span class="oj-tag cui">CUI · tool</span><div class="mcp-tool"><i class="ph ph-plugs-connected" aria-hidden="true"></i>Data Hub · <span class="mono">update_resource_card</span> · reliableSince, before: not set; pitfalls, before: the text of step 6 · then <span class="mono">guide_owner_journey</span></div></div>
+  <div class="oj-row"><span class="oj-tag cui">CUI · tool</span><div class="mcp-tool"><i class="ph ph-plugs-connected" aria-hidden="true"></i>Data Hub · <span class="mono">update_resource_card</span> · pitfalls, before: the text of step 6 · then <span class="mono">guide_owner_journey</span></div></div>
  </div>
 
- <!-- ===================== 8 · Parameters ===================== -->
- <div data-pane-group="step" data-pane="s8" hidden style="display:contents">
-  <p class="oj-step-head">Step 8 · Parameters: advised</p>
-  <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg"><p><b>Step 8 · Parameters</b>, advised. The fields a Preview offers to filter on, such as a search type. (<a class="text-link" style="display:inline"><span>K5.15 Key Fields and Parameters</span></a>)</p></div></div>
+ <!-- ===================== 9 · Parameters ===================== -->
+ <div data-pane-group="step" data-pane="s9" hidden style="display:contents">
+  <p class="oj-step-head">Step 9 · Parameters: advised</p>
+  <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg"><p><b>Step 9 · Parameters</b>, advised. The fields a Preview offers to filter on, such as a search type. (<a class="text-link" style="display:inline"><span>K5.15 Key Fields and Parameters</span></a>)</p></div></div>
   <div class="oj-row oj-app"><span class="oj-tag oj-mcp">MCP App</span>
-   <section class="mcp-app oj-win" aria-label="Owner Journey, step 8, from Data Hub">
+   <section class="mcp-app oj-win" aria-label="Owner Journey, step 9, from Data Hub">
     <div class="mcp-app-head"><i class="ph-fill ph-path" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">Owner Journey · Attraction · Owner: SEO</span><div class="float-title">Search Console impressions, whole site</div></div></div>
-    <div class="oj-progress" data-at="8"></div>
+    <div class="oj-progress" data-at="9"></div>
     <div class="oj-now"><h3>Parameters</h3><span class="oj-mark advised">Advised</span></div>
     <div class="oj-held"><span class="label">On the card now</span><p class="none">None. "None" is an answer too.</p></div>
     <div class="oj-help">
@@ -467,14 +502,14 @@
   <div class="oj-row"><span class="oj-tag cui">CUI · tool</span><div class="mcp-tool"><i class="ph ph-plugs-connected" aria-hidden="true"></i>Data Hub · <span class="mono">update_resource_card</span> · parameters, before: none · then <span class="mono">guide_owner_journey</span></div></div>
  </div>
 
- <!-- ===================== 9 · Table type, grain and mappings ===================== -->
- <div data-pane-group="step" data-pane="s9" hidden style="display:contents">
-  <p class="oj-step-head">Step 9 · What the Data Admin records: table type and grain for the EDA, mappings advised. Claude offers a Message, nothing more</p>
-  <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg"><p><b>Step 9 · Table type, grain and mappings.</b> These a Data Admin records, in Data Hub. They're not needed to publish, but the EDA starts from the table type and the grain, so it's worth checking them now. (<a class="text-link" style="display:inline"><span>2.3.6 Five model types</span></a>, <a class="text-link" style="display:inline"><span>K5.18 What the Data Admin records</span></a>)</p></div></div>
+ <!-- ===================== 10 · Table type, grain and mappings ===================== -->
+ <div data-pane-group="step" data-pane="s10" hidden style="display:contents">
+  <p class="oj-step-head">Step 10 · What the Data Admin records: table type and grain for the EDA, mappings advised. Claude offers a Message, nothing more</p>
+  <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg"><p><b>Step 10 · Table type, grain and mappings.</b> These a Data Admin records, in Data Hub. They're not needed to publish, but the EDA starts from the table type and the grain, so it's worth checking them now. (<a class="text-link" style="display:inline"><span>2.3.6 Five model types</span></a>, <a class="text-link" style="display:inline"><span>K5.18 What the Data Admin records</span></a>)</p></div></div>
   <div class="oj-row oj-app"><span class="oj-tag oj-mcp">MCP App</span>
-   <section class="mcp-app oj-win" aria-label="Owner Journey, step 9, from Data Hub">
+   <section class="mcp-app oj-win" aria-label="Owner Journey, step 10, from Data Hub">
     <div class="mcp-app-head"><i class="ph-fill ph-path" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">Owner Journey · Attraction · Owner: SEO</span><div class="float-title">Search Console impressions, whole site</div></div></div>
-    <div class="oj-progress" data-at="9"></div>
+    <div class="oj-progress" data-at="10"></div>
     <div class="oj-now"><h3>Table type, grain and mappings</h3><span class="oj-mark eda">Needed for the EDA</span></div>
     <div class="oj-held"><dl>
      <dt><span class="oj-mark eda">Table type</span></dt><dd class="none">Not recorded</dd>
@@ -502,14 +537,14 @@
   <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg"><p>Asked. The step stays open for the EDA until a Data Admin records them; it doesn't hold up the publication.</p></div></div>
  </div>
 
- <!-- ===================== 10 · Questions and Signals ===================== -->
- <div data-pane-group="step" data-pane="s10" hidden style="display:contents">
-  <p class="oj-step-head">Step 10 · Open Questions and Signals: advised; the Owner replies, or leaves them knowingly</p>
-  <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg"><p><b>Step 10 · Open Questions and Signals</b>, advised. What colleagues asked or signalled, before you put your name under it. (<a class="text-link" style="display:inline"><span>4.7.1 Owning a Resource</span></a>)</p></div></div>
+ <!-- ===================== 11 · Questions and Signals ===================== -->
+ <div data-pane-group="step" data-pane="s11" hidden style="display:contents">
+  <p class="oj-step-head">Step 11 · Open Questions and Signals: advised; the Owner replies, or leaves them knowingly</p>
+  <div class="oj-row"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg"><p><b>Step 11 · Open Questions and Signals</b>, advised. What colleagues asked or signalled, before you put your name under it. (<a class="text-link" style="display:inline"><span>4.7.1 Owning a Resource</span></a>)</p></div></div>
   <div class="oj-row oj-app"><span class="oj-tag oj-mcp">MCP App</span>
-   <section class="mcp-app oj-win" aria-label="Owner Journey, step 10, from Data Hub">
+   <section class="mcp-app oj-win" aria-label="Owner Journey, step 11, from Data Hub">
     <div class="mcp-app-head"><i class="ph-fill ph-path" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">Owner Journey · Attraction · Owner: SEO</span><div class="float-title">Search Console impressions, whole site</div></div></div>
-    <div class="oj-progress" data-states="dddddddddqna-"></div>
+    <div class="oj-progress" data-states="ddddddddddqna-"></div>
     <div class="oj-now"><h3>Questions and Signals</h3><span class="oj-mark advised">Advised</span></div>
     <div class="oj-held">
      <span class="label">Open · 1 Question</span>
@@ -532,10 +567,10 @@
   <div class="oj-row"><span class="oj-tag cui">CUI · tool</span><div class="mcp-tool"><i class="ph ph-plugs-connected" aria-hidden="true"></i>Data Hub · <span class="mono">reply_to_message</span> · then <span class="mono">guide_owner_journey</span></div></div>
  </div>
 
- <!-- ===================== 11 · Read it back and publish ===================== -->
- <div data-pane-group="step" data-pane="s11" hidden style="display:contents">
-  <p class="oj-step-head">Step 11 · Read it back and publish: one window, the whole card read back; the declaration, stored, accepts every text</p>
-  <div class="oj-row" data-pane-group="case" data-pane="ready"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg"><p><b>Step 11 · Read it back and publish.</b> Here is the card as a colleague will see it. Read every text: by ticking the declaration you stand for all of them, also what was written before this journey. (<a class="text-link" style="display:inline"><span>K5.13 Publishing a Resource</span></a>)</p></div></div>
+ <!-- ===================== 12 · Read it back and publish ===================== -->
+ <div data-pane-group="step" data-pane="s12" hidden style="display:contents">
+  <p class="oj-step-head">Step 12 · Read it back and publish: one window, the whole card read back; the declaration, stored, accepts every text</p>
+  <div class="oj-row" data-pane-group="case" data-pane="ready"><span class="oj-tag cui">CUI · Claude</span><div class="mcp-msg"><p><b>Step 12 · Read it back and publish.</b> Here is the card as a colleague will see it. Read every text: by ticking the declaration you stand for all of them, also what was written before this journey. (<a class="text-link" style="display:inline"><span>K5.13 Publishing a Resource</span></a>)</p></div></div>
   <div class="oj-row" data-pane-group="case" data-pane="ready"><span class="oj-tag cui">CUI · tool</span><div class="mcp-tool"><i class="ph ph-plugs-connected" aria-hidden="true"></i>Data Hub · <span class="mono">guide_owner_journey</span>: ready · <span class="mono">publish_resource</span></div></div>
   <div class="oj-row oj-app" data-pane-group="case" data-pane="ready"><span class="oj-tag oj-mcp">MCP App</span>
    <section class="mcp-app oj-win" aria-label="Publish Search Console impressions, whole site, in Data Hub">
@@ -548,7 +583,7 @@
      <div class="pub-block">
       <div class="label">What Data Hub checked · the same as in Data Hub itself</div>
       <div class="check-line"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><span>In Attraction, owned by SEO: you may publish it. Described in dbt.</span></div>
-      <div class="check-line"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><span><b>Required:</b> Business Description; 5 Key Fields, each described; intended use; pitfalls; 1 Known Gap; reliable since 1 Mar 2025.</span></div>
+      <div class="check-line"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><span><b>Required:</b> Business Description; 5 Key Fields, each described; intended use; pitfalls; reliable since 1 Mar 2025, on <span class="mono">data_date</span>; 1 Known Gap.</span></div>
       <div class="check-line"><i class="ph ph-circle" aria-hidden="true"></i><span><b>Advised:</b> 5 other fields not described yet. Parameters and the open Question are done.</span></div>
       <div class="check-line"><i class="ph ph-diamond" aria-hidden="true" style="color:var(--col-olive)"></i><span><b>For the EDA, later:</b> table type and grain, asked of the Data Team on 15 Nov.</span></div>
      </div>
@@ -561,7 +596,9 @@
        <p>The trend of our organic search visibility, per week and per month. Not for revenue attribution, and not for a single day of the last three, which Google completes late.</p>
        <div class="desc-head"><span class="label">Pitfalls</span></div>
        <p>Do not average the position: the table keeps sum_top_position; the average position is sum(sum_top_position) / sum(impressions) + 1. Clicks per query do not add up to the clicks of the site: anonymised queries have no query text. Do not add Discover to web search: they count different things. Filter on search_type before you compare.</p>
-       <div class="desc-head"><span class="label">Known Gaps · reliable since 1 Mar 2025</span></div>
+       <div class="desc-head"><span class="label">Reliable since · 1 Mar 2025, on <span class="mono">data_date</span></span></div>
+       <p>February 2025 was a test of the export; its days are incomplete.</p>
+       <div class="desc-head"><span class="label">Known Gaps</span></div>
        <p>Queries Google anonymises have no query text: about a quarter of the rows, and 6% of the clicks.</p>
        <div class="gap-scope"><span class="scope"><i class="ph ph-rows" aria-hidden="true"></i><span class="scope-k">Rows</span><span class="mono">query</span> is empty</span></div>
        <div class="desc-head"><span class="label">Key Fields · Parameters</span></div>
@@ -591,13 +628,13 @@
   </div></div>
  </div>
 
- <!-- ===================== 12 · After ===================== -->
- <div data-pane-group="step" data-pane="s12" hidden style="display:contents">
-  <p class="oj-step-head">Step 12 · After: the new Level, what staying Owner asks, and the road to 4 · Explored</p>
+ <!-- ===================== 13 · After ===================== -->
+ <div data-pane-group="step" data-pane="s13" hidden style="display:contents">
+  <p class="oj-step-head">Step 13 · After: the new Level, what staying Owner asks, and the road to 4 · Explored</p>
   <div class="oj-row oj-app"><span class="oj-tag oj-mcp">MCP App</span>
    <section class="mcp-app oj-win" aria-label="Owner Journey, after the publication, from Data Hub">
     <div class="mcp-app-head"><i class="ph-fill ph-path" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">Owner Journey · Attraction · Owner: SEO</span><div class="float-title">Search Console impressions, whole site</div></div><span class="status"><span class="maturity" data-level="3" data-no-tooltip></span>3 · Confirmed</span></div>
-    <div class="oj-progress" data-states="dddddddddqddn"></div>
+    <div class="oj-progress" data-states="ddddddddddqddn"></div>
     <div class="oj-now"><span class="n">Published on 15 Nov 2026, by you, for SEO</span></div>
     <div class="oj-held">
      <span class="label">Staying its Owner</span>
@@ -645,8 +682,9 @@
      <li><span class="n">4</span><span>Fields<span class="who">You, 12 Nov: the 5 Key Fields; 5 others advised</span></span><span class="st done">Done</span></li>
      <li><span class="n">5</span><span>Intended use<span class="who">A Business Analyst of SEO, 13 Nov</span></span><span class="st done">Done</span></li>
      <li><span class="n">6</span><span>Pitfalls <span class="oj-mark">Required</span><span class="who">Written before this journey: read it as yours</span></span><span class="st open">Next</span></li>
-     <li><span class="n">7</span><span>Known Gaps and reliable since <span class="oj-mark">Required</span></span><span class="st">To do</span></li>
-     <li><span class="n">8–12</span><span>Parameters, what the Data Admin records, Questions and Signals, publish, after</span><span class="st">To do</span></li>
+     <li><span class="n">7</span><span>Reliable since <span class="oj-mark">Required</span></span><span class="st">To do</span></li>
+     <li><span class="n">8</span><span>Known Gaps <span class="oj-mark">Required</span></span><span class="st">To do</span></li>
+     <li><span class="n">9–13</span><span>Parameters, what the Data Admin records, Questions and Signals, publish, after</span><span class="st">To do</span></li>
     </ol>
     <div class="mcp-app-foot"><span>Kept with the Resource: an Owner of SEO, or a colleague of SEO, goes on where it stopped.</span><a class="text-link open-dh dh-link"><svg class="dh-mark" width="18" height="12" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="20" cy="10" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/></svg><span>Open the Resource in Data Hub</span><i class="ph ph-arrow-square-out" aria-hidden="true"></i></a></div>
    </section>
@@ -665,7 +703,7 @@
  <button class="seg" data-target="analyst" role="tab" aria-selected="false">A Business Analyst of SEO</button>
  <button class="seg" data-target="outside" role="tab" aria-selected="false">Outside SEO</button>
 </div>
-<div class="proto-switch" data-group="case" role="tablist" aria-label="Prototype: step 11" style="bottom:64px">Step 11
+<div class="proto-switch" data-group="case" role="tablist" aria-label="Prototype: step 12" style="bottom:64px">Step 12
  <button class="seg on" data-target="ready" role="tab" aria-selected="true">Ready</button>
  <button class="seg" data-target="open" role="tab" aria-selected="false">A required step open</button>
 </div>
@@ -680,12 +718,12 @@ document.addEventListener('click', (event) => { const b = event.target.closest('
 // The bar of the journey in its window: one segment per step, from what each step asks (DEC-MR-16).
 // data-at="n": the steps before n are done, n is the one now. data-states: d done, n now, r required, e for the EDA,
 // q asked of the Data Team, a advised, - nothing asked.
-const MARKS = ['-', '-', 'r', 'r', 'r', 'r', 'r', 'r', 'a', 'e', 'a', 'r', '-'];
-const NAMES = ['Start', 'Know the data', 'Business Description', 'Key Fields', 'Fields', 'Intended use', 'Pitfalls', 'Known Gaps and reliable since', 'Parameters', 'Table type, grain and mappings', 'Questions and Signals', 'Read it back and publish', 'After'];
+const MARKS = ['-', '-', 'r', 'r', 'r', 'r', 'r', 'r', 'r', 'a', 'e', 'a', 'r', '-'];
+const NAMES = ['Start', 'Know the data', 'Business Description', 'Key Fields', 'Fields', 'Intended use', 'Pitfalls', 'Reliable since', 'Known Gaps', 'Parameters', 'Table type, grain and mappings', 'Questions and Signals', 'Read it back and publish', 'After'];
 const CLASS = { d: 'done', n: 'now', r: 'required', e: 'eda', q: 'asked', a: 'advised', '-': '' };
 const SAYS = { d: 'done', n: 'now', r: 'required to publish', e: 'needed for the EDA', q: 'asked of the Data Team', a: 'advised', '-': '' };
 // What each step holds now, for the test case, and how its mark reads in the overview (DEC-UX-272)
-const HOLDS = ['', 'To do', 'Empty', 'None yet', '0 of 10 described', 'Written before: to read', 'Written before: to read', 'Empty', 'None', 'Not recorded', '1 open', 'After the required steps', ''];
+const HOLDS = ['', 'To do', 'Empty', 'None yet', '0 of 10 described', 'Written before: to read', 'Written before: to read', 'Not set', 'None yet', 'None', 'Not recorded', '1 open', 'After the required steps', ''];
 const MARKWORD = { r: 'Required', e: 'For the EDA', a: 'Optional', '-': '' };
 document.querySelectorAll('.oj-progress').forEach(bar => {
   const at = Number(bar.dataset.at ?? -1);
@@ -701,7 +739,7 @@ document.querySelectorAll('.oj-progress').forEach(bar => {
   where.className = 'oj-where';
   where.open = bar.dataset.open !== undefined;
   const summary = document.createElement('summary');
-  summary.innerHTML = `<span class="where">${now > 0 ? `Step ${now} of 12 · <b>${NAMES[now]}</b>` : '<b>The road ahead</b> · 12 steps'}</span><span class="tally">${done} done · <span class="open">${open} required still open</span><i class="ph ph-caret-down chev" aria-hidden="true"></i></span>`;
+  summary.innerHTML = `<span class="where">${now > 0 ? `Step ${now} of 13 · <b>${NAMES[now]}</b>` : '<b>The road ahead</b> · 13 steps'}</span><span class="tally">${done} done · <span class="open">${open} required still open</span><i class="ph ph-caret-down chev" aria-hidden="true"></i></span>`;
   // A window that lists the steps itself, such as a journey picked up again, keeps its own list in the overview
   const own = bar.nextElementSibling?.matches('ol.oj-list') ? bar.nextElementSibling : null;
   bar.replaceWith(where);

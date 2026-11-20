@@ -59,6 +59,8 @@ Pointers to material this domain will build on, collected during the migration. 
 - <a id="dec-rc-26"></a>**DEC-RC-26** · A Known Gap and a Pitfall are told apart by one test, which Data Hub shows where they are written and Claude applies when it proposes them: a **Known Gap** is in the data itself and would go away if the data were repaired, such as a period, a field or rows that are missing; a **Pitfall** is in how the data is read, its metadata, and stays true even when every row is right, such as what a field means, what a figure counts or when it is final. Claude says so when a text on one reads as the other, and offers to move it ([FR-CL-35](17-claude.md#fr-cl-35)). A Learning Card on data and metadata is written for it (K5.21). *Decided on 2026-11-17, by Max, after a session with business describing a Resource: "we need to educate them properly on the difference between data and metadata … known gaps is just gaps in the data, and pitfalls clearly are misinterpretation of metadata."* *Note of 2026-11-18: Data Hub says it in the definition of the term, behind its ⓘ, no longer in a line beside the text ([DEC-UX-279](../../design/principles.md#dec-ux-279), [FR-LR-44](16-learning.md#fr-lr-44)).*
 - <a id="dec-rc-27"></a>**DEC-RC-27** · Where a Business Description is written, of a Resource or of a field, Data Hub says what it is for next to the description from dbt: dbt says how the data is made, technically; the Business Description says what it represents and what it is used for. In the web app it is one line above the editor; in Claude it is said at the steps Business Description and Fields of the Owner Journey, with the description from dbt of that field beside the proposal. *Decided on 2026-11-17, by Max: "data is more the technical description of fields, where business is really how you use it, what it represents … it's rather important to support them with this message."* *Note of 2026-11-18: Data Hub says it in the definition of the term, behind its ⓘ, no longer in a line beside the text ([DEC-UX-279](../../design/principles.md#dec-ux-279), [FR-LR-44](16-learning.md#fr-lr-44)).*
 - <a id="dec-rc-28"></a>**DEC-RC-28** · Data Hub does not yet show what is in a field while it is described, neither in Claude nor in the web app: a look at the data of a field, a mini-EDA, is a concept of its own and gets its own design first ([OP-RC-29](#op-rc-29)). [FR-RC-30](#fr-rc-30), the first proposal, is withdrawn and kept as the starting point. *Decided on 2026-11-17, by Max, reviewing the design of the Owner Journey after a session with business: "leave the mini-eda out of it all. Think this is a concept which needs way more attention then doing it real quick now."*
+- <a id="dec-rc-29"></a>**DEC-RC-29** · [Reliable Since](../../definitions.md#reliable-since) is a value of its own, not a Known Gap: the day from which the whole table of a Resource can be relied on, which its Owner Unit or the Data Team says, with why not earlier; or from its first row, for a table that can be relied on as far back as it goes. Rows before that day stay, but are not to be read as reliable. It is read on the one [Date Field](../../definitions.md#date-field) of the Resource, which its table type gives: the happened-at field of an `event`, the occurred-at field of a `fact`, the period of an `aggregate`, the created-at or updated-at field of a `state`. The Owner may choose another date field; Data Hub then warns that it is unusual for its table type. The periods of its Known Gaps are read on the same Date Field. Reliable Since shows on the Known Gaps part of the Overview, in a tile of its own, with a small line of the time of its data ([DEC-UX-296](../../design/principles.md#dec-ux-296)), and is a step of its own towards Publication ([DEC-MR-18](06-maturity-and-release.md#dec-mr-18)). *Decided on 2026-11-20, by Max: "this is not the date upon which it is confirmed. This is the day upon which the owner says you can use these dates … this is always dependent upon a date field within the table itself"; choosing "Own value" over a Known Gap from the start, and for the Date Field "One per resource, but … dependent upon the table type, it can be derived … we should leave the option open that an owner can decide to use another date, but we need to set up a warning"; and "you need the option from the beginning of time where you don't care about a reliability date".*
+- <a id="dec-rc-30"></a>**DEC-RC-30** · The period of a Known Gap may be one day: entered as one date, and read as that day. Max saw that the start and the end of a period are often the same day. How the form offers it is [OP-UX-110](../../design/principles.md#op-ux-110). *Decided on 2026-11-20, by Max: "a lot of times the start and end date are the same … add a check mark: 'end date same as start date', or that you can say it's a period or it's a given date."*
 
 ## Requirements
 
@@ -182,6 +184,8 @@ The Resource Card shows who published the Resource and when, and who confirmed i
 
 The Resource Card shows since when the data of the Resource is reliable. The Owner and the Data Team set it.
 
+*Note of 2026-11-20: what the day means, its why, its first-row form and the field it is read on are [FR-RC-31](#fr-rc-31) and [FR-RC-32](#fr-rc-32) ([DEC-RC-29](#dec-rc-29)); it moves from Known behaviour to the Known Gaps part of the Overview.*
+
 <a id="fr-rc-14"></a>
 ### FR-RC-14 · Checks and incidents
 
@@ -279,6 +283,8 @@ The Owner Unit and the Data Team can narrow a Known Gap down ([FR-RC-21](#fr-rc-
 
 Without any of them a gap is free text, as every gap before. Adding or changing the scope of a gap goes into its Log, as a change of the gap ([TR-SR-25](../technical/04-stacks-and-resources.md#tr-sr-25)).
 
+*Note of 2026-11-20: a period is read on the [Date Field](../../definitions.md#date-field) of the Resource ([FR-RC-32](#fr-rc-32)), and may be one day ([FR-RC-33](#fr-rc-33)).*
+
 <a id="fr-rc-25"></a>
 ### FR-RC-25 · The Summary and Claude read the scope of a Known Gap
 
@@ -337,6 +343,33 @@ While a field is described, Data Hub shows what is in it. For every field: how m
 
 **Makes easy:** describing a code field from the values that are really in it, and noticing a field that is half empty before writing what it means. **Makes hard:** describing a field nobody looked at, and a look that costs more than a glance.
 
+<a id="fr-rc-31"></a>
+### FR-RC-31 · Reliable Since: a later day with why, or from its first row
+
+**Status:** Specified · **Source:** Max, 2026-11-20 ([DEC-RC-29](#dec-rc-29), [DEC-UX-296](../../design/principles.md#dec-ux-296)) · **Screens:** [resource-overview](../../design/screens/resource-overview.html), [owner-journey](../../design/screens/owner-journey.html), [resource-publish](../../design/screens/resource-publish.html), [mcp-resource-publish](../../design/screens/mcp-resource-publish.html)
+
+The Owner Unit and the Data Team set the [Reliable Since](../../definitions.md#reliable-since) of a Resource in one of two ways: **from its first row**, or **from a later day**, with why not earlier, which is required. It shows on the Known Gaps part of the Overview, in a tile of its own above the gaps: its day, or "From its first row" with the day of that row; the Date Field it is read on; why not earlier; who set it and when; and the time of its data as a line, from its first row to today, the time before Reliable Since shaded, and each Known Gap with a period as a numbered hole ([OP-RC-31](#op-rc-31)). The Summary, the publication and Claude read it with its why and its Date Field. Setting or changing it goes into the Log. It is required to publish, as a step of its own ([DEC-MR-18](06-maturity-and-release.md#dec-mr-18)).
+
+**Makes easy:** knowing from which day a trend or a comparison may start, and why not earlier, without asking. **Makes hard:** a bare date nobody can explain, and comparing with a start-up period that was never complete.
+
+<a id="fr-rc-32"></a>
+### FR-RC-32 · The Date Field of a Resource, from its table type
+
+**Status:** Specified · **Source:** Max, 2026-11-20 ([DEC-RC-29](#dec-rc-29)) · **Screens:** [resource-overview](../../design/screens/resource-overview.html), [owner-journey](../../design/screens/owner-journey.html)
+
+A Resource has one [Date Field](../../definitions.md#date-field), a field of type DATE, DATETIME or TIMESTAMP, which its Reliable Since and the periods of its Known Gaps are read on. Data Hub takes it from its table type: the field of the role happened at of an `event`, occurred at of a `fact`, period of an `aggregate`; for a `state`, its created at or its updated at, which the Owner picks. For a `dimension`, another table type, or while no table type is recorded, the Owner chooses one of its date fields ([OP-RC-30](#op-rc-30)). The Owner Unit and the Data Team may choose another date field than its table type gives; Data Hub then warns, where it is chosen and on the tile of Reliable Since, that it is unusual for its table type and what it changes: Reliable Since and the periods of its gaps then say when a row was made, not the time it counts. The warning also shows when the table type is changed later, or its field goes.
+
+**Makes easy:** one answer to "on which date?" for every date on the card, taken from what the Data Team recorded. **Makes hard:** a Reliable Since read on a load date by accident, and two dates on one card that mean different times.
+
+<a id="fr-rc-33"></a>
+### FR-RC-33 · A Known Gap of one day
+
+**Status:** Specified · **Source:** Max, 2026-11-20 ([DEC-RC-30](#dec-rc-30)) · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
+
+The period of a Known Gap ([FR-RC-24](#fr-rc-24)) is one day or a period. One day is entered as one date and reads "on 14 Sep 2025", on the chip, in the Summary and in Claude; it is kept as a period whose from and to are that day, so that everything that reads a period reads it unchanged. A period keeps its two sides, one of them open if need be. Claude's `add_known_gap` and `change_known_gap` take one day as a period with both sides the same.
+
+**Makes easy:** writing down the one day an export failed, with one date. **Makes hard:** typing the same date twice, and a one-day gap that reads like a range.
+
 ## Edge cases
 
 <a id="ec-rc-01"></a>
@@ -377,6 +410,8 @@ When a field that the scope of a Known Gap names is removed or renamed in dbt, t
 - [x] <a id="op-rc-27"></a>**OP-RC-27** · [FR-RC-14](#fr-rc-14), the active checks and incidents on the Resource Card, is not marked Could, while checks come in version 2 ([DEC-MR-13](06-maturity-and-release.md#dec-mr-13)); [resource-detail](../../design/screens/resource-detail.html) shows a tile Monitoring and [collection-overview](../../design/screens/collection-overview.html) "Check passed". Proposal: FR-RC-14 is a Could, not in v1, and the build leaves the tile out. *Raised on 2026-10-28, while mapping the screens to the requirements.* *Decided on 2026-10-28, by Max: as proposed.*
 - [x] <a id="op-rc-28"></a>**OP-RC-28** · Decide whether the model types get `other`, for a Resource that fits none of the five ([DEC-RC-10](#dec-rc-10)), as Max asked on 2026-11-15. Proposal: yes. `other` asks for a sentence on what one row is and has no fields of its own ([FR-CO-44](03-collections.md#fr-co-44)); its EDA gets only the EDA-Probes for every Resource; it gives no guidance on counting. The Data Team sees how many Resources are `other`, to add a model type when several share a kind. The list of [DEC-RC-10](#dec-rc-10) is hard-coded, so `other` is a change to the code. *Decided on 2026-11-15, by Max: yes, on these conditions ([DEC-RC-21](#dec-rc-21)).*
 - [ ] <a id="op-rc-29"></a>**OP-RC-29** · Design the look at what is in a field while it is described, a mini-EDA of one field: what it measures for each kind of field, over which period and at what cost, where it shows in Claude and in the web app, how it relates to the EDA and its [EDA-Probes](../../definitions.md#eda-probe) ([DEC-ED-14](15-eda.md#dec-ed-14)), and whether it is kept. The first proposal is [FR-RC-30](#fr-rc-30), withdrawn. *Raised on 2026-11-17, by Max, after a session with business describing fields: "we run some queries on them so that we provide them the data that's in the fields … you just quickly go fetch the number of distinct values that are in there. If it's a small list, you prepare the list." Kept out of the Owner Journey on the same day ([DEC-RC-28](#dec-rc-28)).*
+- [ ] <a id="op-rc-30"></a>**OP-RC-30** · Decide the [Date Field](../../definitions.md#date-field) of a Resource whose table type gives none: a `dimension`, another table type, or none recorded yet, as in the Owner Journey, where the Data Admin records the table type only at step 10 ([FR-RC-32](#fr-rc-32)). Proposal: the Owner chooses among its fields of type DATE, DATETIME or TIMESTAMP, and Claude proposes one from the data; once a table type with a time role is recorded and its field differs, the tile of Reliable Since shows the warning, without a Message. A Resource without any date field has no Date Field: Reliable Since can then only be "From its first row", and its gaps no period. *Raised on 2026-11-20, while designing Reliable Since.*
+- [ ] <a id="op-rc-31"></a>**OP-RC-31** · Decide where the first row of a Resource and the line of the time of its data come from ([FR-RC-31](#fr-rc-31)). The storage facts Data Hub keeps have no first day. Proposal: from the partitions BigQuery keeps, which reading costs nothing, when the table is partitioned on its Date Field; otherwise the lowest value of its Date Field, read once a day when the Pre-flight says it reads under 100 MB; otherwise no first row, and the line starts at Reliable Since with "earlier rows" undated. *Raised on 2026-11-20, while designing Reliable Since.*
 
 ## Builds on
 

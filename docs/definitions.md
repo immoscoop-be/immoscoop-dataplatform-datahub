@@ -40,6 +40,7 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="current-version"></a>**Current Version** | Per dbt project, the most recent fully processed Artifact Set; the rest of Data Hub works on it. | [Artifact registry](requirements/functional/01-artifact-registry.md#terms) |
 | <a id="data-admin"></a>**Data Admin** | A User who registers and manages Resources: a member of the Role Group of the Data Team, and once Permission groups are built, a User whose Permission group has `resources.assign`. | [Resources](requirements/functional/04-stacks-and-resources.md#terms) |
 | <a id="data-team"></a>**Data Team** | The team that takes data in, describes it and makes it a Resource with an exposure in its dbt project. In Data Hub: the members of its Role Group. | [DEC-CO-03](requirements/functional/03-collections.md#dec-co-03) |
+| <a id="date-field"></a>**Date Field** | The one date field of a Resource that its Reliable Since and the periods of its Known Gaps are read on: a field of type DATE, DATETIME or TIMESTAMP. Its table type gives it: the happened-at field of an `event`, the occurred-at field of a `fact`, the period of an `aggregate`, the created-at or updated-at field of a `state`. Its Owner may choose another, with a warning. An ordinary date field of a Resource stays lowercase. | [DEC-RC-29](requirements/functional/05-resource-card.md#dec-rc-29), [FR-RC-32](requirements/functional/05-resource-card.md#fr-rc-32) |
 | <a id="display-name"></a>**Display Name** | The readable, unique name of a Resource, as business sees it, for example "Agency purity". | [Resources](requirements/functional/04-stacks-and-resources.md#terms) |
 | <a id="domain-model"></a>**Domain Model** | The description of the entities of the business, maintained with Domain Hub and delivered to Data Hub as dbt Artifacts and as the overview the server of Colleciónes deploys ([FR-AR-15](requirements/functional/01-artifact-registry.md#fr-ar-15)). Data Hub describes the data; the Domain Model describes the business. | [Relation to existing work](overview/data-hub.md#relation-to-existing-work) |
 | <a id="eda"></a>**EDA** | Exploratory data analysis: a function of Data Hub in which the Owner takes a Resource through a predefined set of EDA-Steps that explore its data, its gaps, its weight and its correctness. Completing the EDA-Steps makes a Resource Explored. It has three phases: EDA-Setup, EDA-Rerun and EDA-Revalidation. | [DEC-ED-01](requirements/functional/15-eda.md#dec-ed-01), [FR-MR-03](requirements/functional/06-maturity-and-release.md#fr-mr-03) |
@@ -99,6 +100,7 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="refresh-token"></a>**Refresh Token** | The long-lived token, usable once, with which a client that signs in on behalf of a User (the server of the web app, or Claude) gets a new Access Token without a new login. Only identity accepts it; the other services never see it. | [DEC-PF-18](requirements/technical/00-platform.md#dec-pf-18), [TR-PF-25](requirements/technical/00-platform.md#tr-pf-25) |
 | <a id="registration"></a>**Registration** | Making a table a Resource: an exposure with the tag `datahub` in its dbt project that depends on it. The Registrations together are the index of Data Hub. | [DEC-SR-22](requirements/functional/04-stacks-and-resources.md#dec-sr-22) |
 | <a id="release"></a>**Release** | Making data available, in two steps that Data Hub enforces: from the Data Team to the Owner (Registration in a Collection), then from the Owner to everyone who sees the Collection (Publication). | [Release in two steps](overview/data-hub.md#release-in-two-steps) |
+| <a id="reliable-since"></a>**Reliable Since** | The day from which the whole table of a Resource can be relied on, read on its Date Field, set by its Owner Unit or the Data Team with why not earlier; or from its first row. Rows before it stay, but are not to be read as reliable: a trend or a comparison starts there. A hole after that day, or in part of the rows, is a [Known Gap](#known-gap). | [DEC-RC-29](requirements/functional/05-resource-card.md#dec-rc-29), [FR-RC-31](requirements/functional/05-resource-card.md#fr-rc-31) |
 | <a id="report"></a>**Report** | One or more Lenses around a question, with text and explanation, made by business. It shares its Parameters with its Lenses; its Level is the lowest Level of the Lenses in it. | [Reports](overview/data-hub.md#reports) |
 | <a id="request"></a>**Request** | A Message that asks the Data Team for a decision on its object, such as accepting a very large Lens. It is waiting, accepted or refused, and its reply is the decision. | [DEC-CV-06](requirements/functional/14-conversations.md#dec-cv-06) |
 | <a id="resource"></a>**Resource** | A registered table of a dbt project: one book on the shelves. | [Resources](requirements/functional/04-stacks-and-resources.md#terms) |
@@ -160,10 +162,12 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | berichtencentrum | Message Centre |
 | beslisregel | decision rule |
 | beslissing | decision |
+| betrouwbaar sinds | Reliable Since |
 | bibliothecaris | librarian |
 | bronjob | Source Job |
 | bucket, bucketgrootte | bucket, size of a bucket |
 | businessbeschrijving | Business Description |
+| datumveld (van een Resource) | Date Field |
 | defect, werkt niet meer | Broken |
 | collectie | Collection |
 | collectiebeheer en wieden | collection management and weeding |
