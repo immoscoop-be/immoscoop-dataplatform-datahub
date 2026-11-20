@@ -411,6 +411,12 @@ export interface Storage {
   beneath: boolean;
 }
 
+/** The first row of a Resource on a date field (DEC-RC-33): its day, and where it came from; none when it cannot be told cheaply. */
+export interface FirstRow {
+  day: string | null;
+  from: 'partitions' | 'lowest' | null;
+}
+
 /** The window of a Preview: its newest 1, 4 or 12 partitions that hold rows (DEC-SR-39). */
 export type PreviewWindow = 1 | 4 | 12;
 
@@ -547,6 +553,10 @@ export function createQuery(config: Config, session: Pick<Session, 'accessToken'
     /** The size and partitions of a Resource; null where BigQuery does not tell them. */
     async storage(resourceId: string): Promise<Storage | null> {
       return ((await (await call(`${resource(resourceId)}/storage`)).json()) as { storage: Storage | null }).storage;
+    },
+    /** The first row of a Resource on one of its date fields, for the line under Reliable Since (DEC-RC-33). */
+    async firstRow(resourceId: string, field: string): Promise<FirstRow> {
+      return ((await (await call(`${resource(resourceId)}/first-row?field=${encodeURIComponent(field)}`)).json()) as { firstRow: FirstRow }).firstRow;
     },
     /** The choices of a Preview for its window, their values read once (DEC-SR-37). */
     async previewChoices(resourceId: string, window: PreviewWindow): Promise<PreviewChoices> {

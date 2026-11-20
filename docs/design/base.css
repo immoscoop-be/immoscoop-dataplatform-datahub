@@ -1854,6 +1854,53 @@ button.lin-node:hover { box-shadow: 0 0 0 1.5px var(--tint-active); }
 .gap-pill { display: inline-flex; align-items: center; gap: 4px; text-decoration: none; color: var(--text-secondary); }
 .gap-pill > .ph-fill { font-size: 12px; color: var(--text-muted); }
 
+/* Reliable since, its own tile on top of Known Gaps (DEC-UX-296): what it means, its day on the date field of the Resource
+   and why not earlier; under it the time of its data as a line, before that day shaded, with no Known Gaps */
+.rs-tile { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+.rs-head { display: flex; align-items: center; gap: 10px; }
+.rs-head .said { flex: 1; margin: 0; }
+.rs-head .btn-quiet { display: inline-flex; align-items: center; gap: 6px; }
+.rs-value { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 0; }
+.rs-value b { font-size: var(--text-section); font-weight: var(--weight-medium); color: var(--text-primary); }
+.rs-why { display: flex; flex-direction: column; gap: 2px; margin: 8px 0 4px; max-width: 720px; }
+.rs-why-k { font-size: var(--text-meta); color: var(--text-muted); }
+.rs-q { margin: 0; font-size: var(--text-small); font-weight: var(--weight-medium); }
+.rs-save:disabled { opacity: .45; cursor: default; }
+.rs-line { margin-top: 4px; }
+.rs-track { position: relative; height: 16px; border-radius: var(--radius-pill); background: var(--text-secondary); overflow: hidden; }
+.rs-before { position: absolute; inset: 0 auto 0 0; background: repeating-linear-gradient(135deg, var(--tint-active) 0 4px, var(--surface-solid) 4px 8px); }
+.rs-ticks { position: relative; height: 36px; margin-top: 6px; }
+.rs-tick { position: absolute; top: 0; display: flex; flex-direction: column; font-size: var(--text-meta); color: var(--text-muted); white-space: nowrap; }
+.rs-tick b { font-weight: var(--weight-medium); color: var(--text-secondary); }
+.rs-tick-mark { padding-left: 8px; border-left: 1.5px solid var(--text-primary); margin-top: -18px; padding-top: 18px; }
+.rs-tick-mark b { color: var(--text-primary); }
+.rs-key { display: flex; align-items: flex-start; gap: 8px; margin: 4px 0 0; font-size: var(--text-meta); line-height: 1.45; color: var(--text-secondary); }
+.rs-key-before { flex: none; width: 18px; height: 12px; margin-top: 2px; border-radius: 3px; background: repeating-linear-gradient(135deg, var(--tint-active) 0 4px, var(--surface-solid) 4px 8px); }
+.rs-form { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; border-radius: var(--radius-md); background: var(--surface-solid);
+  outline: 1.5px solid var(--text-secondary); outline-offset: -1.5px; }
+.rs-form .field { margin: 0; }
+.rs-choice { display: flex; align-items: flex-start; gap: 10px; font-size: var(--text-small); cursor: pointer; }
+.rs-choice input { margin: 3px 0 0; accent-color: var(--text-primary); }
+.rs-choice > span { display: flex; flex-direction: column; gap: 1px; }
+.rs-choice b { font-weight: var(--weight-medium); }
+.rs-later { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); padding-left: 26px; }
+.rs-field-note { display: block; margin: -6px 0 0 26px; }
+.rs-odd { margin: 0 0 0 26px; }
+.rs-odd p { margin: 0; color: var(--text-secondary); }
+.rs-odd b { font-weight: var(--weight-medium); color: var(--text-primary); }
+.rs-req { margin-right: 4px; }
+.gaps-label { margin: 0 0 8px; }
+.lvl-step-val { margin-left: 4px; }
+/* The period of a gap: one day or a period (OP-UX-110) */
+.gap-when-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.gap-when { display: inline-flex; gap: 2px; }
+.gap-when-in { display: inline-flex; align-items: center; gap: 8px; }
+.gap-when-in input { font: var(--text-small)/1.5 var(--font-family); color: var(--text-primary); background: var(--surface-solid);
+  border: 1px solid var(--tint-active); border-radius: var(--radius-sm); padding: 6px 10px; }
+.gap-when-in input:focus { outline: 2px solid var(--text-secondary); outline-offset: 1px; }
+.gap-field { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); margin-top: 12px; }
+.scope-on { padding-left: 6px; margin-left: 2px; border-left: 1px solid var(--tint-active); color: var(--text-muted); }
+
 /* Charts, the gallery of semgraph (a proposal): the charts in the panel by the question they answer, one opened on the
    right with its examples and what it is for */
 .chart-list { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
@@ -2511,7 +2558,7 @@ body.oj-plain .oj-tag { visibility: hidden; }
 .mcp-msg a { color: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
 .mcp-msg code, .oj-win code { font-family: var(--font-mono, ui-monospace, monospace); font-size: .92em; }
 /* The window of the journey, drawn by Data Hub */
-.oj-progress { display: grid; grid-template-columns: repeat(13, minmax(0, 1fr)); gap: 3px; }
+.oj-progress { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 3px; }
 .oj-progress span { height: 6px; border-radius: 3px; background: var(--tint-active); }
 .oj-progress .done { background: var(--col-teal-ink); }
 .oj-progress .required { background: color-mix(in srgb, var(--text-primary) 30%, var(--tint-active)); }

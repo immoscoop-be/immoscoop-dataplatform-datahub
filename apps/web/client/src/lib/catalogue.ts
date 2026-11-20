@@ -1,3 +1,4 @@
+import type { ReliableSince, ReliableSinceInput } from '@datahub/contracts/reliable';
 import type { GapScope } from '@datahub/contracts/gaps';
 import type { Journey, JourneyAnswer, JourneyStepId } from '@datahub/contracts/journey';
 import type { MissingOfType, ModelType, TypeField, TypeRole } from '@datahub/contracts/model-types';
@@ -104,7 +105,7 @@ export interface KnownGap {
 }
 
 /** What changes about a Resource at once; its Known Gaps change one at a time (FR-RC-21). */
-export type CardChanges = Partial<Omit<Card, 'knownGaps'>>;
+export type CardChanges = Partial<Omit<Card, 'knownGaps' | 'reliableSince'> & { reliableSince: ReliableSinceInput | null }>;
 
 /** What the Owner and the Data Team keep about a Resource in Data Hub (FR-RC-15, TR-SR-10). */
 export interface Card {
@@ -113,8 +114,13 @@ export interface Card {
   pitfalls: string;
   /** One item each, in the order they were added (FR-RC-21). */
   knownGaps: KnownGap[];
-  /** A day, `YYYY-MM-DD`, or null. */
-  reliableSince: string | null;
+  /**
+   * From which day the whole table can be relied on, or from its first row, with why not earlier and who set it
+   * (FR-RC-31); null while not set, which is never either. A day set before has no why, nor who.
+   */
+  reliableSince: (ReliableSince & { setBy: string | null; setAt: string | null }) | null;
+  /** The Date Field its Owner Unit or the Data Team chose; null takes the one its table type gives (FR-RC-32). */
+  dateField: string | null;
   keyFields: string[];
   parameters: string[];
 }

@@ -17,13 +17,13 @@
 
 {#if line}
   <span class="line">
-    {#if scope.period}<span>{spanOf(scope.period)}</span>{/if}
+    {#if scope.period}<span>{spanOf(scope.period)}{#if scope.period.dateField}{' '}{t('gaps.onField')} {@render name(scope.period.dateField)}{/if}</span>{/if}
     {#if scope.fields?.length}<span>{t('gaps.fieldsWord')} {#each scope.fields as field, index (field)}{index > 0 ? ', ' : ''}{@render name(field)}{/each}</span>{/if}
     {#if scope.rows}<span>{@render name(scope.rows.field)} {scope.rows.is === 'empty' ? t('gaps.isEmpty') : `${t('gaps.is')} ${valuesOf(scope.rows.values)}`}</span>{/if}
   </span>
 {:else}
   <span class="chips">
-    {#if scope.period}<span class="chip"><Icon name="calendar-blank" /><span class="kind">{t('gaps.period')}</span> {spanOf(scope.period)}</span>{/if}
+    {#if scope.period}<span class="chip"><Icon name="calendar-blank" /><span class="kind">{t('gaps.period')}</span> {spanOf(scope.period)}{#if scope.period.dateField}<span class="on"><span class="kind">{t('gaps.onField')}</span> {@render name(scope.period.dateField)}</span>{/if}</span>{/if}
     {#if scope.fields?.length}<span class="chip"><Icon name="columns" /><span class="kind">{t('gaps.fields')}</span> {#each scope.fields as field, index (field)}{index > 0 ? ', ' : ''}{@render name(field)}{/each}</span>{/if}
     {#if scope.rows}<span class="chip"><Icon name="rows" /><span class="kind">{t('gaps.rows')}</span> {@render name(scope.rows.field)} <span class="kind">{scope.rows.is === 'empty' ? t('gaps.isEmpty') : t('gaps.is')}</span>{#if scope.rows.is === 'oneOf'}{' '}<span class="mono">{valuesOf(scope.rows.values)}</span>{/if}</span>{/if}
   </span>
@@ -34,6 +34,8 @@
   .chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px 3px 7px; border-radius: var(--radius-pill); background: var(--surface-solid); font-size: var(--text-meta); color: var(--text-primary); }
   .chip > :global(.icon) { font-size: 13px; color: var(--text-muted); }
   .kind { color: var(--text-muted); }
+  /* The date field a period names, when it names another than the Date Field (FR-RC-34). */
+  .on { margin-left: 2px; padding-left: 6px; border-left: 1px solid var(--tint-active); }
   .mono { font-family: var(--font-mono); }
   .gone { text-decoration: line-through; color: var(--text-muted); }
   .line { display: block; margin-top: 2px; font-size: var(--text-meta); color: var(--text-muted); }

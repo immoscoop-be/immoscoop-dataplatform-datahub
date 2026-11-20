@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { ExcelKeyExchanger, ServiceCallerVerifier, TokenVerifier } from '@datahub/auth';
 import { can, rangesOf, reach } from '@datahub/contracts';
+import { kindOf } from '@datahub/contracts/model-types';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { forbidden, ownerUnitsOf, permissionsOf } from './access.js';
 import { type BigQuery, BigQueryRefused, BigQueryUnavailable, type Finished, type Page, ResultExpired } from './bigquery.js';
@@ -746,6 +747,21 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       };
     } catch (error) {
       if (error instanceof BigQueryRefused) return { storage: null };
+      return unavailable(error, reply, request);
+    }
+  });
+
+  // The first row of a Resource on one of its date fields, for the line under Reliable Since (FR-RC-31, DEC-RC-33).
+  app.get<{ Params: { id: string }; Querystring: { field?: string } }>('/resources/:id/first-row', async (request, reply) => {
+    const resource = await resourceOf(request, reply);
+    if (!resource) return reply;
+    const field = resource.fields.find((one) => one.name === request.query.field);
+    if (!field || kindOf(field.dataType) !== 'date' || !/^[A-Za-z_][A-Za-z0-9_]{0,299}$/.test(field.name)) {
+      return reply.code(400).send({ error: 'invalid_request', message: 'The field is one of its fields of type DATE, DATETIME or TIMESTAMP.' });
+    }
+    try {
+      return { firstRow: await storage.firstRow(resource, field.name) };
+    } catch (error) {
       return unavailable(error, reply, request);
     }
   });

@@ -81,6 +81,7 @@ async function tool(name: string, args: Record<string, unknown>, token: string) 
 
 interface Listed {
   name: string;
+  description?: string;
   inputSchema: { properties: Record<string, { enum?: string[] }> };
   _meta?: { ui?: { visibility?: string[]; resourceUri?: string } };
 }
@@ -251,7 +252,7 @@ describe('Resources through Claude', () => {
   it('gives Claude the Summary first, in its order and with its weights, the Q&A of the Owner among them (FR-CL-25, DEC-RC-18)', async () => {
     answers[`GET ${CATALOGUE}/resources/${RESOURCE_ID}`] = () => [
       200,
-      detail({ card: { businessDescription: '### Leads\nCredit leads per **week**.', intendedUse: 'Weekly trends.', pitfalls: 'The current week is incomplete.', knownGaps: [{ id: '1', text: 'No partner leads before March.', scope: { period: { from: null, to: '2025-02-28' }, rows: { field: 'lead_source', is: 'oneOf', values: ['partner'] } }, addedBy: 'An', addedAt: '2026-11-01T10:00:00Z' }], reliableSince: null, keyFields: [], parameters: [] } }),
+      detail({ card: { businessDescription: '### Leads\nCredit leads per **week**.', intendedUse: 'Weekly trends.', pitfalls: 'The current week is incomplete.', knownGaps: [{ id: '1', text: 'No partner leads before March.', scope: { period: { from: null, to: '2025-02-28' }, rows: { field: 'lead_source', is: 'oneOf', values: ['partner'] } }, addedBy: 'An', addedAt: '2026-11-01T10:00:00Z' }], reliableSince: { from: 'day', day: '2025-01-01', why: '2024 was loaded once from the old CRM export.', setBy: 'An', setAt: '2026-11-15T10:00:00Z' }, dateField: 'week_start', keyFields: [], parameters: [] } }),
     ];
     answers[`GET ${CATALOGUE}/collections/c-1`] = () => [200, collection];
     const said = (kind: string, name: string, as: string | null, text: string, state: string | null, replies: object[] = []) => ({
@@ -274,12 +275,15 @@ describe('Resources through Claude', () => {
     const result = await tool('get_resource', { id: RESOURCE_ID }, await issuer.sign({ groups: ['g-credit'] }));
     const text = result.content[0]?.text ?? '';
     expect(text).toContain('- When interpreting results: It decides what a result may be taken to say.');
-    const order = ['## 1. What it is (read first)', '## 2. Use it for (read first)', '## 3. Its fields (before you query)', '## 4. Watch out (when interpreting results)', '## 5. Known Gaps', '## 6. Q&A of the Owner and the Data Team', '## 7. Where it stands (context)', '## 8. What colleagues noted (context)'];
+    const order = ['## 1. What it is (read first)', '## 2. Use it for (read first)', '## 3. Its fields (before you query)', '## 4. Watch out (when interpreting results)', '## 5. Reliable since, Known Gaps (when interpreting results)', '## 6. Q&A of the Owner and the Data Team', '## 7. Where it stands (context)', '## 8. What colleagues noted (context)'];
     expect(order.map((heading) => text.indexOf(heading))).toEqual([...order.map((heading) => text.indexOf(heading))].sort((a, b) => a - b));
     expect(order.filter((heading) => !text.includes(heading))).toEqual([]);
     expect(text).toContain('Credit leads per **week**.');
-    // A Known Gap with where it holds, as data (FR-RC-25).
-    expect(text).toContain('- No partner leads before March. [period: until 2025-02-28; rows: lead_source = partner]');
+    // A Known Gap with where it holds, as data (FR-RC-25); Reliable since first in its part, on its Date Field, no longer under Watch out (DEC-UX-296).
+    expect(text).toContain(
+      '## 5. Reliable since, Known Gaps (when interpreting results)\nReliable since: from 2025-01-01 on week_start; not earlier because: 2024 was loaded once from the old CRM export. Do not read earlier data as reliable.\n- No partner leads before March. [period: until 2025-02-28; rows: lead_source = partner]',
+    );
+    expect(text).not.toMatch(/Watch out[^#]*Reliable since/);
     expect(text).toContain('  - An, Owner, 2026-11-03: Every request counts.');
     expect(text).toMatch(/What colleagues noted \(context\)\n- Question, open, Jan, 2026-11-02: Per province\?/);
     // A part with nothing in it is left out.
@@ -300,7 +304,7 @@ describe('Resources through Claude', () => {
       [2, 'Use it for', 'Read first', 1],
       [3, 'Its fields', 'Before you query', 2],
       [4, 'Watch out', 'When interpreting results', 3],
-      [5, 'Known Gaps', 'When interpreting results', 3],
+      [5, 'Reliable since, Known Gaps', 'When interpreting results', 3],
       [6, 'Q&A of the Owner and the Data Team', 'When interpreting results', 3],
       [7, 'Where it stands', 'Context', 4],
       [8, 'What colleagues noted', 'Context', 4],
@@ -371,7 +375,7 @@ describe('Resources through Claude', () => {
     const guided = await tool('guide_owner_journey', { id: RESOURCE_ID }, owner);
     expect(guided.structuredContent).toMatchObject({
       ready: false,
-      open: ['businessDescription', 'keyFields', 'fields', 'pitfalls', 'gaps'],
+      open: ['businessDescription', 'keyFields', 'fields', 'pitfalls', 'since', 'gaps'],
       you: { mayPublish: true, mayDescribe: true },
       next: { number: 2, step: 'businessDescription', mark: 'required to publish', writes: 'update_resource_card' },
     });
@@ -388,15 +392,15 @@ describe('Resources through Claude', () => {
     // The window keeps the overview at hand, the definitions of the terms of the step behind the ⓘ after its title, and
     // links to its spot (FR-CL-33, FR-LR-44, DEC-CL-19).
     const shown = guided.structuredContent as { window: { overview: { steps: { number: number; state: string; mark: string; says: string }[]; done: number; open: number }; terms: { name: string; definition: string }[]; link: { url: string; label: string } } };
-    expect(shown.window.overview.open).toBe(5);
+    expect(shown.window.overview.open).toBe(6);
     expect(shown.window.overview.steps.find((step) => step.number === 1)).toMatchObject({ state: 'done', says: 'Done' });
     expect(shown.window.overview.steps.find((step) => step.number === 2)).toMatchObject({ state: 'now', mark: 'Required' });
-    expect(shown.window.overview.steps.find((step) => step.number === 8)).toMatchObject({ state: 'optional', mark: 'Optional' });
+    expect(shown.window.overview.steps.find((step) => step.number === 9)).toMatchObject({ state: 'optional', mark: 'Optional' });
     expect(shown.window.terms).toEqual([{ name: 'Business Description', definition: expect.stringContaining('the description from dbt, which says how the data is made') }]);
     expect(shown.window).not.toHaveProperty('purpose');
     expect(shown.window.link).toEqual({ url: `${WEB}/resources/${RESOURCE_ID}/description`, label: 'Open the Description in Data Hub' });
-    expect(guided.content[0]?.text).toContain('Step 2 of 12 is next: Business Description, required to publish.');
-    expect(guided.content[0]?.text).toContain('Still open before it can be published: Business Description, Key Fields, Fields, Pitfalls, Known Gaps and reliable since.');
+    expect(guided.content[0]?.text).toContain('Step 2 of 13 is next: Business Description, required to publish.');
+    expect(guided.content[0]?.text).toContain('Still open before it can be published: Business Description, Key Fields, Fields, Pitfalls, Reliable since, Known Gaps.');
 
     // The publication shows what is open, and sends Claude back to the journey: no declaration to tick yet (DEC-MR-15).
     const publish = await tool('publish_resource', { id: RESOURCE_ID }, owner);
@@ -435,6 +439,97 @@ describe('Resources through Claude', () => {
     const written = await tool('update_resource_card', { id: RESOURCE_ID, pitfalls: 'Mind the current week.', before: { pitfalls: 'The current week is incomplete.' } }, await issuer.sign());
     expect(written.isError).toBeUndefined();
     expect(asked.find((call) => call.method === 'PATCH')?.body).toEqual({ pitfalls: 'Mind the current week.' });
+  });
+
+  it('writes Reliable since as from its first row or a later day with why, and its Date Field, never over a colleague (FR-RC-31, FR-RC-32)', async () => {
+    const set = { from: 'day', day: '2025-01-01', why: '2024 was loaded once from the old CRM export.', setBy: 'An', setAt: '2026-11-15T10:00:00Z' };
+    answers[`GET ${CATALOGUE}/resources/${RESOURCE_ID}`] = () => [200, detail({ card: { ...detail().resource.card, reliableSince: set, dateField: null } })];
+    answers[`PATCH ${CATALOGUE}/resources/${RESOURCE_ID}`] = () => [200, detail()];
+    const owner = await issuer.sign();
+    const card = (await toolsOf(owner)).find((item) => item.name === 'update_resource_card');
+    expect(Object.keys(card?.inputSchema.properties ?? {})).toEqual(expect.arrayContaining(['reliableSince', 'dateField']));
+    expect(card?.description).toContain('never set it by default');
+
+    // A bare day, as before, or a later day without why, is refused before it is sent.
+    expect((await tool('update_resource_card', { id: RESOURCE_ID, reliableSince: '2025-01-01' }, owner)).isError).toBe(true);
+    expect((await tool('update_resource_card', { id: RESOURCE_ID, reliableSince: { from: 'day', day: '2025-01-01', why: ' ' } }, owner)).isError).toBe(true);
+    expect(asked.some((call) => call.method === 'PATCH')).toBe(false);
+
+    // What Claude showed is compared without who set it and when: From its first row, on another Date Field.
+    const written = await tool('update_resource_card', { id: RESOURCE_ID, reliableSince: { from: 'firstRow' }, dateField: 'week_start', before: { reliableSince: { from: 'day', day: '2025-01-01', why: '2024 was loaded once from the old CRM export.' }, dateField: null } }, owner);
+    expect(written.isError).toBeUndefined();
+    expect(asked.find((call) => call.method === 'PATCH')?.body).toEqual({ reliableSince: { from: 'firstRow' }, dateField: 'week_start' });
+
+    // A colleague set it meanwhile: not written over.
+    asked.length = 0;
+    const stale = await tool('update_resource_card', { id: RESOURCE_ID, reliableSince: { from: 'firstRow' }, before: { reliableSince: null } }, owner);
+    expect(stale.isError).toBe(true);
+    expect(stale.content[0]?.text).toContain('reliableSince is now');
+    expect(asked.some((call) => call.method === 'PATCH')).toBe(false);
+  });
+
+  it('takes the Owner through Reliable since as a step of its own, before the Known Gaps, on the Date Field its table type gives (DEC-MR-18, FR-RC-32)', async () => {
+    const said = { by: 'An', at: '2026-11-15T09:00:00Z' };
+    const journey = journeyOf({
+      level: 2,
+      inCollection: true,
+      published: false,
+      businessDescription: 'Credit leads per week.',
+      keyFields: ['week_start'],
+      fields: [{ name: 'week_start', businessDescription: 'The Monday of the week.' }],
+      intendedUse: 'Weekly trends.',
+      pitfalls: 'The current week is incomplete.',
+      knownGaps: 0,
+      reliableSince: null,
+      parameters: [],
+      modelType: 'aggregate',
+      grain: ['week_start'],
+      mappings: 0,
+      openMessages: 0,
+      records: [{ step: 'data', answer: 'goneThrough', ...said }],
+    });
+    const fields = [
+      { name: 'week_start', dataType: 'DATE', description: 'Monday of the week', businessDescription: 'The Monday of the week.' },
+      { name: 'loaded_at', dataType: 'TIMESTAMP', description: '', businessDescription: '' },
+      { name: 'lead_count', dataType: 'INT64', description: '', businessDescription: '' },
+    ];
+    const details = { partition: null, clusterBy: [], grain: ['week_start'], grainSentence: '', modelType: 'aggregate', typeFields: [{ field: 'week_start', role: 'period', origin: 'here' }] };
+    answers[`GET ${CATALOGUE}/resources/${RESOURCE_ID}`] = () => [200, detail({ level: 2, published: false, journey, fields, details, card: { ...detail().resource.card, intendedUse: 'Weekly trends.', keyFields: ['week_start'] } })];
+    answers[`GET ${CATALOGUE}/collections/c-1`] = () => [200, collection];
+    const guided = await tool('guide_owner_journey', { id: RESOURCE_ID }, await issuer.sign({ groups: ['g-credit'] }));
+    const data = guided.structuredContent as { next: { number: number; step: string; writes: string; ask: string }; open: string[]; window: { held: { label: string; text?: string; chips?: string[]; none?: string }[]; link: { label: string; url: string }; total: number } };
+    expect(data.next).toMatchObject({ number: 7, step: 'since', writes: 'update_resource_card' });
+    expect(data.next.ask).toContain('Never choose one for the Owner');
+    expect(data.open).toEqual(['since', 'gaps']);
+    expect(data.window.total).toBe(13);
+    expect(data.window.held).toEqual([
+      { label: 'Reliable since', text: undefined, none: expect.stringContaining('neither from its first row nor from a later day') },
+      { label: 'Read on', text: 'week_start, from its table type: period of an aggregate.', none: expect.any(String) },
+      { label: 'Its date fields', chips: ['week_start', 'loaded_at'], none: expect.any(String) },
+    ]);
+    expect(data.window.link).toEqual({ url: `${WEB}/resources/${RESOURCE_ID}/gaps`, label: 'Open Reliable since in Data Hub' });
+    expect(guided.content[0]?.text).toContain('Step 7 of 13 is next: Reliable since, required to publish.');
+
+    // Another Date Field than its table type gives is unusual, and the window says so.
+    answers[`GET ${CATALOGUE}/resources/${RESOURCE_ID}`] = () => [
+      200,
+      detail({ level: 2, published: false, journey, fields, details, card: { ...detail().resource.card, reliableSince: { from: 'firstRow', day: null, why: '', setBy: 'An', setAt: said.at }, dateField: 'loaded_at' } }),
+    ];
+    const odd = (await tool('guide_owner_journey', { id: RESOURCE_ID }, await issuer.sign({ groups: ['g-credit'] }))).structuredContent as typeof data;
+    expect(odd.window.held[0]?.text).toBe('From its first row: the whole table can be relied on, as far back as it goes.');
+    expect(odd.window.held[1]?.text).toMatch(/^loaded_at, chosen\. Unusual: its table type gives week_start/);
+  });
+
+  it('writes a Known Gap of one day on another date field, and reads it as data (FR-RC-33, FR-RC-34)', async () => {
+    const owner = await issuer.sign();
+    const scope = { period: { from: '2026-10-21', to: '2026-10-21', dateField: 'loaded_at' } };
+    answers[`POST ${CATALOGUE}/resources/${RESOURCE_ID}/gaps`] = () => [201, { gap: { id: '8', text: 'Fair leads entered a week late.', scope, addedBy: 'An', addedAt: '2026-11-03T10:00:00Z' } }];
+    expect((await tool('add_known_gap', { id: RESOURCE_ID, text: 'Fair leads entered a week late.', scope }, owner)).isError).toBeUndefined();
+    expect(asked.find((call) => call.method === 'POST')?.body).toEqual({ text: 'Fair leads entered a week late.', scope });
+    answers[`GET ${CATALOGUE}/resources/${RESOURCE_ID}`] = () => [200, detail({ card: { ...detail().resource.card, knownGaps: [{ id: '8', text: 'Fair leads entered a week late.', scope, addedBy: 'An', addedAt: '2026-11-03T10:00:00Z' }] } })];
+    answers[`GET ${CATALOGUE}/collections/c-1`] = () => [200, collection];
+    const text = (await tool('get_resource', { id: RESOURCE_ID }, owner)).content[0]?.text ?? '';
+    expect(text).toContain('- Fair leads entered a week late. [period: on 2026-10-21 on loaded_at]');
   });
 
   it('shows the fields Claude suggests in a card, and writes only what the User saves there, never over a colleague (FR-CL-38, DEC-CL-22)', async () => {

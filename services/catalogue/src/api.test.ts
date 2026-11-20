@@ -111,13 +111,17 @@ describe('the Resources to add, in a request (FR-CO-31, FR-CO-33, FR-CO-34)', ()
 });
 
 describe('what changes about a Resource, in a request (FR-RC-15, FR-RC-16)', () => {
-  it('takes texts, a list of gaps, a day and lists of fields, trimmed', () => {
-    expect(parseCard({ businessDescription: ' Leads per week. ', knownGaps: [' no partner leads before March ', ' '], reliableSince: '2025-01-01', keyFields: ['week_start'] })).toEqual({
+  it('takes texts, a list of gaps, Reliable since, the Date Field and lists of fields, trimmed (FR-RC-31, FR-RC-32)', () => {
+    expect(
+      parseCard({ businessDescription: ' Leads per week. ', knownGaps: [' no partner leads before March ', ' '], reliableSince: { from: 'day', day: '2025-01-01', why: ' 2024 was a test. ' }, dateField: 'week_start', keyFields: ['week_start'] }),
+    ).toEqual({
       businessDescription: 'Leads per week.',
       knownGaps: ['no partner leads before March'],
-      reliableSince: '2025-01-01',
+      reliableSince: { from: 'day', day: '2025-01-01', why: '2024 was a test.' },
+      dateField: 'week_start',
       keyFields: ['week_start'],
     });
+    expect(parseCard({ reliableSince: { from: 'firstRow' }, dateField: null })).toEqual({ reliableSince: { from: 'firstRow', day: null, why: '' }, dateField: null });
     expect(parseCard({ reliableSince: null, pitfalls: '' })).toEqual({ reliableSince: null, pitfalls: '' });
   });
 
@@ -125,8 +129,11 @@ describe('what changes about a Resource, in a request (FR-RC-15, FR-RC-16)', () 
     expect(parseCard({})).toBe('Send at least one thing to change.');
     expect(parseCard({ stability: 'D-3' })).toBe('A Resource has no stability to change.');
     expect(parseCard({ intendedUse: 'x'.repeat(2001) })).toMatch(/at most 2000/);
-    expect(parseCard({ reliableSince: '2025-02-30' })).toMatch(/YYYY-MM-DD/);
-    expect(parseCard({ reliableSince: 'yesterday' })).toMatch(/YYYY-MM-DD/);
+    expect(parseCard({ reliableSince: { from: 'day', day: '2025-02-30', why: 'Why.' } })).toMatch(/YYYY-MM-DD/);
+    // A later day without why, or a bare day as before, is refused: why not earlier is required (FR-RC-31).
+    expect(parseCard({ reliableSince: { from: 'day', day: '2025-01-01', why: ' ' } })).toMatch(/Why not earlier is required/);
+    expect(parseCard({ reliableSince: '2025-01-01' })).toMatch(/Reliable since is/);
+    expect(parseCard({ dateField: 3 })).toMatch(/Date Field/);
     expect(parseCard({ keyFields: ['a', 'a'] })).toMatch(/different fields/);
     expect(parseCard({ knownGaps: 'none' })).toMatch(/Known Gaps/);
   });
@@ -296,7 +303,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
 
   /** Every step required to publish, done by who may describe it, so that its Owner may publish it (DEC-MR-15, DEC-MR-16). */
   async function makeReady(as: Awaited<ReturnType<typeof user>>, id: string | undefined, keyField: string) {
-    expect((await as('PATCH', `/resources/${id}`, { businessDescription: 'What it is.', keyFields: [keyField], intendedUse: 'What it is for.', pitfalls: 'Where it trips people up.', reliableSince: '2025-01-01' })).statusCode).toBe(200);
+    expect((await as('PATCH', `/resources/${id}`, { businessDescription: 'What it is.', keyFields: [keyField], intendedUse: 'What it is for.', pitfalls: 'Where it trips people up.', reliableSince: { from: 'firstRow' } })).statusCode).toBe(200);
     expect((await as('PUT', `/resources/${id}/fields`, { fields: [{ name: keyField, businessDescription: 'What the field is.' }] })).statusCode).toBe(200);
     expect((await as('POST', `/resources/${id}/journey/gaps`, { answer: 'nothing' })).statusCode).toBe(200);
   }
@@ -808,7 +815,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
         businessDescription: 'The cards we send each week.',
         intendedUse: 'Trends.',
         knownGaps: ['No cards before March.'],
-        reliableSince: '2025-01-01',
+        reliableSince: { from: 'day', day: '2025-01-01', why: 'The cards of 2024 were loaded once, incomplete.' },
         keyFields: ['cards_id'],
         parameters: ['listing_id'],
       });
@@ -818,7 +825,8 @@ describe.skipIf(!url)('the routes of Collections', () => {
         intendedUse: 'Trends.',
         pitfalls: '',
         knownGaps: [{ id: expect.any(String), text: 'No cards before March.', scope: null, addedBy: 'An', addedAt: expect.any(String) }],
-        reliableSince: '2025-01-01',
+        reliableSince: { from: 'day', day: '2025-01-01', why: 'The cards of 2024 were loaded once, incomplete.', setBy: 'An', setAt: expect.any(String) },
+        dateField: null,
         keyFields: ['cards_id'],
         parameters: ['listing_id'],
       });
@@ -833,6 +841,15 @@ describe.skipIf(!url)('the routes of Collections', () => {
         'Intended use updated by An',
         'Business Description updated by An',
       ]);
+
+      // The Date Field is one of its date fields; From its first row needs no day nor why (FR-RC-31, FR-RC-32).
+      expect((await an('PATCH', `/resources/${cards}`, { dateField: 'listing_id' })).json().message).toMatch(/listing_id holds no date/);
+      expect((await an('PATCH', `/resources/${cards}`, { dateField: 'nope' })).json().message).toBe('cards has no field nope.');
+      const first = await an('PATCH', `/resources/${cards}`, { reliableSince: { from: 'firstRow' } });
+      expect(first.json().resource.card.reliableSince).toEqual({ from: 'firstRow', day: null, why: '', setBy: 'An', setAt: expect.any(String) });
+      expect((await an('PATCH', `/resources/${cards}`, { reliableSince: null })).json().resource.card.reliableSince).toBeNull();
+      // Set again for the publication below.
+      expect((await an('PATCH', `/resources/${cards}`, { reliableSince: { from: 'day', day: '2025-01-01', why: 'The cards of 2024 were loaded once, incomplete.' } })).statusCode).toBe(200);
 
       // The Known Gaps one at a time, each with who added it; who added one stays when it changes (FR-RC-21).
       const newGap = await dirk('POST', `/resources/${cards}/gaps`, { text: '  visitorId is missing for MySQL leads. ' });
@@ -853,6 +870,12 @@ describe.skipIf(!url)('the routes of Collections', () => {
         'Known Gap changed by An: visitorId is missing for leads from MySQL.',
         'Known Gap added by Dirk: visitorId is missing for MySQL leads.',
       ]);
+      // The period of a gap may name its date field, a field that holds a date; one day has both sides the same (FR-RC-33, FR-RC-34).
+      const onLoad = { text: 'Fair leads entered a week late.', scope: { period: { from: '2026-10-21', to: '2026-10-21', dateField: 'listing_id' } } };
+      expect((await dirk('POST', `/resources/${cards}/gaps`, onLoad)).json().message).toMatch(/listing_id holds no date/);
+      const fair = await dirk('POST', `/resources/${cards}/gaps`, { ...onLoad, scope: { period: { ...onLoad.scope.period, dateField: 'week' } } });
+      expect(fair.json().gap.scope).toEqual({ period: { from: '2026-10-21', to: '2026-10-21', dateField: 'week' } });
+      expect((await dirk('DELETE', `/resources/${cards}/gaps/${fair.json().gap.id}`)).statusCode).toBe(204);
       // The whole list at once, as Claude sends it: a gap that stays keeps who added it.
       await an('PATCH', `/resources/${cards}`, { knownGaps: ['No cards before March.', 'No decks.'] });
       expect((await an('GET', `/resources/${cards}`)).json().resource.card.knownGaps).toEqual([

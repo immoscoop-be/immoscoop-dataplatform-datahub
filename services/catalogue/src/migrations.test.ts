@@ -194,7 +194,8 @@ describe.skipIf(!url)('catalogue migrations', () => {
     const id = (await sql<{ id: string }>`select id from resources where key = 'p.d.journey'`.execute(admin.db)).rows[0]!.id;
     const typed = (type: string) => sql`update resources set model_type = ${type} where id = ${id}`;
     await expect(typed('other').execute(admin.db)).rejects.toThrow(/resources_model_type_check/);
-    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    await sql`update resources set reliable_since = '2025-01-01' where id = ${id}`.execute(admin.db);
+    const results = await migrate({ db: admin.db, schema, migrations: before('0027'), serviceUser: 'postgres' });
     expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0026-type-fields', 'Success']]);
     // Every model type of the shared definition, and nothing else.
     for (const type of MODEL_TYPES) await typed(type).execute(admin.db);
@@ -209,5 +210,22 @@ describe.skipIf(!url)('catalogue migrations', () => {
     await expect(sql`insert into resource_type_fields (resource_id, field, role, origin) values (gen_random_uuid(), 'a', 'about', 'here')`.execute(admin.db)).rejects.toThrow(
       /foreign key/,
     );
+  });
+
+  it('keeps Reliable Since as from its first row or a later day with why, a day of before as a later day, and the Date Field chosen (FR-RC-31, FR-RC-32)', async () => {
+    const id = (await sql<{ id: string }>`select id from resources where key = 'p.d.journey'`.execute(admin.db)).rows[0]!.id;
+    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0027-reliable-since', 'Success']]);
+    // The day set before is a later day, without why nor who.
+    const kept = await sql<{ from: string; why: string; by: string | null }>`select reliable_since_from as from, reliable_since_why as why, reliable_since_by_name as by from resources where id = ${id}`.execute(admin.db);
+    expect(kept.rows[0]).toEqual({ from: 'day', why: '', by: null });
+    const set = (from: string | null, day: string | null) => sql`update resources set reliable_since_from = ${from}, reliable_since = ${day} where id = ${id}`;
+    await set('firstRow', null).execute(admin.db);
+    await set(null, null).execute(admin.db);
+    await expect(set('firstRow', '2025-01-01').execute(admin.db)).rejects.toThrow(/resources_reliable_since_check/);
+    await expect(set('day', null).execute(admin.db)).rejects.toThrow(/resources_reliable_since_check/);
+    await expect(set(null, '2025-01-01').execute(admin.db)).rejects.toThrow(/resources_reliable_since_check/);
+    await expect(set('always', null).execute(admin.db)).rejects.toThrow(/check/);
+    await sql`update resources set date_field = 'week_start' where id = ${id}`.execute(admin.db);
   });
 });

@@ -6,6 +6,7 @@ import archive from '@phosphor-icons/core/assets/regular/archive.svg?raw';
 import arrowBendUpLeftFill from '@phosphor-icons/core/assets/fill/arrow-bend-up-left-fill.svg?raw';
 import bellSimpleFill from '@phosphor-icons/core/assets/fill/bell-simple-fill.svg?raw';
 import calendarBlankFill from '@phosphor-icons/core/assets/fill/calendar-blank-fill.svg?raw';
+import calendarCheckFill from '@phosphor-icons/core/assets/fill/calendar-check-fill.svg?raw';
 import caretDoubleLeftFill from '@phosphor-icons/core/assets/fill/caret-double-left-fill.svg?raw';
 import chartBarFill from '@phosphor-icons/core/assets/fill/chart-bar-fill.svg?raw';
 import chatCircleDotsFill from '@phosphor-icons/core/assets/fill/chat-circle-dots-fill.svg?raw';
@@ -186,6 +187,7 @@ export const ICONS = {
   'arrow-bend-up-left-fill': arrowBendUpLeftFill,
   'bell-simple-fill': bellSimpleFill,
   'calendar-blank-fill': calendarBlankFill,
+  'calendar-check-fill': calendarCheckFill,
   'caret-double-left-fill': caretDoubleLeftFill,
   'chart-bar-fill': chartBarFill,
   'chat-circle-dots-fill': chatCircleDotsFill,

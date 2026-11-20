@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fieldsOf, type GapScope, gapScopeSchema, hasScope, scopeText } from './gaps.js';
+import { fieldsOf, type GapScope, gapScopeSchema, hasScope, oneDay, scopeText } from './gaps.js';
 
 describe('the scope of a Known Gap (FR-RC-24, DEC-RC-20)', () => {
   it('takes a period, fields and rows, each optional and combined', () => {
@@ -20,6 +20,17 @@ describe('the scope of a Known Gap (FR-RC-24, DEC-RC-20)', () => {
     // A period names no field of its own: Fields says which it concerns (DEC-UX-178).
     expect(gapScopeSchema.safeParse({ period: { field: 'week_start', from: null, to: '2025-02-28' } }).success).toBe(false);
     expect(gapScopeSchema.safeParse({ when: 'always' }).success).toBe(false);
+  });
+
+  it('takes one day as a period whose sides are the same day, and a date field of its own, optional (FR-RC-33, FR-RC-34)', () => {
+    const day: GapScope = { period: { from: '2026-10-21', to: '2026-10-21', dateField: 'loaded_at' } };
+    expect(gapScopeSchema.parse(day)).toEqual(day);
+    expect(oneDay(day.period)).toBe(true);
+    expect(oneDay({ from: '2026-10-21', to: '2026-10-22' })).toBe(false);
+    expect(oneDay({ from: null, to: '2026-10-21' })).toBe(false);
+    expect(gapScopeSchema.safeParse({ period: { from: '2026-10-21', to: null, dateField: '' } }).success).toBe(false);
+    expect(scopeText(day)).toBe('[period: on 2026-10-21 on loaded_at]');
+    expect(fieldsOf(day)).toEqual(['loaded_at']);
   });
 
   it('names its fields once each', () => {

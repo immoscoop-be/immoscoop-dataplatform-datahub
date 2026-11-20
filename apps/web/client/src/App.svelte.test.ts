@@ -93,7 +93,7 @@ const SAVED_SEARCHES = {
   ],
   leftOut: [],
   details: { partition: null, clusterBy: [], partitionFilter: 'none', grain: [], grainSentence: '', modelType: null, origins: {}, release: null, mappings: [] },
-  card: { businessDescription: '', intendedUse: '', pitfalls: '', knownGaps: [], reliableSince: null, keyFields: [], parameters: [] },
+  card: { businessDescription: '', intendedUse: '', pitfalls: '', knownGaps: [], reliableSince: null, dateField: null, keyFields: [], parameters: [] },
   published: false,
   deprecated: false,
   publication: null,
@@ -263,7 +263,7 @@ const READY: JourneyFacts = {
   intendedUse: 'Weekly trends.',
   pitfalls: 'The current week is incomplete.',
   knownGaps: 1,
-  reliableSince: '2025-01-01',
+  reliableSince: { from: 'day', day: '2025-01-01', why: 'Earlier weeks are incomplete.' },
   parameters: [],
   modelType: null,
   grain: [],
@@ -904,6 +904,10 @@ function serve({
       });
     }
     // query, as it tells the size of a Resource, previews it and lists the queries on it (FR-SR-38, FR-SR-39, FR-SR-44).
+    // Its first row on its Date Field, for the line under Reliable since (DEC-RC-33).
+    if (path.startsWith('/resources/r2/first-row')) {
+      return json({ firstRow: { day: '2024-01-08', from: 'partitions' } });
+    }
     if (path === '/resources/r2/storage') {
       return json({ storage: { key: WEEKLY_DETAIL.key, bytes: 6_200_000_000, rows: 41_000, partitions: 312, modifiedAt: '2026-10-28T06:00:00Z', beneath: false } });
     }
@@ -2661,7 +2665,7 @@ describe('the page of a Resource', () => {
     expect(main.getByRole('toolbar', { name: /Valkuilen/ })).toBeTruthy();
     await fireEvent.input(main.getByRole('textbox', { name: 'Beoogd gebruik' }), { target: { value: 'Weekly **trends**.' } });
     await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
-    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/resources/r2', body: { intendedUse: 'Weekly **trends**.', pitfalls: '', reliableSince: null } }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/resources/r2', body: { intendedUse: 'Weekly **trends**.', pitfalls: '' } }));
     expect((await main.findByText('trends')).tagName).toBe('STRONG');
 
     await fireEvent.click(main.getByRole('tab', { name: 'Kolommen' }));
@@ -2839,6 +2843,61 @@ describe('the page of a Resource', () => {
     expect(main.getByRole('tab', { name: /^Known Gaps/ }).getAttribute('aria-selected')).toBe('true');
   });
 
+  it('asks for Reliable since on top of the Known Gaps, nothing chosen, and keeps a later day with why on its Date Field (FR-RC-31, FR-RC-32, DEC-UX-297)', async () => {
+    const calls = serve({ groups: ['g1'] });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('tab', { name: /^Known Gaps/ }));
+    // Not set is empty, never one of the two: both choices unchosen, Save off until one is.
+    const form = within(main.getByRole('form', { name: 'Reliable since' }));
+    expect(form.getByText('Vanaf welke dag is zijn data betrouwbaar? Kies er een.')).toBeTruthy();
+    expect(form.getAllByRole('radio').every((radio) => !(radio as HTMLInputElement).checked)).toBe(true);
+    expect((form.getByRole('button', { name: 'Bewaren' }) as HTMLButtonElement).disabled).toBe(true);
+    // A later day: its day, a date field, as no table type gives one (DEC-RC-32), and why not earlier, required.
+    await fireEvent.click(form.getByRole('radio', { name: /Vanaf een latere dag/ }));
+    await fireEvent.input(form.getByLabelText('Dag'), { target: { value: '2025-01-01' } });
+    await fireEvent.change(form.getByRole('combobox', { name: 'Op het datumveld' }), { target: { value: 'week_start' } });
+    expect((form.getByRole('button', { name: 'Bewaren' }) as HTMLButtonElement).disabled).toBe(true);
+    await fireEvent.input(form.getByRole('textbox', { name: 'Waarom niet eerder · verplicht' }), { target: { value: '2024 was loaded once from the old CRM export.' } });
+    await fireEvent.click(form.getByRole('button', { name: 'Bewaren' }));
+    await vi.waitFor(() =>
+      expect(calls).toContainEqual({
+        method: 'PATCH',
+        path: '/resources/r2',
+        body: { reliableSince: { from: 'day', day: '2025-01-01', why: '2024 was loaded once from the old CRM export.' }, dateField: 'week_start' },
+      }),
+    );
+    // The tile, with why not earlier and the line from its first row to today, before that day shaded.
+    expect(await main.findByText('2024 was loaded once from the old CRM export.')).toBeTruthy();
+    expect(main.getByText('Waarom niet eerder')).toBeTruthy();
+    expect(main.getByText('Zijn eerste rij')).toBeTruthy();
+    expect(main.getByText('Voor Reliable since: rijen die er zijn, maar niet betrouwbaar te lezen')).toBeTruthy();
+    expect(main.getByRole('button', { name: /Wijzigen/ })).toBeTruthy();
+  });
+
+  it('takes the period of a Known Gap as one day, the date right behind the choice, and an optional date field of its own (FR-RC-33, FR-RC-34)', async () => {
+    const calls = serve({ groups: ['g1'] });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('tab', { name: /^Known Gaps/ }));
+    await fireEvent.click(main.getByRole('button', { name: /^Voeg een Known Gap toe/ }));
+    const form = within(main.getByRole('form', { name: 'Een nieuwe Known Gap' }));
+    await fireEvent.input(form.getByRole('textbox', { name: WHY }), { target: { value: 'Fair leads entered a week late.' } });
+    await fireEvent.click(form.getByRole('button', { name: 'Periode' }));
+    await fireEvent.click(form.getByRole('radio', { name: 'Eén dag' }));
+    expect(form.getByRole('status').textContent).toBe('Kies de dag.');
+    await fireEvent.input(form.getByLabelText('De dag'), { target: { value: '2026-10-21' } });
+    await fireEvent.change(form.getByRole('combobox', { name: 'Op het datumveld · optioneel' }), { target: { value: 'week_start' } });
+    await fireEvent.click(form.getByRole('button', { name: 'Voeg toe' }));
+    await vi.waitFor(() =>
+      expect(calls).toContainEqual({ method: 'POST', path: '/resources/r2/gaps', body: { text: 'Fair leads entered a week late.', scope: { period: { from: '2026-10-21', to: '2026-10-21', dateField: 'week_start' } } } }),
+    );
+    // One day reads as one day, and the date field it names.
+    expect(await main.findByText(/op 21 okt 2026/)).toBeTruthy();
+  });
+
   it('marks the Key Fields in its Columns, first among what a field serves as (DEC-UX-266)', async () => {
     serve({ groups: ['g1'], weekly: { card: { ...WEEKLY_DETAIL.card, keyFields: ['week_start'] } } });
     open('/resources/r2');
@@ -2852,7 +2911,7 @@ describe('the page of a Resource', () => {
   });
 
   it('lets its Owner publish it, its first Confirmation, once the declaration is ticked (FR-SR-49, DEC-UX-63)', async () => {
-    const calls = serve({ groups: ['g1'], journey: READY, weekly: { card: { ...WEEKLY_DETAIL.card, keyFields: ['week_start'], intendedUse: 'Weekly trends.', pitfalls: 'The current week is incomplete.', reliableSince: '2025-01-01' } } });
+    const calls = serve({ groups: ['g1'], journey: READY, weekly: { card: { ...WEEKLY_DETAIL.card, keyFields: ['week_start'], intendedUse: 'Weekly trends.', pitfalls: 'The current week is incomplete.', reliableSince: { from: 'day', day: '2025-01-01', why: 'Earlier weeks are incomplete.', setBy: 'An Claes', setAt: '2026-11-15T10:00:00Z' } } } });
     open('/resources/r2');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
@@ -2862,12 +2921,14 @@ describe('the page of a Resource', () => {
     expect(sheet.getByText(/het hele bedrijf, want de Collection is publiek/)).toBeTruthy();
     expect(sheet.getByText(/jij mag hem publiceren/)).toBeTruthy();
     // Every step required to publish done; what is advised or for the EDA holds nothing up (DEC-MR-15).
-    expect(sheet.getByText(/Nodig om te publiceren, alles gedaan:/).closest('p')?.textContent).toContain('Business Description; Sleutelvelden; Velden; Beoogd gebruik; Valkuilen; Known Gaps en betrouwbaar sinds.');
+    expect(sheet.getByText(/Nodig om te publiceren, alles gedaan:/).closest('p')?.textContent).toContain('Business Description; Sleutelvelden; Velden; Beoogd gebruik; Valkuilen; Reliable since; Known Gaps.');
     expect(sheet.getByText(/Aangeraden:/).closest('p')?.textContent).toContain('1 ander veld zonder Business Description');
     expect(sheet.getByText(/Voor de EDA, later:/).closest('p')?.textContent).toContain('geen modeltype vastgelegd; geen grain vastgelegd.');
     // The card, read back: what the declaration accepts (DEC-MR-17).
     expect(sheet.getByText('Wat je bevestigt · de kaart, voorgelezen')).toBeTruthy();
-    expect(sheet.getByText('Known Gaps · betrouwbaar sinds 1 jan 2025')).toBeTruthy();
+    // Reliable since on a line of its own, with why not earlier, before the Known Gaps (FR-RC-31).
+    expect(sheet.getByText(/^Reliable since · 1 jan 2025/)).toBeTruthy();
+    expect(sheet.getByText('Earlier weeks are incomplete.')).toBeTruthy();
     expect(sheet.getByText('week_start · geen')).toBeTruthy();
     const button = sheet.getByRole('button', { name: /Publiceren en bevestigen/ }) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
@@ -2913,14 +2974,14 @@ describe('the page of a Resource', () => {
     await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
     // Maturity names the steps required to publish, the open ones with the way to them.
     await fireEvent.click(main.getByRole('tab', { name: 'Maturiteit' }));
-    expect(main.getByText('Daarvoor zijn de stappen gedaan die nodig zijn om te publiceren: nu 4 van 6.')).toBeTruthy();
+    expect(main.getByText('Daarvoor zijn de stappen gedaan die nodig zijn om te publiceren: nu 5 van 7.')).toBeTruthy();
     expect(main.getByText(/Of laat Claude je er stap voor stap door leiden/)).toBeTruthy();
     // The publication shows what is open, leads to it, and holds the declaration back.
     await fireEvent.click(main.getAllByRole('button', { name: /Publiceren/ })[0]!);
     const sheet = within(await screen.findByRole('dialog', { name: 'Weekly lead volume' }));
-    expect(sheet.getByText(/^Gedaan:/).closest('p')?.textContent).toContain('Business Description; Sleutelvelden; Velden; Beoogd gebruik.');
+    expect(sheet.getByText(/^Gedaan:/).closest('p')?.textContent).toContain('Business Description; Sleutelvelden; Velden; Beoogd gebruik; Reliable since.');
     expect(sheet.getByText('Valkuilen:').closest('p')?.textContent).toContain('geen geschreven, en niemand zei dat er geen zijn.');
-    expect(sheet.getByText('Known Gaps en betrouwbaar sinds:').closest('p')?.textContent).toContain('geen Known Gap geschreven, en niemand zei dat er geen zijn.');
+    expect(sheet.getByText('Known Gaps:').closest('p')?.textContent).toContain('geen Known Gap geschreven, en niemand zei dat er geen zijn.');
     expect(sheet.getByText(/om je te helpen Weekly lead volume te publiceren/)).toBeTruthy();
     expect(sheet.queryByText('Wat je bevestigt · de kaart, voorgelezen')).toBeNull();
     expect((sheet.getByRole('checkbox') as HTMLInputElement).disabled).toBe(true);
