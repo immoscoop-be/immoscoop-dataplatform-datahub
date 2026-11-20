@@ -120,8 +120,16 @@ export interface CatalogueDatabase {
     businessDescription: ColumnType<string, string | undefined, string>;
     intendedUse: ColumnType<string, string | undefined, string>;
     pitfalls: ColumnType<string, string | undefined, string>;
-    /** A day, as `YYYY-MM-DD`. */
+    /** Reliable Since (FR-RC-31): its day, as `YYYY-MM-DD`, from a later day; null from its first row or not set. */
     reliableSince: ColumnType<Date | null, string | null | undefined, string | null>;
+    /** From its first row or a later day; null while not set, which is never either. */
+    reliableSinceFrom: ColumnType<'firstRow' | 'day' | null, 'firstRow' | 'day' | null | undefined, 'firstRow' | 'day' | null>;
+    /** Why not earlier, for a later day. */
+    reliableSinceWhy: ColumnType<string, string | undefined, string>;
+    reliableSinceByName: string | null;
+    reliableSinceAt: Date | null;
+    /** The Date Field its Owner Unit or the Data Team chose; null takes the one its table type gives (FR-RC-32). */
+    dateField: string | null;
     keyFields: ColumnType<string[], string[] | undefined, string[]>;
     parameters: ColumnType<string[], string[] | undefined, string[]>;
     /** Published, by name; the first Publication is the first Confirmation (DEC-SR-07). */

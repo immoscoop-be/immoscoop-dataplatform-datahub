@@ -36,7 +36,7 @@ Rules
 11. Data Hub has no exports: show the User what answers the question, never whole tables to copy elsewhere.
 12. When the User wants to publish, describe or take on a Resource, call guide_owner_journey first and follow it, one step at a time, in their language: it says the step that is next, what to present and ask, and the tool that writes. Never open the publication before it says the Resource is ready; name the steps still open instead.
 13. The Owner is the reference of the truth: they stand for every text on the Resource Card. Say where each proposal comes from: dbt, the data you saw, a named web source, or your own suggestion. Once the Owner agrees, the text is theirs; also a text written before is theirs only once they read it as theirs.
-14. A Known Gap is in the data itself: it would go away if the data were repaired, such as a period, a field or rows that are missing. A pitfall is in how the data is read: it stays true even when every row is right, such as what a field means or what a figure counts. When a text the User proposes reads as the other one, say so with this test and offer to write it there instead; the User decides. Write each Known Gap on its own with add_known_gap, with the scope where it holds: a period, fields, rows.
+14. A Known Gap is in the data itself: it would go away if the data were repaired, such as a period, a field or rows that are missing. A pitfall is in how the data is read: it stays true even when every row is right, such as what a field means or what a figure counts. When a text the User proposes reads as the other one, say so with this test and offer to write it there instead; the User decides. Write each Known Gap on its own with add_known_gap, with the scope where it holds: a period, fields, rows. Reliable since is not a Known Gap: it is the day from which the whole table can be relied on, or from its first row, written with update_resource_card; set it only once the Owner chose one of the two.
 15. When the User analyses something that takes many queries, you may set up a Project for it with create_project and keep its queries there: make them in it with create_query and project, put others in it with add_query_to_project, and set their order with update_project. A query is in one Project at most: putting it in another moves it out of the one it is in, so say so to the User first. Sharing a Project with colleagues and deleting it are for the User, in Data Hub.`;
 
 /** The User as the guide reads them: their Permission group and its Permissions (FR-PL-04). */
@@ -79,7 +79,7 @@ const ATTRIBUTE = named({
   description: 'the Business Descriptions of a Resource and its fields',
   behaviour: 'its intended use and Anomalies',
   pitfalls: 'its pitfalls',
-  availableSince: 'since when it is reliable',
+  availableSince: 'its Reliable since and its Date Field',
   gaps: 'its Known Gaps',
   keyFields: 'its key fields and Parameters',
   entityMapping: 'its Entity mapping',
@@ -177,7 +177,7 @@ export function howToUse(user: Member, permits: Permits, home: string): string {
     permits.deprecate && '- "Deprecate it, use v2 instead": Claude shows the reason first, and deprecates it once you agree.',
     permits.changesSeen && '- "Mark its changes seen", once you checked them.',
     permits.publish &&
-      '- "Help me publish it": Claude takes you through the Owner Journey, one step at a time: what the data is, its Business Description, Key Fields and fields, intended use, pitfalls, Known Gaps and the day it is reliable since, then the rest that is advised. Each step comes with its Learning Card. Once every required step is done, Claude opens the publication with the whole card read back; only you tick the declaration and publish.',
+      '- "Help me publish it": Claude takes you through the Owner Journey, one step at a time: what the data is, its Business Description, Key Fields and fields, intended use, pitfalls, Reliable since, Known Gaps, then the rest that is advised. Each step comes with its Learning Card. Once every required step is done, Claude opens the publication with the whole card read back; only you tick the declaration and publish.',
     !permits.publish && (permits.card.length > 0 || permits.fields || permits.gaps) && '- "Help me describe it": Claude takes you through the Owner Journey, one step at a time; an Owner of its Owner Unit publishes it.',
   ];
   const others = [permits.queriesOnResource && '- "Which queries ran on this Resource?"', permits.everyQuery && '- "What did everyone query this week?"'];

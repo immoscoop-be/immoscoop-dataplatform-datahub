@@ -509,6 +509,7 @@
       removeLater={removedByTeam ? (collection?.name ?? null) : null}
       onremove={() => mark(async () => (await catalogue.removeResource(resource.id), catalogue.resource(resource.id)))}
       onchangetype={relates ? () => (relating = resource.details.modelType ? 'change' : 'type') : undefined}
+      firstRowOf={(field) => queries.firstRow(resource.id, field).catch(() => null)}
       bind:part
     />
   {:else if tab === 'columns'}

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { type BigQuery, BigQueryRefused, type TableFacts } from './bigquery.js';
 import type { QueryResource } from './catalogue.js';
-import { choicesOf, chosenParameters, createStorage, partitionStart, previewSql, valuesSql, windowFilter } from './preview.js';
+import { choicesOf, chosenParameters, createStorage, FIRST_ROW_BYTES, partitionStart, previewSql, valuesSql, windowFilter } from './preview.js';
 
 const WEEKLY: QueryResource = {
   id: '6f1c2b4e-8a1d-4c3e-9f20-1b2c3d4e5f60',
@@ -129,5 +129,50 @@ describe('the size and partitions of a Resource (FR-SR-39)', () => {
   it('say nothing of the newest partitions where BigQuery does not tell them', async () => {
     const { bigquery } = fake({ [WEEKLY.key]: facts({ partitionField: 'week_start' }) }, new BigQueryRefused('Access Denied'));
     expect(await createStorage(bigquery, async () => []).newest(WEEKLY, 4)).toBeNull();
+  });
+});
+
+describe('the first row of a Resource on its Date Field (DEC-RC-33)', () => {
+  const facts = (extra: Partial<TableFacts>): TableFacts => ({ type: 'TABLE', bytes: 10, rows: 1, partitions: null, partitionField: null, modifiedAt: null, ...extra });
+  function fake(partitionField: string | null, bytes: number) {
+    const asked: string[] = [];
+    const bigquery = {
+      async table() {
+        return facts({ partitionField });
+      },
+      async firstPartition() {
+        asked.push('partitions');
+        return '20240108';
+      },
+      async dryRun(sql: string) {
+        asked.push(`dry ${sql}`);
+        return { statementType: 'SELECT', bytes, referencedTables: [], partitions: null };
+      },
+      async lowestDay(_key: string, field: string, most: number) {
+        asked.push(`lowest ${field} ${most}`);
+        return '2023-05-02';
+      },
+    } as unknown as BigQuery;
+    return { bigquery, asked };
+  }
+
+  it('comes from its oldest partition when it is partitioned on that field, at no cost, once a day', async () => {
+    const { bigquery, asked } = fake('week_start', 0);
+    const storage = createStorage(bigquery, async () => []);
+    expect(await storage.firstRow(WEEKLY, 'week_start')).toEqual({ day: '2024-01-08', from: 'partitions' });
+    expect(await storage.firstRow(WEEKLY, 'week_start')).toEqual({ day: '2024-01-08', from: 'partitions' });
+    expect(asked).toEqual(['partitions']);
+  });
+
+  it('is otherwise the lowest value of the field, when it reads at most 100 MB; else none', async () => {
+    const small = fake('week_start', 2_000_000);
+    expect(await createStorage(small.bigquery, async () => []).firstRow(WEEKLY, 'created_at')).toEqual({ day: '2023-05-02', from: 'lowest' });
+    expect(small.asked).toEqual([
+      'dry select cast(min(`created_at`) as date) as first_day from `immoscoop-dataplatform.dbt_prod_stacks.weekly_lead_volume`',
+      `lowest created_at ${FIRST_ROW_BYTES}`,
+    ]);
+    const large = fake(null, 400_000_000);
+    expect(await createStorage(large.bigquery, async () => []).firstRow(WEEKLY, 'created_at')).toEqual({ day: null, from: null });
+    expect(large.asked.some((what) => what.startsWith('lowest'))).toBe(false);
   });
 });

@@ -47,6 +47,8 @@ function fakeBigQuery(answer: (sql: string) => DryRun | Error): BigQuery & { ask
     table: () => Promise.reject(new Error('not in this test')),
     describe: () => Promise.reject(new Error('not in this test')),
     partitions: () => Promise.reject(new Error('not in this test')),
+    firstPartition: () => Promise.reject(new Error('not in this test')),
+    lowestDay: () => Promise.reject(new Error('not in this test')),
   };
 }
 

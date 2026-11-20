@@ -233,6 +233,12 @@ function fakeBigQuery() {
     async partitions(_key, limit) {
       return ['20261019', '20261012', '20261005', '20260928', '20260921'].slice(0, limit);
     },
+    async firstPartition() {
+      return '20240108';
+    },
+    async lowestDay(_key, field) {
+      return field === 'created_at' ? '2023-05-02' : null;
+    },
     // The staging table of the leads, as BigQuery keeps it: by its full name in its own case (FR-SR-62).
     async describe(key) {
       if (silent) throw new BigQueryUnavailable('BigQuery did not answer');
@@ -639,6 +645,10 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     const storage = (await call(an, 'GET', `/resources/${WEEKLY.id}/storage`)).json().storage;
     expect(storage).toEqual({ key: WEEKLY.key, bytes: 4_200_000_000, rows: 1_560, partitions: 312, modifiedAt: '2026-10-28T06:00:00.000Z', beneath: false });
     expect((await call(an, 'GET', `/resources/${SECRET.id}/storage`)).statusCode).toBe(404);
+    // The first row on its Date Field, for the line under Reliable Since: from its oldest partition (DEC-RC-33).
+    expect((await call(an, 'GET', `/resources/${WEEKLY.id}/first-row?field=week_start`)).json().firstRow).toEqual({ day: '2024-01-08', from: 'partitions' });
+    expect((await call(an, 'GET', `/resources/${WEEKLY.id}/first-row?field=lead_source`)).statusCode).toBe(400);
+    expect((await call(an, 'GET', `/resources/${SECRET.id}/first-row?field=week_start`)).statusCode).toBe(404);
   });
 
   it('offers the choices of a Preview, their values read once and kept out of its history (DEC-SR-37, DEC-SR-39, DEC-SR-40)', async () => {

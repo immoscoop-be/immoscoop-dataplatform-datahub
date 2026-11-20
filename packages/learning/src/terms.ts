@@ -60,6 +60,36 @@ export const TERMS = {
       },
     },
   },
+  reliableSince: {
+    term: 'Reliable Since',
+    text: {
+      en: {
+        name: 'Reliable Since',
+        definition:
+          'The day from which the whole table of a Resource can be relied on, read on its Date Field, with why not earlier; or from its first row. Rows before it stay, but are not to be read as reliable: a trend or a comparison starts there. A hole after that day, or in part of the rows, is a Known Gap.',
+      },
+      nl: {
+        name: 'Reliable Since',
+        definition:
+          'De dag vanaf wanneer de hele tabel van een Resource betrouwbaar is, gelezen op zijn Date Field, met waarom niet eerder; of vanaf zijn eerste rij. Rijen ervoor blijven, maar lees ze niet als betrouwbaar: een trend of een vergelijking begint daar. Een gat na die dag, of in een deel van de rijen, is een Known Gap.',
+      },
+    },
+  },
+  dateField: {
+    term: 'Date Field',
+    text: {
+      en: {
+        name: 'Date Field',
+        definition:
+          'The one date field of a Resource that Reliable Since is read on. Its table type gives it: the event date of an event, the date of a fact, the period of an aggregate, the created or updated date of a state.',
+      },
+      nl: {
+        name: 'Date Field',
+        definition:
+          'Het ene datumveld van een Resource waarop Reliable Since gelezen wordt. Zijn tabeltype geeft het: de datum van een event, de datum van een fact, de periode van een aggregate, de aanmaak- of wijzigingsdatum van een state.',
+      },
+    },
+  },
   pitfall: {
     term: 'Pitfall',
     text: {

@@ -87,6 +87,10 @@ export interface BigQuery {
   describe(key: string): Promise<TableInfo>;
   /** The IDs of its newest partitions that hold rows, newest first, such as `20261019` (DEC-SR-39). */
   partitions(key: string, limit: number): Promise<string[]>;
+  /** The ID of its oldest partition that holds rows, such as `20240106`; null when none does (DEC-RC-33). */
+  firstPartition(key: string): Promise<string | null>;
+  /** The lowest value of a date field as a day, by `lowestDaySql`, billed at most this much; null when it has none (DEC-RC-33). */
+  lowestDay(key: string, field: string, maximumBytesBilled: number): Promise<string | null>;
   run(sql: string, options: RunOptions): Promise<Finished>;
   /** A page of the result of a job; throws ResultExpired once BigQuery no longer keeps it (DEC-UX-99). */
   page(job: { jobId: string; location: string }, startIndex: number, maxResults: number): Promise<Page>;
@@ -347,7 +351,47 @@ export function createBigQuery(options: { project: string; location: string; tok
       if (!answer.jobComplete) throw new BigQueryUnavailable('BigQuery did not list the partitions in time');
       return rowsOf(answer).rows.map((row) => String(row[0]));
     },
+    async firstPartition(key) {
+      const [tableProject, dataset, table] = parts(key);
+      // Metadata of Data Hub, as above: the oldest partition that holds rows.
+      const answer = await call<QueryResults>(
+        'POST',
+        '/queries',
+        {
+          query: `select partition_id from \`${tableProject}.${dataset}.INFORMATION_SCHEMA.PARTITIONS\` where table_name = @table and total_rows > 0 and partition_id not in ('__NULL__', '__UNPARTITIONED__') order by partition_id limit 1`,
+          useLegacySql: false,
+          location,
+          parameterMode: 'NAMED',
+          queryParameters: [{ name: 'table', parameterType: { type: 'STRING' }, parameterValue: { value: table } }],
+          maximumBytesBilled: '100000000',
+          labels: { 'datahub-purpose': 'first-row' },
+          timeoutMs: 20_000,
+        },
+        30_000,
+      );
+      if (!answer.jobComplete) throw new BigQueryUnavailable('BigQuery did not list the partitions in time');
+      const first = rowsOf(answer).rows[0]?.[0];
+      return first ? String(first) : null;
+    },
+    async lowestDay(key, field, maximumBytesBilled) {
+      // The lowest value of its Date Field, for Reliable Since: a small query of Data Hub, after a dry run said it fits.
+      const answer = await call<QueryResults>(
+        'POST',
+        '/queries',
+        { query: lowestDaySql(key, field), useLegacySql: false, location, maximumBytesBilled: String(maximumBytesBilled), labels: { 'datahub-purpose': 'first-row' }, timeoutMs: 20_000 },
+        30_000,
+      );
+      if (!answer.jobComplete) throw new BigQueryUnavailable('BigQuery did not read the first row in time');
+      const first = rowsOf(answer).rows[0]?.[0];
+      return first ? String(first).slice(0, 10) : null;
+    },
   };
+}
+
+/** The SQL that reads the lowest value of a date field of a table as a day (DEC-RC-33); the field is checked by its caller. */
+export function lowestDaySql(key: string, field: string): string {
+  const [tableProject, dataset, table] = parts(key);
+  return `select cast(min(\`${field}\`) as date) as first_day from \`${tableProject}.${dataset}.${table}\``;
 }
 
 /** The project, dataset and table of a Key; a name with backticks or fewer parts is refused. */

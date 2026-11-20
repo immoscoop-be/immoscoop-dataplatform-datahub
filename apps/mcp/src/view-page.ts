@@ -501,10 +501,17 @@ function renderPublish(v) {
   const card = r.card || {};
   const part = (label, text) => (text ? '<span class="label">' + esc(label) + '</span><p style="margin:2px 0 8px">' + esc(text) + '</p>' : '');
   const gaps = (card.knownGaps || []).map((gap) => gap.text).join(' ');
+  // Reliable since on a line of its own, with its Date Field and why not earlier, before the Known Gaps (FR-RC-31)
+  const reliable = (since, field) => {
+    if (!since) return '';
+    const on = field ? ', on ' + field : '';
+    if (typeof since === 'string') return part('Reliable since · ' + since + on, 'Earlier rows are not to be read as reliable.');
+    return since.from === 'firstRow' ? part('Reliable since', 'From its first row' + on + ': the whole table can be relied on.') : part('Reliable since · ' + since.day + on, since.why ? 'Why not earlier: ' + since.why : 'Earlier rows are not to be read as reliable.');
+  };
   const read = '<div><div class="label">What you confirm · the card, read back</div><p class="meta">Publishing is also the first Confirmation: for ' + esc(owner) + ', you confirm what this Resource is and what it stands for, in every text on it; not the figures in it.</p><div class="tile">' +
     part('Business Description', card.businessDescription) + '<span class="label">Description</span><span class="origin">From dbt</span><p style="margin:2px 0 8px">' + esc(r.description) + '</p>' +
     part('Intended use', card.intendedUse) + part('Pitfalls', card.pitfalls) +
-    part('Known Gaps' + (card.reliableSince ? ' · reliable since ' + card.reliableSince : ''), gaps || (card.reliableSince ? 'None known.' : '')) +
+    reliable(card.reliableSince, r.dateField && r.dateField.field) + part('Known Gaps', gaps || 'None known.') +
     part('Key Fields · Parameters', (card.keyFields || []).join(', ') + ' · ' + ((card.parameters || []).join(', ') || 'none')) + '</div></div>';
   const declaration = 'For ' + owner + ', I have read this card and confirm that this Resource is correct: what it is and what it stands for, in every text on it.';
   root.innerHTML = head('Publish · Resource', r.displayName, null, level(r.levelName), r.collection) +
@@ -608,7 +615,7 @@ let termsAt = null;
 function renderJourney(v) {
   const w = v.window || {};
   const r = v.resource;
-  const total = w.total || 12;
+  const total = w.total || 13;
   const at = v.next.number;
   const start = v.next.step === 'start';
   const o = w.overview || { steps: [], done: 0, open: 0 };

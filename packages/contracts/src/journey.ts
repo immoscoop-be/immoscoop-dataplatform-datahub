@@ -10,6 +10,7 @@
  * stopped, in any conversation, for any member of the Owner Unit.
  */
 
+import type { ReliableSince } from './reliable.js';
 import type { SummarySource } from './summary.js';
 
 export type JourneyStepId =
@@ -20,6 +21,7 @@ export type JourneyStepId =
   | 'fields'
   | 'intendedUse'
   | 'pitfalls'
+  | 'since'
   | 'gaps'
   | 'parameters'
   | 'admin'
@@ -59,18 +61,20 @@ export const JOURNEY_STEPS: readonly JourneyStep[] = [
   { id: 'fields', number: 4, mark: 'required', cards: ['K5.14'], parts: ['columns'], writes: 'describe_fields', answers: ['goneThrough'], name: 'Fields' },
   { id: 'intendedUse', number: 5, mark: 'required', cards: ['3.3.3'], parts: ['behaviour'], writes: 'update_resource_card', answers: [], name: 'Intended use' },
   { id: 'pitfalls', number: 6, mark: 'required', cards: ['K5.16'], parts: ['behaviour'], writes: 'update_resource_card', answers: ['nothing'], name: 'Pitfalls' },
-  { id: 'gaps', number: 7, mark: 'required', cards: ['K5.3', 'K5.17'], parts: ['gaps', 'behaviour'], writes: 'add_known_gap and update_resource_card', answers: ['nothing'], name: 'Known Gaps and reliable since' },
-  { id: 'parameters', number: 8, mark: 'advised', cards: ['K5.15'], parts: ['querying'], writes: 'update_resource_card', answers: ['nothing'], name: 'Parameters' },
-  { id: 'admin', number: 9, mark: 'eda', cards: ['2.3.6', 'K5.18'], parts: ['entities'], writes: 'write_message', answers: ['goneThrough'], name: 'Table type, grain and mappings' },
-  { id: 'messages', number: 10, mark: 'advised', cards: ['4.7.1'], parts: ['messages'], writes: 'reply_to_message', answers: ['goneThrough'], name: 'Open Questions and Signals' },
-  { id: 'publish', number: 11, mark: 'required', cards: ['K5.13', 'K5.2'], parts: ['maturity'], writes: 'publish_resource', answers: [], name: 'Read it back and publish' },
-  { id: 'after', number: 12, mark: 'none', cards: ['K5.19', 'K5.2'], parts: ['maturity'], writes: null, answers: [], name: 'After' },
+  // Reliable Since before the Known Gaps: a Known Gap is a hole after that day (DEC-MR-18, DEC-MR-19).
+  { id: 'since', number: 7, mark: 'required', cards: ['K5.17'], parts: ['gaps'], writes: 'update_resource_card', answers: [], name: 'Reliable since' },
+  { id: 'gaps', number: 8, mark: 'required', cards: ['K5.3'], parts: ['gaps'], writes: 'add_known_gap', answers: ['nothing'], name: 'Known Gaps' },
+  { id: 'parameters', number: 9, mark: 'advised', cards: ['K5.15'], parts: ['querying'], writes: 'update_resource_card', answers: ['nothing'], name: 'Parameters' },
+  { id: 'admin', number: 10, mark: 'eda', cards: ['2.3.6', 'K5.18'], parts: ['entities'], writes: 'write_message', answers: ['goneThrough'], name: 'Table type, grain and mappings' },
+  { id: 'messages', number: 11, mark: 'advised', cards: ['4.7.1'], parts: ['messages'], writes: 'reply_to_message', answers: ['goneThrough'], name: 'Open Questions and Signals' },
+  { id: 'publish', number: 12, mark: 'required', cards: ['K5.13', 'K5.2'], parts: ['maturity'], writes: 'publish_resource', answers: [], name: 'Read it back and publish' },
+  { id: 'after', number: 13, mark: 'none', cards: ['K5.19', 'K5.2'], parts: ['maturity'], writes: null, answers: [], name: 'After' },
 ];
 
 export const JOURNEY_STEP_IDS: readonly JourneyStepId[] = JOURNEY_STEPS.map((step) => step.id);
 
 /** The steps that must be done before a Resource may be published (DEC-MR-16); reading back happens in the publication. */
-export const REQUIRED_TO_PUBLISH: readonly JourneyStepId[] = ['businessDescription', 'keyFields', 'fields', 'intendedUse', 'pitfalls', 'gaps'];
+export const REQUIRED_TO_PUBLISH: readonly JourneyStepId[] = ['businessDescription', 'keyFields', 'fields', 'intendedUse', 'pitfalls', 'since', 'gaps'];
 
 /** What the Owner Unit said in a step, with who and when. */
 export interface JourneyRecord {
@@ -93,8 +97,8 @@ export interface JourneyFacts {
   intendedUse: string;
   pitfalls: string;
   knownGaps: number;
-  /** A day, `YYYY-MM-DD`, or null. */
-  reliableSince: string | null;
+  /** From its first row, or from a later day; null while not set, which is never either (FR-RC-31). */
+  reliableSince: ReliableSince | null;
   parameters: readonly string[];
   modelType: string | null;
   grain: readonly string[];
@@ -174,8 +178,10 @@ export function journeyOf(facts: JourneyFacts): Journey {
         return filled(facts.intendedUse) ? [] : ['intendedUse'];
       case 'pitfalls':
         return filled(facts.pitfalls) || said('pitfalls', 'nothing') ? [] : ['pitfalls'];
+      case 'since':
+        return facts.reliableSince ? [] : ['reliableSince'];
       case 'gaps':
-        return [...(facts.knownGaps > 0 || said('gaps', 'nothing') ? [] : ['knownGaps' as const]), ...(facts.reliableSince ? [] : ['reliableSince' as const])];
+        return facts.knownGaps > 0 || said('gaps', 'nothing') ? [] : ['knownGaps'];
       case 'parameters':
         return facts.parameters.length > 0 || said('parameters', 'nothing') ? [] : ['parameters'];
       case 'admin':

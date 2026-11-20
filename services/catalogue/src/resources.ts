@@ -1,9 +1,11 @@
 import { fieldsOf, type GapScope, hasScope } from '@datahub/contracts/gaps';
 import { type Journey, type JourneyAnswer, journeyOf, type JourneyStepId, journeyStep } from '@datahub/contracts/journey';
+import type { ReliableSince } from '@datahub/contracts/reliable';
 import {
   type FieldOfType,
   goneOfType,
   invalidTypeFields,
+  kindOf,
   type MissingOfType,
   missingOfType,
   type ModelType,
@@ -156,14 +158,19 @@ export interface Card {
   pitfalls: string;
   /** One item each, in the order they were added (FR-RC-21). */
   knownGaps: KnownGap[];
-  /** Since when its data is reliable (FR-RC-13): a day, `YYYY-MM-DD`, or null. */
-  reliableSince: string | null;
+  /**
+   * Since when its data is reliable (FR-RC-31): from its first row, or from a later day with why not earlier, with who
+   * set it and when; null while not set, which is never either. A day set before has no why, nor who.
+   */
+  reliableSince: (ReliableSince & { setBy: string | null; setAt: Date | null }) | null;
+  /** The Date Field its Owner Unit or the Data Team chose; null takes the one its table type gives (FR-RC-32). */
+  dateField: string | null;
   /** Fields of the Resource, by name, in the order chosen. */
   keyFields: string[];
   parameters: string[];
 }
 
-export const CARD_KEYS = ['businessDescription', 'intendedUse', 'pitfalls', 'knownGaps', 'reliableSince', 'keyFields', 'parameters'] as const;
+export const CARD_KEYS = ['businessDescription', 'intendedUse', 'pitfalls', 'knownGaps', 'reliableSince', 'dateField', 'keyFields', 'parameters'] as const;
 export type CardKey = (typeof CARD_KEYS)[number];
 
 /** A Known Gap of a Resource, with who added it and when; neither for a gap of before (FR-RC-21). */
@@ -180,7 +187,7 @@ export interface KnownGap {
  * What changes about a Resource at once (FR-RC-15): its Known Gaps as their texts, the whole list, which Data Hub
  * turns into the gaps added and removed; one gap at a time goes through addGap, changeGap and removeGap.
  */
-export type CardChanges = Partial<Omit<Card, 'knownGaps'> & { knownGaps: string[] }>;
+export type CardChanges = Partial<Omit<Card, 'knownGaps' | 'reliableSince'> & { knownGaps: string[]; reliableSince: ReliableSince | null }>;
 
 /** At most this many Known Gaps per Resource. */
 export const MAX_GAPS = 50;
@@ -403,14 +410,21 @@ function present(row: Row): Resource {
   };
 }
 
+/** Reliable Since from the row of a Resource, its day read as text; null while not set (FR-RC-31). */
+function reliableOf(row: Row, day: string | null): ReliableSince | null {
+  return row.reliableSinceFrom === null ? null : { from: row.reliableSinceFrom, day: row.reliableSinceFrom === 'day' ? day : null, why: row.reliableSinceWhy };
+}
+
 /** What Data Hub keeps about a Resource, from its row and its Known Gaps, with its reliable day read as text. */
-function cardOf(row: Row, reliableSince: string | null, knownGaps: KnownGap[]): Card {
+function cardOf(row: Row, reliableDay: string | null, knownGaps: KnownGap[]): Card {
+  const reliable = reliableOf(row, reliableDay);
   return {
     businessDescription: row.businessDescription,
     intendedUse: row.intendedUse,
     pitfalls: row.pitfalls,
     knownGaps,
-    reliableSince,
+    reliableSince: reliable && { ...reliable, setBy: row.reliableSinceByName, setAt: row.reliableSinceAt },
+    dateField: row.dateField,
     keyFields: row.keyFields,
     parameters: row.parameters,
   };
@@ -465,7 +479,7 @@ async function journeyFrom(from: Database, row: Row): Promise<Journey> {
     intendedUse: row.intendedUse,
     pitfalls: row.pitfalls,
     knownGaps: Number(gaps.count),
-    reliableSince: day.day,
+    reliableSince: reliableOf(row, day.day),
     parameters: row.parameters,
     modelType: row.modelType,
     grain: row.grain,
@@ -481,10 +495,15 @@ async function journeyFrom(from: Database, row: Row): Promise<Journey> {
  * period names no field (DEC-UX-178). Returns the problem as a sentence when there is one.
  */
 async function scopeProblem(from: Database, resourceId: string, scope: GapScope, before: GapScope | null): Promise<string | null> {
-  const fields = new Set((await from.selectFrom('resourceFields').select('name').where('resourceId', '=', resourceId).execute()).map((field) => field.name));
+  const typed = await from.selectFrom('resourceFields').select(['name', 'dataType']).where('resourceId', '=', resourceId).execute();
+  const fields = new Set(typed.map((field) => field.name));
   const kept = new Set(fieldsOf(before));
   const unknown = fieldsOf(scope).find((name) => !fields.has(name) && !kept.has(name));
-  return unknown === undefined ? null : `${unknown} is no field of this Resource.`;
+  if (unknown !== undefined) return `${unknown} is no field of this Resource.`;
+  // The date field of a period holds a date (FR-RC-34); one kept from before may have left the Resource.
+  const on = scope.period?.dateField;
+  const field = on === undefined ? undefined : typed.find((one) => one.name === on);
+  return field && kindOf(field.dataType) !== 'date' ? `${on} holds no date: a period is read on a field of type DATE, DATETIME or TIMESTAMP.` : null;
 }
 
 /** The words of a Known Gap as its Log Entry keeps them: the first 200 characters. */
@@ -1216,7 +1235,8 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
           return { outcome: 'not_found' };
         }
         const gaps = await gapsOf(trx, id);
-        const current = { ...cardOf(row, row.reliableDay, gaps), knownGaps: gaps.map((gap) => gap.text) };
+        // As it is compared: the gaps by their texts, Reliable Since without who set it and when.
+        const current = { ...cardOf(row, row.reliableDay, gaps), knownGaps: gaps.map((gap) => gap.text), reliableSince: reliableOf(row, row.reliableDay) };
         const changed = CARD_KEYS.filter((key) => changes[key] !== undefined && JSON.stringify(changes[key]) !== JSON.stringify(current[key]));
         const refused = changed.find((key) => !allowed(key));
         if (refused !== undefined) {
@@ -1225,10 +1245,15 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         if (changed.includes('businessDescription') && changes.businessDescription && row.level < DESCRIBED) {
           return { outcome: 'not_described' };
         }
-        const fields = new Set(await fieldNames(trx, id));
-        const stranger = [...(changes.keyFields ?? []), ...(changes.parameters ?? [])].find((name) => !fields.has(name));
+        const typed = await typedFields(trx, id);
+        const fields = new Set(typed.map((field) => field.name));
+        const stranger = [...(changes.keyFields ?? []), ...(changes.parameters ?? []), ...(changes.dateField ? [changes.dateField] : [])].find((name) => !fields.has(name));
         if (stranger !== undefined) {
           return { outcome: 'invalid', message: `${row.displayName} has no field ${stranger}.` };
+        }
+        // The Date Field is one of its date fields (FR-RC-32).
+        if (changed.includes('dateField') && changes.dateField && kindOf(typed.find((field) => field.name === changes.dateField)?.dataType ?? null) !== 'date') {
+          return { outcome: 'invalid', message: `${changes.dateField} holds no date: the Date Field is of type DATE, DATETIME or TIMESTAMP.` };
         }
         if (changed.length === 0) {
           return { outcome: 'edited', changed };
@@ -1237,9 +1262,24 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
           return { outcome: 'invalid', message: `A Resource has at most ${MAX_GAPS} Known Gaps.` };
         }
         const onRow = changed.filter((key) => key !== 'knownGaps');
+        const plain = onRow.filter((key) => key !== 'reliableSince');
+        // Reliable Since with who set it and when; cleared, none of it (FR-RC-31).
+        const reliable = changed.includes('reliableSince') ? (changes.reliableSince ?? null) : undefined;
         await trx
           .updateTable('resources')
-          .set({ ...Object.fromEntries(onRow.map((key) => [key, changes[key]])), updatedAt: new Date() })
+          .set({
+            ...Object.fromEntries(plain.map((key) => [key, changes[key]])),
+            ...(reliable === undefined
+              ? {}
+              : {
+                  reliableSince: reliable?.from === 'day' ? reliable.day : null,
+                  reliableSinceFrom: reliable?.from ?? null,
+                  reliableSinceWhy: reliable?.from === 'day' ? reliable.why : '',
+                  reliableSinceByName: reliable ? viewer.name : null,
+                  reliableSinceAt: reliable ? new Date() : null,
+                }),
+            updatedAt: new Date(),
+          })
           .where('id', '=', id)
           .execute();
         for (const key of onRow) {
