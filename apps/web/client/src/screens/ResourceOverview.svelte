@@ -4,7 +4,7 @@
 </script>
 
 <script lang="ts">
-  import { tick } from 'svelte';
+  import { tick, untrack } from 'svelte';
   import type { GapScope } from '@datahub/contracts/gaps';
   import { dateFieldOf } from '@datahub/contracts/reliable';
   import type { SummarySource } from '@datahub/contracts/summary';
@@ -23,6 +23,7 @@
   import OriginTag from '@datahub/ui/marks/OriginTag.svelte';
   import Button from '@datahub/ui/primitives/Button.svelte';
   import Loading from '@datahub/ui/primitives/Loading.svelte';
+  import { flowBox, markPlace } from '../lib/flowBox.svelte.js';
   import type { CardChanges, DescribeAttribute, KnownGap, LogEntry, Related, ResourceDetail } from '../lib/catalogue.js';
   import { carriersOf, nounOf } from '../lib/grain.js';
   import type { MarkerPlace } from '../lib/learning.js';
@@ -167,6 +168,35 @@
   }
   /** Known Gaps opened on a new gap, the cursor in its text (DEC-UX-258). */
   let addingGap = $state(false);
+
+  // The Flow Box led here (DEC-UX-303): the part of the step opens for editing, its field in focus and marked.
+  $effect(() => {
+    if (flowBox.aim?.resource !== resource.id) return;
+    untrack(() => {
+      const step = flowBox.take(resource.id, ['businessDescription', 'keyFields', 'intendedUse', 'pitfalls', 'since', 'gaps']);
+      if (step) void aimAt(step);
+    });
+  });
+  async function aimAt(step: 'businessDescription' | 'keyFields' | 'intendedUse' | 'pitfalls' | 'since' | 'gaps'): Promise<void> {
+    const fields = { businessDescription: ['description', '#business-description'], keyFields: ['querying', 'select[data-pick="keyFields"]'], intendedUse: ['behaviour', '#intended-use'], pitfalls: ['behaviour', '#pitfalls'] } as const;
+    if (step === 'since' || step === 'gaps') {
+      open('gaps');
+      if (step === 'gaps' && describes('gaps')) addingGap = true;
+      await tick();
+      const place = step === 'since' ? document.getElementById('reliable-since') : document.querySelector('.adding textarea');
+      if (step === 'since') place?.querySelector<HTMLElement>('input, select, textarea, button')?.focus();
+      markPlace(place);
+      return;
+    }
+    const [which, field] = fields[step];
+    const may = which === 'description' ? describes('description') && described : which === 'behaviour' ? describes(step === 'pitfalls' ? 'pitfalls' : 'behaviour') : describes('keyFields');
+    if (!may) {
+      open(which);
+      return;
+    }
+    await editAt(which, field);
+    markPlace(document.querySelector(field));
+  }
 
   function go(target: Exclude<SummarySource, 'messages'>) {
     if (target === 'columns') oncolumns();

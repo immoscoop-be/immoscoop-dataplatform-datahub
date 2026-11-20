@@ -4,6 +4,7 @@ import { setLanguage } from '@datahub/ui/foundations/texts.svelte.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { journeyOf, type JourneyFacts } from '@datahub/contracts/journey';
 import { NO_PERMISSIONS, STARTING_GROUPS, type Permissions, type StartingGroup } from '@datahub/contracts/permissions';
+import { flowBox } from './lib/flowBox.svelte.js';
 import App from './App.svelte';
 import type { Config } from './lib/config.js';
 
@@ -1418,12 +1419,15 @@ function open(path: string): void {
 beforeEach(() => {
   // The narrowest window, as tokens.css gives it, and a wide window with a light system and no wish for less motion.
   document.documentElement.style.setProperty('--app-min-width', '900px');
+  document.documentElement.style.setProperty('--flow-box-fold-below', '1360px');
   vi.stubGlobal('matchMedia', (query: string) => ({ matches: false, media: query, addEventListener() {}, removeEventListener() {} }));
   // Random picks the first of each set: the gradient, which needs no WebGL, and the first photo.
   vi.spyOn(Math, 'random').mockReturnValue(0);
 });
 
 afterEach(() => {
+  // The Flow Box lives in the open app only (DEC-UX-306).
+  flowBox.close();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   setLanguage('nl');
@@ -2966,7 +2970,7 @@ describe('the page of a Resource', () => {
     expect(main.queryByText('Gepubliceerd', { selector: '.chip' })).toBeNull();
   });
 
-  it('leads its Owner through the steps still open before it can be published, and Nothing to add records who said so (DEC-MR-16, DEC-CL-17)', async () => {
+  it('warns before it can be published while a step is open, and leads to each; Nothing to add records who said so (DEC-MR-16, DEC-MR-20, FR-MR-21)', async () => {
     const calls = serve({ groups: ['g1'], journey: { ...READY, pitfalls: '', knownGaps: 0 } });
     open('/resources/r2');
     render(App, { config: CONFIG });
@@ -2976,26 +2980,64 @@ describe('the page of a Resource', () => {
     await fireEvent.click(main.getByRole('tab', { name: 'Maturiteit' }));
     expect(main.getByText('Daarvoor zijn de stappen gedaan die nodig zijn om te publiceren: nu 5 van 7.')).toBeTruthy();
     expect(main.getByText(/Of laat Claude je er stap voor stap door leiden/)).toBeTruthy();
-    // The publication shows what is open, leads to it, and holds the declaration back.
+    // Publish warns first: what is open, the way to each, and "Guide me"; the publication does not open.
     await fireEvent.click(main.getAllByRole('button', { name: /Publiceren/ })[0]!);
-    const sheet = within(await screen.findByRole('dialog', { name: 'Weekly lead volume' }));
-    expect(sheet.getByText(/^Gedaan:/).closest('p')?.textContent).toContain('Business Description; Sleutelvelden; Velden; Beoogd gebruik; Reliable since.');
-    expect(sheet.getByText('Valkuilen:').closest('p')?.textContent).toContain('geen geschreven, en niemand zei dat er geen zijn.');
-    expect(sheet.getByText('Known Gaps:').closest('p')?.textContent).toContain('geen Known Gap geschreven, en niemand zei dat er geen zijn.');
-    expect(sheet.getByText(/om je te helpen Weekly lead volume te publiceren/)).toBeTruthy();
-    expect(sheet.queryByText('Wat je bevestigt · de kaart, voorgelezen')).toBeNull();
-    expect((sheet.getByRole('checkbox') as HTMLInputElement).disabled).toBe(true);
-    expect((sheet.getByRole('button', { name: /Publiceren en bevestigen/ }) as HTMLButtonElement).disabled).toBe(true);
-    const goTo = sheet.getAllByRole('button', { name: 'Ga erheen' });
-    expect(goTo).toHaveLength(2);
-    await fireEvent.click(goTo[0]!);
-    await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    const warning = within(await main.findByRole('dialog', { name: 'Nog niet klaar om te publiceren' }));
+    expect(warning.getByText('2 van de 7 stappen die nodig zijn om te publiceren zijn nog open:')).toBeTruthy();
+    expect(warning.getByRole('button', { name: /^Valkuilen/ }).textContent).toContain('geen geschreven, en niemand zei dat er geen zijn');
+    expect(warning.getByRole('button', { name: /^Known Gaps/ })).toBeTruthy();
+    expect(warning.getByRole('button', { name: 'Begeleid me' })).toBeTruthy();
+    expect(screen.queryByRole('dialog', { name: 'Weekly lead volume' })).toBeNull();
+    // "I'll do it myself" closes it.
+    await fireEvent.click(warning.getByRole('button', { name: 'Ik doe het zelf' }));
+    expect(main.queryByRole('dialog', { name: 'Nog niet klaar om te publiceren' })).toBeNull();
+    // A step leads to its place, opened for editing, its field in focus (DEC-UX-303).
+    await fireEvent.click(main.getAllByRole('button', { name: /Publiceren/ })[0]!);
+    await fireEvent.click(within(await main.findByRole('dialog', { name: 'Nog niet klaar om te publiceren' })).getByRole('button', { name: /^Valkuilen/ }));
+    await vi.waitFor(() => expect(document.activeElement?.id).toBe('pitfalls'));
+    expect(main.queryByRole('dialog', { name: 'Nog niet klaar om te publiceren' })).toBeNull();
     // Its pitfalls: write them, or say there are none.
+    await fireEvent.click(main.getByRole('button', { name: 'Annuleren' }));
     const nothing = await main.findByRole('button', { name: 'Niets toe te voegen' });
     await fireEvent.click(nothing);
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/resources/r2/journey/pitfalls', body: { answer: 'nothing' } }));
     expect(await main.findByText('Geen, volgens Max Verstraete, op 15 nov 2026.')).toBeTruthy();
     expect(calls.some((call) => call.path === '/resources/r2/publication')).toBe(false);
+  });
+
+  it('guides through the steps in the Flow Box, beside every page, until it is closed (FR-MR-20, DEC-UX-299 to DEC-UX-308)', async () => {
+    serve({ groups: ['g1'], journey: { ...READY, pitfalls: '', knownGaps: 0 } });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
+    await fireEvent.click(main.getAllByRole('button', { name: /Publiceren/ })[0]!);
+    await fireEvent.click(await main.findByRole('button', { name: 'Begeleid me' }));
+    const box = within(await screen.findByRole('complementary', { name: 'Beschrijven en publiceren · Weekly lead volume' }));
+    expect(box.getByText('5 van de 7 stappen die nodig zijn om te publiceren klaar')).toBeTruthy();
+    // It starts at the first step still open, with what, why and how; a done step carries its tick and is folded.
+    expect(box.getByRole('button', { name: /^Valkuilen/ }).getAttribute('aria-expanded')).toBe('true');
+    expect(box.getByText(/Jij kent de valkuilen/)).toBeTruthy();
+    expect(box.getByRole('button', { name: /^Business Description/ }).getAttribute('aria-expanded')).toBe('false');
+    expect(box.getByRole('button', { name: /^Business Description/ }).textContent).toContain('klaar');
+    expect(box.getByRole('button', { name: /^Teruglezen en publiceren/ }).textContent).toContain('Na de stappen hierboven');
+    // A step opens by a click, and its button leads to its place, opened for editing (DEC-UX-303).
+    await fireEvent.click(box.getByRole('button', { name: /^Beoogd gebruik/ }));
+    expect(box.getByRole('button', { name: /^Beoogd gebruik/ }).getAttribute('aria-expanded')).toBe('true');
+    await fireEvent.click(box.getByRole('button', { name: /^Valkuilen/ }));
+    await fireEvent.click(box.getByRole('button', { name: /Schrijf de valkuilen/ }));
+    await vi.waitFor(() => expect(document.activeElement?.id).toBe('pitfalls'));
+    // Minimize folds it to a strip with its progress; Maximize opens it again (DEC-UX-301).
+    await fireEvent.click(box.getByRole('button', { name: 'Minimaliseren' }));
+    const strip = within(await screen.findByRole('complementary', { name: /Beschrijven en publiceren · Weekly lead volume · 5 van de 7/ }));
+    expect(strip.getByText('5')).toBeTruthy();
+    await fireEvent.click(strip.getByRole('button', { name: 'Maximaliseren' }));
+    // It stays open on every page of Data Hub (DEC-UX-300).
+    await fireEvent.click(within(screen.getByRole('navigation', { name: 'Hoofdnavigatie' })).getByRole('link', { name: 'Query' }));
+    const again = within(await screen.findByRole('complementary', { name: 'Beschrijven en publiceren · Weekly lead volume' }));
+    // Close takes it away; nothing of it is kept (DEC-UX-302, DEC-UX-306).
+    await fireEvent.click(again.getByRole('button', { name: 'Sluiten' }));
+    expect(screen.queryByRole('complementary', { name: /Beschrijven en publiceren/ })).toBeNull();
   });
 
   it('warns everyone of a change since its last Confirmation, until its Owner Unit marks it seen (FR-MR-12, DEC-UX-64)', async () => {
