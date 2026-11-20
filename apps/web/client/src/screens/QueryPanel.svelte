@@ -43,6 +43,7 @@
     currentProject,
     loadProject,
     onnewproject,
+    onclose,
   }: {
     client: Pick<QueryClient, 'list' | 'days' | 'hide'>;
     /** The User sees the queries of everyone (`queries.seeOthers`, every, FR-PL-14). */
@@ -71,6 +72,8 @@
     loadProject?: (id: string) => Promise<ProjectPage>;
     /** New project, as its + does. */
     onnewproject?: () => void;
+    /** Close project: stop working in the Project the User works in (DEC-UX-295). */
+    onclose?: () => void;
   } = $props();
 
   /** The Projects in view before "Show all" (DEC-UX-285). */
@@ -194,7 +197,8 @@
 
   /** The Projects in view: those matching the search by their name or a query of theirs it found (DEC-UX-285). */
   const projectsShown = $derived.by(() => {
-    const list = projects ?? [];
+    // The Project the User works in comes first (DEC-UX-295).
+    const list = [...(projects ?? [])].sort((a, b) => Number(b.id === working) - Number(a.id === working));
     if (!words) return list;
     return list.filter((project) => projectMatches(project, words) || (found?.items ?? []).some((item) => item.project?.id === project.id));
   });
@@ -339,6 +343,13 @@
         <span class="text"><span class="name" title={project.name}>{project.name}</span><span class="meta">{t('row.queries', { count: project.queries })} · {withWho(project)}</span></span>
         {#if project.id === working}<span class="flag" title={t('query.projects.working')}><Icon name="flag-fill" label={t('query.projects.working')} /></span>{/if}
       </a>
+      {#if project.id === working && onclose}
+        <!-- You work in it, and Close project, which stops working in it (DEC-UX-295) -->
+        <div class="working">
+          <Icon name="flag-fill" /><span>{t('query.projects.workingIn')}</span>
+          <button type="button" class="close" title={t('query.projects.close.title', { name: project.name })} onclick={onclose}><Icon name="sign-out" />{t('query.projects.close')}</button>
+        </div>
+      {/if}
       {#if project.queries > 0}
         <span class="buttons">
           <button type="button" class="unfold" aria-expanded={open} aria-label={t('query.projects.itsQueries', { name: project.name })} onclick={() => unfoldProject(project.id)}><Icon name="caret-down" /></button>
@@ -431,6 +442,12 @@
   .period[aria-expanded='false'] :global(.icon) { transform: rotate(-90deg); }
   .period.found { cursor: default; margin: 0; }
   .entry { position: relative; margin-bottom: 7px; }
+  /* The Project the User works in: You work in it · Close project (DEC-UX-295) */
+  .working { display: flex; align-items: center; gap: 6px; margin: 4px 0 2px; padding: 2px 2px 2px 12px; font-size: var(--text-meta); color: var(--text-secondary); }
+  .working > :global(.icon) { font-size: 12px; color: var(--text-muted); }
+  .close { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: 0; border-radius: var(--radius-pill); background: var(--tint-hover);
+    font: var(--weight-medium) var(--text-meta) var(--font-family); color: var(--text-primary); cursor: pointer; }
+  .close:hover { background: var(--tint-active); }
   .item { display: flex; align-items: center; gap: 10px; padding: 9px 40px 9px 12px; border-radius: var(--radius-md); color: inherit; text-decoration: none; outline: 1px solid transparent; }
   .draft { margin-bottom: 7px; padding-right: 12px; }
   .item.unfolds { padding-right: 68px; }
