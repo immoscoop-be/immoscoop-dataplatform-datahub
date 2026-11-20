@@ -177,7 +177,7 @@ describe.skipIf(!url)('identity migration 0010-query-outside', () => {
     await sql`insert into ${groups} (name, sentence, permissions, is_default, locked)
       select 'Power users', '', permissions, false, false from ${groups} where starting = 'admin'`.execute(admin.db);
 
-    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    const results = await migrate({ db: admin.db, schema, migrations: before('0011'), serviceUser: 'postgres' });
     expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0010-query-outside', 'Success']]);
     const held = await sql<{ name: string; on: string }>`
       select name, permissions -> 'queries.outside' ->> 'on' as on from ${groups} order by name`.execute(admin.db);
@@ -187,5 +187,29 @@ describe.skipIf(!url)('identity migration 0010-query-outside', () => {
       { name: 'Lens user', on: 'false' },
       { name: 'Power users', on: 'false' },
     ]);
+  });
+});
+
+describe.skipIf(!url)('identity migration 0011-forget-flags', () => {
+  const schema = `identity_test_${randomBytes(4).toString('hex')}`;
+  const admin = createDatabase<unknown>({ connectionString: url }, schema);
+
+  afterAll(async () => {
+    await sql`drop schema if exists ${sql.id(schema)} cascade`.execute(admin.db);
+    await admin.close();
+  });
+
+  it('forgets the flagged queries and the Project worked in, and keeps the other settings (DEC-UX-316, DEC-UX-317)', async () => {
+    await migrate({ db: admin.db, schema, migrations: before('0011'), serviceUser: 'postgres' });
+    await sql`insert into ${sql.id(schema, 'users')} (google_id, email, name, permission_group_id) values
+      ('jan', 'jan@thenextimmoscoop.be', 'Jan', (select id from ${sql.id(schema, 'permission_groups')} where starting = 'lensUser'))`.execute(admin.db);
+    await sql`insert into ${sql.id(schema, 'settings')} (google_id, key, value) values
+      ('jan', 'query.flagged', '["00000000-0000-4000-8000-000000000001"]'), ('jan', 'query.project', '"00000000-0000-4000-8000-000000000002"'),
+      ('jan', 'query.layout', '"sideBySide"')`.execute(admin.db);
+
+    const results = await migrate({ db: admin.db, schema, migrations: before('0012'), serviceUser: 'postgres' });
+    expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0011-forget-flags', 'Success']]);
+    const kept = await sql<{ key: string }>`select key from ${sql.id(schema, 'settings')} order by key`.execute(admin.db);
+    expect(kept.rows.map((row) => row.key)).toEqual(['query.layout']);
   });
 });

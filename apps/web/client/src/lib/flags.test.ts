@@ -1,27 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { digitOf, flag, KEYED, keyed, markOf, MOST_FLAGGED, moveFlag, placeOf, unflag, withMod } from './flags.js';
+import { digitOf, KEYED, keyed, markOf, placeOf, withMod } from './flags.js';
 
-describe('flagged queries (DEC-UX-236)', () => {
+describe('the row of the active Project (DEC-UX-317)', () => {
   it('gives the first nine the keys 1 to 9 and the tenth 0, and any further one none (DEC-UX-283)', () => {
     expect(Array.from({ length: KEYED }, (_, at) => digitOf(at)).join('')).toBe('1234567890');
     expect([0, 9, 10, 49].map(keyed)).toEqual([true, true, false, false]);
     expect(['1', '9', '0'].map(placeOf)).toEqual([0, 8, 9]);
-  });
-
-  it('flags a query at the end of the row, once, and at most 50 (OP-UX-96)', () => {
-    expect(flag(['a', 'b'], 'c')).toEqual(['a', 'b', 'c']);
-    expect(flag(['a', 'b'], 'a')).toEqual(['a', 'b']);
-    const ten = Array.from({ length: 10 }, (_, at) => `q${at}`);
-    expect(flag(ten, 'eleventh')).toHaveLength(11);
-    const full = Array.from({ length: MOST_FLAGGED }, (_, at) => `q${at}`);
-    expect(flag(full, 'one more')).toEqual(full);
-    expect(unflag(['a', 'b', 'c'], 'b')).toEqual(['a', 'c']);
-  });
-
-  it('moves a tab to another place, the others shifting with their keys', () => {
-    expect(moveFlag(['a', 'b', 'c', 'd'], 0, 2)).toEqual(['b', 'c', 'a', 'd']);
-    expect(moveFlag(['a', 'b', 'c', 'd'], 3, 0)).toEqual(['d', 'a', 'b', 'c']);
-    expect(moveFlag(['a', 'b'], 0, 5)).toEqual(['a', 'b']);
   });
 
   it('marks a run going, Broken, and a result or failure not seen yet', () => {

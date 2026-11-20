@@ -1107,9 +1107,10 @@ function serve({
       });
     }
     if (path === '/queries' && method === 'POST') {
-      const { name, question } = JSON.parse(init.body as string) as { name: string; question: string };
+      const { name, question, project: into } = JSON.parse(init.body as string) as { name: string; question: string; project?: string };
       const made = { ...QUERY, name, question, id: 'q-made', lastRun: null, lastRunAt: null };
       queries.unshift(made);
+      projects.find((one) => one.id === into)?.queries.push(made.id);
       return json({ query: made }, 201);
     }
     // The Projects of Query (TR-SR-33).
@@ -1162,7 +1163,9 @@ function serve({
       return json({ query });
     }
     if (query && path === `/queries/${query.id as string}`) {
-      return json({ query });
+      // The Project it is in, as query tells it (TR-SR-33).
+      const holder = projects.find((one) => one.queries.includes(query.id as string));
+      return json({ query: { ...query, project: holder ? { id: holder.id, name: holder.name } : null } });
     }
     if (query && path.endsWith('/preflight')) {
       const body = JSON.parse(init.body as string) as { sql: string; parameters: { name: string }[] };
@@ -3793,17 +3796,17 @@ describe('Query', () => {
     expect(within(item as HTMLElement).getByText('Claude').getAttribute('title')).toBe('Gemaakt via Claude');
   });
 
-  it('shows no row of flagged queries while none is flagged, and flags the first from the quick window (DEC-UX-253)', async () => {
-    const calls = serve({ queries: [{ ...QUERY }] });
+  it('shows no row while no Project is active, and offers Add to project on a query in none (DEC-UX-317, DEC-UX-318)', async () => {
+    serve({ queries: [{ ...QUERY }] });
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
     await main.findByRole('heading', { level: 1, name: 'Leads per source name' }, { timeout: 3000 });
-    expect(main.queryByRole('navigation', { name: 'Gemarkeerde queries' })).toBeNull();
-    await quickDo('markeer deze query');
-    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/query.flagged', body: { value: ['q1'] } }));
-    const flags = within(await main.findByRole('navigation', { name: 'Gemarkeerde queries' }));
-    expect(await flags.findByRole('link', { name: /Leads per source name/ })).toBeTruthy();
+    expect(main.queryByRole('navigation', { name: /^De queries van/ })).toBeNull();
+    await fireEvent.click(await main.findByRole('button', { name: /^Project/ }));
+    const menu = within(main.getByRole('menu', { name: 'Project' }));
+    expect(menu.getAllByRole('menuitem')).toHaveLength(1);
+    expect(menu.getByRole('menuitem', { name: /Aan project toevoegen/ }).textContent).toContain('kies er een, of een nieuw');
   });
 
   it('keeps the head of a query light: its name on one line, no New query, no line where it started from (DEC-UX-250, DEC-UX-251, DEC-UX-252)', async () => {
@@ -3824,28 +3827,21 @@ describe('Query', () => {
     expect(add.getAttribute('title')).toBe('Een Resource toevoegen');
   });
 
-  it('keeps flagged queries on top of Query, flags with Flag and jumps with Ctrl+1 to Ctrl+0 (DEC-UX-236, OP-UX-84, OP-UX-86)', async () => {
+  it('keeps the queries of the active Project on top: its details first, then its queries with Ctrl+1 to Ctrl+0 (DEC-UX-317, DEC-UX-319, OP-UX-85, OP-UX-86)', async () => {
     const partners = { ...QUERY, id: 'q2', name: 'Partner share per week', lastRunAt: new Date().toISOString() };
-    const calls = serve({ queries: [{ ...QUERY, lastRunAt: new Date().toISOString() }, partners], settings: { 'query.flagged': ['q2'] } });
+    const credit = { id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }, { id: '7', name: 'Karel Leys' }], queries: ['q2', 'q1'] };
+    serve({ queries: [{ ...QUERY, lastRunAt: new Date().toISOString() }, partners], projects: [credit] });
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    const flags = within(await main.findByRole('navigation', { name: 'Gemarkeerde queries' }));
-    expect((await flags.findByRole('link', { name: /Partner share per week/ })).getAttribute('href')).toBe('/query/q2');
-    expect(flags.getByText('1')).toBeTruthy();
-    // This query is not flagged yet: "Flag this query" in the row keeps it on top, as the second, with its key (DEC-UX-241).
-    const add = await flags.findByRole('button', { name: /^Markeer deze query/ }, { timeout: 3000 });
-    expect(add.textContent).toContain('Ctrl+2');
-    // The head of a query has no Flag.
-    expect(main.queryByRole('button', { name: 'Markeren' })).toBeNull();
-    await fireEvent.click(add);
-    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/query.flagged', body: { value: ['q2', 'q1'] } }));
-    await vi.waitFor(() => expect(flags.queryByRole('button', { name: /^Markeer deze query/ })).toBeNull());
-    expect((await flags.findByRole('link', { name: /Leads per source name/ })).getAttribute('aria-current')).toBe('page');
-    // The panel shows the flag at the end of a flagged query.
-    const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
-    await openPeriod(panel);
-    expect(await panel.findAllByRole('img', { name: 'Gemarkeerd' })).toHaveLength(2);
+    // A query of a Project open makes that Project active: its row is on top.
+    const row = within(await main.findByRole('navigation', { name: 'De queries van Credit leads Q4' }, { timeout: 3000 }));
+    // Its details first, without a key; then its queries, the open one current.
+    const details = row.getByRole('link', { name: /^Credit leads Q4/ });
+    expect(details.getAttribute('href')).toBe('/query/projects/p1');
+    expect(details.getAttribute('aria-current')).toBeNull();
+    expect((await row.findByRole('link', { name: /Partner share per week/ })).getAttribute('href')).toBe('/query/q2');
+    expect(row.getByRole('link', { name: /Leads per source name/ }).getAttribute('aria-current')).toBe('page');
     // Ctrl+1 opens the first; the one left stays as the User left it, what was typed in its SQL too (OP-UX-85).
     const editor = await main.findByRole('textbox', { name: /Leads per source name/ });
     await typeInEditor(editor, ' -- mine');
@@ -3858,44 +3854,43 @@ describe('Query', () => {
     const back = await main.findByRole('textbox', { name: /Leads per source name/ });
     expect(back).toBe(editor);
     expect(back.textContent).toContain('-- mine');
-    // The × on a tab unflags it.
-    await fireEvent.click(flags.getByRole('button', { name: 'Partner share per week niet meer markeren' }));
-    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/query.flagged', body: { value: ['q1'] } }));
   });
 
-  it('keeps the open query on screen, as the User left it, when it is unflagged (DEC-UX-236)', async () => {
+  it('takes the open query out of its Project with the Project button: no Project is active then, and the query stays as the User left it (DEC-UX-317, DEC-UX-318)', async () => {
     const partners = { ...QUERY, id: 'q2', name: 'Partner share per week' };
-    const calls = serve({ queries: [{ ...QUERY }, partners], settings: { 'query.flagged': ['q1', 'q2'] } });
+    const credit = { id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: ['q1', 'q2'] };
+    const calls = serve({ queries: [{ ...QUERY }, partners], projects: [credit] });
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    const flags = within(await main.findByRole('navigation', { name: 'Gemarkeerde queries' }));
+    await main.findByRole('navigation', { name: 'De queries van Credit leads Q4' }, { timeout: 3000 });
     const editor = await main.findByRole('textbox', { name: /Leads per source name/ }, { timeout: 3000 });
     await typeInEditor(editor, ' -- mine');
-    // Unflagged from the quick window: it leaves the row on top, and stays open as it was.
-    await quickDo('niet meer markeren');
-    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/query.flagged', body: { value: ['q2'] } }));
-    await vi.waitFor(() => expect(flags.queryByRole('link', { name: /Leads per source name/ })).toBeNull());
-    expect(main.getByRole('heading', { level: 1, name: 'Leads per source name' })).toBeTruthy();
+    // In a Project: Change project and Remove from project.
+    await fireEvent.click(await main.findByRole('button', { name: /^Project/ }));
+    const menu = within(main.getByRole('menu', { name: 'Project' }));
+    expect(menu.getByRole('menuitem', { name: /Ander project/ }).textContent).toContain('nu in Credit leads Q4');
+    await fireEvent.click(menu.getByRole('menuitem', { name: /Uit project halen/ }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/projects/p1/queries/q1' }));
+    // No Project is active now: the row is gone, and the query stays open as it was.
+    await vi.waitFor(() => expect(main.queryByRole('navigation', { name: 'De queries van Credit leads Q4' })).toBeNull());
     const still = main.getByRole('textbox', { name: /Leads per source name/ });
     expect(still).toBe(editor);
     expect(still.textContent).toContain('-- mine');
-    // Flagged again from the row, and unflagged with the × on its tab: it stays open all the same.
-    await fireEvent.click(await flags.findByRole('button', { name: /^Markeer deze query/ }));
-    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/query.flagged', body: { value: ['q2', 'q1'] } }));
-    await fireEvent.click(await flags.findByRole('button', { name: 'Leads per source name niet meer markeren' }));
-    await vi.waitFor(() => expect(flags.queryByRole('link', { name: /Leads per source name/ })).toBeNull());
-    expect(main.getByRole('textbox', { name: /Leads per source name/ })).toBe(editor);
     expect(location.pathname).toBe('/query/q1');
+    // In none now: Add to project.
+    await fireEvent.click(main.getByRole('button', { name: /^Project/ }));
+    expect(within(main.getByRole('menu', { name: 'Project' })).getByRole('menuitem', { name: /Aan project toevoegen/ })).toBeTruthy();
   });
 
   it('lists what was done first, and Ctrl+1 to Ctrl+9 highlight a row without doing it (DEC-UX-242)', async () => {
     const named = (id: string, name: string) => ({ ...QUERY, id, name });
-    const calls = serve({ queries: [named('q1', 'Leads per source name'), named('q2', 'Partner share per week'), named('q3', 'Listings per postal code')], settings: { 'query.flagged': ['q1', 'q2', 'q3'] } });
+    const calls = serve({ queries: [named('q1', 'Leads per source name'), named('q2', 'Partner share per week'), named('q3', 'Listings per postal code')], projects: [{ id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: ['q1', 'q2', 'q3'] }] });
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
     await main.findByRole('heading', { level: 1, name: 'Leads per source name' }, { timeout: 3000 });
+    await main.findByRole('navigation', { name: 'De queries van Credit leads Q4' }, { timeout: 3000 });
     await quickDo('verberg');
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/queries/q1/hidden' }));
     await fireEvent.keyDown(document.body, { key: 'k', code: 'KeyK', ctrlKey: true });
@@ -3906,9 +3901,9 @@ describe('Query', () => {
     // Hidden, the same button is now Show this query again: Recently used keeps it.
     expect(options[0]?.textContent).toContain('Deze query weer tonen');
     expect(options[0]?.textContent).toContain('Ctrl+1');
-    // The flagged queries show their own key in their line.
+    // The queries of the active Project show their own key in their line.
     expect(options.find((option) => option.querySelector('.title')?.textContent === 'Partner share per week')?.querySelector('.meta')?.textContent).toBe('Ctrl+2');
-    // Ctrl+3 highlights the third, and does not open the third flagged query.
+    // Ctrl+3 highlights the third, and does not open the third query of the row.
     const third = options.find((option) => option.textContent?.includes('Ctrl+3'));
     await fireEvent.keyDown(quick.getByRole('combobox'), { key: '3', code: 'Digit3', ctrlKey: true });
     expect(third?.getAttribute('aria-selected')).toBe('true');
@@ -3920,58 +3915,42 @@ describe('Query', () => {
     await vi.waitFor(() => expect(location.pathname).toBe('/query/q1/lens'));
   });
 
-  it('goes to the next and the previous flagged query from the quick window, round the row (DEC-UX-241)', async () => {
+  it('goes to the next and the previous query of the row from the quick window, round the row (DEC-UX-241)', async () => {
     const named = (id: string, name: string) => ({ ...QUERY, id, name });
-    serve({ queries: [named('q1', 'Leads per source name'), named('q2', 'Partner share per week'), named('q3', 'Listings per postal code')], settings: { 'query.flagged': ['q1', 'q2', 'q3'] } });
+    serve({ queries: [named('q1', 'Leads per source name'), named('q2', 'Partner share per week'), named('q3', 'Listings per postal code')], projects: [{ id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: ['q1', 'q2', 'q3'] }] });
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    const flags = within(await main.findByRole('navigation', { name: 'Gemarkeerde queries' }));
-    await flags.findByRole('link', { name: /Listings per postal code/ }, { timeout: 3000 });
-    const next = await quickRow('Volgende gemarkeerde query');
+    const row = within(await main.findByRole('navigation', { name: 'De queries van Credit leads Q4' }, { timeout: 3000 }));
+    await row.findByRole('link', { name: /Listings per postal code/ }, { timeout: 3000 });
+    const next = await quickRow('Volgende query in de rij');
     expect(next.textContent).toContain('Partner share per week · Ctrl+2');
     await closeQuick();
-    await quickDo('volgende gemarkeerde');
+    await quickDo('volgende query in de rij');
     await vi.waitFor(() => expect(location.pathname).toBe('/query/q2'));
     // From the first, the previous one is the last, round the row.
-    await quickDo('vorige gemarkeerde');
+    await quickDo('vorige query in de rij');
     await vi.waitFor(() => expect(location.pathname).toBe('/query/q1'));
-    await quickDo('vorige gemarkeerde');
+    await quickDo('vorige query in de rij');
     await vi.waitFor(() => expect(location.pathname).toBe('/query/q3'));
   });
 
-  it('moves a flagged query by dragging its tab, and its key with it (DEC-UX-236)', async () => {
+  it('moves a query of the row by dragging its tab, and its key with it, for everyone in the Project (OP-UX-95)', async () => {
     const named = (id: string, name: string) => ({ ...QUERY, id, name });
-    const calls = serve({ queries: [named('q1', 'Leads per source name'), named('q2', 'Partner share per week'), named('q3', 'Listings per postal code')], settings: { 'query.flagged': ['q1', 'q2', 'q3'] } });
+    const calls = serve({ queries: [named('q1', 'Leads per source name'), named('q2', 'Partner share per week'), named('q3', 'Listings per postal code')], projects: [{ id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: ['q1', 'q2', 'q3'] }] });
     open('/query/q1');
     render(App, { config: CONFIG });
-    const flags = within(await screen.findByRole('navigation', { name: 'Gemarkeerde queries' }));
-    const tab = async (name: string) => (await flags.findByRole('link', { name: new RegExp(name) })).closest('[role="listitem"]') as HTMLElement;
+    const row = within(await screen.findByRole('navigation', { name: 'De queries van Credit leads Q4' }, { timeout: 3000 }));
+    const tab = async (name: string) => (await row.findByRole('link', { name: new RegExp(name) })).closest('[role="listitem"]') as HTMLElement;
     const third = await tab('Listings per postal code');
     const first = await tab('Leads per source name');
     // The third onto the first: it becomes the first, and Ctrl+1 opens it.
     await fireEvent.dragStart(third);
     await fireEvent.dragOver(first);
     await fireEvent.drop(first);
-    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/query.flagged', body: { value: ['q3', 'q1', 'q2'] } }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/projects/p1/order', body: { queries: ['q3', 'q1', 'q2'] } }));
     await fireEvent.keyDown(document.body, { key: '1', code: 'Digit1', ctrlKey: true });
     await vi.waitFor(() => expect(location.pathname).toBe('/query/q3'));
-  });
-
-  it('has no Flag in the row at 50 flagged queries, and greys it in the quick window with why (OP-UX-96, DEC-UX-241)', async () => {
-    // Two digits, so that no ID starts another, as the fake service finds a query by the start of its path.
-    const ten = Array.from({ length: 50 }, (_, at) => ({ ...QUERY, id: `f${String(at).padStart(2, '0')}`, name: `Flagged ${at}` }));
-    serve({ queries: [QUERY, ...ten], settings: { 'query.flagged': ten.map((query) => query.id) } });
-    open('/query/q1');
-    render(App, { config: CONFIG });
-    const main = within(await screen.findByRole('main'));
-    const flags = within(await main.findByRole('navigation', { name: 'Gemarkeerde queries' }));
-    await main.findByRole('heading', { level: 1, name: 'Leads per source name' }, { timeout: 3000 });
-    await flags.findByRole('link', { name: /Flagged 49/ }, { timeout: 3000 });
-    expect(flags.queryByRole('button', { name: /^Markeer deze query/ })).toBeNull();
-    const row = await quickRow('Markeer deze query');
-    expect(row.getAttribute('aria-disabled')).toBe('true');
-    expect(row.nextElementSibling?.textContent).toBe('De rij houdt 50 queries. Haal er eerst één uit.');
   });
 
   it('opens the quick window with Ctrl+K and Ctrl+Shift+P, with the commands of the query first, and does one (DEC-UX-237, OP-UX-87)', async () => {
@@ -3990,7 +3969,7 @@ describe('Query', () => {
     expect(titles().slice(0, 13)).toEqual([
       'Uitvoeren',
       'Maak er een Lens van',
-      'Markeer deze query',
+      'Aan project toevoegen',
       'Deze query hernoemen',
       'Alles dichtvouwen',
       'De SQL opmaken',
@@ -4043,7 +4022,7 @@ describe('Query', () => {
   });
 
   it('runs from the quick window as Ctrl+Enter does, and above 100 MB leaves the approval to the red button (DEC-UX-239, DEC-UX-142)', async () => {
-    const calls = serve({ queries: [{ ...QUERY }, { ...QUERY, id: 'q2', name: 'All weeks', sql: `${QUERY.sql}\n-- all weeks` }, { ...QUERY, id: 'q3', name: 'Every year', sql: `${QUERY.sql}\n-- every year` }], settings: { 'query.flagged': ['q1', 'q2', 'q3'] } });
+    const calls = serve({ queries: [{ ...QUERY }, { ...QUERY, id: 'q2', name: 'All weeks', sql: `${QUERY.sql}\n-- all weeks` }, { ...QUERY, id: 'q3', name: 'Every year', sql: `${QUERY.sql}\n-- every year` }], projects: [{ id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: ['q1', 'q2', 'q3'] }] });
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
@@ -4820,70 +4799,113 @@ describe('Query', () => {
     });
   });
 
-  it('holds the queries of the Project the User works in in the row on top, and takes one out with its × (DEC-UX-282, DEC-UX-291)', async () => {
+  it('makes the Project of the open query active, its queries the row on top; a query in none, or a new one, leaves none active (DEC-UX-317, DEC-UX-291)', async () => {
     const other = { ...QUERY, id: 'q2', name: 'Partner share per week' };
     const credit = { id: 'p1', name: 'Credit leads Q4', description: 'The quarterly review.', members: [{ id: ME_ID, name: ME.name }, { id: '7', name: 'Karel Leys' }], queries: ['q1', 'q2'] };
-    const calls = serve({ queries: [{ ...QUERY }, other], projects: [credit], settings: { 'query.project': 'p1', 'query.flagged': [] } });
+    const calls = serve({ queries: [{ ...QUERY }, other], projects: [credit] });
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
     const row = within(await main.findByRole('navigation', { name: 'De queries van Credit leads Q4' }, { timeout: 3000 }));
-    // The switch names the Project, and how many are in it.
-    expect(row.getByRole('button', { name: /^Credit leads Q4/ }).textContent).toContain('2');
-    expect(row.getByRole('link', { name: /Partner share per week/ }).getAttribute('href')).toBe('/query/q2');
+    // Its details tab names the Project, and how many are in it.
+    expect(row.getByRole('link', { name: /^Credit leads Q4/ }).textContent).toContain('2');
+    expect((await row.findByRole('link', { name: /Partner share per week/ })).getAttribute('href')).toBe('/query/q2');
     // The breadcrumb of the query names its Project.
     expect((await main.findByRole('link', { name: 'Credit leads Q4' })).getAttribute('href')).toBe('/query/projects/p1');
-    // The × removes it from the Project, without asking (OP-UX-106).
+    // The panel lists the Project above the history, the active one standing out.
+    const panel = within(screen.getByRole('complementary', { name: 'Query' }));
+    const item = await panel.findByRole('link', { name: /Credit leads Q4/ });
+    expect(item.textContent).toContain('met Karel Leys');
+    expect(item.classList.contains('current')).toBe(true);
+    // The × takes it out of the Project, without asking (OP-UX-106); the open query is still in it, so the row stays.
     await fireEvent.click(row.getByRole('button', { name: 'Partner share per week uit Credit leads Q4 halen' }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/projects/p1/queries/q2' }));
     expect(row.queryByRole('link', { name: /Partner share per week/ })).toBeNull();
-    // The panel lists the Project above the history, flagged as worked in.
-    const panel = within(screen.getByRole('complementary', { name: 'Query' }));
-    expect(panel.getByRole('link', { name: /Credit leads Q4/ }).textContent).toContain('met Karel Leys');
+    // A query in no Project open: no Project is active, no row.
+    history.pushState(null, '', '/query/q2');
+    dispatchEvent(new PopStateEvent('popstate'));
+    await main.findByRole('heading', { level: 1, name: 'Partner share per week' }, { timeout: 3000 });
+    await vi.waitFor(() => expect(main.queryByRole('navigation', { name: 'De queries van Credit leads Q4' })).toBeNull());
+    expect(panel.getByRole('link', { name: /Credit leads Q4/ }).classList.contains('current')).toBe(false);
+    // Back on a query of the Project, it is active again; a new query leaves none active.
+    history.pushState(null, '', '/query/q1');
+    dispatchEvent(new PopStateEvent('popstate'));
+    expect(await main.findByRole('navigation', { name: 'De queries van Credit leads Q4' }, { timeout: 3000 })).toBeTruthy();
+    history.pushState(null, '', '/query/new');
+    dispatchEvent(new PopStateEvent('popstate'));
+    await vi.waitFor(() => expect(main.queryByRole('navigation', { name: 'De queries van Credit leads Q4' })).toBeNull());
   });
 
-  it('makes a Project from the row, with the open query in it, and works in it (FR-SR-63, DEC-UX-282)', async () => {
-    const calls = serve({ queries: [{ ...QUERY }], settings: { 'query.flagged': ['q1'] } });
+  it('adds the open query to a new Project with the Project button, which is then active (FR-SR-72, DEC-UX-318)', async () => {
+    const calls = serve({ queries: [{ ...QUERY }] });
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    const row = within(await main.findByRole('navigation', { name: 'Gemarkeerde queries' }, { timeout: 3000 }));
-    await fireEvent.click(row.getByRole('button', { name: /Gemarkeerd/ }));
-    await fireEvent.click(row.getByRole('menuitem', { name: 'Nieuw project' }));
-    const dialog = within(row.getByRole('dialog', { name: 'Nieuw project' }));
-    await fireEvent.input(dialog.getByRole('textbox', { name: 'Naam' }), { target: { value: 'Credit leads Q4' } });
-    await fireEvent.click(dialog.getByRole('button', { name: 'Maken' }));
+    await main.findByRole('heading', { level: 1, name: 'Leads per source name' }, { timeout: 3000 });
+    await fireEvent.click(await main.findByRole('button', { name: /^Project/ }));
+    await fireEvent.click(within(main.getByRole('menu', { name: 'Project' })).getByRole('menuitem', { name: /Aan project toevoegen/ }));
+    // No Project yet: New project is chosen, with its name.
+    const sheet = within(await screen.findByRole('dialog', { name: 'Leads per source name aan een project toevoegen' }));
+    expect((sheet.getByRole('radio', { name: /Nieuw project/ }) as HTMLInputElement).checked).toBe(true);
+    await fireEvent.input(sheet.getByRole('textbox', { name: 'Naam' }), { target: { value: 'Credit leads Q4' } });
+    await fireEvent.click(sheet.getByRole('button', { name: 'Maken' }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/projects', body: { name: 'Credit leads Q4', description: '', queries: ['q1'] } }));
-    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/query.project', body: { value: 'p-1' } }));
-    expect(await main.findByRole('navigation', { name: 'De queries van Credit leads Q4' })).toBeTruthy();
+    expect(await main.findByRole('navigation', { name: 'De queries van Credit leads Q4' }, { timeout: 3000 })).toBeTruthy();
+    expect(screen.queryByRole('dialog', { name: /aan een project toevoegen/ })).toBeNull();
   });
 
-  it('opens the page of a Project, whose New query makes an empty query in it and opens it (FR-SR-68, DEC-UX-290)', async () => {
+  it('moves the open query to another Project with Change project, which is then active (FR-SR-72, DEC-UX-318, OP-UX-93)', async () => {
+    const credit = { id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: ['q1'] };
+    const partner = { id: 'p2', name: 'Partner review', description: '', members: [{ id: ME_ID, name: ME.name }, { id: '7', name: 'Karel Leys' }], queries: [] };
+    const calls = serve({ queries: [{ ...QUERY }], projects: [credit, partner] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('navigation', { name: 'De queries van Credit leads Q4' }, { timeout: 3000 });
+    await fireEvent.click(await main.findByRole('button', { name: /^Project/ }));
+    await fireEvent.click(within(main.getByRole('menu', { name: 'Project' })).getByRole('menuitem', { name: /Ander project/ }));
+    const sheet = within(await screen.findByRole('dialog', { name: 'Leads per source name naar een ander project verplaatsen' }));
+    // The Project it is in is left out; the first other one is chosen.
+    expect(sheet.queryByRole('radio', { name: /Credit leads Q4/ })).toBeNull();
+    expect((sheet.getByRole('radio', { name: /Partner review/ }) as HTMLInputElement).checked).toBe(true);
+    expect(sheet.getByText(/Hij verlaat Credit leads Q4/)).toBeTruthy();
+    await fireEvent.click(sheet.getByRole('button', { name: 'Verplaatsen' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/projects/p2/queries/q1', body: undefined }));
+    expect(await main.findByRole('navigation', { name: 'De queries van Partner review' }, { timeout: 3000 })).toBeTruthy();
+  });
+
+  it('opens the details of a Project, which is then active, and whose New query makes an empty query in it and opens it (FR-SR-68, DEC-UX-290, DEC-UX-317)', async () => {
     const credit = { id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: ['q1'] };
     const calls = serve({ queries: [{ ...QUERY }], projects: [credit] });
     open('/query/projects/p1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
     expect(await main.findByRole('heading', { level: 1, name: /Credit leads Q4/ }, { timeout: 3000 })).toBeTruthy();
+    // Its row on top, its details tab current; no Work in it.
+    const row = within(await main.findByRole('navigation', { name: 'De queries van Credit leads Q4' }, { timeout: 3000 }));
+    expect(row.getByRole('link', { name: /^Credit leads Q4/ }).getAttribute('aria-current')).toBe('page');
+    expect(main.queryByRole('button', { name: /Werk erin/ })).toBeNull();
     await fireEvent.click(main.getByRole('button', { name: /^Nieuwe query$/ }));
     await vi.waitFor(() => expect(location.pathname).toBe('/query/q-made'));
     const made = calls.find((call) => call.method === 'POST' && call.path === '/queries')?.body as { name: string; resources: string[]; project: string };
     expect(made).toMatchObject({ resources: [], project: 'p1' });
     expect(made.name).toMatch(/^Nieuwe query, /);
+    // Made in it, it opens with the Project still active.
+    expect(await main.findByRole('navigation', { name: 'De queries van Credit leads Q4' })).toBeTruthy();
   });
 
-  it('starts an empty query in each Project from the quick window, and the User then works in it (DEC-UX-293)', async () => {
+  it('starts an empty query in each Project from the quick window, which is then active (DEC-UX-293, DEC-UX-317)', async () => {
     const credit = { id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: ['q1'] };
     const partner = { id: 'p2', name: 'Partner review', description: '', members: [{ id: ME_ID, name: ME.name }], queries: [] };
-    const calls = serve({ queries: [{ ...QUERY }], projects: [credit, partner], settings: { 'query.project': 'p2', 'query.flagged': [] } });
+    const calls = serve({ queries: [{ ...QUERY }], projects: [credit, partner] });
     open('/collections');
     render(App, { config: CONFIG });
     await screen.findByRole('complementary', { name: 'Collections' });
-    // On every screen: New query, and New query in each Project, the one worked in first; no blank query for a business analyst.
+    // On every screen: New query, and New query in each Project; no blank query for a business analyst.
     await vi.waitFor(() => expect(calls.some((call) => call.path === '/projects')).toBe(true));
     const shown = await quickTitles('nieuwe');
     expect(shown).toContain('Nieuwe query');
-    expect(shown.filter((title) => title.startsWith('Nieuwe query in '))).toEqual(['Nieuwe query in Partner review', 'Nieuwe query in Credit leads Q4']);
+    expect(shown.filter((title) => title.startsWith('Nieuwe query in ')).toSorted()).toEqual(['Nieuwe query in Credit leads Q4', 'Nieuwe query in Partner review']);
     expect(shown).not.toContain('Nieuwe lege query');
     await closeQuick();
     await quickDo('nieuwe query in credit');
@@ -4891,7 +4913,7 @@ describe('Query', () => {
     const made = calls.find((call) => call.method === 'POST' && call.path === '/queries')?.body as { name: string; resources: string[]; project: string };
     expect(made).toMatchObject({ resources: [], project: 'p1', sql: '' });
     expect(made.name).toMatch(/^Nieuwe query, /);
-    expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/query.project', body: { value: 'p1' } });
+    expect(await screen.findByRole('navigation', { name: 'De queries van Credit leads Q4' }, { timeout: 3000 })).toBeTruthy();
   });
 
   it('offers a power user a blank query in no Project from the quick window (DEC-UX-293, DEC-SR-46)', async () => {
@@ -4908,33 +4930,39 @@ describe('Query', () => {
     expect(made).not.toHaveProperty('project');
   });
 
-  it('adds a query to a Project of 50 already: a Project has no limit, unlike the flagged queries (DEC-SR-49)', async () => {
+  it('adds a query to a Project of 50 already, from the quick window: a Project has no limit (DEC-SR-49, DEC-UX-318)', async () => {
     const many = Array.from({ length: 50 }, (_, at) => ({ ...QUERY, id: `f${String(at).padStart(2, '0')}`, name: `Query ${at}` }));
     const credit = { id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: many.map((query) => query.id) };
-    const calls = serve({ queries: [{ ...QUERY }, ...many], projects: [credit], settings: { 'query.project': 'p1', 'query.flagged': [] } });
+    const calls = serve({ queries: [{ ...QUERY }, ...many], projects: [credit] });
     open('/query/q1');
     render(App, { config: CONFIG });
-    await screen.findByRole('main');
-    await quickDo('toevoegen aan credit');
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('heading', { level: 1, name: 'Leads per source name' }, { timeout: 3000 });
+    await vi.waitFor(() => expect(calls.some((call) => call.path === '/projects')).toBe(true));
+    await quickDo('aan project toevoegen');
+    const sheet = within(await screen.findByRole('dialog', { name: 'Leads per source name aan een project toevoegen' }));
+    expect((sheet.getByRole('radio', { name: /Credit leads Q4/ }) as HTMLInputElement).checked).toBe(true);
+    await fireEvent.click(sheet.getByRole('button', { name: 'Toevoegen' }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/projects/p1/queries/q1', body: undefined }));
   });
 
-  it('puts the Project the User works in first in the panel, with Close project, which stops working in it (DEC-UX-295)', async () => {
+  it('puts the active Project first in the panel, standing out, with no Close project (DEC-UX-317)', async () => {
     const partner = { id: 'p2', name: 'Partner review', description: '', members: [{ id: ME_ID, name: ME.name }], queries: [] };
     const credit = { id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: ['q1'] };
-    const calls = serve({ queries: [{ ...QUERY }], projects: [partner, credit], settings: { 'query.project': 'p1', 'query.flagged': [] } });
+    serve({ queries: [{ ...QUERY }], projects: [partner, credit] });
     open('/query/q1');
     render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('navigation', { name: 'De queries van Credit leads Q4' }, { timeout: 3000 });
     const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
-    const close = await panel.findByRole('button', { name: /Project sluiten/ }, { timeout: 3000 });
-    expect(close.getAttribute('title')).toContain('Stoppen met werken in Credit leads Q4');
     // First among the Projects, though Partner review came first.
-    const names = panel.getAllByRole('link').map((link) => link.textContent ?? '').filter((text) => /Credit leads Q4|Partner review/.test(text));
-    expect(names[0]).toContain('Credit leads Q4');
-    expect(panel.getByText('Je werkt erin')).toBeTruthy();
-    await fireEvent.click(close);
-    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/me/settings/query.project' }));
-    await vi.waitFor(() => expect(panel.queryByRole('button', { name: /Project sluiten/ })).toBeNull());
+    await vi.waitFor(() => {
+      const names = panel.getAllByRole('link').map((link) => link.textContent ?? '').filter((text) => /Credit leads Q4|Partner review/.test(text));
+      expect(names[0]).toContain('Credit leads Q4');
+    });
+    expect(panel.getByRole('link', { name: /Credit leads Q4/ }).classList.contains('current')).toBe(true);
+    expect(panel.queryByRole('button', { name: /Project sluiten/ })).toBeNull();
+    expect(panel.queryByText('Je werkt erin')).toBeNull();
   });
 
   it('takes a Resource out of the query itself with Just take it out, which stays open (FR-SR-67, DEC-SR-48)', async () => {

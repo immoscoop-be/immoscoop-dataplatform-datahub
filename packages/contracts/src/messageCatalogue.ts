@@ -1731,7 +1731,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     learningCard: { fit: 'proposed', card: { number: 'K5.8', title: 'A Lens or your own query' }, why: 'A query a team keeps coming back to may answer better as a Lens, for everyone.' },
     action: {
       asks: 'nothing',
-      what: 'The colleague opens the Project, and may work in it: its queries are then the row on top of Query.',
+      what: 'The colleague opens the Project: it is then active, its queries the row on top of Query.',
       buttons: [{ label: { nl: 'Project openen', en: 'Open the Project' }, opens: 'Query, the page of the Project' }],
       done: 'When it is read.',
     },

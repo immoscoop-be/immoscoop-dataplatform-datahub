@@ -23,8 +23,8 @@
    * DEC-UX-150). The eye on a query hides it for this User alone (DEC-UX-138). The query that is open has an arrow
    * that unfolds its last runs, folded at first (DEC-UX-140). A User who sees every query (`queries.seeOthers`, every) also has All in the filter (DEC-UX-161): everyone's
    * queries, with who ran them (DEC-LN-01). A new query is in it at once, as not run yet. Above the history, the
-   * Projects the User is in (DEC-UX-285): each with how many queries and who is in it, the one they work in flagged; a
-   * click opens its page, the arrow unfolds its first queries with their keys. The first three, then "Show all". The
+   * Projects the User is in (DEC-UX-285): each with how many queries and who is in it, the active one first and standing
+   * out (DEC-UX-317); a click opens its details, so it is active, the arrow unfolds its first queries with their keys. The first three, then "Show all". The
    * search looks through Projects and queries together: a Project whose name matches stays, one with a matching query
    * unfolds to it. The history lists the queries the User made and those they ran (OP-UX-103).
    */
@@ -36,14 +36,12 @@
     draft,
     version,
     onhidden,
-    flagged = [],
     projects,
-    working = null,
+    active = null,
     me = '',
     currentProject,
     loadProject,
     onnewproject,
-    onclose,
   }: {
     client: Pick<QueryClient, 'list' | 'days' | 'hide'>;
     /** The User sees the queries of everyone (`queries.seeOthers`, every, FR-PL-14). */
@@ -58,12 +56,10 @@
     version: number;
     /** A query was hidden or shown again from the panel. */
     onhidden?: (id: string, hidden: boolean) => void;
-    /** The queries the User flagged: each has the flag at its end (DEC-UX-236). */
-    flagged?: readonly string[];
     /** The Projects the User is in; undefined while they come (DEC-UX-285). */
     projects?: readonly ProjectItem[];
-    /** The Project the User works in: it has the flag at its end. */
-    working?: string | null;
+    /** The active Project, which follows what is open (DEC-UX-317): first, and standing out. */
+    active?: string | null;
     /** The ID of the User, for who else is in a Project. */
     me?: string;
     /** The Project whose page is open. */
@@ -72,8 +68,6 @@
     loadProject?: (id: string) => Promise<ProjectPage>;
     /** New project, as its + does. */
     onnewproject?: () => void;
-    /** Close project: stop working in the Project the User works in (DEC-UX-295). */
-    onclose?: () => void;
   } = $props();
 
   /** The Projects in view before "Show all" (DEC-UX-285). */
@@ -198,7 +192,7 @@
   /** The Projects in view: those matching the search by their name or a query of theirs it found (DEC-UX-285). */
   const projectsShown = $derived.by(() => {
     // The Project the User works in comes first (DEC-UX-295).
-    const list = [...(projects ?? [])].sort((a, b) => Number(b.id === working) - Number(a.id === working));
+    const list = [...(projects ?? [])].sort((a, b) => Number(b.id === active) - Number(a.id === active));
     if (!words) return list;
     return list.filter((project) => projectMatches(project, words) || (found?.items ?? []).some((item) => item.project?.id === project.id));
   });
@@ -277,7 +271,6 @@
         <!-- Made through Claude, as it stays once its User goes on in Query (DEC-CL-11, FR-CL-22). -->
         <span class="pill" title={t('query.label.claude.hint')}>{t('query.label.claude')}</span>
       {/if}
-      {#if flagged.includes(item.id)}<span class="flag"><Icon name="flag-fill" label={t('flags.flaggedMark')} /></span>{/if}
     </a>
     <span class="buttons">
       <button type="button" class="eye" aria-label={t(item.hidden ? 'query.unhide' : 'query.hide', { name: item.name })} title={t(item.hidden ? 'query.unhide.hint' : 'query.hide.hint')} onclick={() => hide(item)}
@@ -338,18 +331,10 @@
     {@const open = unfoldedProjects[project.id] || matched.length > 0}
     {@const listed = matched.length > 0 ? matched.map(({ id, name }) => ({ id, name, locked: false })) : projectQueries[project.id]}
     <div class="entry">
-      <a class="item card" class:current={project.id === currentProject} href={projectPath(project.id)} aria-current={project.id === currentProject ? 'page' : undefined}>
+      <a class="item card" class:current={project.id === currentProject || project.id === active} href={projectPath(project.id)} aria-current={project.id === currentProject ? 'page' : undefined}>
         <span class="kind"><Icon name="folders-fill" label="Project" /></span>
         <span class="text"><span class="name" title={project.name}>{project.name}</span><span class="meta">{t('row.queries', { count: project.queries })} · {withWho(project)}</span></span>
-        {#if project.id === working}<span class="flag" title={t('query.projects.working')}><Icon name="flag-fill" label={t('query.projects.working')} /></span>{/if}
       </a>
-      {#if project.id === working && onclose}
-        <!-- You work in it, and Close project, which stops working in it (DEC-UX-295) -->
-        <div class="working">
-          <Icon name="flag-fill" /><span>{t('query.projects.workingIn')}</span>
-          <button type="button" class="close" title={t('query.projects.close.title', { name: project.name })} onclick={onclose}><Icon name="sign-out" />{t('query.projects.close')}</button>
-        </div>
-      {/if}
       {#if project.queries > 0}
         <span class="buttons">
           <button type="button" class="unfold" aria-expanded={open} aria-label={t('query.projects.itsQueries', { name: project.name })} onclick={() => unfoldProject(project.id)}><Icon name="caret-down" /></button>
@@ -442,16 +427,9 @@
   .period[aria-expanded='false'] :global(.icon) { transform: rotate(-90deg); }
   .period.found { cursor: default; margin: 0; }
   .entry { position: relative; margin-bottom: 7px; }
-  /* The Project the User works in: You work in it · Close project (DEC-UX-295) */
-  .working { display: flex; align-items: center; gap: 6px; margin: 4px 0 2px; padding: 2px 2px 2px 12px; font-size: var(--text-meta); color: var(--text-secondary); }
-  .working > :global(.icon) { font-size: 12px; color: var(--text-muted); }
-  .close { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: 0; border-radius: var(--radius-pill); background: var(--tint-hover);
-    font: var(--weight-medium) var(--text-meta) var(--font-family); color: var(--text-primary); cursor: pointer; }
-  .close:hover { background: var(--tint-active); }
   .item { display: flex; align-items: center; gap: 10px; padding: 9px 40px 9px 12px; border-radius: var(--radius-md); color: inherit; text-decoration: none; outline: 1px solid transparent; }
   .draft { margin-bottom: 7px; padding-right: 12px; }
   .item.unfolds { padding-right: 68px; }
-  .flag { display: inline-flex; margin-left: auto; font-size: var(--text-small); color: var(--text-muted); flex: none; }
   .item:hover { outline-color: var(--tint-active); }
   .item.current { outline: 1.5px solid var(--text-muted); }
   .item:focus-visible { outline: 2px solid var(--text-secondary); }

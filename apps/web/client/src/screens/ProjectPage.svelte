@@ -31,8 +31,8 @@
    * The page of a Project, in Query (FR-SR-63, FR-SR-65, FR-SR-66, FR-SR-68, FR-SR-69; DEC-UX-285), laid out as the page
    * of a folder of a Collection (DEC-UX-156):
    * - its head: its name and what it is for, changed in place by anyone in it (DEC-UX-162); Share, with the faces of who
-   *   is in it (DEC-UX-286); New query, which makes an empty query in it and opens it (DEC-UX-290, OP-UX-105); and Work
-   *   in it, or "You work in it" with Stop (DEC-UX-282, OP-UX-94);
+   *   is in it (DEC-UX-286); and New query, which makes an empty query in it and opens it (DEC-UX-290, OP-UX-105). Its
+   *   page open makes it the active Project, its row on top with this page as the details tab (DEC-UX-317);
    * - a line of facts: how many queries, how many people, who made it and when, and its last run, by whom;
    * - its queries in the one order of the row on top (OP-UX-95): the first ten with their key (DEC-UX-283), each with
    *   what it reads, who made it and its last run, marked as on its tab. A row is dragged by its handle, or moved with
@@ -53,8 +53,6 @@
     identity,
     me,
     canMake,
-    working,
-    onwork,
     onnewquery,
     onchanged,
     go,
@@ -65,9 +63,6 @@
     me: { id: string; name: string };
     /** `queries.make`: otherwise its queries are read only, and their order too (OP-UX-98). */
     canMake: boolean;
-    /** The User works in this Project now: its queries are the row on top. */
-    working: boolean;
-    onwork: (on: boolean) => void;
     /** Makes an empty query in it and opens it (FR-SR-68). */
     onnewquery: () => Promise<void>;
     /** Anything of it changed: the row on top and the panel read it again. */
@@ -230,7 +225,6 @@
     busy = true;
     try {
       await projects.removeMember(project.id, me.id);
-      if (working) onwork(false);
       onchanged();
       go('/query');
     } catch (error) {
@@ -248,7 +242,6 @@
     try {
       await projects.remove(project.id, reason.trim() || undefined);
       [deleting, reason] = [false, ''];
-      if (working) onwork(false);
       await changed();
     } catch (error) {
       console.error('The Project could not be deleted', error);
@@ -289,11 +282,6 @@
     if (!shown) return null;
     const name = shown.name;
     const rows: QuickRow[] = [];
-    rows.push(
-      working
-        ? command('project:stop', 'x', t('project.quick.stop', { name }), () => onwork(false), { meta: t('project.quick.stop.meta'), words: t('project.quick.work.words') })
-        : command('project:work', 'flag', t('project.quick.work', { name }), () => onwork(true), { meta: t('project.quick.work.meta'), words: t('project.quick.work.words') }),
-    );
     rows.push(command('project:share', 'share-network', t('project.quick.share', { name }), () => (sharing = true), { meta: t('project.quick.share.meta', { count: shown.members.length }), words: t('project.quick.share.words') }));
     if (canMake) rows.push(command('project:new', 'plus', t('project.quick.new', { name }), () => void newQuery(), { meta: t('project.quick.new.meta'), words: t('project.quick.new.words') }));
     rows.push(command('project:rename', 'pencil-simple', t('project.quick.rename', { name }), () => head?.querySelector<HTMLButtonElement>('button.in-place')?.click(), { meta: t('project.quick.rename.meta'), words: t('project.quick.rename.words') }));
@@ -339,11 +327,6 @@
       </Button>
       {#if canMake}
         <Button variant="outline" title={t('project.newQuery.hint', { name: shown.name })} disabled={making} onclick={newQuery}><Icon name="plus" />{t('project.newQuery')}</Button>
-      {/if}
-      {#if working}
-        <span class="here" title={t('project.working.hint')}><Icon name="flag-fill" />{t('project.working')}<button type="button" class="text-link" title={t('project.stop.hint')} onclick={() => onwork(false)}>{t('project.stop')}</button></span>
-      {:else}
-        <Button title={t('project.work.hint')} onclick={() => onwork(true)}><Icon name="flag" />{t('project.work')}</Button>
       {/if}
     </div>
   </div>
@@ -584,7 +567,6 @@
   .faces { display: inline-flex; align-items: center; margin-right: 2px; }
   .faces :global(.avatar) { margin-left: -6px; outline: 2px solid var(--surface-solid); }
   .faces :global(.avatar:first-child) { margin-left: 0; }
-  .here { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-small); color: var(--text-secondary); background: var(--card); padding: 7px 12px; border-radius: var(--radius-pill); }
   .status-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
   .section-head { display: flex; align-items: baseline; gap: 12px; margin: 26px 0 12px; }
   .section-head h2 { font-size: var(--text-section); font-weight: var(--weight-medium); margin: 0; }

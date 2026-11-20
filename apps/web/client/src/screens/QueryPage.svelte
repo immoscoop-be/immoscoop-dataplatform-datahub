@@ -22,7 +22,7 @@
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import Callout from '@datahub/ui/containers/Callout.svelte';
   import Sheet from '@datahub/ui/containers/Sheet.svelte';
-  import MenuButton from '@datahub/ui/containers/MenuButton.svelte';
+  import MenuButton, { type MenuChoice } from '@datahub/ui/containers/MenuButton.svelte';
   import Toast from '@datahub/ui/components/Toast.svelte';
   import { NotFound as Missing } from '../lib/api.js';
   import { missingOfQuery } from '../lib/broken.js';
@@ -38,7 +38,7 @@
   import FieldExplain from './FieldExplain.svelte';
   import FindTableSheet from './FindTableSheet.svelte';
   import type { KnownTable } from '../lib/registry.js';
-  import { digitOf, keyed, modLabel, type QueryStatus } from '../lib/flags.js';
+  import { type QueryStatus } from '../lib/flags.js';
   import type { QuickRow } from '../lib/quick.js';
   import ParameterWindow from './ParameterWindow.svelte';
   import OutsideTableWindow from './OutsideTableWindow.svelte';
@@ -75,9 +75,6 @@
     findTables,
     layout = 'horizontal',
     onlayout,
-    flagAt = null,
-    flagsFull = false,
-    onflag,
     onstatus,
     oncommands,
     go,
@@ -85,8 +82,8 @@
     shown = true,
     me = '',
     projectNow,
-    working = null,
-    onworkin,
+    placeable = false,
+    onproject,
   }: {
     id: string;
     /** Its history opened from the panel, at one of its runs or at all of them. */
@@ -112,13 +109,7 @@
     /** The query above the result, or next to it, as the User chose it (DEC-UX-143). */
     layout?: Layout;
     onlayout?: (layout: Layout) => void;
-    /** Its place among the flagged queries, or null when it is not flagged (DEC-UX-236). */
-    flagAt?: number | null;
-    /** Ten queries are flagged: Flag is greyed, with why (OP-UX-84). */
-    flagsFull?: boolean;
-    /** Flags or unflags it; without it, the page has no Flag. */
-    onflag?: (on: boolean) => void;
-    /** What it tells on its tab while the User is in another query: a run going, a failure, Broken (DEC-UX-236). */
+    /** What it tells on its tab while the User is in another query: a run going, a failure, Broken (OP-UX-85). */
     onstatus?: (id: string, status: QueryStatus) => void;
     /** What can be done to it now, for the quick window (DEC-UX-237). */
     oncommands?: (id: string, commands: QuickRow[]) => void;
@@ -130,12 +121,12 @@
     shown?: boolean;
     /** The ID of the User, to tell their own change of the SQL from another's (OP-UX-99). */
     me?: string;
-    /** The Project it is in now, as the row knows it after a change there; undefined: as it was read. */
+    /** The Project it is in now, as the App knows it after a change there; undefined: as it was read. */
     projectNow?: { id: string; name: string } | null;
-    /** The Project the User works in, if any (OP-UX-94). */
-    working?: string | null;
-    /** Work in its Project, from its breadcrumb (OP-UX-94). */
-    onworkin?: (id: string) => void;
+    /** The User writes it, so it may go into a Project or move to another (DEC-UX-318, OP-UX-98). */
+    placeable?: boolean;
+    /** The Project button (DEC-UX-318): add it to a Project, move it to another, or take it out of the one it is in. */
+    onproject?: (kind: 'add' | 'move' | 'remove', query: { id: string; name: string }, inIt: { id: string; name: string } | null) => void;
   } = $props();
   /** Several queries stay open at once (OP-UX-85): what one names by an id is its own. */
   const uid = $props.id();
@@ -207,6 +198,18 @@
   const editable = $derived(query ? (query.editable ?? query.mine) : false);
   /** The Project it is in, named in its breadcrumb (OP-UX-94). */
   const projectShown = $derived(projectNow !== undefined ? projectNow : (query?.project ?? null));
+  /** What its Project button offers, by the state of the query and who writes it (DEC-UX-318). */
+  const projectChoices = $derived.by((): MenuChoice[] => {
+    const shown = query;
+    if (!shown || shown.kind !== 'query' || !onproject) return [];
+    const it = { id: shown.id, name: shown.name };
+    const inIt = projectShown;
+    if (!inIt) return placeable ? [{ key: 'add', icon: 'folder-simple-plus', label: t('query.project.add'), hint: t('query.project.add.meta'), run: () => onproject('add', it, null) }] : [];
+    return [
+      ...(placeable ? [{ key: 'move', icon: 'arrows-left-right' as const, label: t('query.project.move'), hint: t('query.project.move.meta', { name: inIt.name }), run: () => onproject('move', it, inIt) }] : []),
+      { key: 'remove', icon: 'minus-circle', label: t('query.project.remove'), hint: t('query.project.remove.meta', { name: inIt.name }), run: () => onproject('remove', it, inIt) },
+    ];
+  });
 
   /** Its Resources not published yet: they grey "Make it a lens", with why (DEC-LE-22, DEC-UX-218). */
   const unpublished = $derived((query?.resources ?? []).flatMap((resource) => (resource.visible && resource.published === false ? [resource] : [])));
@@ -716,13 +719,10 @@
         rows.push(command('lens', 'aperture', t('quick.query.lens'), () => open(newLensPath(found.id)), { meta: t('quick.query.lens.meta'), words: t('quick.query.lens.words'), ...(why ? { why } : {}) }));
       }
     }
-    if (onflag) {
-      const flag = onflag;
-      rows.push(
-        flagAt === null
-          ? command('flag', 'flag', t('quick.query.flag'), () => flag(true), flagsFull ? { why: t('flags.full.short'), words: t('quick.query.flag.words') } : { meta: t('quick.query.flag.meta'), words: t('quick.query.flag.words') })
-          : command('flag', 'flag-fill', t('quick.query.unflag'), () => flag(false), { ...(keyed(flagAt) ? { meta: t('quick.query.unflag.meta', { key: `${modLabel(mac)}${digitOf(flagAt)}` }) } : {}), words: t('quick.query.flag.words') }),
-      );
+    // Its Project button, as on the page (DEC-UX-318): Add to project in none, or Change project and Remove from project;
+    // adding and taking out are a pair, under one key.
+    for (const choice of projectChoices) {
+      rows.push(command(choice.key === 'move' ? 'project-move' : 'project', choice.icon, choice.label, choice.run, { meta: choice.hint, words: t('quick.project.words') }));
     }
     if ((found.editable ?? found.mine)) rows.push(command('rename', 'pencil-simple', t('quick.query.rename'), () => void startRename(), { meta: t('quick.query.rename.meta'), words: t('quick.query.rename.words') }));
     rows.push(command('fold', 'arrows-in-line-vertical', t('quick.query.fold'), () => editor?.foldAll(), { meta: t('quick.query.fold.meta'), words: t('quick.query.fold.words') }));
@@ -1140,10 +1140,9 @@
   <div class="page">
   <header class="head">
     <div class="titles">
-      <!-- A query of a Project names it, as a link to its page; in another, "Work in it" follows (OP-UX-94). -->
+      <!-- A query of a Project names it, as a link to its details (DEC-UX-317). -->
       <div class="meta crumb">
-        Query{#if projectShown}{@const inIt = projectShown}<span aria-hidden="true">/</span><a class="crumb-project" href={projectPath(inIt.id)}><Icon name="folders-fill" />{inIt.name}</a
-          >{#if working !== inIt.id && onworkin}<button type="button" class="text-link" onclick={() => onworkin(inIt.id)}>{t('query.workInIt')}</button>{/if}{/if}
+        Query{#if projectShown}{@const inIt = projectShown}<span aria-hidden="true">/</span><a class="crumb-project" href={projectPath(inIt.id)}><Icon name="folders-fill" />{inIt.name}</a>{/if}
       </div>
       {#if renaming}
         <form class="rename" onsubmit={rename}>
@@ -1216,6 +1215,8 @@
         {/each}
       </span>
       <!-- No New query here: the panel has it, and the quick window (DEC-UX-252). -->
+      <!-- The Project button (DEC-UX-318): Add to project in none; Change project and Remove from project in one. -->
+      {#if projectChoices.length > 0}<MenuButton icon="folders-fill" text="Project" variant="outline" label="Project" choices={projectChoices} />{/if}
       <!-- No Hide here: the eye in the panel and the quick window hide a query (DEC-UX-246). -->
       {#if query.mine && query.kind === 'query' && query.lens}
         <!-- A query used as a Lens overwrites it, after its size check (DEC-UX-77); greyed, it says why (DEC-UX-232). -->

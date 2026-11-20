@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <!--
   Screen: the page of a Project, in Query (DEC-UX-282, DEC-UX-285)
-  A Project is a set of queries a User works on, alone or with colleagues: its queries are the row on top while they
-  work in it, the first ten with ⌘1 to ⌘0 (DEC-UX-283). Its page, opened from the panel, the switch of the row or the
-  quick window, holds:
+  A Project is a set of queries a User works on, alone or with colleagues: its queries are the row on top while it is
+  active, the first ten with ⌘1 to ⌘0 (DEC-UX-283). Its details, opened from the panel, the first tab of its row or the
+  quick window, make it active (DEC-UX-317, DEC-UX-319), and hold:
   - its head: its name and what it is for, changed in place by anyone in it; Share; New query, which makes an empty
-    query in it and opens it (DEC-UX-290, OP-UX-105, in query.html?empty=1); and "Work in it",
-    which puts its queries in the row on top, or "You work in it" while they are;
+    query in it and opens it (DEC-UX-290, OP-UX-105, in query.html?empty=1); no button to work in it, as it is active
+    while it is open (DEC-UX-317);
   - a line of facts: how many queries, who is in it, who made it and when, and its last run, by whom;
   - its queries, one row each in the order of the row, with its key, its name and question, what it reads, who made
     it and its last run, marked as in the row (running, a result not seen yet, failed, Broken); a row is dragged to
@@ -22,10 +22,10 @@
   (OP-UX-101). Everyone in a Project has every right on it and on its queries (DEC-UX-286); a query runs with the
   rights of whoever runs it.
   The switches at the bottom: the Project as it is, just made and deleted (?proj=new, ?proj=deleted); seen by you or
-  by Lotte Dewulf, who cannot run queries (?seen=lotte); working in it or not (?work=out); ?share=open opens the share
+  by Lotte Dewulf, who cannot run queries (?seen=lotte); ?share=open opens the share
   sheet, ?delete=open the delete sheet. The quick window holds every command of the page (DEC-UX-288).
-  Requirements: FR-SR-63, FR-SR-65, FR-SR-66, FR-SR-68, FR-SR-69
-  Decisions: DEC-UX-282, DEC-UX-283, DEC-UX-285, DEC-UX-286, DEC-UX-288, DEC-UX-290, DEC-UX-291.
+  Requirements: FR-SR-63, FR-SR-65, FR-SR-66, FR-SR-68, FR-SR-69, FR-SR-72
+  Decisions: DEC-UX-282, DEC-UX-283, DEC-UX-285, DEC-UX-286, DEC-UX-288, DEC-UX-290, DEC-UX-291, DEC-UX-317, DEC-UX-319.
   Related screens: query.html (the row on top, the panel, Add to a project).
   Rules: ../principles.md#projects  ·  Placeholder content only.
 -->
@@ -85,7 +85,7 @@
   <p class="q-filter-on"><span>Also showing: Previews</span><button class="q-filter-x" aria-label="Stop showing Previews"><i class="ph ph-x"></i></button></p>
   <div data-group="scope" hidden><button data-target="yours"></button><button data-target="all"></button></div>
   <!-- The Projects, above the history (DEC-UX-285): each with how many queries it holds and who is in it; the one the
-       User works in has the flag of the row. A click opens its page; the arrow unfolds its queries, with their keys.
+       User has active comes first and stands out (DEC-UX-317). A click opens its page; the arrow unfolds its queries, with their keys.
        The search looks through both: a Project whose name matches stays, one with a matching query unfolds to it. -->
   <div class="proj-list" id="proj-list">
    <div class="panel-label with-add"><span>Projects</span><button class="icon-btn" type="button" data-row-pop="newproj" aria-label="New project" title="New project"><i class="ph ph-plus"></i></button></div>
@@ -190,18 +190,13 @@
  </div>
 </aside>
 <main class="main">
-<!-- The row on top, while the User works in this Project: its queries, the first ten with ⌘1 to ⌘0 (DEC-UX-283). In
-     query.html it is drawn with every case; here as it stands. -->
-<nav class="q-flags" aria-label="The queries of Credit leads Q4" data-pane-group="work" data-pane="in">
- <a class="q-proj" href="query.html?rowpop=work" title="You work in Credit leads Q4: its queries are in this row. Click to work in another"><i class="ph-fill ph-folders" aria-hidden="true"></i><span class="clip">Credit leads Q4</span><span class="q-proj-people" title="4 in it"><i class="ph ph-users"></i>4</span><i class="ph ph-caret-down caret" aria-hidden="true"></i></a>
+<!-- The row on top, as this Project is active while its details are open (DEC-UX-317): a tab for its details, standing
+     out, without a key (DEC-UX-319), then its queries, the first ten with ⌘1 to ⌘0 (DEC-UX-283). -->
+<nav class="q-flags" aria-label="The queries of Credit leads Q4">
+ <a class="q-proj" href="query-project.html" aria-current="page" title="The details of Credit leads Q4: its queries, who is in it, Share"><i class="ph-fill ph-folders" aria-hidden="true"></i><span class="clip">Credit leads Q4</span><span class="q-proj-people" title="4 in it"><i class="ph ph-users"></i>4</span><i class="ph ph-caret-down caret" aria-hidden="true"></i></a>
  <span class="q-flags-mod" title="Hold ⌘ and press the number of a query to open it">⌘</span>
  <div class="q-flags-tabs many"><a class="q-flag" href="query.html" title="Leads per source name · ⌘1"><span class="kbd">1</span><span class="q-flag-name">Leads per source name</span></a><a class="q-flag" href="query.html" title="Partner share per week · ⌘2"><span class="kbd">2</span><span class="q-flag-name">Partner share per week</span><i class="ph ph-circle-notch q-flag-spin" role="img" aria-label="Running"></i></a><a class="q-flag" href="query.html" title="Listings per postal code, last 28 days · ⌘3"><span class="kbd">3</span><span class="q-flag-name">Listings per postal code, last 28 days</span><span class="q-flag-mark seen-not" role="img" aria-label="A result you have not seen yet"></span></a><a class="q-flag" href="query.html" title="Saved searches by price band · ⌘4"><span class="kbd">4</span><span class="q-flag-name">Saved searches by price band</span><span class="q-flag-mark failed" role="img" aria-label="Its last run failed"></span></a><a class="q-flag" href="query.html" title="Leads that came back within a week · ⌘5"><span class="kbd">5</span><span class="q-flag-name">Leads that came back within a week</span></a><a class="q-flag" href="query.html" title="Credit leads per partner, this year · ⌘6"><span class="kbd">6</span><span class="q-flag-name">Credit leads per partner, this year</span></a><a class="q-flag" href="query.html" title="Price per m² by province · ⌘7"><span class="kbd">7</span><span class="q-flag-name">Price per m² by province</span><i class="ph ph-link-break q-flag-broken" role="img" aria-label="Broken"></i></a><a class="q-flag" href="query.html" title="New listings per day · ⌘8"><span class="kbd">8</span><span class="q-flag-name">New listings per day</span></a><a class="q-flag" href="query.html" title="Leads without a source · ⌘9"><span class="kbd">9</span><span class="q-flag-name">Leads without a source</span></a><a class="q-flag" href="query.html" title="Partner contracts ending soon · ⌘0"><span class="kbd">0</span><span class="q-flag-name">Partner contracts ending soon</span></a><a class="q-flag" href="query.html" title="Searches per user, last week"><span class="nokey" aria-hidden="true"></span><span class="q-flag-name">Searches per user, last week</span></a><a class="q-flag" href="query.html" title="Response time per broker"><span class="nokey" aria-hidden="true"></span><span class="q-flag-name">Response time per broker</span></a><a class="q-flag" href="query.html" title="Leads per postal code"><span class="nokey" aria-hidden="true"></span><span class="q-flag-name">Leads per postal code</span></a><a class="q-flag" href="query.html" title="Conversion per channel"><span class="nokey" aria-hidden="true"></span><span class="q-flag-name">Conversion per channel</span></a></div>
  <div class="q-flags-end"><a class="q-flags-all" href="query.html?rowpop=all"><span>All 14</span><i class="ph ph-caret-down"></i></a></div>
-</nav>
-<nav class="q-flags" aria-label="Your flagged queries" data-pane-group="work" data-pane="out" hidden>
- <a class="q-proj mine" href="query.html?flags=this&amp;rowpop=work"><i class="ph-fill ph-flag" aria-hidden="true"></i><span class="clip">Flagged</span><i class="ph ph-caret-down caret" aria-hidden="true"></i></a>
- <span class="q-flags-mod">⌘</span>
- <div class="q-flags-tabs"><a class="q-flag" href="query.html"><span class="kbd">1</span><span class="q-flag-name">Leads per source name</span></a><a class="q-flag" href="query.html"><span class="kbd">2</span><span class="q-flag-name">Partner share per week</span></a><a class="q-flag" href="query.html"><span class="kbd">3</span><span class="q-flag-name">Lead volume per province</span></a></div>
 </nav>
 <div class="breadcrumb crumbs"><a href="query.html">Query</a> / <span>Credit leads Q4</span></div>
 
@@ -223,8 +218,7 @@
  <div class="coll-actions">
   <button class="btn-quiet outline" type="button" data-sheet-open="share-sheet" style="display:inline-flex;align-items:center;gap:8px" title="Who is in it, and add a colleague"><span class="proj-people" aria-hidden="true"><span class="mini-avatar">MP</span><span class="mini-avatar">KL</span><span class="mini-avatar">AC</span><span class="mini-avatar">LD</span></span>Share</button>
   <a class="btn-quiet outline" href="query.html?empty=1" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none" title="An empty query, in Credit leads Q4 from the start: you add its Resources in it" data-pane-group="seen" data-pane="me"><i class="ph ph-plus"></i>New query</a>
-  <span class="proj-here" data-pane-group="work" data-pane="in" title="Its queries are in the row on top"><i class="ph-fill ph-flag"></i>You work in it<button class="text-link" type="button" data-go="work:out" title="The row shows your flagged queries again"><span>Stop</span></button></span>
-  <button class="btn-primary" type="button" data-pane-group="work" data-pane="out" hidden data-go="work:in" title="Put its queries in the row on top"><i class="ph ph-flag" style="font-size:15px"></i>Work in it</button>
+  <!-- No button to work in it: it is active while it is open (DEC-UX-317). -->
  </div>
 </div>
 <div class="status-row">
@@ -259,7 +253,7 @@
 </table></div>
 <!-- Removed without asking, as adding it again undoes it; Undo for a while (OP-UX-106) -->
 <div class="notice proj-undo" id="proj-undo" role="status" hidden><i class="ph-fill ph-minus-circle"></i><p><b id="undo-what">Leads per source name</b> is no longer in Credit leads Q4. It stays with <span id="undo-who">you</span>, who made it, in the history.</p><button class="text-link" type="button" id="undo-btn"><span>Undo</span></button></div>
-<div class="card proj-empty" data-pane-group="proj" data-pane="new" hidden><i class="ph ph-folders"></i>Nothing in it yet.<br>Open a query and press "Add to Credit leads Q4" at the end of the row on top, or start an empty one here.<br><a class="btn-quiet outline" href="query.html?empty=1" style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;text-decoration:none"><i class="ph ph-plus"></i>New query</a></div>
+<div class="card proj-empty" data-pane-group="proj" data-pane="new" hidden><i class="ph ph-folders"></i>Nothing in it yet.<br>Open a query and add it with its Project button, or start an empty one here.<br><a class="btn-quiet outline" href="query.html?empty=1" style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;text-decoration:none"><i class="ph ph-plus"></i>New query</a></div>
 
 <div class="section-head"><h2>In it</h2><button class="btn-quiet outline" type="button" data-sheet-open="share-sheet" style="display:inline-flex;align-items:center;gap:6px"><i class="ph ph-user-plus"></i>Share</button></div>
 <div class="card" style="padding:6px;border-radius:var(--radius-lg)" data-pane-group="proj" data-pane="shared">
@@ -281,7 +275,7 @@
 <section class="danger proj-danger">
  <div class="danger-head"><i class="ph-fill ph-trash" aria-hidden="true"></i><div><h3>Delete it</h3><p>When its work is done. Anyone in it may delete it, for everyone. It cannot be undone.</p></div></div>
  <div class="danger-what">
-  <p class="line"><i class="ph-fill ph-folders" aria-hidden="true"></i><span><b>It is gone for the 4 people in it:</b> from their panel and from the row on top. Whoever worked in it works in their flagged queries again.</span></p>
+  <p class="line"><i class="ph-fill ph-folders" aria-hidden="true"></i><span><b>It is gone for the 4 people in it:</b> from their panel and from the row on top.</span></p>
   <p class="line"><i class="ph-fill ph-table" aria-hidden="true"></i><span><b>Its 14 queries stay, each with whoever made it:</b> in their history, with every run. Who did not make a query no longer sees it.</span></p>
   <p class="line"><i class="ph-fill ph-chat-circle-text" aria-hidden="true"></i><span><b>The others are told:</b> Karel Leys, An Claes and Lotte Dewulf get a Message that you deleted it, with your reason.</span></p>
  </div>
@@ -364,10 +358,6 @@
  <button class="seg on" data-target="me" role="tab" aria-selected="true">You</button>
  <button class="seg" data-target="lotte" role="tab" aria-selected="false">Lotte, who cannot run queries</button>
 </div>
-<div class="proto-switch" data-group="work" role="tablist" aria-label="Prototype: working in it" style="bottom:112px;top:auto;right:24px">Row
- <button class="seg on" data-target="in" role="tab" aria-selected="true">You work in it</button>
- <button class="seg" data-target="out" role="tab" aria-selected="false">You work in another</button>
-</div>
 <style>
   /* Seen by a colleague who cannot run queries: no query to add, change or take out (OP-UX-98) */
   body[data-seen="lotte"] .row-x { visibility: hidden; }
@@ -416,15 +406,11 @@
   if (ask.get('delete') === 'open') $('#delete-sheet').hidden = false;
   if (ask.has('edit')) editing(true);
   // Every command of the page in the quick window (DEC-UX-240, DEC-UX-288)
-  const working = () => document.querySelector('[data-group="work"] .seg.on')?.dataset.target === 'in';
   window.QUICK = {
     group: 'This project',
     where: 'Query · Credit leads Q4',
     get commands() {
       return [
-        working()
-          ? { icon: 'ph ph-flag', title: 'Stop working in Credit leads Q4', meta: 'the row shows your flagged queries again', run: () => document.querySelector('[data-group="work"] [data-target="out"]').click(), words: 'project leave row flagged' }
-          : { icon: 'ph-fill ph-flag', title: 'Work in Credit leads Q4', meta: 'its queries in the row on top', run: () => document.querySelector('[data-group="work"] [data-target="in"]').click(), words: 'project row open switch' },
         { icon: 'ph ph-share-network', title: 'Share Credit leads Q4', meta: '4 in it', click: '[data-sheet-open="share-sheet"]', words: 'share people colleague invite add member' },
         { icon: 'ph ph-plus', title: 'New query in Credit leads Q4', meta: 'an empty one, in it from the start', run: () => { location.href = 'query.html?empty=1'; }, words: 'query new create start empty blank' },
         { icon: 'ph ph-pencil-simple', title: 'Rename Credit leads Q4', meta: 'its name and what it is for, in place', run: () => editing(true), words: 'rename name description edit' },

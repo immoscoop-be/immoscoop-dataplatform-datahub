@@ -23,7 +23,7 @@
   import { type Card, cardsIn, createLearning, drawExample, LEVELS, type LevelId, type Progress, type Step, suggestedLevels, topicOf, writtenCards } from './lib/learning.js';
   import { createQuery, type DeletedLens, type Lens, LensDeleted, type LensItem, type Run } from './lib/query.js';
   import { createRegistry } from './lib/registry.js';
-  import { digitOf, type FlagMark, flag, keyed, markOf, modLabel, MOST_FLAGGED, moveFlag, onMac, placeOf, type QueryStatus, unflag, withMod } from './lib/flags.js';
+  import { digitOf, type FlagMark, keyed, markOf, modLabel, onMac, placeOf, type QueryStatus, withMod } from './lib/flags.js';
   import { createProjects, isDeleted, moved as reordered, type Project, type ProjectItem, projectPath } from './lib/projects.js';
   import { type QuickRow, used } from './lib/quick.js';
   import { provideScreenCommands } from './lib/commands.svelte.js';
@@ -65,6 +65,7 @@
   import QueryNew from './screens/QueryNew.svelte';
   import { day } from '@datahub/ui/foundations/when.js';
   import QueryFlags from './screens/QueryFlags.svelte';
+  import ProjectSheet from './screens/ProjectSheet.svelte';
   import ProjectPage from './screens/ProjectPage.svelte';
   import QueryPanel from './screens/QueryPanel.svelte';
   import QuickWindow from './screens/QuickWindow.svelte';
@@ -798,13 +799,6 @@
   );
   /** Cmd on a Mac, Ctrl elsewhere: how the keys are pressed and written. */
   const mac = onMac();
-  /** The queries the User flagged, in their order on top of Query (DEC-UX-236): kept with their settings (OP-UX-84). */
-  const flagged: readonly string[] = $derived(settings?.values['query.flagged'] ?? []);
-  function setFlagged(ids: string[]): void {
-    settings?.set('query.flagged', ids);
-  }
-  /** The names on the tabs of the flagged queries, as query gives them. */
-  let flagNames = $state<Record<string, string>>({});
   /** What each open query tells, for the mark on its tab: a run going, a failure, Broken. */
   let queryStatus = $state<Record<string, QueryStatus>>({});
   /** A run ended while the User was in another query: its tab says so until they open it again. */
@@ -814,7 +808,7 @@
   /** What every other screen can do now, as it tells it (DEC-UX-240). */
   const screenCommands = provideScreenCommands((path) => router.go(path));
   /**
-   * The flagged queries opened since this browser tab loaded: each stays as the User left it while they work in another,
+   * The queries of the row opened since this browser tab loaded: each stays as the User left it while they work in another,
    * its result, its tab and a run still going, until the tab closes or reloads (OP-UX-85).
    */
   let kept = $state<string[]>([]);
@@ -826,8 +820,8 @@
     if (unseen[id]) unseen = { ...unseen, [id]: false };
   });
   /**
-   * The query pages that live: those kept and still flagged, and the one open, always, also when it was just unflagged:
-   * unflagging takes it off the row on top, never off the screen (DEC-UX-236).
+   * The query pages that live: those kept and still in the row, and the one open, always, also when it was just taken out
+   * of its Project: that takes it off the row on top, never off the screen (DEC-UX-291).
    */
   const alive = $derived.by(() => {
     const live = kept.filter((id) => row.includes(id));
@@ -838,44 +832,35 @@
     queryStatus = { ...queryStatus, [id]: now };
     if (before?.running && !now.running && openId !== id) unseen = { ...unseen, [id]: true };
   }
-  // The names of the flagged queries; one that the User may no longer see leaves the row.
-  $effect(() => {
-    if (status.kind !== 'signedIn') return;
-    for (const id of flagged) {
-      if (flagNames[id] !== undefined) continue;
-      flagNames = { ...flagNames, [id]: '' };
-      queries.get(id).then(
-        (found) => (flagNames = { ...flagNames, [id]: found.name }),
-        (error: unknown) => {
-          if (error instanceof Missing) setFlagged(unflag(flagged, id));
-          else console.error(`The name of the query ${id} could not be read`, error);
-        },
-      );
-    }
-  });
-  // A rename of the open query shows on its tab.
-  $effect(() => {
-    if (queryName && flagNames[queryName.id] !== undefined && flagNames[queryName.id] !== queryName.name) flagNames = { ...flagNames, [queryName.id]: queryName.name };
-  });
-  const flagItems = $derived(flagged.map((id) => ({ id, name: flagNames[id] || null, mark: markOf(queryStatus[id], unseen[id] ?? false), by: null as string | null, locked: false })));
 
-  /** The Project the User works in, kept with their settings on every computer (DEC-UX-282, OP-UX-94); null in none. */
-  const working: string | null = $derived(settings?.values['query.project'] ?? null);
-  function workIn(id: string | null): void {
-    // In none, the setting is forgotten: the row shows the flagged queries again (OP-UX-94).
-    if (id) settings?.set('query.project', id);
-    else settings?.forget('query.project');
-  }
-  /** The Projects the User is in, for the panel, "Work in" and the quick window (DEC-UX-285). */
+  /** A Project the open query was just put in, or taken out of (null), here: its page and the row follow at once. */
+  let placed = $state<Record<string, { id: string; name: string } | null>>({});
+  /** The Project the open query is in: what was just done here, else what query said of it; undefined while not known. */
+  const openProject = $derived.by((): { id: string; name: string } | null | undefined => {
+    if (page.kind !== 'query') return null;
+    const id = page.id;
+    if (id in placed) return placed[id];
+    return queryName?.id === id ? (queryName.project ?? null) : undefined;
+  });
+  /**
+   * The active Project, which follows what is open (DEC-UX-317): its details, or the Project of the open query; none on
+   * a query in no Project, on a new query and elsewhere. While the open query is still read, the one before stays.
+   */
+  let working = $state<string | null>(null);
+  $effect(() => {
+    const next = page.kind === 'project' ? page.id : page.kind === 'query' ? openProject === undefined ? undefined : (openProject?.id ?? null) : null;
+    if (next !== undefined && next !== untrack(() => working)) working = next;
+  });
+  /** The Projects the User is in, for the panel, the Project button and the quick window (DEC-UX-285). */
   let projectList = $state<ProjectItem[] | undefined>();
-  /** The Project the User works in, its queries in the one order of everyone in it (OP-UX-95). */
+  /** The active Project, its queries in the one order of everyone in it (OP-UX-95). */
   let workProject = $state<Project | undefined>();
   /** Grows after a change to a Project: its list and the row are read again. */
   let projectsVersion = $state(0);
-  /** The pop-out of the row that is open: what to work in, the whole row, Add to a project, New project. */
-  let rowPop = $state<'work' | 'all' | 'addp' | 'newproj' | null>(null);
-  /** A query taken out of the Project it was in, here: its page no longer names it. */
-  let leftProject = $state<Record<string, true>>({});
+  /** The pop-out of the row that is open: the whole row. */
+  let rowPop = $state<'all' | null>(null);
+  /** The sheet of the Project button or of New project (DEC-UX-318): for which query, and what it does. */
+  let projectSheet = $state<{ mode: 'add' | 'move' | 'new'; query: { id: string; name: string } | null } | null>(null);
   function refreshProjects(): void {
     projectsVersion += 1;
   }
@@ -887,7 +872,7 @@
       (error: unknown) => console.error('The projects could not be read', error),
     );
   });
-  // The queries of the Project the User works in; one they are no longer in, or that was deleted, is left.
+  // The queries of the active Project; one the User is no longer in, or that was deleted, is not shown.
   $effect(() => {
     if (status.kind !== 'signedIn' || !working) {
       workProject = undefined;
@@ -897,12 +882,12 @@
     void projectsVersion;
     projectsClient.get(id).then(
       (found) => {
-        if (isDeleted(found)) workIn(null);
-        else if (working === id) workProject = found;
+        if (working !== id) return;
+        workProject = isDeleted(found) ? undefined : found;
       },
       (error: unknown) => {
-        if (error instanceof Missing) workIn(null);
-        else console.error('The project could not be read', error);
+        if (working === id) workProject = undefined;
+        if (!(error instanceof Missing)) console.error('The project could not be read', error);
       },
     );
   });
@@ -913,66 +898,44 @@
     if (query.lastRun?.state === 'running') return 'running';
     return query.broken ? 'broken' : null;
   }
-  /** The row on top: the queries of the Project the User works in, or their flagged queries (DEC-UX-282). */
+  /** The row on top: the queries of the active Project (DEC-UX-317); none without one. */
   const rowItems = $derived(
-    working
-      ? workProject?.id === working
-        ? workProject.queries.map((query) => ({ id: query.id, name: query.name, mark: query.locked ? null : projectMark(query), by: query.owner.name, locked: query.locked }))
-        : []
-      : flagItems,
+    working && workProject?.id === working
+      ? workProject.queries.map((query) => ({ id: query.id, name: query.name, mark: query.locked ? null : projectMark(query), by: query.owner.name, locked: query.locked }))
+      : [],
   );
   const row: readonly string[] = $derived(rowItems.map((item) => item.id));
-  /** The open query, if the User writes it: it may go into a Project (OP-UX-98). */
-  const openWritable = $derived(page.kind === 'query' && queryName?.id === page.id && queryName.kind === 'query' && queryName.editable === true && can(permissions, 'queries.make'));
-  /** The Project the open query is in now, as the row and its page know it. */
-  function projectOfQuery(id: string): { id: string; name: string } | null | undefined {
-    if (workProject && workProject.queries.some((query) => query.id === id)) return { id: workProject.id, name: workProject.name };
-    if (leftProject[id]) return null;
-    return undefined;
-  }
-  /** What the button after the tabs does for the open query (DEC-UX-241, DEC-UX-282). */
-  const rowAdd = $derived.by(() => {
-    // Flagged queries stop at 50; a Project takes any number (DEC-SR-49).
-    if (page.kind !== 'query' || !openId || row.includes(openId) || (!working && row.length >= MOST_FLAGGED)) return null;
-    if (!working) return { kind: 'flag' as const };
-    if (!openWritable) return null;
-    const now = projectOfQuery(openId);
-    const from = now === undefined ? queryName?.project : now;
-    return from && from.id !== working ? { kind: 'move' as const, from: from.name } : { kind: 'add' as const };
-  });
-  async function addToRow(id: string): Promise<void> {
-    if (!working) {
-      setFlagged(flag(flagged, id));
-      return;
-    }
-    try {
-      await projectsClient.addQuery(working, id);
-      delete leftProject[id];
-    } catch (error) {
-      console.error('The query could not be added to the project', error);
+  /** Puts a query in a Project, out of the one it was in: that Project is then active, as the query is open (DEC-UX-318). */
+  async function putInProject(query: string, target: { to: string } | { name: string; description?: string }): Promise<void> {
+    if ('name' in target) {
+      const made = await projectsClient.create({ name: target.name, description: target.description ?? '', queries: [query] });
+      placed = { ...placed, [query]: { id: made.id, name: made.name } };
+    } else {
+      await projectsClient.addQuery(target.to, query);
+      const name = projectList?.find((one) => one.id === target.to)?.name ?? '';
+      placed = { ...placed, [query]: { id: target.to, name } };
     }
     refreshProjects();
+    refreshQueries();
   }
-  async function removeFromRow(id: string): Promise<void> {
-    if (!working || !workProject) {
-      setFlagged(unflag(flagged, id));
-      return;
-    }
-    // At once, without asking: it stays with whoever made it, in their history (OP-UX-106).
-    workProject = { ...workProject, queries: workProject.queries.filter((query) => query.id !== id) };
-    leftProject = { ...leftProject, [id]: true };
+  /** Takes the open query out of its Project, at once (DEC-UX-291): no Project is active then (DEC-UX-317). */
+  async function takeOutOfProject(query: string, project: string): Promise<void> {
+    placed = { ...placed, [query]: null };
+    if (workProject?.id === project) workProject = { ...workProject, queries: workProject.queries.filter((one) => one.id !== query) };
     try {
-      await projectsClient.removeQuery(working, id);
+      await projectsClient.removeQuery(project, query);
     } catch (error) {
       console.error('The query could not be taken out of the project', error);
     }
     refreshProjects();
+    refreshQueries();
+  }
+  /** The × on a tab: at once, without asking; it stays with whoever made it, in their history (OP-UX-106). */
+  async function removeFromRow(id: string): Promise<void> {
+    if (working) await takeOutOfProject(id, working);
   }
   async function moveInRow(from: number, to: number): Promise<void> {
-    if (!working || !workProject) {
-      setFlagged(moveFlag(flagged, from, to));
-      return;
-    }
+    if (!working || !workProject) return;
     // One order for everyone in it (OP-UX-95).
     const next = reordered(workProject.queries, from, to);
     workProject = { ...workProject, queries: next };
@@ -990,33 +953,27 @@
   async function newEmptyQuery(projectId: string | null): Promise<void> {
     const name = t('query.empty.name', { date: day(new Date(), currentLanguage()) });
     const made = await queries.create({ name, question: '', resources: [], sql: '', ...(projectId ? { project: projectId } : {}) });
-    if (projectId) refreshProjects();
+    if (projectId) {
+      // Made in it, so that Project is active as soon as it opens (DEC-UX-317).
+      placed = { ...placed, [made.id]: { id: projectId, name: projectList?.find((one) => one.id === projectId)?.name ?? '' } };
+      refreshProjects();
+    }
     await refreshQueries();
     router.go(queryPath(made.id));
   }
-  /** New query in a Project, from the quick window: an empty query in it, and the User works in it (DEC-UX-293). */
+  /** New query in a Project, from the quick window: an empty query in it, opened, so that Project is active (DEC-UX-293). */
   function newQueryIn(projectId: string): void {
-    workIn(projectId);
     void newEmptyQuery(projectId).catch((error: unknown) => console.error('The query could not be made', error));
   }
-  /** New project: the User is in it alone, works in it, and the open query goes in when ticked (DEC-UX-282). */
-  async function newProject(fields: { name: string; description: string; putCurrent: boolean }): Promise<void> {
-    const made = await projectsClient.create({ name: fields.name, description: fields.description, queries: fields.putCurrent && openId ? [openId] : [] });
-    workIn(made.id);
+  /** New project, from the panel or the quick window: the User is in it alone, and its details open (DEC-UX-317). */
+  async function newProject(fields: { name: string; description: string }): Promise<void> {
+    const made = await projectsClient.create({ name: fields.name, description: fields.description, queries: [] });
     refreshProjects();
+    router.go(projectPath(made.id));
   }
-  /** Add to a project: the queries ticked go into it, or into a new one, and the User then works in it (DEC-UX-282). */
-  async function addToProject(target: { to: string } | { name: string }, ids: string[]): Promise<void> {
-    if ('name' in target) {
-      const made = await projectsClient.create({ name: target.name, queries: ids });
-      workIn(made.id);
-    } else {
-      for (const id of ids) await projectsClient.addQuery(target.to, id);
-      workIn(target.to);
-    }
-    refreshProjects();
-  }
-  /** On the screens of Query, Cmd+1 to Cmd+0 open the flagged queries; elsewhere they stay the browser's (OP-UX-86). */
+  /** The open query that the Project button acts on, for who writes it (DEC-UX-318, OP-UX-98). */
+  const placeable = $derived(page.kind === 'query' && queryName?.id === page.id && queryName.kind === 'query' && queryName.editable === true && can(permissions, 'queries.make'));
+  /** On the screens of Query, Cmd+1 to Cmd+0 open the queries of the active Project; elsewhere they stay the browser's (OP-UX-86). */
   const inQuery = $derived(section?.id === 'query' && mayQuery(permissions));
 
   /** The quick window, Cmd+Shift+P or Cmd+K anywhere in Data Hub (DEC-UX-237, OP-UX-87). */
@@ -1060,7 +1017,7 @@
         : 'Query'
       : (screenCommands.where ?? (section ? sectionLabel(section) : page.kind === 'me' ? 'My page' : page.kind === 'groups' ? 'Groups' : null)),
   );
-  /** Every row of the quick window: the commands of the screen and of Data Hub, the flagged queries, the places and what the User may see (OP-UX-88). */
+  /** Every row of the quick window: the commands of the screen and of Data Hub, the queries of the row, the places and what the User may see (OP-UX-88). */
   const quickRows: QuickRow[] = $derived.by(() => {
     if (status.kind !== 'signedIn') return [];
     const language = currentLanguage();
@@ -1072,7 +1029,7 @@
       if (can(permissions, 'queries.outside')) {
         rows.push({ key: 'new-blank', group: 'commands', icon: 'file-plus', title: t('quick.newBlank'), meta: t('quick.newBlank.meta'), kind: command, words: t('quick.newBlank.words'), does: 'do', run: () => void newEmptyQuery(null).catch((error: unknown) => console.error('The query could not be made', error)) });
       }
-      // An empty query in each Project the User is in, the one they work in first (DEC-UX-293).
+      // An empty query in each Project the User is in, the active one first (DEC-UX-293).
       const ins = [...(projectList ?? [])].sort((a, b) => Number(b.id === working) - Number(a.id === working));
       for (const one of ins) {
         rows.push({ key: `new-in:${one.id}`, group: 'commands', icon: 'folders-fill', title: t('quick.newIn', { name: one.name }), meta: t('quick.newIn.meta'), kind: command, words: t('quick.newIn.words'), does: 'do', run: () => newQueryIn(one.id) });
@@ -1098,38 +1055,19 @@
     const here = openId ? row.indexOf(openId) : -1;
     if (here >= 0 && row.length > 1) {
       const step = (by: 1 | -1) => (here + by + row.length) % row.length;
-      for (const [by, key, icon] of [[1, 'quick.flags.next', 'arrow-right'], [-1, 'quick.flags.previous', 'arrow-left']] as const) {
+      for (const [by, key, icon] of [[1, 'quick.row.next', 'arrow-right'], [-1, 'quick.row.previous', 'arrow-left']] as const) {
         const at = step(by);
         const item = rowItems[at];
-        if (item) rows.push({ key: `flags:${by > 0 ? 'next' : 'previous'}`, group: 'flagged', icon, title: t(key), meta: `${item.name || '…'}${keyed(at) ? ` · ${modLabel(mac)}${digitOf(at)}` : ''}`, kind: command, words: t('quick.flags.words'), does: 'go', run: () => open(item) });
+        if (item) rows.push({ key: `row:${by > 0 ? 'next' : 'previous'}`, group: 'row', icon, title: t(key), meta: `${item.name || '…'}${keyed(at) ? ` · ${modLabel(mac)}${digitOf(at)}` : ''}`, kind: command, words: t('quick.row.words'), does: 'go', run: () => open(item) });
       }
     }
     rowItems.forEach((item, at) =>
-      rows.push({ key: `flag:${item.id}`, group: 'flagged', icon: working ? 'folders-fill' : 'flag-fill', title: item.name || '…', meta: keyed(at) ? `${modLabel(mac)}${digitOf(at)}` : undefined, kind: t('quick.kind.query'), does: 'open', run: () => open(item) }),
+      rows.push({ key: `row:${item.id}`, group: 'row', icon: 'folders-fill', title: item.name || '…', meta: keyed(at) ? `${modLabel(mac)}${digitOf(at)}` : undefined, kind: t('quick.kind.query'), does: 'open', run: () => open(item) }),
     );
-    // Every command of Projects (DEC-UX-288, FR-SR-69), on every screen of Query.
-    if (section?.id === 'query' && mayQuery(permissions)) {
-      const current = working && workProject?.id === working ? workProject : undefined;
-      if (current) {
-        rows.push({ key: 'project:stop', group: 'commands', icon: 'flag-fill', title: t('quick.project.stop', { name: current.name }), meta: t('quick.project.stop.meta'), kind: command, words: t('quick.project.words'), does: 'do', run: () => workIn(null) });
-        rows.push({ key: 'project:page', group: 'commands', icon: 'arrow-square-out', title: t('quick.project.page', { name: current.name }), kind: command, words: t('quick.project.words'), does: 'go', run: () => router.go(projectPath(current.id)) });
-        rows.push({ key: 'project:share', group: 'commands', icon: 'users', title: t('quick.project.share', { name: current.name }), meta: t('quick.project.share.meta'), kind: command, words: t('quick.project.share.words'), does: 'go', run: () => router.go(projectPath(current.id)) });
-      } else {
-        rows.push({ key: 'project:work', group: 'commands', icon: 'folders-fill', title: t('quick.project.workIn'), kind: command, words: t('quick.project.words'), does: 'do', run: () => (rowPop = 'work') });
-        if (openWritable) rows.push({ key: 'project:addp', group: 'commands', icon: 'folder-simple-plus', title: t('quick.project.addTo'), kind: command, words: t('quick.project.words'), does: 'do', run: () => (rowPop = 'addp') });
-      }
-      if (rowAdd && rowAdd.kind !== 'flag' && openId) {
-        const id = openId;
-        rows.push({ key: 'project:add', group: 'commands', icon: 'plus', title: t(rowAdd.kind === 'move' ? 'row.move' : 'row.add', { project: current?.name ?? '' }), meta: rowAdd.kind === 'move' ? t('row.move.hint', { from: rowAdd.from }) : t('row.add.hint'), kind: command, words: t('quick.project.words'), does: 'do', run: () => void addToRow(id) });
-      }
-      if (current && openId && row.includes(openId)) {
-        const id = openId;
-        rows.push({ key: 'project:remove', group: 'commands', icon: 'x', title: t('quick.project.remove', { name: current.name }), meta: t('quick.project.remove.meta'), kind: command, words: t('quick.project.words'), does: 'do', run: () => void removeFromRow(id) });
-      }
-      if (can(permissions, 'queries.make')) rows.push({ key: 'project:new', group: 'commands', icon: 'plus', title: t('row.newProject'), kind: command, words: t('quick.project.words'), does: 'do', run: () => (rowPop = 'newproj') });
-      for (const one of projectList ?? []) {
-        if (one.id !== working) rows.push({ key: `project:work:${one.id}`, group: 'commands', icon: 'folders-fill', title: t('quick.project.workInOne', { name: one.name }), meta: t('row.queries', { count: one.queries }), kind: command, words: t('quick.project.words'), does: 'do', run: () => workIn(one.id) });
-      }
+    // New project, on every screen of Query (DEC-UX-288, FR-SR-69); the Project button of the open query is a command of
+    // its page (DEC-UX-318).
+    if (section?.id === 'query' && can(permissions, 'queries.make')) {
+      rows.push({ key: 'project:new', group: 'commands', icon: 'plus', title: t('row.newProject'), kind: command, words: t('quick.project.words'), does: 'do', run: () => (projectSheet = { mode: 'new', query: null }) });
     }
     // Each Project is a place to go to, after the queries of the row (DEC-UX-288).
     for (const one of projectList ?? []) {
@@ -1254,7 +1192,7 @@
     side={flowBox.open && flowResource ? flowSide : undefined}
   >
     {#if inQuery && page.kind !== 'query'}
-      <!-- The flagged queries on top of every screen of Query (DEC-UX-236). -->
+      <!-- The row of the active Project on top of every screen of Query (DEC-UX-317). -->
       {@render flagsBar()}
     {/if}
     {#if page.kind === 'start' && page.section.id === 'collections'}
@@ -1361,7 +1299,7 @@
         />
       {/key}
     {:else if page.kind === 'query'}
-      <!-- Its page lives below the others, where the flagged queries stay open (OP-UX-85). -->
+      <!-- Its page lives below the others, where the queries of the row stay open (OP-UX-85). -->
     {:else if page.kind === 'project'}
       <!-- The page of a Project: its queries in one order, who is in it, Share, Leave and Delete (DEC-UX-285). -->
       {#key page.id}
@@ -1372,8 +1310,6 @@
           {identity}
           me={{ id: signedIn.me.sub, name: signedIn.me.name }}
           canMake={can(permissions, 'queries.make')}
-          working={working === projectId}
-          onwork={(on) => workIn(on ? projectId : null)}
           onnewquery={() => newEmptyQuery(projectId)}
           onchanged={() => {
             refreshProjects();
@@ -1581,7 +1517,7 @@
       <NotFound />
     {/if}
     {#if mayQuery(permissions) && alive.length > 0}
-      <!-- Every flagged query opened since this tab loaded stays as the User left it; only the open one shows (OP-UX-85). -->
+      <!-- Every query of the row opened since this tab loaded stays as the User left it; only the open one shows (OP-UX-85). -->
       <div class="query-screen" style:display={page.kind === 'query' ? undefined : 'none'}>
         {#if page.kind === 'query'}{@render flagsBar()}{/if}
         <div class="query-pages">
@@ -1611,14 +1547,12 @@
                     queryHidden = { id, hidden };
                     refreshQueries();
                   }}
-                  flagAt={!working && flagged.includes(id) ? flagged.indexOf(id) : null}
-                  flagsFull={flagged.length >= MOST_FLAGGED}
-                  onflag={working ? undefined : (on) => setFlagged(on ? flag(flagged, id) : unflag(flagged, id))}
                   {shown}
                   me={signedIn.me.sub}
-                  projectNow={projectOfQuery(id)}
-                  {working}
-                  onworkin={workIn}
+                  projectNow={id in placed ? placed[id] : undefined}
+                  placeable={shown && placeable}
+                  onproject={(kind, query, inIt) =>
+                    kind === 'remove' && inIt ? void takeOutOfProject(query.id, inIt.id) : kind !== 'remove' && (projectSheet = { mode: kind, query })}
                   onstatus={statusOf}
                   oncommands={(of, rows) => (queryCommands = { ...queryCommands, [of]: rows })}
                   go={(path) => router.go(path)}
@@ -1782,14 +1716,12 @@
       draft={page.kind === 'newQuery' ? draft : null}
       version={queriesVersion}
       onhidden={(id, hidden) => (queryHidden = { id, hidden })}
-      {flagged}
       projects={projectList}
-      {working}
+      active={working}
       me={status.me.sub}
       currentProject={page.kind === 'project' ? page.id : undefined}
       loadProject={(id) => projectsClient.get(id)}
-      onnewproject={can(permissions, 'queries.make') ? () => (rowPop = 'newproj') : undefined}
-      onclose={() => workIn(null)}
+      onnewproject={can(permissions, 'queries.make') ? () => (projectSheet = { mode: 'new', query: null }) : undefined}
     />
   {:else if section?.id === 'charts' && status.kind === 'signedIn'}
     <ChartsPanel overview={chartsShown} current={page.kind === 'chart' ? page.id : undefined} iconUrl={(id) => charts.iconUrl(id)} />
@@ -1803,26 +1735,29 @@
 {/snippet}
 
 {#snippet flagsBar()}
-  <!-- With nothing flagged and no Project, no row: the quick window flags the first (DEC-UX-253). -->
-  {#if working || flagItems.length > 0 || rowPop !== null}
+  <!-- With no Project active, no row (DEC-UX-317). -->
+  {#if working && workProject?.id === working}
     <QueryFlags
       items={rowItems}
-      current={openId}
-      currentName={queryName?.id === openId ? queryName?.name : null}
+      current={page.kind === 'query' ? openId : undefined}
+      details={page.kind === 'project'}
       {mac}
-      project={working && workProject?.id === working ? { id: workProject.id, name: workProject.name, people: workProject.members.length } : null}
-      flagged={flagItems}
-      projects={projectList ?? []}
-      me={status.kind === 'signedIn' ? status.me.sub : ''}
-      add={rowAdd}
-      canAddToProject={openWritable}
+      project={{ id: workProject.id, name: workProject.name, people: workProject.members.length }}
       bind:pop={rowPop}
       onremove={(id) => void removeFromRow(id)}
       onmove={(from, to) => void moveInRow(from, to)}
-      onadd={() => openId && void addToRow(openId)}
-      onwork={workIn}
-      onnewproject={newProject}
-      onaddtoproject={addToProject}
+    />
+  {/if}
+  {#if projectSheet}
+    {@const asked = projectSheet}
+    <ProjectSheet
+      mode={asked.mode}
+      query={asked.query}
+      projects={projectList ?? []}
+      current={asked.query ? (asked.query.id in placed ? (placed[asked.query.id] ?? null) : asked.query.id === queryName?.id ? (queryName.project ?? null) : null) : null}
+      me={status.kind === 'signedIn' ? status.me.sub : ''}
+      onput={(target) => (asked.query ? putInProject(asked.query.id, target) : newProject({ name: 'name' in target ? target.name : '', description: 'name' in target ? (target.description ?? '') : '' }))}
+      onclose={() => (projectSheet = null)}
     />
   {/if}
 {/snippet}
@@ -1832,7 +1767,7 @@
 {/snippet}
 
 <style>
-  /* A query fills the height of the screen under the row of flagged queries (DEC-UX-144, DEC-UX-236). */
+  /* A query fills the height of the screen under the row of the active Project (DEC-UX-144, DEC-UX-317). */
   .query-screen { height: 100%; min-height: 0; display: flex; flex-direction: column; }
   .query-pages { flex: 1; min-height: 0; }
   .query-kept { height: 100%; }

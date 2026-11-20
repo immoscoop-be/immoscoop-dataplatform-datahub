@@ -22,7 +22,7 @@
    * choices, Home and End jump, Enter or a click does one and closes the menu. Escape, Tab or a click beside it closes
    * the menu, and the focus goes back to the button, except after Tab or a click elsewhere. A line on top may say what
    * the choices act on. With words of its own, it is a primary button with them, such as "New" on the page of a
-   * Collection (DEC-UX-310).
+   * Collection (DEC-UX-310), or an outline one, such as Project on a query (DEC-UX-318).
    */
   let {
     icon,
@@ -31,6 +31,7 @@
     choices,
     align = 'end',
     text,
+    variant = 'primary',
   }: {
     icon: IconName;
     /** Its name, on hover and for a screen reader. */
@@ -42,6 +43,8 @@
     align?: 'start' | 'end';
     /** Its words, on the button itself: a primary button, its name these words. */
     text?: string;
+    /** With words: the dark primary button, or the outline one beside other buttons. */
+    variant?: 'primary' | 'outline';
   } = $props();
 
   let open = $state(false);
@@ -110,7 +113,8 @@
     bind:this={button}
     type="button"
     class="opener"
-    class:primary={text !== undefined}
+    class:primary={text !== undefined && variant === 'primary'}
+    class:outline={text !== undefined && variant === 'outline'}
     aria-label={text === undefined ? label : undefined}
     title={text === undefined ? label : undefined}
     aria-haspopup="menu"
@@ -144,6 +148,10 @@
     font: var(--weight-medium) var(--text-small) var(--font-family); }
   .opener.primary:hover, .opener.primary[aria-expanded='true'] { background: var(--text-primary); color: var(--surface-solid); opacity: .88; }
   .opener.primary .caret { color: inherit; margin-left: 2px; }
+  .opener.outline { height: auto; gap: 6px; padding: 8px 12px 8px 14px; border-radius: var(--radius-pill); background: var(--card); color: var(--text-primary);
+    font: var(--weight-medium) var(--text-small) var(--font-family); }
+  .opener.outline:hover, .opener.outline[aria-expanded='true'] { background: var(--tint-active); }
+  .opener.outline .caret { margin-left: 2px; }
   .menu { position: absolute; z-index: 30; top: calc(100% + 6px); right: 0; width: max-content; min-width: 260px; padding: 6px; border-radius: var(--radius-md);
     background: var(--surface-solid); outline: 1px solid var(--tint-active); box-shadow: var(--sheet-shadow); }
   .menu.start { right: auto; left: 0; }
