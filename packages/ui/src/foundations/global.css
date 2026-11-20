@@ -28,3 +28,8 @@ body { font-family: var(--font-family); color: var(--text-primary); font-size: v
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* A place the Flow Box led to, marked for a moment as its field takes the focus (DEC-UX-303). */
+.flow-marked { animation: flow-mark var(--motion-flow-mark) var(--delay-flow-mark) both; }
+@keyframes flow-mark { from { box-shadow: 0 0 0 2px var(--text-secondary); } to { box-shadow: 0 0 0 2px transparent; } }
+@media (prefers-reduced-motion: reduce) { .flow-marked { animation: none; } }

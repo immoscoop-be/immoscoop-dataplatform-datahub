@@ -2705,3 +2705,92 @@ body.oj-plain .oj-tag { visibility: hidden; }
 .proj-danger .danger-foot { display: flex; align-items: center; gap: 10px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--tint-hover); }
 .proj-danger .danger-foot .meta { flex: 1; }
 .proj-danger + .proj-danger { margin-top: 14px; }
+
+/* The Flow Box (DEC-UX-299): a frame of its own, docked on the right of the main area, that takes a User through the
+   steps of one flow. The page narrows to make room; nothing is covered. Focus follows the mouse into it, as into the
+   panel (DEC-UX-146) */
+.flowbox, .flowstrip { flex-shrink: 0; background: var(--surface-glass); border-radius: var(--radius-xl); }
+html[data-bg] :is(.flowbox, .flowstrip) { -webkit-backdrop-filter: var(--blur-frame); backdrop-filter: var(--blur-frame); }
+.flowbox { width: var(--flow-box-width); display: flex; overflow: hidden; --card: var(--surface-soft); }
+.flowbox:hover { --card: var(--surface-solid); }
+.app:has(.flowbox:hover) .main { --card: var(--surface-soft); }
+.app:has(.flowbox:hover) .main > * { opacity: var(--opacity-out-of-focus); }
+.fb-inner { flex: 1; min-width: 0; display: flex; flex-direction: column; transition: opacity var(--motion-focus) var(--delay-focus); }
+.flowbox:not(:hover) .fb-inner { opacity: var(--opacity-out-of-focus); }
+.fb-head { display: flex; align-items: center; gap: 8px; padding: 16px 10px 12px 16px; }
+.fb-icon { width: 30px; height: 30px; flex: none; border-radius: 50%; background: var(--card); display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--text-primary); }
+.fb-titles { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.fb-title { font-size: var(--text-section); font-weight: var(--weight-medium); }
+.fb-object { display: inline-flex; align-items: center; gap: 4px; min-width: 0; font-size: var(--text-meta); color: var(--text-secondary); text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fb-object:hover { text-decoration: underline; text-underline-offset: 3px; }
+/* The progress: one segment per step, done in the colour of the text */
+.fb-progress { display: grid; gap: 6px; padding: 0 16px 12px; }
+.fb-bar { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 3px; }
+.fb-bar span { height: 5px; border-radius: 3px; background: var(--tint-active); }
+.fb-bar span.done { background: var(--text-primary); }
+.fb-bar span.now { background: var(--text-muted); }
+.fb-body-scroll { flex: 1; min-height: 0; overflow: auto; padding: 0 10px 6px; }
+.fb-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.fb-step { border-radius: var(--radius-md); background: var(--card); transition: background-color var(--motion-focus) var(--delay-focus); }
+.fb-step.now { outline: 1.5px solid var(--text-primary); outline-offset: -1.5px; }
+.fb-row { all: unset; box-sizing: border-box; width: 100%; display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: var(--radius-md); cursor: pointer; }
+.fb-row:focus-visible { outline: 2px solid var(--text-secondary); }
+.fb-tick { flex: none; margin-top: 1px; font-size: 18px; color: var(--text-secondary); }
+.fb-num { flex: none; width: 18px; height: 18px; margin-top: 1px; border-radius: 50%; outline: 1.5px solid var(--text-muted); outline-offset: -1.5px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: var(--weight-medium); color: var(--text-secondary); }
+.fb-step.now .fb-num { background: var(--text-primary); outline-color: var(--text-primary); color: var(--surface-solid); }
+.fb-name { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.fb-name b { font-size: var(--text-small); font-weight: var(--weight-medium); }
+.fb-step.done .fb-name b { color: var(--text-secondary); }
+.fb-said { display: flex; align-items: baseline; gap: 5px; font-size: var(--text-meta); line-height: 1.45; color: var(--text-muted); }
+.fb-said i { position: relative; top: 1px; font-size: 12px; color: var(--signal-warn); }
+.fb-row .chev { margin-top: 3px; color: var(--text-muted); transition: transform var(--motion-fade); }
+.fb-step.open .chev { transform: rotate(180deg); }
+/* The step open: What, Why and How, its Learning Card, and the way to where it is done (DEC-UX-303) */
+.fb-detail { display: grid; gap: 10px; padding: 0 14px 14px 40px; }
+.fb-here { display: inline-flex; align-items: center; gap: 5px; font-size: var(--text-meta); color: var(--text-secondary); }
+.fb-wwh { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 6px 10px; margin: 0; font-size: var(--text-small); line-height: 1.5; }
+.fb-wwh dt { padding-top: 2px; font-size: var(--text-meta); color: var(--text-muted); }
+.fb-wwh dd { margin: 0; color: var(--text-primary); }
+.fb-card { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--surface-sub); color: inherit; font-size: var(--text-small); text-decoration: none; }
+.fb-card:hover { outline: 1px solid var(--tint-active); }
+.fb-card .num { font-size: var(--text-meta); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.fb-card .tt { flex: 1; min-width: 0; }
+.fb-go { justify-self: start; text-decoration: none; }
+.fb-foot { display: grid; gap: 8px; padding: 10px 16px 16px; }
+.fb-foot .meta { display: block; line-height: 1.5; }
+.fb-publish { justify-self: start; text-decoration: none; }
+.fb-done { display: grid; justify-items: center; gap: 8px; padding: 24px 16px; text-align: center; }
+.fb-done > i { font-size: 40px; color: var(--text-primary); }
+.fb-done-title { margin: 0; font-size: var(--text-section); font-weight: var(--weight-medium); }
+.fb-done p { margin: 0; font-size: var(--text-small); line-height: 1.55; }
+/* Minimized: a strip on the right edge, its progress as dots; the strip opens it again (DEC-UX-301) */
+.flowstrip { width: var(--flow-strip-width); display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 12px 0; }
+.fs-count { font-size: var(--text-meta); color: var(--text-muted); }
+.fs-count b { font-size: var(--text-small); font-weight: var(--weight-medium); color: var(--text-primary); }
+.fs-dots { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.fs-dots li { width: 8px; height: 8px; border-radius: 50%; outline: 1.5px solid var(--text-muted); outline-offset: -1.5px; }
+.fs-dots li.done { background: var(--text-primary); outline-color: var(--text-primary); }
+.fs-dots li.now { outline: 2px solid var(--text-primary); outline-offset: 1px; }
+.fs-label { all: unset; flex: 1; margin-top: 4px; writing-mode: vertical-rl; white-space: nowrap; font-size: var(--text-meta); color: var(--text-secondary); cursor: pointer; }
+.fs-label:hover { color: var(--text-primary); }
+/* Arrived from the Flow Box: the place opens for editing, its field in focus and marked for a moment (DEC-UX-303) */
+.fb-target { box-shadow: 0 0 0 2px var(--text-secondary); animation: fb-mark var(--motion-flow-mark) var(--delay-flow-mark) forwards; }
+@keyframes fb-mark { to { box-shadow: 0 0 0 2px transparent; } }
+@media (prefers-reduced-motion: reduce) { .fb-target { animation: none; } }
+.fb-from { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; font-size: var(--text-meta); font-weight: var(--weight-regular); color: var(--text-muted); }
+.fb-field { box-sizing: border-box; width: 100%; padding: 10px 12px; border: 1px solid var(--tint-active); border-radius: var(--radius-sm); background: var(--surface-solid); color: var(--text-primary); font: var(--text-small)/1.55 var(--font-family); resize: vertical; }
+.fb-field:focus { outline: 2px solid var(--text-secondary); outline-offset: 1px; }
+.fb-field-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+/* Publish while a step is open: a pop-out under the button that says what is open, with "Guide me" (DEC-MR-20) */
+.fb-anchor { position: relative; }
+.pub-warn { position: absolute; top: calc(100% + 8px); right: 0; z-index: 12; width: 340px; display: grid; gap: 10px; padding: 16px; border-radius: var(--radius-lg); background: var(--surface-solid); border: 1px solid var(--tint-active); box-shadow: 0 12px 36px rgba(0,0,0,.14); }
+.pw-title { display: flex; align-items: center; gap: 8px; margin: 0; font-size: var(--text-section); font-weight: var(--weight-medium); }
+.pw-title i { color: var(--signal-warn); font-size: 18px; }
+.pw-lead { margin: 0; font-size: var(--text-small); color: var(--text-secondary); }
+.pw-list { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.pw-list a { display: grid; gap: 1px; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--surface-sub); color: inherit; text-decoration: none; font-size: var(--text-small); }
+.pw-list a:hover { outline: 1px solid var(--tint-active); }
+.pw-list b { font-weight: var(--weight-medium); }
+.pw-list span { font-size: var(--text-meta); color: var(--text-muted); }
+.pw-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.pw-claude { display: block; margin: 0; line-height: 1.5; }

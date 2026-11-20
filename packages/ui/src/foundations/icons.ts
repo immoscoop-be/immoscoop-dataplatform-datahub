@@ -1,6 +1,10 @@
 // The icons of the interface, from Phosphor (Icons): filled for everything of the interface, the
 // regular line where the prototypes draw one. Each is imported by name, so the page holds only the
 // icons it shows. A new icon of the interface is added here.
+import signpostFill from '@phosphor-icons/core/assets/fill/signpost-fill.svg?raw';
+import arrowsInSimple from '@phosphor-icons/core/assets/regular/arrows-in-simple.svg?raw';
+import arrowUpRight from '@phosphor-icons/core/assets/regular/arrow-up-right.svg?raw';
+import mapPinFill from '@phosphor-icons/core/assets/fill/map-pin-fill.svg?raw';
 import archiveFill from '@phosphor-icons/core/assets/fill/archive-fill.svg?raw';
 import archive from '@phosphor-icons/core/assets/regular/archive.svg?raw';
 import arrowBendUpLeftFill from '@phosphor-icons/core/assets/fill/arrow-bend-up-left-fill.svg?raw';
@@ -182,6 +186,10 @@ import signOutFill from '@phosphor-icons/core/assets/fill/sign-out-fill.svg?raw'
 import shareNetwork from '@phosphor-icons/core/assets/regular/share-network.svg?raw';
 
 export const ICONS = {
+  'signpost-fill': signpostFill,
+  'arrows-in-simple': arrowsInSimple,
+  'arrow-up-right': arrowUpRight,
+  'map-pin-fill': mapPinFill,
   'archive-fill': archiveFill,
   archive,
   'arrow-bend-up-left-fill': arrowBendUpLeftFill,
