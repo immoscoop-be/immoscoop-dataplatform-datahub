@@ -1714,6 +1714,7 @@
       currentProject={page.kind === 'project' ? page.id : undefined}
       loadProject={(id) => projectsClient.get(id)}
       onnewproject={can(permissions, 'queries.make') ? () => (rowPop = 'newproj') : undefined}
+      onclose={() => workIn(null)}
     />
   {:else if section?.id === 'charts' && status.kind === 'signedIn'}
     <ChartsPanel overview={chartsShown} current={page.kind === 'chart' ? page.id : undefined} iconUrl={(id) => charts.iconUrl(id)} />

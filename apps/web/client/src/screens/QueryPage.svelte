@@ -22,6 +22,7 @@
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import Callout from '@datahub/ui/containers/Callout.svelte';
   import Sheet from '@datahub/ui/containers/Sheet.svelte';
+  import MenuButton from '@datahub/ui/containers/MenuButton.svelte';
   import Toast from '@datahub/ui/components/Toast.svelte';
   import { NotFound as Missing } from '../lib/api.js';
   import { missingOfQuery } from '../lib/broken.js';
@@ -648,12 +649,10 @@
     }
   }
 
-  /** How much a copy takes: the first 100 of all, or all of them when they are fewer. */
-  const copyCount = $derived(shownPage ? Math.min(shownPage.totalRows, ROWS_COPIED) : 0);
-  const copyTitle = (format: CopyFormat): string =>
-    shownPage && shownPage.totalRows > ROWS_COPIED
-      ? t('query.copy.titleFirst', { count: ROWS_COPIED, total: shownPage.totalRows, format: format.toUpperCase() })
-      : t('query.copy.titleAll', { count: copyCount, format: format.toUpperCase() });
+  /** What the menu of the copy says it copies: the first 100 of all, or all of them when they are fewer (DEC-UX-294). */
+  const copyCaption = $derived(
+    !shownPage ? '' : shownPage.totalRows > ROWS_COPIED ? t('query.copy.captionFirst', { count: ROWS_COPIED, total: shownPage.totalRows }) : t('query.copy.captionAll', { count: shownPage.totalRows }),
+  );
 
   /**
    * What can be done to it now, for the quick window (DEC-UX-237, DEC-UX-239): a command for every button of the page
@@ -1518,10 +1517,17 @@
       />
       {#if tab === 'result' && shownRun}<span class="meta">{ago(shownRun.startedAt, language)}{valuesOf(shownRun)}</span>{/if}
       {#if tab === 'result' && shownRun && shownPage && shownRun.state !== 'failed' && !running}
-        <!-- Copy the result, in its upper right corner: its first 100 rows (DEC-UX-292) -->
+        <!-- Copy the result, in its upper right corner: a menu button with its first 100 rows as JSON or CSV (DEC-UX-292, DEC-UX-294) -->
         <span class="copy-result">
-          <Button variant="quiet" title={copyTitle('json')} onclick={() => void copyResult('json')}><Icon name="brackets-curly" />{t('query.copy.json')}</Button>
-          <Button variant="quiet" title={copyTitle('csv')} onclick={() => void copyResult('csv')}><Icon name="file-csv" />{t('query.copy.csv')}</Button>
+          <MenuButton
+            icon="copy"
+            label={t('query.copy.menu')}
+            caption={copyCaption}
+            choices={[
+              { key: 'json', icon: 'brackets-curly', label: t('query.copy.json'), hint: t('query.copy.json.hint'), run: () => void copyResult('json') },
+              { key: 'csv', icon: 'file-csv', label: t('query.copy.csv'), hint: t('query.copy.csv.hint'), run: () => void copyResult('csv') },
+            ]}
+          />
         </span>
       {/if}
     </div>

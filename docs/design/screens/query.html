@@ -36,9 +36,9 @@
   100 rows a page, read from the same run (FR-SR-51); the menu of a column sorts this page only; a click selects a cell,
   Ctrl+C copies it; null in grey. Every result carries its Query ID (DEC-UX-72). In the upper right corner of the result, a
   menu button, the copy icon with a caret, opens a menu with Copy as JSON and Copy as CSV: each copies its first 100 rows,
-  whichever page shows, with the names of its fields, and a toast says how many were copied (DEC-UX-292, OP-UX-107).
+  whichever page shows, with the names of its fields, and a toast says how many were copied (DEC-UX-292, DEC-UX-294).
   ?copy=open shows the menu open. In the panel, the Project the User works in comes first, with "You work in it" and
-  "Close project" under it, which stops working in it: the row on top shows the flagged queries again (OP-UX-108).
+  "Close project" under it, which stops working in it: the row on top shows the flagged queries again (DEC-UX-295).
   The icon of each query in the panel says whether it ran on Resources (a table) or on a Lens (an aperture); "All" is for the Data Team only.
   The switch "Query" shows it Broken (DEC-UX-160, FR-SR-53, DEC-UX-81): a table or column it reads no longer exists, so
   Run is off, a callout on top names what is missing, and the query has the red dot in the panel; its SQL can still be
@@ -403,7 +403,7 @@
   </div>
   <span class="meta" data-pane-group="rtab" data-pane="result">2 minutes ago, with <span class="mono">@dateFrom</span> 1 Jan 2026, <span class="mono">@dateTo</span> 25 Oct 2026, <span class="mono">@leadChannel</span> Form</span>
   <!-- Copy the result, in the upper right corner (DEC-UX-292): a menu button, its icon and a caret, opens a menu with
-       Copy as JSON and Copy as CSV, its first 100 rows with the names of its fields (OP-UX-107) -->
+       Copy as JSON and Copy as CSV, its first 100 rows with the names of its fields (DEC-UX-294) -->
   <span class="result-copy" data-pane-group="rtab" data-pane="result">
    <button class="icon-btn menu-btn" type="button" id="copy-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="copy-menu" aria-label="Copy the result" title="Copy the result"><i class="ph ph-copy"></i><i class="ph ph-caret-down menu-caret" aria-hidden="true"></i></button>
    <div class="rg-menu btn-menu" id="copy-menu" role="menu" aria-label="Copy the result" hidden>
@@ -885,7 +885,7 @@
       if (!on && flag) flag.remove();
     });
     // The panel: the Project the User works in comes first, with "You work in it" and "Close project" under it, which
-    // stops working in it (OP-UX-108)
+    // stops working in it (DEC-UX-295)
     const label = document.querySelector('#proj-list > .panel-label');
     document.querySelectorAll('.proj-entry').forEach(en => {
       const item = en.querySelector('.proj-item'), flag = item.querySelector('.flag-mark'), strip = en.querySelector('.proj-working'), on = en.dataset.proj === work;
@@ -1121,7 +1121,7 @@
       document.querySelector('.q-item.current .meta').textContent = 'not run yet';
     }
   }
-  // The menu button of the result (OP-UX-107): a click, Enter, Space or the down arrow opens its menu under it, aligned
+  // The menu button of the result (DEC-UX-294): a click, Enter, Space or the down arrow opens its menu under it, aligned
   // to its right edge, the first choice focused; the arrows move, Home and End jump, Enter does the choice and closes;
   // Escape, Tab or a click beside it closes, and the focus goes back to the button.
   (() => {
