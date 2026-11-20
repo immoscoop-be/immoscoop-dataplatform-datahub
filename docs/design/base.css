@@ -597,6 +597,20 @@ button.ln-fold i { transition: transform 200ms ease; }
 .result-head:has(.result-copy:not([hidden])) { flex-wrap: nowrap; }
 .result-head:has(.result-copy:not([hidden])) > .meta { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .result-copy[hidden] { display: none; }
+/* Menu button (OP-UX-107): an icon button with a small caret that opens a menu under it, right-aligned to it */
+.menu-btn { width: auto; padding: 0 6px 0 8px; gap: 2px; }
+.menu-btn .menu-caret { font-size: 10px; color: var(--text-muted); }
+.menu-btn[aria-expanded="true"] { background: var(--tint-active); }
+.result-copy { position: relative; }
+.rg-menu.btn-menu { position: absolute; top: calc(100% + 6px); right: 0; width: max-content; min-width: 260px; }
+.btn-menu .menu-label { margin: 0; white-space: nowrap; }
+.btn-menu .menu-item { width: 100%; border: 0; background: none; font: inherit; color: inherit; text-align: left; }
+.btn-menu .menu-item:focus-visible { background: var(--tint-hover); outline: 2px solid var(--text-secondary); outline-offset: -2px; }
+.btn-menu .menu-item .meta { padding-left: 14px; }
+/* The Project the User works in, in the panel: You work in it · Close project (OP-UX-108) */
+.proj-working { display: flex; align-items: center; gap: 6px; margin: 4px 0 2px; padding: 4px 4px 4px 12px; font-size: var(--text-meta); color: var(--text-secondary); }
+.proj-working > .ph-flag { font-size: 12px; color: var(--text-muted); }
+.proj-working .proj-close { margin-left: auto; padding: 4px 10px; font-size: var(--text-meta); }
 .rgrid-scroll { overflow: auto; max-height: min(620px, calc(100vh - 220px)); border-radius: var(--radius-md); outline: 1px solid var(--tint-active); background: var(--surface-solid); }
 .rgrid-scroll:focus-visible { outline: 2px solid var(--text-secondary); }
 .rgrid { table-layout: fixed; border-collapse: separate; border-spacing: 0; width: auto; font-size: var(--text-small); font-variant-numeric: tabular-nums; }

@@ -34,9 +34,11 @@
   them here); beside the list, the selected one shows the type of its field and its descriptions (DEC-UX-115). The result is a grid like that of BigQuery: the row number, then a column per field with its
   type under its name, a row on one line, alternate rows lightly shaded; the edge of a column head makes it narrower or wider, a double click fits it;
   100 rows a page, read from the same run (FR-SR-51); the menu of a column sorts this page only; a click selects a cell,
-  Ctrl+C copies it; null in grey. Every result carries its Query ID (DEC-UX-72). In the upper right corner of the result,
-  Copy as JSON and Copy as CSV copy its first 100 rows, whichever page shows, with the names of its fields; a toast says
-  how many were copied (DEC-UX-292).
+  Ctrl+C copies it; null in grey. Every result carries its Query ID (DEC-UX-72). In the upper right corner of the result, a
+  menu button, the copy icon with a caret, opens a menu with Copy as JSON and Copy as CSV: each copies its first 100 rows,
+  whichever page shows, with the names of its fields, and a toast says how many were copied (DEC-UX-292, OP-UX-107).
+  ?copy=open shows the menu open. In the panel, the Project the User works in comes first, with "You work in it" and
+  "Close project" under it, which stops working in it: the row on top shows the flagged queries again (OP-UX-108).
   The icon of each query in the panel says whether it ran on Resources (a table) or on a Lens (an aperture); "All" is for the Data Team only.
   The switch "Query" shows it Broken (DEC-UX-160, FR-SR-53, DEC-UX-81): a table or column it reads no longer exists, so
   Run is off, a callout on top names what is missing, and the query has the red dot in the panel; its SQL can still be
@@ -400,10 +402,15 @@
    <button class="seg" data-target="history" role="tab" aria-selected="false" id="hist-tab">History · 14 runs</button>
   </div>
   <span class="meta" data-pane-group="rtab" data-pane="result">2 minutes ago, with <span class="mono">@dateFrom</span> 1 Jan 2026, <span class="mono">@dateTo</span> 25 Oct 2026, <span class="mono">@leadChannel</span> Form</span>
-  <!-- Copy the result, in the upper right corner (DEC-UX-292): its first 100 rows, with the names of its fields -->
+  <!-- Copy the result, in the upper right corner (DEC-UX-292): a menu button, its icon and a caret, opens a menu with
+       Copy as JSON and Copy as CSV, its first 100 rows with the names of its fields (OP-UX-107) -->
   <span class="result-copy" data-pane-group="rtab" data-pane="result">
-   <button class="btn-quiet" type="button" data-copy-result="json" title="Copies the first 100 of 210 rows as JSON, one object a row"><i class="ph ph-brackets-curly"></i><span>Copy as JSON</span></button>
-   <button class="btn-quiet" type="button" data-copy-result="csv" title="Copies the first 100 of 210 rows as CSV, with a comma and a header row"><i class="ph ph-file-csv"></i><span>Copy as CSV</span></button>
+   <button class="icon-btn menu-btn" type="button" id="copy-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="copy-menu" aria-label="Copy the result" title="Copy the result"><i class="ph ph-copy"></i><i class="ph ph-caret-down menu-caret" aria-hidden="true"></i></button>
+   <div class="rg-menu btn-menu" id="copy-menu" role="menu" aria-label="Copy the result" hidden>
+    <p class="menu-label">The first 100 of 210 rows, with the names of the fields</p>
+    <button class="menu-item" type="button" role="menuitem" tabindex="-1" data-copy-result="json"><i class="ph ph-brackets-curly"></i><span>Copy as JSON</span><span class="meta">an object a row</span></button>
+    <button class="menu-item" type="button" role="menuitem" tabindex="-1" data-copy-result="csv"><i class="ph ph-file-csv"></i><span>Copy as CSV</span><span class="meta">a comma, a header row</span></button>
+   </div>
   </span>
  </div>
  <div class="moved-toast card" id="copy-toast" role="status" hidden><i class="ph ph-check"></i><span></span></div>
@@ -877,10 +884,16 @@
       if (on && !flag) item.insertAdjacentHTML('beforeend', '<i class="ph-fill ph-flag flag-mark" role="img" aria-label="In the row"></i>');
       if (!on && flag) flag.remove();
     });
+    // The panel: the Project the User works in comes first, with "You work in it" and "Close project" under it, which
+    // stops working in it (OP-UX-108)
+    const label = document.querySelector('#proj-list > .panel-label');
     document.querySelectorAll('.proj-entry').forEach(en => {
-      const item = en.querySelector('.proj-item'), flag = item.querySelector('.flag-mark'), on = en.dataset.proj === work;
+      const item = en.querySelector('.proj-item'), flag = item.querySelector('.flag-mark'), strip = en.querySelector('.proj-working'), on = en.dataset.proj === work;
       if (on && !flag) item.insertAdjacentHTML('beforeend', '<i class="ph-fill ph-flag flag-mark" role="img" aria-label="You work in it" title="You work in it: its queries are in the row on top"></i>');
       if (!on && flag) flag.remove();
+      if (on && !strip) en.querySelector('.proj-queries').insertAdjacentHTML('beforebegin', `<div class="proj-working"><i class="ph-fill ph-flag" aria-hidden="true"></i><span>You work in it</span><button class="btn-quiet proj-close" type="button" data-work="" title="Stop working in ${esc2(PROJECTS[work]?.name ?? '')}: the row on top shows your flagged queries again, and a new query is in no project. The project stays as it is"><i class="ph ph-sign-out"></i><span>Close project</span></button></div>`);
+      if (!on && strip) strip.remove();
+      if (on && label && label.nextElementSibling !== en) { en.hidden = false; label.after(en); }
     });
   }
   // The pop-outs of the row: what to work in, the whole row, Add to a project and New project
@@ -1108,13 +1121,35 @@
       document.querySelector('.q-item.current .meta').textContent = 'not run yet';
     }
   }
-  // Copy as JSON and Copy as CSV (DEC-UX-292): the first 100 rows of the result, whichever page shows; the toast says
-  // how many, and of how many.
-  document.querySelectorAll('[data-copy-result]').forEach(b => b.addEventListener('click', () => {
-    const toast = document.getElementById('copy-toast');
-    toast.querySelector('span').textContent = `Copied the first 100 of 210 rows as ${b.dataset.copyResult.toUpperCase()}`;
-    toast.hidden = false; clearTimeout(toast.timer); toast.timer = setTimeout(() => { toast.hidden = true; }, 2500);
-  }));
+  // The menu button of the result (OP-UX-107): a click, Enter, Space or the down arrow opens its menu under it, aligned
+  // to its right edge, the first choice focused; the arrows move, Home and End jump, Enter does the choice and closes;
+  // Escape, Tab or a click beside it closes, and the focus goes back to the button.
+  (() => {
+    const btn = document.getElementById('copy-btn'), menu = document.getElementById('copy-menu');
+    if (!btn || !menu) return;
+    const items = () => [...menu.querySelectorAll('[role="menuitem"]')];
+    const close = (back = true) => { menu.hidden = true; btn.setAttribute('aria-expanded', 'false'); if (back) btn.focus(); };
+    const open = (at = 0) => { menu.hidden = false; btn.setAttribute('aria-expanded', 'true'); items()[at]?.focus(); };
+    btn.addEventListener('click', () => (menu.hidden ? open() : close()));
+    btn.addEventListener('keydown', e => { if (e.key === 'ArrowDown') { e.preventDefault(); open(); } if (e.key === 'ArrowUp') { e.preventDefault(); open(items().length - 1); } });
+    menu.addEventListener('keydown', e => {
+      const list = items(), at = list.indexOf(document.activeElement);
+      const go = i => { e.preventDefault(); list[(i + list.length) % list.length].focus(); };
+      if (e.key === 'ArrowDown') go(at + 1); else if (e.key === 'ArrowUp') go(at - 1);
+      else if (e.key === 'Home') go(0); else if (e.key === 'End') go(list.length - 1);
+      else if (e.key === 'Escape') { e.preventDefault(); close(); } else if (e.key === 'Tab') close(false);
+    });
+    document.addEventListener('click', e => { if (!menu.hidden && !e.target.closest('.result-copy')) close(false); });
+    // Copy as JSON and Copy as CSV (DEC-UX-292): the first 100 rows, whichever page shows; the menu closes, a toast says
+    // how many, and of how many
+    menu.querySelectorAll('[data-copy-result]').forEach(b => b.addEventListener('click', () => {
+      close();
+      const toast = document.getElementById('copy-toast');
+      toast.querySelector('span').textContent = `Copied the first 100 of 210 rows as ${b.dataset.copyResult.toUpperCase()}`;
+      toast.hidden = false; clearTimeout(toast.timer); toast.timer = setTimeout(() => { toast.hidden = true; }, 2500);
+    }));
+    if (new URLSearchParams(location.search).get('copy') === 'open') { open(); }
+  })();
 </script>
 </body>
 </html>
