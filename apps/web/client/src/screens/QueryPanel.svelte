@@ -16,8 +16,8 @@
   /**
    * The panel of Query (DEC-UX-20): the queries that ran, one item per query (DEC-UX-74), each labelled
    * when it went to the Data Team (DEC-UX-116). They are grouped per day in this week, per week back to
-   * the first of last month, then per month, each period with how many it holds; only today is open, and
-   * another period reads its queries when it is opened (DEC-UX-139). A search looks through all of them.
+   * the first of last month, then per month, each period with how many it holds; every period starts folded, today
+   * too, and reads its queries when it is opened (DEC-UX-139). A search looks through all of them.
    * Previews, the queries of Lenses and hidden queries are left out until the User ticks them in the
    * filter that folds open next to the search; folded, one line says what it adds (DEC-UX-137,
    * DEC-UX-150). The eye on a query hides it for this User alone (DEC-UX-138). The query that is open has an arrow
@@ -118,7 +118,7 @@
   let days = $state<QueryDay[] | null | undefined>();
   /** The queries of the periods read so far, by period; null when they could not be read. */
   let loaded = $state<Record<string, QueryItem[] | null>>({});
-  /** The periods the User opened or folded; today is open until folded. */
+  /** The periods the User opened; every one starts folded, today too (DEC-UX-139). */
   let opened = $state<Record<string, boolean>>({});
   /** What the search found, for these words. */
   let found = $state<{ words: string; items: QueryItem[] | null } | undefined>();
@@ -132,7 +132,7 @@
   const totals = $derived(
     Object.fromEntries(SHOWN.map((kind) => [kind, (days ?? []).reduce((sum, day) => sum + day[kind], 0)])) as Record<Shown, number>,
   );
-  const isOpen = (period: Period) => opened[period.key] ?? isToday(period);
+  const isOpen = (period: Period) => opened[period.key] ?? false;
 
   // The counts per day, again when the scope changes, after a run, or after hiding.
   $effect(() => {

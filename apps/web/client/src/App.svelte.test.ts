@@ -3717,6 +3717,11 @@ describe('the model type of a Resource and the fields it asks for (FR-CO-44, FR-
 });
 
 /** Opens the quick window, types words and does the first row that may be done, as Enter does. */
+/** Opens a period of the panel of Query, which starts folded, today too (DEC-UX-139). */
+async function openPeriod(panel: ReturnType<typeof within>, name = 'Vandaag'): Promise<void> {
+  const period = await panel.findByRole('button', { name: new RegExp(`^${name}`) }, { timeout: 3000 });
+  if (period.getAttribute('aria-expanded') !== 'true') await fireEvent.click(period);
+}
 async function quickDo(words: string): Promise<void> {
   await fireEvent.keyDown(document.body, { key: 'k', code: 'KeyK', ctrlKey: true });
   const quick = within(await screen.findByRole('dialog', { name: 'Snelvenster' }));
@@ -3750,6 +3755,7 @@ describe('Query', () => {
     open('/query/q1');
     render(App, { config: CONFIG });
     const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
+    await openPeriod(panel);
     const item = (await panel.findByRole('link', { name: /Leads per source name/ }, { timeout: 3000 })).closest('.item')!;
     expect(within(item as HTMLElement).getByText('Claude').getAttribute('title')).toBe('Gemaakt via Claude');
   });
@@ -3805,6 +3811,7 @@ describe('Query', () => {
     expect((await flags.findByRole('link', { name: /Leads per source name/ })).getAttribute('aria-current')).toBe('page');
     // The panel shows the flag at the end of a flagged query.
     const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
+    await openPeriod(panel);
     expect(await panel.findAllByRole('img', { name: 'Gemarkeerd' })).toHaveLength(2);
     // Ctrl+1 opens the first; the one left stays as the User left it, what was typed in its SQL too (OP-UX-85).
     const editor = await main.findByRole('textbox', { name: /Leads per source name/ });
@@ -4200,8 +4207,10 @@ describe('Query', () => {
     expect(await main.findByRole('heading', { level: 1, name: 'Leads per source name' }, { timeout: 3000 })).toBeTruthy();
     expect(location.pathname).toBe('/query/q1');
     const panel = within(screen.getByRole('complementary', { name: 'Query' }));
-    expect(panel.getByText('Vandaag')).toBeTruthy();
-    expect(panel.getByRole('link', { name: /Leads per source name/ }).getAttribute('aria-current')).toBe('page');
+    // Every period starts folded, today too (DEC-UX-139).
+    expect(panel.getByRole('button', { name: /^Vandaag/ }).getAttribute('aria-expanded')).toBe('false');
+    await openPeriod(panel);
+    expect((await panel.findByRole('link', { name: /Leads per source name/ })).getAttribute('aria-current')).toBe('page');
     expect(panel.getByText(/Weekly lead volume · 1 keer/)).toBeTruthy();
     // It reads only its Resources; another set is a new query, and the Lenses on them come later (DEC-UX-73, DEC-UX-114).
     expect(main.getByText('Leest enkel')).toBeTruthy();
@@ -4329,6 +4338,7 @@ describe('Query', () => {
     await vi.waitFor(() => expect(main.getByRole('button', { name: /Uitvoeren/ }).getAttribute('title')).toBe('Hij draait nu niet: wat hij leest, bestaat niet meer'), { timeout: 3000 });
     expect((main.getByRole('button', { name: /Uitvoeren/ }) as HTMLButtonElement).disabled).toBe(true);
     const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
+    await openPeriod(panel);
     expect(await panel.findByRole('img', { name: 'Resource · Broken: de kolom lead_source bestaat niet meer' })).toBeTruthy();
   });
 
@@ -4341,6 +4351,7 @@ describe('Query', () => {
     expect(await main.findByText('Deze query kan niet draaien.', {}, { timeout: 3000 })).toBeTruthy();
     expect(main.getByText(/Hij leest de tabel weekly_lead_volume, die sinds 31 okt\.? 2026 niet meer bestaat/)).toBeTruthy();
     const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
+    await openPeriod(panel);
     expect(await panel.findByRole('img', { name: /Resource · Broken/ })).toBeTruthy();
   });
 
@@ -4365,6 +4376,7 @@ describe('Query', () => {
     render(App, { config: CONFIG });
     await screen.findByRole('main');
     const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
+    await openPeriod(panel);
     expect(await panel.findByRole('link', { name: /Partner share per week/ })).toBeTruthy();
     // An older period shows with how many it holds, folded, and is read once opened.
     const period = panel.getAllByRole('button', { expanded: false }).find((button) => button.textContent?.trim().endsWith('1')) as HTMLElement;
@@ -4590,6 +4602,7 @@ describe('Query', () => {
     const main = within(await screen.findByRole('main'));
     // A preview of a Resource is a query of the User, marked so in the panel once Previews is ticked (DEC-UX-137, DEC-UX-150).
     const panel = within(screen.getByRole('complementary', { name: 'Query' }));
+    await openPeriod(panel);
     expect(await panel.findByRole('link', { name: /Leads per source name/ })).toBeTruthy();
     expect(panel.queryByRole('link', { name: /Preview · Weekly lead volume/ })).toBeNull();
     await fireEvent.click(panel.getByRole('button', { name: /^Filter: toon ook/ }));
@@ -4657,6 +4670,7 @@ describe('Query', () => {
     const main = within(await screen.findByRole('main'));
     // The query that is open unfolds in the panel to its last runs, with its arrow (DEC-UX-140).
     const panel = within(screen.getByRole('complementary', { name: 'Query' }));
+    await openPeriod(panel);
     const unfold = await panel.findByRole('button', { name: 'De laatste uitvoeringen' });
     expect(unfold.getAttribute('aria-expanded')).toBe('false');
     expect(panel.queryByRole('link', { name: /Uitvoering 1/ })).toBeNull();
@@ -4687,7 +4701,9 @@ describe('Query', () => {
     await fireEvent.click(main.getByRole('button', { name: /Versturen/ }));
     expect(await main.findByText(/Wacht op het Data Team sinds \d\d:\d\d/)).toBeTruthy();
     expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/requests', body: { sql: formatBigQuery(`${QUERY.sql}-- every year\n`), parameters: [], text: 'For the five-year review.' } });
-    expect(await within(screen.getByRole('complementary', { name: 'Query' })).findByText('Naar het Data Team')).toBeTruthy();
+    const panel = within(screen.getByRole('complementary', { name: 'Query' }));
+    await openPeriod(panel);
+    expect(await panel.findByText('Naar het Data Team')).toBeTruthy();
   });
 
   it('adds several Resources at once to a new query, each as a CTE at the start of its SQL (FR-SR-59, DEC-UX-225)', async () => {
