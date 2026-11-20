@@ -167,10 +167,9 @@ export interface Card {
   dateField: string | null;
   /** Fields of the Resource, by name, in the order chosen. */
   keyFields: string[];
-  parameters: string[];
 }
 
-export const CARD_KEYS = ['businessDescription', 'intendedUse', 'pitfalls', 'knownGaps', 'reliableSince', 'dateField', 'keyFields', 'parameters'] as const;
+export const CARD_KEYS = ['businessDescription', 'intendedUse', 'pitfalls', 'knownGaps', 'reliableSince', 'dateField', 'keyFields'] as const;
 export type CardKey = (typeof CARD_KEYS)[number];
 
 /** A Known Gap of a Resource, with who added it and when; neither for a gap of before (FR-RC-21). */
@@ -426,7 +425,6 @@ function cardOf(row: Row, reliableDay: string | null, knownGaps: KnownGap[]): Ca
     reliableSince: reliable && { ...reliable, setBy: row.reliableSinceByName, setAt: row.reliableSinceAt },
     dateField: row.dateField,
     keyFields: row.keyFields,
-    parameters: row.parameters,
   };
 }
 
@@ -480,7 +478,6 @@ async function journeyFrom(from: Database, row: Row): Promise<Journey> {
     pitfalls: row.pitfalls,
     knownGaps: Number(gaps.count),
     reliableSince: reliableOf(row, day.day),
-    parameters: row.parameters,
     modelType: row.modelType,
     grain: row.grain,
     mappings: Number(mappings.count),
@@ -1247,7 +1244,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         }
         const typed = await typedFields(trx, id);
         const fields = new Set(typed.map((field) => field.name));
-        const stranger = [...(changes.keyFields ?? []), ...(changes.parameters ?? []), ...(changes.dateField ? [changes.dateField] : [])].find((name) => !fields.has(name));
+        const stranger = [...(changes.keyFields ?? []), ...(changes.dateField ? [changes.dateField] : [])].find((name) => !fields.has(name));
         if (stranger !== undefined) {
           return { outcome: 'invalid', message: `${row.displayName} has no field ${stranger}.` };
         }

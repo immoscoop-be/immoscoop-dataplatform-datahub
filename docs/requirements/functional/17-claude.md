@@ -276,6 +276,9 @@ Each tool that returns an object returns the address of its page in Data Hub, at
 
 *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 
+*Note of 2026-11-20: the Resource Card has no Parameters any more ([DEC-RC-34](05-resource-card.md#dec-rc-34)).*
+
+
 <a id="fr-cl-08"></a>
 ### FR-CL-08 · Lineage, related Resources, Log and queries
 
@@ -304,6 +307,9 @@ For its Owner Unit and the Data Team, Claude can write what Data Hub keeps about
 *Note of 2026-11-01, on building it: "through Claude" in the Log ([DEC-CL-08](#dec-cl-08)) is not built yet: the Access Token does not say through which client a User came, so catalogue cannot tell ([OP-CL-10](#op-cl-10)). The same holds for [FR-CL-11](#fr-cl-11), [FR-CL-12](#fr-cl-12) and [FR-CL-13](#fr-cl-13).*
 
 *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
+
+*Note of 2026-11-20: Claude writes Key Fields, no Parameters ([DEC-RC-34](05-resource-card.md#dec-rc-34)).*
+
 
 <a id="fr-cl-11"></a>
 ### FR-CL-11 · Marking changes seen, deprecating and taking it back
@@ -491,6 +497,8 @@ The tool `guide_owner_journey` returns the Owner Journey of a Resource: its thir
 
 *Note of 2026-11-17: the window of each step is calmer: its overview folded, its Learning Cards folded under "How can we help with this step?" ([FR-CL-33](#fr-cl-33)), and the Known Gaps written one by one with their scope ([FR-CL-34](#fr-cl-34)).*
 
+*Note of 2026-11-20: the journey has twelve steps after Start, numbered up to 12: its advised step 9, Parameters, is gone and the steps after it moved up one ([DEC-RC-34](05-resource-card.md#dec-rc-34)).*
+
 **Makes easy:** an Owner who has never published a Resource getting from 2 · Described to a card a colleague can trust, in one conversation or several. **Makes hard:** skipping a step, taking them in another order, and a journey that only lives in one conversation.
 
 <a id="fr-cl-31"></a>
@@ -499,6 +507,8 @@ The tool `guide_owner_journey` returns the Owner Journey of a Resource: its thir
 **Status:** Implemented · **Source:** Max, 2026-11-15 ([DEC-MR-16](06-maturity-and-release.md#dec-mr-16))
 
 The tool `record_journey_step` records, for a User who may describe the Resource, that the Owner went through a step that writes nothing of its own (Know the data, the fields, the table type, grain and mappings, the open Questions and Signals), or that there is nothing to add to the pitfalls, the Known Gaps or the Parameters. Data Hub keeps who and when, and writes it into the Log of the Resource ([FR-MR-18](06-maturity-and-release.md#fr-mr-18)). Claude records it only after the Owner said so.
+
+*Note of 2026-11-20: "nothing to add" is no longer said of Parameters, which left the card ([DEC-RC-34](05-resource-card.md#dec-rc-34)).*
 
 **Makes easy:** a journey that remembers what the Owner already went through. **Makes hard:** Claude marking a step done that the Owner never saw.
 

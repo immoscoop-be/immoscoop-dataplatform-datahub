@@ -3,7 +3,7 @@ number: K5.15
 status: reviewed
 minutes: 4
 added: 2026-11-15
-changed: 2026-11-15
+changed: 2026-11-20
 gain: You show colleagues where to start in a table of many fields and what to filter its Preview on, and the EDA what to explore first.
 ---
 
@@ -14,15 +14,15 @@ gain: You show colleagues where to start in a table of many fields and what to f
 
 SEO knows that five of its ten fields answer nearly every question, and that mixing Discover with web search is the classic mistake. The colleague does not, and the Resource says it only once its Owner has marked those fields.
 
-Promise: which fields to mark as Key Fields and as Parameters, and what each does for a colleague, a Preview and the EDA.
+Promise: which fields to mark as Key Fields, and what they do for a colleague, a Preview and the EDA.
 
 # Core idea
 
-**Key Fields** are the few fields of a Resource a colleague should look at first and its EDA explores; its Parameters are the fields its Preview offers to filter on.
+**Key Fields** are the few fields of a Resource a colleague should look at first: its EDA explores them, and its Preview offers those of text or yes/no to filter on.
 
 ## At Immoscoop
 
-Search Console impressions, whole site has ten fields and one row per day, query, country, device and search type. SEO marks five Key Fields: `data_date`, `query`, `search_type`, `impressions` and `clicks`. `country` and `device` are part of the grain but no Key Field, and `impressions` identifies no row but is one: a Key Field is what matters, not what makes a row unique. Each Key Field needs its Business Description before the Resource is published, and the EDA explores at least these five. SEO marks one Parameter, `search_type`: its Preview then offers its values to pick, such as web, discover and news, next to the newest days, so a colleague sees only Discover without writing SQL. Both lists stand under Querying on its Overview, and Claude reads them before it queries the Resource.
+Search Console impressions, whole site has ten fields and one row per day, query, country, device and search type. SEO marks five Key Fields: `data_date`, `query`, `search_type`, `impressions` and `clicks`. `country` and `device` are part of the grain but no Key Field, and `impressions` identifies no row but is one: a Key Field is what matters, not what makes a row unique. Each Key Field needs its Business Description before the Resource is published, and the EDA explores at least these five. Its Preview offers its Key Fields of text, such as `search_type`, with their values to pick, such as web, discover and news, next to the newest days, so a colleague sees only Discover without writing SQL. The list stands under Querying on its Overview, and Claude reads it before it queries the Resource.
 
 # Check your understanding
 
@@ -36,11 +36,11 @@ Why: the grain says what one row is; the Key Fields say where a colleague starts
 
 ## A colleague wants the Preview of a Resource of yours to show only the rows of one country, without writing SQL. What makes that possible?
 
-- [ ] Marking `country` as a Key Field
-- [x] Marking `country` as a Parameter: the Preview then offers its values to pick
+- [ ] Describing `country` in its Business Description
+- [x] Marking `country` as a Key Field: the Preview then offers its values to pick
 - [ ] Nothing: a Preview always shows the newest rows of everything
 
-Why: a Preview offers a choice for its partition column, its first cluster column and each Parameter of its Resource, with up to 100 values to pick. Key Fields change nothing in a Preview: they tell a colleague, and the EDA, where to look.
+Why: a Preview offers a choice for its partition column, its first cluster column and each Key Field of text or yes/no that is no identifier, with up to 100 values to pick. A Business Description tells what a field means; it changes nothing in a Preview.
 
 ## To be safe, you mark twenty of the thirty fields of a Resource as Key Fields. What does that do?
 
@@ -52,10 +52,10 @@ Why: Key Fields work because they are few: they say where to start. Each one ask
 
 # You can now
 
-mark the few fields a colleague should start from as Key Fields and the ones they filter on as Parameters, and ask "which fields answer nearly every question asked of it?" before you choose.
+mark the few fields a colleague should start from, and filters on, as Key Fields, and ask "which fields answer nearly every question asked of it?" before you choose.
 
 ## Where to next
 
 - Next to it: K5.14
 - Next to it: K5.18
-- Apply: [Open Collections](/collections) Open a Resource and look at its Key Fields and Parameters under Querying on its Overview, then at the choices of its Preview.
+- Apply: [Open Collections](/collections) Open a Resource and look at its Key Fields under Querying on its Overview, then at the choices of its Preview.

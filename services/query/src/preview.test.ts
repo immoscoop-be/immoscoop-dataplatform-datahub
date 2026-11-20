@@ -21,8 +21,10 @@ const WEEKLY: QueryResource = {
     { name: 'lead_count', dataType: 'INT64', description: '', businessDescription: '' },
     { name: 'created_at', dataType: 'TIMESTAMP', description: '', businessDescription: '' },
     { name: 'is_partner', dataType: 'BOOL', description: '', businessDescription: '' },
+    { name: 'lead_status', dataType: 'STRING', description: '', businessDescription: '' },
+    { name: 'leadId', dataType: 'STRING', description: '', businessDescription: '' },
   ],
-  parameters: ['week_start', 'lead_count', 'created_at', 'is_partner', 'lead_source'],
+  keyFields: ['week_start', 'lead_count', 'created_at', 'is_partner', 'lead_source', 'lead_status', 'leadId'],
 };
 
 describe('the window of a Preview (DEC-SR-39)', () => {
@@ -45,11 +47,18 @@ describe('the window of a Preview (DEC-SR-39)', () => {
 });
 
 describe('the choices of a Preview (FR-SR-38)', () => {
-  it('are its first cluster column, then the Parameters of its Card, of types it can offer', () => {
+  it('are its first cluster column, then the Key Fields of its Card that sort its rows: text or yes/no, no identifier (DEC-RC-34)', () => {
     expect(choicesOf(WEEKLY).map(({ field, role, kind }) => [field, role, kind])).toEqual([
       ['lead_source', 'cluster', 'choice'],
-      ['lead_count', 'parameter', 'number'],
-      ['is_partner', 'parameter', 'yesno'],
+      ['is_partner', 'keyField', 'yesno'],
+      ['lead_status', 'keyField', 'choice'],
+    ]);
+    // A cluster column is offered whatever its kind.
+    expect(choicesOf({ ...WEEKLY, clusterBy: ['lead_count'] }).map(({ field, role }) => [field, role])).toEqual([
+      ['lead_count', 'cluster'],
+      ['is_partner', 'keyField'],
+      ['lead_source', 'keyField'],
+      ['lead_status', 'keyField'],
     ]);
   });
 
@@ -61,7 +70,7 @@ describe('the choices of a Preview (FR-SR-38)', () => {
   });
 
   it('take a value of their column, never SQL', () => {
-    const choices = choicesOf(WEEKLY);
+    const choices = choicesOf({ ...WEEKLY, clusterBy: ['lead_count'] });
     expect(chosenParameters(choices, { lead_source: 'app', lead_count: '12', is_partner: 'true' })).toEqual([
       { name: 'lead_source', kind: 'choice', value: 'app', list: ['app'] },
       { name: 'lead_count', kind: 'number', value: '12' },
@@ -78,7 +87,7 @@ describe('the SQL of a Preview', () => {
   it('reads its fields within its window and choices, newest first, at most 1000 rows', () => {
     expect(previewSql(WEEKLY, "`week_start` >= DATE '2026-09-28'", ['lead_source'])).toBe(
       [
-        'select `week_start`, `lead_source`, `lead_count`, `created_at`, `is_partner`',
+        'select `week_start`, `lead_source`, `lead_count`, `created_at`, `is_partner`, `lead_status`, `leadId`',
         'from `immoscoop-dataplatform.dbt_prod_stacks.weekly_lead_volume`',
         "where `week_start` >= DATE '2026-09-28'\n  and `lead_source` = @lead_source",
         'order by `week_start` desc',

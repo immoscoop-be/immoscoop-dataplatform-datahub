@@ -26,6 +26,7 @@ import * as slackAddresses from './0024-slack-addresses.js';
 import * as ownerJourney from './0025-owner-journey.js';
 import * as typeFields from './0026-type-fields.js';
 import * as reliableSince from './0027-reliable-since.js';
+import * as parametersIntoKeyFields from './0028-parameters-into-key-fields.js';
 
 /** The migrations of catalogue, by name; they run in the order of their names (TR-PF-09). */
 export const migrations: Record<string, Migration> = {
@@ -56,4 +57,5 @@ export const migrations: Record<string, Migration> = {
   '0025-owner-journey': ownerJourney,
   '0026-type-fields': typeFields,
   '0027-reliable-since': reliableSince,
+  '0028-parameters-into-key-fields': parametersIntoKeyFields,
 };

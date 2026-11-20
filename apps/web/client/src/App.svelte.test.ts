@@ -94,7 +94,7 @@ const SAVED_SEARCHES = {
   ],
   leftOut: [],
   details: { partition: null, clusterBy: [], partitionFilter: 'none', grain: [], grainSentence: '', modelType: null, origins: {}, release: null, mappings: [] },
-  card: { businessDescription: '', intendedUse: '', pitfalls: '', knownGaps: [], reliableSince: null, dateField: null, keyFields: [], parameters: [] },
+  card: { businessDescription: '', intendedUse: '', pitfalls: '', knownGaps: [], reliableSince: null, dateField: null, keyFields: [] },
   published: false,
   deprecated: false,
   publication: null,
@@ -265,7 +265,6 @@ const READY: JourneyFacts = {
   pitfalls: 'The current week is incomplete.',
   knownGaps: 1,
   reliableSince: { from: 'day', day: '2025-01-01', why: 'Earlier weeks are incomplete.' },
-  parameters: [],
   modelType: null,
   grain: [],
   mappings: 0,
@@ -2933,7 +2932,7 @@ describe('the page of a Resource', () => {
     // Reliable since on a line of its own, with why not earlier, before the Known Gaps (FR-RC-31).
     expect(sheet.getByText(/^Reliable since · 1 jan 2025/)).toBeTruthy();
     expect(sheet.getByText('Earlier weeks are incomplete.')).toBeTruthy();
-    expect(sheet.getByText('week_start · geen')).toBeTruthy();
+    expect(sheet.getByText('week_start')).toBeTruthy();
     const button = sheet.getByRole('button', { name: /Publiceren en bevestigen/ }) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
     await fireEvent.click(sheet.getByRole('checkbox', { name: /Voor Data heb ik deze kaart gelezen en bevestig ik/ }));

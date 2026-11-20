@@ -452,7 +452,7 @@ function renderResource(r, parts) {
       '<ol class="sum">' + parts.map((part) => '<li class="sum-part"><div class="sum-side"><span class="sum-n">' + (part.number ?? '!') + '</span><span class="weight w' + part.rank + '">' + esc(part.weightName) + '</span></div>' +
         '<div class="sum-main"><div class="sum-title"><h3>' + esc(part.title) + '</h3>' + (part.part === 'fields' ? '<button class="link" data-tab="columns">Columns</button>' : '') + '</div>' + partLines(part.lines) + '</div></li>').join('') + '</ol>'
     : '<p class="meta">Data Hub has nothing to summarise about it yet.</p>';
-  const role = (name) => [(card.keyFields ?? []).includes(name) ? '<span class="pill">Key Field</span>' : '', details.partition?.field === name ? '<span class="pill">Partition</span>' : '', (details.clusterBy ?? []).includes(name) ? '<span class="pill">Cluster ' + ((details.clusterBy ?? []).indexOf(name) + 1) + '</span>' : '', (card.parameters ?? []).includes(name) ? '<span class="pill">Parameter</span>' : ''].join('');
+  const role = (name) => [(card.keyFields ?? []).includes(name) ? '<span class="pill">Key Field</span>' : '', details.partition?.field === name ? '<span class="pill">Partition</span>' : '', (details.clusterBy ?? []).includes(name) ? '<span class="pill">Cluster ' + ((details.clusterBy ?? []).indexOf(name) + 1) + '</span>' : ''].join('');
   const columns = '<table class="stack"><thead><tr><th>Column</th><th>Type</th><th>Business Description</th><th>Description, from dbt</th><th></th></tr></thead><tbody>' +
     (r.fields ?? []).map((f) => '<tr><td class="mono name">' + esc(f.name) + '</td><td class="meta type">' + esc(f.dataType) + '</td><td data-label="Business Description, from the Owner">' + (esc(f.businessDescription) || '–') + '</td><td data-label="Description, from dbt">' + (esc(f.description) || '–') + '</td><td>' + role(f.name) + '</td></tr>').join('') + '</tbody></table>';
   root.innerHTML = head(kind, r.displayName, r.key, '', r.collection) + state + dep + changes +
@@ -512,7 +512,7 @@ function renderPublish(v) {
     part('Business Description', card.businessDescription) + '<span class="label">Description</span><span class="origin">From dbt</span><p style="margin:2px 0 8px">' + esc(r.description) + '</p>' +
     part('Intended use', card.intendedUse) + part('Pitfalls', card.pitfalls) +
     reliable(card.reliableSince, r.dateField && r.dateField.field) + part('Known Gaps', gaps || 'None known.') +
-    part('Key Fields · Parameters', (card.keyFields || []).join(', ') + ' · ' + ((card.parameters || []).join(', ') || 'none')) + '</div></div>';
+    part('Key Fields', (card.keyFields || []).join(', ') || 'none') + '</div></div>';
   const declaration = 'For ' + owner + ', I have read this card and confirm that this Resource is correct: what it is and what it stands for, in every text on it.';
   root.innerHTML = head('Publish · Resource', r.displayName, null, level(r.levelName), r.collection) +
     '<div><div class="label">Who will see it</div><div class="checks"><div><b>Everyone who sees ' + esc(r.collection?.name ?? 'its Collection') + ':</b> ' + esc(who) + '. Now only ' + esc(owner) + ' and the Data Team see it.</div></div></div>' +
@@ -965,7 +965,7 @@ root.addEventListener('click', (event) => {
   }
 });
 
-// A Parameter of a Preview changed in the window: the Preview again, through its Pre-flight (FR-CL-09).
+// A choice of a Preview changed in the window: the Preview again, through its Pre-flight (FR-CL-09).
 root.addEventListener('change', (event) => {
   if (view?.view === 'preview' && event.target.closest('[data-choice],[data-param]')) call('preview_resource', previewArgs());
 });

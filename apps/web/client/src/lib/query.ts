@@ -423,7 +423,7 @@ export type PreviewWindow = 1 | 4 | 12;
 /** What a Preview offers to choose by (FR-SR-38, DEC-SR-37). */
 export interface PreviewChoices {
   window: { field: string; unit: string | null; from: string | null; window: PreviewWindow } | null;
-  choices: { field: string; dataType: string; role: 'cluster' | 'parameter'; kind: ParameterKind; values: string[] | null }[];
+  choices: { field: string; dataType: string; role: 'cluster' | 'keyField'; kind: ParameterKind; values: string[] | null }[];
 }
 
 /** The values chosen in a Preview, by column; null for all. */

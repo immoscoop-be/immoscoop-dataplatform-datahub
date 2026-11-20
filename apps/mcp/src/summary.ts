@@ -25,7 +25,6 @@ export interface SummaryFacts {
     /** The Date Field chosen; null takes the one its table type gives (FR-RC-32). */
     dateField?: string | null;
     keyFields: string[];
-    parameters: string[];
   };
   details: {
     partition: { field: string; unit: string | null } | null;
@@ -167,7 +166,6 @@ export function summaryParts(given: SummaryFacts): SummaryBlock[] {
       ...(details.clusterBy.length ? [plain(`Clustered by ${details.clusterBy.join(', then ')}.`)] : []),
       ...(storage?.size ? [plain(`Size: ${storage.size}.`)] : []),
       ...(card.keyFields.length ? [plain(`Key fields: ${card.keyFields.join(', ')}.`)] : []),
-      ...(card.parameters.length ? [plain(`Parameters: ${card.parameters.join(', ')}.`)] : []),
     ],
     joins: facts.related
       .filter((entry) => entry.resources.length > 0)

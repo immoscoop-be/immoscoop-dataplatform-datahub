@@ -214,7 +214,7 @@ describe.skipIf(!url)('catalogue migrations', () => {
 
   it('keeps Reliable Since as from its first row or a later day with why, a day of before as a later day, and the Date Field chosen (FR-RC-31, FR-RC-32)', async () => {
     const id = (await sql<{ id: string }>`select id from resources where key = 'p.d.journey'`.execute(admin.db)).rows[0]!.id;
-    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    const results = await migrate({ db: admin.db, schema, migrations: before('0028'), serviceUser: 'postgres' });
     expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0027-reliable-since', 'Success']]);
     // The day set before is a later day, without why nor who.
     const kept = await sql<{ from: string; why: string; by: string | null }>`select reliable_since_from as from, reliable_since_why as why, reliable_since_by_name as by from resources where id = ${id}`.execute(admin.db);
@@ -227,5 +227,18 @@ describe.skipIf(!url)('catalogue migrations', () => {
     await expect(set(null, '2025-01-01').execute(admin.db)).rejects.toThrow(/resources_reliable_since_check/);
     await expect(set('always', null).execute(admin.db)).rejects.toThrow(/check/);
     await sql`update resources set date_field = 'week_start' where id = ${id}`.execute(admin.db);
+  });
+
+  it('folds the Parameters into the Key Fields: their lists and the answers to their step go (DEC-RC-34)', async () => {
+    const id = (await sql<{ id: string }>`select id from resources where key = 'p.d.journey'`.execute(admin.db)).rows[0]!.id;
+    await sql`update resources set parameters = '{lead_source}' where id = ${id}`.execute(admin.db);
+    await sql`insert into journey_records (resource_id, step, answer, user_id, user_name) values (${id}, 'parameters', 'nothing', 'u-an', 'An')`.execute(admin.db);
+    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0028-parameters-into-key-fields', 'Success']]);
+    const columns = await sql<{ name: string }>`select column_name as name from information_schema.columns where table_schema = ${schema} and table_name = 'resources' and column_name = 'parameters'`.execute(admin.db);
+    expect(columns.rows).toEqual([]);
+    const steps = await sql<{ step: string }>`select step from journey_records where resource_id = ${id}`.execute(admin.db);
+    expect(steps.rows.map((row) => row.step)).not.toContain('parameters');
+    await expect(sql`insert into journey_records (resource_id, step, answer, user_id, user_name) values (${id}, 'parameters', 'nothing', 'u-an', 'An')`.execute(admin.db)).rejects.toThrow(/journey_records_step_check/);
   });
 });

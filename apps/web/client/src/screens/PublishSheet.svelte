@@ -121,8 +121,8 @@
           {/if}
           <div class="label">{t('resource.gaps')}</div>
           <p class="read">{card.knownGaps.length > 0 ? card.knownGaps.map((gap) => gap.text).join(' ') : t('publish.gapsNone')}</p>
-          <div class="label">{t('resource.keyFields')} · {t('resource.parameters')}</div>
-          <p class="read">{card.keyFields.join(', ') || t('publish.none')} · {card.parameters.join(', ') || t('publish.none')}</p>
+          <div class="label">{t('resource.keyFields')}</div>
+          <p class="read">{card.keyFields.join(', ') || t('publish.none')}</p>
           <button type="button" class="text-link" onclick={onfields}>{t('publish.fields', { count: resource.fields.length, described: dbtFields })}<Icon name="arrow-right" /></button>
         </div>
         <p class="meta text">{t('publish.notData')} {t('publish.changeLater')}</p>

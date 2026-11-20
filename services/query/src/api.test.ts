@@ -47,7 +47,7 @@ const WEEKLY: QueryResource = {
     { name: 'week_start', dataType: 'DATE', description: 'The Monday of the week.', businessDescription: '' },
     { name: 'lead_source', dataType: 'STRING', description: 'Source system code.', businessDescription: 'Where the lead came in.' },
   ],
-  parameters: ['lead_source'],
+  keyFields: ['lead_source'],
 };
 const SOURCES: QueryResource = { ...WEEKLY, id: '7a2d3c5f-9b2e-4d4f-8a31-2c3d4e5f6a71', key: `${PROJECT}.dbt_prod_stacks.lead_sources`, fullName: `${PROJECT}.dbt_prod_stacks.lead_sources`, displayName: 'Lead sources', partition: null, clusterBy: [] };
 const SECRET: QueryResource = { ...SOURCES, id: '8b3e4d6a-0c3f-4e5a-9b42-3d4e5f6a7b82', key: `${PROJECT}.dbt_prod_stacks.salaries`, fullName: `${PROJECT}.dbt_prod_stacks.salaries`, displayName: 'Salaries' };

@@ -23,7 +23,6 @@ export const CARD_ATTRIBUTES = {
   reliableSince: 'availableSince',
   dateField: 'availableSince',
   keyFields: 'keyFields',
-  parameters: 'keyFields',
 } as const;
 
 export type CardKey = keyof typeof CARD_ATTRIBUTES;
