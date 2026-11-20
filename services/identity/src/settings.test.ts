@@ -104,23 +104,11 @@ describe.skipIf(!url)('the settings of a User (DEC-UX-96)', () => {
     expect((await app.inject({ method: 'PUT', url: '/me/settings/intro.collections', headers: jan, payload: {} })).statusCode).toBe(400);
   });
 
-  it('keeps the flagged queries in their order, at most 50 and each once, and the Project worked in (DEC-UX-283, OP-UX-94)', async () => {
+  it('keeps no flagged queries and no Project worked in: the active Project follows what is open (DEC-UX-316, DEC-UX-317)', async () => {
     const an = await as('an');
-    const ids = Array.from({ length: 51 }, (_, at) => `00000000-0000-4000-8000-${String(at).padStart(12, '0')}`);
     const put = (key: string, value: unknown) => app.inject({ method: 'PUT', url: `/me/settings/${key}`, headers: an, payload: { value } });
-    const flag = (value: unknown) => put('query.flagged', value);
-    expect((await flag([ids[2], ids[0], ids[1]])).statusCode).toBe(204);
-    expect((await app.inject({ url: '/me/settings', headers: an })).json().settings).toEqual({ 'query.flagged': [ids[2], ids[0], ids[1]] });
-    // More than ten: the first ten have a key, the rest none (DEC-UX-283).
-    expect((await flag(ids.slice(0, 14))).statusCode).toBe(204);
-    // At most 50, a query is flagged once, and only a query is flagged.
-    expect((await flag(ids)).statusCode).toBe(400);
-    expect((await flag([ids[0], ids[0]])).statusCode).toBe(400);
-    expect((await flag(['leads'])).statusCode).toBe(400);
-    // The Project worked in, or none.
-    expect((await put('query.project', ids[3])).statusCode).toBe(204);
-    expect((await put('query.project', null)).statusCode).toBe(204);
-    expect((await put('query.project', 'credit')).statusCode).toBe(400);
+    expect((await put('query.flagged', ['00000000-0000-4000-8000-000000000001'])).statusCode).toBe(404);
+    expect((await put('query.project', '00000000-0000-4000-8000-000000000001')).statusCode).toBe(404);
   });
 
   it('needs an Access Token', async () => {

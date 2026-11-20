@@ -1,12 +1,9 @@
 /**
- * Flagged queries (DEC-UX-236): the queries a User keeps in a row on top of every screen of Query, to work on several
- * side by side and jump between them with Cmd+1 to Cmd+0, Ctrl on Windows and Linux. Kept in their order with the
- * settings of the User, so they follow them to every computer (OP-UX-84). The row holds up to 50 flagged queries, and
- * in a Project all its queries (DEC-SR-49): the first ten keep a key, any further one has none (DEC-UX-283, OP-UX-96).
+ * The row on top of every screen of Query (DEC-UX-317, DEC-UX-319): while a Project is active, a tab for its details
+ * and then its queries, to work on several side by side and jump between them with Cmd+1 to Cmd+0, Ctrl on Windows and
+ * Linux. A Project holds any number of queries (DEC-SR-49): the first ten keep a key, any further one has none
+ * (DEC-UX-283, OP-UX-96). There are no flagged queries (DEC-UX-316).
  */
-
-/** At most 50 flagged queries in the row (OP-UX-96); a Project has no limit (DEC-SR-49). */
-export const MOST_FLAGGED = 50;
 
 /** How many in the row have a key: Cmd+1 to Cmd+9, then Cmd+0 (DEC-UX-283). */
 export const KEYED = 10;
@@ -20,26 +17,7 @@ export const digitOf = (at: number): string => String((at + 1) % 10);
 /** The place in the row a key opens: 1 the first, 0 the tenth. */
 export const placeOf = (digit: string): number => (digit === '0' ? 9 : Number(digit) - 1);
 
-/** The row with a query flagged at its end, unless it is there already or the row is full. */
-export function flag(ids: readonly string[], id: string): string[] {
-  return ids.includes(id) || ids.length >= MOST_FLAGGED ? [...ids] : [...ids, id];
-}
-
-/** The row without a query. */
-export function unflag(ids: readonly string[], id: string): string[] {
-  return ids.filter((one) => one !== id);
-}
-
-/** The row with the query at one place moved to another: the others shift, and their keys with them. */
-export function moveFlag(ids: readonly string[], from: number, to: number): string[] {
-  if (from === to || from < 0 || from >= ids.length || to < 0 || to >= ids.length) return [...ids];
-  const next = [...ids];
-  const [moved] = next.splice(from, 1);
-  next.splice(to, 0, moved as string);
-  return next;
-}
-
-/** What a flagged query tells about itself while the User is elsewhere, as its page reports it. */
+/** What a query of the row tells about itself while the User is elsewhere, as its page reports it. */
 export interface QueryStatus {
   /** A run is going. */
   running: boolean;
@@ -50,7 +28,7 @@ export interface QueryStatus {
 }
 
 /**
- * The mark on the tab of a flagged query: a run going, a result not seen yet, a run that failed while the User was
+ * The mark on the tab of a query of the row: a run going, a result not seen yet, a run that failed while the User was
  * elsewhere, or Broken; nothing when there is nothing to tell.
  */
 export type FlagMark = 'running' | 'new' | 'failed' | 'broken' | null;

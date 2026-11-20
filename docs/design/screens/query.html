@@ -37,14 +37,13 @@
   Ctrl+C copies it; null in grey. Every result carries its Query ID (DEC-UX-72). In the upper right corner of the result, a
   menu button, the copy icon with a caret, opens a menu with Copy as JSON and Copy as CSV: each copies its first 100 rows,
   whichever page shows, with the names of its fields, and a toast says how many were copied (DEC-UX-292, DEC-UX-294).
-  ?copy=open shows the menu open. In the panel, the Project the User works in comes first, with "You work in it" and
-  "Close project" under it, which stops working in it: the row on top shows the flagged queries again (DEC-UX-295).
+  ?copy=open shows the menu open. In the panel, the active Project comes first and stands out (DEC-UX-317).
   The icon of each query in the panel says whether it ran on Resources (a table) or on a Lens (an aperture); "All" is for the Data Team only.
   The switch "Query" shows it Broken (DEC-UX-160, FR-SR-53, DEC-UX-81): a table or column it reads no longer exists, so
   Run is off, a callout on top names what is missing, and the query has the red dot in the panel; its SQL can still be
   changed, and a change that runs makes it work again, as does the return of what it reads.
-  Requirements: FR-SR-71, FR-SR-70, FR-SR-69, FR-SR-68, FR-SR-67, FR-SR-64, FR-SR-63, FR-SR-62, FR-SR-61, FR-SR-60, FR-SR-59, FR-SR-58, FR-SR-57, FR-SR-56, FR-SR-53, FR-SR-36, FR-SR-37, FR-SR-40, FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-45, FR-SR-47, FR-SR-48, FR-SR-51, FR-LN-05, FR-LN-06, FR-LE-07, FR-LE-08, FR-LE-16, FR-RC-18
-  Decisions: DEC-UX-290, DEC-UX-289, DEC-UX-288, DEC-UX-287, DEC-UX-286, DEC-UX-285, DEC-UX-284, DEC-UX-283, DEC-UX-282, DEC-UX-238, DEC-UX-237, DEC-UX-236, DEC-UX-235, DEC-UX-234, DEC-UX-225, DEC-UX-224, DEC-UX-223, DEC-UX-222, DEC-UX-221, DEC-UX-220, DEC-UX-219, DEC-UX-218, DEC-UX-163, DEC-UX-17, DEC-UX-20, DEC-UX-70, DEC-UX-71, DEC-UX-72, DEC-UX-73, DEC-UX-74, DEC-UX-76, DEC-UX-77, DEC-UX-88, DEC-UX-97, DEC-UX-99, DEC-UX-115, DEC-SR-29, DEC-SR-35, DEC-LN-01.
+  Requirements: FR-SR-73, FR-SR-72, FR-SR-71, FR-SR-70, FR-SR-69, FR-SR-68, FR-SR-67, FR-SR-63, FR-SR-62, FR-SR-61, FR-SR-59, FR-SR-58, FR-SR-57, FR-SR-56, FR-SR-53, FR-SR-36, FR-SR-37, FR-SR-40, FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-45, FR-SR-47, FR-SR-48, FR-SR-51, FR-LN-05, FR-LN-06, FR-LE-07, FR-LE-08, FR-LE-16, FR-RC-18
+  Decisions: DEC-UX-319, DEC-UX-318, DEC-UX-317, DEC-UX-316, DEC-UX-290, DEC-UX-289, DEC-UX-288, DEC-UX-287, DEC-UX-286, DEC-UX-285, DEC-UX-284, DEC-UX-283, DEC-UX-282, DEC-UX-238, DEC-UX-237, DEC-UX-235, DEC-UX-234, DEC-UX-225, DEC-UX-224, DEC-UX-223, DEC-UX-222, DEC-UX-221, DEC-UX-220, DEC-UX-219, DEC-UX-218, DEC-UX-163, DEC-UX-17, DEC-UX-20, DEC-UX-70, DEC-UX-71, DEC-UX-72, DEC-UX-73, DEC-UX-74, DEC-UX-76, DEC-UX-77, DEC-UX-88, DEC-UX-97, DEC-UX-99, DEC-UX-115, DEC-SR-29, DEC-SR-35, DEC-LN-01.
   Not in v1: the label "Claude" on a query in the panel (FR-SR-26, DEC-CH-02); leave it out.
   "Make it a lens" turns the query into a Lens (FR-LE-07, DEC-UX-25). The query stays, used as the Lens: then "Update the lens"
   takes its place and overwrites the Lens after a size check, and "Lenses on these resources" goes (DEC-LE-03, DEC-LE-04,
@@ -65,21 +64,22 @@
   columns, and adds the ones ticked: each comes as a CTE at the start of the SQL, after "with", named after its table,
   selecting its fields and filtering on its recent partitions; the sheet shows which CTEs come (DEC-UX-224, DEC-UX-225,
   FR-SR-58, FR-SR-59, OP-UX-81). A Resource found there is added to this query (DEC-UX-287). ?find=open opens it.
-  The row on top (DEC-UX-236, DEC-UX-282): the queries of the Project the User works in, or, in none, their own
-  flagged queries. The switch at its start names which, with how many are in the Project, and opens "Work in": your
-  flagged queries, every Project with how many queries and who is in it, New project, and the page of the Project.
+  The row on top (DEC-UX-316, DEC-UX-317, DEC-UX-319): there are no flagged queries. While a Project is active, which
+  follows what is open (the Project of the open query, or its details), the row holds a tab for its details, without a
+  key, and then its queries; with none active there is no row.
   A tab per query in the order of the row; the first ten carry ⌘1 to ⌘9 and ⌘0 (Ctrl on Windows), from anywhere in
   Query, also while typing in the SQL; any further one has no key, and the tabs scroll sideways, with "All 14" at the
-  end, which lists them all (DEC-UX-283). In a Project, "Add to Credit leads Q4" adds the open query to it, "Move to"
-  when it is in another (OP-UX-93), and the × on a tab removes a query from it; in none, "Flag this query" and "Add to
-  a project", which puts the open query, and flagged ones ticked, into a Project or a new one, and the User then works
-  in it. No quick-window button in the row (DEC-UX-284). A query keeps what was done in it while the User is in
+  end, which lists them all (DEC-UX-283). The × on a tab removes a query from the Project; taking out the open query
+  leaves no Project active. The Project button in the head of the query (DEC-UX-318): Add to project in none, Change
+  project and Remove from project in one; Add and Change open a sheet with the Projects and New project, and the query
+  goes to the end of the row of the one chosen, which is then active (OP-UX-93). No quick-window button in the row
+  (DEC-UX-284). A query keeps what was done in it while the User is in
   another one: its result, its tab, a run still going (OP-UX-85). Its tab marks a run going, a result not seen yet, a
   run that failed and Broken. Dragging a tab changes its place, and its number, for everyone in a Project (OP-UX-95).
-  The breadcrumb names the Project of the open query, with "Work in it" when it is another (OP-UX-94). The switch
-  "Row" shows each case; ?flags=many picks one, and ?rowpop=work, all, addp or newproj opens a pop-out.
-  The panel (DEC-UX-285): the Projects above the history, each with how many queries and who is in it, the one the
-  User works in flagged; the arrow unfolds its queries with their keys; a click opens its page (query-project.html).
+  The breadcrumb names the Project of the open query, as a link to its details. The switch "Row" puts the query in a
+  Project or in none; ?rowpop=all opens the list of the row, and ?project=add, move or new the sheet.
+  The panel (DEC-UX-285): the Projects above the history, each with how many queries and who is in it, the active one
+  first; the arrow unfolds its queries with their keys; a click opens its details (query-project.html), so it is active.
   The search looks through Projects and queries together.
   An empty query (DEC-UX-290, OP-UX-105): ?empty=1 shows the query "New query" on the page of a Project makes: in the
   Project, at the end of its row, no Resources yet, an empty editor, and Run waiting for a Resource.
@@ -87,9 +87,8 @@
   query it lists first what can be done to this query now, a command for every button of the page that does something
   to it (DEC-UX-239): Show info when the cursor is on a field, Parameter or Resource (DEC-UX-238); Run as ⌘↵ does,
   which above 100 MB puts the focus on the red button, where Enter approves; Add the partition filter (with
-  ?pf=nofilter); Make it a Lens or Update the Lens; in a Project, Add this query to it or Remove it from it, Work in another
-  project, Stop working in it, Open its page and Share it; in none, Flag or Unflag, Add this query to a project and Work
-  in a project; New project (DEC-UX-288); Rename; Fold all; Format the SQL; Add a Parameter; Add a Resource; Remove
+  ?pf=nofilter); Make it a Lens or Update the Lens; Add to project, or Change project and Remove from project, as the
+  Project button (DEC-UX-318); New project (DEC-UX-288); Rename; Fold all; Format the SQL; Add a Parameter; Add a Resource; Remove
   each Resource; Add a table (a power user); New query from this one; Lenses on these Resources; Show the history or
   the result; Copy the Query ID; Hide or Show again, and the view: the query next to or above the result. ?quick=open
   opens it, &q=lea types in it.
@@ -153,11 +152,11 @@
   </form>
   <p class="q-filter-on"><span>Also showing: Previews</span><button class="q-filter-x" aria-label="Stop showing Previews"><i class="ph ph-x"></i></button></p>
   <div data-group="scope" hidden><button data-target="yours"></button><button data-target="all"></button></div>
-  <!-- The Projects, above the history (DEC-UX-285): each with how many queries it holds and who is in it; the one the
-       User works in has the flag of the row. A click opens its page; the arrow unfolds its queries, with their keys.
+  <!-- The Projects, above the history (DEC-UX-285): each with how many queries it holds and who is in it; the active one
+       comes first and stands out (DEC-UX-317). A click opens its details, so it is active; the arrow unfolds its queries.
        The search looks through both: a Project whose name matches stays, one with a matching query unfolds to it. -->
   <div class="proj-list" id="proj-list">
-   <div class="panel-label with-add"><span>Projects</span><button class="icon-btn" type="button" data-row-pop="newproj" aria-label="New project" title="New project"><i class="ph ph-plus"></i></button></div>
+   <div class="panel-label with-add"><span>Projects</span><button class="icon-btn" type="button" data-project-sheet="new" aria-label="New project" title="New project"><i class="ph ph-plus"></i></button></div>
    <div class="proj-entry open" data-proj="credit">
     <a class="list-item card proj-item" href="query-project.html" data-name="credit leads q4 leads per source name partner share per week weekly lead volume lead sources listings saved searches"><i class="ph-fill ph-folders kind-icon" role="img" aria-label="Project"></i><span><span class="item-title">Credit leads Q4</span><span class="meta">14 queries · with 3 colleagues</span></span><i class="ph-fill ph-flag flag-mark" role="img" aria-label="You work in it" title="You work in it: its queries are in the row on top"></i></a>
     <button class="icon-btn q-unfold" aria-expanded="true" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
@@ -259,8 +258,9 @@
  </div>
 </aside>
 <main class="main">
-<!-- The row on top (DEC-UX-236, DEC-UX-282): on every screen of Query, the queries of the Project the User works in, or their flagged ones, a tab each with its key, ⌘1 to ⌘0
-     (Ctrl+1 to Ctrl+0 on Windows); the open one stands out; drawn by the script at the foot of this page. -->
+<!-- The row on top (DEC-UX-317, DEC-UX-319): on every screen of Query, while a Project is active, its details and then its
+     queries, a tab each with its key, ⌘1 to ⌘0 (Ctrl+1 to Ctrl+0 on Windows); no row with none active; the open one stands
+     out; drawn by the script at the foot of this page. -->
 <nav class="q-flags" id="q-flags" aria-label="The row on top"></nav>
 <div class="breadcrumb crumbs" id="q-crumb">Query</div>
 <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
@@ -268,6 +268,11 @@
  <h1 class="page-title q-title-line" style="flex:1" id="q-title" title="Leads per source name">Leads per source name</h1>
  <span class="q-layouts" role="group" aria-label="Layout"><button aria-pressed="true" data-layout="horizontal" aria-label="The query above the result" onclick="location.search=''"><i class="ph ph-rows"></i></button><button aria-pressed="false" data-layout="side" aria-label="The query next to the result" onclick="location.search='?layout=side'"><i class="ph ph-columns"></i></button></span>
  <!-- No New query here: the panel has it, and the quick window (DEC-UX-252) -->
+ <!-- The Project button (DEC-UX-318): Add to project in none; Change project and Remove from project in one -->
+ <span class="project-menu-wrap" style="position:relative">
+  <button class="btn-quiet outline" type="button" id="project-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="project-menu" style="display:inline-flex;align-items:center;gap:6px"><i class="ph ph-folders"></i>Project<i class="ph ph-caret-down" style="font-size:11px" aria-hidden="true"></i></button>
+  <div class="rg-menu btn-menu" id="project-menu" role="menu" aria-label="Project" hidden></div>
+ </span>
  <a class="btn-primary" data-pane-group="lens" data-pane="free" hidden href="lens-new.html" style="text-decoration:none" title="Turn this query into a Lens for everyone who may use its Resources"><i class="ph ph-aperture" style="font-size:15px"></i>Make it a Lens</a>
  <!-- Greyed, with why on a hover or on focus: each Resource not published yet with its Level, or each table outside Data Hub (DEC-UX-232) -->
  <span class="why-anchor" data-pane-group="lens" data-pane="unpublished" hidden tabindex="0" aria-describedby="why-lens"><button class="btn-primary" type="button" disabled><i class="ph ph-aperture" style="font-size:15px"></i>Make it a Lens</button>
@@ -801,24 +806,36 @@
  <button class="seg on" data-target="colleague" role="tab" aria-selected="true">Colleague</button>
  <button class="seg" data-target="datateam" role="tab" aria-selected="false">Data Team</button>
 </div>
-<div class="proto-switch" data-group="flags" role="tablist" aria-label="Prototype: the row on top" style="bottom:68px;top:auto;right:24px">Row
- <button class="seg on" data-target="project" role="tab" aria-selected="true">In a project, 14 queries</button>
- <button class="seg" data-target="notin" role="tab" aria-selected="false">In a project, this one not in it</button>
- <button class="seg" data-target="elsewhere" role="tab" aria-selected="false">This one in another project</button>
- <button class="seg" data-target="this" role="tab" aria-selected="false">Flagged, no project</button>
- <button class="seg" data-target="others" role="tab" aria-selected="false">Three others flagged</button>
- <button class="seg" data-target="many" role="tab" aria-selected="false">Fourteen flagged</button>
- <button class="seg" data-target="none" role="tab" aria-selected="false">None</button>
+<!-- The sheet of the Project button and of New project (DEC-UX-318): the Projects the User is in, the one the query is in
+     left out, and New project with its name. ?project=add, move or new opens it. -->
+<div class="sheet-wrap" id="project-sheet" hidden>
+<div class="sheet-backdrop" data-sheet-close></div>
+<section class="sheet" role="dialog" aria-modal="true" aria-labelledby="project-sheet-title">
+ <div style="display:flex;align-items:flex-start;gap:10px">
+  <i class="ph ph-folders" style="font-size:22px;color:var(--text-secondary);margin-top:2px" aria-hidden="true"></i>
+  <div style="flex:1;min-width:0"><h2 id="project-sheet-title">Add to a project</h2></div>
+  <button class="icon-btn" data-sheet-close aria-label="Close"><i class="ph ph-x"></i></button>
+ </div>
+ <div class="sheet-list" id="project-sheet-list" style="margin-top:12px"></div>
+ <div class="sheet-foot">
+  <p class="meta" id="project-sheet-foot"></p>
+  <button class="btn-quiet" data-sheet-close>Cancel</button>
+  <button class="btn-primary" type="button" id="project-sheet-go">Add</button>
+ </div>
+</section>
+</div>
+<div class="proto-switch" data-group="flags" role="tablist" aria-label="Prototype: the Project of the query" style="bottom:68px;top:auto;right:24px">Row
+ <button class="seg on" data-target="credit" role="tab" aria-selected="true">In Credit leads Q4, 14 queries</button>
+ <button class="seg" data-target="partner" role="tab" aria-selected="false">In Partner review, 5 queries</button>
+ <button class="seg" data-target="none" role="tab" aria-selected="false">In no project: no row</button>
 </div>
 <script>
 // One scope of its own: app.js declares names of its own at the top level
 (() => {
-  // The row on top (DEC-UX-236, DEC-UX-282): the queries of the Project the User works in, or, in none, their own
-  // flagged queries; the switch at its start says which, and changes it. A tab each, in the order of the row; the first
-  // ten carry ⌘1 to ⌘9 and ⌘0, any further one no key (DEC-UX-283), and the tabs scroll sideways behind "All 14". In a
-  // Project, Flag is "Add to Credit leads Q4" and the × on a tab removes the query from it; in none, "Add to a project"
-  // puts the open query, and any flagged one ticked, into a Project, and the User then works in it. No quick-window
-  // button in the row (DEC-UX-284): ⌘⇧P and ⌘K open it. A tab marks a run still going (the turning circle), a result
+  // The row on top (DEC-UX-316, DEC-UX-317, DEC-UX-319): no flagged queries; while a Project is active, which follows the
+  // query that is open, a tab for its details without a key and then its queries in their order; the first ten carry ⌘1
+  // to ⌘9 and ⌘0, any further one no key (DEC-UX-283), and the tabs scroll sideways behind "All 14". The × on a tab
+  // removes the query from the Project. No quick-window button in the row (DEC-UX-284): ⌘⇧P and ⌘K open it. A tab marks a run still going (the turning circle), a result
   // not seen yet (a dot), a run that failed (a red dot) and a query that is Broken (the red mark of the panel). Hovered,
   // a tab offers its ×; dragged, it changes place, and the numbers follow, for everyone in a Project (OP-UX-95).
   const PEOPLE = { MP: 'Maxime Passenier', KL: 'Karel Leys', AC: 'An Claes', JP: 'Jonas Peeters', LD: 'Lotte Dewulf', EY: 'Elif Yilmaz' };
@@ -828,26 +845,19 @@
     partner: { name: 'Partner review', people: ['MP'], queries: [q('Partner share per month'), q('Leads per partner, last 12 weeks'), q('Partners without leads'), q('Partner contracts ending soon')] },
     listings: { name: 'Listings audit', people: ['MP', 'JP', 'LD', 'EY', 'KL'], queries: [q('Listings without a price', '', 'JP'), q('Price changes per week', '', 'LD'), q('Listings per agency', '', 'EY'), q('Duplicate listings', '', 'JP'), q('Days on market by province'), q('Listings per postal code, last 28 days', '', 'LD')] },
   };
-  const OWN = {
-    this: [q('Leads per source name'), q('Partner share per week', 'running'), q('Listings per postal code, last 28 days', 'new'), q('Saved searches by price band', 'failed')],
-    others: [q('Partner share per week', 'running'), q('Listings per postal code, last 28 days', 'new'), q('Saved searches by price band', 'failed')],
-    many: PROJECTS.credit.queries.slice(1, 12).concat([q('Leads per source name'), q('Leads per postal code'), q('Conversion per channel')]).map(x => ({ ...x, by: 'MP' })),
-    none: [],
-  };
-  const STATES = {
-    project: { work: 'credit', own: 'this' }, notin: { work: 'partner', own: 'this' }, elsewhere: { work: 'partner', own: 'this', moveFrom: 'credit' },
-    this: { work: null, own: 'this' }, others: { work: null, own: 'others' }, many: { work: null, own: 'many' }, none: { work: null, own: 'none' },
-  };
-  let work = 'credit', flags = OWN.this.map(x => ({ ...x }));
+  // Which Project the open query is in decides the row: none, no row (DEC-UX-317). The switch "Row" puts the query in one.
+  const STATES = { credit: 'credit', partner: 'partner', none: null };
   const fresh = () => { Object.values(PROJECTS).forEach(p => { p.base ??= p.queries.map(x => ({ ...x })); p.queries = p.base.map(x => ({ ...x })); }); };
   fresh();
   const here = () => document.getElementById('q-title').textContent;
-  const row = () => (work ? PROJECTS[work].queries : flags);
+  const projectOf = title => Object.keys(PROJECTS).find(k => PROJECTS[k].queries.some(x => x.title === title)) || null;
+  // The active Project follows what is open: the Project of the open query, or none (DEC-UX-317)
+  const active = () => projectOf(here());
+  const row = () => (active() ? PROJECTS[active()].queries : []);
   const keyOf = i => '⌘' + (i === 9 ? 0 : i + 1);
   const keyNo = i => (i < 10 ? String(i === 9 ? 0 : i + 1) : '');
   const esc2 = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   const names = p => { const o = p.people.filter(x => x !== 'MP').map(x => PEOPLE[x]); return o.length === 0 ? 'only you' : o.length <= 2 ? 'with ' + o.join(' and ') : `with ${o.length} colleagues`; };
-  const projectOf = title => Object.keys(PROJECTS).find(k => PROJECTS[k].queries.some(x => x.title === title));
   const mark = f => f.state === 'running' ? '<i class="ph ph-circle-notch q-flag-spin" role="img" aria-label="Running"></i>'
     : f.state === 'new' ? '<span class="q-flag-mark seen-not" role="img" aria-label="A result you have not seen yet"></span>'
     : f.state === 'failed' ? '<span class="q-flag-mark failed" role="img" aria-label="Its run failed"></span>'
@@ -855,122 +865,87 @@
   const what = { running: ', running', new: ', a result you have not seen yet', failed: ', its run failed', broken: ', Broken' };
   let openPop = null;
   function drawFlags() {
-    const bar = document.getElementById('q-flags'), list = row(), p = work && PROJECTS[work];
-    // With nothing flagged and no Project, no row: the quick window flags the first (DEC-UX-253)
-    bar.hidden = !work && list.length === 0;
-    const at = list.findIndex(f => f.title === here()), from = projectOf(here());
-    const chip = p
-      ? `<button class="q-proj" type="button" data-row-pop="work" aria-haspopup="menu" aria-expanded="false" title="You work in ${esc2(p.name)}: its queries are in this row. Click to work in another"><i class="ph-fill ph-folders" aria-hidden="true"></i><span class="clip">${esc2(p.name)}</span><span class="q-proj-people" title="${p.people.length} in it"><i class="ph ph-users"></i>${p.people.length}</span><i class="ph ph-caret-down caret" aria-hidden="true"></i></button>`
-      : `<button class="q-proj mine" type="button" data-row-pop="work" aria-haspopup="menu" aria-expanded="false" title="Your flagged queries: only you see them. Click to work in a project"><i class="ph-fill ph-flag" aria-hidden="true"></i><span class="clip">Flagged</span><i class="ph ph-caret-down caret" aria-hidden="true"></i></button>`;
-    const tabs = list.map((f, i) => `<a class="q-flag${f.title === here() ? ' current' : ''}" href="query.html" draggable="true" data-i="${i}"${f.title === here() ? ' aria-current="page"' : ''} title="${esc2(f.title)}${i < 10 ? ' · ' + keyOf(i) : ''}${p ? ' · by ' + PEOPLE[f.by] : ''}${what[f.state] || ''}">${i < 10 ? `<span class="kbd">${keyNo(i)}</span>` : '<span class="nokey" aria-hidden="true"></span>'}<span class="q-flag-name">${esc2(f.title)}</span>${mark(f)}<button class="q-flag-x" type="button" aria-label="${p ? `Remove ${esc2(f.title)} from ${esc2(p.name)}` : `Unflag ${esc2(f.title)}`}" title="${p ? `Remove it from ${esc2(p.name)}: the query stays with ${PEOPLE[f.by]}, who made it` : 'Unflag it: the query stays as it is'}"><i class="ph ph-x"></i></button></a>`).join('');
-    // Flag, in the row itself, for the open query while it is not in the row (DEC-UX-241): in a Project it adds the
-    // query to it, and a query of another Project moves (OP-UX-93); with no Project, "Add to a project" too
-    const add = at >= 0 ? '' : p
-      ? `<button class="q-flags-add" type="button" data-flag-add title="${from ? `It leaves ${esc2(PROJECTS[from].name)}: a query is in one project at most` : 'Everyone in the project can then open, change and run it'}"><i class="ph ph-plus"></i><span>${from ? 'Move to' : 'Add to'} ${esc2(p.name)}</span>${list.length < 10 ? `<span class="kbd">${keyOf(list.length)}</span>` : ''}</button>`
-      : `<button class="q-flags-add" type="button" data-flag-add title="Keep this query on top, to jump to it with its key"><i class="ph ph-flag"></i><span>Flag this query</span>${list.length < 10 ? `<span class="kbd">${keyOf(list.length)}</span>` : ''}</button>`;
-    const addp = p ? '' : `<button class="q-flags-add" type="button" data-row-pop="addp" aria-haspopup="dialog" aria-expanded="false" title="Put this query, and flagged ones you tick, into a project"><i class="ph ph-folder-simple-plus"></i><span>Add to a project</span></button>`;
-    const all = list.length > 6 ? `<button class="q-flags-all" type="button" data-row-pop="all" aria-haspopup="menu" aria-expanded="false" title="Every query of this row, with its key"><span>All ${list.length}</span><i class="ph ph-caret-down"></i></button>` : '';
-    bar.setAttribute('aria-label', p ? `The queries of ${p.name}` : 'Your flagged queries');
-    bar.innerHTML = chip + (list.length ? '<span class="q-flags-mod" title="Hold ⌘ and press the number of a query to open it">⌘</span>' : '')
-      + `<div class="q-flags-tabs${list.length > 8 ? ' many' : ''}">${tabs}</div><div class="q-flags-end">${add}${addp}${all}</div>` + pops();
-    if (openPop) { const pop = bar.querySelector(`#pop-${openPop}`); if (pop) { pop.hidden = false; bar.querySelector(`[data-row-pop="${openPop}"]`)?.setAttribute('aria-expanded', 'true'); } }
-    bar.querySelector('.q-flag.current')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-    // The breadcrumb names the Project of the open query (OP-UX-94)
+    const bar = document.getElementById('q-flags'), work = active(), p = work && PROJECTS[work], list = row();
+    // With no Project active, no row (DEC-UX-317)
+    bar.hidden = !p;
+    if (p) {
+      // First the details of the Project, without a key (DEC-UX-319); then its queries, ⌘1 to ⌘0
+      const details = `<a class="q-proj" href="query-project.html" title="The details of ${esc2(p.name)}: its queries, who is in it, Share"><i class="ph-fill ph-folders" aria-hidden="true"></i><span class="clip">${esc2(p.name)}</span><span class="q-proj-people" title="${p.people.length} in it"><i class="ph ph-users"></i>${p.people.length}</span></a>`;
+      const tabs = list.map((f, i) => `<a class="q-flag${f.title === here() ? ' current' : ''}" href="query.html" draggable="true" data-i="${i}"${f.title === here() ? ' aria-current="page"' : ''} title="${esc2(f.title)}${i < 10 ? ' · ' + keyOf(i) : ''} · by ${PEOPLE[f.by]}${what[f.state] || ''}">${i < 10 ? `<span class="kbd">${keyNo(i)}</span>` : '<span class="nokey" aria-hidden="true"></span>'}<span class="q-flag-name">${esc2(f.title)}</span>${mark(f)}<button class="q-flag-x" type="button" aria-label="Remove ${esc2(f.title)} from ${esc2(p.name)}" title="Remove it from ${esc2(p.name)}: the query stays with ${PEOPLE[f.by]}, who made it"><i class="ph ph-x"></i></button></a>`).join('');
+      const all = list.length > 6 ? `<button class="q-flags-all" type="button" data-row-pop="all" aria-haspopup="menu" aria-expanded="false" title="Every query of this row, with its key"><span>All ${list.length}</span><i class="ph ph-caret-down"></i></button>` : '';
+      const allPop = `<div class="q-pop end" id="pop-all" role="menu" aria-label="Every query of the row" hidden><div class="q-pop-h">${esc2(p.name)} · ${list.length} queries</div>`
+        + list.map((f, i) => `<a class="q-pop-opt${f.title === here() ? ' on' : ''}" href="query.html" role="menuitem" data-jump="${i}"><span class="kbd${i < 10 ? '' : ' none'}">${i < 10 ? keyOf(i) : '⌘0'}</span><span class="grow"><span class="item-title">${esc2(f.title)}</span><span class="meta">by ${PEOPLE[f.by]}${(what[f.state] || '')}</span></span>${mark(f)}</a>`).join('')
+        + '<div class="q-pop-foot"><span class="meta">⌘1 to ⌘0 open the first ten. Drag a tab to change the order, for everyone in the project.</span></div></div>';
+      bar.setAttribute('aria-label', `The queries of ${p.name}`);
+      bar.innerHTML = details + (list.length ? '<span class="q-flags-mod" title="Hold ⌘ and press the number of a query to open it">⌘</span>' : '')
+        + `<div class="q-flags-tabs${list.length > 8 ? ' many' : ''}">${tabs}</div><div class="q-flags-end">${all}</div>` + allPop;
+      if (openPop === 'all') { const pop = bar.querySelector('#pop-all'); if (pop) { pop.hidden = false; bar.querySelector('[data-row-pop="all"]')?.setAttribute('aria-expanded', 'true'); } }
+      bar.querySelector('.q-flag.current')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    } else bar.innerHTML = '';
+    // The breadcrumb names the Project of the open query, as a link to its details (DEC-UX-317)
     const crumb = document.getElementById('q-crumb');
-    if (crumb) crumb.innerHTML = from ? `Query / <a class="crumb-proj" href="query-project.html"><i class="ph-fill ph-folders" aria-hidden="true"></i>${esc2(PROJECTS[from].name)}</a>` + (from !== work ? ` <button class="text-link" type="button" data-work="${from}"><span>Work in it</span></button>` : '') : 'Query';
-    // The panel: a query in the row has the flag at its end, and so has the Project the User works in
-    document.querySelectorAll('.panel .q-item').forEach(item => {
-      const on = list.some(f => f.title === item.querySelector('.item-title')?.textContent);
-      const flag = item.querySelector('.flag-mark');
-      if (on && !flag) item.insertAdjacentHTML('beforeend', '<i class="ph-fill ph-flag flag-mark" role="img" aria-label="In the row"></i>');
-      if (!on && flag) flag.remove();
-    });
-    // The panel: the Project the User works in comes first, with "You work in it" and "Close project" under it, which
-    // stops working in it (DEC-UX-295)
+    if (crumb) crumb.innerHTML = p ? `Query / <a class="crumb-proj" href="query-project.html"><i class="ph-fill ph-folders" aria-hidden="true"></i>${esc2(p.name)}</a>` : 'Query';
+    // The Project button: what fits the query (DEC-UX-318)
+    const menu = document.getElementById('project-menu');
+    if (menu) menu.innerHTML = p
+      ? `<button class="menu-item" type="button" role="menuitem" data-project-sheet="move"><i class="ph ph-arrows-left-right"></i><span>Change project</span><span class="meta">now in ${esc2(p.name)}</span></button>`
+        + `<button class="menu-item" type="button" role="menuitem" data-project-remove><i class="ph ph-minus-circle"></i><span>Remove from project</span><span class="meta">it stays in your history</span></button>`
+      : '<button class="menu-item" type="button" role="menuitem" data-project-sheet="add"><i class="ph ph-folder-simple-plus"></i><span>Add to project</span><span class="meta">choose one, or a new one</span></button>';
+    // The panel: the active Project comes first and stands out (DEC-UX-317); no flags
     const label = document.querySelector('#proj-list > .panel-label');
     document.querySelectorAll('.proj-entry').forEach(en => {
-      const item = en.querySelector('.proj-item'), flag = item.querySelector('.flag-mark'), strip = en.querySelector('.proj-working'), on = en.dataset.proj === work;
-      if (on && !flag) item.insertAdjacentHTML('beforeend', '<i class="ph-fill ph-flag flag-mark" role="img" aria-label="You work in it" title="You work in it: its queries are in the row on top"></i>');
-      if (!on && flag) flag.remove();
-      if (on && !strip) en.querySelector('.proj-queries').insertAdjacentHTML('beforebegin', `<div class="proj-working"><i class="ph-fill ph-flag" aria-hidden="true"></i><span>You work in it</span><button class="btn-quiet proj-close" type="button" data-work="" title="Stop working in ${esc2(PROJECTS[work]?.name ?? '')}: the row on top shows your flagged queries again, and a new query is in no project. The project stays as it is"><i class="ph ph-sign-out"></i><span>Close project</span></button></div>`);
-      if (!on && strip) strip.remove();
+      const on = en.dataset.proj === work;
+      en.querySelector('.proj-item').classList.toggle('current', on);
       if (on && label && label.nextElementSibling !== en) { en.hidden = false; label.after(en); }
     });
   }
-  // The pop-outs of the row: what to work in, the whole row, Add to a project and New project
-  function pops() {
-    const p = work && PROJECTS[work], list = row(), check = on => on ? '<i class="ph ph-check q-pop-check" aria-hidden="true"></i>' : '';
-    const workPop = `<div class="q-pop" id="pop-work" role="menu" aria-label="Work in" hidden><div class="q-pop-h">Work in</div>`
-      + `<button class="q-pop-opt" type="button" role="menuitemradio" aria-checked="${!work}" data-work=""><i class="ph-fill ph-flag"></i><span class="grow"><span class="item-title">Your flagged queries</span><span class="meta">${flags.length} ${flags.length === 1 ? 'query' : 'queries'} · only you see them</span></span>${check(!work)}</button>`
-      + Object.entries(PROJECTS).map(([k, x]) => `<button class="q-pop-opt" type="button" role="menuitemradio" aria-checked="${work === k}" data-work="${k}"><i class="ph-fill ph-folders"></i><span class="grow"><span class="item-title">${esc2(x.name)}</span><span class="meta">${x.queries.length} queries · ${names(x)}</span></span>${check(work === k)}</button>`).join('')
-      + `<div class="q-pop-sep"></div><button class="q-pop-opt" type="button" data-row-pop="newproj"><i class="ph ph-plus"></i><span class="grow"><span class="item-title">New project</span></span></button>`
-      + (p ? `<a class="q-pop-opt" href="query-project.html"><i class="ph ph-arrow-square-out"></i><span class="grow"><span class="item-title">Open the page of ${esc2(p.name)}</span><span class="meta">its queries and who is in it; share, rename or delete it</span></span></a>` : '')
-      + '</div>';
-    const allPop = `<div class="q-pop end" id="pop-all" role="menu" aria-label="Every query of the row" hidden><div class="q-pop-h">${p ? esc2(p.name) : 'Your flagged queries'} · ${list.length} queries</div>`
-      + list.map((f, i) => `<a class="q-pop-opt${f.title === here() ? ' on' : ''}" href="query.html" role="menuitem" data-jump="${i}"><span class="kbd${i < 10 ? '' : ' none'}">${i < 10 ? keyOf(i) : '⌘0'}</span><span class="grow"><span class="item-title">${esc2(f.title)}</span>${p ? `<span class="meta">by ${PEOPLE[f.by]}${(what[f.state] || '')}</span>` : what[f.state] ? `<span class="meta">${what[f.state].slice(2)}</span>` : ''}</span>${mark(f)}</a>`).join('')
-      + `<div class="q-pop-foot"><span class="meta">⌘1 to ⌘0 open the first ten. Drag a tab to change the order${p ? ', for everyone in the project' : ''}.</span></div></div>`;
-    const others = flags.filter(f => f.title !== here());
-    const addPop = `<div class="q-pop end" id="pop-addp" role="dialog" aria-label="Add to a project" hidden><div class="q-pop-h">Add to a project</div>`
-      + Object.entries(PROJECTS).map(([k, x], i) => `<label class="q-pop-opt"><input type="radio" name="addp-to" value="${k}"${i === 0 ? ' checked' : ''}><span class="grow"><span class="item-title">${esc2(x.name)}</span><span class="meta">${x.queries.length} queries · ${names(x)}</span></span></label>`).join('')
-      + `<label class="q-pop-opt"><input type="radio" name="addp-to" value="new"><span class="grow"><span class="item-title">New project</span></span></label><div class="q-pop-new"><input placeholder="Its name" aria-label="Name of the new project"></div>`
-      + `<div class="q-pop-h" style="margin-top:12px">Queries</div>`
-      + `<label class="q-pop-opt"><input type="checkbox" name="addp-q" checked><span class="grow"><span class="item-title">${esc2(here())}</span><span class="meta">the query you have open</span></span></label>`
-      + others.map(f => `<label class="q-pop-opt"><input type="checkbox" name="addp-q"><span class="grow"><span class="item-title">${esc2(f.title)}</span><span class="meta">flagged, ${keyOf(flags.indexOf(f))}</span></span></label>`).join('')
-      + `<div class="q-pop-foot"><span class="meta">You then work in that project. Your flagged queries stay flagged, for when you work in none.</span><button class="btn-quiet" type="button" data-row-pop-close>Cancel</button><button class="btn-primary" type="button" data-addp-go>Add 1 query</button></div></div>`;
-    const newPop = `<div class="q-pop" id="pop-newproj" role="dialog" aria-label="New project" hidden><div class="q-pop-h">New project</div>`
-      + '<div style="padding:2px 8px"><label class="field"><span>Name</span><input id="np-name" placeholder="Credit leads Q4" maxlength="80"></label>'
-      + '<label class="field"><span>What it is for · optional</span><textarea rows="2" maxlength="500" placeholder="The queries behind the quarterly review of credit leads"></textarea></label></div>'
-      + `<label class="q-pop-opt"><input type="checkbox" checked><span class="grow"><span class="item-title">Put ${esc2(here())} in it</span><span class="meta">the query you have open</span></span></label>`
-      + '<div class="q-pop-foot"><span class="meta">Only you are in it until you share it, on its page.</span><button class="btn-quiet" type="button" data-row-pop-close>Cancel</button><button class="btn-primary" type="button" data-newproj-go>Make it</button></div></div>';
-    return workPop + allPop + (p ? '' : addPop) + newPop;
+  // The pop-out "All 14" of the row
+  // The sheet of the Project button and of New project (DEC-UX-318): the Projects the User is in, the one the query is in
+  // left out, and New project with its name
+  function projectSheet(mode) {
+    const from = active(), wrap = document.getElementById('project-sheet');
+    document.getElementById('project-sheet-title').textContent = mode === 'new' ? 'New project' : mode === 'move' ? `Move ${here()} to another project` : `Add ${here()} to a project`;
+    const opts = mode === 'new' ? '' : Object.entries(PROJECTS).filter(([k]) => k !== from).map(([k, x], i) => `<label class="q-pop-opt"><input type="radio" name="proj-to" value="${k}"${i === 0 ? ' checked' : ''}><i class="ph-fill ph-folders"></i><span class="grow"><span class="item-title">${esc2(x.name)}</span><span class="meta">${x.queries.length} queries · ${names(x)}</span></span></label>`).join('')
+      + '<label class="q-pop-opt"><input type="radio" name="proj-to" value="new"><i class="ph ph-plus"></i><span class="grow"><span class="item-title">New project</span></span></label>';
+    document.getElementById('project-sheet-list').innerHTML = opts
+      + `<div class="q-pop-new" id="proj-new"${mode === 'new' ? '' : ' hidden'}><label class="field"><span>Name</span><input id="np-name" placeholder="Credit leads Q4" maxlength="80"></label>`
+      + (mode === 'new' ? '<label class="field"><span>What it is for · optional</span><textarea rows="2" maxlength="500" placeholder="The queries behind the quarterly review of credit leads"></textarea></label>' : '') + '</div>';
+    document.getElementById('project-sheet-go').textContent = mode === 'new' ? 'Make it' : mode === 'move' ? 'Move' : 'Add';
+    document.getElementById('project-sheet-foot').textContent = mode === 'new' ? 'Only you are in it until you share it. It opens, so it is active.' : mode === 'move' ? `It leaves ${PROJECTS[from].name}: a query is in one project at most. The project you choose is then active.` : 'It goes at the end of the row of that project, which is then active.';
+    wrap.dataset.mode = mode; wrap.hidden = false;
   }
-  // Flag this query, and unflag it; in a Project, add it to it and take it out (DEC-UX-282). Only the row changes:
-  // the query stays open as it is
-  window.toggleFlag = () => {
-    const list = row(), at = list.findIndex(f => f.title === here());
-    if (at >= 0) { list.splice(at, 1); drawFlags(); return; }
-    const from = work && projectOf(here());
-    if (from && from !== work) { const src = PROJECTS[from].queries; src.splice(src.findIndex(f => f.title === here()), 1); }
-    list.push(q(here()));
-    drawFlags();
-  };
-  window.workIn = k => { work = k || null; openPop = null; drawFlags(); };
-  window.rowAdd = title => { if (!row().some(f => f.title === title)) row().push(q(title)); drawFlags(); };
-  window.openRowPop = name => { openPop = name; if (name === 'addp' && work) openPop = 'work'; drawFlags(); document.querySelector(`#pop-${openPop} input, #pop-${openPop} button`)?.focus(); };
+  window.openProjectSheet = projectSheet;
+  document.addEventListener('change', e => { if (e.target.name === 'proj-to') document.getElementById('proj-new').hidden = e.target.value !== 'new'; });
+  document.getElementById('project-sheet-go')?.addEventListener('click', () => {
+    const wrap = document.getElementById('project-sheet'), mode = wrap.dataset.mode;
+    if (mode === 'new') { location.href = 'query-project.html?proj=new'; return; }
+    let to = document.querySelector('input[name="proj-to"]:checked')?.value;
+    if (to === 'new') { PROJECTS.fresh = { name: document.getElementById('np-name').value.trim() || 'New project', people: ['MP'], queries: [] }; to = 'fresh'; }
+    const from = active();
+    if (from) PROJECTS[from].queries = PROJECTS[from].queries.filter(f => f.title !== here());
+    PROJECTS[to].queries.push(q(here()));
+    wrap.hidden = true; drawFlags();
+  });
+  window.rowAdd = title => { const k = active(); if (k && !PROJECTS[k].queries.some(f => f.title === title)) PROJECTS[k].queries.push(q(title)); drawFlags(); };
+  window.removeFromProject = () => { const k = active(); if (k) PROJECTS[k].queries = PROJECTS[k].queries.filter(f => f.title !== here()); drawFlags(); };
   // No Hide in the head of the page (DEC-UX-246): the eye in the panel and the quick window hide it
   window.queryHidden = false;
   window.toggleHidden = () => { window.queryHidden = !window.queryHidden; };
   document.addEventListener('click', e => {
-    const bar = document.getElementById('q-flags');
     const opener = e.target.closest('[data-row-pop]');
-    if (opener) { e.preventDefault(); const name = opener.dataset.rowPop; openPop = openPop === name ? null : name; drawFlags(); return; }
-    if (e.target.closest('[data-row-pop-close]')) { openPop = null; drawFlags(); return; }
-    const w = e.target.closest('[data-work]');
-    if (w) { e.preventDefault(); window.workIn(w.dataset.work); return; }
-    if (e.target.closest('[data-addp-go]')) {
-      const to = bar.querySelector('input[name="addp-to"]:checked')?.value || 'credit';
-      if (to === 'new') { PROJECTS.fresh = { name: bar.querySelector('.q-pop-new input').value.trim() || 'New project', people: ['MP'], queries: [] }; }
-      const key = to === 'new' ? 'fresh' : to;
-      if (!PROJECTS[key].queries.some(f => f.title === here())) PROJECTS[key].queries.push(q(here()));
-      window.workIn(key); return;
-    }
-    if (e.target.closest('[data-newproj-go]')) {
-      PROJECTS.fresh = { name: document.getElementById('np-name')?.value.trim() || 'New project', people: ['MP'], queries: [q(here())] };
-      window.workIn('fresh'); return;
-    }
+    if (opener) { e.preventDefault(); openPop = openPop === opener.dataset.rowPop ? null : opener.dataset.rowPop; drawFlags(); return; }
+    const sheet = e.target.closest('[data-project-sheet]');
+    if (sheet) { e.preventDefault(); document.getElementById('project-menu').hidden = true; projectSheet(sheet.dataset.projectSheet); return; }
+    if (e.target.closest('[data-project-remove]')) { document.getElementById('project-menu').hidden = true; window.removeFromProject(); return; }
+    if (e.target.closest('#project-btn')) { const m = document.getElementById('project-menu'); m.hidden = !m.hidden; document.getElementById('project-btn').setAttribute('aria-expanded', String(!m.hidden)); return; }
+    if (!e.target.closest('.project-menu-wrap')) { const m = document.getElementById('project-menu'); if (m) m.hidden = true; }
     if (openPop && !e.target.closest('.q-pop')) { openPop = null; drawFlags(); }
   });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && openPop) { openPop = null; drawFlags(); } });
-  // Add to a project: the button counts the queries ticked
-  document.addEventListener('change', e => {
-    if (e.target.name !== 'addp-q') return;
-    const n = document.querySelectorAll('input[name="addp-q"]:checked').length, go = document.querySelector('[data-addp-go]');
-    if (go) { go.textContent = n === 1 ? 'Add 1 query' : `Add ${n} queries`; go.disabled = n === 0; }
-  });
   document.getElementById('q-flags').addEventListener('click', e => {
-    if (e.target.closest('[data-flag-add]')) { window.toggleFlag(); return; }
     const x = e.target.closest('.q-flag-x'), tab = e.target.closest('.q-flag'), jumpTo = e.target.closest('[data-jump]');
-    if (x) { e.preventDefault(); row().splice(+tab.dataset.i, 1); drawFlags(); return; }
+    // The × takes it out of the Project; taking out the open query leaves no Project active (DEC-UX-317)
+    if (x) { e.preventDefault(); const k = active(); PROJECTS[k].queries.splice(+tab.dataset.i, 1); drawFlags(); return; }
     if (tab) { e.preventDefault(); jump(+tab.dataset.i); }
     if (jumpTo) { e.preventDefault(); openPop = null; jump(+jumpTo.dataset.jump); }
   });
@@ -982,7 +957,7 @@
     if (f.state === 'new') f.state = '';
     drawFlags();
   }
-  // ⌘1 to ⌘9 and ⌘0 open the first ten; a query further on has no key (DEC-UX-283)
+  // ⌘1 to ⌘9 and ⌘0 open the first ten queries of the active Project; a query further on has no key (DEC-UX-283)
   document.addEventListener('keydown', e => {
     if (!(e.metaKey || e.ctrlKey) || e.shiftKey || e.altKey || !/^[0-9]$/.test(e.key)) return;
     // While the quick window is open, its own ⌘1 to ⌘9 highlight a row there (DEC-UX-242)
@@ -990,7 +965,7 @@
     e.preventDefault();
     jump(e.key === '0' ? 9 : +e.key - 1);
   }, true);
-  // Dragging a tab changes its place, and the numbers follow; in a Project, for everyone in it (OP-UX-95)
+  // Dragging a tab changes its place, and the numbers follow, for everyone in the Project (OP-UX-95)
   let dragged = null;
   const bar = document.getElementById('q-flags');
   bar.addEventListener('dragstart', e => { const t = e.target.closest('.q-flag'); if (!t) return; dragged = +t.dataset.i; t.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
@@ -998,28 +973,28 @@
   bar.addEventListener('drop', e => { const t = e.target.closest('.q-flag'); if (dragged === null || !t) return; e.preventDefault(); const list = row(); const [f] = list.splice(dragged, 1); list.splice(+t.dataset.i > dragged ? +t.dataset.i - 1 : +t.dataset.i, 0, f); dragged = null; drawFlags(); });
   bar.addEventListener('dragend', () => { dragged = null; drawFlags(); });
   document.querySelectorAll('[data-group="flags"] [data-target]').forEach(b => b.addEventListener('click', () => {
-    const st = STATES[b.dataset.target];
-    document.getElementById('q-title').textContent = 'Leads per source name';
+    const to = STATES[b.dataset.target];
     delete PROJECTS.fresh; fresh(); openPop = null;
-    if (b.dataset.target !== 'project' && b.dataset.target !== 'elsewhere') PROJECTS.credit.queries = PROJECTS.credit.queries.filter(f => f.title !== 'Leads per source name');
-    work = st.work; flags = OWN[st.own].map(x => ({ ...x }));
+    PROJECTS.credit.queries = PROJECTS.credit.queries.filter(f => f.title !== 'Leads per source name');
+    document.getElementById('q-title').textContent = 'Leads per source name';
+    if (to) PROJECTS[to].queries.unshift(q('Leads per source name'));
     drawFlags();
   }));
   drawFlags();
-  // ?flags=many picks a case of the row (app.js); ?rowpop=work, all, addp or newproj opens a pop-out of it
-  const popParam = new URLSearchParams(location.search).get('rowpop');
-  if (popParam) setTimeout(() => window.openRowPop(popParam), 50);
+  // ?rowpop=all opens the list of the row; ?project=add or move opens the sheet of the Project button
+  const ask = new URLSearchParams(location.search);
+  if (ask.get('rowpop') === 'all') setTimeout(() => { openPop = 'all'; drawFlags(); }, 50);
+  if (ask.get('project')) setTimeout(() => projectSheet(ask.get('project')), 50);
 
   // The commands of a query in the quick window (DEC-UX-237, DEC-UX-239): a command for every button of the page that
-  // does something to it, only what applies now, such as Flag or Unflag, Hide or Show again; Add a table only for a
-  // power user; what cannot be done now greyed, with why. Every command of Projects too (DEC-UX-288): in a Project,
-  // Add this query to it or Remove it from it, Work in another project, Stop working in it, Open its page and Share it; in
-  // none, Flag or Unflag, Add this query to a project and Work in a project; New project in both.
+  // does something to it, only what applies now, such as Hide or Show again; Add a table only for a power user; what
+  // cannot be done now greyed, with why. The commands of its Project button too (DEC-UX-318): Add to project in none,
+  // Change project and Remove from project in one; and New project (DEC-UX-288).
   window.QUICK = {
     group: 'This query',
     get where() { return 'Query · ' + here(); },
     get commands() {
-      const list = row(), at = list.findIndex(f => f.title === here()), p = work && PROJECTS[work], from = projectOf(here());
+      const p = active() && PROJECTS[active()];
       const hidden = !!window.queryHidden;
       const side = new URLSearchParams(location.search).get('layout') === 'side';
       const state = g => document.querySelector(`[data-group="${g}"] .seg.on`)?.dataset.target;
@@ -1040,23 +1015,14 @@
         lens === 'linked'
           ? { icon: 'ph ph-arrows-clockwise', title: 'Update the Lens', meta: 'overwrites Leads per source name with this query', click: '[data-sheet-open="update-lens"]', words: 'lens update overwrite' }
           : { icon: 'ph ph-aperture', title: 'Make it a Lens', meta: 'for everyone who may use its Resources', run: () => { location.href = 'lens-new.html'; }, disabled: lens === 'unpublished', why: 'Not published yet: Lead sources. A Lens is made only on published Resources.', words: 'lens create new make share' },
-        // The row: in a Project, adding the query to it and taking it out; in none, flagging it (DEC-UX-282, DEC-UX-288)
+        // The Project button (DEC-UX-318): Add to project in none; Change project and Remove from project in one
         ...(p ? [
-          at >= 0
-            ? { icon: 'ph ph-minus-circle', title: `Remove this query from ${p.name}`, meta: `takes ${at < 10 ? keyOf(at) : 'its tab'} away; the query stays with ${PEOPLE[list[at].by]}`, run: () => window.toggleFlag(), words: 'project remove unflag flag pin row' }
-            : { icon: 'ph ph-plus-circle', title: `${from ? 'Move' : 'Add'} this query to ${p.name}`, meta: from ? `it leaves ${PROJECTS[from].name}` : `everyone in it can open, change and run it${list.length < 10 ? ', as ' + keyOf(list.length) : ''}`, run: () => window.toggleFlag(), words: 'project add flag pin row move' },
-          { icon: 'ph ph-folders', title: 'Work in another project', meta: 'or in your flagged queries', run: () => window.openRowPop('work'), words: 'project switch change row flagged' },
-          { icon: 'ph ph-flag', title: `Stop working in ${p.name}`, meta: 'the row shows your flagged queries again', run: () => window.workIn(''), words: 'project leave close row flagged' },
-          { icon: 'ph ph-arrow-square-out', title: `Open the page of ${p.name}`, meta: 'its queries and who is in it', run: () => { location.href = 'query-project.html'; }, words: 'project page open detail' },
-          { icon: 'ph ph-share-network', title: `Share ${p.name}`, meta: `${p.people.length} in it`, run: () => { location.href = 'query-project.html?share=open'; }, words: 'project share people colleague invite add member' },
+          { icon: 'ph ph-arrows-left-right', title: 'Change project', meta: `now in ${p.name}; choose another`, run: () => window.openProjectSheet('move'), words: 'project move change other' },
+          { icon: 'ph ph-minus-circle', title: 'Remove from project', meta: `takes it out of ${p.name}; it stays in your history`, run: () => window.removeFromProject(), words: 'project remove out leave unpin' },
         ] : [
-          at >= 0
-            ? { icon: 'ph-fill ph-flag', title: 'Unflag this query', meta: `takes it off the top${at < 10 ? ', and ' + keyOf(at) + ' with it' : ''}`, run: () => window.toggleFlag(), words: 'flag pin remove quick list' }
-            : { icon: 'ph ph-flag', title: 'Flag this query', meta: `keeps it on top${list.length < 10 ? ', as ' + keyOf(list.length) : ''}`, run: () => window.toggleFlag(), words: 'pin star keep quick list' },
-          { icon: 'ph ph-folder-simple-plus', title: 'Add this query to a project', meta: 'and flagged ones you tick', run: () => window.openRowPop('addp'), words: 'project add move folder' },
-          { icon: 'ph ph-folders', title: 'Work in a project', meta: 'its queries in the row on top', run: () => window.openRowPop('work'), words: 'project switch row open' },
+          { icon: 'ph ph-folder-simple-plus', title: 'Add to project', meta: 'choose one, or a new one', run: () => window.openProjectSheet('add'), words: 'project add pin keep put' },
         ]),
-        { icon: 'ph ph-plus', title: 'New project', meta: 'with this query in it', run: () => window.openRowPop('newproj'), words: 'project create make folder' },
+        { icon: 'ph ph-plus', title: 'New project', meta: 'with this query in it', run: () => window.openProjectSheet('new'), words: 'project create make folder' },
         { icon: 'ph ph-pencil-simple', title: 'Rename this query', meta: 'its name and question, in place', run: () => { const h = document.getElementById('q-title'); h.contentEditable = 'true'; h.focus(); }, words: 'rename name question title' },
         // No buttons for these on the page: the quick window does them (DEC-UX-248)
         { icon: 'ph ph-arrows-in-line-vertical', title: 'Fold all', meta: 'every CTE of the SQL', run: () => window.foldAllCtes?.(), words: 'collapse cte' },

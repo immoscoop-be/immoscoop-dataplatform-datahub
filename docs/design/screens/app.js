@@ -1972,17 +1972,18 @@ document.addEventListener('click', e => {
 });
 
 // The quick window (DEC-UX-237): Cmd+Shift+P or Cmd+K (Ctrl on Windows), anywhere in Data Hub, also while typing in the SQL
-// editor. Empty, it lists the commands of the screen it opened on (a page declares them in window.QUICK), the flagged
-// queries with their keys, and Go to: every section. Typed, it searches those and everything the User may see,
+// editor. Empty, it lists the commands of the screen it opened on (a page declares them in window.QUICK), the queries
+// of the active Project with their keys (DEC-UX-317), and Go to: every section. Typed, it searches those and everything the User may see,
 // Resources, Collections, Lenses, their queries and Learning Cards, grouped by kind, each with its kind on the right.
 // Up and Down move, Enter does what the row says, Escape, the shortcut again or a click beside it closes it.
 // Empty, it lists first what the User did from it in this session, most recent first, five at most (DEC-UX-242). The
 // first nine rows that can be done carry ⌘1 to ⌘9: that key highlights the row, and Enter then does it; while the window
-// is open, ⌘1 to ⌘9 no longer open a flagged query, whose key shows in its name line.
+// is open, ⌘1 to ⌘9 no longer open a query of the row, whose key shows in its name line.
 // What the User may never do is not listed; what they cannot do right now is greyed, with why (DEC-UX-207).
 // Prototype: ?quick=open opens it, ?quick=open&q=lead with a search typed.
 (() => {
   const role = () => document.documentElement.dataset.role || 'colleague';
+  // The queries of the active Project, in its row (DEC-UX-317)
   const FLAGGED = [
     { title: 'Leads per source name', meta: '⌘1', href: 'query.html' },
     { title: 'Partner share per week', meta: '⌘2', href: 'query.html' },
@@ -2034,7 +2035,7 @@ document.addEventListener('click', e => {
     { group: 'Learning Cards', icon: 'ph ph-graduation-cap', title: 'When a figure is final', meta: 'K5.4', href: 'learning-card.html' },
   ];
   const KIND = { Resources: 'Resource', Collections: 'Collection', Lenses: 'Lens', Projects: 'Project', 'Your queries': 'Query', 'Learning Cards': 'Learning Card' };
-  const ORDER = ['Commands', 'Flagged queries', 'Projects', 'Resources', 'Collections', 'Lenses', 'Your queries', 'Learning Cards', 'Go to'];
+  const ORDER = ['Commands', 'This project', 'Projects', 'Resources', 'Collections', 'Lenses', 'Your queries', 'Learning Cards', 'Go to'];
   const back = document.createElement('div');
   back.className = 'quick-backdrop'; back.hidden = true;
   const win = document.createElement('section');
@@ -2061,18 +2062,18 @@ document.addEventListener('click', e => {
     const all = [
       ...here,
       ...COMMANDS.map(r => ({ ...r, group: 'Commands', kind: 'Command' })),
-      // On a flagged query, the next and the previous one, round the row (DEC-UX-241)
+      // On a query of the active Project, the next and the previous one, round the row (DEC-UX-241)
       ...(document.querySelector('.q-flag.current') ? [
-        { icon: 'ph ph-arrow-right', title: 'Next flagged query', meta: 'Partner share per week · ⌘2', href: 'query.html', group: 'Flagged queries', kind: 'Command', words: 'next flagged tab switch' },
-        { icon: 'ph ph-arrow-left', title: 'Previous flagged query', meta: 'Saved searches by price band · ⌘4', href: 'query.html', group: 'Flagged queries', kind: 'Command', words: 'previous flagged tab switch back' },
+        { icon: 'ph ph-arrow-right', title: 'Next query in the row', meta: 'Partner share per week · ⌘2', href: 'query.html', group: 'This project', kind: 'Command', words: 'next tab switch project row' },
+        { icon: 'ph ph-arrow-left', title: 'Previous query in the row', meta: 'Saved searches by price band · ⌘4', href: 'query.html', group: 'This project', kind: 'Command', words: 'previous tab switch back project row' },
       ] : []),
-      ...FLAGGED.map(r => ({ ...r, icon: 'ph-fill ph-flag', group: 'Flagged queries', kind: 'Query' })),
+      ...(document.querySelector('.q-flags:not([hidden]) .q-proj') ? FLAGGED.map(r => ({ ...r, icon: 'ph ph-table', group: 'This project', kind: 'Query' })) : []),
       ...ITEMS.map(r => ({ ...r, kind: KIND[r.group] })),
       ...GO.filter(visible).map(r => ({ ...r, group: 'Go to', kind: 'Section' })),
     ];
     let shown;
     if (!q) {
-      const usual = [...here, ...all.filter(r => r.group === 'Flagged queries'), ...all.filter(r => r.group === 'Go to')];
+      const usual = [...here, ...all.filter(r => r.group === 'This project'), ...all.filter(r => r.group === 'Go to')];
       const used = recent.map(title => usual.find(r => r.title === title)).filter(Boolean).slice(0, 5);
       shown = [...used.map(r => ({ ...r, group: 'Recently used' })), ...usual.filter(r => !used.includes(r))];
     }

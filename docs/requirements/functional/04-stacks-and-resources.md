@@ -485,7 +485,7 @@ Resources added to a query, which start a new query ([DEC-UX-73](../../design/pr
 <a id="fr-sr-60"></a>
 ### FR-SR-60 · A User flags queries to work on several side by side
 
-**Status:** Implemented · **Source:** Max, 2026-11-13 ([DEC-UX-236](../../design/principles.md#dec-ux-236), [DEC-UX-241](../../design/principles.md#dec-ux-241)) · **Screens:** [query](../../design/screens/query.html), [query-new](../../design/screens/query-new.html)
+**Status:** Withdrawn · **Source:** Max, 2026-11-13 ([DEC-UX-236](../../design/principles.md#dec-ux-236), [DEC-UX-241](../../design/principles.md#dec-ux-241))
 
 A User flags a query, theirs or one they may read, to keep it in a row on top of every screen of Query: at most ten, in the order they were flagged, which dragging a tab changes ([OP-UX-84](../../design/principles.md#op-ux-84)). "Flag this query" is in that row itself, while fewer than ten are flagged; the × on a tab unflags it, and the query stays open as it is ([DEC-UX-241](../../design/principles.md#dec-ux-241)). Cmd+1 to Cmd+0, Ctrl on Windows and Linux, open the first to the tenth on those screens, and elsewhere stay the browser's ([OP-UX-86](../../design/principles.md#op-ux-86)). A flagged query stays as the User left it while they work in another, a run still going included, until the browser tab closes or reloads; its tab shows a run going, a result or a failure not seen yet, and Broken ([OP-UX-85](../../design/principles.md#op-ux-85)). The flags follow the User to every computer they sign in on. On a flagged query, the quick window goes to the next and the previous one, round the row.
 
@@ -494,6 +494,8 @@ A User flags a query, theirs or one they may read, to keep it in a row on top of
 *Note of 2026-11-14: with no query flagged the row is not shown, and the quick window flags the first ([DEC-UX-253](../../design/principles.md#dec-ux-253)).*
 
 *Note of 2026-11-19: the row holds the queries of the Project the User works in, or their flagged queries, up to 50, the first ten with a key ([FR-SR-64](#fr-sr-64)).*
+
+*Withdrawn on 2026-11-20: there are no flagged queries; a query is kept on top by being in a Project, and the row holds the active Project ([FR-SR-72](#fr-sr-72), [DEC-UX-316](../../design/principles.md#dec-ux-316)).*
 
 <a id="fr-sr-61"></a>
 ### FR-SR-61 · The quick window does the commands of a query, and goes anywhere
@@ -530,14 +532,18 @@ A User makes a Project, a set of queries with a name and a sentence on what it i
 
 *Note of 2026-11-19, later: a Project holds any number of queries ([DEC-SR-49](#dec-sr-49)), and Claude sets one up and keeps its queries in it ([FR-CL-39](17-claude.md#fr-cl-39)).*
 
+*Note of 2026-11-20: a query goes into a Project, changes Project or leaves one with the Project button on the query ([FR-SR-73](#fr-sr-73)); the page of a Project is the first tab of its row, and has no Work in it ([FR-SR-72](#fr-sr-72)).*
+
 <a id="fr-sr-64"></a>
 ### FR-SR-64 · The row on top holds what the User works in, more than ten
 
-**Status:** Implemented · **Source:** Max, 2026-11-19 ([DEC-UX-282](../../design/principles.md#dec-ux-282), [DEC-UX-283](../../design/principles.md#dec-ux-283), [DEC-UX-284](../../design/principles.md#dec-ux-284), [OP-UX-94](../../design/principles.md#op-ux-94), [OP-UX-95](../../design/principles.md#op-ux-95), [OP-UX-96](../../design/principles.md#op-ux-96)) · **Screens:** [query](../../design/screens/query.html)
+**Status:** Withdrawn · **Source:** Max, 2026-11-19 ([DEC-UX-282](../../design/principles.md#dec-ux-282), [DEC-UX-283](../../design/principles.md#dec-ux-283), [DEC-UX-284](../../design/principles.md#dec-ux-284), [OP-UX-94](../../design/principles.md#op-ux-94), [OP-UX-95](../../design/principles.md#op-ux-95), [OP-UX-96](../../design/principles.md#op-ux-96))
 
 The row on top of Query holds the queries of the Project the User works in, or, in none, their own flagged queries ([FR-SR-60](#fr-sr-60)); a switch at its start names which and changes it. The User works in one Project at a time, or none, kept with their settings on every computer, and it changes only when they choose ([OP-UX-94](../../design/principles.md#op-ux-94)). In a Project, flagging a query adds it to the Project, and unflagging removes it. The row holds up to 50 queries: the first ten keep Cmd+1 to Cmd+0, any further one has no key, and "All 14" at its end lists them all ([OP-UX-96](../../design/principles.md#op-ux-96)). *Note of 2026-11-19, later: in a Project the row holds all its queries, with no limit; only the flagged queries stay at 50 ([DEC-SR-49](#dec-sr-49)).* *Note of 2026-11-20: the panel puts the Project the User works in first, with Close project, which stops working in it; a new query is in no Project unless it is made in one ([DEC-UX-295](../../design/principles.md#dec-ux-295)).* The order of a Project is one for everyone in it ([OP-UX-95](../../design/principles.md#op-ux-95)). The row has no button for the quick window.
 
 **Makes easy:** switching from one piece of work to another with all its queries at hand, and saying "Cmd+3" to a colleague in the same Project. **Makes hard:** losing the keys of the queries that matter most to a long row, and a row that changes under the User without their choosing.
+
+*Withdrawn on 2026-11-20: the User no longer works in a Project; the row holds the Project that is active, which follows what is open ([FR-SR-72](#fr-sr-72), [DEC-UX-317](../../design/principles.md#dec-ux-317)).*
 
 <a id="fr-sr-65"></a>
 ### FR-SR-65 · A Project is shared, and everyone in it has every right on its queries
@@ -586,6 +592,8 @@ The quick window, Cmd+Shift+P or Cmd+K, holds every command of Projects ([FR-SR-
 
 *Note of 2026-11-19, later: the quick window also starts a new query in each Project, and a blank one for a power user ([FR-SR-71](#fr-sr-71)).*
 
+*Note of 2026-11-20: with no flagged queries and no Project to work in, the quick window holds on a query Add to project, or Change project and Remove from project; New project; each Project as a place to go to; and on the details of a Project Share it, New query in it, Rename it, Change the order, Leave it and Delete it ([FR-SR-73](#fr-sr-73)).*
+
 <a id="fr-sr-70"></a>
 ### FR-SR-70 · The first 100 rows of a result are copied as JSON or CSV
 
@@ -603,6 +611,26 @@ In the upper right corner of the result of a query in Query, a menu button opens
 On every screen, the quick window offers, to who may make queries: "New query", which opens the screen of a new query, to choose its Resources with the Lenses on them first ([FR-SR-47](#fr-sr-47)); and "New query in" each Project the User is in, the one they work in first, which makes an empty query at the end of its row, opens it at once and makes it the Project they work in ([FR-SR-68](#fr-sr-68)). Only to a power user ([FR-SR-56](#fr-sr-56)), it also offers "New blank query": an empty query in no Project, named "New query" and the date, without Resources, opened at once, for SQL on the tables Data Hub knows or to add a Resource to.
 
 **Makes easy:** starting the next query from the keyboard, where the work is. **Makes hard:** a blank query outside any Project for a User whose query must start from Resources and the Lenses on them.
+
+*Note of 2026-11-20: New query in a Project opens the query in it, so that Project is active ([FR-SR-72](#fr-sr-72)).*
+
+<a id="fr-sr-72"></a>
+### FR-SR-72 · The active Project follows what is open, its details first in its row
+
+**Status:** Implemented · **Source:** Max, 2026-11-20 ([DEC-UX-316](../../design/principles.md#dec-ux-316), [DEC-UX-317](../../design/principles.md#dec-ux-317), [DEC-UX-319](../../design/principles.md#dec-ux-319)) · **Screens:** [query](../../design/screens/query.html), [query-project](../../design/screens/query-project.html), [query-new](../../design/screens/query-new.html)
+
+A Project is active while its details or one of its queries is open: a click on a Project in the panel or the quick window opens its details, and a query of a Project opened from the row, the panel, the history or a link makes that Project active. Opening a query in no Project, starting a new query that is not made in the Project, or taking the open query out of it, leaves none active. While a Project is active, the row on top of every screen of Query holds a tab for its details, without a key, and then its queries in the one order of everyone in it, the first ten with Cmd+1 to Cmd+0 (Ctrl on Windows and Linux), any further one without a key, behind "All 14". With none active there is no row. There are no flagged queries: a query is kept on top only by being in a Project, and the flags of before are taken away. A query of the row stays as the User left it while they are in another, a run still going included; its tab shows a run going, a result or a failure not seen yet, and Broken. Nothing activates or deactivates a Project but what is open, and nothing is kept for it.
+
+**Makes easy:** being in the right piece of work by opening one of its queries, and having its other queries and its details one key or one click away. **Makes hard:** working in a Project that has nothing to do with the query on screen, and a second way to keep queries on top beside Projects.
+
+<a id="fr-sr-73"></a>
+### FR-SR-73 · Every query has a Project button
+
+**Status:** Implemented · **Source:** Max, 2026-11-20 ([DEC-UX-318](../../design/principles.md#dec-ux-318)) · **Screens:** [query](../../design/screens/query.html)
+
+In the head of every query, a menu button "Project" offers what fits it: in no Project, Add to project; in one, Change project and Remove from project. Add and Change open a sheet with the Projects the User is in, the one the query is in left out, and New project with its name; the query goes to the end of the row of the Project chosen, leaving the one it was in, and that Project is then active. Remove takes the query out at once, and it stays with whoever made it, in their history. Add and Change are for who writes the query; Remove for anyone in its Project. The quick window holds the same.
+
+**Makes easy:** putting the query on screen into a piece of work, or moving it to another, from where it is. **Makes hard:** a query in two Projects at once, and moving a query someone else writes.
 
 <a id="fr-sr-35"></a>
 ### FR-SR-35 · A new Resource waits for a Collection

@@ -47,7 +47,7 @@
   const GROUPS: Record<Exclude<QuickGroup, 'screen'>, string> = {
     recent: 'quick.group.recent',
     commands: 'quick.group.commands',
-    flagged: 'quick.group.flagged',
+    row: 'quick.group.row',
     projects: 'quick.group.projects',
     resources: 'quick.group.resources',
     collections: 'quick.group.collections',
