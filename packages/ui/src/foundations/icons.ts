@@ -165,6 +165,8 @@ import copy from '@phosphor-icons/core/assets/regular/copy.svg?raw';
 import bracketsCurly from '@phosphor-icons/core/assets/regular/brackets-curly.svg?raw';
 import fileCsv from '@phosphor-icons/core/assets/regular/file-csv.svg?raw';
 import filePlus from '@phosphor-icons/core/assets/regular/file-plus.svg?raw';
+// Close project in the panel of Query (DEC-UX-295).
+import signOut from '@phosphor-icons/core/assets/regular/sign-out.svg?raw';
 import pencilSimple from '@phosphor-icons/core/assets/regular/pencil-simple.svg?raw';
 import plugsConnected from '@phosphor-icons/core/assets/regular/plugs-connected.svg?raw';
 import shieldCheck from '@phosphor-icons/core/assets/regular/shield-check.svg?raw';
@@ -341,6 +343,7 @@ export const ICONS = {
   'brackets-curly': bracketsCurly,
   'file-csv': fileCsv,
   'file-plus': filePlus,
+  'sign-out': signOut,
   'pencil-simple': pencilSimple,
   'plugs-connected': plugsConnected,
   'shield-check': shieldCheck,

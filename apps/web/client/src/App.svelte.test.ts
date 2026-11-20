@@ -3988,16 +3988,20 @@ describe('Query', () => {
     await vi.waitFor(() => expect(main.getByRole('radio', { name: /Resultaat/ }).getAttribute('aria-checked')).toBe('true'));
   });
 
-  it('copies the first 100 rows of the result as JSON or CSV from its upper right corner, also from another page (DEC-UX-292)', async () => {
+  it('copies the first 100 rows of the result as JSON or CSV from the menu in its upper right corner, also from another page (DEC-UX-292, DEC-UX-294)', async () => {
     const writeText = vi.fn(async (_text: string) => undefined);
     Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
     const calls = serve({ queries: [{ ...QUERY, lastRun: RUN, runs: 1, lastRunAt: RUN.startedAt }] });
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    const json = await main.findByRole('button', { name: /Kopieer als JSON/ }, { timeout: 3000 });
-    expect(json.getAttribute('title')).toBe('Kopieert de eerste 100 van 210 rijen als JSON, met de namen van de velden');
-    await fireEvent.click(json);
+    const copy = await main.findByRole('button', { name: 'Kopieer het resultaat' }, { timeout: 3000 });
+    expect(copy.getAttribute('aria-haspopup')).toBe('menu');
+    await fireEvent.click(copy);
+    const menu = within(await main.findByRole('menu', { name: 'Kopieer het resultaat' }));
+    expect(menu.getByText('De eerste 100 van 210 rijen, met de namen van de velden')).toBeTruthy();
+    await fireEvent.click(menu.getByRole('menuitem', { name: /Kopieer als JSON/ }));
+    expect(main.queryByRole('menu')).toBeNull();
     const [first, second] = RUN.columns.map((column) => column.name);
     await vi.waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
     expect(JSON.parse(writeText.mock.calls[0]![0])).toEqual([
@@ -4009,7 +4013,8 @@ describe('Query', () => {
     await fireEvent.click(main.getByRole('button', { name: /Volgende pagina/ }));
     await main.findByText('2026-08-03', {}, { timeout: 3000 });
     const pages = calls.filter((call) => call.path === `/runs/${RUN.ref}/rows?page=1`).length;
-    await fireEvent.click(main.getByRole('button', { name: /Kopieer als CSV/ }));
+    await fireEvent.click(main.getByRole('button', { name: 'Kopieer het resultaat' }));
+    await fireEvent.click(within(await main.findByRole('menu')).getByRole('menuitem', { name: /Kopieer als CSV/ }));
     await vi.waitFor(() => expect(writeText).toHaveBeenCalledTimes(2));
     expect(writeText.mock.calls[1]![0]).toBe(`${first},${second}\r\n${PAGE.rows[0]!.join(',')}\r\n${PAGE.rows[1]![0]},`);
     expect(calls.filter((call) => call.path === `/runs/${RUN.ref}/rows?page=1`).length).toBe(pages + 1);
@@ -4761,6 +4766,24 @@ describe('Query', () => {
     await screen.findByRole('main');
     await quickDo('toevoegen aan credit');
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/projects/p1/queries/q1', body: undefined }));
+  });
+
+  it('puts the Project the User works in first in the panel, with Close project, which stops working in it (DEC-UX-295)', async () => {
+    const partner = { id: 'p2', name: 'Partner review', description: '', members: [{ id: ME_ID, name: ME.name }], queries: [] };
+    const credit = { id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: ['q1'] };
+    const calls = serve({ queries: [{ ...QUERY }], projects: [partner, credit], settings: { 'query.project': 'p1', 'query.flagged': [] } });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
+    const close = await panel.findByRole('button', { name: /Project sluiten/ }, { timeout: 3000 });
+    expect(close.getAttribute('title')).toContain('Stoppen met werken in Credit leads Q4');
+    // First among the Projects, though Partner review came first.
+    const names = panel.getAllByRole('link').map((link) => link.textContent ?? '').filter((text) => /Credit leads Q4|Partner review/.test(text));
+    expect(names[0]).toContain('Credit leads Q4');
+    expect(panel.getByText('Je werkt erin')).toBeTruthy();
+    await fireEvent.click(close);
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/me/settings/query.project' }));
+    await vi.waitFor(() => expect(panel.queryByRole('button', { name: /Project sluiten/ })).toBeNull());
   });
 
   it('takes a Resource out of the query itself with Just take it out, which stays open (FR-SR-67, DEC-SR-48)', async () => {
