@@ -187,7 +187,7 @@
 
 <div class="preview">
   <div class="bar">
-    <span class="label">{t('preview.parameters')}</span>
+    <span class="label">{t('preview.filter')}</span>
     {#if offered?.window}
       {@const window = offered.window}
       <label class="choice">
@@ -200,7 +200,7 @@
     {/if}
     {#each offered?.choices ?? [] as choice (choice.field)}
       <label class="choice">
-        <span class="mono">{choice.field}</span>{#if choice.role === 'cluster'}<span class="role">{t('preview.role.cluster')}</span>{/if}
+        <span class="mono">{choice.field}</span><span class="role">{choice.role === 'cluster' ? t('preview.role.cluster') : t('resource.role.keyField')}</span>
         <select value={values[choice.field] ?? ''} onchange={(event) => (values = { ...values, [choice.field]: event.currentTarget.value || null })}>
           <option value="">{t('preview.all')}</option>
           {#each choice.values ?? [] as value (value)}<option {value}>{value}</option>{/each}

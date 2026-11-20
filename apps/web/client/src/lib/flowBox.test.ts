@@ -20,7 +20,6 @@ const FACTS: JourneyFacts = {
   pitfalls: '',
   knownGaps: 0,
   reliableSince: { from: 'day', day: '2025-01-01', why: 'Earlier weeks are incomplete.' },
-  parameters: [],
   modelType: null,
   grain: [],
   mappings: 0,

@@ -817,7 +817,6 @@ describe.skipIf(!url)('the routes of Collections', () => {
         knownGaps: ['No cards before March.'],
         reliableSince: { from: 'day', day: '2025-01-01', why: 'The cards of 2024 were loaded once, incomplete.' },
         keyFields: ['cards_id'],
-        parameters: ['listing_id'],
       });
       expect(edited.statusCode).toBe(200);
       expect(edited.json().resource.card).toEqual({
@@ -828,14 +827,12 @@ describe.skipIf(!url)('the routes of Collections', () => {
         reliableSince: { from: 'day', day: '2025-01-01', why: 'The cards of 2024 were loaded once, incomplete.', setBy: 'An', setAt: expect.any(String) },
         dateField: null,
         keyFields: ['cards_id'],
-        parameters: ['listing_id'],
       });
       // Only what changed goes into the Log.
       expect((await dirk('PATCH', `/resources/${cards}`, { intendedUse: 'Trends.', pitfalls: 'Weeks overlap.' })).statusCode).toBe(200);
-      expect((await an('GET', `/resources/${cards}/log`)).json().entries.slice(0, 7).map((entry: { text: string }) => entry.text)).toEqual([
+      expect((await an('GET', `/resources/${cards}/log`)).json().entries.slice(0, 6).map((entry: { text: string }) => entry.text)).toEqual([
         'Pitfalls updated by Dirk',
         'Known Gap added by An: No cards before March.',
-        'Parameters updated by An',
         'Key fields updated by An',
         'Reliable since updated by An',
         'Intended use updated by An',

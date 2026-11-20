@@ -24,8 +24,8 @@ export interface QueryResource {
   /** Who requires a filter on its partition column in every query: nobody, Data Hub or BigQuery (DEC-SR-35). */
   partitionFilter: 'none' | 'dataHub' | 'bigQuery';
   fields: ResourceField[];
-  /** The fields its Owner marked as its Parameters, which its Preview offers to choose by (FR-SR-38). */
-  parameters: string[];
+  /** The fields its Owner marked as its Key Fields; its Preview offers those that sort its rows to choose by (FR-SR-38). */
+  keyFields: string[];
 }
 
 import type { IdTokenSource } from '@datahub/google';
@@ -112,11 +112,11 @@ export interface BrokenMessage {
 export class CatalogueUnavailable extends Error {}
 
 interface ResourceBody {
-  resource: Omit<QueryResource, 'fullName' | 'partition' | 'clusterBy' | 'partitionFilter' | 'parameters'> & {
+  resource: Omit<QueryResource, 'fullName' | 'partition' | 'clusterBy' | 'partitionFilter' | 'keyFields'> & {
     /** Missing from a catalogue that does not keep it yet: then the Key. */
     fullName?: string;
     details?: { partition?: QueryResource['partition']; clusterBy?: string[]; partitionFilter?: QueryResource['partitionFilter'] };
-    card?: { parameters?: string[] };
+    card?: { keyFields?: string[] };
   };
 }
 
@@ -266,7 +266,7 @@ export function createCatalogue(baseUrl: string, request: typeof fetch = fetch, 
         clusterBy: resource.details?.clusterBy ?? [],
         partitionFilter: resource.details?.partition ? (resource.details.partitionFilter ?? 'none') : 'none',
         fields: resource.fields.map(({ name, dataType, description, businessDescription }) => ({ name, dataType, description, businessDescription })),
-        parameters: resource.card?.parameters ?? [],
+        keyFields: resource.card?.keyFields ?? [],
       };
     },
 

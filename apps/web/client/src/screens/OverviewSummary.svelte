@@ -97,7 +97,7 @@
     whatItIs: () => Boolean(card.businessDescription || resource.description),
     oneRow: () => details.grain.length > 0 || details.modelType !== null,
     useFor: () => Boolean(card.intendedUse),
-    queryCheaply: () => Boolean(details.partition || details.clusterBy.length > 0 || size || card.keyFields.length > 0 || card.parameters.length > 0),
+    queryCheaply: () => Boolean(details.partition || details.clusterBy.length > 0 || size || card.keyFields.length > 0),
     joins: () => joins.length > 0,
     fields: () => resource.fields.length > 0,
     watchOut: () => Boolean(card.pitfalls),
@@ -186,11 +186,8 @@
             </p>
           {/if}
           {#if size}<p class="line">{t('resource.size')}: {size}</p>{/if}
-          {#if card.keyFields.length > 0 || card.parameters.length > 0}
-            <p class="line">
-              {#if card.keyFields.length > 0}{t('resource.keyFields')}{#each card.keyFields as field (field)}{' '}<span class="code">{field}</span>{/each}{/if}
-              {#if card.parameters.length > 0}{card.keyFields.length > 0 ? ' · ' : ''}{t('resource.parameters')}{#each card.parameters as field (field)}{' '}<span class="code">{field}</span>{/each}{/if}
-            </p>
+          {#if card.keyFields.length > 0}
+            <p class="line">{t('resource.keyFields')}{#each card.keyFields as field (field)}{' '}<span class="code">{field}</span>{/each}</p>
           {/if}
         {:else if part === 'joins'}
           {#each joins as mapping (mapping.field)}

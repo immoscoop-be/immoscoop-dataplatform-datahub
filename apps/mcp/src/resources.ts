@@ -60,7 +60,7 @@ const window = z
 const values = z
   .record(z.string(), z.string())
   .optional()
-  .describe('The value of each Parameter of the Preview to filter on, by field, from the choices it offers.');
+  .describe('The value to filter on, by field, from the choices the Preview offers: its first cluster column and its Key Fields that are text or yes/no.');
 
 /**
  * The tools around Resources (see docs/requirements/functional/17-claude.md, Resources through the MCP): those that
@@ -231,7 +231,7 @@ export function resourceTools(context: Context): void {
     {
       title: 'Read a Resource',
       description:
-        'The Summary of a Resource, the general instruction on it, first: everything Data Hub knows about it in the order to read it, each part with its weight (Read first, Before you query, When interpreting results, Context), among them the Q&A of its Owner and the Data Team. Then the Resource Card as data: the description of every field (the Business Description and the one from dbt, each marked), its grain, partition and cluster columns, size, Known Gaps, key fields and Parameters. Read it before you query the Resource, and follow its weights.',
+        'The Summary of a Resource, the general instruction on it, first: everything Data Hub knows about it in the order to read it, each part with its weight (Read first, Before you query, When interpreting results, Context), among them the Q&A of its Owner and the Data Team. Then the Resource Card as data: the description of every field (the Business Description and the one from dbt, each marked), its grain, partition and cluster columns, size, Known Gaps and Key Fields. Read it before you query the Resource, and follow its weights.',
       inputSchema: { id },
       annotations: READ,
     },
@@ -341,8 +341,7 @@ export function resourceTools(context: Context): void {
       .nullable()
       .optional()
       .describe('The Date Field Reliable since is read on: one of its fields of type DATE, DATETIME or TIMESTAMP; null takes the one its table type gives (dateField.typeField of get_resource).'),
-    keyFields: z.array(z.string()).max(50).optional(),
-    parameters: z.array(z.string()).max(50).optional().describe('The fields a Preview offers to choose by.'),
+    keyFields: z.array(z.string()).max(50).optional().describe('The few fields a colleague starts from; its Preview offers those that are text or yes/no, and no identifier, to filter on.'),
   };
   const CARD_NAMES: Record<keyof typeof card, string> = {
     businessDescription: 'the Business Description',
@@ -351,7 +350,6 @@ export function resourceTools(context: Context): void {
     reliableSince: 'Reliable since',
     dateField: 'its Date Field',
     keyFields: 'key fields',
-    parameters: 'Parameters',
   };
   /**
    * A value of the card as it is compared with what Claude showed: Reliable Since without who set it and when, and
@@ -634,7 +632,7 @@ export function resourceTools(context: Context): void {
    */
   function previewTools(): void {
     const card = permits.results === 'card';
-    const NARROWER = 'a narrower window or a Parameter';
+    const NARROWER = 'a narrower window or a choice';
 
     if (permits.results === 'none') {
       server.registerTool(
@@ -704,7 +702,7 @@ export function resourceTools(context: Context): void {
         case 'ran':
           return `The Preview of ${name} ran and is shown to the User; its first rows are below. Answer from them, and name the Level.`;
         case 'approve':
-          return `The Preview of ${name} reads ${shown.reads}, more than the ${free} Data Hub runs freely. Only the User approves it, in the window; you cannot. A narrower window or a Parameter reads less.`;
+          return `The Preview of ${name} reads ${shown.reads}, more than the ${free} Data Hub runs freely. Only the User approves it, in the window; you cannot. A narrower window or a choice reads less.`;
         case 'request':
           return `The Preview of ${name} reads ${shown.reads}, more than ${large}: the Data Team accepts it first. Only the User sends that Request, in the window; you cannot.${shown.request?.state === 'waiting' ? ' A Request of theirs is waiting already.' : ''}`;
         case 'blocked': {
@@ -733,8 +731,8 @@ export function resourceTools(context: Context): void {
       {
         title: 'Preview a Resource',
         description: card
-          ? `Shows the first rows of a Resource to the User in the conversation, in a card only, filtered by its Parameters, through the Pre-flight: up to ${free} it runs, and you get its shape (its columns, how many rows, what it read), never its values; above, only the User approves it, or sends a Request to the Data Team above ${large}, in the window.`
-          : `Shows the first rows of a Resource to the User in the conversation, filtered by its Parameters, through the Pre-flight: up to ${free} it runs and you get the rows too; above, only the User approves it, or sends a Request to the Data Team above ${large}, in the window.`,
+          ? `Shows the first rows of a Resource to the User in the conversation, in a card only, filtered by the choices it offers, through the Pre-flight: up to ${free} it runs, and you get its shape (its columns, how many rows, what it read), never its values; above, only the User approves it, or sends a Request to the Data Team above ${large}, in the window.`
+          : `Shows the first rows of a Resource to the User in the conversation, filtered by the choices it offers, through the Pre-flight: up to ${free} it runs and you get the rows too; above, only the User approves it, or sends a Request to the Data Team above ${large}, in the window.`,
         inputSchema: { id, window, values },
         annotations: READ,
         _meta: SHOWS,
@@ -776,7 +774,7 @@ export function resourceTools(context: Context): void {
         'read_preview_choices',
         {
           title: 'Read the choices of a Preview',
-          description: 'The values each Parameter of a Preview offers, for the card only. Only the MCP App calls this.',
+          description: 'The values each choice of a Preview offers, for the card only. Only the MCP App calls this.',
           inputSchema: { id, window },
           annotations: READ,
           _meta: APP_ONLY,

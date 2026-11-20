@@ -3,7 +3,7 @@ number: K5.13
 status: reviewed
 minutes: 4
 added: 2026-11-15
-changed: 2026-11-15
+changed: 2026-11-20
 gain: You know what you declare when you publish a Resource and who will see it, before you take a step that is not undone.
 ---
 
@@ -22,7 +22,7 @@ Publishing a Resource is its first **Confirmation**: you declare for your Owner 
 
 ## At Immoscoop
 
-A colleague of SEO opens the publication of Search Console impressions, whole site. It says who will see it: everyone who sees Attraction, which is the whole company as the Collection is public, where now only SEO and the Data Team do. It reads the card back: the Business Description next to the description from dbt, the intended use, the pitfalls, the Known Gap with the day it is reliable since, the Key Fields and the Parameters. The pitfall about the average position was written by someone else before the Owner Journey, and the declaration covers it as well. The colleague reads every text, ticks the declaration and presses Publish and confirm themselves, in the window Claude shows or in Data Hub itself; Claude never presses it. The Level rises from 2 · Described to 3 · Confirmed, and Data Hub keeps the declaration, in the words that were ticked, with the Confirmation. The Confirmation vouches for what the Resource is; its figures are for the EDA to explore. Should SEO later want nobody to build on it any more, they mark it deprecated: the Publication stays.
+A colleague of SEO opens the publication of Search Console impressions, whole site. It says who will see it: everyone who sees Attraction, which is the whole company as the Collection is public, where now only SEO and the Data Team do. It reads the card back: the Business Description next to the description from dbt, the intended use, the pitfalls, the Known Gap with the day it is reliable since, and the Key Fields. The pitfall about the average position was written by someone else before the Owner Journey, and the declaration covers it as well. The colleague reads every text, ticks the declaration and presses Publish and confirm themselves, in the window Claude shows or in Data Hub itself; Claude never presses it. The Level rises from 2 · Described to 3 · Confirmed, and Data Hub keeps the declaration, in the words that were ticked, with the Confirmation. The Confirmation vouches for what the Resource is; its figures are for the EDA to explore. Should SEO later want nobody to build on it any more, they mark it deprecated: the Publication stays.
 
 # Check your understanding
 

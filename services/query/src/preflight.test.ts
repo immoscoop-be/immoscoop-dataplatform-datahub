@@ -20,7 +20,7 @@ const resource = (name: string, extra: Partial<QueryResource> = {}): QueryResour
   clusterBy: [],
   partitionFilter: 'none',
   fields: [],
-  parameters: [],
+  keyFields: [],
   ...extra,
 });
 

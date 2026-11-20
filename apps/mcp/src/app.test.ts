@@ -118,7 +118,7 @@ const detail = (overrides: Record<string, unknown> = {}) => ({
     description: 'One row per week and lead source.',
     collectionId: 'c-1',
     fields: [{ name: 'week_start', dataType: 'DATE', description: 'Monday of the week', businessDescription: '' }],
-    card: { businessDescription: 'Credit leads per week.', intendedUse: '', pitfalls: 'The current week is incomplete.', knownGaps: [], reliableSince: null, keyFields: [], parameters: [] },
+    card: { businessDescription: 'Credit leads per week.', intendedUse: '', pitfalls: 'The current week is incomplete.', knownGaps: [], reliableSince: null, keyFields: [] },
     deprecation: null,
     ...overrides,
   },
@@ -252,7 +252,7 @@ describe('Resources through Claude', () => {
   it('gives Claude the Summary first, in its order and with its weights, the Q&A of the Owner among them (FR-CL-25, DEC-RC-18)', async () => {
     answers[`GET ${CATALOGUE}/resources/${RESOURCE_ID}`] = () => [
       200,
-      detail({ card: { businessDescription: '### Leads\nCredit leads per **week**.', intendedUse: 'Weekly trends.', pitfalls: 'The current week is incomplete.', knownGaps: [{ id: '1', text: 'No partner leads before March.', scope: { period: { from: null, to: '2025-02-28' }, rows: { field: 'lead_source', is: 'oneOf', values: ['partner'] } }, addedBy: 'An', addedAt: '2026-11-01T10:00:00Z' }], reliableSince: { from: 'day', day: '2025-01-01', why: '2024 was loaded once from the old CRM export.', setBy: 'An', setAt: '2026-11-15T10:00:00Z' }, dateField: 'week_start', keyFields: [], parameters: [] } }),
+      detail({ card: { businessDescription: '### Leads\nCredit leads per **week**.', intendedUse: 'Weekly trends.', pitfalls: 'The current week is incomplete.', knownGaps: [{ id: '1', text: 'No partner leads before March.', scope: { period: { from: null, to: '2025-02-28' }, rows: { field: 'lead_source', is: 'oneOf', values: ['partner'] } }, addedBy: 'An', addedAt: '2026-11-01T10:00:00Z' }], reliableSince: { from: 'day', day: '2025-01-01', why: '2024 was loaded once from the old CRM export.', setBy: 'An', setAt: '2026-11-15T10:00:00Z' }, dateField: 'week_start', keyFields: [] } }),
     ];
     answers[`GET ${CATALOGUE}/collections/c-1`] = () => [200, collection];
     const said = (kind: string, name: string, as: string | null, text: string, state: string | null, replies: object[] = []) => ({
@@ -361,11 +361,10 @@ describe('Resources through Claude', () => {
       pitfalls: '',
       knownGaps: 0,
       reliableSince: null,
-      parameters: [],
       modelType: null,
       grain: [],
       mappings: 0,
-      openMessages: 0,
+      openMessages: 1,
       records: [{ step: 'data', answer: 'goneThrough', by: 'An', at: '2026-11-15T09:00:00Z' }],
     });
     answers[`GET ${CATALOGUE}/resources/${RESOURCE_ID}`] = () => [200, detail({ level: 2, published: false, journey })];
@@ -395,11 +394,11 @@ describe('Resources through Claude', () => {
     expect(shown.window.overview.open).toBe(6);
     expect(shown.window.overview.steps.find((step) => step.number === 1)).toMatchObject({ state: 'done', says: 'Done' });
     expect(shown.window.overview.steps.find((step) => step.number === 2)).toMatchObject({ state: 'now', mark: 'Required' });
-    expect(shown.window.overview.steps.find((step) => step.number === 9)).toMatchObject({ state: 'optional', mark: 'Optional' });
+    expect(shown.window.overview.steps.find((step) => step.number === 10)).toMatchObject({ state: 'optional', mark: 'Optional' });
     expect(shown.window.terms).toEqual([{ name: 'Business Description', definition: expect.stringContaining('the description from dbt, which says how the data is made') }]);
     expect(shown.window).not.toHaveProperty('purpose');
     expect(shown.window.link).toEqual({ url: `${WEB}/resources/${RESOURCE_ID}/description`, label: 'Open the Description in Data Hub' });
-    expect(guided.content[0]?.text).toContain('Step 2 of 13 is next: Business Description, required to publish.');
+    expect(guided.content[0]?.text).toContain('Step 2 of 12 is next: Business Description, required to publish.');
     expect(guided.content[0]?.text).toContain('Still open before it can be published: Business Description, Key Fields, Fields, Pitfalls, Reliable since, Known Gaps.');
 
     // The publication shows what is open, and sends Claude back to the journey: no declaration to tick yet (DEC-MR-15).
@@ -481,7 +480,6 @@ describe('Resources through Claude', () => {
       pitfalls: 'The current week is incomplete.',
       knownGaps: 0,
       reliableSince: null,
-      parameters: [],
       modelType: 'aggregate',
       grain: ['week_start'],
       mappings: 0,
@@ -501,14 +499,14 @@ describe('Resources through Claude', () => {
     expect(data.next).toMatchObject({ number: 7, step: 'since', writes: 'update_resource_card' });
     expect(data.next.ask).toContain('Never choose one for the Owner');
     expect(data.open).toEqual(['since', 'gaps']);
-    expect(data.window.total).toBe(13);
+    expect(data.window.total).toBe(12);
     expect(data.window.held).toEqual([
       { label: 'Reliable since', text: undefined, none: expect.stringContaining('neither from its first row nor from a later day') },
       { label: 'Read on', text: 'week_start, from its table type: period of an aggregate.', none: expect.any(String) },
       { label: 'Its date fields', chips: ['week_start', 'loaded_at'], none: expect.any(String) },
     ]);
     expect(data.window.link).toEqual({ url: `${WEB}/resources/${RESOURCE_ID}/gaps`, label: 'Open Reliable since in Data Hub' });
-    expect(guided.content[0]?.text).toContain('Step 7 of 13 is next: Reliable since, required to publish.');
+    expect(guided.content[0]?.text).toContain('Step 7 of 12 is next: Reliable since, required to publish.');
 
     // Another Date Field than its table type gives is unusual, and the window says so.
     answers[`GET ${CATALOGUE}/resources/${RESOURCE_ID}`] = () => [
@@ -602,7 +600,7 @@ describe('Resources through Claude', () => {
 
     // Changing only the scope keeps the text, and who added it stays with Data Hub.
     const gap = { id: '1', text: 'No partner leads before March.', scope: { period: { from: null, to: '2025-02-28' } }, addedBy: 'An', addedAt: '2026-11-01T10:00:00Z' };
-    answers[`GET ${CATALOGUE}/resources/${RESOURCE_ID}`] = () => [200, detail({ card: { businessDescription: '', intendedUse: '', pitfalls: '', knownGaps: [gap], reliableSince: null, keyFields: [], parameters: [] } })];
+    answers[`GET ${CATALOGUE}/resources/${RESOURCE_ID}`] = () => [200, detail({ card: { businessDescription: '', intendedUse: '', pitfalls: '', knownGaps: [gap], reliableSince: null, keyFields: [] } })];
     answers[`PATCH ${CATALOGUE}/resources/${RESOURCE_ID}/gaps/1`] = () => [200, { gap: { ...gap, scope: { fields: ['lead_source'] } } }];
     asked.length = 0;
     const changed = await tool('change_known_gap', { id: RESOURCE_ID, gap: '1', scope: { fields: ['lead_source'] }, before: { text: gap.text, scope: gap.scope } }, owner);
@@ -1049,7 +1047,7 @@ describe('results in Claude, in a card only, or not in Claude (FR-CL-28)', () =>
 
     answers[`POST ${QUERY}/resources/${RESOURCE_ID}/preview/preflight`] = () => [200, { preflight, request: null }];
     const preview = await tool('preview_resource', { id: RESOURCE_ID }, await showing('card'));
-    expect(preview.structuredContent).toMatchObject({ outcome: 'blocked', problem: expect.stringContaining('a narrower window or a Parameter reads less') });
+    expect(preview.structuredContent).toMatchObject({ outcome: 'blocked', problem: expect.stringContaining('a narrower window or a choice reads less') });
     expect(asked.some((call) => call.url.endsWith('/preview/runs'))).toBe(false);
   });
 });

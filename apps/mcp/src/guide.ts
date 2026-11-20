@@ -81,7 +81,7 @@ const ATTRIBUTE = named({
   pitfalls: 'its pitfalls',
   availableSince: 'its Reliable since and its Date Field',
   gaps: 'its Known Gaps',
-  keyFields: 'its key fields and Parameters',
+  keyFields: 'its Key Fields',
   entityMapping: 'its Entity mapping',
 });
 const KIND = named({ question: 'Questions', remark: 'Remarks', signal: 'Signals' });

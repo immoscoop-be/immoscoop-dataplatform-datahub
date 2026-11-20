@@ -149,8 +149,6 @@ export function heldOf(step: JourneyStepState, resource: JourneyResource, journe
         .map((gap) => ({ text: gap.text as string, scope: gap.scope ?? null }));
       return [{ label: 'Known Gaps', gaps, none: saidNone ?? 'None written, and nobody said there are none.' }];
     }
-    case 'parameters':
-      return [{ label: 'Parameters now', chips: list('parameters').filter((name): name is string => typeof name === 'string'), none: saidNone ?? 'None.' }];
     case 'admin':
       return [
         { label: 'Table type', text: details?.modelType ?? undefined, none: 'Not recorded yet.' },
@@ -188,7 +186,7 @@ export const GUIDE: Readonly<Record<JourneyStepId, { say: string; present: strin
     ask: 'What it is for in their work. Propose a text, and say where each part comes from.',
   },
   keyFields: {
-    say: 'The few fields a colleague should look at first. The EDA, which takes a Resource to 4 · Explored, explores at least its Key Fields.',
+    say: 'The few fields a colleague should look at first. Its Preview offers those that are text or yes/no to filter on, and the EDA, which takes a Resource to 4 · Explored, explores at least its Key Fields.',
     present: 'Your suggestion of its Key Fields, in the card of suggest_fields, together with a description for every field that has none: the User ticks, edits and saves there (DEC-CL-22). Base it on its fields, how often the queries on it use each (get_resource_queries) and, where you may, a small Preview.',
     ask: 'Whether the suggestion is right; the User saves it in the card.',
   },
@@ -216,11 +214,6 @@ export const GUIDE: Readonly<Record<JourneyStepId, { say: string; present: strin
     say: 'Where data is missing after the day it is reliable since, or only for part of the rows. A Known Gap is in the data itself: it would go away if the data were repaired; how the data is misread is a pitfall.',
     present: 'Its Known Gaps, and holes you find in the data, such as empty periods or fields empty for part of the rows. Propose each gap with the scope where it holds: a period, one day or from until, read on the Date Field unless it names another; fields; rows.',
     ask: 'Which gaps to write down, each on its own with add_known_gap and its scope. When a proposed gap is a misreading, say so with the test and offer to write it under the pitfalls instead; the User decides. "No gaps" is an answer: record "nothing" with record_journey_step.',
-  },
-  parameters: {
-    say: 'The fields a Preview offers to filter on.',
-    present: 'The Parameters on the card, and the fields colleagues filter on in their queries.',
-    ask: 'Which ones. "None" is an answer: record "nothing" with record_journey_step.',
   },
   admin: {
     say: 'The table type, the grain and the mappings, which a Data Admin records in Data Hub. They hold up no publication, but the EDA starts from the table type and the grain.',
@@ -355,8 +348,6 @@ function missingText(step: JourneyStepState, missing: JourneyMissing): string {
       return 'no Known Gap written, and nobody said there are none';
     case 'reliableSince':
       return 'not set: neither from its first row nor from a later day';
-    case 'parameters':
-      return 'no Parameters';
     case 'modelType':
       return 'no table type recorded';
     case 'grain':
@@ -493,11 +484,11 @@ export function journeyTools({ server, hub, permits }: Context, read: (id: strin
       {
         title: 'Record a step of the Owner Journey',
         description:
-          'Keeps what the User said in a step of the Owner Journey where the card cannot tell it, with who and when, in the Log of the Resource: "nothing" for the pitfalls, the Known Gaps or the Parameters when there are none; "goneThrough" for a step gone through without writing, such as looking at the data, leaving the other fields for later, asking the Data Team about the table type and grain, or leaving open Messages knowingly. Only once the User said so.',
+          'Keeps what the User said in a step of the Owner Journey where the card cannot tell it, with who and when, in the Log of the Resource: "nothing" for the pitfalls or the Known Gaps when there are none; "goneThrough" for a step gone through without writing, such as looking at the data, leaving the other fields for later, asking the Data Team about the table type and grain, or leaving open Messages knowingly. Only once the User said so.',
         inputSchema: {
           id,
-          step: z.enum(recordable).describe('The step: data, fields, pitfalls, gaps, parameters, admin or messages.'),
-          answer: z.enum(['goneThrough', 'nothing']).describe('goneThrough, or nothing for the pitfalls, the Known Gaps or the Parameters.'),
+          step: z.enum(recordable).describe('The step: data, fields, pitfalls, gaps, admin or messages.'),
+          answer: z.enum(['goneThrough', 'nothing']).describe('goneThrough, or nothing for the pitfalls or the Known Gaps.'),
         },
         annotations: WRITE,
       },
