@@ -2,7 +2,7 @@ import type { IconName } from '@datahub/ui/foundations/icons.js';
 
 /**
  * The quick window (DEC-UX-237): Cmd+Shift+P or Cmd+K (Ctrl on Windows and Linux) anywhere in Data Hub. A row is a
- * command of the screen or of Data Hub, or a place to go to: a section, a flagged query, or something the User may see.
+ * command of the screen or of Data Hub, or a place to go to: a section, a query of the active Project, or something the User may see.
  */
 export interface QuickRow {
   /** Unique among the rows. */
@@ -27,7 +27,7 @@ export interface QuickRow {
 }
 
 /** The groups, in the order the window shows them when something is typed (OP-UX-88). */
-export const QUICK_GROUPS = ['screen', 'commands', 'flagged', 'projects', 'resources', 'collections', 'lenses', 'queries', 'cards', 'goTo'] as const;
+export const QUICK_GROUPS = ['screen', 'commands', 'row', 'projects', 'resources', 'collections', 'lenses', 'queries', 'cards', 'goTo'] as const;
 /** Recently used comes on top when nothing is typed (DEC-UX-242). */
 export type QuickGroup = 'recent' | (typeof QUICK_GROUPS)[number];
 
@@ -52,7 +52,7 @@ export function scoreOf(row: Pick<QuickRow, 'title' | 'words' | 'meta'>, typed: 
 
 /**
  * What the window lists. Nothing typed: what the User did from it in this session, most recent first, five at most and
- * only what can be done now, under Recently used (DEC-UX-242); then the commands of the screen, the flagged queries and
+ * only what can be done now, under Recently used (DEC-UX-242); then the commands of the screen, the queries of the active Project and
  * Go to, without those. Typed: every group in its order, the rows that match best first, the one used more lately first
  * among rows that match as well, four at most a group.
  */
@@ -63,7 +63,7 @@ export function rowsFor(rows: readonly QuickRow[], typed: string, recent: readon
     return at < 0 ? Number.POSITIVE_INFINITY : at;
   };
   if (!words) {
-    const usual = (['screen', 'flagged', 'goTo'] as const).flatMap((group) => rows.filter((row) => row.group === group));
+    const usual = (['screen', 'row', 'goTo'] as const).flatMap((group) => rows.filter((row) => row.group === group));
     const used = recent.flatMap((key) => usual.filter((row) => row.key === key && !row.why)).slice(0, RECENT);
     return [...used.map((row): QuickRow => ({ ...row, group: 'recent' })), ...usual.filter((row) => !used.includes(row))];
   }

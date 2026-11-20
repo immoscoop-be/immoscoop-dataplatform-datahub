@@ -21,8 +21,8 @@ describe('the quick window (DEC-UX-237)', () => {
     expect(scoreOf({ title: 'Listings' }, 'lea')).toBe(0);
   });
 
-  it('lists the commands of the screen, the flagged queries and Go to when nothing is typed (OP-UX-88)', () => {
-    const rows = [row('goTo', 'Collections'), row('resources', 'Leads'), row('flagged', 'Leads per source'), row('screen', 'Flag this query')];
+  it('lists the commands of the screen, the queries of the active Project and Go to when nothing is typed (OP-UX-88)', () => {
+    const rows = [row('goTo', 'Collections'), row('resources', 'Leads'), row('row', 'Leads per source'), row('screen', 'Flag this query')];
     expect(rowsFor(rows, '').map((one) => one.title)).toEqual(['Flag this query', 'Leads per source', 'Collections']);
   });
 
@@ -42,7 +42,7 @@ describe('the quick window (DEC-UX-237)', () => {
       row('screen', 'Run'),
       row('screen', 'Fold all'),
       row('screen', 'Flag this query', { why: 'Ten queries are flagged.' }),
-      row('flagged', 'Leads per source'),
+      row('row', 'Leads per source'),
       row('goTo', 'Collections'),
       row('resources', 'Leads'),
     ];
@@ -53,7 +53,7 @@ describe('the quick window (DEC-UX-237)', () => {
       'recent:Fold all',
       'screen:Run',
       'screen:Flag this query',
-      'flagged:Leads per source',
+      'row:Leads per source',
     ]);
     const many = Array.from({ length: 7 }, (_, at) => row('screen', `Command ${at}`));
     expect(rowsFor(many, '', many.map((one) => one.key)).filter((one) => one.group === 'recent')).toHaveLength(5);

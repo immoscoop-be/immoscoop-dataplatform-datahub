@@ -3229,7 +3229,7 @@ One item of `missing`, English, laid out:
 | Status | Implemented |
 | Comes from | [FR-SR-65](04-stacks-and-resources.md#fr-sr-65), [DEC-SR-47](04-stacks-and-resources.md#dec-sr-47), [DEC-UX-286](../../design/principles.md#dec-ux-286), [OP-UX-101](../../design/principles.md#op-ux-101) |
 
-**What it asks:** Nothing. The colleague opens the Project, and may work in it: its queries are then the row on top of Query.
+**What it asks:** Nothing. The colleague opens the Project: it is then active, its queries the row on top of Query.
 
 **How it ends:** When it is read.
 

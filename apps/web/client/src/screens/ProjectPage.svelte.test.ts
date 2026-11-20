@@ -64,16 +64,15 @@ function fakes(pages: (Page | Error)[] = [credit()]) {
   return { projects, identity };
 }
 
-function show(options: { pages?: (Page | Error)[]; canMake?: boolean; working?: boolean } = {}) {
+function show(options: { pages?: (Page | Error)[]; canMake?: boolean } = {}) {
   const { projects, identity } = fakes(options.pages);
-  const calls = { onwork: vi.fn(), onnewquery: vi.fn(async () => {}), onchanged: vi.fn(), go: vi.fn() };
+  const calls = { onnewquery: vi.fn(async () => {}), onchanged: vi.fn(), go: vi.fn() };
   render(ProjectPage, {
     id: 'p-1',
     projects: projects as unknown as Projects,
     identity,
     me: ME,
     canMake: options.canMake ?? true,
-    working: options.working ?? false,
     ...calls,
   });
   return { projects, identity, ...calls };
@@ -102,17 +101,11 @@ describe('the page of a Project (FR-SR-63, DEC-UX-285)', () => {
     expect(screen.getByText(/Their Permission group, Reader, does not let them make or run queries/)).toBeTruthy();
   });
 
-  it('works in it, or stops (OP-UX-94)', async () => {
-    const first = show();
-    await fireEvent.click(await screen.findByRole('button', { name: 'Work in it' }));
-    expect(first.onwork).toHaveBeenCalledWith(true);
-  });
-
-  it('says the User works in it, with Stop', async () => {
-    const { onwork } = show({ working: true });
-    expect(await screen.findByText('You work in it')).toBeTruthy();
-    await fireEvent.click(screen.getByRole('button', { name: 'Stop' }));
-    expect(onwork).toHaveBeenCalledWith(false);
+  it('has no Work in it: its page open is what makes it the active Project (DEC-UX-317)', async () => {
+    show();
+    expect(await screen.findByRole('heading', { name: 'Credit leads Q4' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Work in it/ })).toBeNull();
+    expect(screen.queryByText('You work in it')).toBeNull();
   });
 
   it('makes an empty query in it with New query (FR-SR-68)', async () => {
@@ -181,7 +174,7 @@ describe('the page of a Project (FR-SR-63, DEC-UX-285)', () => {
     const made: Project = { ...credit(), members: [credit().members[0] as Project['members'][number]], queries: [] };
     show({ pages: [made] });
     expect(await screen.findByText('Nothing in it yet.', { exact: false })).toBeTruthy();
-    expect(screen.getByText(/Open a query and press “Add to Credit leads Q4”/)).toBeTruthy();
+    expect(screen.getByText(/Open a query and add it with its Project button/)).toBeTruthy();
     expect(screen.getByText('Only you')).toBeTruthy();
     expect(screen.getByText(/Only you see it\. Share it/)).toBeTruthy();
   });
