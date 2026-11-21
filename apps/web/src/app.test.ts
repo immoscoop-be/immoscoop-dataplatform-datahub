@@ -13,6 +13,7 @@ const CATALOGUE = 'https://catalogue.test';
 const REGISTRY = 'https://registry.test';
 const SEMGRAPH = 'https://semgraph.test';
 const QUERY = 'https://query.test';
+const EDA = 'https://eda.test';
 
 /** identity as far as the web app's server sees it: its token and revocation endpoints. */
 function fakeIdentity() {
@@ -84,7 +85,7 @@ describe('the server of the web app', () => {
 
   beforeEach(async () => {
     identity = fakeIdentity();
-    app = await buildApp({ verifier: (await createTestIssuer()).verifier, webUrl: WEB, identityUrl: IDENTITY, catalogueUrl: CATALOGUE, registryUrl: REGISTRY, queryUrl: QUERY, semgraphUrl: SEMGRAPH, environment: 'uat', clientDir, fetch: identity.fetch, logger: false });
+    app = await buildApp({ verifier: (await createTestIssuer()).verifier, webUrl: WEB, identityUrl: IDENTITY, catalogueUrl: CATALOGUE, registryUrl: REGISTRY, queryUrl: QUERY, edaUrl: EDA, semgraphUrl: SEMGRAPH, environment: 'uat', clientDir, fetch: identity.fetch, logger: false });
   });
 
   afterEach(() => app.close());
@@ -105,11 +106,11 @@ describe('the server of the web app', () => {
     return cookies(callback.headers)['datahub_session'] ?? '';
   }
 
-  it('serves the page, which knows its environment and may only talk to itself, identity, catalogue, registry, query and semgraph', async () => {
+  it('serves the page, which knows its environment and may only talk to itself, identity, catalogue, registry, query, eda and semgraph', async () => {
     const page = await app.inject({ url: '/' });
     expect(page.statusCode).toBe(200);
     expect(page.headers['cache-control']).toBe('no-store');
-    expect(page.body).toContain(`<html lang="nl" data-identity="${IDENTITY}" data-catalogue="${CATALOGUE}" data-registry="${REGISTRY}" data-query="${QUERY}" data-semgraph="${SEMGRAPH}" data-environment="uat" data-nonce="`);
+    expect(page.body).toContain(`<html lang="nl" data-identity="${IDENTITY}" data-catalogue="${CATALOGUE}" data-registry="${REGISTRY}" data-query="${QUERY}" data-eda="${EDA}" data-semgraph="${SEMGRAPH}" data-environment="uat" data-nonce="`);
     const policy = page.headers['content-security-policy'] as string;
     expect(policy).toContain("default-src 'self';");
     // The editor of Query adds styles of its own, allowed by a nonce that is new for every page.
@@ -117,7 +118,7 @@ describe('the server of the web app', () => {
     expect(nonce).toMatch(/^[A-Za-z0-9+/]{24}$/);
     expect(policy).toContain(`style-src 'self' 'nonce-${nonce}';`);
     expect((await app.inject({ url: '/' })).body).not.toContain(nonce);
-    expect(policy).toContain(`connect-src 'self' ${IDENTITY} ${CATALOGUE} ${REGISTRY} ${QUERY} ${SEMGRAPH};`);
+    expect(policy).toContain(`connect-src 'self' ${IDENTITY} ${CATALOGUE} ${REGISTRY} ${QUERY} ${EDA} ${SEMGRAPH};`);
     // Charts are pictures from semgraph, and the grain of a background is a small picture of its own.
     expect(policy).toContain(`img-src 'self' data: ${SEMGRAPH};`);
     expect(policy).not.toContain('unsafe');
@@ -153,7 +154,7 @@ describe('the server of the web app', () => {
 
   it('refuses to start without the built page', async () => {
     await expect(
-      buildApp({ verifier: (await createTestIssuer()).verifier, webUrl: WEB, identityUrl: IDENTITY, catalogueUrl: CATALOGUE, registryUrl: REGISTRY, queryUrl: QUERY, semgraphUrl: SEMGRAPH, clientDir: join(clientDir, 'missing'), logger: false }),
+      buildApp({ verifier: (await createTestIssuer()).verifier, webUrl: WEB, identityUrl: IDENTITY, catalogueUrl: CATALOGUE, registryUrl: REGISTRY, queryUrl: QUERY, edaUrl: EDA, semgraphUrl: SEMGRAPH, clientDir: join(clientDir, 'missing'), logger: false }),
     ).rejects.toThrow(/index\.html/);
   });
 

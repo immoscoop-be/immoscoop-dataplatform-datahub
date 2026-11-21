@@ -1,5 +1,6 @@
 <script lang="ts">
   import { tick, untrack } from 'svelte';
+  import type { EdaView } from '@datahub/contracts/eda';
   import type { GapScope } from '@datahub/contracts/gaps';
   import Breadcrumb from '@datahub/ui/components/Breadcrumb.svelte';
   import ObjectHeader from '@datahub/ui/components/ObjectHeader.svelte';
@@ -19,7 +20,8 @@
   import type { Conversation, WrittenKind } from '../lib/messages.js';
   import type { QueryClient, Storage } from '../lib/query.js';
   import type { Registry } from '../lib/registry.js';
-  import { collectionPath, newQueryPath, type ResourceSpot, resourcePath } from '../lib/routes.js';
+  import { collectionPath, edaPath, newQueryPath, type ResourceSpot, resourcePath } from '../lib/routes.js';
+  import type { EdaClient } from '../lib/eda.js';
   import { command, place, useScreenCommands, view } from '../lib/commands.svelte.js';
   import type { IconName } from '@datahub/ui/foundations/icons.js';
   import type { QuickRow } from '../lib/quick.js';
@@ -38,6 +40,7 @@
   import ResourceHistory from './ResourceHistory.svelte';
   import ResourceLineage from './ResourceLineage.svelte';
   import ResourceOverview, { type OverviewPart } from './ResourceOverview.svelte';
+  import type { LadderEda } from './OverviewMaturity.svelte';
   import ResourcePreview from './ResourcePreview.svelte';
 
   /**
@@ -69,6 +72,7 @@
     threads,
     at,
     onguide,
+    explore,
   }: {
     resource: ResourceDetail;
     log: readonly LogEntry[] | undefined;
@@ -95,7 +99,48 @@
     at?: ResourceSpot;
     /** Opens the Flow Box on it, which takes whoever may describe it through the steps required to publish (FR-MR-20). */
     onguide?: () => void;
+    /**
+     * Its EDA, for a User who may explore Resources (`eda.use`, FR-ED-01): read from eda once it is at 3 · Confirmed,
+     * for its maturity ladder, where Start the EDA creates it and opens it in the section EDA (FR-ED-02).
+     */
+    explore?: { client: EdaClient; go: (path: string) => void; onstarted?: () => void };
   } = $props();
+
+  /** Its EDA: undefined while it is read, null when it has none. */
+  let edaView: EdaView | null | undefined = $state();
+  let edaFor: string | undefined;
+  $effect(() => {
+    const id = resource.id;
+    if (!explore || resource.level < 3) {
+      edaView = undefined;
+      edaFor = undefined;
+      return;
+    }
+    if (edaFor === id) return;
+    edaFor = id;
+    edaView = undefined;
+    explore.client.get(id).then(
+      (found) => resource.id === id && (edaView = found),
+      (error: unknown) => {
+        console.error(`The EDA of ${resource.displayName} could not be read`, error);
+        if (resource.id === id) edaView = null;
+      },
+    );
+  });
+  /** Starts its EDA, In progress, and opens it in the section EDA (DEC-UX-320). */
+  async function startEda(): Promise<boolean> {
+    if (!explore) return false;
+    try {
+      edaView = await explore.client.start(resource.id);
+      explore.onstarted?.();
+      explore.go(edaPath(resource.id));
+      return true;
+    } catch (error) {
+      console.error(`The EDA of ${resource.displayName} could not be started`, error);
+      return false;
+    }
+  }
+  const ladder: LadderEda | undefined = $derived(explore && resource.level >= 3 ? { view: edaView, href: edaPath(resource.id), onstart: startEda } : undefined);
 
   // The tabs of a Resource (DEC-UX-90).
   const TABS = [
@@ -573,6 +618,7 @@
       onremove={() => mark(async () => (await catalogue.removeResource(resource.id), catalogue.resource(resource.id)))}
       onchangetype={relates ? () => (relating = resource.details.modelType ? 'change' : 'type') : undefined}
       firstRowOf={(field) => queries.firstRow(resource.id, field).catch(() => null)}
+      eda={ladder}
       bind:part
     />
   {:else if tab === 'columns'}

@@ -7,7 +7,7 @@ IDs: TR-ED-NN. Every TR links what it realises.
 | | |
 | --- | --- |
 | Realises | [EDA](../functional/15-eda.md) |
-| Status | Specified for the first build ([DEC-ED-26](../functional/15-eda.md#dec-ed-26)) |
+| Status | First build implemented ([DEC-ED-26](../functional/15-eda.md#dec-ed-26)) |
 | Source of truth | This file |
 
 ## Requirements
@@ -15,7 +15,7 @@ IDs: TR-ED-NN. Every TR links what it realises.
 <a id="tr-ed-01"></a>
 ### TR-ED-01 · A service eda keeps the EDAs in its own schema
 
-**Status:** Specified · **Realises:** [DEC-ED-26](../functional/15-eda.md#dec-ed-26), [FR-ED-02](../functional/15-eda.md#fr-ed-02), [FR-ED-06](../functional/15-eda.md#fr-ed-06), [FR-ED-11](../functional/15-eda.md#fr-ed-11)
+**Status:** Implemented · **Realises:** [DEC-ED-26](../functional/15-eda.md#dec-ed-26), [FR-ED-02](../functional/15-eda.md#fr-ed-02), [FR-ED-06](../functional/15-eda.md#fr-ed-06), [FR-ED-11](../functional/15-eda.md#fr-ed-11)
 
 `services/eda` is a backend service like the others ([TR-PF-11](00-platform.md#tr-pf-11)), with its own schema `eda` in the Postgres of Data Hub ([DEC-PF-29](00-platform.md#dec-pf-29)) and its own migrations. It has no access to BigQuery. Its tables:
 
@@ -40,7 +40,7 @@ For a Resource, eda asks catalogue with the token of the User whether the User s
 <a id="tr-ed-02"></a>
 ### TR-ED-02 · One catalogue of EDA-Probes, shared
 
-**Status:** Specified · **Realises:** [FR-ED-05](../functional/15-eda.md#fr-ed-05), [DEC-ED-11](../functional/15-eda.md#dec-ed-11), [DEC-ED-12](../functional/15-eda.md#dec-ed-12), [DEC-ED-17](../functional/15-eda.md#dec-ed-17)
+**Status:** Implemented · **Realises:** [FR-ED-05](../functional/15-eda.md#fr-ed-05), [DEC-ED-11](../functional/15-eda.md#dec-ed-11), [DEC-ED-12](../functional/15-eda.md#dec-ed-12), [DEC-ED-17](../functional/15-eda.md#dec-ed-17)
 
 `@datahub/contracts/eda` holds the EDA-Probes of [the table](../functional/15-eda.md#eda-steps-and-eda-probes) for eda and the web app alike: per EDA-Probe its key, name, EDA-Step, place on the table (the rows, one column, two columns together, another Resource), its level per model type (`must`, `should`, `could`, or not offered) and whether Data Hub runs it yet. It also holds what an EDA-Probe applies to on a Resource, the fields a needed one must be set on to be complete, and the shapes of the answers of eda. In the first build Data Hub runs `grainHolds`, `nullsPerKeyField`, `volumeOverTime` and `distributionOfNumbers`; every other EDA-Probe is listed as coming and, needed, still counts ([OP-ED-09](../functional/15-eda.md#op-ed-09)).
 
@@ -56,7 +56,7 @@ A needed EDA-Probe is complete once a run of it covers what it applies to ([DEC-
 <a id="tr-ed-03"></a>
 ### TR-ED-03 · eda writes the SQL of an EDA-Probe, which returns aggregates only
 
-**Status:** Specified · **Realises:** [FR-ED-07](../functional/15-eda.md#fr-ed-07), [FR-ED-08](../functional/15-eda.md#fr-ed-08), [FR-ED-09](../functional/15-eda.md#fr-ed-09), [FR-ED-10](../functional/15-eda.md#fr-ed-10)
+**Status:** Implemented · **Realises:** [FR-ED-07](../functional/15-eda.md#fr-ed-07), [FR-ED-08](../functional/15-eda.md#fr-ed-08), [FR-ED-09](../functional/15-eda.md#fr-ed-09), [FR-ED-10](../functional/15-eda.md#fr-ed-10)
 
 Per EDA-Probe that Data Hub runs, eda writes one `SELECT` over the table of the Resource, by its full name, from the fields it is set on, that returns aggregates only, never rows of the table; a table that requires a filter on its partition column gets one that keeps every partition. eda then turns the answer into the result per subject and Data Hub's reading, so that the numbers in the web app are those kept.
 
@@ -68,21 +68,21 @@ Per EDA-Probe that Data Hub runs, eda writes one `SELECT` over the table of the 
 <a id="tr-ed-04"></a>
 ### TR-ED-04 · query runs an EDA-Probe as the User
 
-**Status:** Specified · **Realises:** [FR-ED-06](../functional/15-eda.md#fr-ed-06), [DEC-ED-26](../functional/15-eda.md#dec-ed-26), [DEC-SR-32](../functional/04-stacks-and-resources.md#dec-sr-32)
+**Status:** Implemented · **Realises:** [FR-ED-06](../functional/15-eda.md#fr-ed-06), [DEC-ED-26](../functional/15-eda.md#dec-ed-26), [DEC-SR-32](../functional/04-stacks-and-resources.md#dec-sr-32)
 
 query, the only service that reads data, gets `POST /resources/{id}/eda/runs` with `{ probe, sql, approve }` and the token of the User, from eda. It checks as for a query ([TR-SR-15](04-stacks-and-resources.md#tr-sr-15), [TR-SR-16](04-stacks-and-resources.md#tr-sr-16)) that the User holds `eda.use` and sees the Resource, that the SQL only reads its table, and what it reads in a dry run. Up to what the User's `runs.ranges` lets run freely it runs; up to what they may approve it runs with `approve`; otherwise it answers what the Pre-flight asks, and above the ranges it does not run: a Request for an EDA-Probe comes with [OP-ED-05](../functional/15-eda.md#op-ed-05). It runs as a job with a maximum on the bytes billed and the labels of the User and of an EDA run, keeps the run in the Query Log as a run of kind `eda`, one such query per User and Resource, apart from the queries of the panel of the User and of the History of the Resource, and never run as a query itself, and answers at most 10,000 rows with the bytes read and the ID of the run.
 
 <a id="tr-ed-05"></a>
 ### TR-ED-05 · catalogue makes a Resource Explored when eda says so
 
-**Status:** Specified · **Realises:** [FR-ED-12](../functional/15-eda.md#fr-ed-12), [FR-MR-22](../functional/06-maturity-and-release.md#fr-mr-22), [DEC-MR-21](../functional/06-maturity-and-release.md#dec-mr-21)
+**Status:** Implemented · **Realises:** [FR-ED-12](../functional/15-eda.md#fr-ed-12), [FR-MR-22](../functional/06-maturity-and-release.md#fr-mr-22), [DEC-MR-21](../functional/06-maturity-and-release.md#dec-mr-21)
 
 When every needed EDA-Probe of an EDA is complete, eda sets it to `explored` and calls `POST /internal/resources/{id}/eda` of catalogue with `{ explored: true }`, with its Google ID token for catalogue's address, which catalogue checks against `DATAHUB_EDA_SERVICE_ACCOUNT`. catalogue keeps on the Resource that it is explored (a migration), so that a Resource at 3 · Confirmed becomes 4 · Explored and stays so whenever it recomputes the Level, and writes it in its Log (`RES-002`). `{ explored: false }`, when an EDA goes, takes it back to 3 · Confirmed with `MAT-021` and the Message of a Level that drops, cause `eda` ([MSG-RES-05](../functional/message-catalogue.md#msg-res-05)); in the first build no EDA goes.
 
 <a id="tr-ed-06"></a>
 ### TR-ED-06 · The Permission eda.use, on for Admin only
 
-**Status:** Specified · **Realises:** [FR-ED-01](../functional/15-eda.md#fr-ed-01), [DEC-PL-10](../functional/12-permissions-and-library-cards.md#dec-pl-10), [DEC-ED-25](../functional/15-eda.md#dec-ed-25)
+**Status:** Implemented · **Realises:** [FR-ED-01](../functional/15-eda.md#fr-ed-01), [DEC-PL-10](../functional/12-permissions-and-library-cards.md#dec-pl-10), [DEC-ED-25](../functional/15-eda.md#dec-ed-25)
 
 *Built as the other Permissions: in the one catalogue ([TR-PL-03](12-permissions-and-library-cards.md#tr-pl-03)), carried by the Access Token ([TR-PL-05](12-permissions-and-library-cards.md#tr-pl-05)) and checked by every service ([TR-PL-06](12-permissions-and-library-cards.md#tr-pl-06)).*
 
@@ -91,14 +91,14 @@ When every needed EDA-Probe of an EDA is complete, eda sets it to `explored` and
 <a id="tr-ed-07"></a>
 ### TR-ED-07 · The web app has the section EDA
 
-**Status:** Specified · **Realises:** [FR-ED-02](../functional/15-eda.md#fr-ed-02), [FR-ED-03](../functional/15-eda.md#fr-ed-03), [FR-ED-04](../functional/15-eda.md#fr-ed-04), [FR-ED-06](../functional/15-eda.md#fr-ed-06), [FR-ED-07](../functional/15-eda.md#fr-ed-07), [FR-ED-08](../functional/15-eda.md#fr-ed-08), [FR-ED-09](../functional/15-eda.md#fr-ed-09), [FR-ED-10](../functional/15-eda.md#fr-ed-10), [FR-ED-11](../functional/15-eda.md#fr-ed-11), [DEC-UX-325](../../design/principles.md#dec-ux-325)
+**Status:** Implemented · **Realises:** [FR-ED-02](../functional/15-eda.md#fr-ed-02), [FR-ED-03](../functional/15-eda.md#fr-ed-03), [FR-ED-04](../functional/15-eda.md#fr-ed-04), [FR-ED-06](../functional/15-eda.md#fr-ed-06), [FR-ED-07](../functional/15-eda.md#fr-ed-07), [FR-ED-08](../functional/15-eda.md#fr-ed-08), [FR-ED-09](../functional/15-eda.md#fr-ed-09), [FR-ED-10](../functional/15-eda.md#fr-ed-10), [FR-ED-11](../functional/15-eda.md#fr-ed-11), [DEC-UX-325](../../design/principles.md#dec-ux-325)
 
 The web app calls eda at its address (`DATAHUB_EDA_URL`) with the Access Token of the User, as it calls the other services. The section EDA, after Charts in the rail with the binoculars icon, its panel, the page of an EDA with its tabs, the tab Steps and the detail of the four EDA-Probes follow the screens [eda](../../design/screens/eda.html), [eda-probe](../../design/screens/eda-probe.html), [eda-probe-nulls](../../design/screens/eda-probe-nulls.html), [eda-probe-volume](../../design/screens/eda-probe-volume.html) and [eda-probe-distribution](../../design/screens/eda-probe-distribution.html); the Maturity of a Resource gets Start the EDA and its progress, as in [resource-overview](../../design/screens/resource-overview.html). The drawings of the EDA-Probes and their charts are Svelte components of their own, not charts of semgraph ([DEC-UX-325](../../design/principles.md#dec-ux-325)); a drawing comes in once, again on Replay, and stands still for whoever asks for reduced motion. Every text is in English and in Dutch.
 
 <a id="tr-ed-08"></a>
 ### TR-ED-08 · eda runs on Cloud Run, without access to data
 
-**Status:** Specified · **Realises:** [DEC-ED-26](../functional/15-eda.md#dec-ed-26), [DEC-ED-03](../functional/15-eda.md#dec-ed-03)
+**Status:** Implemented · **Realises:** [DEC-ED-26](../functional/15-eda.md#dec-ed-26), [DEC-ED-03](../functional/15-eda.md#dec-ed-03)
 
 eda is one of `local.services` in `infra/main.tf`, with its own service account that holds only what every service with a database holds, the Cloud SQL client role and its login to Postgres, and no role on BigQuery, and the addresses of query and catalogue (`DATAHUB_QUERY_URL`, `DATAHUB_CATALOGUE_URL`) and of identity (`DATAHUB_TOKEN_ISSUER`). catalogue gets the service account of eda (`DATAHUB_EDA_SERVICE_ACCOUNT`), and web the address of eda (`DATAHUB_EDA_URL`). A test in `infra/tests/` checks that eda holds no BigQuery role.
 

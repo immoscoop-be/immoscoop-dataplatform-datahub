@@ -2,6 +2,7 @@ import { formatBigQuery } from '@datahub/ui/components/sqlFormat.js';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/svelte';
 import { setLanguage } from '@datahub/ui/foundations/texts.svelte.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { coverage, type EdaResource, type EdaView } from '@datahub/contracts/eda';
 import { journeyOf, type JourneyFacts } from '@datahub/contracts/journey';
 import { NO_PERMISSIONS, STARTING_GROUPS, type Permissions, type StartingGroup } from '@datahub/contracts/permissions';
 import { flowBox } from './lib/flowBox.svelte.js';
@@ -13,6 +14,7 @@ const CONFIG: Config = {
   catalogueUrl: 'https://catalogue.test',
   registryUrl: 'https://registry.test',
   queryUrl: 'https://query.test',
+  edaUrl: 'https://eda.test',
   semgraphUrl: 'https://semgraph.test',
 };
 
@@ -642,6 +644,8 @@ function serve({
   projects = [] as FakeProject[],
   /** Who else is in a query of a Project, and who changed its SQL last (OP-UX-99). */
   presence = { others: [], sqlChanged: null } as Record<string, unknown>,
+  /** eda, by what it answers a call; without it, eda knows no EDA (TR-ED-01). */
+  edaService = undefined as ((method: string, path: string, body?: unknown) => Response | undefined) | undefined,
 } = {}): Saved[] {
   const calls: Saved[] = [];
   // The Users and Permission groups as identity keeps them, changed by what the page asks (TR-PL-07).
@@ -679,6 +683,13 @@ function serve({
     const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
     if (path === '/auth/token') {
       return signedIn ? json({ access_token: 'token', expires_in: 3600 }) : json({ error: 'no_session' }, 401);
+    }
+    // eda, apart from the other services: its calls are kept as "eda <path>".
+    if (input.startsWith(CONFIG.edaUrl)) {
+      const at = input.slice(CONFIG.edaUrl.length);
+      const body: unknown = init.body ? JSON.parse(init.body as string) : undefined;
+      calls.push({ method, path: `eda ${at}`, ...(body ? { body } : {}) });
+      return edaService?.(method, at, body) ?? json({ error: 'not_found' }, 404);
     }
     calls.push({ method, path, ...(init.body ? { body: JSON.parse(init.body as string) } : {}) });
     if (sessionEndsAt !== undefined && path === sessionEndsAt) {
@@ -2155,6 +2166,129 @@ describe('the Permissions of the User (FR-PL-14)', () => {
   });
 });
 
+/** Weekly lead volume as eda sees it: an aggregate at 3 · Confirmed, with four Key Fields. */
+const EDA_WEEKLY: EdaResource = {
+  id: 'r2',
+  displayName: 'Weekly lead volume',
+  modelType: 'aggregate',
+  level: 3,
+  fields: [
+    { name: 'week_start', dataType: 'DATE', keyField: true, role: 'period', grain: true, mapped: false },
+    { name: 'lead_source', dataType: 'STRING', keyField: true, role: 'groupedBy', grain: true, mapped: true },
+    { name: 'lead_count', dataType: 'INT64', keyField: true, role: 'addsUp', grain: false, mapped: false },
+    { name: 'lead_channel', dataType: 'STRING', keyField: true, role: null, grain: false, mapped: false },
+  ],
+};
+
+/** The EDA of Weekly lead volume, In progress, with how many of its needed EDA-Probes are complete. */
+function edaOf(complete = 0): EdaView {
+  return {
+    resource: { ...EDA_WEEKLY, collection: { id: 'c1', name: 'Credit leads' } },
+    status: 'inProgress',
+    startedBy: { id: '2', name: 'An Claes' },
+    startedAt: '2026-11-21T09:00:00Z',
+    exploredAt: null,
+    needed: { total: 10, complete },
+    probes: [],
+    coverage: coverage(EDA_WEEKLY, []),
+    next: null,
+  };
+}
+
+const answer = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+/** Weekly lead volume, published: 3 · Confirmed. */
+const CONFIRMED = { level: 3, published: true, publication: { publishedAt: '2026-11-02T09:00:00Z', publishedBy: 'An Claes', confirmedAt: '2026-11-02T09:00:00Z', confirmedBy: 'An Claes' } };
+
+describe('the section EDA (FR-ED-01 to FR-ED-04, TR-ED-07)', () => {
+  it('is in the rail after Charts only for who may explore Resources; to anyone else it is what may not be seen (FR-ED-01)', async () => {
+    const calls = serve();
+    open('/eda');
+    render(App, { config: CONFIG });
+    expect(await screen.findByRole('heading', { level: 1, name: 'Hier is niets voor jou' })).toBeTruthy();
+    expect(within(screen.getByRole('navigation', { name: 'Hoofdnavigatie' })).queryByRole('link', { name: 'EDA' })).toBeNull();
+    expect(calls.some((call) => call.path.startsWith('eda '))).toBe(false);
+  });
+
+  it('lists the EDAs by Collection, with where each stands and how many needed EDA-Probes it still has to go, and the Resources ready for one (FR-ED-03)', async () => {
+    serve({
+      as: 'admin',
+      edaService: (method, path) =>
+        method === 'GET' && path === '/edas'
+          ? answer({
+              edas: [{ resource: { id: 'r2', displayName: 'Weekly lead volume', collection: { id: 'c1', name: 'Credit leads' } }, status: 'inProgress', needed: { total: 10, complete: 4 } }],
+              ready: [{ resource: { id: 'r7', displayName: 'Listing states', collection: { id: 'c2', name: 'Listings' } }, level: 3 }],
+            })
+          : undefined,
+    });
+    open('/eda');
+    render(App, { config: CONFIG });
+    const rail = within(await screen.findByRole('navigation', { name: 'Hoofdnavigatie' }));
+    const eda = await rail.findByRole('link', { name: 'EDA' });
+    expect(eda.getAttribute('aria-current')).toBe('page');
+    const links = rail.getAllByRole('link').map((link) => link.getAttribute('aria-label'));
+    expect(links.indexOf('EDA')).toBe(links.indexOf('Grafieken') + 1);
+    const panel = within(screen.getByRole('complementary', { name: 'EDA' }));
+    const weekly = await panel.findByRole('link', { name: /Weekly lead volume/ });
+    expect(weekly.getAttribute('href')).toBe('/eda/r2');
+    expect(weekly.textContent).toContain('nog 6');
+    expect(within(weekly).getByRole('img', { name: 'Bezig' })).toBeTruthy();
+    expect(panel.getByText('Credit leads')).toBeTruthy();
+    expect(panel.getByText('Klaar voor een EDA')).toBeTruthy();
+    expect(panel.getByRole('link', { name: /Listing states/ }).getAttribute('href')).toBe('/resources/r7/maturity');
+    expect(within(screen.getByRole('main')).getByRole('heading', { level: 1, name: 'EDA' })).toBeTruthy();
+    expect(document.title).toBe('local · Data Hub — EDA');
+  });
+
+  it('starts the EDA from the maturity ladder at 3 · Confirmed, and opens it in the section EDA (FR-ED-02, DEC-UX-320)', async () => {
+    let started = false;
+    const calls = serve({
+      as: 'admin',
+      weekly: CONFIRMED,
+      edaService: (method, path) => {
+        if (path === '/resources/r2/eda' && method === 'POST') {
+          started = true;
+          return answer(edaOf(), 201);
+        }
+        if (path === '/resources/r2/eda') return started ? answer(edaOf()) : answer({ error: 'not_found' }, 404);
+        if (path === '/edas') return answer({ edas: [], ready: [] });
+        return undefined;
+      },
+    });
+    open('/resources/r2/maturity');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const start = await main.findByRole('button', { name: 'Start de EDA' });
+    expect(main.getByText(/Vraagt een EDA: Data Hub neemt de Resource door zijn EDA-Steps/)).toBeTruthy();
+    await fireEvent.click(start);
+    await vi.waitFor(() => expect(location.pathname).toBe('/eda/r2'));
+    expect(calls).toContainEqual({ method: 'POST', path: 'eda /resources/r2/eda' });
+    expect(await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' })).toBeTruthy();
+    expect(main.getByRole('tab', { name: 'Stappen' }).getAttribute('aria-selected')).toBe('true');
+    expect(main.getByText('0 van 10')).toBeTruthy();
+  });
+
+  it('shows on the ladder how far its EDA is, with a bar and Open its EDA; without eda.use the Levels read as before (FR-ED-01, FR-ED-02)', async () => {
+    serve({ as: 'admin', weekly: CONFIRMED, edaService: (method, path) => (method === 'GET' && path === '/resources/r2/eda' ? answer(edaOf(4)) : undefined) });
+    open('/resources/r2/maturity');
+    const { unmount } = render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByText(/Zijn EDA, gestart op .* door An Claes: 4 van 10 nodige EDA-Probes af\./)).toBeTruthy();
+    expect(main.getByRole('img', { name: '4 van 10 nodige EDA-Probes af' }).querySelectorAll('span.on')).toHaveLength(4);
+    expect(main.getByRole('link', { name: /Open zijn EDA/ }).getAttribute('href')).toBe('/eda/r2');
+    expect(main.queryByRole('button', { name: 'Start de EDA' })).toBeNull();
+    unmount();
+    cleanup();
+
+    const calls = serve({ weekly: CONFIRMED });
+    open('/resources/r2/maturity');
+    render(App, { config: CONFIG });
+    const page = within(await screen.findByRole('main'));
+    expect(await page.findByText(/Vraagt een EDA, voorlopig door een Data Admin/)).toBeTruthy();
+    expect(page.queryByRole('button', { name: 'Start de EDA' })).toBeNull();
+    expect(calls.some((call) => call.path.startsWith('eda '))).toBe(false);
+  });
+});
+
 describe('the flags the services send per object (FR-PL-14, DEC-PL-03)', () => {
   const ONLY_GAPS = { description: false, behaviour: false, pitfalls: false, availableSince: false, gaps: true, keyFields: false, entityMapping: false };
 
@@ -2301,7 +2435,7 @@ describe('Permission groups, in Admin', () => {
     expect(list.getByRole('button', { name: /^Lens user/ }).textContent).toContain('Standaard voor nieuwe Users');
     await fireEvent.click(list.getByRole('button', { name: /^Lens user/ }));
     expect(opened().getByRole('heading', { level: 2, name: 'Lens user' })).toBeTruthy();
-    expect(opened().getAllByRole('region').map((part) => part.getAttribute('aria-label'))).toEqual(['Collections en Resources', 'Groups', 'Query', 'Lenses', 'Berichten', 'Claude, via de MCP', 'Excel', 'Admin']);
+    expect(opened().getAllByRole('region').map((part) => part.getAttribute('aria-label'))).toEqual(['Collections en Resources', 'Groups', 'Query', 'Lenses', 'EDA', 'Berichten', 'Claude, via de MCP', 'Excel', 'Admin']);
     expect(screen.queryByText(/nog niet bewaard/)).toBeNull();
 
     // Yes shows its values; the change is marked and counted.

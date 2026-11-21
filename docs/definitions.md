@@ -153,6 +153,7 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | afgeleide metriek, basismetriek | derived Metric, base Metric |
 | actie (van een regel) | Action |
 | aggregaattabel | Aggregate Table |
+| Basis, Hiaten, Gewicht, Juistheid, Relaties tussen velden (de EDA-Steps) | Basis, Gaps, Weight, Correctness, Relations between fields |
 | begrip, beta-begrip | concept, Beta Concept |
 | bekend gedrag | Known Behaviour |
 | bekende hiaten | Known Gaps |
@@ -169,6 +170,7 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | bucket, bucketgrootte | bucket, size of a bucket |
 | businessbeschrijving | Business Description |
 | datumveld (van een Resource) | Date Field |
+| De grain klopt, Lege waarden per sleutelveld, Volume in de tijd met lege periodes, Verdeling van getallen (EDA-Probes) | The grain holds, Nulls per Key Field, Volume over time with empty periods, Distribution of numbers |
 | defect, werkt niet meer | Broken |
 | collectie | Collection |
 | collectiebeheer en wieden | collection management and weeding |
@@ -244,6 +246,7 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | signaal, opmerking, vraag | Signal, Remark, Question |
 | signaalkleur | signal colour |
 | sleutel | Key |
+| sleutelveld | Key Field |
 | snel pad, volledig pad | quick path, full path |
 | stabiliteit | Stability |
 | startscherm | start screen |

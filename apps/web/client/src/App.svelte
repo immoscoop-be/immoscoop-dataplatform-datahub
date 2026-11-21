@@ -14,6 +14,7 @@
   import { Backgrounds } from './lib/background.svelte.js';
   import { createCatalogue, type Collection, type LogEntry, type Resource, type ResourceDetail, type ToComplete } from './lib/catalogue.js';
   import { type ChartsOverview, createCharts } from './lib/charts.js';
+  import { createEda, type EdaList } from './lib/eda.js';
   import { dragging, type Mover } from './lib/dragging.svelte.js';
   import type { Config } from './lib/config.js';
   import { createIdentity, type GroupSummary, SignedOut, type Me } from './lib/identity.js';
@@ -43,6 +44,8 @@
   import AdminWithdrawn from './screens/AdminWithdrawn.svelte';
   import ChartPage from './screens/ChartPage.svelte';
   import ChartsPanel from './screens/ChartsPanel.svelte';
+  import EdaPage from './screens/EdaPage.svelte';
+  import EdaPanel from './screens/EdaPanel.svelte';
   import CollectionPage from './screens/CollectionPage.svelte';
   import CollectionsPanel from './screens/CollectionsPanel.svelte';
   import CollectionsStart from './screens/CollectionsStart.svelte';
@@ -87,6 +90,8 @@
   const queries = $derived(createQuery(config, session));
   const projectsClient = $derived(createProjects(config, session));
   const messages = $derived(createMessages(config, session));
+  /** eda, the EDA of each Resource, for a User who may explore Resources (TR-ED-07). */
+  const edaClient = $derived(createEda(config, session));
   const learning = $derived(createLearning(config, session));
   /** semgraph, whose gallery Charts shows; open to everyone, so without Access Token (TR-PF-34). */
   const charts = $derived(createCharts(config));
@@ -291,6 +296,24 @@
   }
   /** Who sees all of the catalogue sees the Resources without a Collection too (DEC-PL-02, FR-SR-35). */
   const seesAll = $derived(sees(permissions) === 'all');
+  /** Who may explore Resources sees the section EDA and Start the EDA (`eda.use`, FR-ED-01). */
+  const mayExplore = $derived(can(permissions, 'eda.use'));
+  /** The EDAs of the Resources the User sees, for the panel of EDA: undefined until read, null when eda did not answer (FR-ED-03). */
+  let edas: EdaList | null | undefined = $state();
+  /** Reads the EDAs again, after one started, ran or was read. */
+  function readEdas(): void {
+    edaClient.list().then(
+      (found) => (edas = found),
+      (error: unknown) => {
+        console.error('The EDAs could not be read', error);
+        edas = null;
+      },
+    );
+  }
+  // The panel of EDA reads the EDAs when the section opens.
+  $effect(() => {
+    if (status.kind === 'signedIn' && mayExplore && section?.id === 'eda' && untrack(() => edas) === undefined) readEdas();
+  });
 
   /** The Permission a service last refused for, by its name, for the line on screen (EC-PL-01); a new key shows it again. */
   let lost = $state({ key: 0, name: '' });
@@ -759,7 +782,9 @@
                             ? cardTitle(page.id)
                             : page.kind === 'chart'
                               ? (chartsShown?.charts.find((chart) => chart.id === page.id)?.title ?? sectionLabel(page.section))
-                              : undefined;
+                              : page.kind === 'eda'
+                                ? [sectionLabel(page.section), edas?.edas.find((one) => one.resource.id === page.id)?.resource.displayName].filter(Boolean).join(' · ')
+                                : undefined;
     // The title of the tab begins with the environment, as its ribbon does; prod wears nothing (DEC-UX-203).
     const environment = config.environment ?? 'local';
     const named = title ? `Data Hub — ${title}` : 'Data Hub';
@@ -793,7 +818,8 @@
       page.kind === 'learningCard' ||
       page.kind === 'learningSee' ||
       page.kind === 'admin' ||
-      page.kind === 'chart'
+      page.kind === 'chart' ||
+      page.kind === 'eda'
       ? page.section
       : undefined,
   );
@@ -1224,6 +1250,18 @@
       />
     {:else if queryPage && !mayQuery(permissions)}
       <NotFound />
+    {:else if (page.kind === 'eda' || (page.kind === 'start' && page.section.id === 'eda')) && !mayExplore}
+      <!-- The section EDA is for who may explore Resources; to anyone else it is what may not be seen (FR-ED-01). -->
+      <NotFound />
+    {:else if page.kind === 'start' && page.section.id === 'eda'}
+      <div class="eda-start">
+        <h1 class="page-title">EDA</h1>
+        <p>{t('eda.start.text')}</p>
+      </div>
+    {:else if page.kind === 'eda'}
+      {#key page.id}
+        <EdaPage id={page.id} tab={page.tab} probe={page.probe} client={edaClient} onchanged={readEdas} />
+      {/key}
     {:else if page.kind === 'start' && page.section.id === 'learning'}
       <LearningStart
         shown={shownCards}
@@ -1478,6 +1516,7 @@
           }}
           onrun={() => refreshQueries()}
           onguide={() => guide(resource.id)}
+          explore={mayExplore ? { client: edaClient, go: (path) => router.go(path), onstarted: readEdas } : undefined}
         />
       {:else if opened?.resource === null}
         <NotFound />
@@ -1723,6 +1762,8 @@
       loadProject={(id) => projectsClient.get(id)}
       onnewproject={can(permissions, 'queries.make') ? () => (projectSheet = { mode: 'new', query: null }) : undefined}
     />
+  {:else if section?.id === 'eda' && status.kind === 'signedIn' && mayExplore}
+    <EdaPanel list={edas} {collections} current={page.kind === 'eda' ? page.id : undefined} />
   {:else if section?.id === 'charts' && status.kind === 'signedIn'}
     <ChartsPanel overview={chartsShown} current={page.kind === 'chart' ? page.id : undefined} iconUrl={(id) => charts.iconUrl(id)} />
   {/if}
@@ -1771,4 +1812,6 @@
   .query-screen { height: 100%; min-height: 0; display: flex; flex-direction: column; }
   .query-pages { flex: 1; min-height: 0; }
   .query-kept { height: 100%; }
+  .eda-start { margin-top: 8px; max-width: 640px; }
+  .eda-start p { margin: 10px 0 0; font-size: var(--text-small); line-height: 1.55; color: var(--text-secondary); }
 </style>

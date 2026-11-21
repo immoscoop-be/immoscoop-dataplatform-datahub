@@ -7,6 +7,10 @@
     readonly label: string;
     /** A tab that has an address of its own is a link. */
     readonly href?: string;
+    /** A tab greyed while what it holds is still to come, such as the Profile of an EDA (DEC-UX-321); it still opens. */
+    readonly muted?: boolean;
+    /** Said on hover, such as when a greyed tab opens. */
+    readonly title?: string;
   }
 
   /**
@@ -40,6 +44,8 @@
       <a
         class="tab"
         class:on={tab.id === current}
+        class:muted={tab.muted}
+        title={tab.title}
         href={tab.href}
         role="tab"
         aria-selected={tab.id === current}
@@ -51,6 +57,8 @@
         type="button"
         class="tab"
         class:on={tab.id === current}
+        class:muted={tab.muted}
+        title={tab.title}
         role="tab"
         aria-selected={tab.id === current}
         tabindex={tab.id === current ? 0 : -1}
@@ -69,6 +77,7 @@
     cursor: pointer; display: inline-flex; align-items: center; gap: 5px; position: relative; z-index: 1; border: 0; background: none; text-decoration: none; }
   .tab:hover { color: var(--text-primary); background: var(--surface-float-hover); }
   .tab.on { color: var(--text-primary); font-weight: var(--weight-medium); background: var(--card); z-index: 2; }
+  .tab.muted:not(.on) { color: color-mix(in srgb, var(--text-muted) 70%, transparent); }
   .tab.on::before, .tab.on::after { content: ''; position: absolute; bottom: 0; width: var(--flare-tab); height: var(--flare-tab); }
   .tab.on::before { left: calc(-1 * var(--flare-tab)); background: radial-gradient(circle at 0 0, transparent var(--flare-tab), var(--card) calc(var(--flare-tab) + .5px)); }
   .tab.on::after { right: calc(-1 * var(--flare-tab)); background: radial-gradient(circle at 100% 0, transparent var(--flare-tab), var(--card) calc(var(--flare-tab) + .5px)); }
