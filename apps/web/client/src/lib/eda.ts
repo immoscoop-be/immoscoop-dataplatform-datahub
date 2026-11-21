@@ -155,6 +155,17 @@ export const PROBE_TEXTS: Readonly<Record<ProbeKey, string>> = {
   chancePerSegment: 'eda.probe.chancePerSegment',
 };
 
+/**
+ * What an EDA-Probe Data Hub runs does, why it matters, what it is set on and what its result will show, as its detail
+ * says it (DEC-UX-324) and as the guide of an EDA unfolds it (DEC-UX-327).
+ */
+export const PROBE_ABOUT: Readonly<Partial<Record<ProbeKey, { does: string; why: string; setOn: string; empty: string }>>> = {
+  grainHolds: { does: 'eda.about.grainHolds.does', why: 'eda.about.grainHolds.why', setOn: 'eda.about.grainHolds.setOn', empty: 'eda.about.grainHolds.empty' },
+  nullsPerKeyField: { does: 'eda.about.nullsPerKeyField.does', why: 'eda.about.nullsPerKeyField.why', setOn: 'eda.about.nullsPerKeyField.setOn', empty: 'eda.about.nullsPerKeyField.empty' },
+  volumeOverTime: { does: 'eda.about.volumeOverTime.does', why: 'eda.about.volumeOverTime.why', setOn: 'eda.about.volumeOverTime.setOn', empty: 'eda.about.volumeOverTime.empty' },
+  distributionOfNumbers: { does: 'eda.about.distributionOfNumbers.does', why: 'eda.about.distributionOfNumbers.why', setOn: 'eda.about.distributionOfNumbers.setOn', empty: 'eda.about.distributionOfNumbers.empty' },
+};
+
 /** The name and the line of each EDA-Step (DEC-ED-11). */
 export const STEP_TEXTS: Readonly<Record<EdaStep, { name: string; about: string }>> = {
   basis: { name: 'eda.step.basis', about: 'eda.step.basis.about' },
@@ -225,12 +236,38 @@ export function probesOf(view: Pick<EdaView, 'probes'>, step: EdaStep): ProbeVie
 }
 
 /**
- * What the tile Add probe of an EDA-Step opens while the list of EDA-Probes is not designed (OP-UX-119, FR-ED-04): the
- * first EDA-Probe of the step that Data Hub runs and that is not added yet, needed ones first; none, no tile.
+ * Whether an EDA-Step has its tile Add probe (FR-ED-04): while it has an EDA-Probe offered that is not added yet,
+ * coming ones too, as the list to add an EDA-Probe shows them (FR-ED-13).
  */
-export function firstToAdd(view: Pick<EdaView, 'probes'>, step: EdaStep): ProbeKey | null {
-  const open = probesOf(view, step).filter((probe) => probe.runs && !probe.added);
-  return (open.find((probe) => probe.needed) ?? open[0])?.key ?? null;
+export function hasToAdd(view: Pick<EdaView, 'probes'>, step: EdaStep): boolean {
+  return probesOf(view, step).some((probe) => !probe.added);
+}
+
+/**
+ * Where an EDA-Probe stands in the list to add one (DEC-UX-328): added, with Data Hub's reading; added and set on part
+ * of what it needs, or not run yet; open, to add it; or coming, while Data Hub does not run it (DEC-ED-27).
+ */
+export type ListState = 'added' | 'part' | 'open' | 'coming';
+
+export function listStateOf(probe: Pick<ProbeView, 'added' | 'needed' | 'complete' | 'runs' | 'lastRun'>): ListState {
+  if (probe.added) return probe.lastRun && (probe.complete || !probe.needed) ? 'added' : 'part';
+  return probe.runs ? 'open' : 'coming';
+}
+
+/** What the list to add an EDA-Probe shows (DEC-UX-328): all, the needed ones, those Data Hub runs, or those added. */
+export type ListFilter = 'all' | 'needed' | 'runs' | 'added';
+
+export function fitsFilter(probe: Pick<ProbeView, 'added' | 'needed' | 'runs'>, filter: ListFilter): boolean {
+  if (filter === 'needed') return probe.needed;
+  if (filter === 'runs') return probe.runs;
+  if (filter === 'added') return probe.added;
+  return true;
+}
+
+/** How much its model type asks for an EDA-Probe, as the list says it: Needed, Suggested or On request (DEC-UX-328). */
+export function askedOf(probe: Pick<ProbeView, 'needed' | 'level'>): Exclude<ProbeStanding, 'added'> {
+  if (probe.needed) return 'needed';
+  return probe.level === 'could' ? 'onRequest' : 'suggested';
 }
 
 /** Where an EDA-Probe stands on the table as a whole (DEC-UX-322): added, needed, suggested or on request. */

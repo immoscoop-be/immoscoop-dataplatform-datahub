@@ -140,7 +140,7 @@ The section EDA stands in the rail after Charts, with the binoculars icon, for a
 <a id="fr-ed-04"></a>
 ### FR-ED-04 · The tab Steps shows the EDA-Setup per EDA-Step and its state
 
-**Status:** Specified · **Source:** Max, 2026-11-21 ([DEC-ED-16](#dec-ed-16)) · **Screens:** [eda](../../design/screens/eda.html)
+**Status:** Implemented · **Source:** Max, 2026-11-21 ([DEC-ED-16](#dec-ed-16)) · **Screens:** [eda](../../design/screens/eda.html)
 
 The page of an EDA has the tabs Overview, Steps and Profile; Overview, filled in later, and Profile, greyed while the EDA-Setup is not complete, say what will come there ([DEC-UX-321](../../design/principles.md#dec-ux-321)). Steps shows on the left a row per EDA-Step ([DEC-ED-11](#dec-ed-11)), each with how many of its needed EDA-Probes are complete, a card per EDA-Probe added, with its result in a sentence, Data Hub's reading and the fields it is set on, and, while the EDA-Step has EDA-Probes not added yet, one empty tile, Add probe, which opens the list to add an EDA-Probe at that EDA-Step ([FR-ED-13](#fr-ed-13)). On the right: the needed EDA-Probes complete, as a number and a bar; what the EDA covers in its four places; the best next step; the EDA-Probes on the table as a whole; and per field, in the order of the Resource Card, what covers it per EDA-Step, the Key Fields marked ([DEC-UX-322](../../design/principles.md#dec-ux-322), [DEC-UX-323](../../design/principles.md#dec-ux-323)).
 
@@ -221,7 +221,7 @@ Once every needed EDA-Probe of an EDA is complete, the EDA is Explored and its R
 <a id="fr-ed-13"></a>
 ### FR-ED-13 · The list to add an EDA-Probe
 
-**Status:** Specified · **Source:** Max, 2026-11-21 ([DEC-UX-328](../../design/principles.md#dec-ux-328)) · **Screens:** [eda](../../design/screens/eda.html)
+**Status:** Implemented · **Source:** Max, 2026-11-21 ([DEC-UX-328](../../design/principles.md#dec-ux-328)) · **Screens:** [eda](../../design/screens/eda.html)
 
 Add probe opens a sheet with every EDA-Probe the model type of the Resource is offered ([DEC-ED-12](#dec-ed-12)), per EDA-Step in their order, opened at the EDA-Step of its tile, with a search that has the focus at once. Each EDA-Probe shows its name, the question it asks of this Resource, whether it is Needed, Suggested or On request, and its state: added, with Data Hub's reading; set on part of what it needs; ready to add; or Coming, while Data Hub does not run it ([DEC-ED-27](#dec-ed-27)). Filters show all, the needed ones, those Data Hub runs, or those added. A click opens its detail, where Run adds it ([FR-ED-06](#fr-ed-06)); a Coming one opens nothing. An EDA-Probe not offered for its model type is not listed.
 
@@ -230,7 +230,7 @@ Add probe opens a sheet with every EDA-Probe the model type of the Resource is o
 <a id="fr-ed-14"></a>
 ### FR-ED-14 · The guide of an EDA, in the Flow Box
 
-**Status:** Specified · **Source:** Max, 2026-11-21 ([DEC-UX-327](../../design/principles.md#dec-ux-327)) · **Screens:** [eda](../../design/screens/eda.html), [eda-probe](../../design/screens/eda-probe.html)
+**Status:** Implemented · **Source:** Max, 2026-11-21 ([DEC-UX-327](../../design/principles.md#dec-ux-327)) · **Screens:** [eda](../../design/screens/eda.html), [eda-probe](../../design/screens/eda-probe.html)
 
 Starting an EDA opens its guide: the [Flow Box](../../design/principles.md#flow-box) with the flow Set up its EDA, one step per needed EDA-Probe, in the order of the EDA-Steps and grouped under them. A step is done once its EDA-Probe is complete, with Data Hub's reading and its result in a few words; open with what it misses; or Coming while Data Hub does not run it, and still counted. The step to do now is the best next step of the EDA, as its page proposes; it unfolds What, Why and How, its Learning Card where one is written, and Open the EDA-Probe, which opens its detail. On the tab Steps of its EDA the Flow Box is folded to its strip, as the page shows the same; on the detail of an EDA-Probe and on every other page of Data Hub it is open, until it is closed. Guide me, beside the title of the page of the EDA, brings it back. It is there for a User with Explore Resources while the EDA is in progress, and it is one Flow Box at a time ([DEC-UX-308](../../design/principles.md#dec-ux-308)).
 

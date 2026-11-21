@@ -14,6 +14,7 @@
   import { Backgrounds } from './lib/background.svelte.js';
   import { createCatalogue, type Collection, type LogEntry, type Resource, type ResourceDetail, type ToComplete } from './lib/catalogue.js';
   import { type ChartsOverview, createCharts } from './lib/charts.js';
+  import type { EdaView } from '@datahub/contracts/eda';
   import { createEda, type EdaList } from './lib/eda.js';
   import { dragging, type Mover } from './lib/dragging.svelte.js';
   import type { Config } from './lib/config.js';
@@ -28,7 +29,7 @@
   import { createProjects, isDeleted, moved as reordered, type Project, type ProjectItem, projectPath } from './lib/projects.js';
   import { type QuickRow, used } from './lib/quick.js';
   import { provideScreenCommands } from './lib/commands.svelte.js';
-  import { collectionPath, GROUPS, learningPath, lensPath, messagesOnPath, myPagePath, NEW_COLLECTION, NEW_QUERY, objectPath, queryPath, resourcePath, route } from './lib/routes.js';
+  import { collectionPath, edaPath, GROUPS, learningPath, lensPath, messagesOnPath, myPagePath, NEW_COLLECTION, NEW_QUERY, objectPath, probePath, queryPath, resourcePath, route } from './lib/routes.js';
   import { Router } from './lib/router.svelte.js';
   import { can, mayQuery, NO_PERMISSIONS, PERMISSION_KEYS, PERMISSION_TEXTS, reach, sees } from './lib/permissions.js';
   import { ADMIN_TOOLS, type AdminTool, SECTIONS, sectionFor, sectionLabel, toolsFor } from './lib/sections.js';
@@ -44,6 +45,7 @@
   import AdminWithdrawn from './screens/AdminWithdrawn.svelte';
   import ChartPage from './screens/ChartPage.svelte';
   import ChartsPanel from './screens/ChartsPanel.svelte';
+  import EdaFlow from './screens/EdaFlow.svelte';
   import EdaPage from './screens/EdaPage.svelte';
   import EdaPanel from './screens/EdaPanel.svelte';
   import CollectionPage from './screens/CollectionPage.svelte';
@@ -515,8 +517,10 @@
    * it is stored (DEC-UX-306).
    */
   let flowResource: ResourceDetail | undefined = $state();
+  /** The Resource the Flow Box guides through publishing, while that is the flow open. */
+  const publishing = $derived(flowBox.open?.flow === 'publish' ? flowBox.open.resource : undefined);
   $effect(() => {
-    const id = flowBox.open?.resource;
+    const id = publishing;
     void router.path;
     if (!id) {
       flowResource = undefined;
@@ -528,21 +532,98 @@
       return;
     }
     catalogue.resource(id).then(
-      (found) => flowBox.open?.resource === id && (flowResource = found),
+      (found) => publishing === id && (flowResource = found),
       (error: unknown) => {
-        if (error instanceof Missing && flowBox.open?.resource === id) flowBox.close();
+        if (error instanceof Missing && publishing === id) flowBox.close();
         else console.error(`The Resource ${id} of the Flow Box could not be read`, error);
       },
     );
   });
   $effect(() => {
-    if (opened?.resource && opened.id === flowBox.open?.resource) flowResource = opened.resource;
+    if (opened?.resource && opened.id === publishing) flowResource = opened.resource;
   });
 
-  /** Opens the Flow Box on a Resource; in a narrow window the panel folds to make room (DEC-UX-307). */
+  /** In a narrow window, opening the Flow Box folds the panel to make room (DEC-UX-307). */
+  function foldPanel(): void {
+    if (matchMedia(`(max-width: ${tokenPixels('--flow-box-fold-below') - 0.02}px)`).matches) settings?.set('panel.open', false);
+  }
+
+  /** Opens the Flow Box on a Resource, to describe and publish it (FR-MR-20). */
   function guide(id: string): void {
     flowBox.show(id);
-    if (matchMedia(`(max-width: ${tokenPixels('--flow-box-fold-below') - 0.02}px)`).matches) settings?.set('panel.open', false);
+    foldPanel();
+  }
+
+  /**
+   * The EDA of the guide in the Flow Box (FR-ED-14): read afresh each time it opens and each time the User goes
+   * elsewhere, and taken from the page of its EDA while that is open, so that its steps follow each run and reading
+   * (TR-ED-09). Nothing of it is stored (DEC-UX-306).
+   */
+  let flowEda: { id: string; view: EdaView } | undefined = $state();
+  /** The EDA as the page of an EDA last had it; `edaShownAt` counts them, so that a slower read never overtakes one. */
+  let edaShown: { id: string; view: EdaView } | undefined = $state();
+  let edaShownAt = 0;
+  function showEda(view: EdaView): void {
+    edaShownAt += 1;
+    edaShown = { id: view.resource.id, view };
+  }
+  /** The Resource whose EDA the Flow Box guides through its EDA-Setup, while that is the flow open. */
+  const exploring = $derived(flowBox.open?.flow === 'eda' ? flowBox.open.resource : undefined);
+  $effect(() => {
+    const id = exploring;
+    void router.path;
+    if (!id) {
+      flowEda = undefined;
+      return;
+    }
+    if (status.kind !== 'signedIn') return;
+    // Only for a User who may explore Resources (FR-ED-01).
+    if (!mayExplore) {
+      flowBox.close();
+      return;
+    }
+    const shown = untrack(() => edaShown);
+    if (shown?.id === id && untrack(() => page.kind === 'eda' && page.id === id)) {
+      flowEda = shown;
+      return;
+    }
+    const since = edaShownAt;
+    edaClient.get(id).then(
+      (found) => {
+        if (exploring !== id) return;
+        if (!found) flowBox.close();
+        else if (edaShownAt === since || edaShown?.id !== id) flowEda = { id, view: found };
+      },
+      (error: unknown) => console.error(`The EDA of ${id} of the Flow Box could not be read`, error),
+    );
+  });
+  $effect(() => {
+    if (edaShown && edaShown.id === exploring) flowEda = edaShown;
+  });
+  // The guide is there while the EDA is in progress (FR-ED-14).
+  $effect(() => {
+    if (flowEda && flowEda.id === exploring && flowEda.view.status !== 'inProgress') flowBox.close();
+  });
+
+  /**
+   * Opens the guide of the EDA of a Resource in the Flow Box (FR-ED-14), in place of the one open (DEC-UX-308). Opened
+   * by starting the EDA, it is folded on the tab Steps of its EDA; opened by Guide me, it shows open, and in a narrow
+   * window the panel folds (DEC-UX-307).
+   */
+  function guideEda(id: string, started?: EdaView): void {
+    if (started) showEda(started);
+    flowBox.show(id, 'eda', { foldsOnSteps: started !== undefined });
+    if (!started) foldPanel();
+  }
+
+  /** On the tab Steps of the EDA it guides, the guide shows folded until the User opens it there (DEC-UX-327). */
+  const onGuidedSteps = $derived(flowBox.open?.flow === 'eda' && page.kind === 'eda' && page.id === flowBox.open.resource && page.tab === 'steps' && page.probe === null);
+  /** Whether the Flow Box shows as its strip. */
+  const flowFolded = $derived(flowBox.folded(onGuidedSteps));
+  /** Minimizes or maximizes the Flow Box; the guide of an EDA opened in a narrow window folds the panel (DEC-UX-307). */
+  function minimizeFlow(minimized: boolean): void {
+    flowBox.minimize(minimized, onGuidedSteps);
+    if (!minimized && flowBox.open?.flow === 'eda') foldPanel();
   }
 
   /** A step of the Flow Box: its place on the page of its Resource, opened for editing (DEC-UX-303). */
@@ -1062,8 +1143,8 @@
       }
     }
     if (flowBox.open) {
-      const minimized = flowBox.open.minimized;
-      rows.push({ key: 'flowbox:size', group: 'commands', icon: minimized ? 'arrows-out-simple' : 'arrows-in-simple', title: t(minimized ? 'quick.flow.maximize' : 'quick.flow.minimize'), kind: command, words: t('quick.flow.words'), does: 'do', run: () => flowBox.minimize(!minimized) });
+      const minimized = flowFolded;
+      rows.push({ key: 'flowbox:size', group: 'commands', icon: minimized ? 'arrows-out-simple' : 'arrows-in-simple', title: t(minimized ? 'quick.flow.maximize' : 'quick.flow.minimize'), kind: command, words: t('quick.flow.words'), does: 'do', run: () => minimizeFlow(!minimized) });
       rows.push({ key: 'flowbox:close', group: 'commands', icon: 'x', title: t('quick.flow.close'), kind: command, words: t('quick.flow.words'), does: 'do', run: () => flowBox.close() });
     }
     rows.push({ key: 'theme', group: 'commands', icon: theme === 'dark' ? 'sun-fill' : 'moon-fill', title: t('quick.theme'), kind: command, words: t('quick.theme.words'), does: 'do', run: () => themeOnScreen.switch() });
@@ -1215,7 +1296,7 @@
     oncollapse={() => signedIn.settings.set('panel.open', false)}
     panel={section ? panel : undefined}
     panelActions={section?.id === 'collections' && can(permissions, 'collections.make') ? newCollection : section?.id === 'query' && can(permissions, 'queries.make') ? newQuery : undefined}
-    side={flowBox.open && flowResource ? flowSide : undefined}
+    side={(flowBox.open?.flow === 'publish' && flowResource) || (flowBox.open?.flow === 'eda' && flowEda?.id === flowBox.open.resource) ? flowSide : undefined}
   >
     {#if inQuery && page.kind !== 'query'}
       <!-- The row of the active Project on top of every screen of Query (DEC-UX-317). -->
@@ -1260,7 +1341,16 @@
       </div>
     {:else if page.kind === 'eda'}
       {#key page.id}
-        <EdaPage id={page.id} tab={page.tab} probe={page.probe} client={edaClient} onchanged={readEdas} />
+        <EdaPage
+          id={page.id}
+          tab={page.tab}
+          probe={page.probe}
+          client={edaClient}
+          onchanged={readEdas}
+          onview={showEda}
+          guided={exploring === page.id}
+          onguide={() => page.kind === 'eda' && guideEda(page.id)}
+        />
       {/key}
     {:else if page.kind === 'start' && page.section.id === 'learning'}
       <LearningStart
@@ -1516,7 +1606,16 @@
           }}
           onrun={() => refreshQueries()}
           onguide={() => guide(resource.id)}
-          explore={mayExplore ? { client: edaClient, go: (path) => router.go(path), onstarted: readEdas } : undefined}
+          explore={mayExplore
+            ? {
+                client: edaClient,
+                go: (path) => router.go(path),
+                onstarted: (view) => {
+                  readEdas();
+                  guideEda(view.resource.id, view);
+                },
+              }
+            : undefined}
         />
       {:else if opened?.resource === null}
         <NotFound />
@@ -1698,7 +1797,7 @@
 {/if}
 
 {#snippet flowSide()}
-  {#if flowBox.open && flowResource}
+  {#if flowBox.open?.flow === 'publish' && flowResource}
     {@const resource = flowResource}
     <PublishFlow
       {resource}
@@ -1710,6 +1809,19 @@
       oncard={(card) => (windowCard = { card, from: 'flow' })}
       onobject={() => router.go(resourcePath(resource.id))}
       onminimize={(minimized) => flowBox.minimize(minimized)}
+      onclose={() => flowBox.close()}
+    />
+  {:else if flowBox.open?.flow === 'eda' && flowEda && flowEda.id === flowBox.open.resource}
+    {@const eda = flowEda.view}
+    <EdaFlow
+      view={eda}
+      minimized={flowFolded}
+      here={page.kind === 'eda' && page.id === eda.resource.id ? page.probe : null}
+      cardTitle={(card) => (localCards.has(card) ? topicOf(card)?.title[currentLanguage()] : undefined)}
+      onstep={(probe) => router.go(probePath(eda.resource.id, probe))}
+      oncard={(card) => (windowCard = { card, from: 'flow' })}
+      onobject={() => router.go(edaPath(eda.resource.id))}
+      onminimize={minimizeFlow}
       onclose={() => flowBox.close()}
     />
   {/if}

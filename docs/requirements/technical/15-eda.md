@@ -109,7 +109,7 @@ None yet.
 <a id="tr-ed-09"></a>
 ### TR-ED-09 · The web app has the list to add an EDA-Probe and the guide of an EDA
 
-**Status:** Specified · **Realises:** [FR-ED-04](../functional/15-eda.md#fr-ed-04), [FR-ED-13](../functional/15-eda.md#fr-ed-13), [FR-ED-14](../functional/15-eda.md#fr-ed-14), [DEC-UX-327](../../design/principles.md#dec-ux-327), [DEC-UX-328](../../design/principles.md#dec-ux-328)
+**Status:** Implemented · **Realises:** [FR-ED-04](../functional/15-eda.md#fr-ed-04), [FR-ED-13](../functional/15-eda.md#fr-ed-13), [FR-ED-14](../functional/15-eda.md#fr-ed-14), [DEC-UX-327](../../design/principles.md#dec-ux-327), [DEC-UX-328](../../design/principles.md#dec-ux-328)
 
 The list to add an EDA-Probe is a sheet of the web app, as [eda](../../design/screens/eda.html) with `?list=open` draws it, read from `GET /resources/{id}/eda` and the catalogue of EDA-Probes in `@datahub/contracts/eda` ([TR-ED-02](#tr-ed-02)): what an EDA-Probe asks of a Resource is a text of the app per EDA-Probe, with the names of its fields filled in. The guide is a second flow of the one Flow Box component (`packages/ui`, `FlowBox.svelte`), beside the flow of publishing: the app keeps which flow is open, of which object, and whether it is minimized, nothing of it stored ([DEC-UX-306](../../design/principles.md#dec-ux-306)); one Flow Box at a time. Its steps are read from the EDA each time it changes; the step to do now is `next` of the EDA. On the tab Steps of its EDA the app shows it folded, as long as the User has not opened it there; elsewhere it shows it as the User left it. Every text is in English and in Dutch.
 

@@ -48,6 +48,7 @@ export default {
   'flowbox.here': 'Open on the page',
   'flowbox.done': 'done',
   'flowbox.open': 'open',
+  'flowbox.coming': 'coming',
   'marker.explained': ' (explained in the Learning Centre)',
   'intro.hide': 'Hide intro',
   'icon.label': 'Icon',

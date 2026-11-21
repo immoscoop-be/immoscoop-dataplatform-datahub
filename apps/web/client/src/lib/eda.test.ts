@@ -2,7 +2,7 @@ import type { EdaView, ProbeView, VolumeResult } from '@datahub/contracts/eda';
 import { addTexts, setLanguage } from '@datahub/ui/foundations/texts.svelte.js';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { TEXTS } from '../texts/index.js';
-import { asksReading, createEda, firstToAdd, niceTicks, overallReading, percent, standingOf, stepCount, stillMissing, volumeBlocks } from './eda.js';
+import { askedOf, asksReading, createEda, fitsFilter, hasToAdd, listStateOf, niceTicks, overallReading, percent, standingOf, stepCount, stillMissing, volumeBlocks } from './eda.js';
 import { cardSentence, distributionSentence, grainConclusion, shapeOf, volumeSentence } from './edaWords.js';
 
 const config = { identityUrl: 'https://identity.test', catalogueUrl: 'https://catalogue.test', registryUrl: 'https://registry.test', queryUrl: 'https://query.test', edaUrl: 'https://eda.test', semgraphUrl: 'https://semgraph.test' };
@@ -78,10 +78,23 @@ describe('what the screens read from an EDA', () => {
     expect(stepCount(view, 'relations')).toEqual({ needed: 0, complete: 0 });
   });
 
-  it('opens from Add probe the first EDA-Probe Data Hub runs that is not added, needed ones first (FR-ED-04)', () => {
-    expect(firstToAdd(view, 'basis')).toBe('volumeOverTime');
-    expect(firstToAdd({ probes: [probe('volumeOverTime', { needed: false }), probe('grainHolds')] }, 'basis')).toBe('grainHolds');
-    expect(firstToAdd(view, 'gaps')).toBeNull();
+  it('keeps the tile Add probe while an EDA-Step has an EDA-Probe offered that is not added, coming ones too (FR-ED-04)', () => {
+    expect(hasToAdd(view, 'basis')).toBe(true);
+    expect(hasToAdd({ probes: [probe('rowCount', { runs: false })] }, 'basis')).toBe(true);
+    expect(hasToAdd(view, 'gaps')).toBe(false);
+    expect(hasToAdd(view, 'relations')).toBe(false);
+  });
+
+  it('says in the list to add an EDA-Probe where each stands, how much it is asked for, and which a filter shows (FR-ED-13)', () => {
+    // Added and not run yet, or set on part of what it needs: it still asks for something.
+    expect(view.probes.map(listStateOf)).toEqual(['part', 'coming', 'open', 'coming', 'part']);
+    expect(listStateOf(probe('grainHolds', { added: true, complete: true, lastRun: { fields: [] } as unknown as ProbeView['lastRun'] }))).toBe('added');
+    expect(listStateOf(probe('volumeOverTime', { added: true, needed: false, lastRun: { fields: [] } as unknown as ProbeView['lastRun'] }))).toBe('added');
+    expect(view.probes.map(askedOf)).toEqual(['needed', 'needed', 'onRequest', 'suggested', 'needed']);
+    expect(view.probes.filter((one) => fitsFilter(one, 'needed')).map((one) => one.key)).toEqual(['grainHolds', 'rowCount', 'nullsPerKeyField']);
+    expect(view.probes.filter((one) => fitsFilter(one, 'runs')).map((one) => one.key)).toEqual(['grainHolds', 'volumeOverTime', 'nullsPerKeyField']);
+    expect(view.probes.filter((one) => fitsFilter(one, 'added')).map((one) => one.key)).toEqual(['grainHolds', 'nullsPerKeyField']);
+    expect(view.probes.filter((one) => fitsFilter(one, 'all'))).toHaveLength(5);
   });
 
   it('says where an EDA-Probe on the table stands, and which fields a needed one still misses', () => {

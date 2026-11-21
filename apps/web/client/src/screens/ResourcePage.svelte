@@ -101,9 +101,10 @@
     onguide?: () => void;
     /**
      * Its EDA, for a User who may explore Resources (`eda.use`, FR-ED-01): read from eda once it is at 3 · Confirmed,
-     * for its maturity ladder, where Start the EDA creates it and opens it in the section EDA (FR-ED-02).
+     * for its maturity ladder, where Start the EDA creates it and opens it in the section EDA, with its guide (FR-ED-02,
+     * FR-ED-14).
      */
-    explore?: { client: EdaClient; go: (path: string) => void; onstarted?: () => void };
+    explore?: { client: EdaClient; go: (path: string) => void; onstarted?: (view: EdaView) => void };
   } = $props();
 
   /** Its EDA: undefined while it is read, null when it has none. */
@@ -131,8 +132,9 @@
   async function startEda(): Promise<boolean> {
     if (!explore) return false;
     try {
-      edaView = await explore.client.start(resource.id);
-      explore.onstarted?.();
+      const started = await explore.client.start(resource.id);
+      edaView = started;
+      explore.onstarted?.(started);
       explore.go(edaPath(resource.id));
       return true;
     } catch (error) {

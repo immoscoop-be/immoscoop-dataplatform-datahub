@@ -2,7 +2,7 @@ import { formatBigQuery } from '@datahub/ui/components/sqlFormat.js';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/svelte';
 import { setLanguage } from '@datahub/ui/foundations/texts.svelte.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { coverage, type EdaResource, type EdaView } from '@datahub/contracts/eda';
+import { appliesTo, bestNext, coverage, isComplete, isNeeded, levelOf, neededOf, PROBES, probesFor, type EdaResource, type EdaView, type ProbeKey, type RunView } from '@datahub/contracts/eda';
 import { journeyOf, type JourneyFacts } from '@datahub/contracts/journey';
 import { NO_PERMISSIONS, STARTING_GROUPS, type Permissions, type StartingGroup } from '@datahub/contracts/permissions';
 import { flowBox } from './lib/flowBox.svelte.js';
@@ -2286,6 +2286,169 @@ describe('the section EDA (FR-ED-01 to FR-ED-04, TR-ED-07)', () => {
     expect(await page.findByText(/Vraagt een EDA, voorlopig door een Data Admin/)).toBeTruthy();
     expect(page.queryByRole('button', { name: 'Start de EDA' })).toBeNull();
     expect(calls.some((call) => call.path.startsWith('eda '))).toBe(false);
+  });
+});
+
+/** The EDA of Weekly lead volume with what its EDA-Probes ran on, from the rules of the contracts, as eda answers it. */
+function edaWith(runs: Partial<Record<ProbeKey, RunView>> = {}): EdaView {
+  const covers = Object.entries(runs).map(([probe, run]) => ({ probe: probe as ProbeKey, fields: run.fields }));
+  return {
+    ...edaOf(),
+    needed: neededOf(EDA_WEEKLY, covers),
+    probes: probesFor(EDA_WEEKLY.modelType).map((key) => ({
+      key,
+      level: levelOf(key, EDA_WEEKLY.modelType) ?? 'could',
+      runs: PROBES[key].runs,
+      needed: isNeeded(key, EDA_WEEKLY),
+      added: runs[key] !== undefined,
+      complete: isComplete(key, EDA_WEEKLY, covers),
+      applies: appliesTo(key, EDA_WEEKLY),
+      fields: runs[key]?.fields ?? [],
+      params: {},
+      lastRun: runs[key] ?? null,
+    })),
+    coverage: coverage(EDA_WEEKLY, covers),
+    next: bestNext(EDA_WEEKLY, covers),
+  };
+}
+const NULLS_RUN: RunView = {
+  id: 'run-nulls',
+  ranAt: '2026-11-21T10:42:00Z',
+  ranBy: { id: '2', name: 'An Claes' },
+  bytes: 1000,
+  fields: ['week_start', 'lead_source', 'lead_count', 'lead_channel'],
+  params: {},
+  results: ['week_start', 'lead_source', 'lead_count', 'lead_channel'].map((subject) => ({ subject, data: { rows: 16224, empty: 0, role: null }, reading: 'expected' as const, yours: null })),
+};
+
+describe('the guide of an EDA, in the Flow Box (FR-ED-14, DEC-UX-327, TR-ED-09)', () => {
+  /** eda with the EDA of Weekly lead volume, which a run of Nulls per Key Field changes. */
+  function serveEda(options: { started?: boolean } = {}) {
+    let view = edaWith();
+    let started = options.started ?? true;
+    const calls = serve({
+      as: 'admin',
+      weekly: CONFIRMED,
+      edaService: (method, path) => {
+        if (path === '/resources/r2/eda' && method === 'POST') {
+          started = true;
+          return answer(view, 201);
+        }
+        if (path === '/resources/r2/eda') return started ? answer(view) : answer({ error: 'not_found' }, 404);
+        if (path === '/resources/r2/eda/probes/nullsPerKeyField/runs' && method === 'POST') {
+          view = edaWith({ nullsPerKeyField: NULLS_RUN });
+          return answer({ state: 'ran', eda: view });
+        }
+        if (path === '/edas') return answer({ edas: [], ready: [] });
+        return undefined;
+      },
+    });
+    return calls;
+  }
+  const box = () => screen.findByRole('complementary', { name: 'Zijn EDA opzetten · Weekly lead volume' });
+
+  it('opens as the EDA starts, folded to its strip on the tab Steps, until it is opened there', async () => {
+    serveEda({ started: false });
+    open('/resources/r2/maturity');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('button', { name: 'Start de EDA' }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/eda/r2'));
+    const strip = within(await screen.findByRole('complementary', { name: 'Zijn EDA opzetten · Weekly lead volume · 0 van 10 nodige EDA-Probes af' }));
+    expect(strip.getByText('0')).toBeTruthy();
+    expect(document.querySelectorAll('.dots li')).toHaveLength(10);
+    expect(document.querySelectorAll('.dots li.coming')).toHaveLength(6);
+    // Its guide is open: Guide me is not there.
+    expect(main.queryByRole('button', { name: 'Begeleid me' })).toBeNull();
+    await fireEvent.click(strip.getByRole('button', { name: 'Maximaliseren' }));
+    const guide = within(await box());
+    // One step per needed EDA-Probe, grouped under its EDA-Step, the coming ones counted.
+    expect([...document.querySelectorAll('.box li.group')].map((group) => group.textContent)).toEqual(['Basis', 'Hiaten', 'Gewicht', 'Juistheid']);
+    expect(guide.getByText('0 van 10 nodige EDA-Probes af')).toBeTruthy();
+    expect(guide.getByRole('button', { name: /^Aantal rijen/ }).textContent).toContain('Komt eraan: Data Hub voert hem nog niet uit');
+    expect(guide.getByRole('button', { name: /^De grain klopt/ }).textContent).toContain('Nog niet toegevoegd');
+    // The step to do now is the best next step, as the page proposes it, unfolded.
+    expect(guide.getByRole('button', { name: /^Lege waarden per sleutelveld/ }).getAttribute('aria-expanded')).toBe('true');
+    expect(guide.getByText(/Nog 10 te gaan, waarvan 6 eraan komen: ze tellen toch mee/)).toBeTruthy();
+    // It stays open on every other page; its Resource leads back to its EDA, where, opened there, it stays open.
+    await fireEvent.click(within(screen.getByRole('navigation', { name: 'Hoofdnavigatie' })).getByRole('link', { name: 'Query' }));
+    const away = within(await box());
+    await fireEvent.click(away.getByRole('button', { name: 'Weekly lead volume' }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/eda/r2'));
+    expect(await box()).toBeTruthy();
+    // Minimized there, it stays so elsewhere, as the User left it.
+    await fireEvent.click(within(await box()).getByRole('button', { name: 'Minimaliseren' }));
+    await fireEvent.click(within(screen.getByRole('navigation', { name: 'Hoofdnavigatie' })).getByRole('link', { name: 'Query' }));
+    expect(await screen.findByRole('complementary', { name: /^Zijn EDA opzetten · Weekly lead volume · 0 van 10/ })).toBeTruthy();
+  });
+
+  it('leads to the detail of the EDA-Probe, says there that it is open on the page, and follows its run', async () => {
+    const calls = serveEda();
+    open('/eda/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    // Closed, Guide me beside the title brings it back, open.
+    await fireEvent.click(await main.findByRole('button', { name: 'Begeleid me' }));
+    const guide = within(await box());
+    expect(main.queryByRole('button', { name: 'Begeleid me' })).toBeNull();
+    await fireEvent.click(guide.getByRole('button', { name: /Open de EDA-Probe/ }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/eda/r2/probes/nullsPerKeyField'));
+    // On the detail it is open as the User left it, its step open on the page, without a way there.
+    const here = within(await box());
+    const nulls = here.getByRole('button', { name: /^Lege waarden per sleutelveld/ });
+    expect(nulls.getAttribute('aria-expanded')).toBe('true');
+    expect(here.getByText('Open op de pagina')).toBeTruthy();
+    expect(within(document.getElementById('flow-step-nullsPerKeyField') as HTMLElement).queryByRole('button', { name: /Open de EDA-Probe/ })).toBeNull();
+    // A run changes the EDA: the step ticks with Data Hub's reading, and the next step unfolds.
+    await fireEvent.click(await main.findByRole('button', { name: /^Uitvoeren$/ }));
+    await vi.waitFor(() => expect(calls).toContainEqual(expect.objectContaining({ method: 'POST', path: 'eda /resources/r2/eda/probes/nullsPerKeyField/runs' })));
+    await vi.waitFor(() => expect(here.getByText('1 van 10 nodige EDA-Probes af')).toBeTruthy());
+    expect(here.getByRole('button', { name: /^Lege waarden per sleutelveld/ }).textContent).toContain('Zoals verwacht');
+    expect(here.getByRole('button', { name: /^De grain klopt/ }).getAttribute('aria-expanded')).toBe('true');
+    // Close takes it away; Guide me brings it back.
+    await fireEvent.click(here.getByRole('button', { name: 'Sluiten' }));
+    expect(screen.queryByRole('complementary', { name: /Zijn EDA opzetten/ })).toBeNull();
+    await fireEvent.click(main.getByRole('link', { name: /Alle EDA-Steps/ }));
+    expect(await main.findByRole('button', { name: 'Begeleid me' })).toBeTruthy();
+  });
+
+  it('opens the detail of an EDA-Probe from the list to add one, which then closes (FR-ED-13)', async () => {
+    serveEda();
+    open('/eda/r2');
+    render(App, { config: CONFIG });
+    const gaps = within(await screen.findByRole('region', { name: 'Hiaten' }));
+    await fireEvent.click(gaps.getByRole('button', { name: /Probe toevoegen/ }));
+    const sheet = within(await screen.findByRole('dialog', { name: 'Een EDA-Probe toevoegen' }));
+    await fireEvent.click(sheet.getByRole('link', { name: /Lege waarden per sleutelveld/ }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/eda/r2/probes/nullsPerKeyField'));
+    expect(screen.queryByRole('dialog', { name: 'Een EDA-Probe toevoegen' })).toBeNull();
+    expect(await within(screen.getByRole('main')).findByRole('heading', { level: 2, name: 'Lege waarden per sleutelveld' })).toBeTruthy();
+  });
+
+  it('is there only while the EDA is in progress', async () => {
+    serve({ as: 'admin', edaService: (method, path) => (path === '/resources/r2/eda' ? answer({ ...edaWith(), status: 'explored', exploredAt: '2026-11-21T12:00:00Z' }) : undefined) });
+    flowBox.show('r2', 'eda');
+    open('/eda/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' })).toBeTruthy();
+    await vi.waitFor(() => expect(flowBox.open).toBeNull());
+    expect(main.queryByRole('button', { name: 'Begeleid me' })).toBeNull();
+    expect(screen.queryByRole('complementary', { name: /Zijn EDA opzetten/ })).toBeNull();
+  });
+
+  it('is one Flow Box at a time: the guide of an EDA takes the place of the publication, and back', async () => {
+    serveEda();
+    flowBox.show('r2');
+    open('/eda/r2');
+    render(App, { config: CONFIG });
+    expect(await screen.findByRole('complementary', { name: 'Beschrijven en publiceren · Weekly lead volume' })).toBeTruthy();
+    await fireEvent.click(await within(screen.getByRole('main')).findByRole('button', { name: 'Begeleid me' }));
+    expect(await box()).toBeTruthy();
+    expect(screen.queryByRole('complementary', { name: /Beschrijven en publiceren/ })).toBeNull();
+    flowBox.show('r2');
+    expect(await screen.findByRole('complementary', { name: 'Beschrijven en publiceren · Weekly lead volume' })).toBeTruthy();
+    expect(screen.queryByRole('complementary', { name: /Zijn EDA opzetten/ })).toBeNull();
   });
 });
 

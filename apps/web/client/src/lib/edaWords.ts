@@ -1,4 +1,4 @@
-import type { DistributionResult, EdaView, GrainResult, NullsResult, ProbeKey, ProbeView, ResultView, VolumeResult } from '@datahub/contracts/eda';
+import { roleDate, type DistributionResult, type EdaResource, type EdaView, type GrainResult, type NullsResult, type ProbeKey, type ProbeView, type ResultView, type VolumeResult } from '@datahub/contracts/eda';
 import type { Language } from '@datahub/contracts/messages';
 import { t } from '@datahub/ui/foundations/texts.svelte.js';
 import { number, percent, periodDay, stillMissing } from './eda.js';
@@ -225,4 +225,87 @@ export function cardSentence(probe: ProbeView, view: Pick<EdaView, 'resource'>, 
 /** Whether a part of a sentence follows the one before without a space, as one that starts with a comma or a colon. */
 export function joins(text: string): boolean {
   return /^[,;:.]/.test(text);
+}
+
+/** A sentence said in parts as plain words, such as in the steps of the Flow Box, the names in it as they are. */
+export function saidText(parts: readonly Said[]): string {
+  return parts.reduce((text, part, index) => {
+    const said = t(part.key, { ...part.values, ...part.names });
+    return index === 0 ? said : joins(said) ? `${text}${said}` : `${text} ${said}`;
+  }, '');
+}
+
+// The question each EDA-Probe asks of a Resource (FR-ED-13)
+
+/** The question of each EDA-Probe, and the one it asks where the fields it names are not there. */
+const ASKS: Readonly<Record<ProbeKey, { key: string; without?: string }>> = {
+  grainHolds: { key: 'eda.ask.grainHolds', without: 'eda.ask.grainHolds.without' },
+  rowCount: { key: 'eda.ask.rowCount' },
+  dateRange: { key: 'eda.ask.dateRange', without: 'eda.ask.dateRange.without' },
+  volumeOverTime: { key: 'eda.ask.volumeOverTime.day' },
+  settling: { key: 'eda.ask.settling.day' },
+  howOftenThingsChange: { key: 'eda.ask.howOftenThingsChange', without: 'eda.ask.howOftenThingsChange.without' },
+  nullsPerKeyField: { key: 'eda.ask.nullsPerKeyField' },
+  disguisedNulls: { key: 'eda.ask.disguisedNulls' },
+  whereGapsCluster: { key: 'eda.ask.whereGapsCluster' },
+  valuesWithoutAMatch: { key: 'eda.ask.valuesWithoutAMatch', without: 'eda.ask.valuesWithoutAMatch.without' },
+  distributionOfNumbers: { key: 'eda.ask.distributionOfNumbers' },
+  distributionOfCategories: { key: 'eda.ask.distributionOfCategories' },
+  sharePerSegment: { key: 'eda.ask.sharePerSegment' },
+  outliers: { key: 'eda.ask.outliers' },
+  mode: { key: 'eda.ask.mode' },
+  spread: { key: 'eda.ask.spread' },
+  impossibleValues: { key: 'eda.ask.impossibleValues' },
+  storedAsText: { key: 'eda.ask.storedAsText' },
+  variants: { key: 'eda.ask.variants' },
+  relationshipsHold: { key: 'eda.ask.relationshipsHold', without: 'eda.ask.relationshipsHold.without' },
+  datesInOrder: { key: 'eda.ask.datesInOrder', without: 'eda.ask.datesInOrder.without' },
+  addsUpToSource: { key: 'eda.ask.addsUpToSource' },
+  derivedValuesAgree: { key: 'eda.ask.derivedValuesAgree' },
+  differencesBetweenSegments: { key: 'eda.ask.differencesBetweenSegments' },
+  correlations: { key: 'eda.ask.correlations' },
+  chancePerSegment: { key: 'eda.ask.chancePerSegment' },
+};
+
+/** Counted per week for the period of an aggregate, per day otherwise, as Volume over time counts (DEC-ED-23). */
+const WEEKLY_ASKS: Partial<Record<ProbeKey, string>> = { volumeOverTime: 'eda.ask.volumeOverTime.week', settling: 'eda.ask.settling.week' };
+
+/**
+ * The question an EDA-Probe asks of this Resource, with the names of its fields filled in where it names them, such as
+ * its grain or the date it counts by (FR-ED-13, TR-ED-09).
+ */
+export function askOf(probe: ProbeKey, resource: EdaResource): Said {
+  const ask = ASKS[probe];
+  const fields = resource.fields;
+  const named = (names: Record<string, string> | null): Said => (names ? { key: ask.key, names } : { key: ask.without ?? ask.key });
+  const date = roleDate(resource);
+  switch (probe) {
+    case 'grainHolds': {
+      const grain = fields.filter((field) => field.grain).map((field) => field.name);
+      return named(grain.length > 0 ? { grain: listed(grain) } : null);
+    }
+    case 'dateRange':
+      return named(date ? { date } : null);
+    case 'volumeOverTime':
+    case 'settling': {
+      const weekly = date !== null && fields.find((field) => field.name === date)?.role === 'period';
+      return { key: weekly ? (WEEKLY_ASKS[probe] as string) : ask.key };
+    }
+    case 'howOftenThingsChange': {
+      const updated = fields.find((field) => field.role === 'updatedAt');
+      return named(updated ? { field: updated.name } : null);
+    }
+    case 'valuesWithoutAMatch':
+    case 'relationshipsHold': {
+      const mapped = fields.filter((field) => field.mapped).map((field) => field.name);
+      return named(mapped.length > 0 ? { fields: listed(mapped) } : null);
+    }
+    case 'datesInOrder': {
+      const created = fields.find((field) => field.role === 'createdAt');
+      const updated = fields.find((field) => field.role === 'updatedAt');
+      return named(created && updated ? { created: created.name, updated: updated.name } : null);
+    }
+    default:
+      return { key: ask.key };
+  }
 }

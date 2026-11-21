@@ -46,6 +46,7 @@ export default {
   'flowbox.here': 'Open op de pagina',
   'flowbox.done': 'klaar',
   'flowbox.open': 'open',
+  'flowbox.coming': 'komt eraan',
   'marker.explained': ' (uitgelegd in het Learning Centre)',
   'intro.hide': 'Verberg de intro',
   'icon.label': 'Icoon',

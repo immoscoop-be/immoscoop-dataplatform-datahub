@@ -12,7 +12,7 @@
   import Button from '@datahub/ui/primitives/Button.svelte';
   import Loading from '@datahub/ui/primitives/Loading.svelte';
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
-  import { asksReading, BLOCKS, type BlockDays, type EdaClient, MARK_ICONS, markOf, number, overallReading, percent, PROBE_TEXTS, type RunAsk, STEP_TEXTS } from '../lib/eda.js';
+  import { asksReading, BLOCKS, type BlockDays, type EdaClient, MARK_ICONS, markOf, number, overallReading, percent, PROBE_ABOUT, PROBE_TEXTS, type RunAsk, STEP_TEXTS } from '../lib/eda.js';
   import { distributionConclusion, distributionSentence, grainConclusion, nullsConclusion, nullsWhy, volumeConclusion, volumeSentence } from '../lib/edaWords.js';
   import { when } from '../lib/moment.js';
   import { edaPath } from '../lib/routes.js';
@@ -184,13 +184,7 @@
   const PLACE_TEXTS = { rows: 'eda.placeWord.rows', column: 'eda.placeWord.column', columns: 'eda.placeWord.columns', resource: 'eda.placeWord.resource' } as const;
   const LEVEL_TEXTS = { must: 'eda.level.must', should: 'eda.level.should', could: 'eda.level.could' } as const;
 
-  const ABOUT: Readonly<Partial<Record<ProbeKey, { does: string; why: string; setOn: string; empty: string }>>> = {
-    grainHolds: { does: 'eda.about.grainHolds.does', why: 'eda.about.grainHolds.why', setOn: 'eda.about.grainHolds.setOn', empty: 'eda.about.grainHolds.empty' },
-    nullsPerKeyField: { does: 'eda.about.nullsPerKeyField.does', why: 'eda.about.nullsPerKeyField.why', setOn: 'eda.about.nullsPerKeyField.setOn', empty: 'eda.about.nullsPerKeyField.empty' },
-    volumeOverTime: { does: 'eda.about.volumeOverTime.does', why: 'eda.about.volumeOverTime.why', setOn: 'eda.about.volumeOverTime.setOn', empty: 'eda.about.volumeOverTime.empty' },
-    distributionOfNumbers: { does: 'eda.about.distributionOfNumbers.does', why: 'eda.about.distributionOfNumbers.why', setOn: 'eda.about.distributionOfNumbers.setOn', empty: 'eda.about.distributionOfNumbers.empty' },
-  };
-  const about = $derived(ABOUT[probe]);
+  const about = $derived(PROBE_ABOUT[probe]);
 
   let days = $state<Record<string, BlockDays>>({});
   const unitsOf = (result: VolumeResult) => {

@@ -23,6 +23,7 @@
    * EDA-Setup and the quality of the EDA. Its status beside the title, In progress until the EDA-Setup is complete, then
    * Explored; its Level; the tabs Overview, still to come, Steps, and Profile, greyed until the EDA-Setup is complete,
    * each saying what will come there. On Steps, the detail of an EDA-Probe opens in place of the rows (DEC-UX-324).
+   * While it is in progress, Guide me beside its title brings back its guide in the Flow Box once it is closed (FR-ED-14).
    */
   let {
     id,
@@ -30,6 +31,9 @@
     probe,
     client,
     onchanged,
+    onview,
+    guided = false,
+    onguide,
   }: {
     /** The Resource whose EDA it is. */
     id: string;
@@ -39,6 +43,12 @@
     client: EdaClient;
     /** After a run or a reading: the panel reads the EDAs again. */
     onchanged: () => void;
+    /** The EDA as the page has it, each time it reads it and after a run or a reading: its guide follows it (TR-ED-09). */
+    onview?: (view: EdaView) => void;
+    /** Whether its guide is open in the Flow Box, minimized or not. */
+    guided?: boolean;
+    /** Opens its guide in the Flow Box, for a User who may explore Resources (FR-ED-14). */
+    onguide?: () => void;
   } = $props();
 
   /** The EDA: undefined while it comes, null when the Resource has none or may not be seen. */
@@ -51,7 +61,9 @@
     failed = false;
     client.get(asked).then(
       (found) => {
-        if (asked === id) view = found;
+        if (asked !== id) return;
+        view = found;
+        if (found) onview?.(found);
       },
       (error: unknown) => {
         console.error(`The EDA of ${asked} could not be read`, error);
@@ -63,6 +75,7 @@
   /** The EDA as it is after a run or a reading. */
   function changed(next: EdaView): void {
     view = next;
+    onview?.(next);
     onchanged();
   }
 
@@ -103,6 +116,9 @@
         {t('eda.page.started', { date: day(eda.startedAt, language), name: eda.startedBy.name })}{#if resource.modelType}{' '}{shortOf(resource.modelType)}{/if}
       </p>
     </div>
+    {#if onguide && !guided && eda.status === 'inProgress'}
+      <Button variant="outline" onclick={onguide}><Icon name="signpost-fill" />{t('eda.page.guide')}</Button>
+    {/if}
     <Button variant="outline" href={resourcePath(id, 'maturity')}><Icon name="arrow-square-out" />{t('eda.page.openResource')}</Button>
   </div>
   <div class="facts">

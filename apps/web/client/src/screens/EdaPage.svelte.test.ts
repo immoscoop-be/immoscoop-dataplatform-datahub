@@ -196,7 +196,7 @@ describe('the page of an EDA (FR-ED-04, DEC-UX-321, DEC-UX-322)', () => {
     expect(await screen.findByRole('heading', { level: 3, name: 'The Profile comes once the EDA-Setup is complete' })).toBeTruthy();
   });
 
-  it('shows a row per EDA-Step with how many needed EDA-Probes are complete, its cards, and one Add probe that opens the first to add, needed first', async () => {
+  it('shows a row per EDA-Step with how many needed EDA-Probes are complete, its cards, and one Add probe while it has EDA-Probes not added', async () => {
     show(viewOf({ grainHolds: GRAIN_HOLDS }));
     await screen.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
     expect(screen.getAllByRole('region').map((region) => region.getAttribute('aria-label')).slice(0, 5)).toEqual(['Basis', 'Gaps', 'Weight', 'Correctness', 'Relations between fields']);
@@ -206,14 +206,12 @@ describe('the page of an EDA (FR-ED-04, DEC-UX-321, DEC-UX-322)', () => {
     expect(card.getByText('As expected')).toBeTruthy();
     expect(card.getByText(/none twice in 16,224 rows/)).toBeTruthy();
     expect(card.getByText('Set on week_start, lead_source')).toBeTruthy();
-    expect(basis.getByRole('link', { name: /Add probe/ }).getAttribute('href')).toBe('/eda/r2/probes/volumeOverTime');
-    expect(basis.getByRole('link', { name: /Add probe/ }).textContent).toContain('3 needed still in Basis');
+    expect(basis.getByRole('button', { name: /Add probe/ }).textContent).toContain('3 needed still in Basis');
     expect(step('Gaps').getByText('0 of 2 needed')).toBeTruthy();
-    expect(step('Gaps').getByRole('link', { name: /Add probe/ }).getAttribute('href')).toBe('/eda/r2/probes/nullsPerKeyField');
-    // Correctness has no EDA-Probe Data Hub runs yet: no tile (OP-UX-119).
-    expect(step('Correctness').queryByRole('link', { name: /Add probe/ })).toBeNull();
-    expect(step('Correctness').getByText('No EDA-Probe of this EDA-Step runs yet: they are coming.')).toBeTruthy();
+    // Coming ones count as EDA-Probes left to add, as the list shows them (FR-ED-04, DEC-ED-27).
+    expect(step('Correctness').getByRole('button', { name: /Add probe/ })).toBeTruthy();
     expect(step('Relations between fields').getByText('None needed')).toBeTruthy();
+    expect(step('Relations between fields').getByRole('button', { name: /Add probe/ }).textContent).toContain('More to add in Relations between fields');
   });
 
   it('shows on the right the needed EDA-Probes complete, the four places, the best next step, the table as a whole and every field (DEC-UX-322, DEC-UX-323)', async () => {
@@ -252,6 +250,97 @@ describe('the page of an EDA (FR-ED-04, DEC-UX-321, DEC-UX-322)', () => {
   it('shows the page for what may not be seen when the Resource has no EDA', async () => {
     show(null);
     expect(await screen.findByRole('heading', { level: 1, name: /Nothing here for you|niets voor jou/ })).toBeTruthy();
+  });
+});
+
+describe('the list to add an EDA-Probe (FR-ED-13, DEC-UX-328)', () => {
+  async function openList(view: EdaView, at: string) {
+    show(view);
+    await screen.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
+    await fireEvent.click(step(at).getByRole('button', { name: /Add probe/ }));
+    return within(await screen.findByRole('dialog', { name: 'Add an EDA-Probe' }));
+  }
+  const group = (sheet: ReturnType<typeof within>, name: string) => within(sheet.getByRole('region', { name }));
+  const rows = (sheet: ReturnType<typeof within>, name: string) => [...sheet.getByRole('region', { name }).querySelectorAll('.row')].map((row) => row.querySelector('b')?.textContent);
+
+  it('opens at the EDA-Step of its tile, every EDA-Step in its order, with the search in focus', async () => {
+    const sheet = await openList(viewOf({ grainHolds: GRAIN_HOLDS }), 'Gaps');
+    expect(sheet.getAllByRole('region').map((region) => region.getAttribute('aria-label'))).toEqual(['Basis', 'Gaps', 'Weight', 'Correctness', 'Relations between fields']);
+    const search = sheet.getByRole('searchbox', { name: /Search the EDA-Probes/ });
+    expect(document.activeElement).toBe(search);
+    const gaps = group(sheet, 'Gaps');
+    expect(gaps.getByText('From its tile')).toBeTruthy();
+    expect(gaps.getByText('0 of 2 needed complete')).toBeTruthy();
+    expect(group(sheet, 'Basis').queryByText('From its tile')).toBeNull();
+    expect(sheet.getByText(/^Weekly lead volume · model type/).textContent).toBe('Weekly lead volume · model type aggregate');
+    expect(sheet.getByText(/An EDA-Probe that is not offered for/).textContent).toBe('An EDA-Probe that is not offered for aggregate is not listed.');
+  });
+
+  it('shows each EDA-Probe offered with its question for this Resource, how much it is asked for, and its state', async () => {
+    const sheet = await openList(viewOf({ grainHolds: GRAIN_HOLDS, nullsPerKeyField: ran(['week_start', 'lead_source', 'lead_count'], NULLS.results.slice(0, 3).map((result) => [result.subject, result.data, result.reading])) }), 'Basis');
+    expect(rows(sheet, 'Basis')).toEqual(['The grain holds', 'Row count', 'Date range', 'Volume over time, with empty periods', 'Settling between EDA-Reruns']);
+    // Added, with Data Hub's reading.
+    const grain = sheet.getByRole('link', { name: /The grain holds/ });
+    expect(grain.textContent).toContain('Is every row one thing: one row per week_start, lead_source?');
+    expect(grain.textContent).toContain('As expected');
+    expect(grain.textContent).toContain('Added');
+    expect(grain.getAttribute('href')).toBe('/eda/r2/probes/grainHolds');
+    // Open, to add it.
+    const volume = sheet.getByRole('link', { name: /Volume over time/ });
+    expect(volume.textContent).toContain('How much comes in per week, and are there weeks without rows?');
+    expect(volume.textContent).toContain('Needed');
+    expect(volume.textContent).toContain('Open');
+    // Coming: quieter, still Needed, and it opens nothing.
+    const row = sheet.getByText('Row count').closest('.row') as HTMLElement;
+    expect(row.tagName).toBe('DIV');
+    expect(row.getAttribute('aria-disabled')).toBe('true');
+    expect(row.textContent).toContain('Coming');
+    expect(row.textContent).toContain('Needed');
+    expect(sheet.queryByRole('link', { name: /Row count/ })).toBeNull();
+    expect(sheet.getByText('Settling between EDA-Reruns').closest('.row')?.textContent).toContain('On request');
+    // Set on part of what it needs.
+    const nulls = sheet.getByRole('link', { name: /Nulls per Key Field/ });
+    expect(nulls.textContent).toContain('Added, 3 of 4 Key Fields');
+    expect(nulls.getAttribute('href')).toBe('/eda/r2/probes/nullsPerKeyField');
+    // Not offered for an aggregate: not listed.
+    expect(sheet.queryByText('How often things change')).toBeNull();
+    expect(sheet.queryByText('Dates in order')).toBeNull();
+  });
+
+  it('filters on the needed ones, those Data Hub runs, or those added, and searches by name and question', async () => {
+    const sheet = await openList(viewOf({ grainHolds: GRAIN_HOLDS }), 'Basis');
+    await fireEvent.click(sheet.getByRole('radio', { name: 'Data Hub runs it' }));
+    expect(sheet.getAllByRole('region').map((region) => region.getAttribute('aria-label'))).toEqual(['Basis', 'Gaps', 'Weight']);
+    expect(rows(sheet, 'Basis')).toEqual(['The grain holds', 'Volume over time, with empty periods']);
+    await fireEvent.click(sheet.getByRole('radio', { name: 'Added' }));
+    expect(rows(sheet, 'Basis')).toEqual(['The grain holds']);
+    await fireEvent.click(sheet.getByRole('radio', { name: 'Needed' }));
+    expect(rows(sheet, 'Weight')).toEqual(['Distribution of numbers', 'Distribution of categories', 'Spread']);
+    await fireEvent.click(sheet.getByRole('radio', { name: 'All' }));
+    await fireEvent.input(sheet.getByRole('searchbox'), { target: { value: 'empty' } });
+    expect(sheet.getAllByRole('region').map((region) => region.getAttribute('aria-label'))).toEqual(['Basis', 'Gaps']);
+    expect(rows(sheet, 'Gaps')).toEqual(['Nulls per Key Field', 'Where gaps cluster']);
+    await fireEvent.input(sheet.getByRole('searchbox'), { target: { value: 'week_start' } });
+    expect(rows(sheet, 'Basis')).toEqual(['The grain holds', 'Date range']);
+    await fireEvent.input(sheet.getByRole('searchbox'), { target: { value: 'nothing like this' } });
+    expect(sheet.getByText('No EDA-Probe fits what you look for.')).toBeTruthy();
+  });
+
+  it('closes by Close, and in Dutch asks its questions in Dutch, the names as they are', async () => {
+    const sheet = await openList(viewOf(), 'Weight');
+    await fireEvent.click(sheet.getAllByRole('button', { name: 'Close' }).at(-1) as HTMLElement);
+    expect(screen.queryByRole('dialog', { name: 'Add an EDA-Probe' })).toBeNull();
+    setLanguage('nl');
+    try {
+      const weight = within(await screen.findByRole('region', { name: 'Gewicht' }));
+      await fireEvent.click(weight.getByRole('button', { name: /Probe toevoegen/ }));
+      const dutch = within(await screen.findByRole('dialog', { name: 'Een EDA-Probe toevoegen' }));
+      expect(dutch.getByText('Vanaf zijn tegel')).toBeTruthy();
+      expect(dutch.getByRole('link', { name: /De grain klopt/ }).textContent).toContain('Is elke rij één ding: één rij per week_start, lead_source?');
+      expect(dutch.getAllByText('Komt eraan').length).toBeGreaterThan(0);
+    } finally {
+      setLanguage('en');
+    }
   });
 });
 

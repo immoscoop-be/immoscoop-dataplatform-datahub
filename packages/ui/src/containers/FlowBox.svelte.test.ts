@@ -78,3 +78,41 @@ describe('a Flow Box (DEC-UX-299)', () => {
     expect(screen.queryByRole('button', { name: /^Step a/ })).toBeNull();
   });
 });
+
+describe('a Flow Box of a flow in groups, with steps still coming (DEC-UX-327)', () => {
+  const GROUPED: FlowStep[] = [
+    step('a', 1, true, { group: 'Basis', tag: { text: 'As expected', tone: 'healthy' }, said: 'One row per week' }),
+    step('b', 2, false, { group: 'Basis', coming: true, warn: false, said: 'Coming', why: undefined, how: undefined }),
+    step('c', 3, false, { group: 'Gaps' }),
+  ];
+
+  it('names each group once, above its first step, with its own mark', () => {
+    box({ steps: GROUPED, now: 'c', icon: 'binoculars-fill' });
+    const aside = screen.getByRole('complementary', { name: 'Describe and publish · Weekly lead volume' });
+    expect([...aside.querySelectorAll('li.group')].map((group) => group.textContent)).toEqual(['Basis', 'Gaps']);
+    expect(aside.querySelector('.mark')?.innerHTML).not.toBe('');
+  });
+
+  it('says a step done with its tag, and a step still coming quieter, its number dashed, and counted', async () => {
+    box({ steps: GROUPED, now: 'c' });
+    const done = screen.getByRole('button', { name: /^Step a/ });
+    expect(done.querySelector('.tag.healthy')?.textContent).toBe('As expected');
+    const coming = screen.getByRole('button', { name: /^Step b/ });
+    expect(coming.textContent).toContain('komt eraan');
+    expect(coming.querySelector('.num.coming')?.textContent).toBe('2');
+    expect(document.querySelectorAll('.bar span')).toHaveLength(3);
+    expect(document.querySelectorAll('.bar span.coming')).toHaveLength(1);
+    // Without a why and a how, it says what it asks only.
+    await fireEvent.click(coming);
+    const detail = document.getElementById('flow-step-b') as HTMLElement;
+    expect(within(detail).getByText('What of b')).toBeTruthy();
+    expect(within(detail).queryByText('Waarom')).toBeNull();
+    expect(within(detail).queryByText('Hoe')).toBeNull();
+  });
+
+  it('as a strip, dashes the dot of a step still coming', () => {
+    box({ steps: GROUPED, now: 'c', minimized: true });
+    expect(document.querySelectorAll('.dots li.coming')).toHaveLength(1);
+    expect(document.querySelectorAll('.dots li.done')).toHaveLength(1);
+  });
+});

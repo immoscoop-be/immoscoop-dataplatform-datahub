@@ -1,13 +1,27 @@
 import type { FlowStepId } from './flowBox.js';
 
 /**
- * The Flow Box open in the app, if one is (DEC-UX-299): there is one at a time (DEC-UX-308), and nothing of it is
- * stored: it lives in the open app only and goes with a reload (DEC-UX-306).
+ * The flows of the Flow Box (DEC-UX-299): describing and publishing a Resource (FR-MR-20), and setting up the EDA of a
+ * Resource (DEC-UX-327, FR-ED-14). Both are about a Resource.
+ */
+export type FlowKind = 'publish' | 'eda';
+
+/**
+ * The Flow Box open in the app, if one is (DEC-UX-299): which flow, of which object, and whether it is minimized. There
+ * is one at a time (DEC-UX-308), and nothing of it is stored: it lives in the open app only and goes with a reload
+ * (DEC-UX-306, TR-ED-09).
  */
 interface Open {
-  /** The Resource it guides through describing and publishing. */
+  readonly flow: FlowKind;
+  /** The Resource it guides through its flow. */
   readonly resource: string;
+  /** Minimized, as the User left it. */
   readonly minimized: boolean;
+  /**
+   * The guide of an EDA shows folded to its strip on the tab Steps of its EDA, as that page shows the same, until the
+   * User opens it there (DEC-UX-327); elsewhere it shows as the User left it.
+   */
+  readonly foldsOnSteps: boolean;
 }
 
 /** A step the Flow Box led to: the page opens its place for editing, its field in focus and marked (DEC-UX-303). */
@@ -26,12 +40,20 @@ export const flowBox = {
   get aim(): Aim | null {
     return aim;
   },
-  /** Opens it on a Resource, in place of one open on another (DEC-UX-308). */
-  show(resource: string): void {
-    open = { resource, minimized: false };
+  /**
+   * Opens a flow on a Resource, in place of the one open (DEC-UX-308): publishing by default. The guide of an EDA opened
+   * by starting it folds on the tab Steps of its EDA; opened by Guide me, it shows open there too.
+   */
+  show(resource: string, flow: FlowKind = 'publish', { foldsOnSteps = false }: { foldsOnSteps?: boolean } = {}): void {
+    open ={ flow, resource, minimized: false, foldsOnSteps: flow === 'eda' && foldsOnSteps };
   },
-  minimize(minimized: boolean): void {
-    if (open) open = { ...open, minimized };
+  /** Minimizes or maximizes it; maximized on the tab Steps of its EDA, it stays open there from then on. */
+  minimize(minimized: boolean, onSteps = false): void {
+    if (open) open = { ...open, minimized, foldsOnSteps: open.foldsOnSteps && (minimized || !onSteps) };
+  },
+  /** Whether it shows as its strip: as the User left it, and folded on the tab Steps of its EDA until opened there. */
+  folded(onSteps = false): boolean {
+    return open !== null && (open.minimized || (onSteps && open.foldsOnSteps));
   },
   close(): void {
     open = null;
