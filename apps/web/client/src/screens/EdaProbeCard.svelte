@@ -12,8 +12,8 @@
 
   /**
    * An EDA-Probe added to an EDA, as a card in its EDA-Step (DEC-UX-322): its drawing with the fields of this Resource
-   * and its result on it, the result in a sentence, how Data Hub reads it, and the fields it is set on. It opens its
-   * detail.
+   * and its result on it, the result in a sentence, how Data Hub reads it, and the fields it is set on. The whole card
+   * opens its detail: its title is the link, stretched over the card.
    */
   let { probe, view }: { probe: ProbeView; view: EdaView } = $props();
 
@@ -40,11 +40,15 @@
 </article>
 
 <style>
-  .card { display: flex; flex-direction: column; padding: 12px 14px 10px; min-height: 300px; border-radius: var(--radius-md); background: var(--surface-sub); min-width: 0; }
+  .card { position: relative; display: flex; flex-direction: column; padding: 12px 14px 10px; min-height: 300px; border-radius: var(--radius-md); background: var(--surface-sub); min-width: 0; transition: box-shadow var(--motion-fade); }
+  .card:hover { box-shadow: 0 0 0 1px var(--tint-active); }
+  .card:focus-within { box-shadow: 0 0 0 2px var(--text-secondary); }
   header { display: flex; gap: 8px; align-items: flex-start; }
   h4 { flex: 1; font-size: 14px; font-weight: var(--weight-medium); margin: 0; line-height: 1.3; }
-  h4 a { color: inherit; text-decoration: none; }
-  h4 a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  h4 a { color: inherit; text-decoration: none; outline: none; }
+  /* The link covers the whole card, so that a click anywhere on it opens the detail. */
+  h4 a::after { content: ''; position: absolute; inset: 0; border-radius: inherit; }
+  .card:hover h4 a { text-decoration: underline; text-underline-offset: 3px; }
   .card :global(.drawing) { margin: 4px 0 2px; }
   .result { font-size: var(--text-small); line-height: 1.5; margin: 2px 0 8px; }
   footer { display: flex; align-items: center; gap: 8px; margin-top: auto; padding-top: 8px; border-top: 1px solid var(--tint-active); font-size: var(--text-meta); color: var(--text-muted); }

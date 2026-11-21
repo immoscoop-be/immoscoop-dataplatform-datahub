@@ -5,10 +5,19 @@
    * A small label (Chip): a status in a row of them, a count next to a name, or a count in the urgent
    * red for what waits for the Data Team (DEC-UX-16). A Broken one is red with its dot (DEC-UX-81).
    */
-  let { variant = 'status', children }: { variant?: 'status' | 'warn' | 'count' | 'urgent' | 'broken'; children: Snippet } = $props();
+  let {
+    variant = 'status',
+    title,
+    children,
+  }: {
+    variant?: 'status' | 'warn' | 'count' | 'urgent' | 'broken';
+    /** What it says more on hover, if anything. */
+    title?: string;
+    children: Snippet;
+  } = $props();
 </script>
 
-<span class="chip {variant}">{@render children()}</span>
+<span class="chip {variant}" {title}>{@render children()}</span>
 
 <style>
   .chip { display: inline-flex; align-items: center; white-space: nowrap; }

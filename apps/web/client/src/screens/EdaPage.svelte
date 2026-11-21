@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { EdaView, ProbeKey } from '@datahub/contracts/eda';
+  import { type EdaView, type ProbeKey, rowsOf } from '@datahub/contracts/eda';
   import Breadcrumb from '@datahub/ui/components/Breadcrumb.svelte';
   import Tabs from '@datahub/ui/containers/Tabs.svelte';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
@@ -10,7 +10,7 @@
   import Button from '@datahub/ui/primitives/Button.svelte';
   import Chip from '@datahub/ui/primitives/Chip.svelte';
   import Loading from '@datahub/ui/primitives/Loading.svelte';
-  import type { EdaClient } from '../lib/eda.js';
+  import { type EdaClient, PROBE_TEXTS } from '../lib/eda.js';
   import { edaPath, type EdaTab, resourcePath } from '../lib/routes.js';
   import { shortOf } from '../lib/typeFields.js';
   import EdaProbeDetail from './EdaProbeDetail.svelte';
@@ -21,8 +21,9 @@
   /**
    * The page of the EDA of a Resource (DEC-UX-321, FR-ED-04): a guiding page, whose picture is the progress of its
    * EDA-Setup and the quality of the EDA. Its status beside the title, In progress until the EDA-Setup is complete, then
-   * Explored; its Level; the tabs Overview, still to come, Steps, and Profile, greyed until the EDA-Setup is complete,
-   * each saying what will come there. On Steps, the detail of an EDA-Probe opens in place of the rows (DEC-UX-324).
+   * Explored; its Level; the rows of its table, from the last run that counted them (DEC-ED-32); the tabs Overview,
+   * still to come, Steps, and Profile, greyed until the EDA-Setup is complete, each saying what will come there. On
+   * Steps, the detail of an EDA-Probe opens in place of the rows (DEC-UX-324).
    * While it is in progress, Guide me beside its title brings back its guide in the Flow Box once it is closed (FR-ED-14).
    */
   let {
@@ -102,6 +103,7 @@
 {:else}
   {@const eda = view}
   {@const resource = eda.resource}
+  {@const counted = rowsOf(eda)}
   <Breadcrumb
     steps={[
       { label: 'EDA', href: '/eda' },
@@ -124,6 +126,11 @@
   <div class="facts">
     <EdaStatus status={eda.status} />
     <Chip><MaturityIcon level={resource.level} tooltip={false} />{levelName(resource.level)}</Chip>
+    {#if counted}
+      <Chip title={t('eda.page.rows.counted', { probe: t(PROBE_TEXTS[counted.probe]), date: day(counted.at, language) })}>
+        <Icon name="rows" />{t('eda.page.rows', { count: counted.rows })}
+      </Chip>
+    {/if}
     {#if !probe}
       <Chip><Icon name={ran ? 'check-circle-fill' : 'play-circle'} />{t(ran ? 'eda.page.ran' : 'eda.page.noRun')}</Chip>
     {/if}

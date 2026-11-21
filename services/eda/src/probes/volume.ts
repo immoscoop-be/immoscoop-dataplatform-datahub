@@ -24,21 +24,25 @@ export function unitOf(source: EdaSource, field: string): Unit {
 }
 
 /** The role of the field that adds up, for the model types that have one: the volume business means. */
-function addingRole(source: EdaSource): 'addsUp' | 'measure' | null {
+export function addingRole(source: EdaSource): 'addsUp' | 'measure' | null {
   const type = source.resource.modelType;
   return type === 'aggregate' ? 'addsUp' : type === 'fact' ? 'measure' : null;
 }
 
 /**
- * The field whose sum is the volume (DEC-ED-23): the one chosen, or the first Key Field that adds up, else the first
- * field that does; null for a model type without one, or when rows only were chosen. A unique count never adds up.
+ * The field that adds up a Resource starts from (DEC-ED-23, DEC-ED-33): the first Key Field that adds up, else the
+ * first field that does; null for a model type without one. A unique count never adds up.
  */
-export function measureOf(source: EdaSource, params: Record<string, unknown>): string | null {
-  if (params.measure !== undefined) return params.measure as string | null;
+export function addingField(source: EdaSource): string | null {
   const role = addingRole(source);
   if (!role) return null;
   const adding = source.resource.fields.filter((field) => field.role === role);
   return (adding.find((field) => field.keyField) ?? adding[0])?.name ?? null;
+}
+
+/** The field whose sum is the volume (DEC-ED-23): the one chosen, else the field that adds up; null for rows only. */
+export function measureOf(source: EdaSource, params: Record<string, unknown>): string | null {
+  return params.measure !== undefined ? (params.measure as string | null) : addingField(source);
 }
 
 function volumeParams(given: Record<string, unknown>, source: EdaSource): Record<string, unknown> | string {

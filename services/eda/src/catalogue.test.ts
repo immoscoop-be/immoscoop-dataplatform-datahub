@@ -40,13 +40,22 @@ describe('a Resource as the EDA sees it, from catalogue (TR-ED-01)', () => {
       partition: { field: 'week_start', unit: 'day' },
       partitionFilter: 'dataHub',
       explored: false,
+      reliableSince: '2025-01-01',
     });
+  });
+
+  it('keeps the day of Reliable Since, which only a later day gives (FR-RC-31)', () => {
+    const card = (reliableSince: unknown) => sourceOf({ ...WEEKLY_ANSWER, card: { keyFields: [], reliableSince: reliableSince as { from: string } } }).reliableSince;
+    expect(card({ from: 'day', day: '2025-01-01', why: 'Loaded once.', setBy: 'An', setAt: '2026-11-15T10:00:00Z' })).toBe('2025-01-01');
+    expect(card({ from: 'firstRow', day: null, why: '' })).toBeNull();
+    expect(card(null)).toBeNull();
+    expect(card({ from: 'day', day: 'soon' })).toBeNull();
   });
 
   it('reads a Resource without details yet: no model type, no partition, its Key as its full name', () => {
     const { details: _details, card: _card, fullName: _fullName, explored: _explored, ...bare } = WEEKLY_ANSWER;
     const source = sourceOf(bare);
-    expect(source).toMatchObject({ fullName: WEEKLY_ANSWER.key, partition: null, partitionFilter: 'none', explored: null });
+    expect(source).toMatchObject({ fullName: WEEKLY_ANSWER.key, partition: null, partitionFilter: 'none', explored: null, reliableSince: null });
     expect(source.resource.modelType).toBeNull();
     expect(source.resource.fields.every((field) => !field.keyField && !field.grain && field.role === null)).toBe(true);
   });
