@@ -75,9 +75,9 @@ Every service also fetches the public keys of identity to validate tokens; those
 | Application | For | Uses |
 | --- | --- | --- |
 | [web](services/web.md) | People in the browser | identity, catalogue, registry, query, semgraph, eda |
-| [mcp](services/mcp.md) | Claude, as an MCP server and later MCP Apps | catalogue, registry, query, semgraph; signs in through identity |
+| [mcp](services/mcp.md) | Claude, as an MCP server and later MCP Apps | catalogue, registry, query, semgraph, eda; signs in through identity |
 
-Later, once their domains are specified: Lenses and Reports ([Lenses](../requirements/functional/09-lenses.md), [Reports](../requirements/functional/10-reports.md)), checks ([Checks and monitoring](../requirements/functional/08-checks-and-monitoring.md)) and notifications ([OP-PF-06](../requirements/technical/00-platform.md#op-pf-06)). Where [Beta and promotion](../requirements/functional/11-beta-and-promotion.md) and [EDA](../requirements/functional/15-eda.md) live is decided with those domains. [Learning](../requirements/functional/16-learning.md) lives in the web app: its Learning Cards are files in the package `packages/learning`, and catalogue keeps what every User did with them ([TR-LR-01](../requirements/technical/16-learning.md#tr-lr-01), [TR-LR-02](../requirements/technical/16-learning.md#tr-lr-02)).
+Later, once their domains are specified: Lenses and Reports ([Lenses](../requirements/functional/09-lenses.md), [Reports](../requirements/functional/10-reports.md)), checks ([Checks and monitoring](../requirements/functional/08-checks-and-monitoring.md)) and notifications ([OP-PF-06](../requirements/technical/00-platform.md#op-pf-06)). Where [Beta and promotion](../requirements/functional/11-beta-and-promotion.md) lives is decided with those domains; the [EDA](../requirements/functional/15-eda.md) lives in eda ([DEC-ED-26](../requirements/functional/15-eda.md#dec-ed-26)). [Learning](../requirements/functional/16-learning.md) lives in the web app: its Learning Cards are files in the package `packages/learning`, and catalogue keeps what every User did with them ([TR-LR-01](../requirements/technical/16-learning.md#tr-lr-01), [TR-LR-02](../requirements/technical/16-learning.md#tr-lr-02)).
 
 ## How a User is validated
 
