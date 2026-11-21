@@ -13,11 +13,11 @@ data "google_project" "this" {}
 locals {
   # Every service and application of Data Hub that runs on Cloud Run, with an image of its own
   # (docs/architecture/README.md#services).
-  services = toset(["identity", "catalogue", "registry", "query", "semgraph", "mcp", "web"])
+  services = toset(["identity", "catalogue", "registry", "query", "eda", "semgraph", "mcp", "web"])
 
   # The services that keep data in Postgres, each in its own schema (TR-PF-08): query keeps its
-  # queries and the Query Log (DEC-LN-01, DEC-PF-29).
-  database_services = toset(["identity", "catalogue", "registry", "query"])
+  # queries and the Query Log (DEC-LN-01, DEC-PF-29), eda the EDAs of the Resources (TR-ED-01).
+  database_services = toset(["identity", "catalogue", "registry", "query", "eda"])
 
   # Cloud Run gives every service a fixed address, so addresses are known before the services
   # exist: every service needs identity's to validate Access Tokens.
@@ -98,7 +98,8 @@ locals {
     # query tells it about the Lenses and the decisions on them the same way (TR-CV-02). It notifies by
     # e-mail through the SMTP relay of Workspace and in Slack, links to the web app, and the scheduler has
     # it send what is left (DEC-LN-02, DEC-PF-31). After a new Current Version it has query check what
-    # reads the Resources that changed, as itself (FR-SR-52).
+    # reads the Resources that changed, as itself (FR-SR-52). eda says whether the EDA-Setup of a Resource is
+    # complete the same way, by a Google ID token for catalogue's address (TR-ED-05).
     catalogue = merge(local.database_env["catalogue"], {
       DATAHUB_CATALOGUE_URL             = local.urls["catalogue"]
       DATAHUB_REGISTRY_SERVICE_ACCOUNT  = google_service_account.service["registry"].email
@@ -106,6 +107,7 @@ locals {
       DATAHUB_QUERY_SERVICE_ACCOUNT     = google_service_account.service["query"].email
       DATAHUB_QUERY_URL                 = local.urls["query"]
       DATAHUB_IDENTITY_SERVICE_ACCOUNT  = google_service_account.service["identity"].email
+      DATAHUB_EDA_SERVICE_ACCOUNT       = google_service_account.service["eda"].email
       DATAHUB_SCHEDULER_SERVICE_ACCOUNT = google_service_account.scheduler.email
       DATAHUB_WEB_URL                   = local.urls["web"]
       DATAHUB_SMTP_HOST                 = "smtp-relay.gmail.com"
@@ -133,6 +135,14 @@ locals {
       DATAHUB_QUERY_URL                 = local.urls["query"]
       DATAHUB_SCHEDULER_SERVICE_ACCOUNT = google_service_account.scheduler.email
     })
+    # eda keeps the EDAs and reads no data itself (DEC-ED-26, TR-ED-08): it asks catalogue about a Resource with the
+    # token of the User, has query run its EDA-Probes as that User, and tells catalogue as itself, by a Google ID
+    # token for catalogue's address, once the EDA-Setup of a Resource is complete (TR-ED-05). identity is the
+    # issuer, as for every service.
+    eda = merge(local.database_env["eda"], {
+      DATAHUB_QUERY_URL     = local.urls["query"]
+      DATAHUB_CATALOGUE_URL = local.urls["catalogue"]
+    })
     # The Chart Server is open to everyone, its MCP server too (DEC-PF-24).
     semgraph = { MCP_AUTH = "none" }
     # The MCP endpoint Claude connects to (TR-PF-06). Its tools ask catalogue and query with the token of
@@ -144,13 +154,15 @@ locals {
       DATAHUB_WEB_URL       = local.urls["web"]
     }
     # The web app signs Users in at its own address (DEC-PF-19); its page shows the Collections of
-    # catalogue, searches registry, runs queries through query and shows the charts of semgraph.
+    # catalogue, searches registry, runs queries through query, shows the charts of semgraph and the
+    # EDAs of eda (TR-ED-07).
     web = {
       DATAHUB_WEB_URL       = local.urls["web"]
       DATAHUB_CATALOGUE_URL = local.urls["catalogue"]
       DATAHUB_REGISTRY_URL  = local.urls["registry"]
       DATAHUB_QUERY_URL     = local.urls["query"]
       DATAHUB_SEMGRAPH_URL  = local.urls["semgraph"]
+      DATAHUB_EDA_URL       = local.urls["eda"]
     }
   }
 }

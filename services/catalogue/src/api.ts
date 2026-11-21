@@ -53,6 +53,8 @@ export interface ApiOptions {
   lensCallers: ServiceCallerVerifier;
   /** identity, which tells about an Excel key (FR-PL-03). */
   keyCallers?: ServiceCallerVerifier;
+  /** eda, which says whether the EDA-Setup of a Resource is complete (TR-ED-05); without it, nobody does. */
+  edaCallers?: ServiceCallerVerifier;
   /** The progress of every User in the Learning Centre (FR-LR-32). */
   learning: Learning;
   /** query, to check what reads the Resources a new Current Version changed (FR-SR-52); absent, nothing is checked then. */
@@ -158,7 +160,7 @@ const UPDATE_LIMIT_BYTES = 32 * 1024 * 1024;
  * Permission it needs.
  */
 export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Promise<void> {
-  const { collections, identity, resources, serviceCallers, registry, requests, messages, lensCallers, keyCallers, learning } = options;
+  const { collections, identity, resources, serviceCallers, registry, requests, messages, lensCallers, keyCallers, edaCallers, learning } = options;
 
   app.setErrorHandler(async (error, request, reply) => {
     if (error instanceof NameTaken) {
@@ -442,6 +444,39 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       return outcome;
     },
   );
+
+  // eda says whether the EDA-Setup of a Resource is complete, with its Google ID token for catalogue's address
+  // (TR-ED-05): explored, 3 · Confirmed becomes 4 · Explored; no longer, its EDA gone, it drops back (FR-ED-12, FR-MR-07).
+  if (edaCallers) {
+    app.post<{ Params: { id: string }; Body: unknown }>(
+      '/internal/resources/:id/eda',
+      {
+        config: { public: true },
+        onRequest: async (request, reply) => {
+          const token = /^Bearer (\S+)$/.exec(request.headers.authorization ?? '')?.[1] ?? '';
+          try {
+            await edaCallers.verify(token);
+          } catch (error) {
+            request.log.warn({ err: error }, 'a call about the EDA of a Resource was refused');
+            return reply.code(401).send({ error: 'unauthorized', message: 'Only eda says whether a Resource is explored.' });
+          }
+        },
+      },
+      async (request, reply) => {
+        const body = request.body;
+        const explored = typeof body === 'object' && body !== null && !Array.isArray(body) ? (body as { explored?: unknown }).explored : undefined;
+        if (typeof explored !== 'boolean') {
+          return reply.code(400).send({ error: 'invalid_request', message: 'Say whether the Resource is explored: { explored: true } or { explored: false }.' });
+        }
+        const outcome = await resources.explore(request.params.id, explored);
+        if (outcome.outcome === 'not_found') {
+          return reply.code(404).send(NO_RESOURCE);
+        }
+        request.log.info({ resource: request.params.id, explored, level: outcome.level }, 'eda said whether a Resource is explored');
+        return { explored: outcome.explored, level: outcome.level };
+      },
+    );
+  }
 
   app.get<{ Querystring: { collection?: string } }>('/resources', async (request, reply) => {
     if (request.query.collection !== 'none') {

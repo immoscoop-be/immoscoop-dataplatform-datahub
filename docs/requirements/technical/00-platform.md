@@ -137,6 +137,7 @@ The request and response schemas of every service are defined with zod in `packa
 | catalogue | Cloud SQL client |
 | registry | Cloud SQL client; write access to the artifact bucket; the dbt Cloud token and the webhook secret from Secret Manager; starting its ingest job ([TR-AR-01](01-artifact-registry.md#tr-ar-01)), which runs as the same service account; BigQuery Metadata Viewer on the project of Data Hub, for the schemas of the tables a catalog lacks, never their rows ([TR-AR-15](01-artifact-registry.md#tr-ar-15)) |
 | query | BigQuery Data Viewer on the project of Data Hub, where the tables of its dbt projects are ([DEC-SR-32](../functional/04-stacks-and-resources.md#dec-sr-32)), and BigQuery Job User; Cloud SQL client, for its queries and the Query Log ([DEC-PF-29](#dec-pf-29)) |
+| eda | Cloud SQL client, and its login as every service with a database; no role on BigQuery: query reads the data for it ([TR-ED-08](15-eda.md#tr-ed-08)) |
 | semgraph | None: no data and no secrets, as it is open to everyone ([DEC-PF-24](#dec-pf-24)) |
 | web, mcp | None beyond calling the services; web keeps the Refresh Tokens of its Users in their cookies, not in a store of its own |
 | `datahub-scheduler`, not a service | None: Cloud Scheduler calls query with its Google ID token once a day to check every Lens and query, and query checks the token itself ([TR-LE-06](09-lenses.md#tr-le-06), [TR-SR-23](04-stacks-and-resources.md#tr-sr-23)) |
