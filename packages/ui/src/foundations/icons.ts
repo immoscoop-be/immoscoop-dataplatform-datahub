@@ -2,6 +2,7 @@
 // regular line where the prototypes draw one. Each is imported by name, so the page holds only the
 // icons it shows. A new icon of the interface is added here.
 import signpostFill from '@phosphor-icons/core/assets/fill/signpost-fill.svg?raw';
+import binocularsFill from '@phosphor-icons/core/assets/fill/binoculars-fill.svg?raw';
 import arrowsInSimple from '@phosphor-icons/core/assets/regular/arrows-in-simple.svg?raw';
 import arrowUpRight from '@phosphor-icons/core/assets/regular/arrow-up-right.svg?raw';
 import mapPinFill from '@phosphor-icons/core/assets/fill/map-pin-fill.svg?raw';
@@ -231,6 +232,7 @@ export const ICONS = {
   'prohibit-fill': prohibitFill,
   'seal-check-fill': sealCheckFill,
   'stack-fill': stackFill,
+  'binoculars-fill': binocularsFill,
   'sun-fill': sunFill,
   'terminal-window-fill': terminalWindowFill,
   'toolbox-fill': toolboxFill,
