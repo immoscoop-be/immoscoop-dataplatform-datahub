@@ -50,6 +50,9 @@ The EDA is a function of Data Hub that lets business explore a Resource. The Res
 - <a id="dec-ed-29"></a>**DEC-ED-29** · The EDA comes to Claude now, for a User with Explore Resources: Claude shows the EDA of a Resource, with what to look at first, and runs an EDA-Probe as the User, through Data Hub, as the web app does. What reads more than runs freely, the User approves in the frame Claude shows; the reading of a result is always the User's, given in the frame or in Data Hub, never by Claude. *Decided on 2026-11-21, by Max.*
 - <a id="dec-ed-30"></a>**DEC-ED-30** · Impossible values covers a Key Field only once it has a rule: a field Data Hub knows no rule for, such as a text that is not mapped, stays not covered under Correctness until someone gives it one, and the EDA-Probe runs once every Key Field it is set on has a rule. A run never counts a field without a rule as checked. *Decided on 2026-11-21, by Max ([OP-ED-10](#op-ed-10)).*
 - <a id="dec-ed-31"></a>**DEC-ED-31** · A field mapped to an Entity is left out of Impossible values: its possible values are those of the Entity, which Values without a match checks, so the Owner is never asked for the same list twice. Values without a match is therefore needed for every model type as soon as a Key Field is mapped ([DEC-ED-19](#dec-ed-19)); without a mapped Key Field it is not. *Decided on 2026-11-21, by Max ([OP-ED-10](#op-ed-10)).*
+- <a id="dec-ed-32"></a>**DEC-ED-32** · Row count is no EDA-Probe of its own: a number of rows says little alone, and The grain holds and Nulls per Key Field count them already. The rows are a fact of the EDA, shown with it from the last run that counted them; their change between runs comes with the EDA-Rerun ([OP-ED-05](#op-ed-05)). Whether every combination of the grain has a row, for an aggregate, is a question of its own ([OP-ED-11](#op-ed-11)). *Decided on 2026-11-21, by Max, after the detail of Row count was drawn and found to add little next to the grain.*
+- <a id="dec-ed-33"></a>**DEC-ED-33** · Distribution of categories is set on the text fields among the Key Fields, mapped ones too, and on any other text added, each with its own result. The User chooses what it weighs by: a number that adds up, the one its role names first, or rows; a unique count is not offered. For an aggregate or a fact it starts from the number that adds up, as a row there is a period and a group. Its result per field: the 10 values that weigh most with their share, the rest together, the empty values apart, the number of values, and how many weigh less than 0.1% each. Data Hub always reads it as for you to judge, as Distribution of numbers; whether two values are one written two ways is left to Variants of one category. *Decided on 2026-11-21, by Max.*
+- <a id="dec-ed-34"></a>**DEC-ED-34** · Date range is set on the date its role names, which it needs, and on any other date added, each with its own result: the first and the last value, the periods between, and the last against today, on a timeline that marks today and the Reliable Since of the Resource Card. It is up to date when the last is the current period or the one before; for a day, today or yesterday. Data Hub reads it as expected when it is up to date, and as look at this when it is behind, naming by how much; the Owner may read that as known, for a table that stopped on purpose. Reliable Since is shown, not read. A date in the future is left to Impossible values, a date that stands for nothing to Disguised nulls, periods without rows to Volume over time. *Proposed by Claude on 2026-11-21 and built at Max's go the same day, without his answer to three points yet: the rule for up to date, behind read as look at this, and Reliable Since shown only.*
 
 ## Terms
 
@@ -76,7 +79,6 @@ What each EDA-Probe reads, and per model type whether it is Must (M), Should (S)
 | EDA-Step | EDA-Probe | Reads | `event` | `state` | `fact` | `dimension` | `aggregate` | `other` |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Basis | The grain holds | The grain | M | M | M | M | M | M |
-| Basis | Row count | – | M | M | M | M | M | M |
 | Basis | Date range | When it happened; created and updated at; when it occurred; the period | M | M | M | – | M | – |
 | Basis | Volume over time, with empty periods | The same date, or as of when for a state | M | C ¹ | M | – | M | – |
 | Basis | Settling between EDA-Reruns, of the rows and of the Key Fields ([DEC-ED-18](#dec-ed-18)) | When it happened; when it occurred; the Key Fields | S | – | S | – | C | – |
@@ -110,7 +112,7 @@ What each EDA-Probe reads, and per model type whether it is Must (M), Should (S)
 
 ## Requirements
 
-The first build ([DEC-ED-26](#dec-ed-26)) holds the section EDA, the start of an EDA, its tab Steps, the detail of an EDA-Probe, and four EDA-Probes: The grain holds, Nulls per Key Field, Volume over time, with empty periods, and Distribution of numbers. The tabs Overview and Profile and the EDA-Rerun ([OP-ED-05](#op-ed-05)) come later. The list to add an EDA-Probe, the guide of an EDA in the Flow Box, and the EDA in Claude follow it ([FR-ED-13](#fr-ed-13) to [FR-ED-16](#fr-ed-16)).
+The first build ([DEC-ED-26](#dec-ed-26)) holds the section EDA, the start of an EDA, its tab Steps, the detail of an EDA-Probe, and four EDA-Probes: The grain holds, Nulls per Key Field, Volume over time, with empty periods, and Distribution of numbers. The second adds Distribution of categories and Date range ([FR-ED-17](#fr-ed-17), [FR-ED-18](#fr-ed-18)). The tabs Overview and Profile and the EDA-Rerun ([OP-ED-05](#op-ed-05)) come later. The list to add an EDA-Probe, the guide of an EDA in the Flow Box, and the EDA in Claude follow it ([FR-ED-13](#fr-ed-13) to [FR-ED-16](#fr-ed-16)).
 
 <a id="fr-ed-01"></a>
 ### FR-ED-01 · Only who may explore Resources works on an EDA
@@ -144,7 +146,7 @@ The section EDA stands in the rail after Charts, with the binoculars icon, for a
 
 **Status:** Implemented · **Source:** Max, 2026-11-21 ([DEC-ED-16](#dec-ed-16)) · **Screens:** [eda](../../design/screens/eda.html)
 
-The page of an EDA has the tabs Overview, Steps and Profile; Overview, filled in later, and Profile, greyed while the EDA-Setup is not complete, say what will come there ([DEC-UX-321](../../design/principles.md#dec-ux-321)). Steps shows on the left a row per EDA-Step ([DEC-ED-11](#dec-ed-11)), each with how many of its needed EDA-Probes are complete, a card per EDA-Probe added, with its result in a sentence, Data Hub's reading and the fields it is set on, and, while the EDA-Step has EDA-Probes not added yet, one empty tile, Add probe, which opens the list to add an EDA-Probe at that EDA-Step ([FR-ED-13](#fr-ed-13)). On the right: the needed EDA-Probes complete, as a number and a bar; what the EDA covers in its four places; the best next step; the EDA-Probes on the table as a whole; and per field, in the order of the Resource Card, what covers it per EDA-Step, the Key Fields marked ([DEC-UX-322](../../design/principles.md#dec-ux-322), [DEC-UX-323](../../design/principles.md#dec-ux-323)).
+Under the title of the page of an EDA stand its status, the Level of its Resource and the rows of its table, as the last run that counted them says ([DEC-ED-32](#dec-ed-32)). The page has the tabs Overview, Steps and Profile; Overview, filled in later, and Profile, greyed while the EDA-Setup is not complete, say what will come there ([DEC-UX-321](../../design/principles.md#dec-ux-321)). Steps shows on the left a row per EDA-Step ([DEC-ED-11](#dec-ed-11)), each with how many of its needed EDA-Probes are complete, a card per EDA-Probe added, with its result in a sentence, Data Hub's reading and the fields it is set on, and, while the EDA-Step has EDA-Probes not added yet, one empty tile, Add probe, which opens the list to add an EDA-Probe at that EDA-Step ([FR-ED-13](#fr-ed-13)). On the right: the needed EDA-Probes complete, as a number and a bar; what the EDA covers in its four places; the best next step; the EDA-Probes on the table as a whole; and per field, in the order of the Resource Card, what covers it per EDA-Step, the Key Fields marked ([DEC-UX-322](../../design/principles.md#dec-ux-322), [DEC-UX-323](../../design/principles.md#dec-ux-323)).
 
 **Makes easy:** seeing what the EDA-Setup still needs, and where. **Makes hard:** taking an EDA for done while a Key Field is not covered.
 
@@ -256,6 +258,24 @@ Claude runs an EDA-Probe Data Hub runs (`run_eda_probe`), on the fields it is se
 
 **Makes easy:** running an EDA-Probe again from a conversation, after a fix. **Makes hard:** Claude reading a result for the User, or running past what the User may run.
 
+<a id="fr-ed-17"></a>
+### FR-ED-17 · Distribution of categories
+
+**Status:** Specified · **Source:** Max, 2026-11-21 ([DEC-ED-33](#dec-ed-33)) · **Screens:** [eda-probe-categories](../../design/screens/eda-probe-categories.html)
+
+Distribution of categories is set on the text fields among the Key Fields, which it needs, and on any other text added, each with its own result. It weighs each value by the number that adds up the User chooses, or by rows; for an aggregate or a fact it starts from the number that adds up. Its result per field: a sentence naming where the weight lies, the 10 values that weigh most with their share, the rest together, the empty values apart, the number of values, and how many weigh less than 0.1% each. Data Hub reads it as for you to judge.
+
+**Makes easy:** seeing which few values carry most of the weight. **Makes hard:** comparing by a category one of whose values carries nearly everything, without knowing it.
+
+<a id="fr-ed-18"></a>
+### FR-ED-18 · Date range
+
+**Status:** Specified · **Source:** Claude, 2026-11-21, built at Max's go ([DEC-ED-34](#dec-ed-34)) · **Screens:** [eda-probe-daterange](../../design/screens/eda-probe-daterange.html)
+
+Date range is set on the date its role names, which it needs, and on any other date added, each with its own result: the first and the last value, the periods between, how many periods the last is behind the current one, and how many lie before the Reliable Since of the Resource Card, on a timeline with today. Data Hub reads it as expected when the last is the current period or the one before, and as look at this when it is behind.
+
+**Makes easy:** seeing at once whether a table is still loaded. **Makes hard:** taking a table that stopped weeks ago for a quiet one.
+
 ## Out of scope
 
 - Personal data, for now ([DEC-ED-08](#dec-ed-08)).
@@ -275,6 +295,7 @@ Raised on 2026-11-15, in the review of the EDA proposal:
 - [ ] <a id="op-ed-08"></a>**OP-ED-08** · Align the other domains with this frame: Explored as "an EDA document is linked" ([DEC-MR-02](06-maturity-and-release.md#dec-mr-02), [FR-MR-03](06-maturity-and-release.md#fr-mr-03), [FR-MR-07](06-maturity-and-release.md#fr-mr-07), [DEC-MR-14](06-maturity-and-release.md#dec-mr-14), the Levels in the [definitions](../../definitions.md#maturity-levels), Learning Card K5.2, the Message catalogue, the screens and the texts of the app); 5 · Monitored only from 4 · Explored, with no Monitor on a Resource without an EDA ([DEC-CM-12](08-checks-and-monitoring.md#dec-cm-12)); and Data Hub writing nothing to BigQuery, also for the Aggregate Table of a Breakdown ([DEC-CM-18](08-checks-and-monitoring.md#dec-cm-18)). *Note of 2026-11-21: Explored is aligned: it means a complete EDA-Setup, in the definitions, [Maturity and release](06-maturity-and-release.md#dec-mr-21), Learning Card K5.2, the Message catalogue, the screens and the texts of the app. Monitored only from Explored, and the Aggregate Table, remain.*
 - [x] <a id="op-ed-09"></a>**OP-ED-09** · Decide whether, while Data Hub cannot run every needed EDA-Probe yet, an EDA-Setup counts only those it can run. Proposal: no, Explored keeps its meaning ([DEC-ED-12](#dec-ed-12)): a needed EDA-Probe that is not built shows as coming and still counts, so that no Resource reaches 4 · Explored before its model type can be fully explored. *Raised on 2026-11-21, while writing the first build.* *Decided on 2026-11-21, by Max: as proposed ([DEC-ED-27](#dec-ed-27)).*
 - [x] <a id="op-ed-10"></a>**OP-ED-10** · Decide two points of Impossible values, drawn as a proposal in [eda-probe-impossible](../../design/screens/eda-probe-impossible.html). First: a Key Field Data Hub knows no rule for, such as a text like `lead_channel`, stays not covered under Correctness until someone gives it a rule; running Impossible values does not cover it. Second: a field mapped to an Entity, such as `lead_source` to Lead sources, is left out of Impossible values, as its possible values are those of the Entity, which Values without a match checks; so the same list of allowed values is not asked twice. *Raised on 2026-11-21, during review: the third point of the proposal is decided ([DEC-ED-28](#dec-ed-28)), and Max asked what these two mean.* *Decided on 2026-11-21, by Max: both as proposed ([DEC-ED-30](#dec-ed-30), [DEC-ED-31](#dec-ed-31)), and Values without a match needed once a Key Field is mapped.*
+- [ ] <a id="op-ed-11"></a>**OP-ED-11** · Decide whether an aggregate gets an EDA-Probe "Every combination present": whether every value of each grain field has a row with every other, such as every lead source in every week, told apart from a value that starts later than the table, and holes matched with its Known Gaps. Proposal: Suggested for an aggregate, built after the needed ones. Drawn once as Row count, in [eda-probe-rowcount](../../design/screens/eda-probe-rowcount.html), which is kept as the sketch of it. *Raised on 2026-11-21, during review ([DEC-ED-32](#dec-ed-32)).*
 
 ## Builds on
 
