@@ -213,3 +213,33 @@ describe.skipIf(!url)('identity migration 0011-forget-flags', () => {
     expect(kept.rows.map((row) => row.key)).toEqual(['query.layout']);
   });
 });
+
+describe.skipIf(!url)('identity migration 0012-eda', () => {
+  const schema = `identity_test_${randomBytes(4).toString('hex')}`;
+  const admin = createDatabase<unknown>({ connectionString: url }, schema);
+
+  afterAll(async () => {
+    await sql`drop schema if exists ${sql.id(schema)} cascade`.execute(admin.db);
+    await admin.close();
+  });
+
+  it('gives Admin the Permission to explore Resources, and every other group it off (DEC-PL-10)', async () => {
+    await migrate({ db: admin.db, schema, migrations: before('0012'), serviceUser: 'postgres' });
+    const groups = sql.id(schema, 'permission_groups');
+    // The groups as they were before, and a group made since by copying Admin.
+    await sql`update ${groups} set permissions = permissions - 'eda.use'`.execute(admin.db);
+    await sql`insert into ${groups} (name, sentence, permissions, is_default, locked)
+      select 'Explorers', '', permissions, false, false from ${groups} where starting = 'admin'`.execute(admin.db);
+
+    const results = await migrate({ db: admin.db, schema, migrations: before('0013'), serviceUser: 'postgres' });
+    expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0012-eda', 'Success']]);
+    const held = await sql<{ name: string; on: string }>`
+      select name, permissions -> 'eda.use' ->> 'on' as on from ${groups} order by name`.execute(admin.db);
+    expect(held.rows).toEqual([
+      { name: 'Admin', on: 'true' },
+      { name: 'Business analyst', on: 'false' },
+      { name: 'Explorers', on: 'false' },
+      { name: 'Lens user', on: 'false' },
+    ]);
+  });
+});

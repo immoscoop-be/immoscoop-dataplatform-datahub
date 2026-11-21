@@ -2,6 +2,7 @@
 // regular line where the prototypes draw one. Each is imported by name, so the page holds only the
 // icons it shows. A new icon of the interface is added here.
 import signpostFill from '@phosphor-icons/core/assets/fill/signpost-fill.svg?raw';
+import binocularsFill from '@phosphor-icons/core/assets/fill/binoculars-fill.svg?raw';
 import arrowsInSimple from '@phosphor-icons/core/assets/regular/arrows-in-simple.svg?raw';
 import arrowUpRight from '@phosphor-icons/core/assets/regular/arrow-up-right.svg?raw';
 import mapPinFill from '@phosphor-icons/core/assets/fill/map-pin-fill.svg?raw';
@@ -183,6 +184,18 @@ import circleNotch from '@phosphor-icons/core/assets/regular/circle-notch.svg?ra
 import linkBreak from '@phosphor-icons/core/assets/regular/link-break.svg?raw';
 import signOutFill from '@phosphor-icons/core/assets/fill/sign-out-fill.svg?raw';
 import shareNetwork from '@phosphor-icons/core/assets/regular/share-network.svg?raw';
+// The EDA: the kinds of a field on its drawings, the readings and the state of its EDA-Steps (DEC-UX-268, DEC-UX-322).
+import binoculars from '@phosphor-icons/core/assets/regular/binoculars.svg?raw';
+import bookmarkSimple from '@phosphor-icons/core/assets/regular/bookmark-simple.svg?raw';
+import checkSquareFill from '@phosphor-icons/core/assets/fill/check-square-fill.svg?raw';
+import circleHalf from '@phosphor-icons/core/assets/regular/circle-half.svg?raw';
+import fingerprint from '@phosphor-icons/core/assets/regular/fingerprint.svg?raw';
+import layout from '@phosphor-icons/core/assets/regular/layout.svg?raw';
+import playCircle from '@phosphor-icons/core/assets/regular/play-circle.svg?raw';
+import plusCircle from '@phosphor-icons/core/assets/regular/plus-circle.svg?raw';
+import questionFill from '@phosphor-icons/core/assets/fill/question-fill.svg?raw';
+import signpost from '@phosphor-icons/core/assets/regular/signpost.svg?raw';
+import tag from '@phosphor-icons/core/assets/regular/tag.svg?raw';
 
 export const ICONS = {
   'signpost-fill': signpostFill,
@@ -231,6 +244,7 @@ export const ICONS = {
   'prohibit-fill': prohibitFill,
   'seal-check-fill': sealCheckFill,
   'stack-fill': stackFill,
+  'binoculars-fill': binocularsFill,
   'sun-fill': sunFill,
   'terminal-window-fill': terminalWindowFill,
   'toolbox-fill': toolboxFill,
@@ -363,6 +377,17 @@ export const ICONS = {
   'link-break': linkBreak,
   'sign-out-fill': signOutFill,
   'share-network': shareNetwork,
+  binoculars,
+  'bookmark-simple': bookmarkSimple,
+  'check-square-fill': checkSquareFill,
+  'circle-half': circleHalf,
+  fingerprint,
+  layout,
+  'play-circle': playCircle,
+  'plus-circle': plusCircle,
+  'question-fill': questionFill,
+  signpost,
+  tag,
 } as const;
 
 export type IconName = keyof typeof ICONS;

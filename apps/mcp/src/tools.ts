@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { answer, refusal } from './answers.js';
 import { type Context, READ, SHOWS } from './context.js';
 import { type DataHub, pages } from './datahub.js';
+import { edaTools } from './eda.js';
 import { howToUse, instructionsFor, mayDo } from './guide.js';
 import { cardFor, explain, topicTitle } from './learning.js';
 import { fieldTools } from './fields.js';
@@ -163,6 +164,7 @@ export function createMcpServer(user: AccessTokenClaims, options: ServerOptions)
   queryTools(context);
   projectTools(context);
   lensTools(context);
+  edaTools(context);
   registerView(server, options.viewHtml, options.serverUrl);
   return server;
 }

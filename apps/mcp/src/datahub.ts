@@ -1,9 +1,11 @@
 /** The services of Data Hub that mcp calls for a User. */
-export type Service = 'catalogue' | 'query';
+export type Service = 'catalogue' | 'query' | 'eda';
 
 export interface DataHubOptions {
   catalogueUrl: string;
   queryUrl: string;
+  /** eda, which keeps the EDA of a Resource and runs its EDA-Probes through query (TR-ED-10). */
+  edaUrl: string;
   /** The web app, for the links to the pages of Data Hub (FR-CL-06). */
   webUrl: string;
   fetch?: typeof fetch;
@@ -38,12 +40,12 @@ export interface DataHub {
 const RUN = /\/(runs|preview\/runs|preview\/choices)$/;
 
 /**
- * catalogue and query, asked with the Access Token of the User, so that every answer is as they may see it
+ * catalogue, query and eda, asked with the Access Token of the User, so that every answer is as they may see it
  * (TR-PF-05, FR-CL-02). mcp keeps nothing itself.
  */
 export function createDataHub(options: DataHubOptions, authorization: string): DataHub {
   const request = options.fetch ?? fetch;
-  const base: Record<Service, string> = { catalogue: options.catalogueUrl, query: options.queryUrl };
+  const base: Record<Service, string> = { catalogue: options.catalogueUrl, query: options.queryUrl, eda: options.edaUrl };
 
   async function call<T>(service: Service, method: string, path: string, body?: unknown): Promise<T> {
     let response: Response;
@@ -94,4 +96,8 @@ export const pages = {
   project: (id: string) => `/query/projects/${encodeURIComponent(id)}`,
   message: (id: string) => `/messages/${encodeURIComponent(id)}`,
   learningCard: (number: string) => `/learning/${encodeURIComponent(number)}`,
+  /** The EDA of a Resource, on its tab Steps (DEC-UX-321). */
+  eda: (resource: string) => `/eda/${encodeURIComponent(resource)}`,
+  /** The detail of an EDA-Probe of the EDA of a Resource (DEC-UX-324). */
+  edaProbe: (resource: string, probe: string) => `/eda/${encodeURIComponent(resource)}/probes/${encodeURIComponent(probe)}`,
 };

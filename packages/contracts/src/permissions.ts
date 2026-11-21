@@ -7,7 +7,7 @@ import { z } from 'zod';
  */
 
 /** The part of Data Hub a Permission belongs to, in the order of the rail (DEC-UX-186). */
-export type PermissionPart = 'collections' | 'groups' | 'query' | 'lenses' | 'messages' | 'claude' | 'excel' | 'admin';
+export type PermissionPart = 'collections' | 'groups' | 'query' | 'lenses' | 'eda' | 'messages' | 'claude' | 'excel' | 'admin';
 
 /** The kind of one value of a Permission: those of a Parameter (DEC-UX-71). */
 export type ValueSpec =
@@ -66,6 +66,8 @@ export const PERMISSIONS = {
   'requests.decide': { name: 'Decide on Requests', part: 'query', values: {} },
   'lenses.make': { name: 'Make Lenses', part: 'lenses', values: {} },
   'lenses.manage': { name: 'Manage Lenses', part: 'lenses', values: { reach: REACH } },
+  // The EDA, first for the Data Admins only (DEC-ED-25, DEC-PL-10).
+  'eda.use': { name: 'Explore Resources', part: 'eda', values: {} },
   'messages.write': { name: 'Write Messages', part: 'messages', values: { kinds: { kind: 'several', options: ['question', 'remark', 'signal'] } } },
   'messages.reply': { name: 'Reply to the Messages of others', part: 'messages', values: { reach: REACH } },
   'messages.close': { name: 'Close and reopen the Messages of others', part: 'messages', values: { reach: REACH } },
@@ -135,6 +137,7 @@ const ADMIN: Permissions = {
   'requests.decide': on(),
   'lenses.make': on(),
   'lenses.manage': on({ reach: 'every' }),
+  'eda.use': on(),
   'messages.write': on({ kinds: ALL_KINDS }),
   'messages.reply': on({ reach: 'every' }),
   'messages.close': on({ reach: 'every' }),
@@ -165,6 +168,7 @@ const BUSINESS_ANALYST: Permissions = {
   'requests.decide': off(),
   'lenses.make': on(),
   'lenses.manage': on({ reach: 'theirs' }),
+  'eda.use': off(),
   'messages.write': on({ kinds: ALL_KINDS }),
   'messages.reply': on({ reach: 'every' }),
   'messages.close': on({ reach: 'theirs' }),
@@ -195,6 +199,7 @@ const LENS_USER: Permissions = {
   'requests.decide': off(),
   'lenses.make': off(),
   'lenses.manage': off({ reach: 'theirs' }),
+  'eda.use': off(),
   'messages.write': on({ kinds: ['question', 'signal'] }),
   'messages.reply': off({ reach: 'theirs' }),
   'messages.close': off({ reach: 'theirs' }),

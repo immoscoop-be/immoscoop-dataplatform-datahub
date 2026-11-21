@@ -1791,6 +1791,10 @@ button.lin-node:hover { box-shadow: 0 0 0 1.5px var(--tint-active); }
 .lvl-name { display: flex; align-items: baseline; gap: 8px; }
 .lvl-name b { font-size: var(--text-small); font-weight: var(--weight-medium); }
 /* What publishing still takes, on the Maturity of a Resource not published yet: the steps required to publish (DEC-MR-16) */
+.lvl-prog { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 3px; max-width: 260px; margin-top: 8px; }
+.lvl-prog span { height: 6px; border-radius: 3px; background: var(--tint-active); }
+.lvl-prog span.on { background: var(--col-teal); }
+.lvl-act { margin-top: 10px; }
 .lvl-steps { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 4px; font-size: var(--text-small); }
 .lvl-steps li { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .lvl-steps li > i { font-size: 15px; color: var(--text-secondary); }

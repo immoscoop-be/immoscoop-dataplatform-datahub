@@ -30,6 +30,8 @@ export interface Query {
   previewOf: string | null;
   /** For the runs of a Lens by one User, the Lens (FR-LE-12). */
   lensOf: string | null;
+  /** For the runs of the EDA-Probes of a Resource by one User, the Resource (TR-ED-04). */
+  edaOf: string | null;
   /** The Lens this query is used as, when "Open in Query" made it (DEC-LE-18). */
   forLens: string | null;
   /** The Collection whose "New Lens" started it (DEC-UX-123). */
@@ -164,6 +166,11 @@ export interface Queries {
   /** The previews of a Resource by this User, if there are. */
   previewOf(owner: Viewer, resourceId: string): Promise<Query | undefined>;
   /**
+   * The runs of the EDA-Probes of a Resource by this User, made the first time eda has one run for them (TR-ED-04):
+   * in the Query Log, never in their panel.
+   */
+  edaFor(owner: Viewer, resource: NamedResource, name: string): Promise<Query>;
+  /**
    * The query of this User used as a Lens, made from its SQL and Parameters the first time they open it in
    * Query (DEC-LE-18); `created` says whether it is new.
    */
@@ -266,6 +273,8 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
         .select(
           sql<{ id: string; name: string } | null>`(select json_build_object('id', p.id, 'name', p.name) from project_queries pq join projects p on p.id = pq.project_id where pq.query_id = q.id and p.deleted_at is null)`.as('project'),
         )
+        // The runs of the EDA-Probes are in the Query Log, never in the panel (TR-ED-04).
+        .where('q.kind', '!=', 'eda')
         // Their own queries, and those of others they ran, such as in a Project (OP-UX-103).
         .$if(!all, (query) => query.where((eb) => eb.or([eb('q.ownerId', '=', viewer.id), sql<boolean>`exists (select 1 from runs r where r.query_id = q.id and r.user_id = ${viewer.id})`])))
         .$if(from !== undefined, (query) => query.where(sql<boolean>`coalesce(q.last_run_at, q.created_at) >= ${from}`))
@@ -307,7 +316,7 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
             case when exists (select 1 from hidden_queries h where h.query_id = q.id and h.user_id = ${viewer.id}) then 'hidden'
               when q.kind = 'preview' then 'previews' when q.kind = 'lens' then 'lenses' else 'queries' end as shown
           from queries q
-          where ${all} or q.owner_id = ${viewer.id} or exists (select 1 from runs r where r.query_id = q.id and r.user_id = ${viewer.id})
+          where q.kind <> 'eda' and (${all} or q.owner_id = ${viewer.id} or exists (select 1 from runs r where r.query_id = q.id and r.user_id = ${viewer.id}))
         )
         select day,
           count(*) filter (where shown = 'queries') as queries,
@@ -375,6 +384,19 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
     },
 
     previewOf,
+
+    async edaFor(owner, resource, name) {
+      const find = () => db.selectFrom('queries').selectAll().where('kind', '=', 'eda').where('ownerId', '=', owner.id).where('edaOf', '=', resource.id).executeTakeFirst();
+      const found = await find();
+      if (found) return found;
+      // Two first runs at once: one of them makes it, the other finds it.
+      await db
+        .insertInto('queries')
+        .values({ ownerId: owner.id, ownerName: owner.name, name, question: '', resources: JSON.stringify([resource]), sql: '', kind: 'eda', edaOf: resource.id })
+        .onConflict((conflict) => conflict.columns(['ownerId', 'edaOf']).where('kind', '=', 'eda').doNothing())
+        .execute();
+      return (await find()) as Query;
+    },
 
     async lensRuns(ownerId) {
       const rows = await db
@@ -461,6 +483,8 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
         .innerJoin('runs as last', (join) => join.onRef('last.queryId', '=', 'q.id').onRef('last.number', '=', 'counted.last').on('last.purpose', '=', 'run'))
         .select(['q.id', 'q.name', 'q.ownerId', 'q.ownerName', 'q.through', 'q.kind', 'q.lensOf', 'q.lastRunAt', 'q.broken', 'counted.runs', 'last.processedBytes', 'last.estimatedBytes', 'last.state'])
         .where(sql<boolean>`q.resources @> ${JSON.stringify([{ id: resourceId }])}::jsonb`)
+        // The runs of its EDA-Probes are kept with its EDA, not among the queries on it (TR-ED-04).
+        .where('q.kind', '!=', 'eda')
         .orderBy('q.lastRunAt', 'desc')
         .limit(200)
         .execute();

@@ -35,7 +35,7 @@
   import LearningRef from './LearningRef.svelte';
   import OverviewDanger from './OverviewDanger.svelte';
   import OverviewGaps from './OverviewGaps.svelte';
-  import OverviewMaturity from './OverviewMaturity.svelte';
+  import OverviewMaturity, { type LadderEda } from './OverviewMaturity.svelte';
   import OverviewReliable from './OverviewReliable.svelte';
   import OverviewRow from './OverviewRow.svelte';
   import OverviewSummary from './OverviewSummary.svelte';
@@ -73,6 +73,7 @@
     onremove,
     onchangetype,
     firstRowOf,
+    eda,
     part = $bindable('summary'),
   }: {
     resource: ResourceDetail;
@@ -115,6 +116,8 @@
     onchangetype?: () => void;
     /** Reads its first row on a date field, for the line under Reliable since (DEC-RC-33). */
     firstRowOf?: (field: string) => Promise<FirstRow | null>;
+    /** Its EDA on the maturity ladder, for a User who may explore Resources (FR-ED-02). */
+    eda?: LadderEda;
     /** The part on screen, which the page can open, such as the Danger zone from a deprecation. */
     part?: Part;
   } = $props();
@@ -570,7 +573,7 @@
       </SubTile>
     {:else if part === 'maturity'}
       {@render head(t('resource.maturity'), t('overview.maturity.lead'))}
-      <OverviewMaturity {resource} {onpublish} onpart={(place) => (place === 'columns' ? oncolumns() : open(place))} />
+      <OverviewMaturity {resource} {onpublish} {eda} onpart={(place) => (place === 'columns' ? oncolumns() : open(place))} />
     {:else if part === 'changes'}
       {@render head(t('overview.changes'), t('overview.changes.lead'))}
       <SubTile>

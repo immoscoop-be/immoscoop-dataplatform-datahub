@@ -1668,12 +1668,12 @@ The dbt run of {run} changed the code of `{node}`, {distance, plural, =0 {the ta
 | Kind | Data Hub |
 | About | Resource |
 | From → to | Data Hub → Owner |
-| When | The Level of a Resource drops: a description goes missing, its EDA document is no longer linked, or its last active check is switched off. |
+| When | The Level of a Resource drops: a description goes missing, its EDA goes, or its last active check is switched off. |
 | Status | Implemented |
 | Comes from | [FR-MR-09](06-maturity-and-release.md#fr-mr-09), [DEC-SR-08](04-stacks-and-resources.md#dec-sr-08), [DEC-MR-08](06-maturity-and-release.md#dec-mr-08) |
 | Open points | [OP-MR-04](06-maturity-and-release.md#op-mr-04) |
 
-**What it asks:** Something to do, of the Owner. The Owner takes the cause away: a description, the EDA document or a check. The Publication stays ([DEC-SR-08](04-stacks-and-resources.md#dec-sr-08)).
+**What it asks:** Something to do, of the Owner. The Owner takes the cause away: a description, the EDA or a check. The Publication stays ([DEC-SR-08](04-stacks-and-resources.md#dec-sr-08)).
 
 **How it ends:** When the Level rises again, it shows that it is restored. It starts `open` and ends `restored`.
 
@@ -1727,7 +1727,7 @@ Weekly lead volume dropped from 4 · Explored to 1 · Available: a description i
 Template, Dutch, plain:
 
 ```text
-{subject} is gezakt van {from} naar {to}: {cause, select, description {er ontbreekt een beschrijving} eda {het EDA-document is niet meer gekoppeld} other {de laatste actieve check werd uitgeschakeld}}.
+{subject} is gezakt van {from} naar {to}: {cause, select, description {er ontbreekt een beschrijving} eda {haar EDA is weg} other {de laatste actieve check werd uitgeschakeld}}.
 ```
 
 Template, Dutch, laid out:
@@ -1735,7 +1735,7 @@ Template, Dutch, laid out:
 ```markdown
 **{subject} is gezakt van {from} naar {to}**
 
-{cause, select, description {Er ontbreekt een beschrijving in dbt, en geen businessbeschrijving vult dat aan.} eda {Het EDA-document is niet meer gekoppeld.} other {De laatste actieve check werd uitgeschakeld.}}
+{cause, select, description {Er ontbreekt een beschrijving in dbt, en geen businessbeschrijving vult dat aan.} eda {Haar EDA is weg.} other {De laatste actieve check werd uitgeschakeld.}}
 - Veld zonder beschrijving: `{field}`
 
 {published, select, yes {Hij blijft gepubliceerd, en iedereen die hem ziet, ziet het lagere level: op de resource en op elke lens en elk report die erop steunen. } other {}}Zodra de oorzaak weg is, stijgt hij opnieuw, en je bekrachtiging blijft gelden.
@@ -1744,7 +1744,7 @@ Template, Dutch, laid out:
 Template, English, plain:
 
 ```text
-{subject} dropped from {from} to {to}: {cause, select, description {a description is missing} eda {its EDA document is no longer linked} other {its last active check was switched off}}.
+{subject} dropped from {from} to {to}: {cause, select, description {a description is missing} eda {its EDA is gone} other {its last active check was switched off}}.
 ```
 
 Template, English, laid out:
@@ -1752,7 +1752,7 @@ Template, English, laid out:
 ```markdown
 **{subject} dropped from {from} to {to}**
 
-{cause, select, description {A description is missing in dbt, and no business description covers it.} eda {Its EDA document is no longer linked.} other {Its last active check was switched off.}}
+{cause, select, description {A description is missing in dbt, and no business description covers it.} eda {Its EDA is gone.} other {Its last active check was switched off.}}
 - Field without a description: `{field}`
 
 {published, select, yes {It stays published, and everyone who sees it sees the lower level, on the resource and on every lens and report built on it. } other {}}When the cause is gone, it rises again, and your confirmation still holds.

@@ -2,7 +2,7 @@ import { MESSAGE_CATALOGUE } from '@datahub/contracts/message-catalogue';
 import { describe, expect, it } from 'vitest';
 import { cardIn, continued, createLearning, drawExample, newAndChanged, type Progress, seenOf, suggestedCards, suggestedLevels, TOPICS, topicOf, writtenCards } from './learning.js';
 
-const config = { identityUrl: 'https://identity.test', catalogueUrl: 'https://catalogue.test', registryUrl: 'https://registry.test', queryUrl: 'https://query.test', semgraphUrl: 'https://semgraph.test' };
+const config = { identityUrl: 'https://identity.test', catalogueUrl: 'https://catalogue.test', registryUrl: 'https://registry.test', queryUrl: 'https://query.test', edaUrl: 'https://eda.test', semgraphUrl: 'https://semgraph.test' };
 
 const seen = (card: string, lastAt: string, understoodAt: string | null = null): Progress => ({ card, seenAt: lastAt, lastAt, step: 'see', understoodAt });
 

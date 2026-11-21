@@ -10,6 +10,7 @@ const app = await buildApp({
   catalogueUrl: required('DATAHUB_CATALOGUE_URL'),
   registryUrl: required('DATAHUB_REGISTRY_URL'),
   queryUrl: required('DATAHUB_QUERY_URL'),
+  edaUrl: required('DATAHUB_EDA_URL'),
   semgraphUrl: required('DATAHUB_SEMGRAPH_URL'),
   environment: required('DATAHUB_ENVIRONMENT'),
   clientDir: fileURLToPath(new URL('./client/', import.meta.url)),

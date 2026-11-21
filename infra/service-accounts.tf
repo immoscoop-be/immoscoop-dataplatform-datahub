@@ -56,6 +56,9 @@ resource "google_project_iam_member" "query_reads" {
   member  = google_service_account.service["query"].member
 }
 
+# eda holds no role on BigQuery: it reads no data itself, and query runs its EDA-Probes as the User who explores
+# (DEC-ED-26, TR-ED-08). Its only roles are those of a service that keeps data in Postgres, above.
+
 # registry reads the schema of the tables of its dbt projects, never their rows, for a table the catalog of a run
 # lacks: its columns and their types then come from BigQuery (EC-AR-06, TR-AR-15). Its ingest job runs as registry.
 resource "google_project_iam_member" "registry_reads_schemas" {
