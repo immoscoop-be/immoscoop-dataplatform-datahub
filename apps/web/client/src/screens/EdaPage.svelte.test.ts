@@ -206,6 +206,8 @@ describe('the page of an EDA (FR-ED-04, DEC-UX-321, DEC-UX-322)', () => {
     expect(card.getByText('As expected')).toBeTruthy();
     expect(card.getByText(/none twice in 16,224 rows/)).toBeTruthy();
     expect(card.getByText('Set on week_start, lead_source')).toBeTruthy();
+    // The whole card opens the detail of its EDA-Probe: its title is the link, stretched over the card.
+    expect(card.getByRole('link', { name: 'The grain holds' }).getAttribute('href')).toBe('/eda/r2/probes/grainHolds');
     expect(basis.getByRole('button', { name: /Add probe/ }).textContent).toContain('3 needed still in Basis');
     expect(step('Gaps').getByText('0 of 3 needed')).toBeTruthy();
     // Coming ones count as EDA-Probes left to add, as the list shows them (FR-ED-04, DEC-ED-27).
