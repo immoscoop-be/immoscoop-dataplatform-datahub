@@ -14,7 +14,14 @@
   Values without a match; a highest number is never invented by Data Hub. Its charts are illustrations drawn for the
   EDA, not charts of semgraph (DEC-UX-325).
   An EDA-Probe is complete once it has run (DEC-ED-21).
-  Switches: ?run=before (the default), a rule still to give, Run waiting; ?run=after, its result.
+  Adding a rule: each field ends with Add a rule, which opens the rules its kind of field can have, each a sentence with a
+  blank: a date not in the future, not before or after a date, always a weekday, never on a weekend; a number not
+  negative, not zero, not below or above a number, a whole number; a category only or never these values; a text not
+  longer than a length, always in the form of an example. Those already in its list are marked. A rule can get unless or
+  only when another field has a value. What no sentence says, the Data Team writes in SQL, kept in the EDA, never in dbt,
+  and read as a sentence; the Owner asks for it with a Message. A rule added runs with Run again; the EDA-Probe stays
+  complete. Drawn on lead_count: ?rule=menu, the menu open; ?rule=added, Not zero, unless lead_source is partner.
+  Switches: ?run=before (the default), a rule still to give, Run waiting; ?run=after, its result; ?rule=none, menu or added.
   Requirements: none yet: an EDA-Probe becomes a requirement once its detail is designed.
   Decisions: DEC-ED-17, DEC-ED-21, DEC-UX-266, DEC-UX-268, DEC-UX-323, DEC-UX-324, DEC-UX-325.
   Open points: OP-UX-119.
@@ -177,6 +184,31 @@
   .needs { display: flex; gap: 6px; align-items: center; margin: 8px 0 0 !important; font-size: var(--text-meta) !important; color: var(--signal-warn) !important; }
   .rf-note { display: flex; gap: 8px; align-items: flex-start; font-size: var(--text-meta) !important; color: var(--text-muted) !important; margin: 2px 2px 0 !important; }
   .pd-runbtn[disabled] { opacity: .45; cursor: not-allowed; }
+  .rf { position: relative; }
+  .add-rule { all: unset; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; margin-top: 6px; padding: 4px 8px; border-radius: var(--radius-pill); font-size: var(--text-meta); color: var(--text-secondary); }
+  .add-rule:hover, .add-rule.on { background: var(--tint-hover); color: var(--text-primary); }
+  .add-rule:focus-visible { outline: 2px solid var(--text-secondary); }
+  .rm-anchor { position: relative; }
+  .rule-menu { position: absolute; z-index: 5; left: 0; top: calc(100% + 6px); width: min(400px, 100%); padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface-solid); box-shadow: 0 10px 30px rgba(40, 34, 30, .16), 0 0 0 1px var(--tint-active); }
+  .rm-head { display: flex; align-items: center; gap: 8px; font-size: var(--text-small); } .rm-head b { flex: 1; font-weight: 500; }
+  .rm-head .icon-btn { width: 26px; height: 26px; }
+  .rm-lead { margin: 2px 0 8px !important; font-size: var(--text-meta) !important; color: var(--text-muted) !important; }
+  .rm-list { list-style: none; margin: 0; padding: 0; }
+  .rm-list li { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: var(--radius-field); font-size: var(--text-small); }
+  .rm-list li.had { color: var(--text-muted); } .rm-list li.had span { flex: 1; } .rm-list li.had small { font-size: var(--text-meta); }
+  .rm-list li button { all: unset; cursor: pointer; flex: 1; display: flex; gap: 8px; align-items: center; }
+  .rm-list li:has(button):hover { background: var(--tint-hover); }
+  .rm-list li i { font-size: 15px; }
+  .rm-sec { display: grid; grid-template-columns: 18px 1fr; gap: 4px 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--tint-active); font-size: var(--text-meta); color: var(--text-secondary); }
+  .rm-sec > i { font-size: 15px; color: var(--text-muted); margin-top: 1px; }
+  .rm-sec p { margin: 0 !important; font-size: var(--text-meta) !important; line-height: 1.5; } .rm-sec b { font-weight: 500; color: var(--text-primary); }
+  .rm-sec .btn-quiet { grid-column: 2; justify-self: start; display: inline-flex; gap: 6px; align-items: center; margin-top: 4px; }
+  .rule.new { grid-template-columns: 18px 1fr 24px; background: color-mix(in srgb, var(--col-teal) 9%, transparent); border-radius: var(--radius-field); padding: 6px; margin: 2px -6px; }
+  .cond { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; font-size: var(--text-meta); color: var(--text-secondary); }
+  .cond > i { color: var(--text-muted); } .cond-word { font-style: italic; }
+  .inp-filled { display: inline-block; padding: 0 8px; border-radius: var(--radius-field); border: 1px solid var(--tint-active); background: var(--surface-solid); color: var(--text-primary); font-size: 11.5px; }
+  .cond-x, .rule-x { all: unset; cursor: pointer; color: var(--text-muted); display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: var(--radius-pill); }
+  .cond-x:hover, .rule-x:hover { color: var(--text-primary); background: var(--tint-hover); }
   .pfbs { display: grid; gap: 10px; }
   .pfb { padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface-solid); }
   .pfb-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: var(--text-small); }
@@ -276,14 +308,29 @@
       <label class="rule"><i class="ph-fill ph-check-square"></i><span>Not in the future<small>Filled in: it is a date.</small></span></label>
       <label class="rule"><i class="ph-fill ph-check-square"></i><span>A Monday<small>Filled in: its period is a week, Monday to Sunday.</small></span></label>
       <label class="rule off"><i class="ph ph-square"></i><span>Not before <span class="inp">a date</span><small>Optional.</small></span></label>
+      <button class="add-rule" type="button" data-go="rule:menu"><i class="ph ph-plus"></i>Add a rule</button>
      </div>
      <div class="rf"><div class="rf-head"><i class="ph ph-key"></i><i class="ph ph-hash"></i><span class="mono">lead_count</span><small>a number · adds up</small></div>
       <label class="rule"><i class="ph-fill ph-check-square"></i><span>Not negative<small>Filled in: it adds up, so it counts.</small></span></label>
       <label class="rule off"><i class="ph ph-square"></i><span>Not above <span class="inp">a number</span><small>Optional, yours to give: the highest now is 412.</small></span></label>
+      <div data-pane-group="rule" data-pane="none"><button class="add-rule" type="button" data-go="rule:menu"><i class="ph ph-plus"></i>Add a rule</button></div><div data-pane-group="rule" data-pane="menu" hidden class="rm-anchor"><button class="add-rule on" type="button" data-go="rule:none"><i class="ph ph-plus"></i>Add a rule</button><div class="rule-menu" role="dialog" aria-label="Add a rule to lead_count">
+  <div class="rm-head"><b>Add a rule to <span class="mono">lead_count</span></b><button class="icon-btn" type="button" data-go="rule:none" aria-label="Close"><i class="ph ph-x"></i></button></div>
+  <p class="rm-lead">The rules a number can have. Choose one and fill in its blank.</p>
+  <ul class="rm-list">
+   <li class="had"><i class="ph-fill ph-check-square"></i><span>Not negative</span><small>In its list</small></li>
+   <li class="had"><i class="ph ph-square"></i><span>Not above <span class="inp">a number</span></span><small>In its list</small></li>
+   <li><button type="button" data-go="rule:added"><i class="ph ph-plus"></i><span>Not zero</span></button></li>
+   <li><button type="button"><i class="ph ph-plus"></i><span>Not below <span class="inp">a number</span></span></button></li>
+   <li><button type="button"><i class="ph ph-plus"></i><span>A whole number</span></button></li>
+  </ul>
+  <div class="rm-sec"><i class="ph ph-arrow-bend-down-right"></i><p><b>With a condition.</b> Once chosen, a rule can get <i>unless</i> or <i>only when</i> another field has a value, such as: not zero, unless lead_source is partner.</p></div>
+  <div class="rm-sec"><i class="ph ph-code"></i><p><b>A rule of your own.</b> What no sentence can say, the Data Team writes in SQL; it is kept in the EDA, never in dbt, and reads to you as a sentence.</p><button class="btn-quiet outline" type="button"><i class="ph ph-chat-circle-text"></i>Ask the Data Team</button></div>
+</div></div><div data-pane-group="rule" data-pane="added" hidden><label class="rule new"><i class="ph-fill ph-check-square"></i><span>Not zero<span class="cond"><i class="ph ph-arrow-bend-down-right"></i><span class="cond-word">unless</span><span class="inp-filled mono">lead_source</span>is<span class="inp-filled mono">partner</span><button class="cond-x" type="button" aria-label="Remove the condition"><i class="ph ph-x"></i></button></span><small>Added by you, today. It runs with Run again.</small></span><button class="rule-x" type="button" data-go="rule:none" aria-label="Remove this rule"><i class="ph ph-trash"></i></button></label><button class="add-rule" type="button" data-go="rule:menu"><i class="ph ph-plus"></i>Add a rule</button></div>
      </div>
      <div class="rf"><div class="rf-head"><i class="ph ph-key"></i><i class="ph ph-tag"></i><span class="mono">lead_channel</span><small>a category</small></div>
       <div class="rule-vals"><span>Only these values</span><small>The values Data Hub found, most first. Tick those that can be; an empty one counts in Nulls.</small><div class="vals"><label class="val"><i class="ph ph-square"></i><span class="mono">web</span><small>61%</small></label><label class="val"><i class="ph ph-square"></i><span class="mono">app</span><small>27%</small></label><label class="val"><i class="ph ph-square"></i><span class="mono">partner</span><small>12%</small></label><label class="val"><i class="ph ph-square"></i><span class="mono">tv</span><small>4 rows</small></label></div></div>
       <p class="needs"><i class="ph-fill ph-warning-circle"></i>Tick the values lead_channel can have. Run waits for it.</p>
+      <button class="add-rule" type="button" data-go="rule:menu"><i class="ph ph-plus"></i>Add a rule</button>
      </div>
      <p class="rf-note"><i class="ph ph-link"></i><span><span class="mono">lead_source</span> is mapped to Lead sources: whether its values exist there is for Values without a match, not this probe.</span></p>
     </div>
@@ -331,14 +378,29 @@
       <label class="rule"><i class="ph-fill ph-check-square"></i><span>Not in the future<small>Filled in: it is a date.</small></span></label>
       <label class="rule"><i class="ph-fill ph-check-square"></i><span>A Monday<small>Filled in: its period is a week, Monday to Sunday.</small></span></label>
       <label class="rule off"><i class="ph ph-square"></i><span>Not before <span class="inp">a date</span><small>Optional.</small></span></label>
+      <button class="add-rule" type="button" data-go="rule:menu"><i class="ph ph-plus"></i>Add a rule</button>
      </div>
      <div class="rf"><div class="rf-head"><i class="ph ph-key"></i><i class="ph ph-hash"></i><span class="mono">lead_count</span><small>a number · adds up</small></div>
       <label class="rule"><i class="ph-fill ph-check-square"></i><span>Not negative<small>Filled in: it adds up, so it counts.</small></span></label>
       <label class="rule off"><i class="ph ph-square"></i><span>Not above <span class="inp">a number</span><small>Optional, yours to give: the highest now is 412.</small></span></label>
+      <div data-pane-group="rule" data-pane="none"><button class="add-rule" type="button" data-go="rule:menu"><i class="ph ph-plus"></i>Add a rule</button></div><div data-pane-group="rule" data-pane="menu" hidden class="rm-anchor"><button class="add-rule on" type="button" data-go="rule:none"><i class="ph ph-plus"></i>Add a rule</button><div class="rule-menu" role="dialog" aria-label="Add a rule to lead_count">
+  <div class="rm-head"><b>Add a rule to <span class="mono">lead_count</span></b><button class="icon-btn" type="button" data-go="rule:none" aria-label="Close"><i class="ph ph-x"></i></button></div>
+  <p class="rm-lead">The rules a number can have. Choose one and fill in its blank.</p>
+  <ul class="rm-list">
+   <li class="had"><i class="ph-fill ph-check-square"></i><span>Not negative</span><small>In its list</small></li>
+   <li class="had"><i class="ph ph-square"></i><span>Not above <span class="inp">a number</span></span><small>In its list</small></li>
+   <li><button type="button" data-go="rule:added"><i class="ph ph-plus"></i><span>Not zero</span></button></li>
+   <li><button type="button"><i class="ph ph-plus"></i><span>Not below <span class="inp">a number</span></span></button></li>
+   <li><button type="button"><i class="ph ph-plus"></i><span>A whole number</span></button></li>
+  </ul>
+  <div class="rm-sec"><i class="ph ph-arrow-bend-down-right"></i><p><b>With a condition.</b> Once chosen, a rule can get <i>unless</i> or <i>only when</i> another field has a value, such as: not zero, unless lead_source is partner.</p></div>
+  <div class="rm-sec"><i class="ph ph-code"></i><p><b>A rule of your own.</b> What no sentence can say, the Data Team writes in SQL; it is kept in the EDA, never in dbt, and reads to you as a sentence.</p><button class="btn-quiet outline" type="button"><i class="ph ph-chat-circle-text"></i>Ask the Data Team</button></div>
+</div></div><div data-pane-group="rule" data-pane="added" hidden><label class="rule new"><i class="ph-fill ph-check-square"></i><span>Not zero<span class="cond"><i class="ph ph-arrow-bend-down-right"></i><span class="cond-word">unless</span><span class="inp-filled mono">lead_source</span>is<span class="inp-filled mono">partner</span><button class="cond-x" type="button" aria-label="Remove the condition"><i class="ph ph-x"></i></button></span><small>Added by you, today. It runs with Run again.</small></span><button class="rule-x" type="button" data-go="rule:none" aria-label="Remove this rule"><i class="ph ph-trash"></i></button></label><button class="add-rule" type="button" data-go="rule:menu"><i class="ph ph-plus"></i>Add a rule</button></div>
      </div>
      <div class="rf"><div class="rf-head"><i class="ph ph-key"></i><i class="ph ph-tag"></i><span class="mono">lead_channel</span><small>a category</small></div>
       <div class="rule-vals"><span>Only these values</span><small>The values Data Hub found, most first. Tick those that can be; an empty one counts in Nulls.</small><div class="vals"><label class="val on"><i class="ph-fill ph-check-square"></i><span class="mono">web</span><small>61%</small></label><label class="val on"><i class="ph-fill ph-check-square"></i><span class="mono">app</span><small>27%</small></label><label class="val on"><i class="ph-fill ph-check-square"></i><span class="mono">partner</span><small>12%</small></label><label class="val"><i class="ph ph-square"></i><span class="mono">tv</span><small>4 rows</small></label></div></div>
       
+      <button class="add-rule" type="button" data-go="rule:menu"><i class="ph ph-plus"></i>Add a rule</button>
      </div>
      <p class="rf-note"><i class="ph ph-link"></i><span><span class="mono">lead_source</span> is mapped to Lead sources: whether its values exist there is for Values without a match, not this probe.</span></p>
     </div>
@@ -376,6 +438,11 @@
 </div>
 <div style="height:90px" aria-hidden="true"></div>
 </main>
+</div>
+<div class="proto-switch" data-group="rule" role="tablist" aria-label="Prototype: adding a rule to lead_count" style="bottom:72px">Add a rule
+ <button class="seg on" data-target="none" role="tab" aria-selected="true">Closed</button>
+ <button class="seg" data-target="menu" role="tab" aria-selected="false">The menu</button>
+ <button class="seg" data-target="added" role="tab" aria-selected="false">A rule added</button>
 </div>
 <div class="proto-switch" data-group="run" role="tablist" aria-label="Prototype: before or after its first run">Run
  <button class="seg on" data-target="before" role="tab" aria-selected="true">A rule to give</button>
