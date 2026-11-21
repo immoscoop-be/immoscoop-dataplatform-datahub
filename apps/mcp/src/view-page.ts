@@ -846,11 +846,12 @@ const fieldsArgs = () => {
 
 // begin eda
 // The EDA of a Resource (FR-ED-15, FR-ED-16, DEC-UX-329): mcp says each result in words, once for Claude and for this
-// card; the card draws them. Its head says where the EDA stands, with the bar of its EDA-Setup. The whole EDA says what
-// needs a look first, then per EDA-Step each EDA-Probe added with its reading, its result in a sentence and what it is
-// set on, then the needed ones Coming, named once; its charts stay in Data Hub. A run shows that EDA-Probe, its
-// conclusion, its result per field and the buttons of the User's reading, which only the User presses (DEC-ED-29); a run
-// above what runs freely waits for the User to approve it, with its gauge, as a query does.
+// card; the card draws them. Its head says where the EDA stands, with the rows of its table once a run counted them
+// (DEC-ED-32) and the bar of its EDA-Setup. The whole EDA says what needs a look first, then per EDA-Step each EDA-Probe
+// added with its reading, its result in a sentence and what it is set on, then the needed ones Coming, named once; its
+// charts stay in Data Hub. A run shows that EDA-Probe, its conclusion, its result per field and the buttons of the
+// User's reading, which only the User presses (DEC-ED-29); a run above what runs freely waits for the User to approve
+// it, with its gauge, as a query does.
 const ED_ICON = { expected: 'ok', look: 'warn', judge: 'ask' };
 const ED_YOURS = [['expected', 'Expected', 'tick'], ['known', 'Known', 'bookmark'], ['problem', 'A problem', 'flag']];
 const edCount = (n, one, more) => n + ' ' + (n === 1 ? one : more);
@@ -864,9 +865,11 @@ function edHead(v) {
   const sub = e ? 'Its EDA, started on ' + day(e.startedAt) + ' by ' + e.startedBy : null;
   const needed = e ? '<span class="status">' + ic('ok', 'ed-ok') + esc(e.needed.complete + ' of ' + e.needed.total + ' needed EDA-Probes complete') + '</span>' : '';
   const status = e ? '<span class="status ed-' + esc(e.status) + '">' + ic(e.status === 'explored' ? 'ok' : 'hourglass') + esc(e.statusName) + '</span>' : '';
+  // The rows of the table, from the last run that counted them, only when one did (DEC-ED-32).
+  const rows = e && e.rows ? '<span class="status" title="' + esc('Counted by ' + e.rows.probeName + ' on ' + day(e.rows.at)) + '">' + esc(e.rows.text) + '</span>' : '';
   const parts = v.bar || [];
   const bar = parts.length ? '<div class="ed-bar" role="img" aria-label="' + esc((e ? e.needed.complete : 0) + ' of ' + parts.length + ' needed EDA-Probes complete') + '">' + parts.map((p) => '<i class="ed-' + esc(p.state) + '" title="' + esc(p.name + (p.state === 'done' ? ' · complete' : p.state === 'coming' ? ' · Coming' : ' · open')) + '"></i>').join('') + '</div>' : '';
-  return head('EDA', r.displayName, sub, '', r.collection) + '<div class="row">' + status + level(r.levelName) + needed + '</div>' + bar;
+  return head('EDA', r.displayName, sub, '', r.collection) + '<div class="row">' + status + level(r.levelName) + rows + needed + '</div>' + bar;
 }
 // What needs a look first: the results Data Hub reads as look at this, then those for the User to judge, and whether they read them.
 function edAttention(a) {

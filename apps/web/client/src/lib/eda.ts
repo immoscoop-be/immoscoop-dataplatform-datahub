@@ -128,7 +128,6 @@ export type EdaClient = ReturnType<typeof createEda>;
 /** The name of an EDA-Probe, in the language of the User: its English name is the contract's, its words a sentence. */
 export const PROBE_TEXTS: Readonly<Record<ProbeKey, string>> = {
   grainHolds: 'eda.probe.grainHolds',
-  rowCount: 'eda.probe.rowCount',
   dateRange: 'eda.probe.dateRange',
   volumeOverTime: 'eda.probe.volumeOverTime',
   settling: 'eda.probe.settling',

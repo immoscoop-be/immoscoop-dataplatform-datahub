@@ -65,7 +65,7 @@ describe('what the screens read from an EDA', () => {
   const view = {
     probes: [
       probe('grainHolds', { added: true, complete: true }),
-      probe('rowCount', { runs: false }),
+      probe('dateRange', { runs: false }),
       probe('volumeOverTime', { needed: false, level: 'could' }),
       probe('settling', { needed: false, level: 'should', runs: false }),
       probe('nullsPerKeyField', { added: true, applies: { table: false, fields: ['a', 'b'], needs: ['a', 'b'], block: null }, lastRun: { fields: ['a'] } as ProbeView['lastRun'] }),
@@ -80,7 +80,7 @@ describe('what the screens read from an EDA', () => {
 
   it('keeps the tile Add probe while an EDA-Step has an EDA-Probe offered that is not added, coming ones too (FR-ED-04)', () => {
     expect(hasToAdd(view, 'basis')).toBe(true);
-    expect(hasToAdd({ probes: [probe('rowCount', { runs: false })] }, 'basis')).toBe(true);
+    expect(hasToAdd({ probes: [probe('dateRange', { runs: false })] }, 'basis')).toBe(true);
     expect(hasToAdd(view, 'gaps')).toBe(false);
     expect(hasToAdd(view, 'relations')).toBe(false);
   });
@@ -91,7 +91,7 @@ describe('what the screens read from an EDA', () => {
     expect(listStateOf(probe('grainHolds', { added: true, complete: true, lastRun: { fields: [] } as unknown as ProbeView['lastRun'] }))).toBe('added');
     expect(listStateOf(probe('volumeOverTime', { added: true, needed: false, lastRun: { fields: [] } as unknown as ProbeView['lastRun'] }))).toBe('added');
     expect(view.probes.map(askedOf)).toEqual(['needed', 'needed', 'onRequest', 'suggested', 'needed']);
-    expect(view.probes.filter((one) => fitsFilter(one, 'needed')).map((one) => one.key)).toEqual(['grainHolds', 'rowCount', 'nullsPerKeyField']);
+    expect(view.probes.filter((one) => fitsFilter(one, 'needed')).map((one) => one.key)).toEqual(['grainHolds', 'dateRange', 'nullsPerKeyField']);
     expect(view.probes.filter((one) => fitsFilter(one, 'runs')).map((one) => one.key)).toEqual(['grainHolds', 'volumeOverTime', 'nullsPerKeyField']);
     expect(view.probes.filter((one) => fitsFilter(one, 'added')).map((one) => one.key)).toEqual(['grainHolds', 'nullsPerKeyField']);
     expect(view.probes.filter((one) => fitsFilter(one, 'all'))).toHaveLength(5);

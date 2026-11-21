@@ -17,7 +17,7 @@ import {
   type RunView,
 } from '@datahub/contracts/eda';
 import { addTexts, setLanguage } from '@datahub/ui/foundations/texts.svelte.js';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/svelte';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/svelte';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import type { EdaClient } from '../lib/eda.js';
 import type { EdaTab } from '../lib/routes.js';
@@ -191,6 +191,34 @@ describe('the page of an EDA (FR-ED-04, DEC-UX-321, DEC-UX-322)', () => {
     expect(screen.getByRole('link', { name: /Open the Resource/ }).getAttribute('href')).toBe('/resources/r2/maturity');
   });
 
+  it('shows the rows of its table beside its Level, from the last run that counted them, and says which counted them and when (DEC-ED-32)', async () => {
+    show(viewOf());
+    await screen.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
+    // Neither The grain holds nor Nulls per Key Field ran: no rows to show.
+    expect(screen.queryByTitle(/^Counted by/)).toBeNull();
+    cleanup();
+
+    show(viewOf({ grainHolds: GRAIN_HOLDS }));
+    const grain = await screen.findByTitle(/^Counted by The grain holds, 21 Nov/);
+    expect(grain.textContent?.trim()).toBe('16,224 rows');
+    expect(grain.closest('.facts')).toBeTruthy();
+    cleanup();
+
+    // Nulls per Key Field ran after it: its count is the last.
+    const later = ran(NULLS.fields, [['week_start', { rows: 16300, empty: 0, role: 'period' }, 'expected']], { ranAt: '2026-11-21T11:30:00Z' });
+    show(viewOf({ grainHolds: GRAIN_HOLDS, nullsPerKeyField: later }));
+    expect((await screen.findByTitle(/^Counted by Nulls per Key Field, 21 Nov/)).textContent?.trim()).toBe('16,300 rows');
+    cleanup();
+
+    setLanguage('nl');
+    try {
+      show(viewOf({ grainHolds: GRAIN_HOLDS }));
+      expect((await screen.findByTitle(/^Geteld door De grain klopt, 21 nov/)).textContent?.trim()).toBe('16.224 rijen');
+    } finally {
+      setLanguage('en');
+    }
+  });
+
   it('says on Profile what will come there', async () => {
     show(viewOf(), { tab: 'profile' });
     expect(await screen.findByRole('heading', { level: 3, name: 'The Profile comes once the EDA-Setup is complete' })).toBeTruthy();
@@ -201,14 +229,14 @@ describe('the page of an EDA (FR-ED-04, DEC-UX-321, DEC-UX-322)', () => {
     await screen.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
     expect(screen.getAllByRole('region').map((region) => region.getAttribute('aria-label')).slice(0, 5)).toEqual(['Basis', 'Gaps', 'Weight', 'Correctness', 'Relations between fields']);
     const basis = step('Basis');
-    expect(basis.getByText('1 of 4 needed')).toBeTruthy();
+    expect(basis.getByText('1 of 3 needed')).toBeTruthy();
     const card = within(basis.getByRole('article', { name: 'The grain holds' }));
     expect(card.getByText('As expected')).toBeTruthy();
     expect(card.getByText(/none twice in 16,224 rows/)).toBeTruthy();
     expect(card.getByText('Set on week_start, lead_source')).toBeTruthy();
     // The whole card opens the detail of its EDA-Probe: its title is the link, stretched over the card.
     expect(card.getByRole('link', { name: 'The grain holds' }).getAttribute('href')).toBe('/eda/r2/probes/grainHolds');
-    expect(basis.getByRole('button', { name: /Add probe/ }).textContent).toContain('3 needed still in Basis');
+    expect(basis.getByRole('button', { name: /Add probe/ }).textContent).toContain('2 needed still in Basis');
     expect(step('Gaps').getByText('0 of 3 needed')).toBeTruthy();
     // Coming ones count as EDA-Probes left to add, as the list shows them (FR-ED-04, DEC-ED-27).
     expect(step('Correctness').getByRole('button', { name: /Add probe/ })).toBeTruthy();
@@ -219,21 +247,20 @@ describe('the page of an EDA (FR-ED-04, DEC-UX-321, DEC-UX-322)', () => {
   it('shows on the right the needed EDA-Probes complete, the four places, the best next step, the table as a whole and every field (DEC-UX-322, DEC-UX-323)', async () => {
     show(viewOf({ grainHolds: GRAIN_HOLDS }));
     const side = within(await screen.findByRole('complementary', { name: 'EDA-Setup' }));
-    expect(side.getByText('1 of 11')).toBeTruthy();
-    const bar = side.getByRole('img', { name: '1 of 11 needed EDA-Probes complete' });
-    expect(bar.querySelectorAll('span')).toHaveLength(11);
+    expect(side.getByText('1 of 10')).toBeTruthy();
+    const bar = side.getByRole('img', { name: '1 of 10 needed EDA-Probes complete' });
+    expect(bar.querySelectorAll('span')).toHaveLength(10);
     expect(bar.querySelectorAll('span.on')).toHaveLength(1);
     // Needed EDA-Probes Data Hub does not run yet are coming, and still count (OP-ED-09).
-    expect(side.getByText(/7 needed EDA-Probes are coming/)).toBeTruthy();
+    expect(side.getByText(/6 needed EDA-Probes are coming/)).toBeTruthy();
     const places = side.getAllByRole('listitem').slice(0, 4).map((item) => item.textContent);
-    expect(places).toEqual(['The rows1 of 4 needed', 'The Key Fields0 of 4 complete', 'Two columns togetherNone needed', 'Other Resources0 of 1 needed']);
+    expect(places).toEqual(['The rows1 of 3 needed', 'The Key Fields0 of 4 complete', 'Two columns togetherNone needed', 'Other Resources0 of 1 needed']);
     expect(side.getByText('Best next step')).toBeTruthy();
     expect(side.getByText('Nulls per Key Field')).toBeTruthy();
     expect(side.getByRole('link', { name: /Add this EDA-Probe/ }).getAttribute('href')).toBe('/eda/r2/probes/nullsPerKeyField');
     const table = side.getByRole('heading', { name: 'The table as a whole' }).parentElement as HTMLElement;
     expect([...table.querySelectorAll('li')].map((item) => item.textContent?.replace(/\s+/g, ' ').trim())).toEqual([
       'The grain holds Added',
-      'Row count Needed · Coming',
       'Date range Needed · Coming',
       'Volume over time, with empty periods Needed',
       'Settling between EDA-Reruns On request · Coming',
@@ -280,7 +307,7 @@ describe('the list to add an EDA-Probe (FR-ED-13, DEC-UX-328)', () => {
 
   it('shows each EDA-Probe offered with its question for this Resource, how much it is asked for, and its state', async () => {
     const sheet = await openList(viewOf({ grainHolds: GRAIN_HOLDS, nullsPerKeyField: ran(['week_start', 'lead_source', 'lead_count'], NULLS.results.slice(0, 3).map((result) => [result.subject, result.data, result.reading])) }), 'Basis');
-    expect(rows(sheet, 'Basis')).toEqual(['The grain holds', 'Row count', 'Date range', 'Volume over time, with empty periods', 'Settling between EDA-Reruns']);
+    expect(rows(sheet, 'Basis')).toEqual(['The grain holds', 'Date range', 'Volume over time, with empty periods', 'Settling between EDA-Reruns']);
     // Added, with Data Hub's reading.
     const grain = sheet.getByRole('link', { name: /The grain holds/ });
     expect(grain.textContent).toContain('Is every row one thing: one row per week_start, lead_source?');
@@ -293,12 +320,12 @@ describe('the list to add an EDA-Probe (FR-ED-13, DEC-UX-328)', () => {
     expect(volume.textContent).toContain('Needed');
     expect(volume.textContent).toContain('Open');
     // Coming: quieter, still Needed, and it opens nothing.
-    const row = sheet.getByText('Row count').closest('.row') as HTMLElement;
+    const row = sheet.getByText('Date range').closest('.row') as HTMLElement;
     expect(row.tagName).toBe('DIV');
     expect(row.getAttribute('aria-disabled')).toBe('true');
     expect(row.textContent).toContain('Coming');
     expect(row.textContent).toContain('Needed');
-    expect(sheet.queryByRole('link', { name: /Row count/ })).toBeNull();
+    expect(sheet.queryByRole('link', { name: /Date range/ })).toBeNull();
     expect(sheet.getByText('Settling between EDA-Reruns').closest('.row')?.textContent).toContain('On request');
     // Set on part of what it needs.
     const nulls = sheet.getByRole('link', { name: /Nulls per Key Field/ });

@@ -1,5 +1,5 @@
 import { rangesOf } from '@datahub/contracts';
-import { EDA_STEPS, type EdaView, PROBES, type ProbeKey, type ProbeView, type RunAnswer, RUNNABLE_PROBES } from '@datahub/contracts/eda';
+import { EDA_STEPS, type EdaView, PROBES, type ProbeKey, type ProbeView, rowsOf, type RunAnswer, RUNNABLE_PROBES } from '@datahub/contracts/eda';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import { attempt, levelName, refusal } from './answers.js';
@@ -11,6 +11,7 @@ import {
   conclusionOf,
   listed,
   nextWhy,
+  number,
   overallReading,
   READINGS,
   type ResultRow,
@@ -104,7 +105,18 @@ export function edaTools({ server, hub, user, permits }: Context): void {
     return { name: found.name, icon: await collectionIcon(found.icon) };
   }
 
-  /** The head of every card of an EDA: the Resource, its Level, its Collection, and where its EDA stands. */
+  /**
+   * The rows of the table, a fact of the EDA (DEC-ED-32): from the last run of The grain holds or Nulls per Key Field,
+   * which counted them, in words; null while neither ran.
+   */
+  function rowsShown(eda: EdaView) {
+    const counted = rowsOf(eda);
+    if (!counted) return null;
+    const name = PROBES[counted.probe].name;
+    return { count: counted.rows, probe: counted.probe, probeName: name, at: counted.at, text: `${number(counted.rows)} ${counted.rows === 1 ? 'row' : 'rows'}, counted by ${name}` };
+  }
+
+  /** The head of every card of an EDA: the Resource, its Level, its Collection, where its EDA stands, and its rows. */
   function headOf(eda: EdaView, collection: Collection) {
     const resource = eda.resource;
     return {
@@ -117,6 +129,7 @@ export function edaTools({ server, hub, user, permits }: Context): void {
         startedAt: eda.startedAt,
         exploredAt: eda.exploredAt,
         needed: eda.needed,
+        rows: rowsShown(eda),
         page: hub.page(pages.eda(resource.id)),
       },
       // The bar of the EDA-Setup: a part per needed EDA-Probe, in the order of the table, complete, open or Coming.
@@ -189,12 +202,13 @@ export function edaTools({ server, hub, user, permits }: Context): void {
     };
   }
 
-  /** The words of the whole EDA for Claude: where it stands, what to look at first, then per EDA-Step (FR-ED-15). */
+  /** The words of the whole EDA for Claude: where it stands, its rows, what to look at first, then per EDA-Step (FR-ED-15). */
   function wholeText(eda: EdaView, shown: ReturnType<typeof wholeOf>): string {
     const name = `${eda.resource.displayName} (${levelName(eda.resource.level)})`;
     const { total, complete } = eda.needed;
+    const counted = shown.eda.rows;
     const lines = [
-      `The EDA of ${name} is ${eda.status === 'explored' ? 'Explored' : 'in progress'}: ${complete} of ${total} needed EDA-Probes complete${eda.status === 'explored' ? '.' : ', and it becomes 4 · Explored once all are.'} Started on ${eda.startedAt.slice(0, 10)} by ${eda.startedBy.name}.`,
+      `The EDA of ${name} is ${eda.status === 'explored' ? 'Explored' : 'in progress'}: ${complete} of ${total} needed EDA-Probes complete${eda.status === 'explored' ? '.' : ', and it becomes 4 · Explored once all are.'} Started on ${eda.startedAt.slice(0, 10)} by ${eda.startedBy.name}.${counted ? ` The table has ${counted.text} on ${counted.at.slice(0, 10)}.` : ''}`,
     ];
     if (shown.coming.count > 0) {
       lines.push(`${shown.coming.count} needed ${shown.coming.count === 1 ? 'one is' : 'ones are'} Coming: ${shown.coming.text}. Data Hub does not run them yet, and they still count.`);

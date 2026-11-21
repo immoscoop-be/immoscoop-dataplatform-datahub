@@ -3,7 +3,8 @@
  * needed one is complete, what the EDA covers, and the shapes of the answers of the service eda. One definition for
  * eda and the web app (TR-ED-02).
  *
- * The EDA-Probes and their level per model type are the table of DEC-ED-11 and DEC-ED-12, with the three of DEC-ED-14.
+ * The EDA-Probes and their level per model type are the table of DEC-ED-11 and DEC-ED-12, with the three of DEC-ED-14;
+ * the rows of the table are a fact of the EDA, counted by The grain holds and Nulls per Key Field (DEC-ED-32).
  * An EDA-Probe is set on its fields and gives a result per field, or per pair or group, or for the table as a whole
  * (DEC-ED-17); a needed one is complete once it has run, set on every field it applies to (DEC-ED-21). Data Hub runs
  * four of them in the first build (DEC-ED-26); the others are listed as coming and, needed, still count (OP-ED-09).
@@ -23,7 +24,6 @@ export type ProbeLevel = 'must' | 'should' | 'could';
 /** The EDA-Probes, in the order of the table of DEC-ED-11. */
 export const PROBE_KEYS = [
   'grainHolds',
-  'rowCount',
   'dateRange',
   'volumeOverTime',
   'settling',
@@ -88,10 +88,9 @@ function levels(...row: (ProbeLevel | null)[]): Partial<Record<ModelType, ProbeL
   return Object.fromEntries(types.flatMap((type, index) => (row[index] ? [[type, row[index]]] : []))) as Partial<Record<ModelType, ProbeLevel>>;
 }
 
-/** The EDA-Probes (DEC-ED-11, DEC-ED-12, DEC-ED-14), in order. */
+/** The EDA-Probes (DEC-ED-11, DEC-ED-12, DEC-ED-14, DEC-ED-32), in order. */
 export const PROBES: Readonly<Record<ProbeKey, ProbeSpec>> = {
   grainHolds: { key: 'grainHolds', name: 'The grain holds', step: 'basis', place: 'rows', target: 'grain', levels: levels(M, M, M, M, M, M), runs: true },
-  rowCount: { key: 'rowCount', name: 'Row count', step: 'basis', place: 'rows', target: 'table', levels: levels(M, M, M, M, M, M), runs: false },
   dateRange: { key: 'dateRange', name: 'Date range', step: 'basis', place: 'rows', target: 'roleDate', levels: levels(M, M, M, null, M, null), runs: false },
   volumeOverTime: { key: 'volumeOverTime', name: 'Volume over time, with empty periods', step: 'basis', place: 'rows', target: 'roleDate', levels: levels(M, C, M, null, M, null), runs: true },
   settling: { key: 'settling', name: 'Settling between EDA-Reruns', step: 'basis', place: 'rows', target: 'roleDate', levels: levels(S, null, S, null, C, null), runs: false },
@@ -515,6 +514,29 @@ export type ProbeRunAnswer =
   | { state: 'ran'; rows: Record<string, unknown>[]; bytes: number; runId: string }
   | { state: 'approve'; bytes: number }
   | { state: 'refused'; bytes: number | null; reason: string };
+
+/** The rows of the table, a fact of the EDA (DEC-ED-32): how many, which EDA-Probe counted them, and when it ran. */
+export interface EdaRows {
+  rows: number;
+  probe: 'grainHolds' | 'nullsPerKeyField';
+  at: string;
+}
+
+/**
+ * The rows of the table, from the last run that counted them (DEC-ED-32): The grain holds counts them for the table as
+ * a whole, Nulls per Key Field with each field; whichever ran last. Null while neither has run.
+ */
+export function rowsOf(view: Pick<EdaView, 'probes'>): EdaRows | null {
+  let found: EdaRows | null = null;
+  for (const one of view.probes) {
+    if ((one.key !== 'grainHolds' && one.key !== 'nullsPerKeyField') || !one.lastRun) continue;
+    const result = one.key === 'grainHolds' ? one.lastRun.results.find((candidate) => candidate.subject === '') : one.lastRun.results[0];
+    const rows = (result?.data as GrainResult | NullsResult | undefined)?.rows;
+    if (typeof rows !== 'number') continue;
+    if (!found || Date.parse(one.lastRun.ranAt) > Date.parse(found.at)) found = { rows, probe: one.key, at: one.lastRun.ranAt };
+  }
+  return found;
+}
 
 /** The needed EDA-Probes of a Resource and how many are complete. */
 export function neededOf(resource: EdaResource, runs: readonly RunCover[]): { total: number; complete: number } {

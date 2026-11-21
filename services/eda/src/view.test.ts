@@ -20,10 +20,10 @@ describe('the EDA as the tab Steps shows it (FR-ED-04, DEC-ED-16)', () => {
   it('lists the EDA-Probes of its model type, what is needed, and the best next step, before anything ran', () => {
     const view = viewOf(WEEKLY, CREDIT, eda, { probes: [], lastRuns: [], readings: [] });
     expect(view.resource).toMatchObject({ id: WEEKLY.resource.id, collection: CREDIT, modelType: 'aggregate' });
-    expect(view).toMatchObject({ status: 'inProgress', startedBy: AN, startedAt: '2026-11-21T09:00:00.000Z', exploredAt: null, needed: { total: 11, complete: 0 }, next: 'nullsPerKeyField' });
+    expect(view).toMatchObject({ status: 'inProgress', startedBy: AN, startedAt: '2026-11-21T09:00:00.000Z', exploredAt: null, needed: { total: 10, complete: 0 }, next: 'nullsPerKeyField' });
     const nulls = view.probes.find((probe) => probe.key === 'nullsPerKeyField');
     expect(nulls).toMatchObject({ level: 'must', runs: true, needed: true, added: false, complete: false, fields: [], params: {}, lastRun: null });
-    expect(view.probes.find((probe) => probe.key === 'rowCount')).toMatchObject({ runs: false, needed: true });
+    expect(view.probes.find((probe) => probe.key === 'dateRange')).toMatchObject({ runs: false, needed: true });
     // Not offered for an aggregate.
     expect(view.probes.some((probe) => probe.key === 'datesInOrder')).toBe(false);
   });
@@ -64,7 +64,7 @@ describe('the EDA as the tab Steps shows it (FR-ED-04, DEC-ED-16)', () => {
         { subject: 'lead_channel', data: { rows: 10, empty: 2, role: null }, reading: 'judge', yours: { reading: 'known', by: AN, at: '2026-11-21T09:30:00.000Z' } },
       ],
     });
-    expect(view.needed).toEqual({ total: 11, complete: 1 });
+    expect(view.needed).toEqual({ total: 10, complete: 1 });
     expect(view.coverage.fields.find((field) => field.name === 'lead_channel')?.steps.gaps).toBe('covered');
     expect(view.next).toBe('grainHolds');
   });

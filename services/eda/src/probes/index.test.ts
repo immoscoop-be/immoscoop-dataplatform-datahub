@@ -33,7 +33,7 @@ describe('what an EDA-Probe is set on when it runs (DEC-ED-13, DEC-ED-17)', () =
   });
 
   it('says why it cannot run: not run yet, not offered, no grain, no date of its role, no Key Field', () => {
-    expect(settingOf('rowCount', WEEKLY, {})).toEqual({ problem: 'blocked', message: 'Data Hub does not run Row count yet (OP-ED-09).' });
+    expect(settingOf('dateRange', WEEKLY, {})).toEqual({ problem: 'blocked', message: 'Data Hub does not run Date range yet (OP-ED-09).' });
     const untyped = { ...WEEKLY, resource: { ...WEEKLY.resource, modelType: null } };
     expect(settingOf('nullsPerKeyField', untyped, {})).toMatchObject({ problem: 'blocked', message: expect.stringMatching(/without a model type/) });
     const fields = WEEKLY.resource.fields.map((field) => ({ ...field, grain: false, role: null, keyField: false }));

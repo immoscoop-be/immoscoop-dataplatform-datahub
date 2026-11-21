@@ -1432,9 +1432,11 @@ describe('the EDA through Claude (FR-ED-15, FR-ED-16, DEC-ED-29, TR-ED-10)', () 
     const read = await tool('get_eda', { id: RESOURCE_ID }, token);
     expect(asked[0]).toMatchObject({ method: 'GET', url: EDA_PATH, authorization: `Bearer ${token}` });
     const text = read.content[0]?.text ?? '';
-    expect(text).toContain('The EDA of Weekly lead volume (3 · Confirmed) is in progress: 4 of 10 needed EDA-Probes complete, and it becomes 4 · Explored once all are.');
+    expect(text).toContain('The EDA of Weekly lead volume (3 · Confirmed) is in progress: 4 of 9 needed EDA-Probes complete, and it becomes 4 · Explored once all are.');
+    // The rows of the table are a fact of the EDA, from the last run that counted them (DEC-ED-32).
+    expect(text).toContain('Started on 2026-11-21 by An Claes. The table has 16,224 rows, counted by The grain holds on 2026-11-21.');
     // The needed ones Data Hub does not run yet are named once, and still count (DEC-ED-27).
-    expect(text).toContain('6 needed ones are Coming: Row count and Date range in Basis, Disguised nulls in Gaps, Distribution of categories and Spread in Weight, Impossible values in Correctness.');
+    expect(text).toContain('5 needed ones are Coming: Date range in Basis, Disguised nulls in Gaps, Distribution of categories and Spread in Weight, Impossible values in Correctness.');
     expect(text.indexOf('Look at this, first:')).toBeLessThan(text.indexOf('For the User to judge:'));
     expect(text).toContain('- Nulls per Key Field, `lead_source`: 130 of 16,224 rows empty (0.8%). Data Hub: its role, grouped by, needs it on every row. No reading of the User yet.');
     expect(text).toMatch(/2 periods have no rows at all, the first from 8 Sept? 2025, between periods of about 2,061 per week\./);
@@ -1453,14 +1455,20 @@ describe('the EDA through Claude (FR-ED-15, FR-ED-16, DEC-ED-29, TR-ED-10)', () 
       view: 'eda',
       mode: 'eda',
       resource: { displayName: 'Weekly lead volume', levelName: '3 · Confirmed', collection: { name: 'Credit leads' }, page: `${WEB}/resources/${RESOURCE_ID}` },
-      eda: { statusName: 'In progress', startedBy: 'An Claes', needed: { total: 10, complete: 4 }, page: `${WEB}/eda/${RESOURCE_ID}` },
+      eda: {
+        statusName: 'In progress',
+        startedBy: 'An Claes',
+        needed: { total: 9, complete: 4 },
+        rows: { count: 16224, probe: 'grainHolds', probeName: 'The grain holds', text: '16,224 rows, counted by The grain holds' },
+        page: `${WEB}/eda/${RESOURCE_ID}`,
+      },
       attention: { ran: 7, look: 2, judge: 2, read: 0 },
-      coming: { count: 6 },
+      coming: { count: 5 },
     });
     const view = shown.structuredContent as { bar: { state: string }[]; steps: { name: string; needed: unknown; probes: { name: string }[] }[] };
-    expect(view.bar.map((part) => part.state)).toEqual(['done', 'coming', 'coming', 'done', 'done', 'coming', 'done', 'coming', 'coming', 'coming']);
+    expect(view.bar.map((part) => part.state)).toEqual(['done', 'coming', 'done', 'done', 'coming', 'done', 'coming', 'coming', 'coming']);
     expect(view.steps.map((step) => [step.name, step.needed, step.probes.map((one) => one.name)])).toEqual([
-      ['Basis', { total: 4, complete: 2 }, ['The grain holds', 'Volume over time, with empty periods']],
+      ['Basis', { total: 3, complete: 2 }, ['The grain holds', 'Volume over time, with empty periods']],
       ['Gaps', { total: 2, complete: 1 }, ['Nulls per Key Field']],
       ['Weight', { total: 3, complete: 1 }, ['Distribution of numbers']],
     ]);
@@ -1469,14 +1477,24 @@ describe('the EDA through Claude (FR-ED-15, FR-ED-16, DEC-ED-29, TR-ED-10)', () 
     const html = draw(shown.structuredContent);
     expect(html).toContain('<b>2 results to look at</b>, 2 for you to judge. No reading of yours yet.');
     expect(html).toContain('Its EDA, started on 21 Nov 2026 by An Claes');
-    expect(html).toContain('4 of 10 needed EDA-Probes complete');
-    expect(html.match(/<i class="ed-(done|open|coming)"/g)).toHaveLength(10);
+    expect(html).toContain('4 of 9 needed EDA-Probes complete');
+    expect(html).toContain('<span class="status" title="Counted by The grain holds on 21 Nov 2026">16,224 rows, counted by The grain holds</span>');
+    expect(html.match(/<i class="ed-(done|open|coming)"/g)).toHaveLength(9);
     expect(html).toContain('<code>lead_source</code> is empty on 130 rows, though its role, grouped by, needs it on every row.');
-    expect(html).toContain('Basis<small class="ed-open">2 of 4 needed complete</small>');
-    expect(html).toContain('Coming<small>6 needed, which count already</small>');
+    expect(html).toContain('Basis<small class="ed-open">2 of 3 needed complete</small>');
+    expect(html).toContain('Coming<small>5 needed, which count already</small>');
     expect(html).toContain(`data-open="${WEB}/eda/${RESOURCE_ID}"`);
     expect(html).not.toContain('data-reading');
     expect(html).not.toMatch(/<canvas|<svg class="chart/);
+  });
+
+  it('says the rows of the table only once The grain holds or Nulls per Key Field counted them (DEC-ED-32)', async () => {
+    stub(edaView([volume]));
+    const token = await admin();
+    expect((await tool('get_eda', { id: RESOURCE_ID }, token)).content[0]?.text).not.toContain('The table has');
+    const shown = await tool('show_eda', { id: RESOURCE_ID }, token);
+    expect(shown.structuredContent).toMatchObject({ eda: { rows: null } });
+    expect(draw(shown.structuredContent)).not.toContain('Counted by');
   });
 
   it('says a Resource without an EDA has none: starting one stays in Data Hub', async () => {

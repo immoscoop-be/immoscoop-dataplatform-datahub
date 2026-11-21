@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { appliesTo, bestNext, coverage, type EdaResource, isComplete, isNeeded, levelOf, neededOf, PROBE_KEYS, PROBES, probesFor, roleDate, RUNNABLE_PROBES } from './eda.js';
+import { appliesTo, bestNext, coverage, type EdaResource, type EdaView, isComplete, isNeeded, levelOf, neededOf, PROBE_KEYS, PROBES, probesFor, roleDate, rowsOf, RUNNABLE_PROBES, type RunView } from './eda.js';
 
 /** Weekly lead volume, an aggregate: one row per week and lead source, as the screens draw it. */
 const weekly: EdaResource = {
@@ -19,8 +19,8 @@ const weekly: EdaResource = {
 };
 
 describe('the catalogue of EDA-Probes (TR-ED-02)', () => {
-  it('holds the 26 EDA-Probes of the table, four of which Data Hub runs', () => {
-    expect(PROBE_KEYS).toHaveLength(26);
+  it('holds the 25 EDA-Probes of the table (DEC-ED-32), four of which Data Hub runs', () => {
+    expect(PROBE_KEYS).toHaveLength(25);
     expect(RUNNABLE_PROBES).toEqual(['grainHolds', 'volumeOverTime', 'nullsPerKeyField', 'distributionOfNumbers']);
     expect(PROBES.spread.levels).toMatchObject({ fact: 'must', aggregate: 'must', event: 'should' });
   });
@@ -49,8 +49,8 @@ describe('what an EDA-Probe applies to on a Resource', () => {
 });
 
 describe('needed, complete, covered (DEC-ED-17, DEC-ED-21)', () => {
-  it('needs eleven EDA-Probes for this aggregate, its mapped Key Field among them, none complete before a run', () => {
-    expect(neededOf(weekly, [])).toEqual({ total: 11, complete: 0 });
+  it('needs ten EDA-Probes for this aggregate, its mapped Key Field among them, none complete before a run', () => {
+    expect(neededOf(weekly, [])).toEqual({ total: 10, complete: 0 });
     expect(isNeeded('relationshipsHold', weekly)).toBe(false);
   });
 
@@ -60,7 +60,7 @@ describe('needed, complete, covered (DEC-ED-17, DEC-ED-21)', () => {
       { probe: 'grainHolds' as const, fields: ['week_start', 'lead_source'] },
       { probe: 'nullsPerKeyField' as const, fields: ['week_start', 'lead_source', 'lead_count', 'lead_channel'] },
     ];
-    expect(neededOf(weekly, runs)).toEqual({ total: 11, complete: 2 });
+    expect(neededOf(weekly, runs)).toEqual({ total: 10, complete: 2 });
   });
 
   it('shows per field what covers it, and what a Key Field still needs', () => {
@@ -71,7 +71,7 @@ describe('needed, complete, covered (DEC-ED-17, DEC-ED-21)', () => {
     expect(field('lead_channel')?.steps.gaps).toBe('needed');
     expect(field('lead_origin')?.steps.gaps).toBe('free');
     expect(places.keyFields).toEqual({ total: 4, complete: 0, started: 3 });
-    expect(places.rows).toEqual({ needed: 4, complete: 0 });
+    expect(places.rows).toEqual({ needed: 3, complete: 0 });
   });
 
   it('proposes as best next step what Data Hub runs that covers most of what is missing', () => {
@@ -83,5 +83,25 @@ describe('needed, complete, covered (DEC-ED-17, DEC-ED-21)', () => {
       { probe: 'distributionOfNumbers' as const, fields: ['lead_count'] },
     ];
     expect(bestNext(weekly, runs)).toBeNull();
+  });
+});
+
+describe('the rows of the table, a fact of the EDA (DEC-ED-32)', () => {
+  const run = (ranAt: string, results: RunView['results']): RunView => ({ id: ranAt, ranAt, ranBy: { id: '1', name: 'An' }, bytes: 0, fields: [], params: {}, results });
+  const probe = (key: 'grainHolds' | 'nullsPerKeyField' | 'volumeOverTime', lastRun: RunView | null) => ({ key, lastRun }) as EdaView['probes'][number];
+  const grain = run('2026-11-21T10:00:00Z', [
+    { subject: '', data: { rows: 16224, values: 16224, onMoreThanOne: 0, rowsCovered: 0, emptyGrain: 0, buckets: [16224, 0, 0, 0], examples: [] }, reading: 'expected', yours: null },
+  ]);
+  const nulls = run('2026-11-21T11:00:00Z', [{ subject: 'week_start', data: { rows: 16300, empty: 0, role: 'period' }, reading: 'expected', yours: null }]);
+
+  it('takes them from the last run of The grain holds or of Nulls per Key Field, whichever ran last', () => {
+    expect(rowsOf({ probes: [probe('grainHolds', grain)] })).toEqual({ rows: 16224, probe: 'grainHolds', at: '2026-11-21T10:00:00Z' });
+    expect(rowsOf({ probes: [probe('grainHolds', grain), probe('nullsPerKeyField', nulls)] })).toEqual({ rows: 16300, probe: 'nullsPerKeyField', at: '2026-11-21T11:00:00Z' });
+    expect(rowsOf({ probes: [probe('grainHolds', { ...grain, ranAt: '2026-11-21T12:00:00Z' }), probe('nullsPerKeyField', nulls)] })).toMatchObject({ rows: 16224, probe: 'grainHolds' });
+  });
+
+  it('knows none while neither has run', () => {
+    expect(rowsOf({ probes: [probe('grainHolds', null), probe('nullsPerKeyField', null)] })).toBeNull();
+    expect(rowsOf({ probes: [probe('volumeOverTime', run('2026-11-21T10:00:00Z', []))] })).toBeNull();
   });
 });

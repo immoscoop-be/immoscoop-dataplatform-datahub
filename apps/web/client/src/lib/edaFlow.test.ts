@@ -85,24 +85,23 @@ describe('the guide of an EDA in the Flow Box (FR-ED-14, DEC-UX-327)', () => {
     const flow = edaFlowOf(viewOf());
     expect(flow.steps.map((step) => [step.number, step.group, step.name])).toEqual([
       [1, 'Basis', 'The grain holds'],
-      [2, 'Basis', 'Row count'],
-      [3, 'Basis', 'Date range'],
-      [4, 'Basis', 'Volume over time, with empty periods'],
-      [5, 'Gaps', 'Nulls per Key Field'],
-      [6, 'Gaps', 'Disguised nulls'],
-      [7, 'Gaps', 'Values without a match'],
-      [8, 'Weight', 'Distribution of numbers'],
-      [9, 'Weight', 'Distribution of categories'],
-      [10, 'Weight', 'Spread'],
-      [11, 'Correctness', 'Impossible values'],
+      [2, 'Basis', 'Date range'],
+      [3, 'Basis', 'Volume over time, with empty periods'],
+      [4, 'Gaps', 'Nulls per Key Field'],
+      [5, 'Gaps', 'Disguised nulls'],
+      [6, 'Gaps', 'Values without a match'],
+      [7, 'Weight', 'Distribution of numbers'],
+      [8, 'Weight', 'Distribution of categories'],
+      [9, 'Weight', 'Spread'],
+      [10, 'Correctness', 'Impossible values'],
     ]);
-    expect(flow.steps.filter((step) => step.coming).map((step) => step.id)).toEqual(['rowCount', 'dateRange', 'disguisedNulls', 'valuesWithoutAMatch', 'distributionOfCategories', 'spread', 'impossibleValues']);
-    expect(flow.steps.find((step) => step.id === 'rowCount')).toMatchObject({ said: 'Coming: Data Hub does not run it yet', warn: false, done: false });
+    expect(flow.steps.filter((step) => step.coming).map((step) => step.id)).toEqual(['dateRange', 'disguisedNulls', 'valuesWithoutAMatch', 'distributionOfCategories', 'spread', 'impossibleValues']);
+    expect(flow.steps.find((step) => step.id === 'dateRange')).toMatchObject({ said: 'Coming: Data Hub does not run it yet', warn: false, done: false });
     expect(flow.steps.find((step) => step.id === 'grainHolds')).toMatchObject({ said: 'Not added yet', warn: true, go: 'Open the EDA-Probe' });
     // The step to do now is the best next step of the EDA, as its page proposes.
     expect(flow.now).toBe('nullsPerKeyField');
-    expect(flow.progress).toBe('0 of 11 needed EDA-Probes complete');
-    expect(flow.foot).toMatch(/^11 to go, of which 7 are coming: they still count\./);
+    expect(flow.progress).toBe('0 of 10 needed EDA-Probes complete');
+    expect(flow.foot).toMatch(/^10 to go, of which 6 are coming: they still count\./);
   });
 
   it('says a step done with Data Hub reading and its result in a few words, and an open one with what it misses', () => {
@@ -113,8 +112,8 @@ describe('the guide of an EDA in the Flow Box (FR-ED-14, DEC-UX-327)', () => {
     expect(flow.steps.find((step) => step.id === 'nullsPerKeyField')?.said).toBe('Set on 3 of 4 Key Fields: lead_channel still missing');
     // Each still misses one field: the first in the order of the table comes first, as on its page.
     expect(flow.now).toBe('volumeOverTime');
-    expect(flow.progress).toBe('1 of 11 needed EDA-Probes complete');
-    expect(flow.foot).toMatch(/^10 to go, of which 7 are coming/);
+    expect(flow.progress).toBe('1 of 10 needed EDA-Probes complete');
+    expect(flow.foot).toMatch(/^9 to go, of which 6 are coming/);
   });
 
   it('unfolds What, Why and How, the Learning Card where one is written, and Open the EDA-Probe, except on its own detail', () => {

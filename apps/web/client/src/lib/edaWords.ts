@@ -240,7 +240,6 @@ export function saidText(parts: readonly Said[]): string {
 /** The question of each EDA-Probe, and the one it asks where the fields it names are not there. */
 const ASKS: Readonly<Record<ProbeKey, { key: string; without?: string }>> = {
   grainHolds: { key: 'eda.ask.grainHolds', without: 'eda.ask.grainHolds.without' },
-  rowCount: { key: 'eda.ask.rowCount' },
   dateRange: { key: 'eda.ask.dateRange', without: 'eda.ask.dateRange.without' },
   volumeOverTime: { key: 'eda.ask.volumeOverTime.day' },
   settling: { key: 'eda.ask.settling.day' },
