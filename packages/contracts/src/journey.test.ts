@@ -38,13 +38,15 @@ describe('the Owner Journey (OP-CL-12)', () => {
     ]);
     expect(JOURNEY_STEPS.filter((step) => step.mark === 'required').map((step) => step.id)).toEqual([...REQUIRED_TO_PUBLISH, 'publish']);
     expect(JOURNEY_STEPS.find((step) => step.id === 'admin')?.mark).toBe('eda');
+    // The Known Gaps are advised, not required (DEC-MR-21).
+    expect(JOURNEY_STEPS.find((step) => step.id === 'gaps')).toMatchObject({ mark: 'advised', answers: ['goneThrough'] });
     expect(JOURNEY_STEPS.every((step) => step.cards.length > 0)).toBe(true);
   });
 
   it('is not ready while a step required to publish is open, and says which, in the order of the journey (DEC-MR-15, DEC-MR-16)', () => {
     const journey = journeyOf(SEARCH_CONSOLE);
     expect(journey.ready).toBe(false);
-    expect(journey.open).toEqual(['businessDescription', 'keyFields', 'fields', 'since', 'gaps']);
+    expect(journey.open).toEqual(['businessDescription', 'keyFields', 'fields', 'since']);
     expect(journey.next).toBe('data');
     // The step Fields waits for the Key Fields.
     expect(status(SEARCH_CONSOLE).fields).toBe('blocked');
@@ -62,21 +64,31 @@ describe('the Owner Journey (OP-CL-12)', () => {
     expect(status(FILLED)).toMatchObject({ admin: 'open', messages: 'open', publish: 'open' });
   });
 
-  it('takes "nothing to add" as an answer where none is one, with who and when (DEC-MR-16)', () => {
+  it('takes "nothing to add" as an answer to the pitfalls, with who and when (DEC-MR-16)', () => {
     const empty: JourneyFacts = { ...FILLED, pitfalls: '', knownGaps: 0 };
-    expect(journeyOf(empty).open).toEqual(['pitfalls', 'gaps']);
+    expect(journeyOf(empty).open).toEqual(['pitfalls']);
     const said: JourneyFacts = {
       ...empty,
-      records: [
-        { step: 'pitfalls', answer: 'nothing', by: 'An Claes', at: '2026-11-15T10:00:00Z' },
-        { step: 'gaps', answer: 'nothing', by: 'An Claes', at: '2026-11-15T10:01:00Z' },
-      ],
+      records: [{ step: 'pitfalls', answer: 'nothing', by: 'An Claes', at: '2026-11-15T10:00:00Z' }],
     };
     const journey = journeyOf(said);
     expect(journey.ready).toBe(true);
     expect(journey.steps.find((step) => step.id === 'pitfalls')?.records).toEqual([{ step: 'pitfalls', answer: 'nothing', by: 'An Claes', at: '2026-11-15T10:00:00Z' }]);
     // Reliable since is a step of its own, and "nothing" is no answer to it (DEC-MR-18).
     expect(journeyOf({ ...said, reliableSince: null }).open).toEqual(['since']);
+  });
+
+  it('publishes a Resource without a Known Gap: the gaps are advised, and Claude records that the Owner went through them (DEC-MR-21)', () => {
+    const none: JourneyFacts = { ...FILLED, knownGaps: 0 };
+    const journey = journeyOf(none);
+    expect(journey.ready).toBe(true);
+    expect(journey.steps.find((step) => step.id === 'gaps')).toMatchObject({ mark: 'advised', status: 'open', passed: false, missing: ['knownGaps'] });
+    const through = journeyOf({ ...none, records: [{ step: 'gaps', answer: 'goneThrough', by: 'An Claes', at: '2026-11-21T10:00:00Z' }] });
+    expect(through.steps.find((step) => step.id === 'gaps')).toMatchObject({ passed: true });
+    expect(through.next).not.toBe('gaps');
+    // "Nothing to add", said before, still counts.
+    const before = journeyOf({ ...none, records: [{ step: 'gaps', answer: 'nothing', by: 'An Claes', at: '2026-11-15T10:01:00Z' }] });
+    expect(before.steps.find((step) => step.id === 'gaps')).toMatchObject({ status: 'done', missing: [] });
   });
 
   it('takes From its first row as Reliable since, and not set as neither (FR-RC-31)', () => {

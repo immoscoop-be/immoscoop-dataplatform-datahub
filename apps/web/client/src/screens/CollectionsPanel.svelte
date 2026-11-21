@@ -182,7 +182,9 @@
 
 {#if waiting && waitingShown.length > 0}
   <TreeGroup icon="tray" name={t('collections.unassigned')} urgent bind:open={() => waitingOpen || Boolean(words), (open) => (waitingOpen = open)}>
-    {#snippet meta()}<Chip variant="urgent">{waiting.length}</Chip>{t('collections.unassigned.meta')}{/snippet}
+    <!-- How many wait, before its name; only Data Admins see it (DEC-UX-322). -->
+    {#snippet count()}<Chip variant="urgent">{waiting.length}</Chip>{/snippet}
+    {#snippet meta()}{t('collections.unassigned.meta')}{/snippet}
     {#each waitingShown as resource (resource.id)}
       <ListItem href={resourcePath(resource.id)} name={resource.displayName} level={resource.level} current={resource.id === currentResource} />
     {/each}
@@ -193,7 +195,8 @@
   <!-- In the warning colour, calmer than the red of what waits: a to-do, not an emergency (DEC-UX-265). -->
   <div class="to-complete">
     <TreeGroup icon="list-checks" name={t('collections.toComplete')} bind:open={() => completeOpen || Boolean(words), (open) => (completeOpen = open)}>
-      {#snippet meta()}<Chip variant="urgent">{toComplete.length}</Chip>{t('collections.toComplete.meta')}{/snippet}
+      {#snippet count()}<Chip variant="urgent">{toComplete.length}</Chip>{/snippet}
+      {#snippet meta()}{t('collections.toComplete.meta')}{/snippet}
       {#each completeShown as item (item.id)}
         {@const what = misses(item)}
         <a class="todo" class:current={item.id === currentResource} href={resourcePath(item.id)} title={`${item.displayName} · ${what}`} aria-current={item.id === currentResource ? 'page' : undefined}>

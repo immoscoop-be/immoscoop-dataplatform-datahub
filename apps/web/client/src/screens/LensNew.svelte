@@ -641,6 +641,8 @@
     </div>
   {/snippet}
 
+  <!-- The room the page has, which the two columns follow rather than the window (DEC-UX-323). -->
+  <div class="room">
   <div class="halves">
     <!-- One step at a time, when making it and when editing it (DEC-UX-229, DEC-UX-231). -->
     <section class="card lens" aria-labelledby="the-step">
@@ -760,6 +762,7 @@
     {/if}
     </div>
   </div>
+  </div>
   <!-- "Delete this lens…" under Save opens its sheet (DEC-UX-185, FR-LE-18). -->
   {#if editing && deleting}<LensDeleteSheet name={editing.name} usedBy={editing.usedBy ?? 0} ondelete={remove} onclose={() => (deleting = false)} />{/if}
 {:else}
@@ -774,7 +777,9 @@
   .head { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
   .head h1 { flex: 1; }
   .from { margin: 6px 0 0; font-size: var(--text-small); color: var(--text-secondary); }
-  .halves { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 340px); gap: 14px; margin-top: 18px; align-items: start; }
+  /* The step about 70% of the main area, its steps and size check about 30%, in proportion rather than in pixels, so
+     that a Flow Box or the panel beside it never pushes the side off the page (DEC-UX-323). */
+  .halves { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 3fr); gap: 14px; margin-top: 18px; align-items: start; }
   .card { border-radius: var(--radius-xl); padding: 18px 20px 20px; }
   h2 { font-size: var(--text-section); font-weight: var(--weight-medium); margin: 0 0 12px; }
   fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
@@ -807,9 +812,9 @@
   .failed { color: var(--signal-urgent); font-size: var(--text-small); margin: 0; }
   /* Making it as a flow (DEC-UX-229): one step at a time on the left, the steps with how far each is above the size check */
   .lens > .meta:first-child { display: block; }
-  .side { display: grid; gap: 14px; align-items: start; }
+  .side { display: grid; gap: 14px; align-items: start; min-width: 0; }
   .steps { border-radius: var(--radius-xl); padding: 8px; display: grid; gap: 2px; }
-  .stepbtn { all: unset; box-sizing: border-box; display: flex; align-items: flex-start; gap: 10px; padding: 9px 10px; border-radius: var(--radius-md); cursor: pointer; }
+  .stepbtn { all: unset; box-sizing: border-box; min-width: 0; display: flex; align-items: flex-start; gap: 10px; padding: 9px 10px; border-radius: var(--radius-md); cursor: pointer; }
   .stepbtn:hover { background: var(--tint-hover); }
   .stepbtn.on { background: var(--surface-sub); }
   .stepbtn:focus-visible { outline: 2px solid var(--text-secondary); }
@@ -847,5 +852,7 @@
   .lf-text { color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .later { margin-top: 4px; }
   b { font-weight: var(--weight-medium); }
-  @media (max-width: 1100px) { .halves { grid-template-columns: minmax(0, 1fr); } }
+  /* One column when the main area is narrow, whatever the window: the panel or a Flow Box takes room too. */
+  .room { container-type: inline-size; }
+  @container (max-width: 720px) { .halves { grid-template-columns: minmax(0, 1fr); } }
 </style>

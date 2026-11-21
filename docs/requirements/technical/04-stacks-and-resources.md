@@ -327,6 +327,8 @@ catalogue keeps the records in `journey_records` (migration `0025-owner-journey`
 
 The web app works out its checklist from the journey of the Resource (`lib/journey.ts`): the Publish sheet lists the steps required to publish done and open, each open one with "Go to it" to its part of the Overview, what is advised and what the EDA needs; it reads the card back and offers the declaration only when ready, and sends the declaration ticked. The pitfalls and the Known Gaps offer "Nothing to add" while empty, and then say who said so and when; Maturity lists the steps required to publish under 3 · Confirmed. mcp offers `guide_owner_journey`, `record_journey_step` (for who may describe a Resource) and the prompt `publish_a_resource` (`src/journey.ts`); `publish_resource` sends the same checklist to its window, and `confirm_publication` the declaration.
 
+*Note of 2026-11-21: the step `gaps` is `advised`, takes `goneThrough` and no longer `nothing`, and `REQUIRED_TO_PUBLISH` holds six steps; a `nothing` recorded before still counts. The Known Gaps part of the web app has no "Nothing to add" ([DEC-MR-21](../functional/06-maturity-and-release.md#dec-mr-21), [DEC-UX-320](../../design/principles.md#dec-ux-320)).*
+
 <a id="tr-sr-33"></a>
 ### TR-SR-33 · Projects live in query, and their members share its queries
 
@@ -382,6 +384,8 @@ The web app works the flow of a Resource out of its journey (`lib/flowBox.ts`, `
 A step's way goes to the page of its place and leaves the step for it to take once (`flowBox.aimAt`, `flowBox.take`): the Overview opens the part for editing and puts the focus in its field, the Business Description, the select of the Key Fields, the intended use or the pitfalls, the first control of Reliable since, or a new Known Gap; Columns opens its editing with every field shown and focuses the Business Description of the first Key Field without one. `markPlace` gives the place the class `flow-marked`, a ring that holds for `--delay-flow-mark` and fades in `--motion-flow-mark`, none with Reduce motion.
 
 Publish on a Resource whose journey is not ready opens a pop-out under the button with the open steps of `checklistOf`, each to its place, "Guide me" and "I'll do it myself"; once ready, it opens the Publish sheet, as Publish on Maturity and in the quick window do. The quick window offers Guide me through publishing on such a Resource, and Minimize, Maximize and Close while a Flow Box is open.
+
+*Note of 2026-11-21: a step unfolds on Why, then What and How ([DEC-UX-321](../../design/principles.md#dec-ux-321)); the Known Gaps are no step of the Flow Box of a Resource ([DEC-UX-320](../../design/principles.md#dec-ux-320)). In the panel of Collections, `TreeGroup` takes a `count` before its name, for "Without a Collection" and "To complete" ([DEC-UX-322](../../design/principles.md#dec-ux-322)). Making a Lens lays out its two columns as `7fr` and `3fr` of the main area, the side with `min-width: 0`, and stacks them by a container query on the room the page has, not on the window ([DEC-UX-323](../../design/principles.md#dec-ux-323)).*
 
 <a id="tr-sr-37"></a>
 ### TR-SR-37 · Parameters fold into the Key Fields

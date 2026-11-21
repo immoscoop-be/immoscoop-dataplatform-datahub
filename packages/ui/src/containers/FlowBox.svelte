@@ -13,8 +13,9 @@
     icon?: IconName;
     /** While open, what it misses asks for action: the warning colour. */
     warn?: boolean;
-    what: string;
+    /** Why it matters, shown first, then what it asks and how (DEC-UX-321). */
     why: string;
+    what: string;
     how: string;
     /** Its Learning Card. */
     card?: { number: string; title: string };
@@ -32,7 +33,7 @@
 
   /**
    * A Flow Box (DEC-UX-299): a frame of its own, docked on the right of the main area, that takes a User through the
-   * steps of one flow. It is purely a guide (DEC-UX-303): each step, done or open, folds open on What, Why and How,
+   * steps of one flow. It is purely a guide (DEC-UX-303): each step, done or open, folds open on Why, What and How,
    * its Learning Card and one way to where it is done; the step to do now is outlined and open. Minimize folds it to a
    * strip on the right edge with its progress; the strip opens it again (DEC-UX-301). It keeps nothing of its own: it
    * shows the steps it is given, from the first still open (DEC-UX-306).
@@ -134,8 +135,9 @@
                 <div class="detail" id={`flow-step-${step.id}`} hidden={!open}>
                   {#if step.here}<span class="here"><Icon name="map-pin-fill" />{t('flowbox.here')}</span>{/if}
                   <dl class="wwh">
-                    <dt>{t('flowbox.what')}</dt><dd>{step.what}</dd>
+                    <!-- Why it matters first, then what it asks and how (DEC-UX-321). -->
                     <dt>{t('flowbox.why')}</dt><dd>{step.why}</dd>
+                    <dt>{t('flowbox.what')}</dt><dd>{step.what}</dd>
                     <dt>{t('flowbox.how')}</dt><dd>{step.how}</dd>
                   </dl>
                   {#if step.card}

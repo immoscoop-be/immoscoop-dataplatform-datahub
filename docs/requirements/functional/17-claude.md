@@ -510,6 +510,8 @@ The tool `record_journey_step` records, for a User who may describe the Resource
 
 *Note of 2026-11-20: "nothing to add" is no longer said of Parameters, which left the card ([DEC-RC-34](05-resource-card.md#dec-rc-34)).*
 
+*Note of 2026-11-21: nor of the Known Gaps, which are advised: Claude records that the Owner went through them ([DEC-MR-21](06-maturity-and-release.md#dec-mr-21)).*
+
 **Makes easy:** a journey that remembers what the Owner already went through. **Makes hard:** Claude marking a step done that the Owner never saw.
 
 <a id="fr-cl-32"></a>

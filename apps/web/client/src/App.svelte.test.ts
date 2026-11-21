@@ -2957,7 +2957,7 @@ describe('the page of a Resource', () => {
     expect(sheet.getByText(/het hele bedrijf, want de Collection is publiek/)).toBeTruthy();
     expect(sheet.getByText(/jij mag hem publiceren/)).toBeTruthy();
     // Every step required to publish done; what is advised or for the EDA holds nothing up (DEC-MR-15).
-    expect(sheet.getByText(/Nodig om te publiceren, alles gedaan:/).closest('p')?.textContent).toContain('Business Description; Sleutelvelden; Velden; Beoogd gebruik; Valkuilen; Reliable since; Known Gaps.');
+    expect(sheet.getByText(/Nodig om te publiceren, alles gedaan:/).closest('p')?.textContent).toContain('Business Description; Sleutelvelden; Velden; Beoogd gebruik; Valkuilen; Reliable since.');
     expect(sheet.getByText(/Aangeraden:/).closest('p')?.textContent).toContain('1 ander veld zonder Business Description');
     expect(sheet.getByText(/Voor de EDA, later:/).closest('p')?.textContent).toContain('geen modeltype vastgelegd; geen grain vastgelegd.');
     // The card, read back: what the declaration accepts (DEC-MR-17).
@@ -3010,14 +3010,15 @@ describe('the page of a Resource', () => {
     await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
     // Maturity names the steps required to publish, the open ones with the way to them.
     await fireEvent.click(main.getByRole('tab', { name: 'Maturiteit' }));
-    expect(main.getByText('Daarvoor zijn de stappen gedaan die nodig zijn om te publiceren: nu 5 van 7.')).toBeTruthy();
+    expect(main.getByText('Daarvoor zijn de stappen gedaan die nodig zijn om te publiceren: nu 5 van 6.')).toBeTruthy();
     expect(main.getByText(/Of laat Claude je er stap voor stap door leiden/)).toBeTruthy();
     // Publish warns first: what is open, the way to each, and "Guide me"; the publication does not open.
     await fireEvent.click(main.getAllByRole('button', { name: /Publiceren/ })[0]!);
     const warning = within(await main.findByRole('dialog', { name: 'Nog niet klaar om te publiceren' }));
-    expect(warning.getByText('2 van de 7 stappen die nodig zijn om te publiceren zijn nog open:')).toBeTruthy();
+    expect(warning.getByText('1 van de 6 stappen die nodig zijn om te publiceren is nog open:')).toBeTruthy();
     expect(warning.getByRole('button', { name: /^Valkuilen/ }).textContent).toContain('geen geschreven, en niemand zei dat er geen zijn');
-    expect(warning.getByRole('button', { name: /^Known Gaps/ })).toBeTruthy();
+    // The Known Gaps are advised: they hold nothing up (DEC-MR-21).
+    expect(warning.queryByRole('button', { name: /^Known Gaps/ })).toBeNull();
     expect(warning.getByRole('button', { name: 'Begeleid me' })).toBeTruthy();
     expect(screen.queryByRole('dialog', { name: 'Weekly lead volume' })).toBeNull();
     // "I'll do it myself" closes it.
@@ -3046,7 +3047,7 @@ describe('the page of a Resource', () => {
     await fireEvent.click(main.getAllByRole('button', { name: /Publiceren/ })[0]!);
     await fireEvent.click(await main.findByRole('button', { name: 'Begeleid me' }));
     const box = within(await screen.findByRole('complementary', { name: 'Beschrijven en publiceren · Weekly lead volume' }));
-    expect(box.getByText('5 van de 7 stappen die nodig zijn om te publiceren klaar')).toBeTruthy();
+    expect(box.getByText('5 van de 6 stappen die nodig zijn om te publiceren klaar')).toBeTruthy();
     // It starts at the first step still open, with what, why and how; a done step carries its tick and is folded.
     expect(box.getByRole('button', { name: /^Valkuilen/ }).getAttribute('aria-expanded')).toBe('true');
     expect(box.getByText(/Jij kent de valkuilen/)).toBeTruthy();
@@ -3061,7 +3062,7 @@ describe('the page of a Resource', () => {
     await vi.waitFor(() => expect(document.activeElement?.id).toBe('pitfalls'));
     // Minimize folds it to a strip with its progress; Maximize opens it again (DEC-UX-301).
     await fireEvent.click(box.getByRole('button', { name: 'Minimaliseren' }));
-    const strip = within(await screen.findByRole('complementary', { name: /Beschrijven en publiceren · Weekly lead volume · 5 van de 7/ }));
+    const strip = within(await screen.findByRole('complementary', { name: /Beschrijven en publiceren · Weekly lead volume · 5 van de 6/ }));
     expect(strip.getByText('5')).toBeTruthy();
     await fireEvent.click(strip.getByRole('button', { name: 'Maximaliseren' }));
     // It stays open on every page of Data Hub (DEC-UX-300).
@@ -3727,7 +3728,9 @@ describe('the model type of a Resource and the fields it asks for (FR-CO-44, FR-
     render(App, { config: CONFIG });
     const panel = within(await screen.findByRole('complementary', { name: 'Collections' }));
     expect(await panel.findByText('Te vervolledigen')).toBeTruthy();
-    expect(panel.getByText(/modeltypes te vervolledigen · enkel Data Team/).textContent).toContain('3');
+    // How many, before its name; only Data Admins see it (DEC-UX-322).
+    expect(panel.getByText('modeltypes te vervolledigen · enkel Data Admins')).toBeTruthy();
+    expect(panel.getByText('Te vervolledigen').previousElementSibling?.textContent).toBe('3');
     const weekly = panel.getByRole('link', { name: /Weekly lead volume/ });
     expect(weekly.textContent).toContain('lead_count niet gemarkeerd');
     expect(panel.getByRole('link', { name: /Lead sources/ }).textContent).toContain('nog geen modeltype');

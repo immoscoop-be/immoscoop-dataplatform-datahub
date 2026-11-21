@@ -65,12 +65,12 @@ describe('the Flow Box of a Resource (FR-MR-20)', () => {
       ['intendedUse', true],
       ['pitfalls', false],
       ['since', true],
-      ['gaps', false],
       ['publish', false],
     ]);
+    // The Known Gaps are advised, so not a step of it (DEC-MR-21).
     expect(flow.now).toBe('pitfalls');
-    expect(flow.progress).toBe('5 of 7 steps required to publish done');
-    expect(flow.foot).toMatch(/^2 steps to go/);
+    expect(flow.progress).toBe('5 of 6 steps required to publish done');
+    expect(flow.foot).toMatch(/^1 step to go/);
     const pitfalls = flow.steps.find((step) => step.id === 'pitfalls')!;
     expect(pitfalls).toMatchObject({ number: 5, warn: true, go: 'Write the pitfalls', card: { number: 'K5.16', title: 'Pitfalls' }, here: true });
     expect(pitfalls.why).toMatch(/You know the traps/);

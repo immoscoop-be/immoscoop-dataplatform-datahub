@@ -1,5 +1,4 @@
 <script lang="ts">
-  import Button from '@datahub/ui/primitives/Button.svelte';
   import type { GapScope } from '@datahub/contracts/gaps';
   import { hasScope } from '@datahub/contracts/gaps';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
@@ -13,7 +12,9 @@
    * The Known Gaps of a Resource, a part of its Overview (FR-RC-21, DEC-UX-170): a list, one gap per line, each with
    * who added it and when, and where it holds as chips: a period, fields and rows (FR-RC-24, DEC-UX-177). Its Owner
    * Unit and the Data Team add a gap from the line at the bottom, which opens a form, and change or remove one on its
-   * own line, without editing the others; every change goes into its Log. The why is plain text.
+   * own line, without editing the others; every change goes into its Log. The why is plain text. The Known Gaps are
+   * advised, not required to publish: without one, a Resource has none known, and there is no "Nothing to add" (DEC-MR-21,
+   * DEC-UX-320).
    */
   let {
     gaps,
@@ -24,8 +25,6 @@
     onchange,
     onremove,
     adding = $bindable(false),
-    none = null,
-    onnothing,
   }: {
     gaps: readonly KnownGap[];
     /** The fields of the Resource, to narrow a gap down by. */
@@ -39,10 +38,6 @@
     onremove: (gap: KnownGap) => Promise<boolean>;
     /** A new gap being written; the quick window opens it too (DEC-UX-258). */
     adding?: boolean;
-    /** Who said there are none, and when, while none is written (DEC-MR-16). */
-    none?: { by: string; at: string } | null;
-    /** Says there are none to add; answers whether it worked. Left out for who may not. */
-    onnothing?: () => Promise<boolean>;
   } = $props();
 
   let changing: string | undefined = $state();
@@ -115,15 +110,8 @@
       </li>
     {/each}
   </ul>
-{:else if none}
-  <p class="empty">{t('overview.nothing.gaps.said', { by: none.by, date: new Intl.DateTimeFormat(currentLanguage() === 'nl' ? 'nl-BE' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(none.at)) })}</p>
 {:else}
   <p class="empty">{t('gaps.none')}</p>
-  <!-- Required to publish: the gaps, or "Nothing to add", kept with who and when (DEC-MR-16). -->
-  {#if canEdit && onnothing}
-    <p class="why">{t('overview.nothing.gaps')}</p>
-    <div class="nothing"><Button variant="outline" disabled={busy} onclick={() => attempt(onnothing)}><Icon name="check" />{t('overview.nothing')}</Button></div>
-  {/if}
 {/if}
 
 {#if canEdit}
@@ -166,6 +154,4 @@
   .empty { margin: 0; font-size: var(--text-small); color: var(--text-muted); line-height: 1.5; }
   .help { margin: 8px 0 0; font-size: var(--text-meta); color: var(--text-muted); line-height: 1.5; }
   .failed { margin: 8px 0 0; font-size: var(--text-small); color: var(--signal-urgent); }
-  .why { margin: 4px 0 8px; font-size: var(--text-meta); color: var(--text-muted); }
-  .nothing { margin-bottom: 12px; }
 </style>
