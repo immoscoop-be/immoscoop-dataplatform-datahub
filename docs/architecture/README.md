@@ -70,10 +70,11 @@ Every service also fetches the public keys of identity to validate tokens; those
 | [registry](services/registry.md) | Fetching, storing and processing the dbt Artifacts; Nodes, lineage and Changes | [Artifact registry](../requirements/functional/01-artifact-registry.md) | `registry` |
 | [query](services/query.md) | Running queries on the Resources: Query, previews, later free SQL for Claude and feeds for Excel, and the Query Log | [Resources](../requirements/functional/04-stacks-and-resources.md) (querying), [Channels](../requirements/functional/13-channels.md) | `query` |
 | [semgraph](services/semgraph.md) | The Chart Server: drawing every chart by what it means, following the chart language. Moved in from its own repository, with its history ([DEC-PF-23](../requirements/technical/00-platform.md#dec-pf-23), [DEC-PF-25](../requirements/technical/00-platform.md#dec-pf-25)) | The chart language, for [Lenses](../requirements/functional/09-lenses.md) and [Reports](../requirements/functional/10-reports.md) | none |
+| [eda](services/eda.md) | The EDA of each Resource: its EDA-Probes, their SQL, runs, results and readings, run through query as the User; tells catalogue when an EDA-Setup is complete | [EDA](../requirements/functional/15-eda.md) | `eda` |
 
 | Application | For | Uses |
 | --- | --- | --- |
-| [web](services/web.md) | People in the browser | identity, catalogue, registry, query, semgraph |
+| [web](services/web.md) | People in the browser | identity, catalogue, registry, query, semgraph, eda |
 | [mcp](services/mcp.md) | Claude, as an MCP server and later MCP Apps | catalogue, registry, query, semgraph; signs in through identity |
 
 Later, once their domains are specified: Lenses and Reports ([Lenses](../requirements/functional/09-lenses.md), [Reports](../requirements/functional/10-reports.md)), checks ([Checks and monitoring](../requirements/functional/08-checks-and-monitoring.md)) and notifications ([OP-PF-06](../requirements/technical/00-platform.md#op-pf-06)). Where [Beta and promotion](../requirements/functional/11-beta-and-promotion.md) and [EDA](../requirements/functional/15-eda.md) live is decided with those domains. [Learning](../requirements/functional/16-learning.md) lives in the web app: its Learning Cards are files in the package `packages/learning`, and catalogue keeps what every User did with them ([TR-LR-01](../requirements/technical/16-learning.md#tr-lr-01), [TR-LR-02](../requirements/technical/16-learning.md#tr-lr-02)).

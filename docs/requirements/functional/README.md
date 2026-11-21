@@ -31,7 +31,7 @@
 | 12 | [Permissions and Excel keys](12-permissions-and-library-cards.md) | `PL` | Roles, access and personal keys | To be specified |
 | 13 | [Channels](13-channels.md) | `CH` | Data Hub itself, Claude as an MCP App, Excel and HTML reports | To be specified |
 | 14 | [Conversations](14-conversations.md) | `CV` | Questions, Remarks and margin notes on an object | To be specified |
-| 15 | [EDA](15-eda.md) | `ED` | How the Owner takes a Resource through the EDA in Data Hub: EDA-Setup, EDA-Rerun and EDA-Revalidation, so that business understands the data before monitoring it | To be specified ² |
+| 15 | [EDA](15-eda.md) | `ED` | How the Owner takes a Resource through the EDA in Data Hub: EDA-Setup, EDA-Rerun and EDA-Revalidation, so that business understands the data before monitoring it | Specified for the first build ² |
 | 16 | [Learning](16-learning.md) | `LR` | The Learning Centre: a page for every Learning Card of the master learning plan, by Learning Level and section, in five steps; links to cards anywhere; a silent count of the cards seen | To be specified ³ |
 | 17 | [Claude](17-claude.md) | `CL` | Claude through the MCP of Data Hub, endpoint by endpoint: what it finds, reads and does as the signed-in User, what it shows in an MCP App, the concepts and the how-to-use; version 2 ⁴ | To be specified |
 
