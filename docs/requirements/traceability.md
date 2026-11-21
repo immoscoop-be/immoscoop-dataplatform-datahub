@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 322 | 119 (23 open, 96 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 323 | 119 (23 open, 96 done) |
 | [Backlog](../overview/backlog.md) | – | – | – | 7 (5 open, 2 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
@@ -288,7 +288,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-MR-19](functional/06-maturity-and-release.md#fr-mr-19) | The declaration is kept as the Owner ticked it | Implemented | – | – | [TR-SR-32](technical/04-stacks-and-resources.md#tr-sr-32) | [67c2e14](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/67c2e14c21c77636ce4e4b7fc046f4d5f0f0374c) implements, 2026-11-15 |
 | [FR-MR-20](functional/06-maturity-and-release.md#fr-mr-20) | The Flow Box takes the Owner Unit through the steps required to publish | Implemented | – | [flow-box](../design/screens/flow-box.html) | [TR-SR-36](technical/04-stacks-and-resources.md#tr-sr-36) | [00d5681](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/00d56818d8f1c308c5aac6c016d61978433e7499) implements, 2026-11-20<br>[ad97eb1](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/ad97eb129127e0d6ebe9316666b029b2b39bbcdb) refs, 2026-11-20<br>[86c27ed](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/86c27edcae36ce737275acd44478aece8ad8ffcf) refs, 2026-11-20 |
 | [FR-MR-21](functional/06-maturity-and-release.md#fr-mr-21) | Publish warns while a step is open, and offers to guide | Implemented | – | [flow-box](../design/screens/flow-box.html), [resource-publish](../design/screens/resource-publish.html) | [TR-SR-36](technical/04-stacks-and-resources.md#tr-sr-36) | [00d5681](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/00d56818d8f1c308c5aac6c016d61978433e7499) implements, 2026-11-20<br>[86c27ed](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/86c27edcae36ce737275acd44478aece8ad8ffcf) refs, 2026-11-20 |
-| [FR-MR-22](functional/06-maturity-and-release.md#fr-mr-22) | Explored: a complete EDA-Setup | Specified | – | [resource-detail](../design/screens/resource-detail.html), [resource-overview](../design/screens/resource-overview.html), [eda](../design/screens/eda.html) | – | – |
+| [FR-MR-22](functional/06-maturity-and-release.md#fr-mr-22) | Explored: a complete EDA-Setup | Specified | – | [resource-detail](../design/screens/resource-detail.html), [resource-overview](../design/screens/resource-overview.html), [eda](../design/screens/eda.html) | – | [cdef15a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/cdef15a49b099ccdca75df49c6fa6b82a02e5f39) refs, 2026-11-21 |
 
 ### [Log and notifications](functional/07-log-and-notifications.md)
 
