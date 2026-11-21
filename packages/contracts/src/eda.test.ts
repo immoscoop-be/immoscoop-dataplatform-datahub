@@ -49,8 +49,8 @@ describe('what an EDA-Probe applies to on a Resource', () => {
 });
 
 describe('needed, complete, covered (DEC-ED-17, DEC-ED-21)', () => {
-  it('needs ten EDA-Probes for this aggregate, none complete before a run', () => {
-    expect(neededOf(weekly, [])).toEqual({ total: 10, complete: 0 });
+  it('needs eleven EDA-Probes for this aggregate, its mapped Key Field among them, none complete before a run', () => {
+    expect(neededOf(weekly, [])).toEqual({ total: 11, complete: 0 });
     expect(isNeeded('relationshipsHold', weekly)).toBe(false);
   });
 
@@ -60,7 +60,7 @@ describe('needed, complete, covered (DEC-ED-17, DEC-ED-21)', () => {
       { probe: 'grainHolds' as const, fields: ['week_start', 'lead_source'] },
       { probe: 'nullsPerKeyField' as const, fields: ['week_start', 'lead_source', 'lead_count', 'lead_channel'] },
     ];
-    expect(neededOf(weekly, runs)).toEqual({ total: 10, complete: 2 });
+    expect(neededOf(weekly, runs)).toEqual({ total: 11, complete: 2 });
   });
 
   it('shows per field what covers it, and what a Key Field still needs', () => {

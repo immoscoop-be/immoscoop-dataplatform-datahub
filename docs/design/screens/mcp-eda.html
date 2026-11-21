@@ -76,9 +76,9 @@
   <div class="status-row">
    <span class="tone" data-tone="warmup-chip"><i class="ph ph-hourglass-medium"></i>In progress</span>
    <span class="status"><span class="maturity" data-level="3" data-no-tooltip></span>3 · Confirmed</span>
-   <span class="status"><i class="ph-fill ph-check-circle"></i>4 of 10 needed EDA-Probes complete</span>
+   <span class="status"><i class="ph-fill ph-check-circle"></i>4 of 11 needed EDA-Probes complete</span>
   </div>
-  <div class="me-bar" aria-hidden="true"><span class="done"></span><span class="coming"></span><span class="coming"></span><span class="done"></span><span class="done"></span><span class="coming"></span><span class="done"></span><span class="coming"></span><span class="coming"></span><span class="coming"></span></div>
+  <div class="me-bar" aria-hidden="true"><span class="done"></span><span class="coming"></span><span class="coming"></span><span class="done"></span><span class="done"></span><span class="coming"></span><span class="coming"></span><span class="done"></span><span class="coming"></span><span class="coming"></span><span class="coming"></span></div>
 
   <!-- show_eda: the whole EDA -->
   <div data-pane-group="e" data-pane="eda">
@@ -89,14 +89,14 @@
     <div class="me-probe"><i class="ph-fill ph-check-circle expected" aria-hidden="true"></i><div><b>The grain holds</b><span class="me-tone expected">As expected</span><p>One row per week and lead source: none twice in 16,224 rows.</p><span class="meta">Set on week_start, lead_source · 21 Nov</span></div></div>
     <div class="me-probe"><i class="ph-fill ph-warning-circle look" aria-hidden="true"></i><div><b>Volume over time, with empty periods</b><span class="me-tone look">Look at this</span><p>2 weeks have no rows at all, from 8 Sept 2025, between weeks of about 2,061 leads.</p><span class="meta">Set on week_start · 21 Nov</span></div></div>
    </div>
-   <div class="me-sec"><h3>Gaps <small>1 of 2 needed complete</small></h3>
+   <div class="me-sec"><h3>Gaps <small>1 of 3 needed complete</small></h3>
     <div class="me-probe"><i class="ph-fill ph-warning-circle look" aria-hidden="true"></i><div><b>Nulls per Key Field</b><span class="me-tone look">Look at this</span><p><span class="mono">lead_source</span> is empty on 130 rows, though its role needs it on every row; <span class="mono">lead_channel</span> on 12% of rows.</p><span class="meta">Set on the 4 Key Fields · 21 Nov</span></div></div>
    </div>
    <div class="me-sec"><h3>Weight <small>1 of 3 needed complete</small></h3>
     <div class="me-probe"><i class="ph-fill ph-question look judge" aria-hidden="true"></i><div><b>Distribution of numbers</b><span class="me-tone judge">For you to judge</span><p>Most rows bring little, a few bring much: the median of <span class="mono">lead_count</span> is 25, the mean 38.</p><span class="meta">Set on lead_count · 21 Nov</span></div></div>
    </div>
-   <div class="me-sec"><h3>Coming <small class="none">6 needed, which count already</small></h3></div>
-   <p class="me-coming"><i class="ph ph-hourglass-medium" aria-hidden="true"></i><span>Row count and Date range in Basis, Disguised nulls in Gaps, Distribution of categories and Spread in Weight, Impossible values in Correctness. Data Hub does not run them yet.</span></p>
+   <div class="me-sec"><h3>Coming <small class="none">7 needed, which count already</small></h3></div>
+   <p class="me-coming"><i class="ph ph-hourglass-medium" aria-hidden="true"></i><span>Row count and Date range in Basis, Disguised nulls and Values without a match in Gaps, Distribution of categories and Spread in Weight, Impossible values in Correctness. Data Hub does not run them yet.</span></p>
   </div>
 
   <!-- run_eda_probe: within what runs freely -->
@@ -135,7 +135,7 @@
  </section>
 
  <div class="mcp-msg" data-pane-group="e" data-pane="eda">
-  <p>The EDA of Weekly lead volume is <b>in progress</b>: 4 of the 10 EDA-Probes an aggregate needs are complete, so it stays at <b>3 · Confirmed</b>. The other 6 are not run by Data Hub yet; they still count.</p>
+  <p>The EDA of Weekly lead volume is <b>in progress</b>: 4 of the 11 EDA-Probes it needs are complete, so it stays at <b>3 · Confirmed</b>. The other 7 are not run by Data Hub yet; they still count.</p>
   <p>Two results are worth a look:</p>
   <ul><li><b>Two weeks without any row</b>, from 8 September 2025. That is almost always a load that failed, not a quiet period.</li><li><b><span class="mono">lead_source</span> is empty on 130 rows</b>, while every row should have one.</li></ul>
   <p>Shall I run the nulls again, or look at the rows of those two weeks in a query?</p>

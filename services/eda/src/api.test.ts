@@ -188,7 +188,7 @@ describe.skipIf(!url)('the routes of eda (TR-ED-01)', () => {
       status: 'inProgress',
       startedBy: { id: '103', name: 'Dirk Vos' },
       exploredAt: null,
-      needed: { total: 10, complete: 0 },
+      needed: { total: 11, complete: 0 },
       next: 'nullsPerKeyField',
     });
     expect(view.resource.fields.map((field) => field.name)).toEqual(WEEKLY_ANSWER.fields.map((field) => field.name));
@@ -219,7 +219,7 @@ describe.skipIf(!url)('the routes of eda (TR-ED-01)', () => {
       ['lead_count', 'expected', null],
       ['lead_channel', 'judge', null],
     ]);
-    expect(eda.needed).toEqual({ total: 10, complete: 1 });
+    expect(eda.needed).toEqual({ total: 11, complete: 1 });
     expect(eda.next).toBe('grainHolds');
     const kept = await database.db.selectFrom('edaRuns').select(['queryRunId', 'bytes']).execute();
     expect(kept).toEqual([{ queryRunId: expect.stringMatching(/^q-20261121-[0-9a-f]{6}$/), bytes: '1200000' }]);
@@ -318,8 +318,8 @@ describe.skipIf(!url)('the routes of eda (TR-ED-01)', () => {
     expect(listed.statusCode).toBe(200);
     expect(listed.json()).toEqual({
       edas: [
-        { resource: { id: WEEKLY_ANSWER.id, displayName: 'Weekly lead volume', collection: CREDIT }, status: 'inProgress', needed: { total: 10, complete: 3 } },
-        { resource: { id: BARE.id, displayName: 'Lead sources', collection: CREDIT }, status: 'inProgress', needed: { total: 10, complete: 0 } },
+        { resource: { id: WEEKLY_ANSWER.id, displayName: 'Weekly lead volume', collection: CREDIT }, status: 'inProgress', needed: { total: 11, complete: 3 } },
+        { resource: { id: BARE.id, displayName: 'Lead sources', collection: CREDIT }, status: 'inProgress', needed: { total: 11, complete: 0 } },
       ],
       // Leads is at 4 · Explored without an EDA here; Draft leads is not confirmed yet.
       ready: [{ resource: { id: LEADS_ANSWER.id, displayName: 'Leads', collection: CREDIT }, level: 4 }],
@@ -332,7 +332,7 @@ describe.skipIf(!url)('the routes of eda (TR-ED-01)', () => {
       await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, probe));
     }
     const view = (await call(dirk, 'GET', edaOf(WEEKLY_ANSWER.id))).json<EdaView>();
-    expect(view).toMatchObject({ status: 'inProgress', exploredAt: null, needed: { total: 10, complete: 4 }, next: null });
+    expect(view).toMatchObject({ status: 'inProgress', exploredAt: null, needed: { total: 11, complete: 4 }, next: null });
     expect(told).toHaveLength(0);
   });
 

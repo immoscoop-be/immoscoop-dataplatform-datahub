@@ -99,7 +99,7 @@ export const PROBES: Readonly<Record<ProbeKey, ProbeSpec>> = {
   nullsPerKeyField: { key: 'nullsPerKeyField', name: 'Nulls per Key Field', step: 'gaps', place: 'column', target: 'any', levels: levels(M, M, M, M, M, M), runs: true },
   disguisedNulls: { key: 'disguisedNulls', name: 'Disguised nulls', step: 'gaps', place: 'column', target: 'any', levels: levels(M, M, M, M, M, M), runs: false },
   whereGapsCluster: { key: 'whereGapsCluster', name: 'Where gaps cluster', step: 'gaps', place: 'column', target: 'any', levels: levels(S, S, S, C, S, C), runs: false },
-  valuesWithoutAMatch: { key: 'valuesWithoutAMatch', name: 'Values without a match', step: 'gaps', place: 'resource', target: 'mapped', levels: levels(S, S, S, S, S, S), runs: false },
+  valuesWithoutAMatch: { key: 'valuesWithoutAMatch', name: 'Values without a match', step: 'gaps', place: 'resource', target: 'mapped', levels: levels(M, M, M, M, M, M), runs: false },
   distributionOfNumbers: { key: 'distributionOfNumbers', name: 'Distribution of numbers', step: 'weight', place: 'column', target: 'numbers', levels: levels(M, M, M, M, M, M), runs: true },
   distributionOfCategories: { key: 'distributionOfCategories', name: 'Distribution of categories', step: 'weight', place: 'column', target: 'texts', levels: levels(M, M, M, M, M, M), runs: false },
   sharePerSegment: { key: 'sharePerSegment', name: 'Share per segment', step: 'weight', place: 'column', target: 'texts', levels: levels(S, S, S, S, S, C), runs: false },
@@ -274,6 +274,9 @@ export function isComplete(probe: ProbeKey, resource: EdaResource, runs: readonl
 export function isNeeded(probe: ProbeKey, resource: EdaResource): boolean {
   if (levelOf(probe, resource.modelType) !== 'must') return false;
   const applies = appliesTo(probe, resource);
+  // An EDA-Probe on mapped fields counts only once a Key Field is mapped: a relationship matters when its field is a
+  // Key Field (DEC-ED-19, DEC-ED-31).
+  if (PROBES[probe].target === 'mapped') return applies.needs.length > 0;
   // A column EDA-Probe with no field it could ever be set on does not apply here; one waiting for the grain or a date
   // still counts, as the Data Team can record it.
   return !(applies.block === 'nothing' && !applies.table);

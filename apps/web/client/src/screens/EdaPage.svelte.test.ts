@@ -207,7 +207,7 @@ describe('the page of an EDA (FR-ED-04, DEC-UX-321, DEC-UX-322)', () => {
     expect(card.getByText(/none twice in 16,224 rows/)).toBeTruthy();
     expect(card.getByText('Set on week_start, lead_source')).toBeTruthy();
     expect(basis.getByRole('button', { name: /Add probe/ }).textContent).toContain('3 needed still in Basis');
-    expect(step('Gaps').getByText('0 of 2 needed')).toBeTruthy();
+    expect(step('Gaps').getByText('0 of 3 needed')).toBeTruthy();
     // Coming ones count as EDA-Probes left to add, as the list shows them (FR-ED-04, DEC-ED-27).
     expect(step('Correctness').getByRole('button', { name: /Add probe/ })).toBeTruthy();
     expect(step('Relations between fields').getByText('None needed')).toBeTruthy();
@@ -217,14 +217,14 @@ describe('the page of an EDA (FR-ED-04, DEC-UX-321, DEC-UX-322)', () => {
   it('shows on the right the needed EDA-Probes complete, the four places, the best next step, the table as a whole and every field (DEC-UX-322, DEC-UX-323)', async () => {
     show(viewOf({ grainHolds: GRAIN_HOLDS }));
     const side = within(await screen.findByRole('complementary', { name: 'EDA-Setup' }));
-    expect(side.getByText('1 of 10')).toBeTruthy();
-    const bar = side.getByRole('img', { name: '1 of 10 needed EDA-Probes complete' });
-    expect(bar.querySelectorAll('span')).toHaveLength(10);
+    expect(side.getByText('1 of 11')).toBeTruthy();
+    const bar = side.getByRole('img', { name: '1 of 11 needed EDA-Probes complete' });
+    expect(bar.querySelectorAll('span')).toHaveLength(11);
     expect(bar.querySelectorAll('span.on')).toHaveLength(1);
     // Needed EDA-Probes Data Hub does not run yet are coming, and still count (OP-ED-09).
-    expect(side.getByText(/6 needed EDA-Probes are coming/)).toBeTruthy();
+    expect(side.getByText(/7 needed EDA-Probes are coming/)).toBeTruthy();
     const places = side.getAllByRole('listitem').slice(0, 4).map((item) => item.textContent);
-    expect(places).toEqual(['The rows1 of 4 needed', 'The Key Fields0 of 4 complete', 'Two columns togetherNone needed', 'Other ResourcesNone needed']);
+    expect(places).toEqual(['The rows1 of 4 needed', 'The Key Fields0 of 4 complete', 'Two columns togetherNone needed', 'Other Resources0 of 1 needed']);
     expect(side.getByText('Best next step')).toBeTruthy();
     expect(side.getByText('Nulls per Key Field')).toBeTruthy();
     expect(side.getByRole('link', { name: /Add this EDA-Probe/ }).getAttribute('href')).toBe('/eda/r2/probes/nullsPerKeyField');
@@ -270,7 +270,7 @@ describe('the list to add an EDA-Probe (FR-ED-13, DEC-UX-328)', () => {
     expect(document.activeElement).toBe(search);
     const gaps = group(sheet, 'Gaps');
     expect(gaps.getByText('From its tile')).toBeTruthy();
-    expect(gaps.getByText('0 of 2 needed complete')).toBeTruthy();
+    expect(gaps.getByText('0 of 3 needed complete')).toBeTruthy();
     expect(group(sheet, 'Basis').queryByText('From its tile')).toBeNull();
     expect(sheet.getByText(/^Weekly lead volume · model type/).textContent).toBe('Weekly lead volume · model type aggregate');
     expect(sheet.getByText(/An EDA-Probe that is not offered for/).textContent).toBe('An EDA-Probe that is not offered for aggregate is not listed.');
