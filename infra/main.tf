@@ -145,12 +145,13 @@ locals {
     })
     # The Chart Server is open to everyone, its MCP server too (DEC-PF-24).
     semgraph = { MCP_AUTH = "none" }
-    # The MCP endpoint Claude connects to (TR-PF-06). Its tools ask catalogue and query with the token of
-    # the User, and link to the pages of the web app (FR-CL-02, FR-CL-06).
+    # The MCP endpoint Claude connects to (TR-PF-06). Its tools ask catalogue, query and eda with the token
+    # of the User, and link to the pages of the web app (FR-CL-02, FR-CL-06, TR-ED-10).
     mcp = {
       DATAHUB_MCP_RESOURCE  = "${local.urls["mcp"]}/mcp"
       DATAHUB_CATALOGUE_URL = local.urls["catalogue"]
       DATAHUB_QUERY_URL     = local.urls["query"]
+      DATAHUB_EDA_URL       = local.urls["eda"]
       DATAHUB_WEB_URL       = local.urls["web"]
     }
     # The web app signs Users in at its own address (DEC-PF-19); its page shows the Collections of

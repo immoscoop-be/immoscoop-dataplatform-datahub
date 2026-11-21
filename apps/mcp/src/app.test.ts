@@ -1,5 +1,21 @@
 import { readFileSync } from 'node:fs';
 import { journeyOf } from '@datahub/contracts/journey';
+import {
+  appliesTo,
+  bestNext,
+  coverage,
+  type EdaResource,
+  type EdaView,
+  isComplete,
+  isNeeded,
+  levelOf,
+  neededOf,
+  PROBES,
+  type ProbeKey,
+  probesFor,
+  type ResultView,
+  type RunCover,
+} from '@datahub/contracts/eda';
 import { createTestIssuer, type TestIssuer } from '@datahub/auth/testing';
 import { type Permissions, type StartingGroup, startingPermissions } from '@datahub/contracts';
 import type { FastifyInstance } from 'fastify';
@@ -12,6 +28,7 @@ const RESOURCE = 'https://mcp.test/mcp';
 const IDENTITY = 'https://identity.test';
 const CATALOGUE = 'https://catalogue.test';
 const QUERY = 'https://query.test';
+const EDA = 'https://eda.test';
 const WEB = 'https://datahub.test';
 
 let issuer: TestIssuer;
@@ -44,7 +61,7 @@ beforeAll(async () => {
     verifier: issuer.verifier,
     resource: RESOURCE,
     authorizationServer: IDENTITY,
-    services: { catalogueUrl: CATALOGUE, queryUrl: QUERY, webUrl: WEB, fetch: fakeFetch as typeof fetch },
+    services: { catalogueUrl: CATALOGUE, queryUrl: QUERY, edaUrl: EDA, webUrl: WEB, fetch: fakeFetch as typeof fetch },
     logger: false,
   });
 });
@@ -829,10 +846,12 @@ describe('the Permissions of the User in Claude (TR-PL-09)', () => {
   const WRITES = ['add_known_gap', 'change_known_gap', 'deprecate_resource', 'describe_fields', 'mark_changes_seen', 'record_journey_step', 'remove_known_gap', 'reply_to_message', 'undeprecate_resource', 'update_resource_card', 'write_message'];
   // The fields suggested by Claude, decided by the User in a card: only for who may describe them (FR-CL-38).
   const FIELDS = ['save_fields', 'suggest_fields'];
+  // The EDA, for who may explore Resources (DEC-ED-25, DEC-ED-29).
+  const EDA_TOOLS = ['get_eda', 'give_eda_reading', 'run_eda_probe', 'run_eda_probe_approved', 'show_eda'];
 
   it('offers an Admin every tool, the queries of others included', async () => {
     const tools = names(await toolsOf(await issuer.sign({ as: 'admin' })));
-    expect(tools).toEqual([...READS, ...LENS_RUNS, ...QUERY_TOOLS, ...PROJECT_TOOLS, ...PREVIEW_TOOLS, ...WRITES, ...FIELDS, 'confirm_publication', 'get_resource_queries', 'publish_resource'].sort());
+    expect(tools).toEqual([...READS, ...LENS_RUNS, ...QUERY_TOOLS, ...PROJECT_TOOLS, ...PREVIEW_TOOLS, ...WRITES, ...FIELDS, ...EDA_TOOLS, 'confirm_publication', 'get_resource_queries', 'publish_resource'].sort());
   });
 
   it('offers a Lens user no query tools and no Preview, and lets Claude write only their Questions and Signals', async () => {
@@ -1289,5 +1308,309 @@ describe('the MCP App', () => {
     expect(VIEW_PAGE).toContain(':root { color-scheme: light; }');
     expect(VIEW_PAGE).toContain('[data-theme="dark"] { color-scheme: dark; }');
     expect(VIEW_PAGE).toMatch(/html, body \{[^}]*background: transparent;/);
+  });
+});
+
+describe('the EDA through Claude (FR-ED-15, FR-ED-16, DEC-ED-29, TR-ED-10)', () => {
+  const EDA_PATH = `${EDA}/resources/${RESOURCE_ID}/eda`;
+  const AN = { id: 'u-an', name: 'An Claes' };
+  const resource: EdaResource = {
+    id: RESOURCE_ID,
+    displayName: 'Weekly lead volume',
+    modelType: 'aggregate',
+    level: 3,
+    fields: [
+      { name: 'week_start', dataType: 'DATE', keyField: true, role: 'period', grain: true, mapped: false },
+      { name: 'lead_source', dataType: 'STRING', keyField: true, role: 'groupedBy', grain: true, mapped: false },
+      { name: 'lead_count', dataType: 'INT64', keyField: true, role: 'addsUp', grain: false, mapped: false },
+      { name: 'lead_channel', dataType: 'STRING', keyField: true, role: null, grain: false, mapped: false },
+    ],
+  };
+  interface Ran {
+    probe: ProbeKey;
+    fields: string[];
+    results: ResultView[];
+    params?: Record<string, unknown>;
+  }
+  const result = (subject: string, data: unknown, reading: ResultView['reading'], yours: ResultView['yours'] = null): ResultView => ({ subject, data: data as ResultView['data'], reading, yours });
+  /** The EDA as eda answers it, computed from the contracts as eda computes it (services/eda/src/view.ts). */
+  function edaView(runs: Ran[]): EdaView {
+    const covers: RunCover[] = runs.map((run) => ({ probe: run.probe, fields: run.fields }));
+    return {
+      resource: { ...resource, collection: { id: 'c-1', name: 'Credit leads' } },
+      status: 'inProgress',
+      startedBy: AN,
+      startedAt: '2026-11-21T08:00:00.000Z',
+      exploredAt: null,
+      needed: neededOf(resource, covers),
+      probes: probesFor(resource.modelType).map((key) => {
+        const run = runs.find((one) => one.probe === key);
+        return {
+          key,
+          level: levelOf(key, resource.modelType) ?? 'could',
+          runs: PROBES[key].runs,
+          needed: isNeeded(key, resource),
+          added: run !== undefined,
+          complete: isComplete(key, resource, covers),
+          applies: appliesTo(key, resource),
+          fields: run?.fields ?? [],
+          params: run?.params ?? {},
+          lastRun: run ? { id: `run-${key}`, ranAt: '2026-11-21T09:00:00.000Z', ranBy: AN, bytes: 300_000, fields: run.fields, params: run.params ?? {}, results: run.results } : null,
+        };
+      }),
+      coverage: coverage(resource, covers),
+      next: bestNext(resource, covers),
+    };
+  }
+  const grain: Ran = {
+    probe: 'grainHolds',
+    fields: ['week_start', 'lead_source'],
+    results: [result('', { rows: 16224, values: 16224, onMoreThanOne: 0, rowsCovered: 0, emptyGrain: 0, buckets: [16224, 0, 0, 0], examples: [] }, 'expected')],
+  };
+  const week = { days: 7, average: 2061, sd: 210, p25: 1950, median: 2070, p75: 2180, lowest: { value: 1890, start: '2025-03-03' }, highest: { value: 2410, start: '2025-06-02' } };
+  const periods = [{ start: '2025-09-01', rows: 40, sum: 2100 }, { start: '2025-09-08', rows: 0, sum: null }, { start: '2025-09-15', rows: 0, sum: null }, { start: '2025-09-22', rows: 41, sum: 2033 }];
+  const volume: Ran = {
+    probe: 'volumeOverTime',
+    fields: ['week_start'],
+    results: [result('week_start', { unit: 'week', measure: 'lead_count', periods, empty: ['2025-09-08', '2025-09-15'], current: null, units: [week] }, 'look')],
+  };
+  const nulls = (leadSource: number, yours: ResultView['yours'] = null): Ran => ({
+    probe: 'nullsPerKeyField',
+    fields: ['week_start', 'lead_source', 'lead_count', 'lead_channel'],
+    results: [
+      result('week_start', { rows: 16224, empty: 0, role: 'period' }, 'expected'),
+      result('lead_source', { rows: 16224, empty: leadSource, role: 'groupedBy' }, leadSource ? 'look' : 'expected', yours),
+      result('lead_count', { rows: 16224, empty: 0, role: 'addsUp' }, 'expected'),
+      result('lead_channel', { rows: 16224, empty: 1947, role: null }, 'judge'),
+    ],
+  });
+  const distribution: Ran = {
+    probe: 'distributionOfNumbers',
+    fields: ['lead_count'],
+    results: [result('lead_count', { rows: 16224, low: 0, p25: 12, median: 25, p75: 48, p95: 120, high: 900, mean: 38, width: 10, tailFrom: 120, start: 0, bins: [900, 800], tail: 780 }, 'judge')],
+  };
+  const stub = (view: EdaView) => {
+    answers[`GET ${EDA_PATH}`] = () => [200, view];
+    answers[`GET ${CATALOGUE}/collections/c-1`] = () => [200, collection];
+  };
+  const admin = () => issuer.sign({ as: 'admin' });
+  const posted = () => asked.filter((one) => one.method === 'POST').map((one) => one.body);
+  /** The card of the EDA as the MCP App draws it, from its own functions in the page (view-page.ts). */
+  const draw = (view: unknown): string => {
+    const helpers = VIEW_PAGE.slice(VIEW_PAGE.indexOf('const esc = '), VIEW_PAGE.indexOf('/** The rows of a run'));
+    const block = VIEW_PAGE.slice(VIEW_PAGE.indexOf('// begin eda'), VIEW_PAGE.indexOf('// end eda'));
+    return (new Function(`${helpers}\n${block}\nreturn edaHtml;`)() as (view: unknown) => string)(view);
+  };
+  const EDA_TOOLS = ['get_eda', 'give_eda_reading', 'run_eda_probe', 'run_eda_probe_approved', 'show_eda'];
+
+  it('offers the EDA tools only to a User who may explore Resources, and its buttons to the MCP App only (DEC-ED-25)', async () => {
+    const analyst = names(await toolsOf(await issuer.sign()));
+    for (const name of EDA_TOOLS) expect(analyst).not.toContain(name);
+    const tools = await toolsOf(await admin());
+    expect(names(tools)).toEqual(expect.arrayContaining(EDA_TOOLS));
+    expect(appOnly(tools).filter((name) => /eda/.test(name))).toEqual(['give_eda_reading', 'run_eda_probe_approved']);
+    const shows = tools.filter((item) => item._meta?.ui?.resourceUri === VIEW_URI && !item._meta.ui.visibility).map((item) => item.name);
+    expect(shows.filter((name) => /eda/.test(name)).sort()).toEqual(['run_eda_probe', 'show_eda']);
+    // Only the EDA-Probes Data Hub runs, in the order of the table (DEC-ED-26).
+    expect(tools.find((item) => item.name === 'run_eda_probe')?.inputSchema.properties.probe?.enum).toEqual(['grainHolds', 'volumeOverTime', 'nullsPerKeyField', 'distributionOfNumbers']);
+    // Explore Resources brings them to any Permission group; without claude.use there is nothing of Data Hub in Claude.
+    const exploring = names(await toolsOf(await issuer.sign({ permissions: permissionsOf('businessAnalyst', (permissions) => (permissions['eda.use'].on = true)) })));
+    expect(exploring).toEqual(expect.arrayContaining(EDA_TOOLS));
+    expect(names(await toolsOf(await issuer.sign({ permissions: permissionsOf('admin', (permissions) => (permissions['claude.use'].on = false)) })))).toEqual(['how_to_use', 'who_am_i']);
+    // The rule of the EDA is in the instructions of who has its tools, and only theirs: Claude never approves nor reads for the User.
+    const instructions = async (token: string) => (await call('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'test', version: '1' } }, token)).json().result.instructions as string;
+    expect(await instructions(await admin())).toContain('You never approve a run above 100 MB and never give the reading of a result');
+    expect(await instructions(await issuer.sign())).not.toContain('get_eda');
+    const howTo = (await tool('how_to_use', {}, await admin())).content[0]?.text ?? '';
+    expect(howTo).toContain('Explore a Resource');
+    expect(howTo).toContain('- Explore Resources: start the EDA of a Resource you see at 3 · Confirmed or above');
+  });
+
+  it('reads the EDA in words, what to look at first, and shows it as a card of its own (FR-ED-15)', async () => {
+    stub(edaView([grain, volume, nulls(130), distribution]));
+    const token = await admin();
+    const read = await tool('get_eda', { id: RESOURCE_ID }, token);
+    expect(asked[0]).toMatchObject({ method: 'GET', url: EDA_PATH, authorization: `Bearer ${token}` });
+    const text = read.content[0]?.text ?? '';
+    expect(text).toContain('The EDA of Weekly lead volume (3 · Confirmed) is in progress: 4 of 10 needed EDA-Probes complete, and it becomes 4 · Explored once all are.');
+    // The needed ones Data Hub does not run yet are named once, and still count (DEC-ED-27).
+    expect(text).toContain('6 needed ones are Coming: Row count and Date range in Basis, Disguised nulls in Gaps, Distribution of categories and Spread in Weight, Impossible values in Correctness.');
+    expect(text.indexOf('Look at this, first:')).toBeLessThan(text.indexOf('For the User to judge:'));
+    expect(text).toContain('- Nulls per Key Field, `lead_source`: 130 of 16,224 rows empty (0.8%). Data Hub: its role, grouped by, needs it on every row. No reading of the User yet.');
+    expect(text).toMatch(/2 periods have no rows at all, the first from 8 Sept? 2025, between periods of about 2,061 per week\./);
+    expect(text).toContain('- Distribution of numbers: For you to judge. ');
+    expect(text).toContain('Most rows bring little, a few bring much: the median of `lead_count` is 25, the mean 38.');
+    expect(text).toContain('- The grain holds: As expected. One row per `week_start` and `lead_source`: none twice in 16,224 rows. Set on `week_start` and `lead_source`; ran 2026-11-21.');
+    expect(text).toContain('Never give one yourself');
+    expect(text).toContain(`${WEB}/eda/${RESOURCE_ID}`);
+    expect(read.structuredContent).not.toHaveProperty('view');
+    // The periods of Volume over time stay in Data Hub, with its chart.
+    expect(JSON.stringify(read.structuredContent)).not.toContain('"sum":2100');
+
+    const shown = await tool('show_eda', { id: RESOURCE_ID }, token);
+    expect(shown.content[0]?.text).toContain('The EDA is shown to the User in the conversation.');
+    expect(shown.structuredContent).toMatchObject({
+      view: 'eda',
+      mode: 'eda',
+      resource: { displayName: 'Weekly lead volume', levelName: '3 · Confirmed', collection: { name: 'Credit leads' }, page: `${WEB}/resources/${RESOURCE_ID}` },
+      eda: { statusName: 'In progress', startedBy: 'An Claes', needed: { total: 10, complete: 4 }, page: `${WEB}/eda/${RESOURCE_ID}` },
+      attention: { ran: 7, look: 2, judge: 2, read: 0 },
+      coming: { count: 6 },
+    });
+    const view = shown.structuredContent as { bar: { state: string }[]; steps: { name: string; needed: unknown; probes: { name: string }[] }[] };
+    expect(view.bar.map((part) => part.state)).toEqual(['done', 'coming', 'coming', 'done', 'done', 'coming', 'done', 'coming', 'coming', 'coming']);
+    expect(view.steps.map((step) => [step.name, step.needed, step.probes.map((one) => one.name)])).toEqual([
+      ['Basis', { total: 4, complete: 2 }, ['The grain holds', 'Volume over time, with empty periods']],
+      ['Gaps', { total: 2, complete: 1 }, ['Nulls per Key Field']],
+      ['Weight', { total: 3, complete: 1 }, ['Distribution of numbers']],
+    ]);
+
+    // The card: what needs a look first, then per EDA-Step, the Coming ones once, and no chart.
+    const html = draw(shown.structuredContent);
+    expect(html).toContain('<b>2 results to look at</b>, 2 for you to judge. No reading of yours yet.');
+    expect(html).toContain('Its EDA, started on 21 Nov 2026 by An Claes');
+    expect(html).toContain('4 of 10 needed EDA-Probes complete');
+    expect(html.match(/<i class="ed-(done|open|coming)"/g)).toHaveLength(10);
+    expect(html).toContain('<code>lead_source</code> is empty on 130 rows, though its role, grouped by, needs it on every row.');
+    expect(html).toContain('Basis<small class="ed-open">2 of 4 needed complete</small>');
+    expect(html).toContain('Coming<small>6 needed, which count already</small>');
+    expect(html).toContain(`data-open="${WEB}/eda/${RESOURCE_ID}"`);
+    expect(html).not.toContain('data-reading');
+    expect(html).not.toMatch(/<canvas|<svg class="chart/);
+  });
+
+  it('says a Resource without an EDA has none: starting one stays in Data Hub', async () => {
+    answers[`GET ${CATALOGUE}/resources/${RESOURCE_ID}`] = () => [200, detail({ level: 3 })];
+    answers[`GET ${CATALOGUE}/collections/c-1`] = () => [200, collection];
+    const token = await admin();
+    const read = await tool('get_eda', { id: RESOURCE_ID }, token);
+    expect(read.isError).toBeFalsy();
+    expect(read.content[0]?.text).toContain(`Weekly lead volume (3 · Confirmed) has no EDA yet. Starting it stays in Data Hub: the User starts it on the Maturity of the Resource: ${WEB}/resources/${RESOURCE_ID}/maturity`);
+    const shown = await tool('show_eda', { id: RESOURCE_ID }, token);
+    expect(shown.structuredContent).toMatchObject({ view: 'eda', mode: 'none', maturity: `${WEB}/resources/${RESOURCE_ID}/maturity` });
+    expect(draw(shown.structuredContent)).toContain('Open Maturity in Data Hub');
+    const run = await tool('run_eda_probe', { id: RESOURCE_ID, probe: 'grainHolds' }, token);
+    expect(run.structuredContent).toMatchObject({ mode: 'none' });
+    expect(posted()).toHaveLength(0);
+
+    // A Resource the User does not see is not found, without saying which.
+    answers = {};
+    const hidden = await tool('get_eda', { id: RESOURCE_ID }, token);
+    expect(hidden.isError).toBe(true);
+    expect(hidden.content[0]?.text).toContain('Data Hub found nothing you may see there');
+  });
+
+  it('runs an EDA-Probe as the User on what it is set on, and shows its result per field with the buttons of their reading (FR-ED-16)', async () => {
+    stub(edaView([grain, volume, nulls(130), distribution]));
+    answers[`POST ${EDA_PATH}/probes/nullsPerKeyField/runs`] = () => [200, { state: 'ran', eda: edaView([grain, volume, nulls(12), distribution]) }];
+    const token = await admin();
+    const ran = await tool('run_eda_probe', { id: RESOURCE_ID, probe: 'nullsPerKeyField' }, token);
+    // Run again, it keeps the fields it is set on, and it runs with the token of the User.
+    expect(asked.find((one) => one.method === 'POST')).toMatchObject({ authorization: `Bearer ${token}`, body: { fields: ['week_start', 'lead_source', 'lead_count', 'lead_channel'], approve: false } });
+    expect(ran.structuredContent).toMatchObject({ view: 'eda', mode: 'run', run: { probe: 'nullsPerKeyField', name: 'Nulls per Key Field', readingName: 'Look at this', reads: '300 KB', page: `${WEB}/eda/${RESOURCE_ID}/probes/nullsPerKeyField` } });
+    const rows = (ran.structuredContent?.run as { rows: { subject: string; cells: string[]; readingName: string; asks: boolean }[] }).rows;
+    expect(rows.map((row) => [row.subject, row.cells[0], row.readingName, row.asks])).toEqual([
+      ['week_start', '0', 'As expected', false],
+      ['lead_source', '12 · < 0.1%', 'Look at this', true],
+      ['lead_count', '0', 'As expected', false],
+      ['lead_channel', '1,947 · 12%', 'For you to judge', true],
+    ]);
+    const text = ran.content[0]?.text ?? '';
+    expect(text).toContain('Nulls per Key Field on Weekly lead volume (3 · Confirmed) ran and its result is shown to the User: Look at this. `lead_source` is empty on 12 rows');
+    expect(text).toContain('- `lead_source`: Look at this (its role, grouped by, needs it on every row). 12 of 16,224 rows empty (< 0.1%). No reading of the User yet.');
+    expect(text).toContain('Never give one yourself');
+
+    // The card: its conclusion, a row per field, and the reading only where there is something to read.
+    const html = draw(ran.structuredContent);
+    expect(html).toContain('Your reading of <code>lead_source</code>');
+    expect(html).toContain('data-reading="known" data-subject="lead_source" aria-pressed="false"');
+    expect(html).toContain('data-subject="lead_channel"');
+    expect(html).not.toContain('data-subject="week_start"');
+    expect(html).toContain('You give it here, or in Data Hub; Claude does not give it for you.');
+    expect(html).toContain(`data-open="${WEB}/eda/${RESOURCE_ID}/probes/nullsPerKeyField"`);
+
+    // Other fields named are what it runs on, without the parameters it kept.
+    asked = [];
+    await tool('run_eda_probe', { id: RESOURCE_ID, probe: 'nullsPerKeyField', fields: ['lead_channel'] }, token);
+    expect(posted()).toEqual([{ fields: ['lead_channel'], approve: false }]);
+  });
+
+  it('leaves a run above what runs freely to the User, who approves it in the frame; Claude cannot (FR-ED-16, DEC-ED-29)', async () => {
+    stub(edaView([grain, volume]));
+    answers[`POST ${EDA_PATH}/probes/volumeOverTime/runs`] = (body) =>
+      (body as { approve: boolean }).approve ? [200, { state: 'ran', eda: edaView([grain, volume]) }] : [200, { state: 'approve', bytes: 240_000_000 }];
+    const token = await admin();
+    const waiting = await tool('run_eda_probe', { id: RESOURCE_ID, probe: 'volumeOverTime', fields: ['week_start'] }, token);
+    expect(waiting.structuredContent).toMatchObject({
+      view: 'eda',
+      mode: 'approve',
+      approve: { probe: 'volumeOverTime', fields: ['week_start'], setOn: ['week_start'], reads: '240 MB', thresholds: { approve: 100_000_000, request: 1_000_000_000 }, free: '100 MB', large: '1 GB' },
+    });
+    expect(waiting.content[0]?.text).toContain('reads 240 MB, more than the 100 MB Data Hub runs freely');
+    expect(waiting.content[0]?.text).toContain('Only the User approves it, in the window; you cannot.');
+    const html = draw(waiting.structuredContent);
+    expect(html).toContain('data-act="approve-eda"');
+    expect(html).toContain('Approve and run · 240 MB');
+    expect(html).toContain('<span class="ed-gfill" style="width:24%"></span><span class="ed-mark" style="left:10%"></span>');
+    expect(html).toContain('you approve this run yourself; Claude cannot do it for you');
+
+    const approved = await tool('run_eda_probe_approved', { id: RESOURCE_ID, probe: 'volumeOverTime', fields: ['week_start'] }, token);
+    expect(posted()).toEqual([
+      { fields: ['week_start'], approve: false },
+      { fields: ['week_start'], approve: true },
+    ]);
+    expect(approved.structuredContent).toMatchObject({ mode: 'run', run: { probe: 'volumeOverTime', readingName: 'Look at this' } });
+    expect(approved.content[0]?.text).toContain('ran, approved by the User, and its result is shown to the User');
+  });
+
+  it('says why a run does not run, and what eda refuses, without trying another way', async () => {
+    stub(edaView([grain]));
+    const reason = 'It reads 2.4 GB, more than one run of yours may read (1 GB), so it does not run.';
+    answers[`POST ${EDA_PATH}/probes/distributionOfNumbers/runs`] = () => [200, { state: 'refused', bytes: 2_400_000_000, reason }];
+    const token = await admin();
+    const refused = await tool('run_eda_probe', { id: RESOURCE_ID, probe: 'distributionOfNumbers' }, token);
+    expect(refused.structuredContent).toMatchObject({ mode: 'refused', refused: { probe: 'distributionOfNumbers', reason, setOn: ['lead_count'] } });
+    expect(refused.content[0]?.text).toContain(`did not run: ${reason} Say so to the User, and do not try another way around it.`);
+    expect(draw(refused.structuredContent)).toContain('<b>It does not run.</b> ');
+
+    answers[`POST ${EDA_PATH}/probes/grainHolds/runs`] = () => [422, { error: 'cannot_run', message: 'The grain of this Resource is not recorded yet: the Data Team records its grain first (FR-ED-07).' }];
+    const blocked = await tool('run_eda_probe', { id: RESOURCE_ID, probe: 'grainHolds' }, token);
+    expect(blocked.isError).toBe(true);
+    expect(blocked.content[0]?.text).toContain('The grain of this Resource is not recorded yet');
+  });
+
+  it('keeps the reading the User gives with the buttons of the frame; Claude has no tool to give one (DEC-ED-29)', async () => {
+    const READINGS_PATH = `${EDA_PATH}/probes/nullsPerKeyField/readings`;
+    answers[`PUT ${READINGS_PATH}`] = () => [200, edaView([grain, nulls(130, { reading: 'known', by: AN, at: '2026-11-21T10:00:00.000Z' })])];
+    answers[`GET ${CATALOGUE}/collections/c-1`] = () => [200, collection];
+    const token = await admin();
+    const given = await tool('give_eda_reading', { id: RESOURCE_ID, probe: 'nullsPerKeyField', subject: 'lead_source', reading: 'known' }, token);
+    expect(asked.find((one) => one.method === 'PUT')).toMatchObject({ url: READINGS_PATH, authorization: `Bearer ${token}`, body: { subject: 'lead_source', reading: 'known' } });
+    expect(given.content[0]?.text).toContain("The User's reading of `lead_source` in Nulls per Key Field is kept in Data Hub: Known.");
+    const rows = (given.structuredContent?.run as { rows: { subject: string; yours: unknown }[] }).rows;
+    expect(rows.find((row) => row.subject === 'lead_source')?.yours).toEqual({ reading: 'known', readingName: 'Known', by: 'An Claes', at: '2026-11-21T10:00:00.000Z' });
+    const html = draw(given.structuredContent);
+    expect(html).toContain('<button class="quiet on" type="button" data-reading="known" data-subject="lead_source" aria-pressed="true">');
+    expect(html).toContain('Read by An Claes on 21 Nov 2026');
+
+    // A result that is not there is said in the words of eda.
+    answers[`PUT ${READINGS_PATH}`] = () => [404, { error: 'not_found', message: 'This EDA-Probe has no result for lead_x to read.' }];
+    const none = await tool('give_eda_reading', { id: RESOURCE_ID, probe: 'nullsPerKeyField', subject: 'lead_x', reading: 'problem' }, token);
+    expect(none.isError).toBe(true);
+    expect(none.content[0]?.text).toBe('This EDA-Probe has no result for lead_x to read.');
+
+    // show_eda with an EDA-Probe shows its last result with the buttons, without running it again.
+    stub(edaView([grain, nulls(130)]));
+    asked = [];
+    const again = await tool('show_eda', { id: RESOURCE_ID, probe: 'nullsPerKeyField' }, token);
+    expect(again.structuredContent).toMatchObject({ view: 'eda', mode: 'run', run: { probe: 'nullsPerKeyField' } });
+    expect(again.content[0]?.text).toContain('The last result of Nulls per Key Field on Weekly lead volume (3 · Confirmed) is shown to the User, with the buttons of their reading');
+    expect(posted()).toHaveLength(0);
+  });
+
+  it('draws the EDA as a kind of its own in the one page, and passes the buttons of the User to the tools only it calls', () => {
+    expect(VIEW_PAGE).toContain("else if (view.view === 'eda') renderEda(view);");
+    expect(VIEW_PAGE).toContain("call('give_eda_reading', { id: view.resource.id, probe: view.run.probe, subject, reading: target.dataset.reading }");
+    expect(VIEW_PAGE).toContain("call('run_eda_probe_approved', { id: view.resource.id, probe: a.probe");
   });
 });

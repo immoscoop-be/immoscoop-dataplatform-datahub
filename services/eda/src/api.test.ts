@@ -248,13 +248,19 @@ describe.skipIf(!url)('the routes of eda (TR-ED-01)', () => {
     expect(volume).toMatchObject({ fields: ['week_start', 'loaded_at'], params: { measure: null }, complete: true });
     expect(volume?.lastRun?.results.map((result) => result.subject)).toEqual(['week_start', 'loaded_at']);
 
-    const again = (await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'volumeOverTime'))).json<RunAnswer>();
+    // Without fields or parameters, it runs again as it is set (FR-ED-06), as Claude asks it (FR-ED-16).
+    const same = (await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'volumeOverTime'))).json<RunAnswer>();
+    expect(asked.at(-1)?.run.sql).not.toContain('measure_sum');
+    const kept = same.state === 'ran' ? same.eda.probes.find((probe) => probe.key === 'volumeOverTime') : undefined;
+    expect(kept).toMatchObject({ fields: ['week_start', 'loaded_at'], params: { measure: null } });
+
+    const again = (await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'volumeOverTime'), { fields: ['week_start'], params: {} })).json<RunAnswer>();
     const rerun = again.state === 'ran' ? again.eda.probes.find((probe) => probe.key === 'volumeOverTime') : undefined;
     expect(rerun).toMatchObject({ fields: ['week_start'], params: {} });
     expect(rerun?.lastRun?.results).toEqual([
       expect.objectContaining({ subject: 'week_start', reading: 'expected', data: expect.objectContaining({ unit: 'week', measure: 'lead_count', current: '2026-11-16', empty: [] }) }),
     ]);
-    expect(await database.db.selectFrom('edaRuns').select('probe').where('probe', '=', 'volumeOverTime').execute()).toHaveLength(2);
+    expect(await database.db.selectFrom('edaRuns').select('probe').where('probe', '=', 'volumeOverTime').execute()).toHaveLength(3);
   });
 
   it('says what does not fit, and what cannot run here', async () => {

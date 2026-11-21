@@ -239,7 +239,7 @@ Starting an EDA opens its guide: the [Flow Box](../../design/principles.md#flow-
 <a id="fr-ed-15"></a>
 ### FR-ED-15 · Claude shows the EDA of a Resource
 
-**Status:** Specified · **Source:** Max, 2026-11-21 ([DEC-ED-29](#dec-ed-29)) · **Screens:** [mcp-eda](../../design/screens/mcp-eda.html)
+**Status:** Implemented · **Source:** Max, 2026-11-21 ([DEC-ED-29](#dec-ed-29)) · **Screens:** [mcp-eda](../../design/screens/mcp-eda.html)
 
 For a User with Explore Resources, Claude reads the EDA of a Resource (`get_eda`) and shows it as an MCP App (`show_eda`): the Resource, the status of its EDA, its Level and how many needed EDA-Probes are complete, with the bar of the EDA-Setup; then how many results Data Hub reads as look at this or for you to judge, and whether the User read them; then per EDA-Step each EDA-Probe added, with its reading, its result in a sentence and what it is set on; and the needed ones Coming, named once. The charts stay in Data Hub, where Open in Data Hub leads. Without Explore Resources Claude has no EDA tools ([DEC-ED-25](#dec-ed-25)).
 
@@ -248,7 +248,7 @@ For a User with Explore Resources, Claude reads the EDA of a Resource (`get_eda`
 <a id="fr-ed-16"></a>
 ### FR-ED-16 · Claude runs an EDA-Probe as the User
 
-**Status:** Specified · **Source:** Max, 2026-11-21 ([DEC-ED-29](#dec-ed-29)) · **Screens:** [mcp-eda](../../design/screens/mcp-eda.html)
+**Status:** Implemented · **Source:** Max, 2026-11-21 ([DEC-ED-29](#dec-ed-29)) · **Screens:** [mcp-eda](../../design/screens/mcp-eda.html)
 
 Claude runs an EDA-Probe Data Hub runs (`run_eda_probe`), on the fields it is set on or those the User names, through the same service as the web app and as the User ([FR-ED-06](#fr-ed-06)). Within what runs freely it runs, the EDA-Probe is added when it was not, and the frame shows its conclusion and its result per field. From there up to what the User may approve, the frame asks the User to approve it, which Claude cannot do; above that it does not run. The User gives the reading of a result with the buttons in the frame, or in Data Hub; Claude never gives it. Starting an EDA stays in Data Hub.
 

@@ -16,15 +16,15 @@ export interface Context {
   environment?: string;
 }
 
-/** The MCP App of Data Hub, one page that shows a Resource, a Preview, a publication or the result of a query (FR-CL-01). */
+/** The MCP App of Data Hub, one page that shows a Resource, a Preview, a publication, the result of a query or an EDA (FR-CL-01). */
 export const VIEW_URI = 'ui://datahub/view.html';
 
 /** A show tool: its result opens the MCP App in the conversation (FR-CL-01). */
 export const SHOWS = { ui: { resourceUri: VIEW_URI } };
 
 /**
- * A tool only the MCP App calls, never Claude: the buttons of the User to approve a run, send a Request and
- * publish (DEC-CL-07), and the rows of a result shown in a card only (FR-CL-28).
+ * A tool only the MCP App calls, never Claude: the buttons of the User to approve a run, send a Request, publish
+ * (DEC-CL-07) and read a result of the EDA (DEC-ED-29), and the rows of a result shown in a card only (FR-CL-28).
  */
 export const APP_ONLY = { ui: { resourceUri: VIEW_URI, visibility: ['app'] } };
 

@@ -189,7 +189,14 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       if (!source) return reply.code(404).send(NO_RESOURCE);
       const eda = await edas.ofResource(source.resource.id);
       if (!eda) return reply.code(404).send(NO_EDA);
-      const setting = settingOf(probe, source, asked);
+      // Without fields or parameters, an EDA-Probe added before runs again as it is set: on its own fields and
+      // parameters, not those it would start from (FR-ED-06).
+      let given: { fields?: string[]; params?: Record<string, unknown> } = asked;
+      if (asked.fields === undefined && asked.params === undefined) {
+        const kept = (await edas.state(eda.id)).probes.find((one) => one.probe === probe);
+        if (kept) given = { fields: kept.fields, params: kept.params };
+      }
+      const setting = settingOf(probe, source, given);
       if ('problem' in setting) {
         return reply.code(setting.problem === 'invalid' ? 400 : 422).send({ error: setting.problem === 'invalid' ? 'invalid_request' : 'cannot_run', message: setting.message });
       }
