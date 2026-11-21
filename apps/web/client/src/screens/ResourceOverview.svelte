@@ -96,7 +96,7 @@
       remove: (gap: KnownGap) => Promise<boolean>;
     };
     /** Says there is nothing to add to its pitfalls or Known Gaps (DEC-MR-16); answers whether it worked. */
-    nothing?: (step: 'pitfalls' | 'gaps') => Promise<boolean>;
+    nothing?: (step: 'pitfalls') => Promise<boolean>;
     /** Opens the tab Columns, from its Summary. */
     oncolumns: () => void;
     /** Opens its publication, for its Owner while it is not published; from Maturity. */
@@ -141,7 +141,7 @@
   const EDITS: Record<Editable, readonly DescribeAttribute[]> = { description: ['description'], behaviour: ['behaviour', 'pitfalls'], querying: ['keyFields'] };
   const mayEdit = (which: Editable) => EDITS[which].some((attribute) => describes(attribute));
   /** Who said there is nothing to add to a step, and when, from the journey of the Resource (DEC-MR-16). */
-  const saidNothing = (step: 'pitfalls' | 'gaps') => resource.journey?.steps.find((one) => one.id === step)?.records.find((record) => record.answer === 'nothing');
+  const saidNothing = (step: 'pitfalls') => resource.journey?.steps.find((one) => one.id === step)?.records.find((record) => record.answer === 'nothing');
 
   let editing: Editable | null = $state(null);
   // Another Resource opens on its Summary: the page sets the part, and what was being edited goes.
@@ -173,18 +173,17 @@
   $effect(() => {
     if (flowBox.aim?.resource !== resource.id) return;
     untrack(() => {
-      const step = flowBox.take(resource.id, ['businessDescription', 'keyFields', 'intendedUse', 'pitfalls', 'since', 'gaps']);
+      const step = flowBox.take(resource.id, ['businessDescription', 'keyFields', 'intendedUse', 'pitfalls', 'since']);
       if (step) void aimAt(step);
     });
   });
-  async function aimAt(step: 'businessDescription' | 'keyFields' | 'intendedUse' | 'pitfalls' | 'since' | 'gaps'): Promise<void> {
+  async function aimAt(step: 'businessDescription' | 'keyFields' | 'intendedUse' | 'pitfalls' | 'since'): Promise<void> {
     const fields = { businessDescription: ['description', '#business-description'], keyFields: ['querying', 'select[data-pick="keyFields"]'], intendedUse: ['behaviour', '#intended-use'], pitfalls: ['behaviour', '#pitfalls'] } as const;
-    if (step === 'since' || step === 'gaps') {
+    if (step === 'since') {
       open('gaps');
-      if (step === 'gaps' && describes('gaps')) addingGap = true;
       await tick();
-      const place = step === 'since' ? document.getElementById('reliable-since') : document.querySelector('.adding textarea');
-      if (step === 'since') place?.querySelector<HTMLElement>('input, select, textarea, button')?.focus();
+      const place = document.getElementById('reliable-since');
+      place?.querySelector<HTMLElement>('input, select, textarea, button')?.focus();
       markPlace(place);
       return;
     }
@@ -475,8 +474,6 @@
         onadd={gaps.add}
         onchange={gaps.change}
         onremove={gaps.remove}
-        none={saidNothing('gaps') ?? null}
-        onnothing={nothing && !resource.published ? () => nothing('gaps') : undefined}
       />
     {:else if part === 'querying'}
       {@render head(t('overview.querying'), t('overview.querying.lead'), 'querying')}

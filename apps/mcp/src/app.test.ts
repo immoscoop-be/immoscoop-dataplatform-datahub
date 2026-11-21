@@ -374,7 +374,7 @@ describe('Resources through Claude', () => {
     const guided = await tool('guide_owner_journey', { id: RESOURCE_ID }, owner);
     expect(guided.structuredContent).toMatchObject({
       ready: false,
-      open: ['businessDescription', 'keyFields', 'fields', 'pitfalls', 'since', 'gaps'],
+      open: ['businessDescription', 'keyFields', 'fields', 'pitfalls', 'since'],
       you: { mayPublish: true, mayDescribe: true },
       next: { number: 2, step: 'businessDescription', mark: 'required to publish', writes: 'update_resource_card' },
     });
@@ -391,15 +391,17 @@ describe('Resources through Claude', () => {
     // The window keeps the overview at hand, the definitions of the terms of the step behind the ⓘ after its title, and
     // links to its spot (FR-CL-33, FR-LR-44, DEC-CL-19).
     const shown = guided.structuredContent as { window: { overview: { steps: { number: number; state: string; mark: string; says: string }[]; done: number; open: number }; terms: { name: string; definition: string }[]; link: { url: string; label: string } } };
-    expect(shown.window.overview.open).toBe(6);
+    expect(shown.window.overview.open).toBe(5);
     expect(shown.window.overview.steps.find((step) => step.number === 1)).toMatchObject({ state: 'done', says: 'Done' });
+    // The Known Gaps are optional now (DEC-MR-21).
+    expect(shown.window.overview.steps.find((step) => step.number === 8)).toMatchObject({ mark: 'Optional' });
     expect(shown.window.overview.steps.find((step) => step.number === 2)).toMatchObject({ state: 'now', mark: 'Required' });
     expect(shown.window.overview.steps.find((step) => step.number === 10)).toMatchObject({ state: 'optional', mark: 'Optional' });
     expect(shown.window.terms).toEqual([{ name: 'Business Description', definition: expect.stringContaining('the description from dbt, which says how the data is made') }]);
     expect(shown.window).not.toHaveProperty('purpose');
     expect(shown.window.link).toEqual({ url: `${WEB}/resources/${RESOURCE_ID}/description`, label: 'Open the Description in Data Hub' });
     expect(guided.content[0]?.text).toContain('Step 2 of 12 is next: Business Description, required to publish.');
-    expect(guided.content[0]?.text).toContain('Still open before it can be published: Business Description, Key Fields, Fields, Pitfalls, Reliable since, Known Gaps.');
+    expect(guided.content[0]?.text).toContain('Still open before it can be published: Business Description, Key Fields, Fields, Pitfalls, Reliable since.');
 
     // The publication shows what is open, and sends Claude back to the journey: no declaration to tick yet (DEC-MR-15).
     const publish = await tool('publish_resource', { id: RESOURCE_ID }, owner);
@@ -498,7 +500,7 @@ describe('Resources through Claude', () => {
     const data = guided.structuredContent as { next: { number: number; step: string; writes: string; ask: string }; open: string[]; window: { held: { label: string; text?: string; chips?: string[]; none?: string }[]; link: { label: string; url: string }; total: number } };
     expect(data.next).toMatchObject({ number: 7, step: 'since', writes: 'update_resource_card' });
     expect(data.next.ask).toContain('Never choose one for the Owner');
-    expect(data.open).toEqual(['since', 'gaps']);
+    expect(data.open).toEqual(['since']);
     expect(data.window.total).toBe(12);
     expect(data.window.held).toEqual([
       { label: 'Reliable since', text: undefined, none: expect.stringContaining('neither from its first row nor from a later day') },
