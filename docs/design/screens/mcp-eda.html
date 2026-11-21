@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<!--
+  Screen: the EDA of a Resource in Claude, as an MCP App, designed on 2026-11-21 at the request of Max (DEC-ED-29,
+  DEC-UX-329). A conversation in Claude, drawn plainly: a Data Admin asks how far the EDA of a Resource is, and Claude
+  answers with show_eda from the MCP server of Data Hub.
+  The frame holds the head of the EDA: the Resource, its status In progress or Explored, its Level, and how many needed
+  EDA-Probes are complete, with the bar of the EDA-Setup. Then what needs attention first: the results Data Hub reads as
+  Look at this, then those for you to judge. Then the EDA-Steps in their order, each EDA-Probe added with its reading and
+  its result in a sentence, as on its card in Data Hub (DEC-UX-322); the needed ones Data Hub does not run yet are named
+  once, as Coming, and still count (DEC-ED-27). The charts stay in Data Hub: the frame gives the result in words and
+  numbers, and "Open in Data Hub" leads to the detail of an EDA-Probe.
+  run_eda_probe runs an EDA-Probe through Data Hub as the User, as the EDA does (TR-ED-04): within what runs freely it
+  runs, and the frame shows that EDA-Probe, its conclusion and its result per field, and the reading of the User, given
+  with the buttons in the frame, never by Claude (?e=run). From 100 MB to what the User may approve, the frame asks the
+  User to approve it, as for a query: Claude cannot (?e=approve). Above it, Claude says so; a Request comes later.
+  Who: a User with Explore Resources (eda.use); without it, Claude has no EDA tools (DEC-ED-25).
+  No rail, no panel: an MCP App has no navigation of its own and carries "Open in Data Hub" at its foot (FR-CL-06).
+  Switches: ?e=eda (the default), show_eda; ?e=run, run_eda_probe on Nulls per Key Field; ?e=approve, Volume over time
+  reading more than runs freely.
+  Requirements: FR-ED-15, FR-ED-16
+  Decisions: DEC-ED-25, DEC-ED-27, DEC-ED-29, DEC-UX-322, DEC-UX-325, DEC-UX-329, DEC-CL-02.
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="datateam">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — The EDA of a Resource in Claude</title>
+<style>
+ .me-bar { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 3px; margin: 2px 0 0; }
+ .me-bar span { height: 5px; border-radius: 3px; background: var(--tint-active); }
+ .me-bar span.done { background: var(--col-teal); }
+ .me-bar span.coming { background: repeating-linear-gradient(135deg, var(--tint-active) 0 3px, transparent 3px 5px); }
+ .me-sum { display: grid; gap: 4px; margin: 0; font-size: var(--text-small); line-height: 1.5; }
+ .me-sec { margin-top: 14px; }
+ .me-sec > h3 { display: flex; align-items: baseline; gap: 8px; margin: 0 0 6px; font-size: var(--text-small); font-weight: var(--weight-medium); }
+ .me-sec > h3 small { font-size: var(--text-meta); font-weight: var(--weight-regular); color: var(--signal-warn); }
+ .me-sec > h3 small.none { color: var(--text-muted); }
+ .me-probe { display: grid; grid-template-columns: 18px 1fr; gap: 8px; padding: 8px 10px; border-radius: var(--radius-md); background: var(--card); }
+ .me-probe + .me-probe { margin-top: 6px; }
+ .me-probe > i { margin-top: 2px; font-size: 16px; }
+ .me-probe b { font-size: var(--text-small); font-weight: var(--weight-medium); }
+ .me-probe p { margin: 2px 0 0; font-size: var(--text-small); line-height: 1.5; color: var(--text-primary); }
+ .me-probe .meta { display: block; margin-top: 3px; }
+ .me-tone { font-size: 10.5px; font-weight: var(--weight-medium); margin-left: 6px; }
+ .me-tone.look, .me-probe .look { color: var(--signal-warn); } .me-tone.expected, .me-probe .expected { color: var(--col-teal-ink); } .me-tone.judge, .me-probe .judge { color: var(--col-slate); }
+ .me-coming { display: flex; gap: 8px; align-items: baseline; margin-top: 6px; padding: 0 10px; font-size: var(--text-meta); color: var(--text-muted); line-height: 1.5; }
+ .me-att { display: grid; gap: 6px; margin: 12px 0 0; padding: 10px 12px; border-radius: var(--radius-md); background: color-mix(in srgb, var(--signal-warn) 8%, var(--card)); font-size: var(--text-small); line-height: 1.5; }
+ .me-att b { font-weight: var(--weight-medium); }
+ .me-rows { width: 100%; margin-top: 8px; border-collapse: collapse; font-size: var(--text-small); }
+ .me-rows th { text-align: left; font-size: var(--text-meta); font-weight: var(--weight-regular); color: var(--text-muted); padding: 4px 8px; }
+ .me-rows td { padding: 7px 8px; border-top: 1px solid var(--tint-hover); vertical-align: top; }
+ .me-rows td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+ .me-fill { display: inline-block; width: 90px; height: 6px; border-radius: 3px; background: var(--col-teal); vertical-align: middle; position: relative; overflow: hidden; }
+ .me-fill i { position: absolute; top: 0; right: 0; bottom: 0; background: repeating-linear-gradient(135deg, var(--signal-warn) 0 2px, transparent 2px 4px); }
+ .me-read { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--tint-hover); font-size: var(--text-meta); color: var(--text-muted); }
+</style>
+</head>
+<body class="mcp-demo">
+<div class="mcp-page">
+ <p class="mcp-caption"><i class="ph ph-info" aria-hidden="true"></i>Prototype: how Claude shows the EDA of a Resource, as an MCP App. Only the part inside the frame comes from Data Hub.</p>
+
+ <div class="mcp-msg user" data-pane-group="e" data-pane="eda">How far is the EDA of Weekly lead volume? Anything I should look at?</div>
+ <div class="mcp-msg user" data-pane-group="e" data-pane="run" hidden>Run the nulls again, I think lead_source got fixed yesterday.</div>
+ <div class="mcp-msg user" data-pane-group="e" data-pane="approve" hidden>Can you run the volume over time on loaded_at too?</div>
+ <div class="mcp-tool" data-pane-group="e" data-pane="eda"><i class="ph ph-plugs-connected" aria-hidden="true"></i>Data Hub · <span class="mono">show_eda</span></div>
+ <div class="mcp-tool" data-pane-group="e" data-pane="run approve" hidden><i class="ph ph-plugs-connected" aria-hidden="true"></i>Data Hub · <span class="mono">run_eda_probe</span></div>
+
+ <section class="mcp-app" aria-label="The EDA of Weekly lead volume, from Data Hub">
+  <div class="mcp-app-head"><i class="ph-fill ph-binoculars" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">EDA · <i class="ph ph-coins" aria-hidden="true" style="vertical-align:-2px;margin-right:3px"></i>Credit leads</span><div class="float-title">Weekly lead volume</div><span class="meta">Its EDA, started on 21 Nov 2026 by An Claes</span></div></div>
+  <div class="status-row">
+   <span class="tone" data-tone="warmup-chip"><i class="ph ph-hourglass-medium"></i>In progress</span>
+   <span class="status"><span class="maturity" data-level="3" data-no-tooltip></span>3 · Confirmed</span>
+   <span class="status"><i class="ph-fill ph-check-circle"></i>4 of 10 needed EDA-Probes complete</span>
+  </div>
+  <div class="me-bar" aria-hidden="true"><span class="done"></span><span class="coming"></span><span class="coming"></span><span class="done"></span><span class="done"></span><span class="coming"></span><span class="done"></span><span class="coming"></span><span class="coming"></span><span class="coming"></span></div>
+
+  <!-- show_eda: the whole EDA -->
+  <div data-pane-group="e" data-pane="eda">
+   <div class="me-att" role="status">
+    <span><i class="ph-fill ph-warning-circle" style="color:var(--signal-warn)" aria-hidden="true"></i> <b>2 results to look at</b>, 1 for you to judge. No reading of yours yet.</span>
+   </div>
+   <div class="me-sec"><h3>Basis <small>2 of 4 needed complete</small></h3>
+    <div class="me-probe"><i class="ph-fill ph-check-circle expected" aria-hidden="true"></i><div><b>The grain holds</b><span class="me-tone expected">As expected</span><p>One row per week and lead source: none twice in 16,224 rows.</p><span class="meta">Set on week_start, lead_source · 21 Nov</span></div></div>
+    <div class="me-probe"><i class="ph-fill ph-warning-circle look" aria-hidden="true"></i><div><b>Volume over time, with empty periods</b><span class="me-tone look">Look at this</span><p>2 weeks have no rows at all, from 8 Sept 2025, between weeks of about 2,061 leads.</p><span class="meta">Set on week_start · 21 Nov</span></div></div>
+   </div>
+   <div class="me-sec"><h3>Gaps <small>1 of 2 needed complete</small></h3>
+    <div class="me-probe"><i class="ph-fill ph-warning-circle look" aria-hidden="true"></i><div><b>Nulls per Key Field</b><span class="me-tone look">Look at this</span><p><span class="mono">lead_source</span> is empty on 130 rows, though its role needs it on every row; <span class="mono">lead_channel</span> on 12% of rows.</p><span class="meta">Set on the 4 Key Fields · 21 Nov</span></div></div>
+   </div>
+   <div class="me-sec"><h3>Weight <small>1 of 3 needed complete</small></h3>
+    <div class="me-probe"><i class="ph-fill ph-question look judge" aria-hidden="true"></i><div><b>Distribution of numbers</b><span class="me-tone judge">For you to judge</span><p>Most rows bring little, a few bring much: the median of <span class="mono">lead_count</span> is 25, the mean 38.</p><span class="meta">Set on lead_count · 21 Nov</span></div></div>
+   </div>
+   <div class="me-sec"><h3>Coming <small class="none">6 needed, which count already</small></h3></div>
+   <p class="me-coming"><i class="ph ph-hourglass-medium" aria-hidden="true"></i><span>Row count and Date range in Basis, Disguised nulls in Gaps, Distribution of categories and Spread in Weight, Impossible values in Correctness. Data Hub does not run them yet.</span></p>
+  </div>
+
+  <!-- run_eda_probe: within what runs freely -->
+  <div data-pane-group="e" data-pane="run" hidden>
+   <div class="me-sec"><h3>Nulls per Key Field <small class="none">ran just now · read 0.3 MB</small></h3>
+    <p style="margin:0;font-size:var(--text-body);line-height:1.5"><span class="me-tone look" style="margin:0 6px 0 0">Look at this</span><span class="mono">lead_source</span> is empty on 12 rows now, all in the current week; <span class="mono">lead_channel</span> still on 12% of rows.</p>
+    <table class="me-rows"><thead><tr><th>Field</th><th>Filled and empty</th><th class="num">Empty</th><th>Data Hub</th></tr></thead><tbody>
+     <tr><td class="mono">week_start</td><td><span class="me-fill"></span></td><td class="num">0</td><td class="expected" style="color:var(--col-teal-ink)">As expected</td></tr>
+     <tr><td class="mono">lead_source</td><td><span class="me-fill"><i style="width:2%"></i></span></td><td class="num">12 · 0.1%</td><td style="color:var(--signal-warn)">Look at this: its role needs it</td></tr>
+     <tr><td class="mono">lead_count</td><td><span class="me-fill"></span></td><td class="num">0</td><td style="color:var(--col-teal-ink)">As expected</td></tr>
+     <tr><td class="mono">lead_channel</td><td><span class="me-fill"><i style="width:12%"></i></span></td><td class="num">1,947 · 12%</td><td style="color:var(--col-slate)">For you to judge</td></tr>
+    </tbody></table>
+    <div class="me-read"><span>Your reading of <span class="mono">lead_source</span></span>
+     <button class="btn-quiet outline sm" type="button"><i class="ph ph-check" aria-hidden="true"></i>Expected</button>
+     <button class="btn-quiet outline sm" type="button"><i class="ph ph-bookmark-simple" aria-hidden="true"></i>Known</button>
+     <button class="btn-quiet outline sm" type="button"><i class="ph ph-flag" aria-hidden="true"></i>A problem</button>
+     <span style="flex-basis:100%">You give it here, or in Data Hub; Claude does not give it for you.</span>
+    </div>
+   </div>
+  </div>
+
+  <!-- run_eda_probe: from 100 MB, the User approves it -->
+  <div data-pane-group="e" data-pane="approve" hidden>
+   <div class="me-sec"><h3>Volume over time, with empty periods <small class="none">on week_start and loaded_at</small></h3>
+    <div class="sub-tile" style="margin-top:4px">
+     <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <span class="run-gauge" aria-hidden="true" style="flex:1;min-width:200px"><span class="gauge"><span class="gauge-fill" style="width:24%"></span><span class="gauge-mark" style="left:10%"></span><span class="gauge-mark" style="left:100%"></span></span><span class="gauge-legend"><span>0</span><span style="left:10%">100 MB</span><span style="left:100%">1 GB</span></span></span>
+      <button class="btn-primary run-btn high" type="button"><i class="ph-fill ph-play" style="font-size:14px"></i>Approve and run<span class="run-gb">240 MB</span></button>
+     </div>
+     <p class="meta" style="display:block;line-height:1.5;margin:12px 0 0"><b style="font-weight:500;color:var(--text-primary)">240 MB at most, above 100 MB:</b> you approve this run yourself; Claude cannot do it for you. It reads <span class="mono">week_start</span> and <span class="mono">loaded_at</span> over the whole history of Weekly lead volume, and returns counts per period only.</p>
+    </div>
+   </div>
+  </div>
+
+  <div class="mcp-app-foot"><span><i class="ph ph-user" aria-hidden="true"></i> As you see it in Data Hub</span><a class="text-link open-dh" href="eda.html?state=progress"><span>Open in Data Hub</span><i class="ph ph-arrow-square-out"></i></a></div>
+ </section>
+
+ <div class="mcp-msg" data-pane-group="e" data-pane="eda">
+  <p>The EDA of Weekly lead volume is <b>in progress</b>: 4 of the 10 EDA-Probes an aggregate needs are complete, so it stays at <b>3 · Confirmed</b>. The other 6 are not run by Data Hub yet; they still count.</p>
+  <p>Two results are worth a look:</p>
+  <ul><li><b>Two weeks without any row</b>, from 8 September 2025. That is almost always a load that failed, not a quiet period.</li><li><b><span class="mono">lead_source</span> is empty on 130 rows</b>, while every row should have one.</li></ul>
+  <p>Shall I run the nulls again, or look at the rows of those two weeks in a query?</p>
+ </div>
+ <div class="mcp-msg" data-pane-group="e" data-pane="run" hidden>
+  <p>Better: <span class="mono">lead_source</span> is now empty on <b>12 rows</b>, down from 130, and all of them in the current week, which is not complete yet. That looks like the fix worked, and the rest is the week still coming in.</p>
+  <p>Give your reading in the frame when you agree; I don't record it for you.</p>
+ </div>
+ <div class="mcp-msg" data-pane-group="e" data-pane="approve" hidden>
+  <p>With <span class="mono">loaded_at</span> beside <span class="mono">week_start</span> it reads about <b>240 MB</b>, more than the 100 MB Data Hub runs freely. Approve it in the window above; I can't do that for you.</p>
+ </div>
+</div>
+<div class="proto-switch" data-group="e" role="tablist" aria-label="Prototype: what Claude did">Claude
+ <button class="seg on" data-target="eda" role="tab" aria-selected="true">show_eda</button>
+ <button class="seg" data-target="run" role="tab" aria-selected="false">run_eda_probe</button>
+ <button class="seg" data-target="approve" role="tab" aria-selected="false">To approve</button>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

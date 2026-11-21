@@ -45,6 +45,9 @@ The EDA is a function of Data Hub that lets business explore a Resource. The Res
 - <a id="dec-ed-24"></a>**DEC-ED-24** · Distribution of numbers is set on the numbers among the Key Fields, which it needs, and any other number the Owner adds, each with its own result. Data Hub chooses a round width for its bins, about twelve of them, and puts everything from about P95 in one open bin, the tail; the Owner may change both. Its result names the shape in a sentence, draws the rows per bin with the middle half from P25 to P75, the median and the mean, and gives the lowest, P25, median, P75, highest and mean. Data Hub reads every distribution as for you to judge, as a shape is neither right nor wrong. How far values lie from the average is left to Spread, values far from the rest to Outliers, and the value that comes most to The mode. *Decided on 2026-11-21, by Max.*
 - <a id="dec-ed-25"></a>**DEC-ED-25** · The EDA is a Permission of its own, Explore Resources (`eda.use`), and only Admin has it to start: the Data Admins try the EDA before business works with it. With it a User sees the section EDA and works on the EDA of any Resource they see at 3 · Confirmed or above; without it they see neither, and the Levels as before. Who else gets it, the Owners among them, follows when it is opened up. *Decided on 2026-11-21, by Max.*
 - <a id="dec-ed-26"></a>**DEC-ED-26** · The EDA is built now, before version 2, in a service of its own, `eda`, with its own schema. It reads no data itself: query runs the queries of its EDA-Probes, as the User who runs them, so that the Pre-flight and the Query Log apply as to every query ([DEC-SR-32](04-stacks-and-resources.md#dec-sr-32)). catalogue only hears whether the EDA-Setup of a Resource is complete. *Decided on 2026-11-21, by Max.*
+- <a id="dec-ed-27"></a>**DEC-ED-27** · While Data Hub does not run every needed EDA-Probe yet, those it does not run still count: they show as Coming, and no Resource reaches 4 · Explored before its model type can be explored in full. Explored keeps its meaning ([DEC-ED-12](#dec-ed-12)). *Decided on 2026-11-21, by Max ([OP-ED-09](#op-ed-09)).*
+- <a id="dec-ed-28"></a>**DEC-ED-28** · Impossible values never invents a highest number or a first date: Data Hub proposes only the rules it knows from the type and the role of a field, such as a count that is not negative or a week that starts on a Monday; a highest number or a first date only the Owner gives. *Decided on 2026-11-21, by Max ([OP-UX-119](../../design/principles.md#op-ux-119)).*
+- <a id="dec-ed-29"></a>**DEC-ED-29** · The EDA comes to Claude now, for a User with Explore Resources: Claude shows the EDA of a Resource, with what to look at first, and runs an EDA-Probe as the User, through Data Hub, as the web app does. What reads more than runs freely, the User approves in the frame Claude shows; the reading of a result is always the User's, given in the frame or in Data Hub, never by Claude. *Decided on 2026-11-21, by Max.*
 
 ## Terms
 
@@ -105,7 +108,7 @@ What each EDA-Probe reads, and per model type whether it is Must (M), Should (S)
 
 ## Requirements
 
-The first build ([DEC-ED-26](#dec-ed-26)) holds the section EDA, the start of an EDA, its tab Steps, the detail of an EDA-Probe, and four EDA-Probes: The grain holds, Nulls per Key Field, Volume over time, with empty periods, and Distribution of numbers. The list of EDA-Probes ([OP-UX-119](../../design/principles.md#op-ux-119)), the tabs Overview and Profile, the EDA-Rerun ([OP-ED-05](#op-ed-05)) and Claude come later.
+The first build ([DEC-ED-26](#dec-ed-26)) holds the section EDA, the start of an EDA, its tab Steps, the detail of an EDA-Probe, and four EDA-Probes: The grain holds, Nulls per Key Field, Volume over time, with empty periods, and Distribution of numbers. The tabs Overview and Profile and the EDA-Rerun ([OP-ED-05](#op-ed-05)) come later. The list to add an EDA-Probe, the guide of an EDA in the Flow Box, and the EDA in Claude follow it ([FR-ED-13](#fr-ed-13) to [FR-ED-16](#fr-ed-16)).
 
 <a id="fr-ed-01"></a>
 ### FR-ED-01 · Only who may explore Resources works on an EDA
@@ -137,9 +140,9 @@ The section EDA stands in the rail after Charts, with the binoculars icon, for a
 <a id="fr-ed-04"></a>
 ### FR-ED-04 · The tab Steps shows the EDA-Setup per EDA-Step and its state
 
-**Status:** Implemented · **Source:** Max, 2026-11-21 ([DEC-ED-16](#dec-ed-16)) · **Screens:** [eda](../../design/screens/eda.html)
+**Status:** Specified · **Source:** Max, 2026-11-21 ([DEC-ED-16](#dec-ed-16)) · **Screens:** [eda](../../design/screens/eda.html)
 
-The page of an EDA has the tabs Overview, Steps and Profile; Overview, filled in later, and Profile, greyed while the EDA-Setup is not complete, say what will come there ([DEC-UX-321](../../design/principles.md#dec-ux-321)). Steps shows on the left a row per EDA-Step ([DEC-ED-11](#dec-ed-11)), each with how many of its needed EDA-Probes are complete, a card per EDA-Probe added, with its result in a sentence, Data Hub's reading and the fields it is set on, and, while the EDA-Step has EDA-Probes Data Hub can run that are not added yet, one empty tile, Add probe. Until the list of EDA-Probes is designed ([OP-UX-119](../../design/principles.md#op-ux-119)), the tile opens the detail of the first such EDA-Probe of its EDA-Step, needed ones first. On the right: the needed EDA-Probes complete, as a number and a bar; what the EDA covers in its four places; the best next step; the EDA-Probes on the table as a whole; and per field, in the order of the Resource Card, what covers it per EDA-Step, the Key Fields marked ([DEC-UX-322](../../design/principles.md#dec-ux-322), [DEC-UX-323](../../design/principles.md#dec-ux-323)).
+The page of an EDA has the tabs Overview, Steps and Profile; Overview, filled in later, and Profile, greyed while the EDA-Setup is not complete, say what will come there ([DEC-UX-321](../../design/principles.md#dec-ux-321)). Steps shows on the left a row per EDA-Step ([DEC-ED-11](#dec-ed-11)), each with how many of its needed EDA-Probes are complete, a card per EDA-Probe added, with its result in a sentence, Data Hub's reading and the fields it is set on, and, while the EDA-Step has EDA-Probes not added yet, one empty tile, Add probe, which opens the list to add an EDA-Probe at that EDA-Step ([FR-ED-13](#fr-ed-13)). On the right: the needed EDA-Probes complete, as a number and a bar; what the EDA covers in its four places; the best next step; the EDA-Probes on the table as a whole; and per field, in the order of the Resource Card, what covers it per EDA-Step, the Key Fields marked ([DEC-UX-322](../../design/principles.md#dec-ux-322), [DEC-UX-323](../../design/principles.md#dec-ux-323)).
 
 **Makes easy:** seeing what the EDA-Setup still needs, and where. **Makes hard:** taking an EDA for done while a Key Field is not covered.
 
@@ -215,6 +218,42 @@ Once every needed EDA-Probe of an EDA is complete, the EDA is Explored and its R
 
 **Makes easy:** a Level that says the data was explored, with the EDA behind it. **Makes hard:** Explored without its needed EDA-Probes.
 
+<a id="fr-ed-13"></a>
+### FR-ED-13 · The list to add an EDA-Probe
+
+**Status:** Specified · **Source:** Max, 2026-11-21 ([DEC-UX-328](../../design/principles.md#dec-ux-328)) · **Screens:** [eda](../../design/screens/eda.html)
+
+Add probe opens a sheet with every EDA-Probe the model type of the Resource is offered ([DEC-ED-12](#dec-ed-12)), per EDA-Step in their order, opened at the EDA-Step of its tile, with a search that has the focus at once. Each EDA-Probe shows its name, the question it asks of this Resource, whether it is Needed, Suggested or On request, and its state: added, with Data Hub's reading; set on part of what it needs; ready to add; or Coming, while Data Hub does not run it ([DEC-ED-27](#dec-ed-27)). Filters show all, the needed ones, those Data Hub runs, or those added. A click opens its detail, where Run adds it ([FR-ED-06](#fr-ed-06)); a Coming one opens nothing. An EDA-Probe not offered for its model type is not listed.
+
+**Makes easy:** finding the EDA-Probe that asks the question one has about the data. **Makes hard:** adding an EDA-Probe that does not fit the kind of table.
+
+<a id="fr-ed-14"></a>
+### FR-ED-14 · The guide of an EDA, in the Flow Box
+
+**Status:** Specified · **Source:** Max, 2026-11-21 ([DEC-UX-327](../../design/principles.md#dec-ux-327)) · **Screens:** [eda](../../design/screens/eda.html), [eda-probe](../../design/screens/eda-probe.html)
+
+Starting an EDA opens its guide: the [Flow Box](../../design/principles.md#flow-box) with the flow Set up its EDA, one step per needed EDA-Probe, in the order of the EDA-Steps and grouped under them. A step is done once its EDA-Probe is complete, with Data Hub's reading and its result in a few words; open with what it misses; or Coming while Data Hub does not run it, and still counted. The step to do now is the best next step of the EDA, as its page proposes; it unfolds What, Why and How, its Learning Card where one is written, and Open the EDA-Probe, which opens its detail. On the tab Steps of its EDA the Flow Box is folded to its strip, as the page shows the same; on the detail of an EDA-Probe and on every other page of Data Hub it is open, until it is closed. Guide me, beside the title of the page of the EDA, brings it back. It is there for a User with Explore Resources while the EDA is in progress, and it is one Flow Box at a time ([DEC-UX-308](../../design/principles.md#dec-ux-308)).
+
+**Makes easy:** keeping the next EDA-Probe in view while looking at the data elsewhere. **Makes hard:** losing track of what the EDA-Setup still needs.
+
+<a id="fr-ed-15"></a>
+### FR-ED-15 · Claude shows the EDA of a Resource
+
+**Status:** Specified · **Source:** Max, 2026-11-21 ([DEC-ED-29](#dec-ed-29)) · **Screens:** [mcp-eda](../../design/screens/mcp-eda.html)
+
+For a User with Explore Resources, Claude reads the EDA of a Resource (`get_eda`) and shows it as an MCP App (`show_eda`): the Resource, the status of its EDA, its Level and how many needed EDA-Probes are complete, with the bar of the EDA-Setup; then how many results Data Hub reads as look at this or for you to judge, and whether the User read them; then per EDA-Step each EDA-Probe added, with its reading, its result in a sentence and what it is set on; and the needed ones Coming, named once. The charts stay in Data Hub, where Open in Data Hub leads. Without Explore Resources Claude has no EDA tools ([DEC-ED-25](#dec-ed-25)).
+
+**Makes easy:** asking Claude where an EDA stands and what to look at first. **Makes hard:** taking an EDA for done because a few of its results read well.
+
+<a id="fr-ed-16"></a>
+### FR-ED-16 · Claude runs an EDA-Probe as the User
+
+**Status:** Specified · **Source:** Max, 2026-11-21 ([DEC-ED-29](#dec-ed-29)) · **Screens:** [mcp-eda](../../design/screens/mcp-eda.html)
+
+Claude runs an EDA-Probe Data Hub runs (`run_eda_probe`), on the fields it is set on or those the User names, through the same service as the web app and as the User ([FR-ED-06](#fr-ed-06)). Within what runs freely it runs, the EDA-Probe is added when it was not, and the frame shows its conclusion and its result per field. From there up to what the User may approve, the frame asks the User to approve it, which Claude cannot do; above that it does not run. The User gives the reading of a result with the buttons in the frame, or in Data Hub; Claude never gives it. Starting an EDA stays in Data Hub.
+
+**Makes easy:** running an EDA-Probe again from a conversation, after a fix. **Makes hard:** Claude reading a result for the User, or running past what the User may run.
+
 ## Out of scope
 
 - Personal data, for now ([DEC-ED-08](#dec-ed-08)).
@@ -232,7 +271,8 @@ Raised on 2026-11-15, in the review of the EDA proposal:
 - [ ] <a id="op-ed-06"></a>**OP-ED-06** · Decide whether EDA and monitoring need a service in Python, for methods SQL does not offer, such as changepoints and seasonal baselines ([FR-CM-38](08-checks-and-monitoring.md#fr-cm-38)). Proposal: not now. An EDA computes in BigQuery SQL, which returns only aggregates, and Data Hub works on those in TypeScript; this is revisited with FR-CM-38, as one service for both. *Note of 2026-11-16: the hypothesis tests and confidence intervals of [DEC-ED-14](#dec-ed-14) need no Python either: Data Hub computes them in TypeScript from the counts, means and variances the query returns.*
 - [ ] <a id="op-ed-07"></a>**OP-ED-07** · Decide what happens to the Monitor of a Resource whose EDA goes, so that it drops to 3 · Confirmed ([FR-MR-07](06-maturity-and-release.md#fr-mr-07)).
 - [ ] <a id="op-ed-08"></a>**OP-ED-08** · Align the other domains with this frame: Explored as "an EDA document is linked" ([DEC-MR-02](06-maturity-and-release.md#dec-mr-02), [FR-MR-03](06-maturity-and-release.md#fr-mr-03), [FR-MR-07](06-maturity-and-release.md#fr-mr-07), [DEC-MR-14](06-maturity-and-release.md#dec-mr-14), the Levels in the [definitions](../../definitions.md#maturity-levels), Learning Card K5.2, the Message catalogue, the screens and the texts of the app); 5 · Monitored only from 4 · Explored, with no Monitor on a Resource without an EDA ([DEC-CM-12](08-checks-and-monitoring.md#dec-cm-12)); and Data Hub writing nothing to BigQuery, also for the Aggregate Table of a Breakdown ([DEC-CM-18](08-checks-and-monitoring.md#dec-cm-18)). *Note of 2026-11-21: Explored is aligned: it means a complete EDA-Setup, in the definitions, [Maturity and release](06-maturity-and-release.md#dec-mr-21), Learning Card K5.2, the Message catalogue, the screens and the texts of the app. Monitored only from Explored, and the Aggregate Table, remain.*
-- [ ] <a id="op-ed-09"></a>**OP-ED-09** · Decide whether, while Data Hub cannot run every needed EDA-Probe yet, an EDA-Setup counts only those it can run. Proposal: no, Explored keeps its meaning ([DEC-ED-12](#dec-ed-12)): a needed EDA-Probe that is not built shows as coming and still counts, so that no Resource reaches 4 · Explored before its model type can be fully explored. *Raised on 2026-11-21, while writing the first build.*
+- [x] <a id="op-ed-09"></a>**OP-ED-09** · Decide whether, while Data Hub cannot run every needed EDA-Probe yet, an EDA-Setup counts only those it can run. Proposal: no, Explored keeps its meaning ([DEC-ED-12](#dec-ed-12)): a needed EDA-Probe that is not built shows as coming and still counts, so that no Resource reaches 4 · Explored before its model type can be fully explored. *Raised on 2026-11-21, while writing the first build.* *Decided on 2026-11-21, by Max: as proposed ([DEC-ED-27](#dec-ed-27)).*
+- [ ] <a id="op-ed-10"></a>**OP-ED-10** · Decide two points of Impossible values, drawn as a proposal in [eda-probe-impossible](../../design/screens/eda-probe-impossible.html). First: a Key Field Data Hub knows no rule for, such as a text like `lead_channel`, stays not covered under Correctness until someone gives it a rule; running Impossible values does not cover it. Second: a field mapped to an Entity, such as `lead_source` to Lead sources, is left out of Impossible values, as its possible values are those of the Entity, which Values without a match checks; so the same list of allowed values is not asked twice. *Raised on 2026-11-21, during review: the third point of the proposal is decided ([DEC-ED-28](#dec-ed-28)), and Max asked what these two mean.*
 
 ## Builds on
 
