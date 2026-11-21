@@ -1,5 +1,5 @@
 import { rangesOf } from '@datahub/contracts';
-import { EDA_STEPS, type EdaView, PROBES, type ProbeKey, type ProbeView, type RunAnswer, RUNNABLE_PROBES } from '@datahub/contracts/eda';
+import { EDA_STEPS, type EdaView, PROBES, type ProbeKey, type ProbeView, rowsOf, type RunAnswer, RUNNABLE_PROBES } from '@datahub/contracts/eda';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import { attempt, levelName, refusal } from './answers.js';
@@ -11,6 +11,7 @@ import {
   conclusionOf,
   listed,
   nextWhy,
+  number,
   overallReading,
   READINGS,
   type ResultRow,
@@ -25,7 +26,9 @@ import { collectionIcon } from './icons.js';
 const id = z.string().min(1).describe('The ID of the Resource, from list_resources or search.');
 const probe = z
   .enum(RUNNABLE_PROBES as unknown as [ProbeKey, ...ProbeKey[]])
-  .describe('The key of an EDA-Probe Data Hub runs: grainHolds (The grain holds), nullsPerKeyField (Nulls per Key Field), volumeOverTime (Volume over time, with empty periods) or distributionOfNumbers (Distribution of numbers).');
+  .describe(
+    'The key of an EDA-Probe Data Hub runs: grainHolds (The grain holds), dateRange (Date range), volumeOverTime (Volume over time, with empty periods), nullsPerKeyField (Nulls per Key Field), distributionOfNumbers (Distribution of numbers) or distributionOfCategories (Distribution of categories).',
+  );
 const fields = z
   .array(z.string().min(1))
   .min(1)
@@ -36,7 +39,7 @@ const params = z
   .record(z.string(), z.unknown())
   .optional()
   .describe(
-    'Its parameters, only when the User asks for them. Volume over time: measure, the field that adds up, or null for rows only, and mayBeEmpty: "weekends" for a count per day. Distribution of numbers: width and tailFrom, a number, or one per field such as {"lead_count": 5}. The grain holds and Nulls per Key Field take none.',
+    'Its parameters, only when the User asks for them. Volume over time: measure, the field that adds up, or null for rows only, and mayBeEmpty: "weekends" for a count per day. Distribution of numbers: width and tailFrom, a number, or one per field such as {"lead_count": 5}. Distribution of categories: weighedBy, the field that adds up to weigh each value by, or null to weigh by rows; never a unique count. The grain holds, Date range and Nulls per Key Field take none.',
   );
 
 /** The reading of each result is the User's, given in the MCP App or in Data Hub, never by Claude (DEC-ED-29). */
@@ -104,7 +107,18 @@ export function edaTools({ server, hub, user, permits }: Context): void {
     return { name: found.name, icon: await collectionIcon(found.icon) };
   }
 
-  /** The head of every card of an EDA: the Resource, its Level, its Collection, and where its EDA stands. */
+  /**
+   * The rows of the table, a fact of the EDA (DEC-ED-32): from the last run of The grain holds or Nulls per Key Field,
+   * which counted them, in words; null while neither ran.
+   */
+  function rowsShown(eda: EdaView) {
+    const counted = rowsOf(eda);
+    if (!counted) return null;
+    const name = PROBES[counted.probe].name;
+    return { count: counted.rows, probe: counted.probe, probeName: name, at: counted.at, text: `${number(counted.rows)} ${counted.rows === 1 ? 'row' : 'rows'}, counted by ${name}` };
+  }
+
+  /** The head of every card of an EDA: the Resource, its Level, its Collection, where its EDA stands, and its rows. */
   function headOf(eda: EdaView, collection: Collection) {
     const resource = eda.resource;
     return {
@@ -117,6 +131,7 @@ export function edaTools({ server, hub, user, permits }: Context): void {
         startedAt: eda.startedAt,
         exploredAt: eda.exploredAt,
         needed: eda.needed,
+        rows: rowsShown(eda),
         page: hub.page(pages.eda(resource.id)),
       },
       // The bar of the EDA-Setup: a part per needed EDA-Probe, in the order of the table, complete, open or Coming.
@@ -130,7 +145,7 @@ export function edaTools({ server, hub, user, permits }: Context): void {
   function probeShown(eda: EdaView, one: ProbeView): ProbeShown {
     const results = one.lastRun?.results ?? [];
     const reading = overallReading(results);
-    const rows = resultTable(one.key, results, grainOf(eda)).rows;
+    const rows = resultTable(one.key, results, grainOf(eda), values).rows;
     return {
       key: one.key,
       name: PROBES[one.key].name,
@@ -189,18 +204,19 @@ export function edaTools({ server, hub, user, permits }: Context): void {
     };
   }
 
-  /** The words of the whole EDA for Claude: where it stands, what to look at first, then per EDA-Step (FR-ED-15). */
+  /** The words of the whole EDA for Claude: where it stands, its rows, what to look at first, then per EDA-Step (FR-ED-15). */
   function wholeText(eda: EdaView, shown: ReturnType<typeof wholeOf>): string {
     const name = `${eda.resource.displayName} (${levelName(eda.resource.level)})`;
     const { total, complete } = eda.needed;
+    const counted = shown.eda.rows;
     const lines = [
-      `The EDA of ${name} is ${eda.status === 'explored' ? 'Explored' : 'in progress'}: ${complete} of ${total} needed EDA-Probes complete${eda.status === 'explored' ? '.' : ', and it becomes 4 · Explored once all are.'} Started on ${eda.startedAt.slice(0, 10)} by ${eda.startedBy.name}.`,
+      `The EDA of ${name} is ${eda.status === 'explored' ? 'Explored' : 'in progress'}: ${complete} of ${total} needed EDA-Probes complete${eda.status === 'explored' ? '.' : ', and it becomes 4 · Explored once all are.'} Started on ${eda.startedAt.slice(0, 10)} by ${eda.startedBy.name}.${counted ? ` The table has ${counted.text} on ${counted.at.slice(0, 10)}.` : ''}`,
     ];
     if (shown.coming.count > 0) {
       lines.push(`${shown.coming.count} needed ${shown.coming.count === 1 ? 'one is' : 'ones are'} Coming: ${shown.coming.text}. Data Hub does not run them yet, and they still count.`);
     }
     const added = eda.probes.filter((one) => one.lastRun);
-    const rows = added.flatMap((one) => resultTable(one.key, one.lastRun?.results ?? [], grainOf(eda)).rows.map((row) => ({ one, row })));
+    const rows = added.flatMap((one) => resultTable(one.key, one.lastRun?.results ?? [], grainOf(eda), values).rows.map((row) => ({ one, row })));
     const line = ({ one, row }: (typeof rows)[number]) =>
       `- ${PROBES[one.key].name}${row.subject ? `, ${code(row.subject)}` : ''}: ${row.detail}${row.why ? ` Data Hub: ${row.why}.` : ''} ${row.yours ? `Read by ${row.yours.by} as ${row.yours.readingName} on ${row.yours.at.slice(0, 10)}.` : 'No reading of the User yet.'}`;
     const look = rows.filter(({ row }) => row.reading === 'look');
@@ -231,7 +247,7 @@ export function edaTools({ server, hub, user, permits }: Context): void {
   function runOf(eda: EdaView, one: ProbeView, collection: Collection) {
     const results = one.lastRun?.results ?? [];
     const reading = overallReading(results);
-    const table = resultTable(one.key, results, grainOf(eda));
+    const table = resultTable(one.key, results, grainOf(eda), values);
     return {
       ...headOf(eda, collection),
       mode: 'run' as const,

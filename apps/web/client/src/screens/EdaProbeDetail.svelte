@@ -1,5 +1,18 @@
 <script lang="ts">
-  import { PROBES, type DistributionResult, type EdaField, type EdaView, type GrainResult, type NullsResult, type OwnerReading, type ProbeKey, type ResultView, type VolumeResult } from '@datahub/contracts/eda';
+  import {
+    PROBES,
+    type CategoriesResult,
+    type DateRangeResult,
+    type DistributionResult,
+    type EdaField,
+    type EdaView,
+    type GrainResult,
+    type NullsResult,
+    type OwnerReading,
+    type ProbeKey,
+    type ResultView,
+    type VolumeResult,
+  } from '@datahub/contracts/eda';
   import { kindOf } from '@datahub/contracts/model-types';
   import RunButton from '@datahub/ui/components/RunButton.svelte';
   import MenuButton, { type MenuChoice } from '@datahub/ui/containers/MenuButton.svelte';
@@ -13,11 +26,32 @@
   import Loading from '@datahub/ui/primitives/Loading.svelte';
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import { asksReading, BLOCKS, type BlockDays, type EdaClient, MARK_ICONS, markOf, number, overallReading, percent, PROBE_ABOUT, PROBE_TEXTS, type RunAsk, STEP_TEXTS } from '../lib/eda.js';
-  import { distributionConclusion, distributionSentence, grainConclusion, nullsConclusion, nullsWhy, volumeConclusion, volumeSentence } from '../lib/edaWords.js';
+  import {
+    categoriesConclusion,
+    categoriesSentence,
+    dateRangeConclusion,
+    dateRangeSentence,
+    dayOfDate,
+    distributionConclusion,
+    distributionSentence,
+    grainConclusion,
+    isUpToDate,
+    nowWord,
+    nullsConclusion,
+    nullsWhy,
+    periodName,
+    periodsOf,
+    sinceWord,
+    topOf,
+    volumeConclusion,
+    volumeSentence,
+  } from '../lib/edaWords.js';
   import { when } from '../lib/moment.js';
   import { edaPath } from '../lib/routes.js';
   import { roleWords } from '../lib/typeFields.js';
   import EdaCalmChart from './EdaCalmChart.svelte';
+  import EdaCategoriesChart from './EdaCategoriesChart.svelte';
+  import EdaDateRangeChart from './EdaDateRangeChart.svelte';
   import EdaDistributionChart from './EdaDistributionChart.svelte';
   import EdaDrawing from './EdaDrawing.svelte';
   import EdaGrainChart from './EdaGrainChart.svelte';
@@ -71,9 +105,20 @@
   // svelte-ignore state_referenced_locally
   let fields = $state<string[]>([...(shown?.added && shown.fields.length > 0 ? shown.fields : (shown?.applies.fields ?? []))]);
   const needs = $derived(shown?.applies.needs ?? []);
-  /** Which fields an EDA-Probe can be set on besides those it needs: any field, the dates, or the numbers (DEC-ED-17). */
-  const fits = (field: EdaField): boolean =>
-    probe === 'nullsPerKeyField' ? true : probe === 'volumeOverTime' ? kindOf(field.dataType) === 'date' : probe === 'distributionOfNumbers' ? kindOf(field.dataType) === 'number' : false;
+  /** Which fields an EDA-Probe can be set on besides those it needs: any field, the dates, the numbers or the texts (DEC-ED-17). */
+  const FITS: Partial<Record<ProbeKey, 'any' | 'date' | 'number' | 'text'>> = {
+    nullsPerKeyField: 'any',
+    volumeOverTime: 'date',
+    dateRange: 'date',
+    distributionOfNumbers: 'number',
+    distributionOfCategories: 'text',
+  };
+  const fits = (field: EdaField): boolean => {
+    const kind = FITS[probe];
+    return kind === 'any' || (kind !== undefined && kindOf(field.dataType) === kind);
+  };
+  /** The EDA-Probes set on dates, which add a date rather than a field. */
+  const onDates = $derived(probe === 'volumeOverTime' || probe === 'dateRange');
   const addable = $derived(view.resource.fields.filter((field) => fits(field) && !fields.includes(field.name)));
   const choices: MenuChoice[] = $derived(
     addable.map((field) => ({ key: field.name, icon: MARK_ICONS[markOf(field)], label: field.name, run: () => (fields = view.resource.fields.map((one) => one.name).filter((one) => one === field.name || fields.includes(one))) })),
@@ -81,7 +126,7 @@
   const chipIcon = (field: string): IconName => {
     if (probe === 'grainHolds') return 'fingerprint';
     const known = fieldsByName.get(field);
-    if (probe !== 'volumeOverTime' && known?.keyField) return 'key';
+    if (!onDates && known?.keyField) return 'key';
     return known ? MARK_ICONS[markOf(known)] : 'tag';
   };
 
@@ -117,12 +162,33 @@
   const weekly = (field: string | undefined) => (field ? fieldsByName.get(field)?.role === 'period' : false);
   const daily = $derived(fields.some((field) => !weekly(field)));
 
+  // Distribution of categories: what it weighs each value by, a number that adds up, its role first, or rows (DEC-ED-33).
+  // eda takes it as the name of a field, or null for rows; left out, eda starts from the number that adds up.
+  const weighers = $derived.by(() => {
+    const names = adding.map((field) => field.name);
+    const set = shown?.params.weighedBy;
+    return typeof set === 'string' && !names.includes(set) ? [...names, set] : names;
+  });
+  /** What it is weighed by now: as it was set, else as its last run weighed it, else the first Key Field that adds up. */
+  const weighedNow = $derived.by((): string | null => {
+    const set = shown?.params.weighedBy;
+    if (typeof set === 'string' || set === null) return set;
+    const ran = (lastRun?.results[0]?.data as CategoriesResult | undefined)?.weighedBy;
+    if (ran !== undefined) return ran;
+    return (adding.find((field) => field.keyField) ?? adding[0])?.name ?? null;
+  });
+  // svelte-ignore state_referenced_locally
+  let weighedChoice = $state<string>(weighedNow ?? '');
+  const weighed = $derived(weighedChoice === '' ? null : weighedChoice);
+  const unique = $derived(view.resource.fields.find((field) => field.role === 'uniqueCount')?.name ?? null);
+
   /** The parameters of the run: what the User changed, as eda takes them. */
   const params = $derived.by((): Record<string, unknown> | undefined => {
     if (probe === 'volumeOverTime') {
       const set = { ...(measure && !summed ? { measure: null } : {}), ...(measure && summed && shown?.params.measure !== undefined ? { measure } : {}), ...(weekends && daily ? { mayBeEmpty: 'weekends' } : {}) };
       return Object.keys(set).length > 0 ? set : undefined;
     }
+    if (probe === 'distributionOfCategories') return shown?.params.weighedBy !== undefined || weighed !== weighedNow ? { weighedBy: weighed } : undefined;
     if (probe !== 'distributionOfNumbers') return undefined;
     const per = (name: 'width' | 'tailFrom') =>
       Object.fromEntries(
@@ -203,6 +269,10 @@
         return volumeConclusion(results, language);
       case 'distributionOfNumbers':
         return distributionConclusion(results, language);
+      case 'distributionOfCategories':
+        return categoriesConclusion(results, language);
+      case 'dateRange':
+        return dateRangeConclusion(results, language);
       default:
         return [];
     }
@@ -245,12 +315,12 @@
               <dt>{t('eda.params.setOn')}</dt>
               <dd>
                 {#each fields as field (field)}
-                  <span class="chip"><Icon name={chipIcon(field)} /><span class="mono">{field}</span>{#if (probe === 'volumeOverTime' || probe === 'distributionOfNumbers') && needs.includes(field)}<span class="note">{t('eda.params.needed')}</span>{/if}{#if !needs.includes(field) && probe !== 'grainHolds'}<button type="button" class="remove" aria-label={t('eda.params.remove', { field })} onclick={() => (fields = fields.filter((one) => one !== field))}><Icon name="x" /></button>{/if}</span>
+                  <span class="chip"><Icon name={chipIcon(field)} /><span class="mono">{field}</span>{#if probe !== 'grainHolds' && probe !== 'nullsPerKeyField' && needs.includes(field)}<span class="note">{t('eda.params.needed')}</span>{/if}{#if !needs.includes(field) && probe !== 'grainHolds'}<button type="button" class="remove" aria-label={t('eda.params.remove', { field })} onclick={() => (fields = fields.filter((one) => one !== field))}><Icon name="x" /></button>{/if}</span>
                 {/each}
                 {#if fields.length === 0}<span class="none">{t('eda.params.setOn.none')}</span>{/if}
                 <small>{t(about.setOn)}</small>
                 {#if choices.length > 0}
-                  <span class="add"><MenuButton icon="plus" variant="outline" align="start" text={t(probe === 'volumeOverTime' ? 'eda.params.addDate' : 'eda.params.addField')} label={t(probe === 'volumeOverTime' ? 'eda.params.addDate' : 'eda.params.addField')} {choices} /></span>
+                  <span class="add"><MenuButton icon="plus" variant="outline" align="start" text={t(onDates ? 'eda.params.addDate' : 'eda.params.addField')} label={t(onDates ? 'eda.params.addDate' : 'eda.params.addField')} {choices} /></span>
                 {/if}
               </dd>
             </div>
@@ -295,11 +365,31 @@
                   <small>{t('eda.params.bins.about')}</small>
                 </dd>
               </div>
+            {:else if probe === 'distributionOfCategories'}
+              <div>
+                <dt>{t('eda.params.weighedBy')}</dt>
+                <dd>
+                  {#if weighers.length > 0}
+                    <select class="weigh" aria-label={t('eda.params.weighedBy')} bind:value={weighedChoice}>
+                      {#each weighers as field (field)}<option value={field}>{t('eda.params.categories.sum', { field })}</option>{/each}
+                      <option value="">{t('eda.params.categories.rows')}</option>
+                    </select>
+                    <small>
+                      {t('eda.params.categories.weighedBy')}{#if addingRole}{' '}{t('eda.params.categories.rowsAlike')}{/if}{#if unique}{' '}<Sentence key="eda.params.categories.unique" names={{ field: unique }} />{/if}
+                    </small>
+                  {:else}
+                    {t('eda.params.categories.rows')}<small>{t('eda.params.categories.noSum')}</small>
+                  {/if}
+                </dd>
+              </div>
+              <div><dt>{t('eda.params.shows')}</dt><dd>{t('eda.params.categories.shows')}</dd></div>
+            {:else if probe === 'dateRange'}
+              <div><dt>{t('eda.params.upToDate')}</dt><dd>{t(daily ? 'eda.params.dateRange.day' : 'eda.params.dateRange.week')}</dd></div>
             {/if}
             <div>
               <dt>{t('eda.params.reads')}</dt>
               <dd>
-                {#if fields.length > 0}<Sentence key="eda.params.reads.fields" names={{ fields: fields.join(', ') }} />{:else}{t('eda.params.reads.table')}{/if}
+                {#if fields.length > 0}<Sentence key="eda.params.reads.fields" names={{ fields: [...fields, ...(probe === 'distributionOfCategories' && weighed ? [weighed] : [])].join(', ') }} />{:else}{t('eda.params.reads.table')}{/if}
                 {#if lastRun}{' '}{t('eda.params.reads.last', { bytes: formatBytes(lastRun.bytes, language) })}{/if}
               </dd>
             </div>
@@ -307,6 +397,10 @@
               <div><dt>{t('eda.params.notHere')}</dt><dd class="quiet">{t('eda.params.nulls.not')}</dd></div>
             {:else if probe === 'distributionOfNumbers'}
               <div><dt>{t('eda.params.notHere')}</dt><dd class="quiet">{t('eda.params.distribution.not')}</dd></div>
+            {:else if probe === 'distributionOfCategories'}
+              <div><dt>{t('eda.params.notHere')}</dt><dd class="quiet">{t('eda.params.categories.not')}</dd></div>
+            {:else if probe === 'dateRange'}
+              <div><dt>{t('eda.params.notHere')}</dt><dd class="quiet">{t('eda.params.dateRange.not', { unit: daily ? 'day' : 'week' })}</dd></div>
             {/if}
           </dl>
         </div>
@@ -473,6 +567,96 @@
                 </article>
               {/each}
             </div>
+          {:else if probe === 'distributionOfCategories'}
+            <div class="blocks">
+              {#each results as result (result.subject)}
+                {@const data = result.data as CategoriesResult}
+                {@const field = fieldsByName.get(result.subject)}
+                {@const top = topOf(data)}
+                <article class="block" aria-label={result.subject}>
+                  <header>
+                    {#if field?.keyField}<Icon name="key" label={t('resource.role.keyField')} />{/if}<Icon name={field ? MARK_ICONS[markOf(field)] : 'tag'} /><span class="mono">{result.subject}</span>
+                    <small>{field?.role ? roleWords(field.role) : t('eda.block.noRole')}{field?.mapped ? ` · ${t('eda.field.mapped')}` : ''}</small>
+                    <EdaTone reading={result.reading} />
+                  </header>
+                  <p class="sentence"><EdaSaid parts={categoriesSentence(data, language)} /></p>
+                  <div class="weights">
+                    <div>
+                      <EdaCategoriesChart result={data} field={result.subject} />
+                      <p class="total">
+                        {#if data.weighedBy}<Sentence key="eda.categories.total.sum" values={{ total: number(data.total, language) }} names={{ field: data.weighedBy }} />{:else}{t('eda.categories.total.rows', { total: number(data.total, language) })}{/if}
+                      </p>
+                    </div>
+                    <dl class="numbers stack">
+                      <div><dt>{t('eda.categories.values')}</dt><dd>{number(data.values, language)}</dd></div>
+                      {#if data.values > 0}<div><dt>{t('eda.categories.top', { count: top.count })}</dt><dd>{percent(top.share, 1, language)}</dd></div>{/if}
+                      {#if data.small > 0}<div><dt>{t('eda.categories.smallCount')}</dt><dd>{number(data.small, language)}</dd></div>{/if}
+                      <div><dt>{t('eda.categories.emptyCount')}</dt><dd>{percent(data.empty.share, 1, language)}</dd></div>
+                    </dl>
+                  </div>
+                  <div class="block-reading"><EdaReading yours={result.yours} label={t('eda.yours.of', { field: result.subject })} onread={(reading) => read(result.subject, reading)} /></div>
+                </article>
+              {/each}
+            </div>
+          {:else if probe === 'dateRange'}
+            <div class="blocks">
+              {#each results as result (result.subject)}
+                {@const data = result.data as DateRangeResult}
+                {@const field = fieldsByName.get(result.subject)}
+                {@const late = !isUpToDate(data)}
+                {@const before = data.beforeReliable ?? 0}
+                <article class="block" aria-label={result.subject}>
+                  <header>
+                    <Icon name="calendar-blank" /><span class="mono">{result.subject}</span>
+                    <small>{field?.role ? `${roleWords(field.role)} · ` : ''}{t(data.unit === 'week' ? 'eda.dateRange.unit.week' : 'eda.dateRange.unit.day')}</small>
+                    <EdaTone reading={result.reading} />
+                  </header>
+                  {#if results.length > 1 || data.first === null}<p class="sentence"><EdaSaid parts={dateRangeSentence(data, language, result.subject)} /></p>{/if}
+                  {#if data.first !== null && data.last !== null}
+                    <EdaDateRangeChart result={data} field={result.subject} ranAt={lastRun.ranAt} />
+                    <dl class="numbers range">
+                      <div>
+                        <dt>{t('eda.dateRange.first')}</dt>
+                        <dd>{periodName(data.unit, data.first, language)}{#if data.unit === 'week'}<small>{dayOfDate(data.first, language)}</small>{/if}</dd>
+                      </div>
+                      <div>
+                        <dt>{t('eda.dateRange.last')}</dt>
+                        <dd>
+                          {periodName(data.unit, data.last, language)}
+                          {#if data.unit === 'week'}
+                            <small>{late ? dayOfDate(data.last, language) : t('eda.dateRange.last.since', { day: dayOfDate(data.last, language), since: sinceWord(data) })}</small>
+                          {:else if !late}
+                            <small>{sinceWord(data)}</small>
+                          {/if}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>{t('eda.dateRange.between', { unit: data.unit })}</dt>
+                        <dd>{number(data.periods, language)}<small>{t('eda.dateRange.between.about')}</small></dd>
+                      </div>
+                      <div>
+                        <dt>{t('eda.dateRange.behindLabel')}</dt>
+                        <dd class:warn={late}>
+                          {data.behind === 0 ? t('eda.dateRange.none') : periodsOf(data.unit, data.behind)}
+                          <small>{t(data.behind === 0 ? 'eda.dateRange.behind.is' : 'eda.dateRange.behind.against', { now: nowWord(data.unit) })}</small>
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>{t('eda.dateRange.beforeReliable')}</dt>
+                        {#if data.reliableSince}
+                          <dd>{before > 0 ? periodsOf(data.unit, before) : t('eda.dateRange.none')}<small>{t('eda.dateRange.beforeReliable.on', { day: dayOfDate(data.reliableSince, language) })}</small></dd>
+                        {:else}
+                          <dd class="unset">{t('eda.dateRange.beforeReliable.notSet')}<small>{t('eda.dateRange.beforeReliable.notSet.about')}</small></dd>
+                        {/if}
+                      </div>
+                    </dl>
+                  {/if}
+                  {#if asksReading(probe, result)}
+                    <div class="block-reading"><EdaReading yours={result.yours} label={t('eda.yours.of', { field: result.subject })} onread={(reading) => read(result.subject, reading)} /></div>
+                  {/if}
+                </article>
+              {/each}
+            </div>
           {/if}
         </section>
       {/if}
@@ -592,9 +776,21 @@
   .k-median { width: 2px; height: 12px; background: var(--text-primary); }
   .k-sd { width: 18px; height: 11px; border-radius: var(--radius-mark); background: color-mix(in srgb, var(--col-teal) 25%, transparent); }
   .block-reading { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--tint-active); }
+  .weigh { max-width: 100%; font: var(--text-small) var(--font-family); padding: 5px 8px; border-radius: var(--radius-sm); border: 1px solid var(--tint-active); background: var(--surface-solid); color: var(--text-primary); }
+  .weights { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 18px; align-items: start; margin-top: 6px; }
+  .total { margin: 6px 0 0; font-size: var(--text-meta); color: var(--text-muted); }
+  .numbers.stack { grid-template-columns: 1fr; gap: 8px; margin: 0; }
+  .numbers.range { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 18px; margin-top: 8px; }
+  .numbers small { display: block; font-size: 10.5px; font-weight: var(--weight-regular); color: var(--text-muted); }
+  .numbers dd.unset { color: var(--text-muted); }
   @media (max-width: 1300px) {
     .nulls-head { display: none; }
     .nulls li { grid-template-columns: 1fr 1fr; }
     .numbers.seven { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
+  @media (max-width: 960px) {
+    .weights { grid-template-columns: 1fr; }
+    .numbers.stack { grid-template-columns: repeat(4, auto); }
+    .numbers.range { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
 </style>

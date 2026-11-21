@@ -3,7 +3,7 @@ import { type CatalogueResource, type EdaSource, sourceOf } from './catalogue.js
 /**
  * The Resources the tests of eda work on, as `GET /resources/{id}` of catalogue answers them. Weekly lead volume is
  * the aggregate the screens draw: one row per week and lead source, partitioned on its week, with a filter Data Hub
- * requires (DEC-SR-35).
+ * requires (DEC-SR-35), reliable since 1 January 2025.
  */
 export const CREDIT = { id: '5d0c1b2a-3e4f-4a5b-8c6d-7e8f9a0b1c2d', name: 'Credit leads' };
 
@@ -38,7 +38,10 @@ export const WEEKLY_ANSWER: CatalogueResource = {
     mappings: [{ field: 'lead_source' }],
   },
   // Chosen in another order than the fields: the Resource Card keeps the order of the fields (DEC-UX-323).
-  card: { keyFields: ['lead_count', 'week_start', 'lead_source', 'lead_channel'] },
+  card: {
+    keyFields: ['lead_count', 'week_start', 'lead_source', 'lead_channel'],
+    reliableSince: { from: 'day', day: '2025-01-01', why: '2024 was loaded once from the old CRM export.' },
+  },
 };
 
 export const WEEKLY: EdaSource = sourceOf(WEEKLY_ANSWER);
@@ -57,7 +60,7 @@ export const LEADS_ANSWER: CatalogueResource = {
     { name: 'channel', dataType: 'STRING' },
   ],
   details: { partition: { field: 'created_at', unit: 'day' }, partitionFilter: 'none', grain: ['lead_id'], modelType: 'event', typeFields: [{ field: 'created_at', role: 'happenedAt' }], mappings: [] },
-  card: { keyFields: ['lead_id', 'created_at', 'price', 'channel'] },
+  card: { keyFields: ['lead_id', 'created_at', 'price', 'channel'], reliableSince: { from: 'firstRow', day: null, why: '' } },
 };
 
 export const LEADS: EdaSource = sourceOf(LEADS_ANSWER);

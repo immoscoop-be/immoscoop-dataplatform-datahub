@@ -11,9 +11,8 @@
   the numbers, up to 5 examples, and the Owner's reading: Expected, Known or A problem.
   The chart is an illustration drawn for the EDA, not a chart of semgraph (DEC-UX-325).
   The guide (DEC-UX-327): the Flow Box "Set up its EDA" is open here, docked on the right, its step The grain holds
-  marked as open on the page; after Run the step ticks and the next needed EDA-Probe Data Hub runs unfolds, Volume over
-  time, with Open the EDA-Probe. Row count and Date range, before it, are Coming: Data Hub does not run them yet, and they
-  still count (DEC-ED-27).
+  marked as open on the page; after Run the step ticks and the next needed EDA-Probe unfolds, Date range, with Open the
+  EDA-Probe. Those Data Hub does not run yet are Coming, and still count (DEC-ED-27).
   Switches: ?run=before (the default), ?run=ok, the grain holds; ?run=dup, 34 grain values on more than one row;
   ?guide=open (the default), min or closed.
   Requirements: FR-ED-06, FR-ED-07, FR-ED-11, FR-ED-14
@@ -296,41 +295,39 @@
    <button class="icon-btn" type="button" data-go="guide:min" aria-label="Minimize" title="Minimize"><i class="ph ph-arrows-in-simple"></i></button>
    <button class="icon-btn" type="button" data-go="guide:closed" aria-label="Close" title="Close: Guide me on its EDA brings it back"><i class="ph ph-x"></i></button>
   </div>
-  <div class="fb-progress"><div class="fb-bar" aria-hidden="true"><span class="now"></span><span class="coming"></span><span class="coming"></span><span class=""></span><span class=""></span><span class="coming"></span><span class="coming"></span><span class=""></span><span class="coming"></span><span class="coming"></span><span class="coming"></span></div><span class="meta">0 of 11 needed EDA-Probes complete</span></div>
+  <div class="fb-progress"><div class="fb-bar" aria-hidden="true"><span class="now"></span><span class=""></span><span class=""></span><span class=""></span><span class="coming"></span><span class="coming"></span><span class=""></span><span class=""></span><span class="coming"></span><span class="coming"></span></div><span class="meta">0 of 10 needed EDA-Probes complete</span></div>
   <div class="fb-body-scroll"><ol class="fb-steps">
    <li class="fb-group" aria-hidden="true">Basis</li><li class="fb-step now open open">
       <button class="fb-row" type="button" aria-expanded="true"><span class="fb-num" aria-hidden="true">1</span><span class="fb-name"><b>The grain holds</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
       <div class="fb-detail"><span class="fb-here"><i class="ph-fill ph-map-pin" aria-hidden="true"></i>Open on the page</span>
        <dl class="fb-wwh"><dt>What</dt><dd>It checks that every row is one thing: one row per week_start, lead_source, as the grain of the Resource says.</dd><dt>Why</dt><dd>When a grain value is on two rows, every count and sum over it doubles up, and a join on it gives too many rows. Every other result of the EDA leans on it.</dd><dt>How</dt><dd>On its detail: it is set on the whole grain. Run reads the table once, through Query, as you.</dd></dl>
-       <a class="fb-card" href="learning-float.html"><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><span class="num">2.3.5</span><span class="tt">The grain question</span><i class="ph ph-arrow-up-right" aria-hidden="true"></i></a></div></li><li class="fb-step coming">
-      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">2</span><span class="fb-name"><b>Row count</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
-      </li><li class="fb-step coming">
-      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">3</span><span class="fb-name"><b>Date range</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+       <a class="fb-card" href="learning-float.html"><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><span class="num">2.3.5</span><span class="tt">The grain question</span><i class="ph ph-arrow-up-right" aria-hidden="true"></i></a></div></li><li class="fb-step">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">2</span><span class="fb-name"><b>Date range</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
       </li><li class="fb-step">
-      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">4</span><span class="fb-name"><b>Volume over time, with empty periods</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">3</span><span class="fb-name"><b>Volume over time, with empty periods</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
       </li><li class="fb-group" aria-hidden="true">Gaps</li><li class="fb-step">
-      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">5</span><span class="fb-name"><b>Nulls per Key Field</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">4</span><span class="fb-name"><b>Nulls per Key Field</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
       </li><li class="fb-step coming">
-      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">6</span><span class="fb-name"><b>Disguised nulls</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">5</span><span class="fb-name"><b>Disguised nulls</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
       </li><li class="fb-step coming">
-      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">7</span><span class="fb-name"><b>Values without a match</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">6</span><span class="fb-name"><b>Values without a match</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
       </li><li class="fb-group" aria-hidden="true">Weight</li><li class="fb-step">
-      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">8</span><span class="fb-name"><b>Distribution of numbers</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">7</span><span class="fb-name"><b>Distribution of numbers</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-step">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">8</span><span class="fb-name"><b>Distribution of categories</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
       </li><li class="fb-step coming">
-      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">9</span><span class="fb-name"><b>Distribution of categories</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
-      </li><li class="fb-step coming">
-      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">10</span><span class="fb-name"><b>Spread</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">9</span><span class="fb-name"><b>Spread</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
       </li><li class="fb-group" aria-hidden="true">Correctness</li><li class="fb-step coming">
-      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">11</span><span class="fb-name"><b>Impossible values</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">10</span><span class="fb-name"><b>Impossible values</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
       </li>
   </ol></div>
-  <div class="fb-foot"><span class="meta">11 to go, of which 7 are coming: they still count. Every run reads the table through Query, as you, and what it reads is in your Query Log.</span></div>
+  <div class="fb-foot"><span class="meta">10 to go, of which 4 are coming: they still count. Every run reads the table through Query, as you, and what it reads is in your Query Log.</span></div>
  </div>
-</aside><aside class="flowstrip" aria-label="Flow Box, folded: set up the EDA of Weekly lead volume, 0 of 11 needed EDA-Probes complete" data-pane-group="guide" data-pane="min" hidden>
+</aside><aside class="flowstrip" aria-label="Flow Box, folded: set up the EDA of Weekly lead volume, 0 of 10 needed EDA-Probes complete" data-pane-group="guide" data-pane="min" hidden>
  <button class="icon-btn" type="button" data-go="guide:open" aria-label="Maximize" title="Open the guide"><i class="ph ph-arrows-out-simple"></i></button>
  <span class="fb-icon" aria-hidden="true"><i class="ph-fill ph-binoculars"></i></span>
- <span class="fs-count" aria-hidden="true"><b>0</b>/11</span>
- <ol class="fs-dots" aria-hidden="true"><li class="now"></li><li class="coming"></li><li class="coming"></li><li class=""></li><li class=""></li><li class="coming"></li><li class="coming"></li><li class=""></li><li class="coming"></li><li class="coming"></li><li class="coming"></li></ol>
+ <span class="fs-count" aria-hidden="true"><b>0</b>/10</span>
+ <ol class="fs-dots" aria-hidden="true"><li class="now"></li><li class=""></li><li class=""></li><li class=""></li><li class="coming"></li><li class="coming"></li><li class=""></li><li class=""></li><li class="coming"></li><li class="coming"></li></ol>
  <button class="fs-label" type="button" data-go="guide:open">Set up its EDA · Weekly lead volume</button>
 </aside></div>
 <div class="contents" data-pane-group="run" data-pane="ok dup" hidden><aside class="flowbox eda-flow" aria-label="Flow Box: set up the EDA of Weekly lead volume" data-pane-group="guide" data-pane="open">
@@ -341,41 +338,39 @@
    <button class="icon-btn" type="button" data-go="guide:min" aria-label="Minimize" title="Minimize"><i class="ph ph-arrows-in-simple"></i></button>
    <button class="icon-btn" type="button" data-go="guide:closed" aria-label="Close" title="Close: Guide me on its EDA brings it back"><i class="ph ph-x"></i></button>
   </div>
-  <div class="fb-progress"><div class="fb-bar" aria-hidden="true"><span class="done"></span><span class="coming"></span><span class="coming"></span><span class="now"></span><span class=""></span><span class="coming"></span><span class="coming"></span><span class=""></span><span class="coming"></span><span class="coming"></span><span class="coming"></span></div><span class="meta">1 of 11 needed EDA-Probes complete</span></div>
+  <div class="fb-progress"><div class="fb-bar" aria-hidden="true"><span class="done"></span><span class="now"></span><span class=""></span><span class=""></span><span class="coming"></span><span class="coming"></span><span class=""></span><span class=""></span><span class="coming"></span><span class="coming"></span></div><span class="meta">1 of 10 needed EDA-Probes complete</span></div>
   <div class="fb-body-scroll"><ol class="fb-steps">
    <li class="fb-group" aria-hidden="true">Basis</li><li class="fb-step done">
       <button class="fb-row" type="button" aria-expanded="false"><i class="ph-fill ph-check-circle fb-tick" aria-hidden="true"></i><span class="fb-name"><b>The grain holds</b><span class="fb-said"><span class="fb-reading" data-tone="expected">As expected</span><span>One row per week and lead source; none twice in 16,224 rows</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
-      </li><li class="fb-step coming">
-      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">2</span><span class="fb-name"><b>Row count</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
-      </li><li class="fb-step coming">
-      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">3</span><span class="fb-name"><b>Date range</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
       </li><li class="fb-step now open open">
-      <button class="fb-row" type="button" aria-expanded="true"><span class="fb-num" aria-hidden="true">4</span><span class="fb-name"><b>Volume over time, with empty periods</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      <button class="fb-row" type="button" aria-expanded="true"><span class="fb-num" aria-hidden="true">2</span><span class="fb-name"><b>Date range</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
       <div class="fb-detail">
-       <dl class="fb-wwh"><dt>What</dt><dd>It counts what comes in per week, from the first to this one, and finds the weeks without any row.</dd><dt>Why</dt><dd>A period without rows is almost always a break: tracking that stopped, a load that failed. It looks like a quiet period.</dd><dt>How</dt><dd>On its detail: set on week_start, its period; other dates can be added. Run.</dd></dl>
-       <a class="btn-primary fb-go" href="eda-probe.html" style="text-decoration:none">Open the EDA-Probe<i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></li><li class="fb-group" aria-hidden="true">Gaps</li><li class="fb-step">
-      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">5</span><span class="fb-name"><b>Nulls per Key Field</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+       <dl class="fb-wwh"><dt>What</dt><dd>It finds the first and the last week_start.</dd><dt>Why</dt><dd>A table that stops early, or starts later than its Reliable Since, misleads every trend.</dd></dl>
+       <a class="btn-primary fb-go" href="eda-probe.html" style="text-decoration:none">Open the EDA-Probe<i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></li><li class="fb-step">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">3</span><span class="fb-name"><b>Volume over time, with empty periods</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-group" aria-hidden="true">Gaps</li><li class="fb-step">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">4</span><span class="fb-name"><b>Nulls per Key Field</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
       </li><li class="fb-step coming">
-      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">6</span><span class="fb-name"><b>Disguised nulls</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">5</span><span class="fb-name"><b>Disguised nulls</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
       </li><li class="fb-step coming">
-      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">7</span><span class="fb-name"><b>Values without a match</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">6</span><span class="fb-name"><b>Values without a match</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
       </li><li class="fb-group" aria-hidden="true">Weight</li><li class="fb-step">
-      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">8</span><span class="fb-name"><b>Distribution of numbers</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">7</span><span class="fb-name"><b>Distribution of numbers</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-step">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">8</span><span class="fb-name"><b>Distribution of categories</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
       </li><li class="fb-step coming">
-      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">9</span><span class="fb-name"><b>Distribution of categories</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
-      </li><li class="fb-step coming">
-      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">10</span><span class="fb-name"><b>Spread</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">9</span><span class="fb-name"><b>Spread</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
       </li><li class="fb-group" aria-hidden="true">Correctness</li><li class="fb-step coming">
-      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">11</span><span class="fb-name"><b>Impossible values</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">10</span><span class="fb-name"><b>Impossible values</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
       </li>
   </ol></div>
-  <div class="fb-foot"><span class="meta">10 to go, of which 7 are coming: they still count. Every run reads the table through Query, as you, and what it reads is in your Query Log.</span></div>
+  <div class="fb-foot"><span class="meta">9 to go, of which 4 are coming: they still count. Every run reads the table through Query, as you, and what it reads is in your Query Log.</span></div>
  </div>
-</aside><aside class="flowstrip" aria-label="Flow Box, folded: set up the EDA of Weekly lead volume, 1 of 11 needed EDA-Probes complete" data-pane-group="guide" data-pane="min" hidden>
+</aside><aside class="flowstrip" aria-label="Flow Box, folded: set up the EDA of Weekly lead volume, 1 of 10 needed EDA-Probes complete" data-pane-group="guide" data-pane="min" hidden>
  <button class="icon-btn" type="button" data-go="guide:open" aria-label="Maximize" title="Open the guide"><i class="ph ph-arrows-out-simple"></i></button>
  <span class="fb-icon" aria-hidden="true"><i class="ph-fill ph-binoculars"></i></span>
- <span class="fs-count" aria-hidden="true"><b>1</b>/11</span>
- <ol class="fs-dots" aria-hidden="true"><li class="done"></li><li class="coming"></li><li class="coming"></li><li class="now"></li><li class=""></li><li class="coming"></li><li class="coming"></li><li class=""></li><li class="coming"></li><li class="coming"></li><li class="coming"></li></ol>
+ <span class="fs-count" aria-hidden="true"><b>1</b>/10</span>
+ <ol class="fs-dots" aria-hidden="true"><li class="done"></li><li class="now"></li><li class=""></li><li class=""></li><li class="coming"></li><li class="coming"></li><li class=""></li><li class=""></li><li class="coming"></li><li class="coming"></li></ol>
  <button class="fs-label" type="button" data-go="guide:open">Set up its EDA · Weekly lead volume</button>
 </aside></div>
 </div>

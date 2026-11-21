@@ -128,7 +128,6 @@ export type EdaClient = ReturnType<typeof createEda>;
 /** The name of an EDA-Probe, in the language of the User: its English name is the contract's, its words a sentence. */
 export const PROBE_TEXTS: Readonly<Record<ProbeKey, string>> = {
   grainHolds: 'eda.probe.grainHolds',
-  rowCount: 'eda.probe.rowCount',
   dateRange: 'eda.probe.dateRange',
   volumeOverTime: 'eda.probe.volumeOverTime',
   settling: 'eda.probe.settling',
@@ -164,6 +163,13 @@ export const PROBE_ABOUT: Readonly<Partial<Record<ProbeKey, { does: string; why:
   nullsPerKeyField: { does: 'eda.about.nullsPerKeyField.does', why: 'eda.about.nullsPerKeyField.why', setOn: 'eda.about.nullsPerKeyField.setOn', empty: 'eda.about.nullsPerKeyField.empty' },
   volumeOverTime: { does: 'eda.about.volumeOverTime.does', why: 'eda.about.volumeOverTime.why', setOn: 'eda.about.volumeOverTime.setOn', empty: 'eda.about.volumeOverTime.empty' },
   distributionOfNumbers: { does: 'eda.about.distributionOfNumbers.does', why: 'eda.about.distributionOfNumbers.why', setOn: 'eda.about.distributionOfNumbers.setOn', empty: 'eda.about.distributionOfNumbers.empty' },
+  distributionOfCategories: {
+    does: 'eda.about.distributionOfCategories.does',
+    why: 'eda.about.distributionOfCategories.why',
+    setOn: 'eda.about.distributionOfCategories.setOn',
+    empty: 'eda.about.distributionOfCategories.empty',
+  },
+  dateRange: { does: 'eda.about.dateRange.does', why: 'eda.about.dateRange.why', setOn: 'eda.about.dateRange.setOn', empty: 'eda.about.dateRange.empty' },
 };
 
 /** The name and the line of each EDA-Step (DEC-ED-11). */
@@ -198,12 +204,10 @@ export function overallReading(results: readonly Pick<ResultView, 'reading'>[]):
 }
 
 /**
- * Whether a result asks the User for a reading (DEC-UX-326): a field of Nulls per Key Field without any empty value has
- * nothing to read; every other result has.
+ * Whether a result asks the User for a reading (DEC-UX-326): a field of Nulls per Key Field without any empty value, and
+ * a date of Date range that is up to date, have nothing to read (DEC-ED-34); every other result has.
  */
-export function asksReading(probe: ProbeKey, result: Pick<ResultView, 'reading'>): boolean {
-  return !(probe === 'nullsPerKeyField' && result.reading === 'expected');
-}
+export { asksReading } from '@datahub/contracts/eda';
 
 /** The kind of a field as the drawings show it in their header (DEC-UX-268): what identifies a row, a date, a link, a number, a text. */
 export type FieldMark = 'grain' | 'date' | 'mapped' | 'number' | 'text';
@@ -316,6 +320,15 @@ export function percent(part: number, whole: number, language: 'nl' | 'en'): str
 export function number(value: number, language: 'nl' | 'en'): string {
   const digits = Math.abs(value) >= 100 ? 0 : Math.abs(value) >= 10 ? 1 : 2;
   return new Intl.NumberFormat(language === 'nl' ? 'nl-BE' : 'en-GB', { maximumFractionDigits: digits }).format(value);
+}
+
+/** The week of a day as ISO 8601 numbers it, with its year and its Monday: week 1 holds the first Thursday of the year. */
+export function isoWeek(date: string): { week: number; year: number; monday: string } {
+  const time = Date.parse(`${date.slice(0, 10)}T00:00:00Z`);
+  const monday = time - ((new Date(time).getUTCDay() + 6) % 7) * 86_400_000;
+  const thursday = monday + 3 * 86_400_000;
+  const year = new Date(thursday).getUTCFullYear();
+  return { week: Math.floor((thursday - Date.UTC(year, 0, 1)) / 86_400_000 / 7) + 1, year, monday: new Date(monday).toISOString().slice(0, 10) };
 }
 
 /** A day of a period, such as "1 Apr 2024". */

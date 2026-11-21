@@ -17,7 +17,7 @@ import {
   type RunView,
 } from '@datahub/contracts/eda';
 import { addTexts, setLanguage } from '@datahub/ui/foundations/texts.svelte.js';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/svelte';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/svelte';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import type { EdaClient } from '../lib/eda.js';
 import type { EdaTab } from '../lib/routes.js';
@@ -139,6 +139,62 @@ const DISTRIBUTION = ran(['lead_count'], [
   ['lead_count', { rows: 16224, low: 1, p25: 17, median: 25, p75: 38, p95: 120, high: 412, mean: 38, width: 10, tailFrom: 120, start: 0, bins: [1023, 4334, 4474, 2726, 1450, 756, 389, 126, 36, 33, 52, 52], tail: 773 }, 'judge'],
 ]);
 
+/** The weight of each value of a text, as a share of the 632,700 leads, the sum of lead_count. */
+function weighed(shares: [string, number][], more: { values: number; others: [number, number]; empty: number; small: number }): ProbeResult {
+  const total = 632_700;
+  const of = (share: number) => Math.round(share * total);
+  return {
+    weighedBy: 'lead_count',
+    total,
+    values: more.values,
+    top: shares.map(([value, share]) => ({ value, weight: of(share), share })),
+    others: { values: more.others[0], weight: of(more.others[1]), share: more.others[1] },
+    empty: { weight: of(more.empty), share: more.empty },
+    small: more.small,
+  };
+}
+const CATEGORIES = ran(['lead_source', 'lead_channel'], [
+  [
+    'lead_source',
+    weighed(
+      [
+        ['website', 0.41],
+        ['app', 0.22],
+        ['partner', 0.09],
+        ['immoweb', 0.07],
+        ['mailing', 0.05],
+        ['kbc-app', 0.04],
+        ['social', 0.03],
+        ['referral', 0.02],
+        ['source 9', 0.009],
+        ['source 10', 0.006],
+      ],
+      { values: 54, others: [44, 0.054], empty: 0.001, small: 31 },
+    ),
+    'judge',
+  ],
+  [
+    'lead_channel',
+    weighed(
+      [
+        ['web', 0.38],
+        ['mobile', 0.31],
+        ['email', 0.1],
+        ['phone', 0.06],
+        ['Web', 0.02],
+        ['e-mail', 0.01],
+        ['fax', 0.0006],
+      ],
+      { values: 7, others: [0, 0], empty: 0.12, small: 1 },
+    ),
+    'judge',
+  ],
+]);
+/** Date range on week_start: up to date, from week 1 of 2021 to this week, week 47 of 2026; and 3 weeks behind. */
+const RANGE = { unit: 'week', first: '2021-01-04', last: '2026-11-16', periods: 307, current: '2026-11-16', behind: 0, reliableSince: '2025-01-01', beforeReliable: 208 } as const;
+const UP_TO_DATE = ran(['week_start'], [['week_start', RANGE, 'expected']]);
+const BEHIND = ran(['week_start'], [['week_start', { ...RANGE, last: '2026-10-26', periods: 303, behind: 3 }, 'look']]);
+
 /** eda as the page meets it: the EDA it holds, and what a run or a reading answers. */
 function fakeEda(view: EdaView | null, answers: RunAnswer[] = []) {
   let now = view;
@@ -191,6 +247,34 @@ describe('the page of an EDA (FR-ED-04, DEC-UX-321, DEC-UX-322)', () => {
     expect(screen.getByRole('link', { name: /Open the Resource/ }).getAttribute('href')).toBe('/resources/r2/maturity');
   });
 
+  it('shows the rows of its table beside its Level, from the last run that counted them, and says which counted them and when (DEC-ED-32)', async () => {
+    show(viewOf());
+    await screen.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
+    // Neither The grain holds nor Nulls per Key Field ran: no rows to show.
+    expect(screen.queryByTitle(/^Counted by/)).toBeNull();
+    cleanup();
+
+    show(viewOf({ grainHolds: GRAIN_HOLDS }));
+    const grain = await screen.findByTitle(/^Counted by The grain holds, 21 Nov/);
+    expect(grain.textContent?.trim()).toBe('16,224 rows');
+    expect(grain.closest('.facts')).toBeTruthy();
+    cleanup();
+
+    // Nulls per Key Field ran after it: its count is the last.
+    const later = ran(NULLS.fields, [['week_start', { rows: 16300, empty: 0, role: 'period' }, 'expected']], { ranAt: '2026-11-21T11:30:00Z' });
+    show(viewOf({ grainHolds: GRAIN_HOLDS, nullsPerKeyField: later }));
+    expect((await screen.findByTitle(/^Counted by Nulls per Key Field, 21 Nov/)).textContent?.trim()).toBe('16,300 rows');
+    cleanup();
+
+    setLanguage('nl');
+    try {
+      show(viewOf({ grainHolds: GRAIN_HOLDS }));
+      expect((await screen.findByTitle(/^Geteld door De grain klopt, 21 nov/)).textContent?.trim()).toBe('16.224 rijen');
+    } finally {
+      setLanguage('en');
+    }
+  });
+
   it('says on Profile what will come there', async () => {
     show(viewOf(), { tab: 'profile' });
     expect(await screen.findByRole('heading', { level: 3, name: 'The Profile comes once the EDA-Setup is complete' })).toBeTruthy();
@@ -201,12 +285,14 @@ describe('the page of an EDA (FR-ED-04, DEC-UX-321, DEC-UX-322)', () => {
     await screen.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
     expect(screen.getAllByRole('region').map((region) => region.getAttribute('aria-label')).slice(0, 5)).toEqual(['Basis', 'Gaps', 'Weight', 'Correctness', 'Relations between fields']);
     const basis = step('Basis');
-    expect(basis.getByText('1 of 4 needed')).toBeTruthy();
+    expect(basis.getByText('1 of 3 needed')).toBeTruthy();
     const card = within(basis.getByRole('article', { name: 'The grain holds' }));
     expect(card.getByText('As expected')).toBeTruthy();
     expect(card.getByText(/none twice in 16,224 rows/)).toBeTruthy();
     expect(card.getByText('Set on week_start, lead_source')).toBeTruthy();
-    expect(basis.getByRole('button', { name: /Add probe/ }).textContent).toContain('3 needed still in Basis');
+    // The whole card opens the detail of its EDA-Probe: its title is the link, stretched over the card.
+    expect(card.getByRole('link', { name: 'The grain holds' }).getAttribute('href')).toBe('/eda/r2/probes/grainHolds');
+    expect(basis.getByRole('button', { name: /Add probe/ }).textContent).toContain('2 needed still in Basis');
     expect(step('Gaps').getByText('0 of 3 needed')).toBeTruthy();
     // Coming ones count as EDA-Probes left to add, as the list shows them (FR-ED-04, DEC-ED-27).
     expect(step('Correctness').getByRole('button', { name: /Add probe/ })).toBeTruthy();
@@ -217,22 +303,21 @@ describe('the page of an EDA (FR-ED-04, DEC-UX-321, DEC-UX-322)', () => {
   it('shows on the right the needed EDA-Probes complete, the four places, the best next step, the table as a whole and every field (DEC-UX-322, DEC-UX-323)', async () => {
     show(viewOf({ grainHolds: GRAIN_HOLDS }));
     const side = within(await screen.findByRole('complementary', { name: 'EDA-Setup' }));
-    expect(side.getByText('1 of 11')).toBeTruthy();
-    const bar = side.getByRole('img', { name: '1 of 11 needed EDA-Probes complete' });
-    expect(bar.querySelectorAll('span')).toHaveLength(11);
+    expect(side.getByText('1 of 10')).toBeTruthy();
+    const bar = side.getByRole('img', { name: '1 of 10 needed EDA-Probes complete' });
+    expect(bar.querySelectorAll('span')).toHaveLength(10);
     expect(bar.querySelectorAll('span.on')).toHaveLength(1);
     // Needed EDA-Probes Data Hub does not run yet are coming, and still count (OP-ED-09).
-    expect(side.getByText(/7 needed EDA-Probes are coming/)).toBeTruthy();
+    expect(side.getByText(/4 needed EDA-Probes are coming/)).toBeTruthy();
     const places = side.getAllByRole('listitem').slice(0, 4).map((item) => item.textContent);
-    expect(places).toEqual(['The rows1 of 4 needed', 'The Key Fields0 of 4 complete', 'Two columns togetherNone needed', 'Other Resources0 of 1 needed']);
+    expect(places).toEqual(['The rows1 of 3 needed', 'The Key Fields0 of 4 complete', 'Two columns togetherNone needed', 'Other Resources0 of 1 needed']);
     expect(side.getByText('Best next step')).toBeTruthy();
     expect(side.getByText('Nulls per Key Field')).toBeTruthy();
     expect(side.getByRole('link', { name: /Add this EDA-Probe/ }).getAttribute('href')).toBe('/eda/r2/probes/nullsPerKeyField');
     const table = side.getByRole('heading', { name: 'The table as a whole' }).parentElement as HTMLElement;
     expect([...table.querySelectorAll('li')].map((item) => item.textContent?.replace(/\s+/g, ' ').trim())).toEqual([
       'The grain holds Added',
-      'Row count Needed · Coming',
-      'Date range Needed · Coming',
+      'Date range Needed',
       'Volume over time, with empty periods Needed',
       'Settling between EDA-Reruns On request · Coming',
     ]);
@@ -245,6 +330,22 @@ describe('the page of an EDA (FR-ED-04, DEC-UX-321, DEC-UX-322)', () => {
     expect(within(rows[2] as HTMLElement).getByRole('img', { name: 'Weight: needed, not set yet' })).toBeTruthy();
     expect(within(rows[0] as HTMLElement).getByRole('img', { name: 'Weight: not needed' })).toBeTruthy();
     expect(within(rows[0] as HTMLElement).getByRole('img', { name: 'Gaps: needed, not set yet' })).toBeTruthy();
+  });
+
+  it('shows on a card of Date range and Distribution of categories their result in a sentence and on their drawing (FR-ED-17, FR-ED-18)', async () => {
+    show(viewOf({ grainHolds: GRAIN_HOLDS, dateRange: BEHIND, distributionOfCategories: CATEGORIES }));
+    await screen.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
+    const range = within(step('Basis').getByRole('article', { name: 'Date range' }));
+    expect(range.getByText('Look at this')).toBeTruthy();
+    expect(range.getByText('The last week is week 44, 26 Oct: 3 weeks behind this one.')).toBeTruthy();
+    expect(range.getByText('3 weeks behind')).toBeTruthy();
+    expect(range.getByText('w44 2026')).toBeTruthy();
+    expect(range.getByRole('link', { name: 'Date range' }).getAttribute('href')).toBe('/eda/r2/probes/dateRange');
+    const categories = within(step('Weight').getByRole('article', { name: 'Distribution of categories' }));
+    expect(categories.getByText('For you to judge')).toBeTruthy();
+    expect(categories.getByRole('paragraph').textContent).toBe('In lead_source, 4 of 54 values bring 79% of lead_count. And 1 more field.');
+    expect(categories.getByText('website weighs most, 41%')).toBeTruthy();
+    expect(categories.getByText('Set on lead_source, lead_channel')).toBeTruthy();
   });
 
   it('shows the page for what may not be seen when the Resource has no EDA', async () => {
@@ -278,7 +379,7 @@ describe('the list to add an EDA-Probe (FR-ED-13, DEC-UX-328)', () => {
 
   it('shows each EDA-Probe offered with its question for this Resource, how much it is asked for, and its state', async () => {
     const sheet = await openList(viewOf({ grainHolds: GRAIN_HOLDS, nullsPerKeyField: ran(['week_start', 'lead_source', 'lead_count'], NULLS.results.slice(0, 3).map((result) => [result.subject, result.data, result.reading])) }), 'Basis');
-    expect(rows(sheet, 'Basis')).toEqual(['The grain holds', 'Row count', 'Date range', 'Volume over time, with empty periods', 'Settling between EDA-Reruns']);
+    expect(rows(sheet, 'Basis')).toEqual(['The grain holds', 'Date range', 'Volume over time, with empty periods', 'Settling between EDA-Reruns']);
     // Added, with Data Hub's reading.
     const grain = sheet.getByRole('link', { name: /The grain holds/ });
     expect(grain.textContent).toContain('Is every row one thing: one row per week_start, lead_source?');
@@ -290,13 +391,18 @@ describe('the list to add an EDA-Probe (FR-ED-13, DEC-UX-328)', () => {
     expect(volume.textContent).toContain('How much comes in per week, and are there weeks without rows?');
     expect(volume.textContent).toContain('Needed');
     expect(volume.textContent).toContain('Open');
+    // Date range runs now: Open, to add it, with its question for this Resource (FR-ED-18).
+    const range = sheet.getByRole('link', { name: /Date range/ });
+    expect(range.textContent).toContain('From when to when does it run, on week_start?');
+    expect(range.textContent).toContain('Open');
+    expect(range.getAttribute('href')).toBe('/eda/r2/probes/dateRange');
     // Coming: quieter, still Needed, and it opens nothing.
-    const row = sheet.getByText('Row count').closest('.row') as HTMLElement;
+    const row = sheet.getByText('Disguised nulls').closest('.row') as HTMLElement;
     expect(row.tagName).toBe('DIV');
     expect(row.getAttribute('aria-disabled')).toBe('true');
     expect(row.textContent).toContain('Coming');
     expect(row.textContent).toContain('Needed');
-    expect(sheet.queryByRole('link', { name: /Row count/ })).toBeNull();
+    expect(sheet.queryByRole('link', { name: /Disguised nulls/ })).toBeNull();
     expect(sheet.getByText('Settling between EDA-Reruns').closest('.row')?.textContent).toContain('On request');
     // Set on part of what it needs.
     const nulls = sheet.getByRole('link', { name: /Nulls per Key Field/ });
@@ -311,7 +417,8 @@ describe('the list to add an EDA-Probe (FR-ED-13, DEC-UX-328)', () => {
     const sheet = await openList(viewOf({ grainHolds: GRAIN_HOLDS }), 'Basis');
     await fireEvent.click(sheet.getByRole('radio', { name: 'Data Hub runs it' }));
     expect(sheet.getAllByRole('region').map((region) => region.getAttribute('aria-label'))).toEqual(['Basis', 'Gaps', 'Weight']);
-    expect(rows(sheet, 'Basis')).toEqual(['The grain holds', 'Volume over time, with empty periods']);
+    expect(rows(sheet, 'Basis')).toEqual(['The grain holds', 'Date range', 'Volume over time, with empty periods']);
+    expect(rows(sheet, 'Weight')).toEqual(['Distribution of numbers', 'Distribution of categories']);
     await fireEvent.click(sheet.getByRole('radio', { name: 'Added' }));
     expect(rows(sheet, 'Basis')).toEqual(['The grain holds']);
     await fireEvent.click(sheet.getByRole('radio', { name: 'Needed' }));
@@ -446,6 +553,122 @@ describe('the detail of an EDA-Probe (FR-ED-06, DEC-UX-324)', () => {
     await fireEvent.input(screen.getByRole('spinbutton', { name: 'The width of the bins of lead_count' }), { target: { value: '5' } });
     await fireEvent.click(screen.getByRole('button', { name: /Run again/ }));
     expect(client.run).toHaveBeenLastCalledWith('r2', 'distributionOfNumbers', { fields: ['lead_count'], params: { width: { lead_count: 5 } } });
+  });
+
+  it('sets Distribution of categories on the texts among the Key Fields, weighed by the number that adds up or by rows (FR-ED-17, DEC-ED-33)', async () => {
+    const { client } = show(viewOf({ grainHolds: GRAIN_HOLDS }), { probe: 'distributionOfCategories', answers: [{ state: 'ran', eda: viewOf({ distributionOfCategories: CATEGORIES }) }] });
+    expect(await screen.findByRole('heading', { level: 2, name: 'Distribution of categories' })).toBeTruthy();
+    expect(screen.getByText('Weight · one column · needed for 4 · Explored')).toBeTruthy();
+    expect(screen.getByRole('img', { name: 'Distribution of categories, drawn on a small table' })).toBeTruthy();
+    expect(screen.getByText('each value counted, the most first')).toBeTruthy();
+    expect(screen.getByText(/^It counts, per text field, how much each value brings/)).toBeTruthy();
+    expect([...document.querySelectorAll('.chip .mono')].map((chip) => chip.textContent)).toEqual(['lead_source', 'lead_channel']);
+    // Weighed by the number that adds up, as for an aggregate it starts; a unique count is not offered.
+    const weigh = screen.getByRole('combobox', { name: 'Weighed by' }) as HTMLSelectElement;
+    expect([...weigh.options].map((option) => option.textContent)).toEqual(['The sum of lead_count', 'Rows']);
+    expect(weigh.value).toBe('lead_count');
+    expect(screen.getByText(/A unique count, such as/).textContent).toContain('unique_applicants, never adds up, so it is not offered.');
+    expect(screen.getByText('The top 10 of each field, the rest together, and the empty values apart.')).toBeTruthy();
+    expect(screen.getByText(/Variants of one category/)).toBeTruthy();
+    expect(screen.getByText('lead_source, lead_channel, lead_count').parentElement?.textContent).toContain('over its whole history');
+    // Rows instead goes with the run, as eda takes it: null.
+    await fireEvent.change(weigh, { target: { value: '' } });
+    await fireEvent.click(screen.getByRole('button', { name: /^Run$/ }));
+    expect(client.run).toHaveBeenLastCalledWith('r2', 'distributionOfCategories', { fields: ['lead_source', 'lead_channel'], params: { weighedBy: null } });
+  });
+
+  it('draws Distribution of categories per field: the heaviest values with their share, the others, the empty ones apart (FR-ED-17)', async () => {
+    show(viewOf({ distributionOfCategories: CATEGORIES }), { probe: 'distributionOfCategories' });
+    const result = within(await screen.findByRole('region', { name: 'Result' }));
+    // Always for you to judge (DEC-ED-33).
+    expect(result.getAllByText('For you to judge')).toHaveLength(3);
+    expect(document.querySelector('.conclusion')?.textContent).toBe('In lead_source, 4 of 54 values bring 79% of lead_count. In lead_channel, web and mobile bring 69% of lead_count.');
+    expect(screen.getAllByRole('article').map((block) => block.getAttribute('aria-label'))).toEqual(['lead_source', 'lead_channel']);
+    const source = within(screen.getByRole('article', { name: 'lead_source' }));
+    expect(source.getByText('grouped by · mapped to an Entity')).toBeTruthy();
+    expect(source.getByText(/^4 of 54 values bring 79% of/).closest('p')?.textContent).toBe('4 of 54 values bring 79% of lead_count. 31 values bring less than 0.1% each. 0.1% of lead_count has no value.');
+    const bars = source.getByRole('list', { name: 'The values of lead_source, the heaviest first, with their share' });
+    const items = within(bars).getAllByRole('listitem');
+    const said = (item: HTMLElement | undefined) => item?.textContent?.replace(/\s+/g, ' ').trim();
+    expect(items).toHaveLength(12);
+    expect(said(items[0])).toBe('website 41%');
+    expect(items[0]?.getAttribute('title')).toBe('website: 259,407, 41%');
+    expect(said(items[10])).toBe('44 others 5.4%');
+    expect(said(items[11])).toBe('empty 0.1%');
+    expect(source.getByText('Share of 632,700, the sum of').textContent).toContain('lead_count');
+    const numbers = [...(source.getByText('Values').closest('dl') as HTMLElement).querySelectorAll('div')].map((pair) => [pair.querySelector('dt')?.textContent, pair.querySelector('dd')?.textContent]);
+    expect(numbers).toEqual([
+      ['Values', '54'],
+      ['The top 4', '79%'],
+      ['Below 0.1% each', '31'],
+      ['Empty', '0.1%'],
+    ]);
+    expect(source.getByRole('group', { name: 'Your reading of lead_source' })).toBeTruthy();
+    const channel = within(screen.getByRole('article', { name: 'lead_channel' }));
+    expect(channel.getByText('no role')).toBeTruthy();
+    // The values go in as names, as they are.
+    expect(screen.getByRole('article', { name: 'lead_channel' }).querySelector('.sentence')?.textContent).toBe('web and mobile bring 69% of lead_count. 1 value brings less than 0.1% each. 12% of lead_count has no value.');
+    expect([...(screen.getByRole('article', { name: 'lead_channel' }).querySelectorAll('.sentence .mono') ?? [])].map((name) => name.textContent)).toEqual(['web', 'mobile', 'lead_count', 'lead_count']);
+    expect(said(within(channel.getByRole('list')).getAllByRole('listitem').at(-1))).toBe('empty 12%');
+    cleanup();
+
+    setLanguage('nl');
+    try {
+      show(viewOf({ distributionOfCategories: CATEGORIES }), { probe: 'distributionOfCategories' });
+      const block = within(await screen.findByRole('article', { name: 'lead_source' }));
+      expect(block.getByText('Aandeel van 632.700, de som van').textContent).toContain('lead_count');
+      expect(block.getByText(/^4 van 54 waarden brengen 79% van/)).toBeTruthy();
+    } finally {
+      setLanguage('en');
+    }
+  });
+
+  it('draws Date range per date: from its first value to today, up to date with nothing to read (FR-ED-18, DEC-ED-34)', async () => {
+    show(viewOf({ dateRange: UP_TO_DATE }), { probe: 'dateRange' });
+    const result = within(await screen.findByRole('region', { name: 'Result' }));
+    expect(screen.getByText('Basis · the rows · needed for 4 · Explored')).toBeTruthy();
+    expect(screen.getByText('the first, the last, and today')).toBeTruthy();
+    expect(screen.getByText(/^When the last is this week or the one before/)).toBeTruthy();
+    expect(screen.getByText(/Weeks without rows in between: Volume over time\.$/)).toBeTruthy();
+    expect(result.getAllByText('As expected').length).toBeGreaterThan(0);
+    expect(document.querySelector('.conclusion')?.textContent).toBe(
+      'From week 1 of 2021 to this week, week 47 of 2026: 307 weeks, up to date. The first 208 weeks lie before its Reliable Since, 1 Jan 2025.',
+    );
+    const block = within(result.getByRole('article', { name: 'week_start' }));
+    expect(block.getByText('period · a week from Monday')).toBeTruthy();
+    const line = block.getByRole('img', { name: 'week_start from its first value to today' });
+    expect(within(line).getByText('Reliable Since 1 Jan 2025')).toBeTruthy();
+    expect(within(line).getByText('week 1 of 2021, 4 Jan')).toBeTruthy();
+    expect(within(line).getByText('last: week 47, 16 Nov · this week')).toBeTruthy();
+    expect(within(line).getByText('2025')).toBeTruthy();
+    // Each number with what it means under it.
+    const numbers = [...block.getAllByRole('definition')].map((one) => [one.firstChild?.textContent?.trim(), one.querySelector('small')?.textContent]);
+    expect(numbers).toEqual([
+      ['week 1 of 2021', '4 Jan 2021'],
+      ['week 47 of 2026', expect.stringMatching(/^16 Nov( 2026)?, this week$/)],
+      ['307', 'with rows or without'],
+      ['none', 'the last is this week'],
+      ['208 weeks', '1 Jan 2025, on its Resource Card'],
+    ]);
+    expect([...block.getAllByRole('term')].map((one) => one.textContent)).toEqual(['First', 'Last', 'Weeks between', 'Behind', 'Before Reliable Since']);
+    // Up to date has nothing to read (DEC-UX-326).
+    expect(block.queryByRole('group', { name: /Your reading/ })).toBeNull();
+  });
+
+  it('reads a date behind as look at this, the part behind hatched and named, and asks for a reading (FR-ED-18, DEC-ED-34)', async () => {
+    show(viewOf({ dateRange: BEHIND }), { probe: 'dateRange' });
+    const result = within(await screen.findByRole('region', { name: 'Result' }));
+    expect(result.getAllByText('Look at this').length).toBeGreaterThan(0);
+    expect(document.querySelector('.conclusion')?.textContent).toBe(
+      'The last week is week 44, 26 Oct: 3 weeks behind this one. From week 1 of 2021, 303 weeks; is it still loaded? The first 208 weeks lie before its Reliable Since, 1 Jan 2025.',
+    );
+    const block = within(result.getByRole('article', { name: 'week_start' }));
+    const line = block.getByRole('img', { name: 'week_start from its first value to today' });
+    expect(within(line).getByText('3 weeks behind')).toBeTruthy();
+    expect(within(line).getByText('last: week 44, 26 Oct')).toBeTruthy();
+    expect(line.querySelector('rect[fill^="url(#eda-range-hatch"]')).toBeTruthy();
+    expect(block.getByText('3 weeks').classList.contains('warn')).toBe(true);
+    expect(block.getByRole('group', { name: 'Your reading of week_start' })).toBeTruthy();
   });
 
   it('keeps the reading of who works on the EDA, with who gave it (FR-ED-11)', async () => {

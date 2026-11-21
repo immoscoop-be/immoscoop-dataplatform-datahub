@@ -3,7 +3,8 @@
  * needed one is complete, what the EDA covers, and the shapes of the answers of the service eda. One definition for
  * eda and the web app (TR-ED-02).
  *
- * The EDA-Probes and their level per model type are the table of DEC-ED-11 and DEC-ED-12, with the three of DEC-ED-14.
+ * The EDA-Probes and their level per model type are the table of DEC-ED-11 and DEC-ED-12, with the three of DEC-ED-14;
+ * the rows of the table are a fact of the EDA, counted by The grain holds and Nulls per Key Field (DEC-ED-32).
  * An EDA-Probe is set on its fields and gives a result per field, or per pair or group, or for the table as a whole
  * (DEC-ED-17); a needed one is complete once it has run, set on every field it applies to (DEC-ED-21). Data Hub runs
  * four of them in the first build (DEC-ED-26); the others are listed as coming and, needed, still count (OP-ED-09).
@@ -23,7 +24,6 @@ export type ProbeLevel = 'must' | 'should' | 'could';
 /** The EDA-Probes, in the order of the table of DEC-ED-11. */
 export const PROBE_KEYS = [
   'grainHolds',
-  'rowCount',
   'dateRange',
   'volumeOverTime',
   'settling',
@@ -88,11 +88,10 @@ function levels(...row: (ProbeLevel | null)[]): Partial<Record<ModelType, ProbeL
   return Object.fromEntries(types.flatMap((type, index) => (row[index] ? [[type, row[index]]] : []))) as Partial<Record<ModelType, ProbeLevel>>;
 }
 
-/** The EDA-Probes (DEC-ED-11, DEC-ED-12, DEC-ED-14), in order. */
+/** The EDA-Probes (DEC-ED-11, DEC-ED-12, DEC-ED-14, DEC-ED-32), in order. */
 export const PROBES: Readonly<Record<ProbeKey, ProbeSpec>> = {
   grainHolds: { key: 'grainHolds', name: 'The grain holds', step: 'basis', place: 'rows', target: 'grain', levels: levels(M, M, M, M, M, M), runs: true },
-  rowCount: { key: 'rowCount', name: 'Row count', step: 'basis', place: 'rows', target: 'table', levels: levels(M, M, M, M, M, M), runs: false },
-  dateRange: { key: 'dateRange', name: 'Date range', step: 'basis', place: 'rows', target: 'roleDate', levels: levels(M, M, M, null, M, null), runs: false },
+  dateRange: { key: 'dateRange', name: 'Date range', step: 'basis', place: 'rows', target: 'roleDate', levels: levels(M, M, M, null, M, null), runs: true },
   volumeOverTime: { key: 'volumeOverTime', name: 'Volume over time, with empty periods', step: 'basis', place: 'rows', target: 'roleDate', levels: levels(M, C, M, null, M, null), runs: true },
   settling: { key: 'settling', name: 'Settling between EDA-Reruns', step: 'basis', place: 'rows', target: 'roleDate', levels: levels(S, null, S, null, C, null), runs: false },
   howOftenThingsChange: { key: 'howOftenThingsChange', name: 'How often things change', step: 'basis', place: 'rows', target: 'updatedAt', levels: levels(null, C, null, null, null, null), runs: false },
@@ -101,7 +100,7 @@ export const PROBES: Readonly<Record<ProbeKey, ProbeSpec>> = {
   whereGapsCluster: { key: 'whereGapsCluster', name: 'Where gaps cluster', step: 'gaps', place: 'column', target: 'any', levels: levels(S, S, S, C, S, C), runs: false },
   valuesWithoutAMatch: { key: 'valuesWithoutAMatch', name: 'Values without a match', step: 'gaps', place: 'resource', target: 'mapped', levels: levels(M, M, M, M, M, M), runs: false },
   distributionOfNumbers: { key: 'distributionOfNumbers', name: 'Distribution of numbers', step: 'weight', place: 'column', target: 'numbers', levels: levels(M, M, M, M, M, M), runs: true },
-  distributionOfCategories: { key: 'distributionOfCategories', name: 'Distribution of categories', step: 'weight', place: 'column', target: 'texts', levels: levels(M, M, M, M, M, M), runs: false },
+  distributionOfCategories: { key: 'distributionOfCategories', name: 'Distribution of categories', step: 'weight', place: 'column', target: 'texts', levels: levels(M, M, M, M, M, M), runs: true },
   sharePerSegment: { key: 'sharePerSegment', name: 'Share per segment', step: 'weight', place: 'column', target: 'texts', levels: levels(S, S, S, S, S, C), runs: false },
   outliers: { key: 'outliers', name: 'Outliers', step: 'weight', place: 'column', target: 'numbers', levels: levels(S, S, S, C, S, C), runs: false },
   mode: { key: 'mode', name: 'The mode', step: 'weight', place: 'column', target: 'any', levels: levels(S, S, S, S, S, S), runs: false },
@@ -430,7 +429,78 @@ export interface DistributionResult {
   tail: number;
 }
 
-export type ProbeResult = GrainResult | NullsResult | VolumeResult | DistributionResult;
+/** One value of a text field and what it weighs: the sum of the number it is weighed by, or its rows (DEC-ED-33). */
+export interface CategoryWeight {
+  value: string;
+  weight: number;
+  /** Its share of the weight of the whole field, empty values included, from 0 to 1. */
+  share: number;
+}
+
+/** Distribution of categories, per field (DEC-ED-33). */
+export interface CategoriesResult {
+  /** The number that adds up it is weighed by, or null for rows. */
+  weighedBy: string | null;
+  /** The weight of the whole field: the sum of that number, or the rows. */
+  total: number;
+  /** How many different values the field holds, empty not counted. */
+  values: number;
+  /** The 10 values that weigh most, the heaviest first. */
+  top: CategoryWeight[];
+  /** The other values together. */
+  others: { values: number; weight: number; share: number };
+  /** The rows where the field is empty. */
+  empty: { weight: number; share: number };
+  /** How many values weigh less than 0.1% each. */
+  small: number;
+}
+
+/** Date range, per date it is set on (DEC-ED-34). */
+export interface DateRangeResult {
+  /** The unit of its date: a day, or a week from a Monday for the period of an aggregate. */
+  unit: 'day' | 'week';
+  /** Its first and last value, as a day; null when it holds no value. */
+  first: string | null;
+  last: string | null;
+  /** The periods from the first to the last, both counted. */
+  periods: number;
+  /** The current period, today's in the time zone of Immoscoop. */
+  current: string;
+  /** How many periods the last is behind the current one: 0 when it is the current one. */
+  behind: number;
+  /** The Reliable Since of the Resource Card, as a day, if it gives one, and how many periods lie before it. */
+  reliableSince: string | null;
+  beforeReliable: number | null;
+}
+
+export type ProbeResult = GrainResult | NullsResult | VolumeResult | DistributionResult | CategoriesResult | DateRangeResult;
+
+/**
+ * Whether a result asks for the reading of who works on the EDA, the same for the web app and Claude (FR-ED-11): not
+ * when there is nothing to read, a field without empty values or a date that is up to date.
+ */
+export function asksReading(probe: ProbeKey, result: { reading: DataHubReading }): boolean {
+  return !((probe === 'nullsPerKeyField' || probe === 'dateRange') && result.reading === 'expected');
+}
+
+/** The share of the weight with a value that the head of a field brings (DEC-ED-33): three quarters. */
+export const CATEGORIES_HEAD = 0.75;
+
+/**
+ * Where the weight of a field lies, the same for the web app and Claude (DEC-ED-33): the fewest of its heaviest values
+ * that together bring three quarters of the weight of its filled values, and their share of the whole, as in "4 of 54
+ * lead sources bring 79% of the leads"; null when its 10 heaviest do not, or it holds no value.
+ */
+export function headOf(result: CategoriesResult): { count: number; share: number } | null {
+  const filled = result.total - result.empty.weight;
+  if (filled <= 0) return null;
+  let weight = 0;
+  for (const [index, value] of result.top.entries()) {
+    weight += value.weight;
+    if (weight >= CATEGORIES_HEAD * filled) return { count: index + 1, share: weight / result.total };
+  }
+  return null;
+}
 
 // ----------------------------------------------------------------------------------------------------------------
 // The answers of eda (TR-ED-01)
@@ -515,6 +585,29 @@ export type ProbeRunAnswer =
   | { state: 'ran'; rows: Record<string, unknown>[]; bytes: number; runId: string }
   | { state: 'approve'; bytes: number }
   | { state: 'refused'; bytes: number | null; reason: string };
+
+/** The rows of the table, a fact of the EDA (DEC-ED-32): how many, which EDA-Probe counted them, and when it ran. */
+export interface EdaRows {
+  rows: number;
+  probe: 'grainHolds' | 'nullsPerKeyField';
+  at: string;
+}
+
+/**
+ * The rows of the table, from the last run that counted them (DEC-ED-32): The grain holds counts them for the table as
+ * a whole, Nulls per Key Field with each field; whichever ran last. Null while neither has run.
+ */
+export function rowsOf(view: Pick<EdaView, 'probes'>): EdaRows | null {
+  let found: EdaRows | null = null;
+  for (const one of view.probes) {
+    if ((one.key !== 'grainHolds' && one.key !== 'nullsPerKeyField') || !one.lastRun) continue;
+    const result = one.key === 'grainHolds' ? one.lastRun.results.find((candidate) => candidate.subject === '') : one.lastRun.results[0];
+    const rows = (result?.data as GrainResult | NullsResult | undefined)?.rows;
+    if (typeof rows !== 'number') continue;
+    if (!found || Date.parse(one.lastRun.ranAt) > Date.parse(found.at)) found = { rows, probe: one.key, at: one.lastRun.ranAt };
+  }
+  return found;
+}
 
 /** The needed EDA-Probes of a Resource and how many are complete. */
 export function neededOf(resource: EdaResource, runs: readonly RunCover[]): { total: number; complete: number } {

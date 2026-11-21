@@ -26,7 +26,7 @@
   const missing = $derived(view.probes.find((probe) => probe.needed && probe.added && !probe.complete && stillMissing(probe).length > 0));
   const coming = $derived(view.probes.filter((probe) => probe.needed && !probe.runs).length);
   const grain = $derived(view.resource.fields.filter((field) => field.grain).map((field) => field.name).join(', '));
-  const date = $derived(view.probes.find((probe) => probe.key === 'volumeOverTime')?.applies.fields[0] ?? '');
+  const date = $derived(view.probes.find((probe) => probe.key === 'volumeOverTime' || probe.key === 'dateRange')?.applies.fields[0] ?? '');
 
   type Place = { icon: IconName; label: string; value: string; state: 'none' | 'part' | 'done' | 'muted' };
   const placeOf = (needed: number, complete: number): Place['state'] => (needed === 0 ? 'muted' : complete === needed ? 'done' : complete === 0 ? 'none' : 'part');
@@ -57,6 +57,8 @@
     nullsPerKeyField: 'eda.next.nullsPerKeyField',
     volumeOverTime: 'eda.next.volumeOverTime',
     distributionOfNumbers: 'eda.next.distributionOfNumbers',
+    distributionOfCategories: 'eda.next.distributionOfCategories',
+    dateRange: 'eda.next.dateRange',
   };
 
   const STANDING_TEXTS: Record<ProbeStanding, string> = {

@@ -85,24 +85,26 @@ describe('the guide of an EDA in the Flow Box (FR-ED-14, DEC-UX-327)', () => {
     const flow = edaFlowOf(viewOf());
     expect(flow.steps.map((step) => [step.number, step.group, step.name])).toEqual([
       [1, 'Basis', 'The grain holds'],
-      [2, 'Basis', 'Row count'],
-      [3, 'Basis', 'Date range'],
-      [4, 'Basis', 'Volume over time, with empty periods'],
-      [5, 'Gaps', 'Nulls per Key Field'],
-      [6, 'Gaps', 'Disguised nulls'],
-      [7, 'Gaps', 'Values without a match'],
-      [8, 'Weight', 'Distribution of numbers'],
-      [9, 'Weight', 'Distribution of categories'],
-      [10, 'Weight', 'Spread'],
-      [11, 'Correctness', 'Impossible values'],
+      [2, 'Basis', 'Date range'],
+      [3, 'Basis', 'Volume over time, with empty periods'],
+      [4, 'Gaps', 'Nulls per Key Field'],
+      [5, 'Gaps', 'Disguised nulls'],
+      [6, 'Gaps', 'Values without a match'],
+      [7, 'Weight', 'Distribution of numbers'],
+      [8, 'Weight', 'Distribution of categories'],
+      [9, 'Weight', 'Spread'],
+      [10, 'Correctness', 'Impossible values'],
     ]);
-    expect(flow.steps.filter((step) => step.coming).map((step) => step.id)).toEqual(['rowCount', 'dateRange', 'disguisedNulls', 'valuesWithoutAMatch', 'distributionOfCategories', 'spread', 'impossibleValues']);
-    expect(flow.steps.find((step) => step.id === 'rowCount')).toMatchObject({ said: 'Coming: Data Hub does not run it yet', warn: false, done: false });
+    // Date range and Distribution of categories run now (FR-ED-17, FR-ED-18): 4 of the 10 are still coming.
+    expect(flow.steps.filter((step) => step.coming).map((step) => step.id)).toEqual(['disguisedNulls', 'valuesWithoutAMatch', 'spread', 'impossibleValues']);
+    expect(flow.steps.find((step) => step.id === 'disguisedNulls')).toMatchObject({ said: 'Coming: Data Hub does not run it yet', warn: false, done: false });
+    expect(flow.steps.find((step) => step.id === 'dateRange')).toMatchObject({ said: 'Not added yet', warn: true, coming: false, go: 'Open the EDA-Probe' });
+    expect(flow.steps.find((step) => step.id === 'distributionOfCategories')).toMatchObject({ said: 'Not added yet', warn: true, coming: false });
     expect(flow.steps.find((step) => step.id === 'grainHolds')).toMatchObject({ said: 'Not added yet', warn: true, go: 'Open the EDA-Probe' });
     // The step to do now is the best next step of the EDA, as its page proposes.
     expect(flow.now).toBe('nullsPerKeyField');
-    expect(flow.progress).toBe('0 of 11 needed EDA-Probes complete');
-    expect(flow.foot).toMatch(/^11 to go, of which 7 are coming: they still count\./);
+    expect(flow.progress).toBe('0 of 10 needed EDA-Probes complete');
+    expect(flow.foot).toMatch(/^10 to go, of which 4 are coming: they still count\./);
   });
 
   it('says a step done with Data Hub reading and its result in a few words, and an open one with what it misses', () => {
@@ -111,10 +113,10 @@ describe('the guide of an EDA in the Flow Box (FR-ED-14, DEC-UX-327)', () => {
     expect(grain).toMatchObject({ done: true, tag: { text: 'As expected', tone: 'healthy' } });
     expect(grain?.said).toBe('One row per week_start, lead_source: none twice in 16,224 rows.');
     expect(flow.steps.find((step) => step.id === 'nullsPerKeyField')?.said).toBe('Set on 3 of 4 Key Fields: lead_channel still missing');
-    // Each still misses one field: the first in the order of the table comes first, as on its page.
-    expect(flow.now).toBe('volumeOverTime');
-    expect(flow.progress).toBe('1 of 11 needed EDA-Probes complete');
-    expect(flow.foot).toMatch(/^10 to go, of which 7 are coming/);
+    // Distribution of categories misses both texts among the Key Fields, more than any other: the best next step.
+    expect(flow.now).toBe('distributionOfCategories');
+    expect(flow.progress).toBe('1 of 10 needed EDA-Probes complete');
+    expect(flow.foot).toMatch(/^9 to go, of which 4 are coming/);
   });
 
   it('unfolds What, Why and How, the Learning Card where one is written, and Open the EDA-Probe, except on its own detail', () => {
@@ -126,6 +128,15 @@ describe('the guide of an EDA in the Flow Box (FR-ED-14, DEC-UX-327)', () => {
     expect(grain).toMatchObject({ here: true, card: { number: '2.3.5', title: 'The grain question' } });
     expect(grain?.go).toBeUndefined();
     expect(flow.steps.find((step) => step.id === 'volumeOverTime')?.how).toBe('On its detail: set on week_start, the date it counts by; other dates can be added. Run.');
+    // The two built next have What, Why and How of their own (FR-ED-17, FR-ED-18).
+    const range = flow.steps.find((step) => step.id === 'dateRange');
+    expect(range?.what).toMatch(/^It finds the first and the last value of a date/);
+    expect(range?.why).toMatch(/^A table that stopped three weeks ago/);
+    expect(range?.how).toBe('On its detail: set on week_start, the date its role names; other dates can be added. Run.');
+    const categories = flow.steps.find((step) => step.id === 'distributionOfCategories');
+    expect(categories?.what).toMatch(/^It counts, per text field, how much each value brings/);
+    expect(categories?.why).toMatch(/^A category with one value that brings nearly everything/);
+    expect(categories?.how).toMatch(/^On its detail: set on the texts among its Key Fields, weighed by the number that adds up or by rows/);
     // A coming one says what it asks, that Data Hub does not run it yet, and leads nowhere.
     const coming = flow.steps.find((step) => step.id === 'impossibleValues');
     expect(coming?.what).toBe('Which values cannot be, such as a negative count or a week that does not start on a Monday?');
@@ -140,6 +151,52 @@ describe('the guide of an EDA in the Flow Box (FR-ED-14, DEC-UX-327)', () => {
     const grain = edaFlowOf(without).steps.find((step) => step.id === 'grainHolds');
     expect(grain?.said).toBe('Its grain is not recorded yet');
     expect(grain?.how).toMatch(/the Data Team records its grain first/);
+  });
+});
+
+describe('the steps of the two EDA-Probes built next, done (FR-ED-17, FR-ED-18)', () => {
+  it('say their result in a few words, as their cards do', () => {
+    const range = run(['week_start'], [
+      {
+        subject: 'week_start',
+        data: { unit: 'week', first: '2021-01-04', last: '2026-10-26', periods: 303, current: '2026-11-16', behind: 3, reliableSince: '2025-01-01', beforeReliable: 208 },
+        reading: 'look',
+        yours: null,
+      },
+    ]);
+    const categories = run(['lead_source', 'lead_channel'], [
+      {
+        subject: 'lead_source',
+        data: {
+          weighedBy: 'lead_count',
+          total: 1000,
+          values: 54,
+          top: [
+            { value: 'website', weight: 410, share: 0.41 },
+            { value: 'app', weight: 220, share: 0.22 },
+            { value: 'partner', weight: 90, share: 0.09 },
+            { value: 'immoweb', weight: 70, share: 0.07 },
+          ],
+          others: { values: 50, weight: 209, share: 0.209 },
+          empty: { weight: 1, share: 0.001 },
+          small: 31,
+        },
+        reading: 'judge',
+        yours: null,
+      },
+      { subject: 'lead_channel', data: { weighedBy: 'lead_count', total: 1000, values: 1, top: [{ value: 'web', weight: 1000, share: 1 }], others: { values: 0, weight: 0, share: 0 }, empty: { weight: 0, share: 0 }, small: 0 }, reading: 'judge', yours: null },
+    ]);
+    const flow = edaFlowOf(viewOf({ dateRange: range, distributionOfCategories: categories }));
+    expect(flow.steps.find((step) => step.id === 'dateRange')).toMatchObject({
+      done: true,
+      tag: { text: 'Look at this', tone: 'attention' },
+      said: 'The last week is week 44, 26 Oct: 3 weeks behind this one.',
+    });
+    expect(flow.steps.find((step) => step.id === 'distributionOfCategories')).toMatchObject({
+      done: true,
+      tag: { text: 'For you to judge', tone: 'informative' },
+      said: 'In lead_source, 4 of 54 values bring 79% of lead_count. And 1 more field.',
+    });
   });
 });
 
