@@ -44,7 +44,7 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="display-name"></a>**Display Name** | The readable, unique name of a Resource, as business sees it, for example "Agency purity". | [Resources](requirements/functional/04-stacks-and-resources.md#terms) |
 | <a id="domain-model"></a>**Domain Model** | The description of the entities of the business, maintained with Domain Hub and delivered to Data Hub as dbt Artifacts and as the overview the server of Colleciónes deploys ([FR-AR-15](requirements/functional/01-artifact-registry.md#fr-ar-15)). Data Hub describes the data; the Domain Model describes the business. | [Relation to existing work](overview/data-hub.md#relation-to-existing-work) |
 | <a id="eda"></a>**EDA** | Exploratory data analysis: a function of Data Hub in which the Owner takes a Resource through a predefined set of EDA-Steps that explore its data, its gaps, its weight and its correctness. Completing the EDA-Steps makes a Resource Explored. It has three phases: EDA-Setup, EDA-Rerun and EDA-Revalidation. | [DEC-ED-01](requirements/functional/15-eda.md#dec-ed-01), [FR-MR-03](requirements/functional/06-maturity-and-release.md#fr-mr-03) |
-| <a id="eda-probe"></a>**EDA-Probe** | One query of an EDA-Step that measures one aspect of the data of a Resource, such as the nulls of a Key Field or the distribution of a field. | [DEC-ED-09](requirements/functional/15-eda.md#dec-ed-09) |
+| <a id="eda-probe"></a>**EDA-Probe** | One query of an EDA-Step that measures one aspect of the data of a Resource, on the fields it is set on: one field, a pair or group of fields, or the table as a whole. It gives a result per field, or per pair or group, such as the nulls of each Key Field. | [DEC-ED-09](requirements/functional/15-eda.md#dec-ed-09), [DEC-ED-17](requirements/functional/15-eda.md#dec-ed-17) |
 | <a id="eda-profile"></a>**EDA-Profile** | The registered results of one run of the EDA-Probes of an EDA: a picture of the data of a Resource at that moment. The EDA-Setup gives the first; each EDA-Rerun gives a new one. | [EDA](requirements/functional/15-eda.md#terms) |
 | <a id="eda-rerun"></a>**EDA-Rerun** | Running the EDA-Probes of an EDA again, which gives a new EDA-Profile. Registering it is the whole re-evaluation. | [DEC-ED-06](requirements/functional/15-eda.md#dec-ed-06) |
 | <a id="eda-revalidation"></a>**EDA-Revalidation** | Reconsidering the EDA-Setup of a Resource, triggered by a change to its table, by heavy use of fields the EDA does not include, or by other triggers still to decide. | [EDA](requirements/functional/15-eda.md#terms) |
@@ -133,7 +133,7 @@ The ladder itself is defined on [Maturity levels of data](https://immoscoop.atla
 | 1 | <a id="available"></a>**Available** | Registered; the description is incomplete |
 | 2 | <a id="described"></a>**Described** | The table and at least one field have a description in dbt |
 | 3 | <a id="confirmed"></a>**Confirmed** | The Owner has confirmed the Resource |
-| 4 | <a id="explored"></a>**Explored** | An EDA document is linked |
+| 4 | <a id="explored"></a>**Explored** | Its EDA-Setup is complete: every EDA-Probe its model type must have is added and set on its fields |
 | 5 | <a id="monitored"></a>**Monitored** | Its Monitor has at least one active Rule ([DEC-CM-12](requirements/functional/08-checks-and-monitoring.md#dec-cm-12)) |
 
 ## The library metaphor
