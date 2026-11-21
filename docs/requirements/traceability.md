@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 318 | 118 (22 open, 96 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 322 | 119 (23 open, 96 done) |
 | [Backlog](../overview/backlog.md) | – | – | – | 7 (5 open, 2 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
@@ -27,7 +27,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Permissions and Excel keys](functional/12-permissions-and-library-cards.md) | 16 (1 proposed, 15 implemented) | 4 (4 implemented) | 9 | 2 (1 open, 1 done) |
 | [Channels](functional/13-channels.md) | 6 (5 proposed, 1 implemented) | – | 6 | 4 (2 open, 2 done) |
 | [Conversations](functional/14-conversations.md) | 16 (16 implemented) | 2 (2 implemented) | 13 | 9 (9 done) |
-| [EDA](functional/15-eda.md) | – | – | 19 | 8 (5 open, 3 done) |
+| [EDA](functional/15-eda.md) | – | – | 20 | 8 (5 open, 3 done) |
 | [Learning](functional/16-learning.md) | 44 (13 proposed, 15 implemented, 16 withdrawn) | – | 39 | 40 (9 open, 31 done) |
 | [Claude](functional/17-claude.md) | 39 (1 proposed, 38 implemented) | 5 (5 implemented) | 23 | 12 (7 open, 5 done) |
 | [Localisation](non-functional/localisation.md) | 12 (8 specified, 3 implemented, 1 withdrawn) | – | – | – |
@@ -288,7 +288,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-MR-19](functional/06-maturity-and-release.md#fr-mr-19) | The declaration is kept as the Owner ticked it | Implemented | – | – | [TR-SR-32](technical/04-stacks-and-resources.md#tr-sr-32) | [67c2e14](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/67c2e14c21c77636ce4e4b7fc046f4d5f0f0374c) implements, 2026-11-15 |
 | [FR-MR-20](functional/06-maturity-and-release.md#fr-mr-20) | The Flow Box takes the Owner Unit through the steps required to publish | Implemented | – | [flow-box](../design/screens/flow-box.html) | [TR-SR-36](technical/04-stacks-and-resources.md#tr-sr-36) | [00d5681](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/00d56818d8f1c308c5aac6c016d61978433e7499) implements, 2026-11-20<br>[ad97eb1](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/ad97eb129127e0d6ebe9316666b029b2b39bbcdb) refs, 2026-11-20<br>[86c27ed](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/86c27edcae36ce737275acd44478aece8ad8ffcf) refs, 2026-11-20 |
 | [FR-MR-21](functional/06-maturity-and-release.md#fr-mr-21) | Publish warns while a step is open, and offers to guide | Implemented | – | [flow-box](../design/screens/flow-box.html), [resource-publish](../design/screens/resource-publish.html) | [TR-SR-36](technical/04-stacks-and-resources.md#tr-sr-36) | [00d5681](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/00d56818d8f1c308c5aac6c016d61978433e7499) implements, 2026-11-20<br>[86c27ed](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/86c27edcae36ce737275acd44478aece8ad8ffcf) refs, 2026-11-20 |
-| [FR-MR-22](functional/06-maturity-and-release.md#fr-mr-22) | Explored: a complete EDA-Setup | Specified | – | [resource-detail](../design/screens/resource-detail.html) | – | – |
+| [FR-MR-22](functional/06-maturity-and-release.md#fr-mr-22) | Explored: a complete EDA-Setup | Specified | – | [resource-detail](../design/screens/resource-detail.html), [resource-overview](../design/screens/resource-overview.html), [eda](../design/screens/eda.html) | – | – |
 
 ### [Log and notifications](functional/07-log-and-notifications.md)
 

@@ -251,7 +251,7 @@ While a step required to publish is open, Publish on a Resource does not open th
 <a id="fr-mr-22"></a>
 ### FR-MR-22 · Explored: a complete EDA-Setup
 
-**Status:** Specified · **Source:** Max, 2026-11-21 ([DEC-MR-21](#dec-mr-21)) · **Screens:** [resource-detail](../../design/screens/resource-detail.html)
+**Status:** Specified · **Source:** Max, 2026-11-21 ([DEC-MR-21](#dec-mr-21)) · **Screens:** [resource-detail](../../design/screens/resource-detail.html), [resource-overview](../../design/screens/resource-overview.html), [eda](../../design/screens/eda.html)
 
 A Resource at 3 · Confirmed becomes 4 · Explored once the EDA-Setup of its EDA is complete: every EDA-Probe its model type must have is added and set on its fields, the Key Fields among them ([DEC-ED-12](15-eda.md#dec-ed-12), [DEC-ED-17](15-eda.md#dec-ed-17)). It drops back to 3 · Confirmed only when its EDA goes ([FR-MR-07](#fr-mr-07)). An EDA-Rerun, a result that reads badly, or a Key Field marked after the EDA-Setup lowers nothing; a Key Field the EDA does not cover gives a warning that names it ([DEC-ED-07](15-eda.md#dec-ed-07)).
 
