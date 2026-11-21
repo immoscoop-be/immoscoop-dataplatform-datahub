@@ -1,8 +1,10 @@
 <script lang="ts">
-  import type { DistributionResult, EdaField, GrainResult, NullsResult, ProbeKey, ResultView, VolumeResult } from '@datahub/contracts/eda';
+  import type { CategoriesResult, DateRangeResult, DistributionResult, EdaField, GrainResult, NullsResult, ProbeKey, ResultView, VolumeResult } from '@datahub/contracts/eda';
+  import { kindOf } from '@datahub/contracts/model-types';
   import { ICONS, type IconName } from '@datahub/ui/foundations/icons.js';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
-  import { MARK_ICONS, markOf, number } from '../lib/eda.js';
+  import { isoWeek, MARK_ICONS, markOf, number, percent } from '../lib/eda.js';
+  import { isUpToDate, periodsOf } from '../lib/edaWords.js';
 
   /**
    * The drawing of an EDA-Probe (DEC-UX-268): one schematic table with fine lines, the kind of each field as an icon in
@@ -50,7 +52,14 @@
     const chosen = [...fields].sort((a, b) => rank(a) - rank(b)).slice(0, 4);
     return fields
       .filter((field) => chosen.includes(field))
-      .map((field) => ({ name: field.name, icon: MARK_ICONS[markOf(field)] as IconName, on: setOn.includes(field.name), date: markOf(field) === 'date', number: markOf(field) === 'number' }));
+      .map((field) => ({
+        name: field.name,
+        icon: MARK_ICONS[markOf(field)] as IconName,
+        on: setOn.includes(field.name),
+        date: markOf(field) === 'date',
+        number: markOf(field) === 'number',
+        text: kindOf(field.dataType) === 'text',
+      }));
   });
   /** The columns it looks at; the first column when it is set on none of them. */
   const looked = $derived(columns.flatMap((column, index) => (column.on ? [index] : [])));
@@ -99,6 +108,33 @@
   const distribution = $derived(results ? result<DistributionResult>() : undefined);
   const numberColumn = $derived(looked.find((index) => columns[index]?.number) ?? firstOn);
 
+  /**
+   * Distribution of categories: the texts it is set on, each value in a colour of its own, one value coming back on
+   * most rows; on a card, the value that weighs most.
+   */
+  const CATEGORIES = [
+    ['magenta', 'teal', 'magenta', 'slate', 'magenta', 'teal'],
+    ['bordeaux', 'olive', 'ochre', 'bordeaux', 'olive', 'ochre'],
+  ];
+  const textColumns = $derived(looked.filter((index) => columns[index]?.text));
+  const heaviest = $derived(results ? result<CategoriesResult>()?.top[0] : undefined);
+
+  /** Date range: the date it is set on, its first value on top and its last at the bottom; on a card, how far behind. */
+  const rangeColumn = $derived(dateColumn >= 0 ? dateColumn : firstOn);
+  const ranges = $derived(results ? results.map((one) => one.data as DateRangeResult) : undefined);
+  const range = $derived(ranges?.find((one) => !isUpToDate(one)) ?? ranges?.[0]);
+  /** A week as its number, such as w47 2026; a day as its month. */
+  const labelOf = (unit: DateRangeResult['unit'], date: string | null) => {
+    if (!date) return '–';
+    if (unit === 'week') {
+      const { week, year } = isoWeek(date);
+      return `w${String(week).padStart(2, '0')} ${year}`;
+    }
+    return new Intl.DateTimeFormat(language === 'nl' ? 'nl-BE' : 'en-GB', { day: 'numeric', month: 'short', year: '2-digit', timeZone: 'UTC' }).format(new Date(`${date.slice(0, 10)}T00:00:00Z`));
+  };
+  const rangeLabels = $derived(range ? [labelOf(range.unit, range.first), labelOf(range.unit, range.last)] : ['w01 2021', 'w47 2026']);
+  const late = $derived(range !== undefined && !isUpToDate(range));
+
   const pill: Pill | null = $derived.by(() => {
     switch (probe) {
       case 'grainHolds':
@@ -115,6 +151,14 @@
       case 'distributionOfNumbers':
         if (!results) return { text: t('eda.draw.distribution.idea'), tone: 'judge' };
         return distribution ? { text: t('eda.draw.distribution.result', { median: number(distribution.median, language), mean: number(distribution.mean, language) }), tone: 'judge' } : null;
+      case 'distributionOfCategories':
+        if (!results) return { text: t('eda.draw.categories.idea'), tone: 'fine' };
+        return heaviest ? { text: t('eda.draw.categories.result', { value: short(heaviest.value), share: percent(heaviest.share, 1, language) }), tone: 'judge' } : null;
+      case 'dateRange':
+        if (!results) return { text: t('eda.draw.dateRange.idea'), tone: 'fine' };
+        if (!range) return null;
+        if (range.last === null) return { text: t('eda.draw.dateRange.none'), tone: 'warn' };
+        return late ? { text: t('eda.draw.dateRange.behind', { periods: periodsOf(range.unit, range.behind) }), tone: 'warn' } : { text: t('eda.draw.dateRange.upToDate'), tone: 'fine' };
       default:
         return null;
     }
@@ -165,6 +209,12 @@
               <rect class="c-teal" x={center(index) - 13} y={top(row)} width="26" height="6" rx="3" />
             {:else if probe === 'distributionOfNumbers' && index === numberColumn}
               <rect class={row === 3 ? 'c-bordeaux' : 'c-slate'} x={center(index) - 23} y={top(row)} width={BARS[row]} height="6" rx="2" />
+            {:else if probe === 'distributionOfCategories' && textColumns.includes(index)}
+              <rect class="c-{CATEGORIES[textColumns.indexOf(index) % 2]?.[row]}" x={center(index) - 13} y={top(row)} width="26" height="6" rx="3" />
+            {:else if probe === 'dateRange' && index === rangeColumn && (row === 0 || row === 5)}
+              <text class="period strong" class:late={row === 5 && late} x={center(index)} y={top(row) + 5.45} text-anchor="middle">{rangeLabels[row === 0 ? 0 : 1]}</text>
+            {:else if probe === 'dateRange' && index === rangeColumn}
+              <rect class="c-teal" x={center(index) - 11} y={top(row)} width="22" height="6" rx="3" />
             {:else}
               <rect class="ink" x={center(index) - 13} y={top(row)} width="26" height="6" rx="3" />
             {/if}
@@ -225,6 +275,8 @@
   .c-ochre { fill: var(--col-ochre); }
   .c-bordeaux { fill: var(--col-bordeaux); }
   .period { font-family: var(--font-mono); font-size: 8px; fill: var(--text-primary); }
+  .period.strong { font-size: 6.8px; font-weight: var(--weight-semibold); }
+  .period.late { fill: var(--signal-warn); }
   .hatch-line { stroke: var(--signal-warn); stroke-width: 1.2; opacity: .5; }
   .gap { font-size: 8px; font-weight: var(--weight-medium); fill: var(--signal-warn); }
   .finding { fill: none; stroke: var(--signal-warn); stroke-width: 1.3; }

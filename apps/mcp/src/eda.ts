@@ -26,7 +26,9 @@ import { collectionIcon } from './icons.js';
 const id = z.string().min(1).describe('The ID of the Resource, from list_resources or search.');
 const probe = z
   .enum(RUNNABLE_PROBES as unknown as [ProbeKey, ...ProbeKey[]])
-  .describe('The key of an EDA-Probe Data Hub runs: grainHolds (The grain holds), nullsPerKeyField (Nulls per Key Field), volumeOverTime (Volume over time, with empty periods) or distributionOfNumbers (Distribution of numbers).');
+  .describe(
+    'The key of an EDA-Probe Data Hub runs: grainHolds (The grain holds), dateRange (Date range), volumeOverTime (Volume over time, with empty periods), nullsPerKeyField (Nulls per Key Field), distributionOfNumbers (Distribution of numbers) or distributionOfCategories (Distribution of categories).',
+  );
 const fields = z
   .array(z.string().min(1))
   .min(1)
@@ -37,7 +39,7 @@ const params = z
   .record(z.string(), z.unknown())
   .optional()
   .describe(
-    'Its parameters, only when the User asks for them. Volume over time: measure, the field that adds up, or null for rows only, and mayBeEmpty: "weekends" for a count per day. Distribution of numbers: width and tailFrom, a number, or one per field such as {"lead_count": 5}. The grain holds and Nulls per Key Field take none.',
+    'Its parameters, only when the User asks for them. Volume over time: measure, the field that adds up, or null for rows only, and mayBeEmpty: "weekends" for a count per day. Distribution of numbers: width and tailFrom, a number, or one per field such as {"lead_count": 5}. Distribution of categories: weighedBy, the field that adds up to weigh each value by, or null to weigh by rows; never a unique count. The grain holds, Date range and Nulls per Key Field take none.',
   );
 
 /** The reading of each result is the User's, given in the MCP App or in Data Hub, never by Claude (DEC-ED-29). */
@@ -143,7 +145,7 @@ export function edaTools({ server, hub, user, permits }: Context): void {
   function probeShown(eda: EdaView, one: ProbeView): ProbeShown {
     const results = one.lastRun?.results ?? [];
     const reading = overallReading(results);
-    const rows = resultTable(one.key, results, grainOf(eda)).rows;
+    const rows = resultTable(one.key, results, grainOf(eda), values).rows;
     return {
       key: one.key,
       name: PROBES[one.key].name,
@@ -214,7 +216,7 @@ export function edaTools({ server, hub, user, permits }: Context): void {
       lines.push(`${shown.coming.count} needed ${shown.coming.count === 1 ? 'one is' : 'ones are'} Coming: ${shown.coming.text}. Data Hub does not run them yet, and they still count.`);
     }
     const added = eda.probes.filter((one) => one.lastRun);
-    const rows = added.flatMap((one) => resultTable(one.key, one.lastRun?.results ?? [], grainOf(eda)).rows.map((row) => ({ one, row })));
+    const rows = added.flatMap((one) => resultTable(one.key, one.lastRun?.results ?? [], grainOf(eda), values).rows.map((row) => ({ one, row })));
     const line = ({ one, row }: (typeof rows)[number]) =>
       `- ${PROBES[one.key].name}${row.subject ? `, ${code(row.subject)}` : ''}: ${row.detail}${row.why ? ` Data Hub: ${row.why}.` : ''} ${row.yours ? `Read by ${row.yours.by} as ${row.yours.readingName} on ${row.yours.at.slice(0, 10)}.` : 'No reading of the User yet.'}`;
     const look = rows.filter(({ row }) => row.reading === 'look');
@@ -245,7 +247,7 @@ export function edaTools({ server, hub, user, permits }: Context): void {
   function runOf(eda: EdaView, one: ProbeView, collection: Collection) {
     const results = one.lastRun?.results ?? [];
     const reading = overallReading(results);
-    const table = resultTable(one.key, results, grainOf(eda));
+    const table = resultTable(one.key, results, grainOf(eda), values);
     return {
       ...headOf(eda, collection),
       mode: 'run' as const,

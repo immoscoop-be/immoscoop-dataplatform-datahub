@@ -23,7 +23,9 @@ describe('the EDA as the tab Steps shows it (FR-ED-04, DEC-ED-16)', () => {
     expect(view).toMatchObject({ status: 'inProgress', startedBy: AN, startedAt: '2026-11-21T09:00:00.000Z', exploredAt: null, needed: { total: 10, complete: 0 }, next: 'nullsPerKeyField' });
     const nulls = view.probes.find((probe) => probe.key === 'nullsPerKeyField');
     expect(nulls).toMatchObject({ level: 'must', runs: true, needed: true, added: false, complete: false, fields: [], params: {}, lastRun: null });
-    expect(view.probes.find((probe) => probe.key === 'dateRange')).toMatchObject({ runs: false, needed: true });
+    expect(view.probes.find((probe) => probe.key === 'dateRange')).toMatchObject({ runs: true, needed: true, applies: { fields: ['week_start'] } });
+    // One Data Hub does not run yet is needed all the same (OP-ED-09).
+    expect(view.probes.find((probe) => probe.key === 'disguisedNulls')).toMatchObject({ runs: false, needed: true });
     // Not offered for an aggregate.
     expect(view.probes.some((probe) => probe.key === 'datesInOrder')).toBe(false);
   });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { appliesTo, bestNext, coverage, type EdaResource, type EdaView, isComplete, isNeeded, levelOf, neededOf, PROBE_KEYS, PROBES, probesFor, roleDate, rowsOf, RUNNABLE_PROBES, type RunView } from './eda.js';
+import { appliesTo, bestNext, coverage, type EdaResource, type EdaView, isComplete, isNeeded, levelOf, neededOf, PROBE_KEYS, PROBES, probesFor, roleDate, rowsOf, RUNNABLE_PROBES, type RunCover, type RunView, asksReading } from './eda.js';
 
 /** Weekly lead volume, an aggregate: one row per week and lead source, as the screens draw it. */
 const weekly: EdaResource = {
@@ -19,9 +19,9 @@ const weekly: EdaResource = {
 };
 
 describe('the catalogue of EDA-Probes (TR-ED-02)', () => {
-  it('holds the 25 EDA-Probes of the table (DEC-ED-32), four of which Data Hub runs', () => {
+  it('holds the 25 EDA-Probes of the table (DEC-ED-32), six of which Data Hub runs', () => {
     expect(PROBE_KEYS).toHaveLength(25);
-    expect(RUNNABLE_PROBES).toEqual(['grainHolds', 'volumeOverTime', 'nullsPerKeyField', 'distributionOfNumbers']);
+    expect(RUNNABLE_PROBES).toEqual(['grainHolds', 'dateRange', 'volumeOverTime', 'nullsPerKeyField', 'distributionOfNumbers', 'distributionOfCategories']);
     expect(PROBES.spread.levels).toMatchObject({ fact: 'must', aggregate: 'must', event: 'should' });
   });
 
@@ -76,12 +76,14 @@ describe('needed, complete, covered (DEC-ED-17, DEC-ED-21)', () => {
 
   it('proposes as best next step what Data Hub runs that covers most of what is missing', () => {
     expect(bestNext(weekly, [])).toBe('nullsPerKeyField');
-    const runs = [
-      { probe: 'nullsPerKeyField' as const, fields: ['week_start', 'lead_source', 'lead_count', 'lead_channel'] },
-      { probe: 'grainHolds' as const, fields: ['week_start', 'lead_source'] },
-      { probe: 'volumeOverTime' as const, fields: ['week_start'] },
-      { probe: 'distributionOfNumbers' as const, fields: ['lead_count'] },
+    const runs: RunCover[] = [
+      { probe: 'nullsPerKeyField', fields: ['week_start', 'lead_source', 'lead_count', 'lead_channel'] },
+      { probe: 'grainHolds', fields: ['week_start', 'lead_source'] },
+      { probe: 'volumeOverTime', fields: ['week_start'] },
+      { probe: 'distributionOfNumbers', fields: ['lead_count'] },
     ];
+    expect(bestNext(weekly, runs)).not.toBeNull();
+    runs.push({ probe: 'dateRange', fields: ['week_start'] }, { probe: 'distributionOfCategories', fields: ['lead_source', 'lead_channel'] });
     expect(bestNext(weekly, runs)).toBeNull();
   });
 });
@@ -103,5 +105,14 @@ describe('the rows of the table, a fact of the EDA (DEC-ED-32)', () => {
   it('knows none while neither has run', () => {
     expect(rowsOf({ probes: [probe('grainHolds', null), probe('nullsPerKeyField', null)] })).toBeNull();
     expect(rowsOf({ probes: [probe('volumeOverTime', run('2026-11-21T10:00:00Z', []))] })).toBeNull();
+  });
+});
+
+describe('the reading of who works on the EDA (FR-ED-11)', () => {
+  it('is not asked where there is nothing to read: a field always filled, a date up to date', () => {
+    expect(asksReading('nullsPerKeyField', { reading: 'expected' })).toBe(false);
+    expect(asksReading('dateRange', { reading: 'expected' })).toBe(false);
+    expect(asksReading('dateRange', { reading: 'look' })).toBe(true);
+    expect(asksReading('grainHolds', { reading: 'expected' })).toBe(true);
   });
 });

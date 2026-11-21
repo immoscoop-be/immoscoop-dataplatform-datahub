@@ -91,7 +91,7 @@ function levels(...row: (ProbeLevel | null)[]): Partial<Record<ModelType, ProbeL
 /** The EDA-Probes (DEC-ED-11, DEC-ED-12, DEC-ED-14, DEC-ED-32), in order. */
 export const PROBES: Readonly<Record<ProbeKey, ProbeSpec>> = {
   grainHolds: { key: 'grainHolds', name: 'The grain holds', step: 'basis', place: 'rows', target: 'grain', levels: levels(M, M, M, M, M, M), runs: true },
-  dateRange: { key: 'dateRange', name: 'Date range', step: 'basis', place: 'rows', target: 'roleDate', levels: levels(M, M, M, null, M, null), runs: false },
+  dateRange: { key: 'dateRange', name: 'Date range', step: 'basis', place: 'rows', target: 'roleDate', levels: levels(M, M, M, null, M, null), runs: true },
   volumeOverTime: { key: 'volumeOverTime', name: 'Volume over time, with empty periods', step: 'basis', place: 'rows', target: 'roleDate', levels: levels(M, C, M, null, M, null), runs: true },
   settling: { key: 'settling', name: 'Settling between EDA-Reruns', step: 'basis', place: 'rows', target: 'roleDate', levels: levels(S, null, S, null, C, null), runs: false },
   howOftenThingsChange: { key: 'howOftenThingsChange', name: 'How often things change', step: 'basis', place: 'rows', target: 'updatedAt', levels: levels(null, C, null, null, null, null), runs: false },
@@ -100,7 +100,7 @@ export const PROBES: Readonly<Record<ProbeKey, ProbeSpec>> = {
   whereGapsCluster: { key: 'whereGapsCluster', name: 'Where gaps cluster', step: 'gaps', place: 'column', target: 'any', levels: levels(S, S, S, C, S, C), runs: false },
   valuesWithoutAMatch: { key: 'valuesWithoutAMatch', name: 'Values without a match', step: 'gaps', place: 'resource', target: 'mapped', levels: levels(M, M, M, M, M, M), runs: false },
   distributionOfNumbers: { key: 'distributionOfNumbers', name: 'Distribution of numbers', step: 'weight', place: 'column', target: 'numbers', levels: levels(M, M, M, M, M, M), runs: true },
-  distributionOfCategories: { key: 'distributionOfCategories', name: 'Distribution of categories', step: 'weight', place: 'column', target: 'texts', levels: levels(M, M, M, M, M, M), runs: false },
+  distributionOfCategories: { key: 'distributionOfCategories', name: 'Distribution of categories', step: 'weight', place: 'column', target: 'texts', levels: levels(M, M, M, M, M, M), runs: true },
   sharePerSegment: { key: 'sharePerSegment', name: 'Share per segment', step: 'weight', place: 'column', target: 'texts', levels: levels(S, S, S, S, S, C), runs: false },
   outliers: { key: 'outliers', name: 'Outliers', step: 'weight', place: 'column', target: 'numbers', levels: levels(S, S, S, C, S, C), runs: false },
   mode: { key: 'mode', name: 'The mode', step: 'weight', place: 'column', target: 'any', levels: levels(S, S, S, S, S, S), runs: false },
@@ -429,7 +429,78 @@ export interface DistributionResult {
   tail: number;
 }
 
-export type ProbeResult = GrainResult | NullsResult | VolumeResult | DistributionResult;
+/** One value of a text field and what it weighs: the sum of the number it is weighed by, or its rows (DEC-ED-33). */
+export interface CategoryWeight {
+  value: string;
+  weight: number;
+  /** Its share of the weight of the whole field, empty values included, from 0 to 1. */
+  share: number;
+}
+
+/** Distribution of categories, per field (DEC-ED-33). */
+export interface CategoriesResult {
+  /** The number that adds up it is weighed by, or null for rows. */
+  weighedBy: string | null;
+  /** The weight of the whole field: the sum of that number, or the rows. */
+  total: number;
+  /** How many different values the field holds, empty not counted. */
+  values: number;
+  /** The 10 values that weigh most, the heaviest first. */
+  top: CategoryWeight[];
+  /** The other values together. */
+  others: { values: number; weight: number; share: number };
+  /** The rows where the field is empty. */
+  empty: { weight: number; share: number };
+  /** How many values weigh less than 0.1% each. */
+  small: number;
+}
+
+/** Date range, per date it is set on (DEC-ED-34). */
+export interface DateRangeResult {
+  /** The unit of its date: a day, or a week from a Monday for the period of an aggregate. */
+  unit: 'day' | 'week';
+  /** Its first and last value, as a day; null when it holds no value. */
+  first: string | null;
+  last: string | null;
+  /** The periods from the first to the last, both counted. */
+  periods: number;
+  /** The current period, today's in the time zone of Immoscoop. */
+  current: string;
+  /** How many periods the last is behind the current one: 0 when it is the current one. */
+  behind: number;
+  /** The Reliable Since of the Resource Card, as a day, if it gives one, and how many periods lie before it. */
+  reliableSince: string | null;
+  beforeReliable: number | null;
+}
+
+export type ProbeResult = GrainResult | NullsResult | VolumeResult | DistributionResult | CategoriesResult | DateRangeResult;
+
+/**
+ * Whether a result asks for the reading of who works on the EDA, the same for the web app and Claude (FR-ED-11): not
+ * when there is nothing to read, a field without empty values or a date that is up to date.
+ */
+export function asksReading(probe: ProbeKey, result: { reading: DataHubReading }): boolean {
+  return !((probe === 'nullsPerKeyField' || probe === 'dateRange') && result.reading === 'expected');
+}
+
+/** The share of the weight with a value that the head of a field brings (DEC-ED-33): three quarters. */
+export const CATEGORIES_HEAD = 0.75;
+
+/**
+ * Where the weight of a field lies, the same for the web app and Claude (DEC-ED-33): the fewest of its heaviest values
+ * that together bring three quarters of the weight of its filled values, and their share of the whole, as in "4 of 54
+ * lead sources bring 79% of the leads"; null when its 10 heaviest do not, or it holds no value.
+ */
+export function headOf(result: CategoriesResult): { count: number; share: number } | null {
+  const filled = result.total - result.empty.weight;
+  if (filled <= 0) return null;
+  let weight = 0;
+  for (const [index, value] of result.top.entries()) {
+    weight += value.weight;
+    if (weight >= CATEGORIES_HEAD * filled) return { count: index + 1, share: weight / result.total };
+  }
+  return null;
+}
 
 // ----------------------------------------------------------------------------------------------------------------
 // The answers of eda (TR-ED-01)

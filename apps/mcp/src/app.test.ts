@@ -1389,6 +1389,65 @@ describe('the EDA through Claude (FR-ED-15, FR-ED-16, DEC-ED-29, TR-ED-10)', () 
     fields: ['lead_count'],
     results: [result('lead_count', { rows: 16224, low: 0, p25: 12, median: 25, p75: 48, p95: 120, high: 900, mean: 38, width: 10, tailFrom: 120, start: 0, bins: [900, 800], tail: 780 }, 'judge')],
   };
+  /** Date range on the period of the aggregate, today being Saturday 21 November 2026, reliable since 1 January 2025. */
+  const range = (last: string, periods: number, behind: number): Ran => ({
+    probe: 'dateRange',
+    fields: ['week_start'],
+    results: [result('week_start', { unit: 'week', first: '2021-01-04', last, periods, current: '2026-11-16', behind, reliableSince: '2025-01-01', beforeReliable: 208 }, behind <= 1 ? 'expected' : 'look')],
+  });
+  /** Distribution of categories weighed by lead_count, as the screen draws it (eda-probe-categories). */
+  const weights = (pairs: [string, number][]) => pairs.map(([value, weight]) => ({ value, weight, share: weight / 100_000 }));
+  const categories: Ran = {
+    probe: 'distributionOfCategories',
+    fields: ['lead_source', 'lead_channel'],
+    results: [
+      result(
+        'lead_source',
+        {
+          weighedBy: 'lead_count',
+          total: 100_000,
+          values: 54,
+          top: weights([
+            ['website', 41_000],
+            ['app', 22_000],
+            ['partner', 9000],
+            ['immoweb', 7000],
+            ['mailing', 5000],
+            ['kbc-app', 4000],
+            ['social', 3000],
+            ['referral', 2000],
+            ['source 9', 900],
+            ['source 10', 600],
+          ]),
+          others: { values: 44, weight: 5400, share: 0.054 },
+          empty: { weight: 100, share: 0.001 },
+          small: 31,
+        },
+        'judge',
+      ),
+      result(
+        'lead_channel',
+        {
+          weighedBy: 'lead_count',
+          total: 100_000,
+          values: 7,
+          top: weights([
+            ['web', 38_000],
+            ['mobile', 31_000],
+            ['email', 10_000],
+            ['phone', 6000],
+            ['Web', 2000],
+            ['e-mail', 1000],
+            ['fax', 50],
+          ]),
+          others: { values: 0, weight: 0, share: 0 },
+          empty: { weight: 11_950, share: 0.1195 },
+          small: 1,
+        },
+        'judge',
+      ),
+    ],
+  };
   const stub = (view: EdaView) => {
     answers[`GET ${EDA_PATH}`] = () => [200, view];
     answers[`GET ${CATALOGUE}/collections/c-1`] = () => [200, collection];
@@ -1412,7 +1471,19 @@ describe('the EDA through Claude (FR-ED-15, FR-ED-16, DEC-ED-29, TR-ED-10)', () 
     const shows = tools.filter((item) => item._meta?.ui?.resourceUri === VIEW_URI && !item._meta.ui.visibility).map((item) => item.name);
     expect(shows.filter((name) => /eda/.test(name)).sort()).toEqual(['run_eda_probe', 'show_eda']);
     // Only the EDA-Probes Data Hub runs, in the order of the table (DEC-ED-26).
-    expect(tools.find((item) => item.name === 'run_eda_probe')?.inputSchema.properties.probe?.enum).toEqual(['grainHolds', 'volumeOverTime', 'nullsPerKeyField', 'distributionOfNumbers']);
+    expect(tools.find((item) => item.name === 'run_eda_probe')?.inputSchema.properties.probe?.enum).toEqual([
+      'grainHolds',
+      'dateRange',
+      'volumeOverTime',
+      'nullsPerKeyField',
+      'distributionOfNumbers',
+      'distributionOfCategories',
+    ]);
+    // Each is named in its description, with its parameters.
+    const described = tools.find((item) => item.name === 'run_eda_probe')?.inputSchema.properties as Record<string, { description?: string }>;
+    expect(described.probe?.description).toContain('dateRange (Date range)');
+    expect(described.probe?.description).toContain('distributionOfCategories (Distribution of categories)');
+    expect(described.params?.description).toContain('Distribution of categories: weighedBy');
     // Explore Resources brings them to any Permission group; without claude.use there is nothing of Data Hub in Claude.
     const exploring = names(await toolsOf(await issuer.sign({ permissions: permissionsOf('businessAnalyst', (permissions) => (permissions['eda.use'].on = true)) })));
     expect(exploring).toEqual(expect.arrayContaining(EDA_TOOLS));
@@ -1436,7 +1507,10 @@ describe('the EDA through Claude (FR-ED-15, FR-ED-16, DEC-ED-29, TR-ED-10)', () 
     // The rows of the table are a fact of the EDA, from the last run that counted them (DEC-ED-32).
     expect(text).toContain('Started on 2026-11-21 by An Claes. The table has 16,224 rows, counted by The grain holds on 2026-11-21.');
     // The needed ones Data Hub does not run yet are named once, and still count (DEC-ED-27).
-    expect(text).toContain('5 needed ones are Coming: Date range in Basis, Disguised nulls in Gaps, Distribution of categories and Spread in Weight, Impossible values in Correctness.');
+    expect(text).toContain('3 needed ones are Coming: Disguised nulls in Gaps, Spread in Weight, Impossible values in Correctness.');
+    // Date range and Distribution of categories Data Hub runs: needed, still to add.
+    expect(text).toContain('Needed, not added yet: Date range, Distribution of categories.');
+    expect(text).toContain('Best next step: Distribution of categories. It shows where the weight of the texts among the Key Fields lies: which few values bring most of it.');
     expect(text.indexOf('Look at this, first:')).toBeLessThan(text.indexOf('For the User to judge:'));
     expect(text).toContain('- Nulls per Key Field, `lead_source`: 130 of 16,224 rows empty (0.8%). Data Hub: its role, grouped by, needs it on every row. No reading of the User yet.');
     expect(text).toMatch(/2 periods have no rows at all, the first from 8 Sept? 2025, between periods of about 2,061 per week\./);
@@ -1463,10 +1537,10 @@ describe('the EDA through Claude (FR-ED-15, FR-ED-16, DEC-ED-29, TR-ED-10)', () 
         page: `${WEB}/eda/${RESOURCE_ID}`,
       },
       attention: { ran: 7, look: 2, judge: 2, read: 0 },
-      coming: { count: 5 },
+      coming: { count: 3 },
     });
     const view = shown.structuredContent as { bar: { state: string }[]; steps: { name: string; needed: unknown; probes: { name: string }[] }[] };
-    expect(view.bar.map((part) => part.state)).toEqual(['done', 'coming', 'done', 'done', 'coming', 'done', 'coming', 'coming', 'coming']);
+    expect(view.bar.map((part) => part.state)).toEqual(['done', 'open', 'done', 'done', 'coming', 'done', 'open', 'coming', 'coming']);
     expect(view.steps.map((step) => [step.name, step.needed, step.probes.map((one) => one.name)])).toEqual([
       ['Basis', { total: 3, complete: 2 }, ['The grain holds', 'Volume over time, with empty periods']],
       ['Gaps', { total: 2, complete: 1 }, ['Nulls per Key Field']],
@@ -1482,7 +1556,8 @@ describe('the EDA through Claude (FR-ED-15, FR-ED-16, DEC-ED-29, TR-ED-10)', () 
     expect(html.match(/<i class="ed-(done|open|coming)"/g)).toHaveLength(9);
     expect(html).toContain('<code>lead_source</code> is empty on 130 rows, though its role, grouped by, needs it on every row.');
     expect(html).toContain('Basis<small class="ed-open">2 of 3 needed complete</small>');
-    expect(html).toContain('Coming<small>5 needed, which count already</small>');
+    expect(html).toContain('Coming<small>3 needed, which count already</small>');
+    expect(html).toContain('Needed, not added yet: Date range.');
     expect(html).toContain(`data-open="${WEB}/eda/${RESOURCE_ID}"`);
     expect(html).not.toContain('data-reading');
     expect(html).not.toMatch(/<canvas|<svg class="chart/);
@@ -1624,6 +1699,77 @@ describe('the EDA through Claude (FR-ED-15, FR-ED-16, DEC-ED-29, TR-ED-10)', () 
     expect(again.structuredContent).toMatchObject({ view: 'eda', mode: 'run', run: { probe: 'nullsPerKeyField' } });
     expect(again.content[0]?.text).toContain('The last result of Nulls per Key Field on Weekly lead volume (3 · Confirmed) is shown to the User, with the buttons of their reading');
     expect(posted()).toHaveLength(0);
+  });
+
+  it('says Date range in words: up to date, or how far behind, and what lies before Reliable Since (FR-ED-18)', async () => {
+    stub(edaView([grain, range('2026-11-16', 307, 0)]));
+    const token = await admin();
+    const read = (await tool('get_eda', { id: RESOURCE_ID }, token)).content[0]?.text ?? '';
+    expect(read).toContain(
+      '- Date range: As expected. From week 1 of 2021 to this week, week 47 of 2026: 307 weeks, up to date. The first 208 weeks lie before its Reliable Since, 1 Jan 2025. Set on `week_start`; ran 2026-11-21.',
+    );
+
+    // Run again, it is three weeks behind: look at this, naming by how much.
+    answers[`POST ${EDA_PATH}/probes/dateRange/runs`] = () => [200, { state: 'ran', eda: edaView([grain, range('2026-10-26', 304, 3)]) }];
+    const ran = await tool('run_eda_probe', { id: RESOURCE_ID, probe: 'dateRange' }, token);
+    expect(posted()).toEqual([{ fields: ['week_start'], approve: false }]);
+    expect(ran.structuredContent).toMatchObject({ mode: 'run', run: { probe: 'dateRange', name: 'Date range', readingName: 'Look at this', columns: ['Date', 'First', 'Last', 'Behind', 'Before Reliable Since'] } });
+    const [row] = (ran.structuredContent?.run as { rows: { subject: string; cells: string[]; why: string; asks: boolean }[] }).rows;
+    expect(row).toMatchObject({ subject: 'week_start', cells: ['week 1 of 2021', 'week 44 of 2026', '3 weeks', '208 weeks, before 1 Jan 2025'], why: 'up to date is the current period or the one before', asks: true });
+    const text = ran.content[0]?.text ?? '';
+    expect(text).toContain('Date range on Weekly lead volume (3 · Confirmed) ran and its result is shown to the User: Look at this. The last week is week 44, 26 Oct 2026: 3 weeks behind this one. From week 1 of 2021, 304 weeks.');
+    const html = draw(ran.structuredContent);
+    expect(html).toContain('<td data-label="Behind">3 weeks</td>');
+    expect(html).toContain('data-reading="known" data-subject="week_start"');
+    expect(html).not.toContain('ed-top');
+  });
+
+  it('says Distribution of categories in words, and shows its heaviest values only where results may reach Claude (FR-ED-17, FR-CL-28)', async () => {
+    stub(edaView([grain]));
+    answers[`POST ${EDA_PATH}/probes/distributionOfCategories/runs`] = () => [200, { state: 'ran', eda: edaView([grain, categories]) }];
+    const ran = await tool('run_eda_probe', { id: RESOURCE_ID, probe: 'distributionOfCategories' }, await admin());
+    // Not added yet, it runs on what it applies to by default, weighed as eda starts it.
+    expect(posted()).toEqual([{ approve: false }]);
+    const run = ran.structuredContent?.run as { conclusion: string; rows: { subject: string; cells: string[]; top: { label: string; share: string; kind: string }[] | null }[]; results: { data: { top: unknown[] } }[] };
+    expect(run.conclusion).toBe(
+      '4 of 54 values of `lead_source` bring 79% of the sum of `lead_count`; 31 bring less than 0.1% each; 0.1% has no value. 2 of 7 values of `lead_channel` bring 69% of the sum of `lead_count`; 1 brings less than 0.1%; 12% has no value.',
+    );
+    expect(run.rows.map((row) => [row.subject, row.cells])).toEqual([
+      ['lead_source', ['54', '4 values · 79%', '31', '0.1%']],
+      ['lead_channel', ['7', '2 values · 69%', '1', '12%']],
+    ]);
+    expect(run.rows[0]?.top?.slice(0, 2)).toEqual([
+      { label: 'website', share: '41%', width: 0.41, kind: 'value' },
+      { label: 'app', share: '22%', width: 0.22, kind: 'value' },
+    ]);
+    expect(run.rows[0]?.top?.slice(-2)).toEqual([
+      { label: '44 other values', share: '5.4%', width: 0.054, kind: 'others' },
+      { label: 'empty', share: '0.1%', width: 0.001, kind: 'empty' },
+    ]);
+    const text = ran.content[0]?.text ?? '';
+    expect(text).toContain('- `lead_source`: For you to judge (a spread of values is neither right nor wrong). 4 of 54 values of `lead_source` bring 79%');
+    expect(text).toContain('The heaviest: "website" 41%, "app" 22%, "partner" 9%');
+    expect(text).toContain('The other 44 values bring 5.4%. Weighed by the sum of `lead_count`: 100,000 in all.');
+    const html = draw(ran.structuredContent);
+    expect(html).toContain('<ul class="ed-top" aria-label="The heaviest values of lead_source"><li><span><code>website</code></span><span class="ed-share"><i style="width:41%"></i></span><span>41%</span></li>');
+    expect(html).toContain('<li class="ed-others"><span>44 other values</span>');
+    expect(html).toContain('<li class="ed-empty"><span>empty</span><span class="ed-share"><i style="width:12%"></i></span><span>12%</span></li>');
+    expect(html).toContain('<td colspan="6">');
+
+    // In a card only, or not in Claude, the values of the data stay out of what Claude gets, and so out of the card.
+    for (const show of ['card', 'none'] as const) {
+      const token = await issuer.sign({ permissions: permissionsOf('admin', (permissions) => (permissions['claude.results'].values = { show })) });
+      const hidden = await tool('run_eda_probe', { id: RESOURCE_ID, probe: 'distributionOfCategories' }, token);
+      const all = JSON.stringify(hidden);
+      for (const value of ['website', 'kbc-app', 'mobile', 'e-mail']) expect(all, show).not.toContain(value);
+      expect(hidden.content[0]?.text).toContain('4 of 54 values of `lead_source` bring 79% of the sum of `lead_count`');
+      const shown = hidden.structuredContent?.run as typeof run;
+      expect(shown.rows.every((row) => row.top === null)).toBe(true);
+      expect(shown.results[0]?.data.top[0]).toEqual({ weight: 41_000, share: 0.41 });
+      expect(draw(hidden.structuredContent)).not.toContain('ed-top');
+      stub(edaView([grain, categories]));
+      expect(JSON.stringify(await tool('get_eda', { id: RESOURCE_ID }, token))).not.toContain('website');
+    }
   });
 
   it('draws the EDA as a kind of its own in the one page, and passes the buttons of the User to the tools only it calls', () => {

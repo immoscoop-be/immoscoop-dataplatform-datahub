@@ -261,7 +261,7 @@ Claude runs an EDA-Probe Data Hub runs (`run_eda_probe`), on the fields it is se
 <a id="fr-ed-17"></a>
 ### FR-ED-17 · Distribution of categories
 
-**Status:** Specified · **Source:** Max, 2026-11-21 ([DEC-ED-33](#dec-ed-33)) · **Screens:** [eda-probe-categories](../../design/screens/eda-probe-categories.html)
+**Status:** Implemented · **Source:** Max, 2026-11-21 ([DEC-ED-33](#dec-ed-33)) · **Screens:** [eda-probe-categories](../../design/screens/eda-probe-categories.html)
 
 Distribution of categories is set on the text fields among the Key Fields, which it needs, and on any other text added, each with its own result. It weighs each value by the number that adds up the User chooses, or by rows; for an aggregate or a fact it starts from the number that adds up. Its result per field: a sentence naming where the weight lies, the 10 values that weigh most with their share, the rest together, the empty values apart, the number of values, and how many weigh less than 0.1% each. Data Hub reads it as for you to judge.
 
@@ -270,7 +270,7 @@ Distribution of categories is set on the text fields among the Key Fields, which
 <a id="fr-ed-18"></a>
 ### FR-ED-18 · Date range
 
-**Status:** Specified · **Source:** Claude, 2026-11-21, built at Max's go ([DEC-ED-34](#dec-ed-34)) · **Screens:** [eda-probe-daterange](../../design/screens/eda-probe-daterange.html)
+**Status:** Implemented · **Source:** Claude, 2026-11-21, built at Max's go ([DEC-ED-34](#dec-ed-34)) · **Screens:** [eda-probe-daterange](../../design/screens/eda-probe-daterange.html)
 
 Date range is set on the date its role names, which it needs, and on any other date added, each with its own result: the first and the last value, the periods between, how many periods the last is behind the current one, and how many lie before the Reliable Since of the Resource Card, on a timeline with today. Data Hub reads it as expected when the last is the current period or the one before, and as look at this when it is behind.
 

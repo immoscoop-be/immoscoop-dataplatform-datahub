@@ -61,6 +61,11 @@ const ROWS: Partial<Record<ProbeKey, Record<string, unknown>[]>> = {
   distributionOfNumbers: [
     { field_index: '0', value_count: '310', low: '0', p25: '12', median: '20', p75: '41', p95: '108', high: '400', mean: '35', width: '10', tail_from: '110', start: '0', bins: '[{"bin":"0","bin_rows":"300"},{"bin":"-1","bin_rows":"10"}]' },
   ],
+  dateRange: [{ first_0: '2021-01-04', last_0: '2026-11-16' }],
+  distributionOfCategories: [
+    { field_index: '0', total_weight: '1000', value_count: '3', empty_weight: '0', others_count: '0', others_weight: '0', small_count: '0', top: '[{"value":"website","weight":"600"},{"value":"app","weight":"300"},{"value":"partner","weight":"100"}]' },
+    { field_index: '1', total_weight: '1000', value_count: '2', empty_weight: '120', others_count: '0', others_weight: '0', small_count: '0', top: '[{"value":"web","weight":"700"},{"value":"mobile","weight":"180"}]' },
+  ],
 };
 
 /** As the contracts count, but only the EDA-Probes Data Hub runs: a model in which an EDA can become Explored (OP-ED-09). */
@@ -265,7 +270,7 @@ describe.skipIf(!url)('the routes of eda (TR-ED-01)', () => {
 
   it('says what does not fit, and what cannot run here', async () => {
     expect((await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'noSuchProbe'))).statusCode).toBe(404);
-    expect((await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'dateRange'))).json()).toEqual({ error: 'cannot_run', message: 'Data Hub does not run Date range yet (OP-ED-09).' });
+    expect((await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'disguisedNulls'))).json()).toEqual({ error: 'cannot_run', message: 'Data Hub does not run Disguised nulls yet (OP-ED-09).' });
     expect((await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'distributionOfNumbers'), { fields: ['lead_channel'] })).statusCode).toBe(400);
     expect((await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'nullsPerKeyField'), { sql: 'select 1' })).statusCode).toBe(400);
     expect((await call(dirk, 'POST', runOf(DRAFT.id, 'nullsPerKeyField'))).json()).toEqual({ error: 'not_found', message: 'This Resource has no EDA yet.' });
@@ -327,19 +332,70 @@ describe.skipIf(!url)('the routes of eda (TR-ED-01)', () => {
     expect((await call(mia, 'GET', '/edas')).json()).toEqual({ edas: [], ready: [{ resource: { id: LEADS_ANSWER.id, displayName: 'Leads', collection: CREDIT }, level: 4 }] });
   });
 
+  it('runs Distribution of categories weighed as asked, and Date range against the Reliable Since of the Resource Card (FR-ED-17, FR-ED-18)', async () => {
+    const weighed = (await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'distributionOfCategories'), {})).json<RunAnswer>();
+    expect(asked.at(-1)?.run).toMatchObject({ probe: 'distributionOfCategories', approve: false });
+    // The sum of what adds up, every partition kept, the 10 heaviest values only.
+    expect(asked.at(-1)?.run.sql).toContain('coalesce(sum(`lead_count`), 0) as weight');
+    expect(asked.at(-1)?.run.sql).toContain("where (`week_start` is null or `week_start` >= date '0001-01-01')");
+    expect(asked.at(-1)?.run.sql).toContain('if(place <= 10, struct(v as value, weight), null)');
+    const categories = weighed.state === 'ran' ? weighed.eda.probes.find((probe) => probe.key === 'distributionOfCategories') : undefined;
+    expect(categories).toMatchObject({ added: true, complete: true, fields: ['lead_source', 'lead_channel'], params: {} });
+    expect(categories?.lastRun?.results.map((result) => [result.subject, result.reading])).toEqual([
+      ['lead_source', 'judge'],
+      ['lead_channel', 'judge'],
+    ]);
+    expect(categories?.lastRun?.results[1]?.data).toEqual({
+      weighedBy: 'lead_count',
+      total: 1000,
+      values: 2,
+      top: [
+        { value: 'web', weight: 700, share: 0.7 },
+        { value: 'mobile', weight: 180, share: 0.18 },
+      ],
+      others: { values: 0, weight: 0, share: 0 },
+      empty: { weight: 120, share: 0.12 },
+      small: 0,
+    });
+
+    // By rows, as chosen, which it is then set on; a unique count never adds up.
+    expect((await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'distributionOfCategories'), { params: { weighedBy: 'unique_applicants' } })).statusCode).toBe(400);
+    const byRows = (await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'distributionOfCategories'), { params: { weighedBy: null } })).json<RunAnswer>();
+    expect(asked.at(-1)?.run.sql).toContain('count(*) as weight');
+    const rerun = byRows.state === 'ran' ? byRows.eda.probes.find((probe) => probe.key === 'distributionOfCategories') : undefined;
+    expect(rerun).toMatchObject({ params: { weighedBy: null } });
+    expect(rerun?.lastRun?.results[0]?.data).toMatchObject({ weighedBy: null, values: 3 });
+
+    const range = (await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'dateRange'))).json<RunAnswer>();
+    expect(asked.at(-1)?.run.sql).toContain("format_date('%F', max(`week_start`)) as last_0");
+    const dates = range.state === 'ran' ? range.eda.probes.find((probe) => probe.key === 'dateRange') : undefined;
+    expect(dates).toMatchObject({ added: true, complete: true, fields: ['week_start'] });
+    // Today in Brussels is Saturday 21 November 2026: the week of 16 November is current, and up to date.
+    expect(dates?.lastRun?.results).toEqual([
+      {
+        subject: 'week_start',
+        reading: 'expected',
+        yours: null,
+        data: { unit: 'week', first: '2021-01-04', last: '2026-11-16', periods: 307, current: '2026-11-16', behind: 0, reliableSince: '2025-01-01', beforeReliable: 208 },
+      },
+    ]);
+    expect((await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'dateRange'), { fields: ['lead_source'] })).statusCode).toBe(400);
+    expect(range.state === 'ran' && range.eda.needed).toEqual({ total: 10, complete: 5 });
+  });
+
   it('never becomes Explored while a needed EDA-Probe Data Hub cannot run yet is not complete (OP-ED-09)', async () => {
-    for (const probe of ['grainHolds', 'nullsPerKeyField', 'volumeOverTime', 'distributionOfNumbers']) {
+    for (const probe of ['grainHolds', 'dateRange', 'volumeOverTime', 'nullsPerKeyField', 'distributionOfNumbers', 'distributionOfCategories']) {
       await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, probe));
     }
     const view = (await call(dirk, 'GET', edaOf(WEEKLY_ANSWER.id))).json<EdaView>();
-    expect(view).toMatchObject({ status: 'inProgress', exploredAt: null, needed: { total: 10, complete: 4 }, next: null });
+    expect(view).toMatchObject({ status: 'inProgress', exploredAt: null, needed: { total: 10, complete: 6 }, next: null });
     expect(told).toHaveLength(0);
   });
 
   it('becomes Explored once every needed EDA-Probe is complete, and tells catalogue until it heard it (FR-ED-12, TR-ED-05)', async () => {
     const started = await call(dirk, 'POST', edaOf(LEADS_ANSWER.id), undefined, explorer);
-    expect(started.json<EdaView>().needed).toEqual({ total: 4, complete: 0 });
-    for (const probe of ['grainHolds', 'nullsPerKeyField', 'volumeOverTime']) {
+    expect(started.json<EdaView>().needed).toEqual({ total: 6, complete: 0 });
+    for (const probe of ['grainHolds', 'dateRange', 'nullsPerKeyField', 'volumeOverTime', 'distributionOfCategories']) {
       const ran = (await call(dirk, 'POST', runOf(LEADS_ANSWER.id, probe), {}, explorer)).json<RunAnswer>();
       expect(ran.state === 'ran' && ran.eda.status).toBe('inProgress');
     }
@@ -347,7 +403,7 @@ describe.skipIf(!url)('the routes of eda (TR-ED-01)', () => {
     catalogueDeaf = true;
     const last = (await call(dirk, 'POST', runOf(LEADS_ANSWER.id, 'distributionOfNumbers'), {}, explorer)).json<RunAnswer>();
     catalogueDeaf = false;
-    expect(last.state === 'ran' && last.eda).toMatchObject({ status: 'explored', exploredAt: expect.any(String), needed: { total: 4, complete: 4 } });
+    expect(last.state === 'ran' && last.eda).toMatchObject({ status: 'explored', exploredAt: expect.any(String), needed: { total: 6, complete: 6 } });
     expect(told).toHaveLength(0);
     const row = () => database.db.selectFrom('edas').select(['status', 'exploredAt', 'toldAt']).where('resourceId', '=', LEADS_ANSWER.id).executeTakeFirstOrThrow();
     expect(await row()).toMatchObject({ status: 'explored', toldAt: null });

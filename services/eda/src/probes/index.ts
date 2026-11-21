@@ -1,6 +1,8 @@
 import { appliesTo, levelOf, PROBES, type ProbeKey } from '@datahub/contracts/eda';
 import { kindOf } from '@datahub/contracts/model-types';
 import type { EdaSource } from '../catalogue.js';
+import { distributionOfCategories } from './categories.js';
+import { dateRange } from './daterange.js';
 import { distributionOfNumbers } from './distribution.js';
 import { grainHolds } from './grain.js';
 import { nullsPerKeyField } from './nulls.js';
@@ -10,12 +12,17 @@ import { volumeOverTime } from './volume.js';
 export type { Outcome, ProbeContext, ProbeSetting, RunnableProbe } from './probe.js';
 export { AnswerMismatch } from './sql.js';
 
-/** The EDA-Probes Data Hub runs in the first build (DEC-ED-26), each in a module of its own. */
+/**
+ * The EDA-Probes Data Hub runs, each in a module of its own, in the order of the table: the four of the first build
+ * (DEC-ED-26), and Date range and Distribution of categories (FR-ED-17, FR-ED-18).
+ */
 export const RUNNERS: Readonly<Partial<Record<ProbeKey, RunnableProbe>>> = {
   grainHolds,
+  dateRange,
   volumeOverTime,
   nullsPerKeyField,
   distributionOfNumbers,
+  distributionOfCategories,
 };
 
 /** Why an EDA-Probe is not run as asked: what was asked does not fit (400), or it cannot run on this Resource (422). */
@@ -38,6 +45,8 @@ function fitting(probe: ProbeKey): { fits: (dataType: string | null) => boolean;
       return { fits: (dataType) => kindOf(dataType) === 'date', kind: 'a date' };
     case 'numbers':
       return { fits: (dataType) => kindOf(dataType) === 'number', kind: 'a number' };
+    case 'texts':
+      return { fits: (dataType) => kindOf(dataType) === 'text', kind: 'a text' };
     default:
       return { fits: () => true, kind: 'a field' };
   }
@@ -45,8 +54,9 @@ function fitting(probe: ProbeKey): { fits: (dataType: string | null) => boolean;
 
 /**
  * The fields and parameters an EDA-Probe runs with on a Resource (DEC-ED-13, DEC-ED-17): the fields given, or those it
- * applies to by default, in the order of the Resource Card. The grain holds is always set on the grain; Volume over
- * time on dates, the date its role names first; Distribution of numbers on numbers; Nulls per Key Field on any field.
+ * applies to by default, in the order of the Resource Card. The grain holds is always set on the grain; Date range and
+ * Volume over time on dates, the date its role names first; Distribution of numbers on numbers; Distribution of
+ * categories on texts (DEC-ED-33); Nulls per Key Field on any field.
  */
 export function settingOf(probe: ProbeKey, source: EdaSource, given: { fields?: string[]; params?: Record<string, unknown> }): ProbeSetting | SettingProblem {
   const runner = RUNNERS[probe];

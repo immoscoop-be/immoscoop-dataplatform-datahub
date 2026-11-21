@@ -1,9 +1,21 @@
-import type { EdaView, ProbeView, VolumeResult } from '@datahub/contracts/eda';
+import type { CategoriesResult, DateRangeResult, EdaView, ProbeView, ResultView, VolumeResult } from '@datahub/contracts/eda';
 import { addTexts, setLanguage } from '@datahub/ui/foundations/texts.svelte.js';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { TEXTS } from '../texts/index.js';
-import { askedOf, asksReading, createEda, fitsFilter, hasToAdd, listStateOf, niceTicks, overallReading, percent, standingOf, stepCount, stillMissing, volumeBlocks } from './eda.js';
-import { cardSentence, distributionSentence, grainConclusion, shapeOf, volumeSentence } from './edaWords.js';
+import { askedOf, asksReading, createEda, fitsFilter, hasToAdd, isoWeek, listStateOf, niceTicks, overallReading, percent, standingOf, stepCount, stillMissing, volumeBlocks } from './eda.js';
+import {
+  cardSentence,
+  categoriesConclusion,
+  categoriesSentence,
+  dateRangeConclusion,
+  dateRangeSentence,
+  distributionSentence,
+  grainConclusion,
+  saidText,
+  shapeOf,
+  topOf,
+  volumeSentence,
+} from './edaWords.js';
 
 const config = { identityUrl: 'https://identity.test', catalogueUrl: 'https://catalogue.test', registryUrl: 'https://registry.test', queryUrl: 'https://query.test', edaUrl: 'https://eda.test', semgraphUrl: 'https://semgraph.test' };
 const session = { accessToken: async () => 'token' };
@@ -65,7 +77,7 @@ describe('what the screens read from an EDA', () => {
   const view = {
     probes: [
       probe('grainHolds', { added: true, complete: true }),
-      probe('dateRange', { runs: false }),
+      probe('howOftenThingsChange', { runs: false }),
       probe('volumeOverTime', { needed: false, level: 'could' }),
       probe('settling', { needed: false, level: 'should', runs: false }),
       probe('nullsPerKeyField', { added: true, applies: { table: false, fields: ['a', 'b'], needs: ['a', 'b'], block: null }, lastRun: { fields: ['a'] } as ProbeView['lastRun'] }),
@@ -80,7 +92,7 @@ describe('what the screens read from an EDA', () => {
 
   it('keeps the tile Add probe while an EDA-Step has an EDA-Probe offered that is not added, coming ones too (FR-ED-04)', () => {
     expect(hasToAdd(view, 'basis')).toBe(true);
-    expect(hasToAdd({ probes: [probe('dateRange', { runs: false })] }, 'basis')).toBe(true);
+    expect(hasToAdd({ probes: [probe('howOftenThingsChange', { runs: false })] }, 'basis')).toBe(true);
     expect(hasToAdd(view, 'gaps')).toBe(false);
     expect(hasToAdd(view, 'relations')).toBe(false);
   });
@@ -91,7 +103,7 @@ describe('what the screens read from an EDA', () => {
     expect(listStateOf(probe('grainHolds', { added: true, complete: true, lastRun: { fields: [] } as unknown as ProbeView['lastRun'] }))).toBe('added');
     expect(listStateOf(probe('volumeOverTime', { added: true, needed: false, lastRun: { fields: [] } as unknown as ProbeView['lastRun'] }))).toBe('added');
     expect(view.probes.map(askedOf)).toEqual(['needed', 'needed', 'onRequest', 'suggested', 'needed']);
-    expect(view.probes.filter((one) => fitsFilter(one, 'needed')).map((one) => one.key)).toEqual(['grainHolds', 'dateRange', 'nullsPerKeyField']);
+    expect(view.probes.filter((one) => fitsFilter(one, 'needed')).map((one) => one.key)).toEqual(['grainHolds', 'howOftenThingsChange', 'nullsPerKeyField']);
     expect(view.probes.filter((one) => fitsFilter(one, 'runs')).map((one) => one.key)).toEqual(['grainHolds', 'volumeOverTime', 'nullsPerKeyField']);
     expect(view.probes.filter((one) => fitsFilter(one, 'added')).map((one) => one.key)).toEqual(['grainHolds', 'nullsPerKeyField']);
     expect(view.probes.filter((one) => fitsFilter(one, 'all'))).toHaveLength(5);
@@ -108,6 +120,10 @@ describe('what the screens read from an EDA', () => {
     expect(overallReading([])).toBeNull();
     expect(asksReading('nullsPerKeyField', { reading: 'expected' })).toBe(false);
     expect(asksReading('grainHolds', { reading: 'expected' })).toBe(true);
+    // A date that is up to date has nothing to read; one behind has (DEC-ED-34).
+    expect(asksReading('dateRange', { reading: 'expected' })).toBe(false);
+    expect(asksReading('dateRange', { reading: 'look' })).toBe(true);
+    expect(asksReading('distributionOfCategories', { reading: 'judge' })).toBe(true);
   });
 
   it('writes round numbers and shares', () => {
@@ -191,5 +207,134 @@ describe('the sentences of a result', () => {
     });
     const said = cardSentence(nulls, { resource: { fields: [] } } as unknown as EdaView, 'en');
     expect(said.at(-1)).toEqual({ key: 'eda.card.missing', names: { fields: 'b' }, warn: true });
+  });
+});
+
+/** A field of Distribution of categories, its weight a sum of lead_count: values with their share of 1,000. */
+function weighed(shares: [string, number][], more: Partial<CategoriesResult> = {}): CategoriesResult {
+  const top = shares.map(([value, share]) => ({ value, weight: share * 1000, share }));
+  const used = shares.reduce((sum, [, share]) => sum + share, 0);
+  return { weighedBy: 'lead_count', total: 1000, values: shares.length, top, others: { values: 0, weight: 0, share: 0 }, empty: { weight: (1 - used) * 1000, share: 1 - used }, small: 0, ...more };
+}
+
+describe('Distribution of categories, in words (FR-ED-17, DEC-ED-33)', () => {
+  const SOURCES = weighed(
+    [
+      ['website', 0.41],
+      ['app', 0.22],
+      ['partner', 0.09],
+      ['immoweb', 0.07],
+      ['mailing', 0.05],
+      ['kbc-app', 0.04],
+      ['social', 0.03],
+      ['referral', 0.02],
+      ['source 9', 0.009],
+      ['source 10', 0.006],
+    ],
+    { values: 54, others: { values: 44, weight: 54, share: 0.054 }, empty: { weight: 1, share: 0.001 }, small: 31 },
+  );
+  const CHANNELS = weighed([
+    ['web', 0.38],
+    ['mobile', 0.31],
+    ['email', 0.1],
+    ['phone', 0.06],
+    ['Web', 0.02],
+    ['e-mail', 0.01],
+  ]);
+
+  it('names the fewest heaviest values that bring three quarters of what is filled in, as Claude does (headOf)', () => {
+    expect(topOf(SOURCES)).toMatchObject({ count: 4, spread: false });
+    expect(topOf(SOURCES).share).toBeCloseTo(0.79);
+    expect(topOf(CHANNELS)).toMatchObject({ count: 2, spread: false });
+    // Ten values that bring a little each: the weight is spread, and the ten are named with what they bring.
+    const spread = weighed(Array.from({ length: 10 }, (_, index): [string, number] => [`v${index}`, 0.03]), { values: 500, others: { values: 490, weight: 700, share: 0.7 }, empty: { weight: 0, share: 0 } });
+    expect(topOf(spread)).toMatchObject({ count: 10, spread: true });
+  });
+
+  it('says where the weight lies: on a few values, on two named, on one alone, or spread, with what it is weighed by', () => {
+    expect(saidText(categoriesSentence(SOURCES, 'en'))).toBe('4 of 54 values bring 79% of lead_count. 31 values bring less than 0.1% each. 0.1% of lead_count has no value.');
+    expect(saidText(categoriesSentence(CHANNELS, 'en'))).toBe('web and mobile bring 69% of lead_count. 12% of lead_count has no value.');
+    expect(saidText(categoriesSentence(weighed([['website', 0.9], ['app', 0.1]], { weighedBy: null }), 'en'))).toBe('website alone brings 90% of the rows.');
+    const spread = weighed([['a', 0.05]], { values: 500, others: { values: 499, weight: 950, share: 0.95 }, empty: { weight: 0, share: 0 } });
+    expect(saidText(categoriesSentence(spread, 'en'))).toBe('The weight is spread: the 1 heaviest of 500 values bring only 5% of lead_count.');
+    expect(saidText(categoriesSentence(weighed([], { values: 0, empty: { weight: 1000, share: 1 } }), 'en'))).toBe('No value: the field is empty on every row.');
+    // The values and the number go in as names, never translated.
+    expect(categoriesSentence(CHANNELS, 'en')[0]).toMatchObject({ key: 'eda.categories.two', names: { first: 'web', second: 'mobile', weighed: 'lead_count' } });
+  });
+
+  it('names each field in the conclusion of several, and writes the numbers as the language does', () => {
+    const results = [
+      { subject: 'lead_source', data: SOURCES, reading: 'judge', yours: null },
+      { subject: 'lead_channel', data: CHANNELS, reading: 'judge', yours: null },
+    ] satisfies ResultView[];
+    expect(saidText(categoriesConclusion(results, 'en'))).toBe('In lead_source, 4 of 54 values bring 79% of lead_count. In lead_channel, web and mobile bring 69% of lead_count.');
+    setLanguage('nl');
+    try {
+      expect(saidText(categoriesConclusion(results, 'nl'))).toBe('In lead_source brengen 4 van 54 waarden 79% van lead_count. In lead_channel brengen web en mobile 69% van lead_count.');
+      expect(saidText(categoriesSentence({ ...SOURCES, values: 1540 }, 'nl'))).toMatch(/^4 van 1\.540 waarden brengen 79% van lead_count\./);
+    } finally {
+      setLanguage('en');
+    }
+  });
+});
+
+describe('Date range, in words (FR-ED-18, DEC-ED-34)', () => {
+  const RANGE: DateRangeResult = { unit: 'week', first: '2021-01-04', last: '2026-11-16', periods: 307, current: '2026-11-16', behind: 0, reliableSince: '2025-01-01', beforeReliable: 208 };
+
+  it('numbers a week as ISO 8601 does, with its Monday', () => {
+    expect(isoWeek('2026-11-16')).toEqual({ week: 47, year: 2026, monday: '2026-11-16' });
+    expect(isoWeek('2021-01-04')).toEqual({ week: 1, year: 2021, monday: '2021-01-04' });
+    // 1 January 2021 was a Friday: it belongs to the last week of 2020.
+    expect(isoWeek('2021-01-01')).toEqual({ week: 53, year: 2020, monday: '2020-12-28' });
+  });
+
+  it('says from when to when a date runs while it is up to date, and what lies before its Reliable Since', () => {
+    expect(saidText(dateRangeSentence(RANGE, 'en', 'week_start'))).toBe(
+      'From week 1 of 2021 to this week, week 47 of 2026: 307 weeks, up to date. The first 208 weeks lie before its Reliable Since, 1 Jan 2025.',
+    );
+    expect(saidText(dateRangeSentence({ ...RANGE, last: '2026-11-09', behind: 1, reliableSince: null, beforeReliable: null }, 'en', 'week_start'))).toBe(
+      'From week 1 of 2021 to last week, week 46 of 2026: 307 weeks, up to date.',
+    );
+    const days: DateRangeResult = { unit: 'day', first: '2024-03-01', last: '2026-11-20', periods: 995, current: '2026-11-21', behind: 1, reliableSince: '2024-01-01', beforeReliable: 0 };
+    expect(saidText(dateRangeSentence(days, 'en', 'created_at'))).toMatch(/^From 1 Mar 2024 to yesterday, 20 Nov( 2026)?: 995 days, up to date\.$/);
+  });
+
+  it('says how far a date is behind, a date after today, and a date without any value', () => {
+    const behind = { ...RANGE, last: '2026-10-26', periods: 303, behind: 3 };
+    expect(saidText(dateRangeSentence(behind, 'en', 'week_start'))).toBe(
+      'The last week is week 44, 26 Oct: 3 weeks behind this one. From week 1 of 2021, 303 weeks; is it still loaded? The first 208 weeks lie before its Reliable Since, 1 Jan 2025.',
+    );
+    expect(saidText(dateRangeSentence({ ...RANGE, last: '2026-11-30', periods: 309 }, 'en', 'week_start'))).toMatch(/^From week 1 of 2021 to week 49 of 2026, after this week: 309 weeks\. A date in the future is for Impossible values\./);
+    expect(saidText(dateRangeSentence({ ...RANGE, first: null, last: null, periods: 0 }, 'en', 'week_start'))).toBe('week_start holds no value: it is empty on every row.');
+    const results = [
+      { subject: 'week_start', data: RANGE, reading: 'expected', yours: null },
+      { subject: 'loaded_at', data: { ...behind, unit: 'day' as const }, reading: 'look', yours: null },
+    ] satisfies ResultView[];
+    expect(saidText(dateRangeConclusion(results, 'en'))).toBe('1 date is not up to date: loaded_at.');
+    setLanguage('nl');
+    try {
+      expect(saidText(dateRangeSentence(behind, 'nl', 'week_start'))).toMatch(/^De laatste week is week 44, 26 okt\.?: 3 weken achter op deze\. Vanaf week 1 van 2021, 303 weken; wordt hij nog geladen\?/);
+    } finally {
+      setLanguage('en');
+    }
+  });
+
+  it('says on a card the date that is not up to date first', () => {
+    const lastRun = {
+      id: 'run-1',
+      ranAt: '2026-11-21T10:00:00Z',
+      ranBy: { id: '1', name: 'An Claes' },
+      bytes: 1,
+      fields: ['week_start', 'loaded_at'],
+      params: {},
+      results: [
+        { subject: 'week_start', data: RANGE, reading: 'expected', yours: null },
+        { subject: 'loaded_at', data: { ...RANGE, unit: 'day', last: '2026-11-02', behind: 19 }, reading: 'look', yours: null },
+      ],
+    } satisfies ProbeView['lastRun'];
+    const card = cardSentence(probe('dateRange', { added: true, complete: true, lastRun }), { resource: { fields: [] } } as unknown as EdaView, 'en');
+    expect(saidText(card)).toMatch(/^The last day is 2 Nov( 2026)?: 19 days behind today\.$/);
+    const upToDate = cardSentence(probe('dateRange', { added: true, complete: true, lastRun: { ...lastRun, results: [lastRun.results[0] as ResultView] } }), { resource: { fields: [] } } as unknown as EdaView, 'en');
+    expect(saidText(upToDate)).toBe('From week 1 of 2021 to this week, week 47 of 2026: 307 weeks.');
   });
 });

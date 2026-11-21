@@ -1,5 +1,7 @@
 import type {
+  CategoriesResult,
   DataHubReading,
+  DateRangeResult,
   DistributionResult,
   EdaStatus,
   EdaStep,
@@ -13,6 +15,7 @@ import type {
   VolumeResult,
 } from '@datahub/contracts/eda';
 import type { TypeRole } from '@datahub/contracts/model-types';
+import { asksReading, headOf } from '@datahub/contracts/eda';
 
 /**
  * The EDA of a Resource in words (FR-ED-15, FR-ED-16): the result of each EDA-Probe Data Hub runs in a sentence, and its
@@ -67,6 +70,10 @@ export function nextWhy(probe: ProbeKey, fields: readonly string[]): string {
       return `It finds a break in the data: a period without any row, counted by ${listed(fields)}.`;
     case 'distributionOfNumbers':
       return 'It shows where the weight of the numbers among the Key Fields lies, and whether their average describes them.';
+    case 'dateRange':
+      return `It shows whether the table is still loaded: the first and the last ${listed(fields)}, set against today.`;
+    case 'distributionOfCategories':
+      return 'It shows where the weight of the texts among the Key Fields lies: which few values bring most of it.';
     default:
       return '';
   }
@@ -227,6 +234,121 @@ function distributionSentence(results: readonly ResultView[]): string {
 }
 
 // ----------------------------------------------------------------------------------------------------------------
+// Distribution of categories (FR-ED-17)
+
+/** What a field is weighed by, inside a sentence: the rows, or the sum of the number that adds up (DEC-ED-33). */
+export const weighedWord = (result: Pick<CategoriesResult, 'weighedBy'>): string => (result.weighedBy ? `the sum of ${code(result.weighedBy)}` : 'the rows');
+
+/** A share from 0 to 1, as Data Hub writes it. */
+const share = (value: number) => percent(value, 1);
+
+/** The share of the weight of its filled values its heaviest values bring together, to be where its weight lies. */
+/** The share of the whole its 10 heaviest values bring together. */
+const topShare = (result: CategoriesResult) => result.top.reduce((sum, value) => sum + value.share, 0);
+
+/**
+ * The weight of one field in a sentence, naming no value, so that it may reach Claude whatever the User's Permission
+ * group says: how few values bring most of it, how many weigh less than 0.1% each, and how much is empty.
+ */
+export function categoriesSentence(field: string, result: CategoriesResult): string {
+  if (result.values === 0) return `${code(field)} holds no value.`;
+  const of = weighedWord(result);
+  const head = headOf(result);
+  const lead =
+    result.values === 1
+      ? `${code(field)} holds one value, which brings ${share(result.top[0]?.share ?? 0)} of ${of}`
+      : head
+        ? `${number(head.count)} of ${many(result.values, 'value', 'values')} of ${code(field)} ${head.count === 1 ? 'brings' : 'bring'} ${share(head.share)} of ${of}`
+        : `The weight of ${code(field)} is spread: its ${number(result.top.length)} heaviest of ${many(result.values, 'value', 'values')} bring ${share(topShare(result))} of ${of}`;
+  const parts = [lead];
+  if (result.small > 0 && result.values > 1) parts.push(result.small === 1 ? '1 brings less than 0.1%' : `${number(result.small)} bring less than 0.1% each`);
+  if (result.empty.weight > 0) parts.push(`${share(result.empty.share)} has no value`);
+  return `${parts.join('; ')}.`;
+}
+
+function categoriesSentences(results: readonly ResultView[]): string {
+  return results.map((result) => categoriesSentence(result.subject, result.data as CategoriesResult)).join(' ');
+}
+
+/** A bar of the card: a value, the others together, or the empty ones, with its share. */
+export interface ShareBar {
+  label: string;
+  share: string;
+  /** Its share, from 0 to 1, the width of its bar. */
+  width: number;
+  kind: 'value' | 'others' | 'empty';
+}
+
+/** The heaviest values of a field with their share, the others together and the empty ones apart (DEC-ED-33). */
+function categoriesBars(result: CategoriesResult): ShareBar[] {
+  return [
+    ...result.top.map((one): ShareBar => ({ label: one.value, share: share(one.share), width: one.share, kind: 'value' })),
+    ...(result.others.values > 0 ? [{ label: `${many(result.others.values, 'other value', 'other values')}`, share: share(result.others.share), width: result.others.share, kind: 'others' as const }] : []),
+    ...(result.empty.weight > 0 ? [{ label: 'empty', share: share(result.empty.share), width: result.empty.share, kind: 'empty' as const }] : []),
+  ];
+}
+
+// ----------------------------------------------------------------------------------------------------------------
+// Date range (FR-ED-18)
+
+const DAY = 86_400_000;
+/** The Monday of the week a day is in. */
+function mondayOf(day: string): string {
+  const time = Date.parse(`${day.slice(0, 10)}T00:00:00Z`);
+  return new Date(time - ((new Date(time).getUTCDay() + 6) % 7) * DAY).toISOString().slice(0, 10);
+}
+
+/** The week of a day as ISO 8601 numbers it, with its year: week 1 holds the first Thursday of the year. */
+export function weekOf(day: string): { week: number; year: number } {
+  const thursday = Date.parse(`${mondayOf(day)}T00:00:00Z`) + 3 * DAY;
+  const year = new Date(thursday).getUTCFullYear();
+  return { week: Math.floor((thursday - Date.UTC(year, 0, 1)) / DAY / 7) + 1, year };
+}
+
+/** A period by its name: a week as `week 47 of 2026`, a day as `21 Nov 2026`. */
+function periodName(unit: DateRangeResult['unit'], day: string): string {
+  if (unit === 'day') return periodDay(day);
+  const { week, year } = weekOf(day);
+  return `week ${week} of ${year}`;
+}
+
+/** Periods of a unit, with the word in the singular or the plural. */
+const periodsOf = (count: number, unit: DateRangeResult['unit']) => many(count, unit, `${unit}s`);
+
+/** What lies before the Reliable Since of the Resource Card, in a sentence; empty without one as a day. */
+function beforeReliable(result: DateRangeResult): string {
+  if (result.reliableSince === null || result.beforeReliable === null) return '';
+  const since = `its Reliable Since, ${periodDay(result.reliableSince)}`;
+  if (result.beforeReliable === 0) return ` None lies before ${since}.`;
+  if (result.beforeReliable >= result.periods) return ` ${result.periods === 1 ? 'It lies' : 'All of them lie'} before ${since}.`;
+  return ` The first ${result.beforeReliable === 1 ? `${result.unit} lies` : `${number(result.beforeReliable)} ${result.unit}s lie`} before ${since}.`;
+}
+
+/** The range of one date in a sentence: up to date, or how far its last period is behind, and what lies before Reliable Since. */
+export function dateRangeSentence(result: DateRangeResult): string {
+  const { unit, first, last } = result;
+  if (first === null || last === null) return `No row has a value, so it has no first or last ${unit}.`;
+  const name = (day: string) => periodName(unit, day);
+  const lastPeriod = unit === 'day' ? last : mondayOf(last);
+  const now = unit === 'day' ? 'today' : 'this week';
+  let lead: string;
+  if (result.behind === 0 && lastPeriod === result.current) lead = `From ${name(first)} to ${now}, ${name(last)}: ${periodsOf(result.periods, unit)}, up to date.`;
+  else if (result.behind === 0) lead = `From ${name(first)} to ${name(last)}, after ${now}: ${periodsOf(result.periods, unit)}. A date in the future is for Impossible values.`;
+  else if (result.behind === 1) lead = `From ${name(first)} to ${unit === 'day' ? 'yesterday' : 'last week'}, ${name(last)}: ${periodsOf(result.periods, unit)}, up to date.`;
+  else {
+    const at = unit === 'day' ? periodDay(last) : `week ${weekOf(last).week}, ${periodDay(lastPeriod)}`;
+    lead = `The last ${unit} is ${at}: ${periodsOf(result.behind, unit)} behind ${unit === 'day' ? 'today' : 'this one'}. From ${name(first)}, ${periodsOf(result.periods, unit)}.`;
+  }
+  return `${lead}${beforeReliable(result)}`;
+}
+
+function dateRangeSentences(results: readonly ResultView[]): string {
+  const only = results[0];
+  if (results.length === 1 && only) return dateRangeSentence(only.data as DateRangeResult);
+  return results.map((result) => `${code(result.subject)}: ${dateRangeSentence(result.data as DateRangeResult)}`).join(' ');
+}
+
+// ----------------------------------------------------------------------------------------------------------------
 // A run, in words and numbers
 
 /** The reading of an EDA-Probe as a whole: look at this before for you to judge, before as expected. */
@@ -238,9 +360,7 @@ export function overallReading(results: readonly Pick<ResultView, 'reading'>[]):
 }
 
 /** Whether a result asks the User for a reading: a field of Nulls per Key Field without any empty value has nothing to read. */
-export function asksReading(probe: ProbeKey, result: Pick<ResultView, 'reading'>): boolean {
-  return !(probe === 'nullsPerKeyField' && result.reading === 'expected');
-}
+export { asksReading };
 
 /** The result of the last run of an EDA-Probe in a sentence, with its key numbers: its conclusion. */
 export function conclusionOf(probe: ProbeKey, results: readonly ResultView[], grain: readonly string[]): string {
@@ -254,6 +374,10 @@ export function conclusionOf(probe: ProbeKey, results: readonly ResultView[], gr
       return volumeSentences(results);
     case 'distributionOfNumbers':
       return distributionSentence(results);
+    case 'dateRange':
+      return dateRangeSentences(results);
+    case 'distributionOfCategories':
+      return categoriesSentences(results);
     default:
       return '';
   }
@@ -273,6 +397,8 @@ export interface ResultRow {
   cells: string[];
   /** The share of rows that is empty, for the bar of Nulls per Key Field. */
   empty: number | null;
+  /** The heaviest values with their share, for Distribution of categories, only when values may reach Claude. */
+  top: ShareBar[] | null;
   reading: DataHubReading;
   readingName: string;
   why: string | null;
@@ -282,13 +408,17 @@ export interface ResultRow {
   yours: { reading: OwnerReading; readingName: string; by: string; at: string } | null;
 }
 
-/** The result of a run per subject: the head of its columns, after the subject, and a row per subject (DEC-UX-326). */
-export function resultTable(probe: ProbeKey, results: readonly ResultView[], grain: readonly string[]): { columns: string[]; bar: boolean; rows: ResultRow[] } {
-  const row = (result: ResultView, cells: string[], why: string | null, detail: string, empty: number | null = null): ResultRow => ({
+/**
+ * The result of a run per subject: the head of its columns, after the subject, and a row per subject (DEC-UX-326). The
+ * values of the data, such as the heaviest values of a text, are in it only when they may reach Claude (FR-CL-28).
+ */
+export function resultTable(probe: ProbeKey, results: readonly ResultView[], grain: readonly string[], values: boolean): { columns: string[]; bar: boolean; rows: ResultRow[] } {
+  const row = (result: ResultView, cells: string[], why: string | null, detail: string, empty: number | null = null, top: ShareBar[] | null = null): ResultRow => ({
     subject: result.subject,
     label: result.subject === '' ? 'The table as a whole' : result.subject,
     cells,
     empty,
+    top,
     reading: result.reading,
     readingName: READINGS[result.reading],
     why,
@@ -341,6 +471,34 @@ export function resultTable(probe: ProbeKey, results: readonly ResultView[], gra
           return row(result, [number(data.median), number(data.mean), `${number(data.p25)} – ${number(data.p75)}`, `${number(data.low)} – ${number(data.high)}`], 'a shape is neither right nor wrong', distributionDetail(data));
         }),
       };
+    case 'dateRange':
+      return {
+        columns: ['Date', 'First', 'Last', 'Behind', 'Before Reliable Since'],
+        bar: false,
+        rows: results.map((result) => {
+          const data = result.data as DateRangeResult;
+          const name = (day: string | null) => (day === null ? '–' : periodName(data.unit, day));
+          const behind = data.last === null ? '–' : data.behind === 0 ? 'none' : periodsOf(data.behind, data.unit);
+          const before = data.reliableSince === null || data.beforeReliable === null ? '–' : `${periodsOf(data.beforeReliable, data.unit)}, before ${periodDay(data.reliableSince)}`;
+          const why = data.last === null ? 'a date without any value has no range' : data.behind > 1 ? 'up to date is the current period or the one before' : null;
+          return row(result, [name(data.first), name(data.last), behind, before], why, dateRangeSentence(data));
+        }),
+      };
+    case 'distributionOfCategories':
+      return {
+        columns: ['Field', 'Values', 'Where the weight lies', 'Below 0.1% each', 'Empty'],
+        bar: false,
+        rows: results.map((result) => {
+          const data = result.data as CategoriesResult;
+          const head = headOf(data);
+          const lies = data.values === 0 ? '–' : head ? `${many(head.count, 'value', 'values')} · ${share(head.share)}` : `spread: ${many(data.top.length, 'value', 'values')} · ${share(topShare(data))}`;
+          // The values are values of the data: they reach Claude, in words or in the card, only when results may (FR-CL-28).
+          const named = values && data.top.length > 0 ? ` The heaviest: ${data.top.map((one) => `${JSON.stringify(one.value)} ${share(one.share)}`).join(', ')}.` : '';
+          const others = data.others.values > 0 ? ` The other ${many(data.others.values, 'value brings', 'values bring')} ${share(data.others.share)}.` : '';
+          const detail = `${categoriesSentence(result.subject, data)}${named}${others} Weighed by ${weighedWord(data)}: ${number(data.total)} in all.`;
+          return row(result, [number(data.values), lies, number(data.small), share(data.empty.share)], 'a spread of values is neither right nor wrong', detail, null, values ? categoriesBars(data) : null);
+        }),
+      };
     default:
       return { columns: ['Field'], bar: false, rows: [] };
   }
@@ -348,8 +506,9 @@ export function resultTable(probe: ProbeKey, results: readonly ResultView[], gra
 
 /**
  * The data of a result as Claude and the MCP App read it: without the long lists a chart draws, such as every period
- * of Volume over time or the bins of a distribution, which stay in Data Hub. The examples of The grain holds are values
- * of the data, so they reach Claude only when results do (FR-CL-28).
+ * of Volume over time or the bins of a distribution, which stay in Data Hub. The examples of The grain holds and the
+ * heaviest values of Distribution of categories are values of the data, so they reach Claude only when results do
+ * (FR-CL-28); without them, the weight and share of each of those values stay.
  */
 export function compactData(probe: ProbeKey, data: ProbeResult, values: boolean): Record<string, unknown> {
   switch (probe) {
@@ -364,6 +523,10 @@ export function compactData(probe: ProbeKey, data: ProbeResult, values: boolean)
     case 'distributionOfNumbers': {
       const { bins: _bins, start: _start, ...rest } = data as DistributionResult;
       return rest;
+    }
+    case 'distributionOfCategories': {
+      const { top, ...rest } = data as CategoriesResult;
+      return { ...rest, top: values ? top : top.map(({ weight, share: part }) => ({ weight, share: part })) };
     }
     default:
       return { ...data };

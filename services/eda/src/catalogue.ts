@@ -18,6 +18,11 @@ export interface EdaSource {
   partitionFilter: PartitionFilter;
   /** Whether catalogue keeps that its EDA is Explored (TR-ED-05); null from a catalogue that does not say yet. */
   explored: boolean | null;
+  /**
+   * The day of the Reliable Since of its Resource Card, `YYYY-MM-DD`, which Date range counts the periods before
+   * (DEC-ED-34); null from its first row or while not set.
+   */
+  reliableSince: string | null;
 }
 
 /** A Resource in a Collection the User sees, as the panel of the section EDA lists it (FR-ED-03). */
@@ -64,13 +69,20 @@ export interface CatalogueResource {
     typeFields?: { field: string; role: TypeRole }[];
     mappings?: { field: string }[];
   };
-  card?: { keyFields?: string[] };
+  /** Its Reliable Since from its first row, or from a later day (FR-RC-31); null while not set. */
+  card?: { keyFields?: string[]; reliableSince?: { from: string; day?: string | null; why?: string } | null };
+}
+
+/** The day of Reliable Since: only from a later day is there one (FR-RC-31). */
+function reliableDay(card: CatalogueResource['card']): string | null {
+  const reliable = card?.reliableSince;
+  return reliable?.from === 'day' && typeof reliable.day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(reliable.day) ? reliable.day : null;
 }
 
 /**
  * The Resource as the EDA sees it (TR-ED-01): its fields in the order of its Resource Card (DEC-UX-323), each with its
  * type, whether it is a Key Field, the role it holds for the model type, whether it is in the grain and whether it is
- * mapped to an Entity; with its table and partitions for the SQL.
+ * mapped to an Entity; with its table and partitions for the SQL, and the day of its Reliable Since for Date range.
  */
 export function sourceOf(resource: CatalogueResource): EdaSource {
   const details = resource.details ?? {};
@@ -96,6 +108,7 @@ export function sourceOf(resource: CatalogueResource): EdaSource {
     partition,
     partitionFilter: partition ? (details.partitionFilter ?? 'none') : 'none',
     explored: typeof resource.explored === 'boolean' ? resource.explored : null,
+    reliableSince: reliableDay(resource.card),
   };
 }
 

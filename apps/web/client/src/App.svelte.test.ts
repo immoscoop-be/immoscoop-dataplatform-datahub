@@ -2357,7 +2357,7 @@ describe('the guide of an EDA, in the Flow Box (FR-ED-14, DEC-UX-327, TR-ED-09)'
     const strip = within(await screen.findByRole('complementary', { name: 'Zijn EDA opzetten · Weekly lead volume · 0 van 10 nodige EDA-Probes af' }));
     expect(strip.getByText('0')).toBeTruthy();
     expect(document.querySelectorAll('.dots li')).toHaveLength(10);
-    expect(document.querySelectorAll('.dots li.coming')).toHaveLength(6);
+    expect(document.querySelectorAll('.dots li.coming')).toHaveLength(4);
     // Its guide is open: Guide me is not there.
     expect(main.queryByRole('button', { name: 'Begeleid me' })).toBeNull();
     await fireEvent.click(strip.getByRole('button', { name: 'Maximaliseren' }));
@@ -2365,11 +2365,13 @@ describe('the guide of an EDA, in the Flow Box (FR-ED-14, DEC-UX-327, TR-ED-09)'
     // One step per needed EDA-Probe, grouped under its EDA-Step, the coming ones counted.
     expect([...document.querySelectorAll('.box li.group')].map((group) => group.textContent)).toEqual(['Basis', 'Hiaten', 'Gewicht', 'Juistheid']);
     expect(guide.getByText('0 van 10 nodige EDA-Probes af')).toBeTruthy();
-    expect(guide.getByRole('button', { name: /^Datumbereik/ }).textContent).toContain('Komt eraan: Data Hub voert hem nog niet uit');
+    // Date range runs now (FR-ED-18); Disguised nulls is still coming.
+    expect(guide.getByRole('button', { name: /^Datumbereik/ }).textContent).toContain('Nog niet toegevoegd');
+    expect(guide.getByRole('button', { name: /^Verkapte lege waarden/ }).textContent).toContain('Komt eraan: Data Hub voert hem nog niet uit');
     expect(guide.getByRole('button', { name: /^De grain klopt/ }).textContent).toContain('Nog niet toegevoegd');
     // The step to do now is the best next step, as the page proposes it, unfolded.
     expect(guide.getByRole('button', { name: /^Lege waarden per sleutelveld/ }).getAttribute('aria-expanded')).toBe('true');
-    expect(guide.getByText(/Nog 10 te gaan, waarvan 6 eraan komen: ze tellen toch mee/)).toBeTruthy();
+    expect(guide.getByText(/Nog 10 te gaan, waarvan 4 eraan komen: ze tellen toch mee/)).toBeTruthy();
     // It stays open on every other page; its Resource leads back to its EDA, where, opened there, it stays open.
     await fireEvent.click(within(screen.getByRole('navigation', { name: 'Hoofdnavigatie' })).getByRole('link', { name: 'Query' }));
     const away = within(await box());

@@ -295,6 +295,16 @@ blockquote.quote .meta { margin-top: 4px; }
 .ed-rows td .meta { display: block; }
 .ed-fill { display: inline-block; position: relative; overflow: hidden; width: 90px; height: 6px; border-radius: 3px; background: var(--col-teal); vertical-align: middle; }
 .ed-fill i { position: absolute; top: 0; right: 0; bottom: 0; background: repeating-linear-gradient(135deg, var(--signal-warn) 0 2px, transparent 2px 4px); }
+.ed-sub td { padding-top: 0; }
+.ed-top { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }
+.ed-top li { display: grid; grid-template-columns: minmax(0, 11em) minmax(0, 1fr) 4.5em; gap: 8px; align-items: center; font-size: var(--text-meta); }
+.ed-top li > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ed-top li > span:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.ed-share { display: block; height: 6px; border-radius: 3px; background: var(--tint-active); overflow: hidden; }
+.ed-share i { display: block; height: 100%; border-radius: 3px; background: var(--col-teal); }
+.ed-top li.ed-others, .ed-top li.ed-empty { color: var(--text-muted); }
+.ed-top li.ed-others .ed-share i { background: var(--text-muted); }
+.ed-top li.ed-empty .ed-share i { background: repeating-linear-gradient(135deg, var(--signal-warn) 0 2px, transparent 2px 4px); }
 .ed-reads { display: grid; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--tint-hover); }
 .ed-read { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: var(--text-meta); color: var(--text-muted); }
 .ed-read .ed-of { margin-right: 4px; }
@@ -889,6 +899,10 @@ function edWhole(v) {
   const coming = v.coming && v.coming.count ? '<div class="ed-sec"><h3>Coming<small>' + esc(v.coming.count + ' needed, which count already') + '</small></h3><p class="ed-quiet">' + ic('hourglass') + '<span>' + esc(v.coming.text) + '. Data Hub does not run them yet.</span></p></div>' : '';
   return edAttention(v.attention) + (v.steps || []).map(edStep).join('') + coming + foot('As you see it in Data Hub', v.eda.page, 'Open in Data Hub');
 }
+// The heaviest values of a text with their share, the others together and the empty ones apart (DEC-ED-33); mcp gives
+// them only when the values of the data may reach Claude (FR-CL-28).
+const edShare = (t) => '<li' + (t.kind === 'value' ? '' : ' class="ed-' + esc(t.kind) + '"') + '><span>' + (t.kind === 'value' ? edField(t.label) : esc(t.label)) + '</span>' +
+  '<span class="ed-share"><i style="width:' + Math.min(100, Math.max(t.width > 0 ? 1 : 0, Math.round(t.width * 100))) + '%"></i></span><span>' + esc(t.share) + '</span></li>';
 // The result of one EDA-Probe per field: its numbers, Data Hub's reading with why, and the reading of the User.
 function edRun(v) {
   const r = v.run;
@@ -899,7 +913,8 @@ function edRun(v) {
     const fill = r.bar ? '<td data-label="' + esc(r.columns[1] || '') + '"><span class="ed-fill" title="' + esc(row.cells[0]) + '"><i style="width:' + (row.empty > 0 ? Math.max(2, Math.round(row.empty * 100)) : 0) + '%"></i></span></td>' : '';
     const cells = row.cells.map((cell, i) => '<td data-label="' + esc(r.columns[i + (r.bar ? 2 : 1)] || '') + '">' + esc(cell) + '</td>').join('');
     const why = row.why && !(row.reading === 'expected' && r.probe === 'nullsPerKeyField') ? '<span class="meta">' + esc(row.why) + '</span>' : '';
-    return '<tr><td class="name">' + name + '</td>' + fill + cells + '<td data-label="Data Hub" class="ed-' + esc(row.reading) + '">' + esc(row.readingName) + why + '</td></tr>';
+    const top = row.top && row.top.length ? '<tr class="ed-sub"><td colspan="' + (r.columns.length + 1) + '"><ul class="ed-top" aria-label="' + esc('The heaviest values of ' + row.subject) + '">' + row.top.map(edShare).join('') + '</ul></td></tr>' : '';
+    return '<tr><td class="name">' + name + '</td>' + fill + cells + '<td data-label="Data Hub" class="ed-' + esc(row.reading) + '">' + esc(row.readingName) + why + '</td></tr>' + top;
   }).join('');
   const asks = r.rows.filter((row) => row.asks);
   const reads = asks.length ? '<div class="ed-reads">' + asks.map((row) => '<div class="ed-read"><span class="ed-of">Your reading of ' + (row.subject ? edField(row.subject) : 'the table as a whole') + '</span>' +
