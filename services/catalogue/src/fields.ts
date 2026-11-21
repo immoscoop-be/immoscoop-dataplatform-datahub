@@ -61,8 +61,25 @@ export function retyped(before: string | null, after: string | null): boolean {
   return before !== null && after !== null && before.trim() !== '' && after.trim() !== '' && written(before) !== written(after);
 }
 
-/** Why a Resource has the Level it got at Registration: a code in its Log, never free text (FR-SR-11). */
-export type LevelReason = 'described' | 'table-undescribed' | 'fields-undescribed';
+/**
+ * Why a Resource has the Level it got, at Registration or since: a code in its Log, never free text (FR-SR-11). `eda`
+ * is its EDA: the EDA-Setup complete made it 4 · Explored, or its EDA going took it back to 3 · Confirmed (TR-ED-05).
+ */
+export type LevelReason = 'described' | 'table-undescribed' | 'fields-undescribed' | 'eda';
+
+/** 3 · Confirmed: published, its first Publication its first Confirmation (FR-SR-17). */
+export const CONFIRMED = 3;
+/** 4 · Explored: the EDA-Setup of its EDA is complete (DEC-MR-21). */
+export const EXPLORED = 4;
+
+/**
+ * The Level of a Resource with whether it is explored (DEC-MR-21, FR-MR-22): 3 · Confirmed becomes 4 · Explored while
+ * the EDA-Setup of its EDA is complete, and every other Level stays as it is. Data Hub works the Level out without its
+ * EDA first, so a Resource that is not explored is never 4.
+ */
+export function withEda(level: number, explored: boolean): number {
+  return explored && level === CONFIRMED ? EXPLORED : level;
+}
 
 /**
  * The Level at Registration (FR-SR-07, DEC-MR-12): 2 · Described when dbt describes the table and at

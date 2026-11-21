@@ -36,8 +36,11 @@ export interface ResultColumn {
 
 export type RunState = 'running' | 'done' | 'failed';
 
-/** A query written in Query, the previews of a Resource by one User (FR-SR-38), or the runs of a Lens by one User (FR-LE-12). */
-export type QueryKind = 'query' | 'preview' | 'lens';
+/**
+ * A query written in Query, the previews of a Resource by one User (FR-SR-38), the runs of a Lens by one User
+ * (FR-LE-12), or the runs of the EDA-Probes of a Resource by one User, which eda has query run (TR-ED-04).
+ */
+export type QueryKind = 'query' | 'preview' | 'lens' | 'eda';
 
 /**
  * A Lens is published; waits for the Data Team while one run reads more than 1 GB (FR-LE-09); or stopped,
@@ -85,6 +88,8 @@ export interface QueryDatabase {
     previewOf: string | null;
     /** For the runs of a Lens by one User, the Lens. */
     lensOf: string | null;
+    /** For the runs of the EDA-Probes of a Resource by one User, its ID in catalogue (TR-ED-04). */
+    edaOf: string | null;
     /** The Lens this query is used as, when "Open in Query" made it for someone of its Owner Unit (DEC-LE-18). */
     forLens: string | null;
     /** The Collection whose "New Lens" started it, offered first when it becomes a Lens (DEC-UX-123). */

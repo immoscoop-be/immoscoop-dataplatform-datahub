@@ -4,7 +4,7 @@ import { createIdentity, SignedOut } from './identity.js';
 /** A Group as identity lists it (FR-UM-18). */
 const SALES = { id: 'g', name: 'Sales', sentence: '', managedBy: { id: 'g', name: 'Sales', isMember: true }, memberCount: 3, isMember: true, mayChange: true };
 
-const config = { identityUrl: 'https://identity.test', catalogueUrl: 'https://catalogue.test', registryUrl: 'https://registry.test', queryUrl: 'https://query.test', semgraphUrl: 'https://semgraph.test' };
+const config = { identityUrl: 'https://identity.test', catalogueUrl: 'https://catalogue.test', registryUrl: 'https://registry.test', queryUrl: 'https://query.test', edaUrl: 'https://eda.test', semgraphUrl: 'https://semgraph.test' };
 
 describe('the calls of the page to identity', () => {
   it('reads who the User is, their groups and their settings, and writes a setting, with the Access Token', async () => {

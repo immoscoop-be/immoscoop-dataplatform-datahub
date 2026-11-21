@@ -1,0 +1,372 @@
+import { randomBytes } from 'node:crypto';
+import { createTestIssuer, type TestIssuer } from '@datahub/auth/testing';
+import { type EdaView, isComplete, isNeeded, PROBES, probesFor, type ProbeKey, type ProbeRunAnswer, type ProbeRunRequest, type RunAnswer } from '@datahub/contracts/eda';
+import { createDatabase, type Database, migrate } from '@datahub/db';
+import type { FastifyInstance } from 'fastify';
+import { sql } from 'kysely';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { parseReading, parseRun, todayAt } from './api.js';
+import { buildApp } from './app.js';
+import { type Catalogue, type CatalogueResource, CatalogueUnavailable, sourceOf } from './catalogue.js';
+import type { EdaDatabase } from './database.js';
+import { createEdas } from './edas.js';
+import { migrations } from './migrations/index.js';
+import { type Query, QueryRefused, QueryUnavailable } from './query.js';
+import { CREDIT, LEADS_ANSWER, WEEKLY_ANSWER } from './testing.js';
+import type { NeededOf } from './view.js';
+
+const url = process.env.DATAHUB_TEST_DATABASE_URL;
+if (!url && process.env.CI) {
+  throw new Error('DATAHUB_TEST_DATABASE_URL must be set in CI');
+}
+
+describe('the requests of eda', () => {
+  it('take the fields, parameters and approval of a run, all optional', () => {
+    expect(parseRun(undefined)).toEqual({ approve: false });
+    expect(parseRun({ fields: ['a'], params: { width: 5 }, approve: true })).toEqual({ fields: ['a'], params: { width: 5 }, approve: true });
+    expect(parseRun({ fields: 'a' })).toBe('fields is a list of the names of fields.');
+    expect(parseRun({ params: [1] })).toBe('params is a JSON object.');
+    expect(parseRun({ approve: 'yes' })).toBe('approve is true or false.');
+    expect(parseRun({ sql: 'select 1' })).toBe('A run has no field sql.');
+    expect(parseRun([])).toBe('Send a JSON object.');
+  });
+
+  it('take a reading of a subject as expected, known or a problem (FR-ED-11)', () => {
+    expect(parseReading({ subject: '', reading: 'known' })).toEqual({ subject: '', reading: 'known' });
+    expect(parseReading({ subject: 'lead_channel', reading: 'fine' })).toBe('reading is expected, known or problem.');
+    expect(parseReading({ reading: 'known' })).toMatch(/subject is/);
+    expect(parseReading({ subject: '', reading: 'known', by: 'me' })).toBe('A reading has no field by.');
+  });
+
+  it('take today in Brussels', () => {
+    expect(todayAt(new Date('2026-11-21T22:30:00Z'))).toBe('2026-11-21');
+    expect(todayAt(new Date('2026-11-21T23:30:00Z'))).toBe('2026-11-22');
+  });
+});
+
+/** A Resource at 2 · Described: no EDA yet (FR-ED-02). */
+const DRAFT: CatalogueResource = { ...WEEKLY_ANSWER, id: '8b3e4d6a-0c3f-4e5a-9b42-3d4e5f6a7b82', displayName: 'Draft leads', level: 2 };
+/** A Resource at 3 · Confirmed whose grain is not recorded. */
+const BARE: CatalogueResource = { ...WEEKLY_ANSWER, id: '9c4f5e7b-1d4a-4f6b-8c53-4e5f6a7b8c93', displayName: 'Lead sources', details: { ...WEEKLY_ANSWER.details, grain: [] } };
+
+/** The answer of BigQuery to each EDA-Probe, every value as text, as query passes it on (TR-ED-04). */
+const ROWS: Partial<Record<ProbeKey, Record<string, unknown>[]>> = {
+  grainHolds: [{ row_count: '312', empty_grain: '0', grain_values: '312', on_one: '312', on_two: '0', on_three: '0', on_four_or_more: '0', rows_covered: '0', examples: 'null' }],
+  nullsPerKeyField: [{ row_count: '1000', empty_0: '0', empty_1: '12', empty_2: '0', empty_3: '7' }],
+  volumeOverTime: [
+    { date_index: '0', period_start: '2026-11-02', row_count: '2', measure_sum: '90' },
+    { date_index: '0', period_start: '2026-11-09', row_count: '2', measure_sum: '110' },
+    { date_index: '0', period_start: '2026-11-16', row_count: '1', measure_sum: '40' },
+  ],
+  distributionOfNumbers: [
+    { field_index: '0', value_count: '310', low: '0', p25: '12', median: '20', p75: '41', p95: '108', high: '400', mean: '35', width: '10', tail_from: '110', start: '0', bins: '[{"bin":"0","bin_rows":"300"},{"bin":"-1","bin_rows":"10"}]' },
+  ],
+};
+
+/** As the contracts count, but only the EDA-Probes Data Hub runs: a model in which an EDA can become Explored (OP-ED-09). */
+const runnableOnly: NeededOf = (resource, runs) => {
+  const needed = probesFor(resource.modelType).filter((probe) => PROBES[probe].runs && isNeeded(probe, resource));
+  return { total: needed.length, complete: needed.filter((probe) => isComplete(probe, resource, runs)).length };
+};
+
+describe.skipIf(!url)('the routes of eda (TR-ED-01)', () => {
+  const schema = `eda_api_${randomBytes(4).toString('hex')}`;
+  let admin: Database<unknown>;
+  let database: Database<EdaDatabase>;
+  let issuer: TestIssuer;
+  let app: FastifyInstance;
+  /** The same eda, but counting only the EDA-Probes Data Hub runs as needed. */
+  let explorer: FastifyInstance;
+
+  /** The Resources catalogue keeps, and which each token may see; while down, catalogue does not answer. */
+  const answers = new Map([WEEKLY_ANSWER, DRAFT, BARE, LEADS_ANSWER].map((answer) => [answer.id, answer]));
+  const visible = new Map<string, string[]>();
+  let catalogueDown = false;
+  /** The Resources catalogue was told are Explored; while deaf, it does not take it (TR-ED-05). */
+  const told: string[] = [];
+  let catalogueDeaf = false;
+  const catalogue: Catalogue = {
+    async resource(id, authorization) {
+      if (catalogueDown) throw new CatalogueUnavailable('down');
+      const answer = answers.get(id);
+      return answer && visible.get(authorization)?.includes(id) ? sourceOf(answer) : null;
+    },
+    async collectionName(id) {
+      return id === CREDIT.id ? CREDIT.name : null;
+    },
+    async seen(authorization) {
+      if (catalogueDown) throw new CatalogueUnavailable('down');
+      return [...answers.values()]
+        .filter((answer) => visible.get(authorization)?.includes(answer.id))
+        .map(({ id, displayName, level }) => ({ id, displayName, level, collection: CREDIT }));
+    },
+    async explored(resourceId) {
+      if (catalogueDeaf) throw new CatalogueUnavailable('down');
+      told.push(resourceId);
+    },
+  };
+
+  /** What eda asked query to run, with whose token; what query answers next, once, instead of a run. */
+  const asked: { resourceId: string; run: ProbeRunRequest; authorization: string }[] = [];
+  let next: ProbeRunAnswer | 'down' | 'hidden' | null = null;
+  const query: Query = {
+    async run(resourceId, run, authorization) {
+      asked.push({ resourceId, run, authorization });
+      const instead = next;
+      next = null;
+      if (instead === 'down') throw new QueryUnavailable('down');
+      if (instead === 'hidden') throw new QueryRefused(404, 'There is no such Resource, or you may not see it.');
+      if (instead) return instead;
+      return { state: 'ran', rows: ROWS[run.probe] ?? [], bytes: 1_200_000, runId: `q-20261121-${asked.length.toString(16).padStart(6, '0')}` };
+    },
+  };
+
+  let dirk: string;
+  let mia: string;
+  let karel: string;
+
+  beforeAll(async () => {
+    admin = createDatabase<unknown>({ connectionString: url }, schema);
+    await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    database = createDatabase<EdaDatabase>({ connectionString: url }, schema);
+    issuer = await createTestIssuer();
+    // Dirk and Mia are in Admin, which holds eda.use; Karel is a Business analyst, who does not (DEC-ED-25).
+    dirk = `Bearer ${await issuer.sign({ sub: '103', name: 'Dirk Vos', as: 'admin' })}`;
+    mia = `Bearer ${await issuer.sign({ sub: '104', name: 'Mia Peeters', as: 'admin' })}`;
+    karel = `Bearer ${await issuer.sign({ sub: '102', name: 'Karel Leys' })}`;
+    visible.set(dirk, [WEEKLY_ANSWER.id, DRAFT.id, BARE.id, LEADS_ANSWER.id]);
+    visible.set(mia, [LEADS_ANSWER.id]);
+    visible.set(karel, [WEEKLY_ANSWER.id]);
+    const api = { edas: createEdas(database.db), catalogue, query, now: () => new Date('2026-11-21T10:00:00Z') };
+    app = await buildApp({ verifier: issuer.verifier, logger: false, api });
+    explorer = await buildApp({ verifier: issuer.verifier, logger: false, api: { ...api, needed: runnableOnly } });
+  });
+
+  afterAll(async () => {
+    await app?.close();
+    await explorer?.close();
+    await database?.close();
+    await sql`drop schema if exists ${sql.id(schema)} cascade`.execute(admin.db);
+    await admin?.close();
+  });
+
+  const call = (authorization: string, method: 'GET' | 'POST' | 'PUT', path: string, payload?: unknown, on: FastifyInstance = app) =>
+    on.inject({ method, url: path, headers: { authorization }, ...(payload === undefined ? {} : { payload: payload as object }) });
+  const edaOf = (id: string) => `/resources/${id}/eda`;
+  const runOf = (id: string, probe: string) => `/resources/${id}/eda/probes/${probe}/runs`;
+  const readingOf = (id: string, probe: string) => `/resources/${id}/eda/probes/${probe}/readings`;
+
+  it('refuses every route to who may not explore Resources, naming eda.use (TR-ED-06)', async () => {
+    for (const [method, path, payload] of [
+      ['GET', '/edas'],
+      ['POST', edaOf(WEEKLY_ANSWER.id)],
+      ['GET', edaOf(WEEKLY_ANSWER.id)],
+      ['POST', runOf(WEEKLY_ANSWER.id, 'grainHolds'), {}],
+      ['PUT', readingOf(WEEKLY_ANSWER.id, 'grainHolds'), { subject: '', reading: 'known' }],
+    ] as const) {
+      const answer = await call(karel, method, path, payload);
+      expect(answer.statusCode, `${method} ${path}`).toBe(403);
+      expect(answer.json()).toMatchObject({ error: 'forbidden', permission: 'eda.use' });
+    }
+    expect((await app.inject({ url: '/edas' })).statusCode).toBe(401);
+    expect(asked).toHaveLength(0);
+  });
+
+  it('starts an EDA from 3 · Confirmed, at most one per Resource, only on a Resource the User sees (FR-ED-02)', async () => {
+    expect((await call(dirk, 'POST', edaOf('not-an-id'))).statusCode).toBe(404);
+    expect((await call(mia, 'POST', edaOf(WEEKLY_ANSWER.id))).statusCode).toBe(404);
+    const draft = await call(dirk, 'POST', edaOf(DRAFT.id));
+    expect(draft.statusCode).toBe(422);
+    expect(draft.json()).toMatchObject({ error: 'not_confirmed' });
+    expect((await call(dirk, 'GET', edaOf(WEEKLY_ANSWER.id))).json()).toEqual({ error: 'not_found', message: 'This Resource has no EDA yet.' });
+
+    const started = await call(dirk, 'POST', edaOf(WEEKLY_ANSWER.id));
+    expect(started.statusCode).toBe(201);
+    const view = started.json<EdaView>();
+    expect(view).toMatchObject({
+      resource: { id: WEEKLY_ANSWER.id, displayName: 'Weekly lead volume', modelType: 'aggregate', level: 3, collection: CREDIT },
+      status: 'inProgress',
+      startedBy: { id: '103', name: 'Dirk Vos' },
+      exploredAt: null,
+      needed: { total: 11, complete: 0 },
+      next: 'nullsPerKeyField',
+    });
+    expect(view.resource.fields.map((field) => field.name)).toEqual(WEEKLY_ANSWER.fields.map((field) => field.name));
+    expect(view.probes.every((probe) => !probe.added && probe.lastRun === null)).toBe(true);
+    expect((await call(dirk, 'POST', edaOf(WEEKLY_ANSWER.id))).statusCode).toBe(409);
+    expect((await call(dirk, 'GET', edaOf(WEEKLY_ANSWER.id))).json<EdaView>().startedAt).toBe(view.startedAt);
+  });
+
+  it('runs an EDA-Probe through query as the User, adds it, keeps its run and results, and answers the EDA (FR-ED-06, TR-ED-04)', async () => {
+    const answer = await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'nullsPerKeyField'));
+    expect(answer.statusCode).toBe(200);
+    const ran = answer.json<RunAnswer>();
+    expect(ran.state).toBe('ran');
+    const last = asked.at(-1);
+    expect(last).toMatchObject({ resourceId: WEEKLY_ANSWER.id, authorization: dirk, run: { probe: 'nullsPerKeyField', approve: false } });
+    // The table by its full name in its own case, its partitions all kept, aggregates only.
+    expect(last?.run.sql).toContain('from `immoscoop-dataplatform.dbt_prod_stacks.Weekly_Lead_Volume`');
+    expect(last?.run.sql).toContain("where (`week_start` is null or `week_start` >= date '0001-01-01')");
+    expect(last?.run.sql).toContain('countif(`lead_channel` is null) as empty_3');
+
+    const eda = (ran as Extract<RunAnswer, { state: 'ran' }>).eda;
+    const nulls = eda.probes.find((probe) => probe.key === 'nullsPerKeyField');
+    expect(nulls).toMatchObject({ added: true, complete: true, fields: ['week_start', 'lead_source', 'lead_count', 'lead_channel'], params: {} });
+    expect(nulls?.lastRun).toMatchObject({ ranBy: { id: '103', name: 'Dirk Vos' }, bytes: 1_200_000, fields: ['week_start', 'lead_source', 'lead_count', 'lead_channel'] });
+    expect(nulls?.lastRun?.results.map((result) => [result.subject, result.reading, result.yours])).toEqual([
+      ['week_start', 'expected', null],
+      ['lead_source', 'look', null],
+      ['lead_count', 'expected', null],
+      ['lead_channel', 'judge', null],
+    ]);
+    expect(eda.needed).toEqual({ total: 11, complete: 1 });
+    expect(eda.next).toBe('grainHolds');
+    const kept = await database.db.selectFrom('edaRuns').select(['queryRunId', 'bytes']).execute();
+    expect(kept).toEqual([{ queryRunId: expect.stringMatching(/^q-20261121-[0-9a-f]{6}$/), bytes: '1200000' }]);
+  });
+
+  it('passes on what the Pre-flight asks, adding nothing, and runs once the User approves (FR-ED-06)', async () => {
+    next = { state: 'approve', bytes: 300_000_000 };
+    const approve = await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'grainHolds'), {});
+    expect(approve.json()).toEqual({ state: 'approve', bytes: 300_000_000 });
+    next = { state: 'refused', bytes: 3_000_000_000, reason: 'It reads 3 GB, more than one run of yours may read (1 GB), so it does not run.' };
+    expect((await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'grainHolds'), {})).json()).toMatchObject({ state: 'refused', bytes: 3_000_000_000 });
+    expect((await call(dirk, 'GET', edaOf(WEEKLY_ANSWER.id))).json<EdaView>().probes.find((probe) => probe.key === 'grainHolds')?.added).toBe(false);
+
+    const ran = (await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'grainHolds'), { approve: true })).json<RunAnswer>();
+    expect(asked.at(-1)?.run).toMatchObject({ probe: 'grainHolds', approve: true });
+    expect(asked.at(-1)?.run.sql).toContain('group by 1, 2');
+    expect(ran.state === 'ran' && ran.eda.probes.find((probe) => probe.key === 'grainHolds')?.lastRun?.results).toEqual([
+      { subject: '', reading: 'expected', yours: null, data: { rows: 312, values: 312, onMoreThanOne: 0, rowsCovered: 0, emptyGrain: 0, buckets: [312, 0, 0, 0], examples: [] } },
+    ]);
+  });
+
+  it('runs again with other fields and parameters, which the EDA-Probe is then set on (DEC-ED-17)', async () => {
+    const first = (await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'volumeOverTime'), { fields: ['loaded_at', 'week_start'], params: { measure: null } })).json<RunAnswer>();
+    expect(asked.at(-1)?.run.sql).not.toContain('measure_sum');
+    const volume = first.state === 'ran' ? first.eda.probes.find((probe) => probe.key === 'volumeOverTime') : undefined;
+    expect(volume).toMatchObject({ fields: ['week_start', 'loaded_at'], params: { measure: null }, complete: true });
+    expect(volume?.lastRun?.results.map((result) => result.subject)).toEqual(['week_start', 'loaded_at']);
+
+    // Without fields or parameters, it runs again as it is set (FR-ED-06), as Claude asks it (FR-ED-16).
+    const same = (await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'volumeOverTime'))).json<RunAnswer>();
+    expect(asked.at(-1)?.run.sql).not.toContain('measure_sum');
+    const kept = same.state === 'ran' ? same.eda.probes.find((probe) => probe.key === 'volumeOverTime') : undefined;
+    expect(kept).toMatchObject({ fields: ['week_start', 'loaded_at'], params: { measure: null } });
+
+    const again = (await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'volumeOverTime'), { fields: ['week_start'], params: {} })).json<RunAnswer>();
+    const rerun = again.state === 'ran' ? again.eda.probes.find((probe) => probe.key === 'volumeOverTime') : undefined;
+    expect(rerun).toMatchObject({ fields: ['week_start'], params: {} });
+    expect(rerun?.lastRun?.results).toEqual([
+      expect.objectContaining({ subject: 'week_start', reading: 'expected', data: expect.objectContaining({ unit: 'week', measure: 'lead_count', current: '2026-11-16', empty: [] }) }),
+    ]);
+    expect(await database.db.selectFrom('edaRuns').select('probe').where('probe', '=', 'volumeOverTime').execute()).toHaveLength(3);
+  });
+
+  it('says what does not fit, and what cannot run here', async () => {
+    expect((await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'noSuchProbe'))).statusCode).toBe(404);
+    expect((await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'rowCount'))).json()).toEqual({ error: 'cannot_run', message: 'Data Hub does not run Row count yet (OP-ED-09).' });
+    expect((await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'distributionOfNumbers'), { fields: ['lead_channel'] })).statusCode).toBe(400);
+    expect((await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'nullsPerKeyField'), { sql: 'select 1' })).statusCode).toBe(400);
+    expect((await call(dirk, 'POST', runOf(DRAFT.id, 'nullsPerKeyField'))).json()).toEqual({ error: 'not_found', message: 'This Resource has no EDA yet.' });
+    expect((await call(dirk, 'POST', edaOf(BARE.id))).statusCode).toBe(201);
+    const noGrain = await call(dirk, 'POST', runOf(BARE.id, 'grainHolds'));
+    expect(noGrain.statusCode).toBe(422);
+    expect(noGrain.json<{ message: string }>().message).toMatch(/records its grain first/);
+  });
+
+  it('answers 503 when query or catalogue does not answer, and passes on what query refuses', async () => {
+    const before = await database.db.selectFrom('edaRuns').select('id').execute();
+    next = 'down';
+    expect((await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'distributionOfNumbers'))).statusCode).toBe(503);
+    next = 'hidden';
+    expect((await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'distributionOfNumbers'))).statusCode).toBe(404);
+    next = { state: 'ran', rows: [], bytes: 10, runId: 'q-20261121-ffffff' };
+    expect((await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'nullsPerKeyField'))).statusCode).toBe(502);
+    expect(await database.db.selectFrom('edaRuns').select('id').execute()).toHaveLength(before.length);
+    catalogueDown = true;
+    try {
+      expect((await call(dirk, 'GET', edaOf(WEEKLY_ANSWER.id))).statusCode).toBe(503);
+      expect((await call(dirk, 'GET', '/edas')).statusCode).toBe(503);
+    } finally {
+      catalogueDown = false;
+    }
+  });
+
+  it('keeps the reading of a result by who works on the EDA, which can be changed (FR-ED-11)', async () => {
+    const path = readingOf(WEEKLY_ANSWER.id, 'nullsPerKeyField');
+    expect((await call(dirk, 'PUT', path, { subject: 'lead_channel', reading: 'fine' })).statusCode).toBe(400);
+    expect((await call(dirk, 'PUT', path, { subject: 'lead_origin', reading: 'known' })).statusCode).toBe(404);
+    expect((await call(dirk, 'PUT', readingOf(WEEKLY_ANSWER.id, 'distributionOfNumbers'), { subject: 'lead_count', reading: 'known' })).statusCode).toBe(404);
+
+    const known = await call(dirk, 'PUT', path, { subject: 'lead_channel', reading: 'known' });
+    expect(known.statusCode).toBe(200);
+    const result = (view: EdaView, subject: string) => view.probes.find((probe) => probe.key === 'nullsPerKeyField')?.lastRun?.results.find((one) => one.subject === subject);
+    expect(result(known.json<EdaView>(), 'lead_channel')?.yours).toEqual({ reading: 'known', by: { id: '103', name: 'Dirk Vos' }, at: expect.any(String) });
+    expect(result(known.json<EdaView>(), 'lead_source')?.yours).toBeNull();
+
+    const changed = await call(dirk, 'PUT', path, { subject: 'lead_channel', reading: 'problem' });
+    expect(result(changed.json<EdaView>(), 'lead_channel')?.yours?.reading).toBe('problem');
+    expect(await database.db.selectFrom('edaReadings').selectAll().execute()).toHaveLength(1);
+    // On the table as a whole, the subject is empty.
+    const grain = await call(dirk, 'PUT', readingOf(WEEKLY_ANSWER.id, 'grainHolds'), { subject: '', reading: 'expected' });
+    expect(grain.json<EdaView>().probes.find((probe) => probe.key === 'grainHolds')?.lastRun?.results[0]?.yours?.reading).toBe('expected');
+  });
+
+  it('lists the EDAs of the Resources the User sees, and those ready for one (FR-ED-03)', async () => {
+    const listed = await call(dirk, 'GET', '/edas');
+    expect(listed.statusCode).toBe(200);
+    expect(listed.json()).toEqual({
+      edas: [
+        { resource: { id: WEEKLY_ANSWER.id, displayName: 'Weekly lead volume', collection: CREDIT }, status: 'inProgress', needed: { total: 11, complete: 3 } },
+        { resource: { id: BARE.id, displayName: 'Lead sources', collection: CREDIT }, status: 'inProgress', needed: { total: 11, complete: 0 } },
+      ],
+      // Leads is at 4 · Explored without an EDA here; Draft leads is not confirmed yet.
+      ready: [{ resource: { id: LEADS_ANSWER.id, displayName: 'Leads', collection: CREDIT }, level: 4 }],
+    });
+    expect((await call(mia, 'GET', '/edas')).json()).toEqual({ edas: [], ready: [{ resource: { id: LEADS_ANSWER.id, displayName: 'Leads', collection: CREDIT }, level: 4 }] });
+  });
+
+  it('never becomes Explored while a needed EDA-Probe Data Hub cannot run yet is not complete (OP-ED-09)', async () => {
+    for (const probe of ['grainHolds', 'nullsPerKeyField', 'volumeOverTime', 'distributionOfNumbers']) {
+      await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, probe));
+    }
+    const view = (await call(dirk, 'GET', edaOf(WEEKLY_ANSWER.id))).json<EdaView>();
+    expect(view).toMatchObject({ status: 'inProgress', exploredAt: null, needed: { total: 11, complete: 4 }, next: null });
+    expect(told).toHaveLength(0);
+  });
+
+  it('becomes Explored once every needed EDA-Probe is complete, and tells catalogue until it heard it (FR-ED-12, TR-ED-05)', async () => {
+    const started = await call(dirk, 'POST', edaOf(LEADS_ANSWER.id), undefined, explorer);
+    expect(started.json<EdaView>().needed).toEqual({ total: 4, complete: 0 });
+    for (const probe of ['grainHolds', 'nullsPerKeyField', 'volumeOverTime']) {
+      const ran = (await call(dirk, 'POST', runOf(LEADS_ANSWER.id, probe), {}, explorer)).json<RunAnswer>();
+      expect(ran.state === 'ran' && ran.eda.status).toBe('inProgress');
+    }
+    // catalogue does not take it the first time: the EDA is Explored all the same, and catalogue is told again.
+    catalogueDeaf = true;
+    const last = (await call(dirk, 'POST', runOf(LEADS_ANSWER.id, 'distributionOfNumbers'), {}, explorer)).json<RunAnswer>();
+    catalogueDeaf = false;
+    expect(last.state === 'ran' && last.eda).toMatchObject({ status: 'explored', exploredAt: expect.any(String), needed: { total: 4, complete: 4 } });
+    expect(told).toHaveLength(0);
+    const row = () => database.db.selectFrom('edas').select(['status', 'exploredAt', 'toldAt']).where('resourceId', '=', LEADS_ANSWER.id).executeTakeFirstOrThrow();
+    expect(await row()).toMatchObject({ status: 'explored', toldAt: null });
+
+    await call(dirk, 'GET', edaOf(LEADS_ANSWER.id), undefined, explorer);
+    expect(told).toEqual([LEADS_ANSWER.id]);
+    expect((await row()).toldAt).toBeInstanceOf(Date);
+    answers.set(LEADS_ANSWER.id, { ...LEADS_ANSWER, explored: true });
+    await call(dirk, 'GET', edaOf(LEADS_ANSWER.id), undefined, explorer);
+    expect(told).toHaveLength(1);
+    // A catalogue that does not keep it is told again.
+    answers.set(LEADS_ANSWER.id, { ...LEADS_ANSWER, explored: false });
+    await call(dirk, 'GET', edaOf(LEADS_ANSWER.id), undefined, explorer);
+    expect(told).toHaveLength(2);
+
+    // What counts as needed later, a run or a reading lowers nothing (FR-ED-12).
+    const later = (await call(dirk, 'GET', edaOf(LEADS_ANSWER.id))).json<EdaView>();
+    expect(later.status).toBe('explored');
+    expect(later.needed.complete).toBeLessThan(later.needed.total);
+    expect((await call(dirk, 'GET', '/edas')).json<{ edas: { status: string }[] }>().edas.map((eda) => eda.status)).toEqual(['inProgress', 'inProgress', 'explored']);
+  });
+});

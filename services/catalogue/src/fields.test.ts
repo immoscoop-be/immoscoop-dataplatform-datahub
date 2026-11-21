@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { type Column, fingerprint, levelAtRegistration, retyped, splitColumns } from './fields.js';
+import { type Column, fingerprint, levelAtRegistration, retyped, splitColumns, withEda } from './fields.js';
 
 const column = (name: string, dataType: string | null, description = ''): Column => ({ name, position: null, dataType, description });
 
@@ -46,6 +46,15 @@ describe('the Level at Registration (FR-SR-07, DEC-MR-12)', () => {
   it('is Available otherwise, never higher', () => {
     expect(levelAtRegistration('  ', [column('id', 'STRING', 'The search.')])).toEqual({ level: 1, reason: 'table-undescribed' });
     expect(levelAtRegistration('One row per saved search.', [column('id', 'STRING', ' ')])).toEqual({ level: 1, reason: 'fields-undescribed' });
+  });
+});
+
+describe('the Level with the EDA (DEC-MR-21, FR-MR-22)', () => {
+  it('is 4 · Explored from 3 · Confirmed while its EDA-Setup is complete, and never 4 otherwise', () => {
+    expect(withEda(3, true)).toBe(4);
+    expect(withEda(3, false)).toBe(3);
+    // Below Confirmed it waits there; a Level worked out without the EDA is never above Confirmed.
+    expect([0, 1, 2].map((level) => withEda(level, true))).toEqual([0, 1, 2]);
   });
 });
 

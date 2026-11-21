@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<!--
+  Screen: the detail of an EDA-Probe, The grain holds, on Weekly lead volume, designed with Max on 2026-11-21: the very
+  simple EDA-Probe, to lay the screen out; a complex one follows (OP-UX-119). It opens from the tab Steps of the EDA, in
+  place of its rows; the state of the EDA-Setup belongs to the tab Steps and is not repeated here.
+  Two columns. On the left, 40%: what it does, with the drawing of its card, smaller, animated once with Replay; why it
+  matters; its parameters, here the grain as the Data Team recorded it and none of its own; and Run, which adds it to the
+  EDA and runs it, then Run again. The left column folds to a strip, giving the result the whole width.
+  On the right, 60%: before it has run, where its result will come; after, the conclusion on top, Data Hub's reading and a
+  sentence with the key numbers, then the result drawn: how many rows each grain value is on, the wrong side shaded; then
+  the numbers, up to 5 examples, and the Owner's reading: Expected, Known or A problem.
+  The chart is an illustration drawn for the EDA, not a chart of semgraph (DEC-UX-325).
+  The guide (DEC-UX-327): the Flow Box "Set up its EDA" is open here, docked on the right, its step The grain holds
+  marked as open on the page; after Run the step ticks and the next needed EDA-Probe Data Hub runs unfolds, Volume over
+  time, with Open the EDA-Probe. Row count and Date range, before it, are Coming: Data Hub does not run them yet, and they
+  still count (DEC-ED-27).
+  Switches: ?run=before (the default), ?run=ok, the grain holds; ?run=dup, 34 grain values on more than one row;
+  ?guide=open (the default), min or closed.
+  Requirements: FR-ED-06, FR-ED-07, FR-ED-11, FR-ED-14
+  Decisions: DEC-ED-12, DEC-ED-13, DEC-ED-17, DEC-ED-21, DEC-UX-268, DEC-UX-270, DEC-UX-322, DEC-UX-324, DEC-UX-325, DEC-UX-327, DEC-ED-27.
+  Open points: OP-UX-119.
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="owner">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — EDA · The grain holds</title>
+<style>
+  :root {
+    --sk-line: color-mix(in srgb, var(--text-muted) 45%, transparent);
+    --sk-head: color-mix(in srgb, var(--text-secondary) 70%, transparent);
+    --sk-ink: color-mix(in srgb, var(--text-muted) 38%, transparent);
+    --sk-paper: var(--surface-solid);
+  }
+
+  .eda-facts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .tone[data-tone="warmup-chip"] { color: var(--text-secondary); background: none; outline: 1.5px dashed var(--text-muted); outline-offset: -1.5px; }
+  .tab.soon { color: color-mix(in srgb, var(--text-muted) 70%, transparent); }
+  .eda-layout { display: grid; grid-template-columns: minmax(0, 7fr) minmax(300px, 3fr); gap: 22px; align-items: start; }
+  .step + .step { margin-top: 24px; }
+  .step-head { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; align-items: baseline; margin-bottom: 10px; }
+  .step-head h3 { font-size: 16px; font-weight: 500; margin: 0; }
+  .step-head p { grid-column: 1 / -1; margin: 0; font-size: var(--text-small); color: var(--text-secondary); }
+  .step-need { display: inline-flex; gap: 5px; align-items: center; font-size: var(--text-meta); }
+  .step-done { color: var(--col-teal-ink); } .step-part { color: var(--signal-warn); } .step-none { color: var(--text-muted); }
+  .pc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); grid-auto-rows: 1fr; gap: 12px; }
+  .pc { display: flex; flex-direction: column; padding: 12px 14px 10px; min-height: 300px; }
+  .pc-head { display: flex; gap: 8px; align-items: flex-start; }
+  .pc-head h4 { flex: 1; font-size: 14px; font-weight: 500; margin: 0; line-height: 1.3; }
+  .pc-draw { width: 100%; height: auto; display: block; margin: 4px 0 2px; }
+  .pc-result { font-size: var(--text-small); line-height: 1.5; margin: 2px 0 8px; }
+  .pc-result b { font-weight: 500; } .pc-result .warn { color: var(--signal-warn); }
+  .pc-foot { display: flex; align-items: center; gap: 8px; margin-top: auto; padding-top: 8px; border-top: 1px solid var(--tint-active); font-size: var(--text-meta); color: var(--text-muted); }
+  .pc-foot span:first-child { flex: 1; min-width: 0; }
+  .pc-need { display: inline-flex; gap: 4px; align-items: center; color: var(--text-secondary); margin-right: 6px; }
+  .add-tile { all: unset; box-sizing: border-box; cursor: pointer; min-height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 18px 22px; text-align: center; border-radius: var(--radius-md); border: 1.5px dashed color-mix(in srgb, var(--text-muted) 55%, transparent); background: color-mix(in srgb, var(--text-muted) 8%, transparent); color: var(--text-secondary); }
+  .add-tile i { font-size: 28px; color: var(--text-muted); }
+  .add-tile b { font-size: 15px; font-weight: 500; color: var(--text-primary); }
+  .add-tile span { font-size: var(--text-small); line-height: 1.5; max-width: 30ch; }
+  .add-tile small { font-size: var(--text-meta); color: var(--text-muted); }
+  .add-tile:hover { background: color-mix(in srgb, var(--text-muted) 14%, transparent); }
+  .add-tile:focus-visible { outline: 2px solid var(--text-secondary); }
+  .side { display: flex; flex-direction: column; gap: 10px; position: sticky; top: 0; }
+  .side h3 { font-size: 14px; font-weight: 500; margin: 0; }
+  .side-top { display: flex; align-items: center; gap: 8px; } .side-top h3 { flex: 1; }
+  .side-meta { display: block; margin: 6px 0 0; line-height: 1.5; }
+  .big { margin: 10px 0 8px; font-size: var(--text-small); color: var(--text-secondary); } .big b { font-size: 22px; font-weight: 500; color: var(--text-primary); margin-right: 4px; }
+  .prog { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 3px; }
+  .prog span { height: 8px; border-radius: 3px; background: color-mix(in srgb, var(--text-muted) 22%, transparent); }
+  .prog span.on { background: var(--col-teal); }
+  .cov { list-style: none; margin: 12px 0 0; padding: 0; }
+  .cov li { display: grid; grid-template-columns: 20px 1fr auto; gap: 8px; align-items: center; padding: 6px 0; border-top: 1px solid var(--tint-active); font-size: var(--text-small); }
+  .cov li i { color: var(--text-muted); font-size: 15px; }
+  .cov b { font-weight: 500; font-size: var(--text-meta); }
+  .cov-part b { color: var(--signal-warn); } .cov-none b { color: var(--signal-warn); } .cov-muted b { color: var(--text-muted); font-weight: 400; } .cov-done b { color: var(--col-teal-ink); }
+  .next { margin-top: 12px; padding: 12px; border-radius: var(--radius-md); background: var(--surface-solid); font-size: var(--text-small); }
+  .next .meta { display: block; margin-bottom: 2px; } .next b { font-weight: 500; } .next p { margin: 4px 0 10px; color: var(--text-secondary); line-height: 1.5; }
+  .next .btn-primary { display: inline-flex; gap: 6px; align-items: center; }
+  .tw { list-style: none; margin: 8px 0 0; padding: 0; }
+  .tw li { display: grid; grid-template-columns: 18px 1fr auto; gap: 8px; align-items: center; padding: 5px 0; font-size: var(--text-small); }
+  .tw small { font-size: var(--text-meta); color: var(--text-muted); }
+  .tw-done i { color: var(--col-teal-ink); } .tw-need i, .tw-need small { color: var(--signal-warn); } .tw-sugg i, .tw-req i { color: var(--text-muted); }
+  .tw-req span { color: var(--text-muted); }
+  .fhead { display: grid; grid-template-columns: repeat(4, 14px); gap: 4px; font-size: 10px; color: var(--text-muted); text-align: center; }
+  .fl { list-style: none; margin: 10px 0 0; padding: 0; }
+  .fr { display: grid; grid-template-columns: 14px 16px 1fr auto; gap: 6px; align-items: center; padding: 6px 0; border-top: 1px solid var(--tint-active); }
+  .fkey { font-size: 12px; color: var(--text-primary); }
+  .fkind { font-size: 14px; color: var(--text-muted); }
+  .fname { min-width: 0; font-size: 12.5px; color: var(--text-muted); }
+  .fname small { display: flex; gap: 4px; align-items: center; font-family: var(--font-family); font-size: 10.5px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fr.key .fname > .mono { color: var(--text-primary); font-weight: 500; }
+  .fr:not(.key) .fkind { opacity: .6; }
+  .fcells { display: grid; grid-template-columns: repeat(4, 14px); gap: 4px; }
+  .fc { display: inline-block; width: 14px; height: 14px; border-radius: 4px; }
+  .fc-done { background: var(--col-teal); }
+  .fc-need { border: 1.5px dashed var(--signal-warn); box-sizing: border-box; }
+  .fc-free { background: color-mix(in srgb, var(--text-muted) 16%, transparent); }
+  .fc-na { background: none; border: 1px solid color-mix(in srgb, var(--text-muted) 25%, transparent); box-sizing: border-box; background-image: linear-gradient(135deg, transparent 45%, color-mix(in srgb, var(--text-muted) 45%, transparent) 45%, color-mix(in srgb, var(--text-muted) 45%, transparent) 55%, transparent 55%); }
+  .flegend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; font-size: 10.5px; color: var(--text-muted); }
+  .flegend > span { display: inline-flex; gap: 5px; align-items: center; } .flegend .fc { width: 11px; height: 11px; }
+  .soon-pane { padding: 40px 20px; text-align: center; color: var(--text-secondary); }
+  .soon-pane i { font-size: 34px; color: var(--text-muted); }
+  .soon-pane h3 { font-size: 17px; font-weight: 500; margin: 10px 0 6px; color: var(--text-primary); }
+  .soon-pane p { max-width: 560px; margin: 0 auto; line-height: 1.55; font-size: var(--text-small); }
+  @media (max-width: 1180px) { .eda-layout { grid-template-columns: 1fr; } .side { position: static; } }
+  .contents:not([hidden]) { display: contents; }
+
+  /* The guide of an EDA in the Flow Box (DEC-UX-327): one step per needed EDA-Probe, grouped by EDA-Step */
+  .eda-flow .fb-group { margin: 6px 4px -2px; font-size: var(--text-meta); font-weight: var(--weight-medium); color: var(--text-muted); list-style: none; }
+  .eda-flow .fb-group:first-child { margin-top: 0; }
+  .fb-bar span.coming { background: repeating-linear-gradient(135deg, var(--tint-active) 0 3px, transparent 3px 5px); }
+  .fs-dots li.coming { outline-style: dashed; }
+  .fb-num.coming { outline-style: dashed; color: var(--text-muted); }
+  .fb-step.coming .fb-name b { color: var(--text-secondary); font-weight: var(--weight-regular); }
+  .fb-said .fb-soon { color: var(--text-muted); }
+  .fb-reading { flex: none; font-size: 10.5px; font-weight: var(--weight-medium); }
+  .fb-reading[data-tone="expected"] { color: var(--col-teal-ink); } .fb-reading[data-tone="look"] { color: var(--signal-warn); } .fb-reading[data-tone="judge"] { color: var(--col-slate); }
+  /* The list to add an EDA-Probe (DEC-UX-328) */
+  .pl-sheet { width: max(520px, var(--sheet-width)); }
+  .pl-why { margin: 10px 0; font-size: var(--text-small); line-height: 1.55; color: var(--text-secondary); }
+  .pl-chips { margin: 10px 0 0; }
+  .pl-group { padding: 10px 6px 6px; border-radius: var(--radius-md); }
+  .pl-group + .pl-group { margin-top: 6px; }
+  .pl-group.at { background: color-mix(in srgb, var(--surface-sub) 70%, transparent); }
+  .pl-head { display: flex; align-items: baseline; gap: 10px; padding: 0 6px; }
+  .pl-head b { font-size: var(--text-body); font-weight: var(--weight-medium); }
+  .pl-count { font-size: var(--text-meta); color: var(--signal-warn); }
+  .pl-from { margin-left: auto; font-size: var(--text-meta); color: var(--text-muted); }
+  .pl-gq { margin: 2px 6px 6px; font-size: var(--text-meta); color: var(--text-muted); }
+  .pl-row { display: grid; grid-template-columns: 20px 1fr auto; gap: 10px; align-items: start; padding: 9px 8px; border-radius: var(--radius-md); color: inherit; text-decoration: none; }
+  a.pl-row:hover { background: var(--tint-hover); }
+  .pl-ic { font-size: 18px; color: var(--text-secondary); margin-top: 1px; } .pl-ic.done { color: var(--col-teal-ink); } .pl-ic.part { color: var(--signal-warn); }
+  .pl-text { display: grid; gap: 2px; min-width: 0; }
+  .pl-text b { font-size: var(--text-small); font-weight: var(--weight-medium); }
+  .pl-q { font-size: var(--text-meta); line-height: 1.45; color: var(--text-secondary); }
+  .pl-meta { font-size: 10.5px; }
+  .pl-level.pl-must { color: var(--signal-warn); } .pl-level.pl-should, .pl-level.pl-could { color: var(--text-muted); }
+  .pl-row.added .pl-level { color: var(--text-muted); }
+  .pl-row.coming b, .pl-row.coming .pl-q { color: var(--text-muted); } .pl-row.coming .pl-ic { color: var(--text-muted); opacity: .7; }
+  .pl-state { display: grid; justify-items: end; gap: 2px; padding-top: 1px; white-space: nowrap; }
+  .pl-state small { font-size: 10.5px; color: var(--text-muted); }
+  .pl-open { display: inline-flex; align-items: center; gap: 4px; font-size: var(--text-meta); color: var(--text-primary); }
+  .pl-coming { display: inline-flex; align-items: center; gap: 4px; }
+
+  .back { margin-bottom: 10px; }
+  .pd-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .pd-head h2 { font-size: 20px; font-weight: 500; margin: 0; }
+  .pd-head .meta { width: 100%; }
+  .pd-grid { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 6fr); gap: 16px; align-items: start; transition: grid-template-columns .2s; }
+  .pd-grid.folded { grid-template-columns: 44px minmax(0, 1fr); }
+  .pd-left { position: relative; padding: 14px 16px 16px; }
+  .pd-fold { all: unset; cursor: pointer; position: absolute; right: 8px; top: 8px; width: 28px; height: 28px; display: grid; place-items: center; border-radius: var(--radius-pill); color: var(--text-muted); }
+  .pd-fold:hover, .pd-unfold:hover { color: var(--text-primary); background: var(--tint-hover); }
+  .pd-unfold { all: unset; cursor: pointer; display: none; writing-mode: vertical-rl; gap: 8px; align-items: center; font-size: var(--text-small); color: var(--text-secondary); padding: 10px 0; border-radius: var(--radius-md); }
+  .pd-unfold i { writing-mode: horizontal-tb; }
+  .pd-grid.folded .pd-left { padding: 6px 0; display: flex; justify-content: center; }
+  .pd-grid.folded .pd-left-body, .pd-grid.folded .pd-fold { display: none; }
+  .pd-grid.folded .pd-unfold { display: inline-flex; }
+  .pd-left h4 { font-size: var(--text-small); font-weight: 500; margin: 12px 0 4px; }
+  .pd-left p { margin: 0; font-size: var(--text-small); line-height: 1.55; color: var(--text-secondary); }
+  .pd-ill { margin: 0 32px 0 0; padding: 8px; border-radius: var(--radius-md); background: var(--surface-solid); position: relative; max-width: 300px; }
+  .pd-ill-svg { width: 100%; height: auto; display: block; }
+  .replay { all: unset; cursor: pointer; position: absolute; right: 8px; top: 6px; display: inline-flex; gap: 4px; align-items: center; font-size: var(--text-meta); color: var(--text-muted); padding: 2px 6px; border-radius: var(--radius-pill); }
+  .replay:hover { color: var(--text-primary); background: var(--tint-hover); }
+  .pd-params { margin-top: 14px; padding-top: 4px; border-top: 1px solid var(--tint-active); }
+  .pd-params dl { margin: 6px 0 0; display: grid; gap: 8px; }
+  .pd-params dl > div { display: grid; grid-template-columns: 64px 1fr; gap: 10px; font-size: var(--text-small); }
+  .pd-params dt { color: var(--text-muted); } .pd-params dd { margin: 0; color: var(--text-secondary); line-height: 1.5; }
+  .pd-params dd small { display: block; color: var(--text-muted); font-size: var(--text-meta); margin-top: 4px; }
+  .fchip { display: inline-flex; gap: 5px; align-items: center; margin: 0 6px 4px 0; padding: 2px 8px; border-radius: var(--radius-chip); background: var(--surface-solid); font-family: var(--font-mono); font-size: 12px; color: var(--text-primary); }
+  .pd-run { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+  .pd-runbtn { display: inline-flex; gap: 6px; align-items: center; }
+  .lbl-again { display: none; } .ran .lbl-again { display: inline; } .ran .lbl-first { display: none; }
+  .ran .pd-runbtn { background: var(--surface-solid); color: var(--text-primary); }
+  .pd-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 420px; padding: 24px; text-align: center; border-radius: var(--radius-md); border: 1.5px dashed color-mix(in srgb, var(--text-muted) 45%, transparent); color: var(--text-secondary); }
+  .pd-empty i { font-size: 30px; color: var(--text-muted); } .pd-empty b { font-weight: 500; color: var(--text-primary); } .pd-empty p { margin: 0; max-width: 40ch; font-size: var(--text-small); line-height: 1.5; }
+  .pd-result { margin: 0; }
+  .res-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .res-head .meta { margin-left: auto; }
+  .res-sentence { font-size: 17px; line-height: 1.45; margin: 10px 0 16px; } .res-sentence b { font-weight: 500; }
+  .res-chart { margin: 0; padding: 12px 14px 8px; border-radius: var(--radius-md); background: var(--surface-solid); }
+  .res-chart figcaption { font-size: var(--text-small); font-weight: 500; }
+  .res-svg { width: 100%; height: auto; display: block; margin-top: 6px; }
+  .res-low { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 14px; align-items: flex-start; }
+  .res-nums { margin: 0; display: grid; grid-template-columns: repeat(3, auto); gap: 8px 22px; }
+  .res-nums dt { font-size: var(--text-meta); color: var(--text-muted); } .res-nums dd { margin: 2px 0 0; font-size: 18px; font-weight: 500; } .res-nums dd.warn { color: var(--signal-warn); }
+  .res-ex { flex: 1; min-width: 260px; }
+  .ex { width: 100%; border-collapse: collapse; margin-top: 4px; font-size: 12px; }
+  .ex th { text-align: left; font-weight: 400; color: var(--text-muted); font-size: var(--text-meta); padding: 3px 6px; } .ex td { padding: 4px 6px; border-top: 1px solid var(--tint-active); } .ex .num { text-align: right; }
+  .res-reading { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--tint-active); }
+  .rd-opts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 6px; }
+  .rd { all: unset; box-sizing: border-box; cursor: pointer; display: grid; grid-template-columns: 20px 1fr; gap: 0 6px; padding: 10px 12px; border-radius: var(--radius-md); background: var(--surface-solid); font-size: var(--text-small); }
+  .rd i { grid-row: span 2; font-size: 16px; color: var(--text-secondary); margin-top: 1px; } .rd b { font-weight: 500; } .rd small { color: var(--text-muted); font-size: var(--text-meta); }
+  .rd:hover { outline: 1.5px solid var(--text-secondary); outline-offset: -1.5px; }
+  @media (prefers-reduced-motion: reduce) { [data-a] { opacity: 1 !important; } }
+
+</style>
+</head>
+<body>
+<div class="app">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <a class="nav-btn" href="collections-start.html" data-label="Collections" aria-label="Collections"><i class="ph-fill ph-stack"></i></a>
+  <a class="nav-btn" href="query.html" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></a>
+  <a class="nav-btn" href="charts.html" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
+  <a class="nav-btn active" href="eda.html" data-label="EDA" aria-label="EDA" aria-current="page"><i class="ph-fill ph-binoculars"></i><span class="flare top"></span><span class="flare bottom"></span></a>
+  <a class="nav-btn" href="monitoring-start.html" data-label="Monitoring" aria-label="Monitoring"><i class="ph-fill ph-pulse"></i></a>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">MP</a>
+</nav>
+<aside class="panel" aria-label="EDA">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:4px">
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0"><a href="eda.html" style="color:inherit;text-decoration:none">EDA</a></h1>
+   <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
+  </div>
+  <label class="search" style="margin-top:12px"><i class="ph ph-magnifying-glass"></i><input type="search" placeholder="Search Resources" aria-label="Search Resources"></label>
+  <div class="panel-label">Credits</div>
+  <a class="mc-filter on" aria-current="page" href="eda.html"><span class="tone-dot" data-tone="warmup" aria-label="In progress"></span><span>Weekly lead volume</span></a>
+  <a class="mc-filter" href="eda.html"><span class="tone-dot" data-tone="healthy" aria-label="Explored"></span><span>Credit leads</span></a>
+  <a class="mc-filter" href="eda.html"><span class="tone-dot" data-tone="healthy" aria-label="Explored"></span><span>Lead sources</span></a>
+  <div class="panel-label">Listings</div>
+  <a class="mc-filter" href="eda.html"><span class="tone-dot" data-tone="healthy" aria-label="Explored"></span><span>Asking prices</span></a>
+  <div class="panel-label">Ready for an EDA</div>
+  <a class="mc-filter" href="eda.html" style="color:var(--text-muted)"><i class="ph ph-plus-circle"></i><span>Listing states</span></a>
+  <a class="mc-filter" href="eda.html" style="color:var(--text-muted)"><i class="ph ph-plus-circle"></i><span>Views</span></a>
+  <a class="mc-filter" href="eda.html" style="color:var(--text-muted)"><i class="ph ph-plus-circle"></i><span>CTAs</span></a>
+ </div>
+</aside>
+<main class="main">
+<div class="breadcrumb"><a href="eda.html" style="color:inherit">EDA</a> · Credits · Weekly lead volume</div>
+<div style="display:flex;align-items:flex-end;gap:12px;margin-top:8px;flex-wrap:wrap">
+ <div style="flex:1;min-width:280px"><h1 class="page-title">Weekly lead volume</h1>
+ <p class="meta" style="display:block;margin-top:4px;line-height:1.5">Its EDA, started on 21 November by An Claes, its Owner. An aggregate: one row per week and lead source.</p></div>
+ <a class="btn-quiet outline" href="resource-overview.html?ov=maturity&amp;lvl=eda" style="display:inline-flex;gap:6px;align-items:center;text-decoration:none"><i class="ph ph-arrow-square-out"></i>Open the Resource</a>
+</div>
+<div class="eda-facts">
+ <span class="tone" data-tone="warmup-chip"><i class="ph ph-hourglass-medium"></i>In progress</span>
+ <span class="status"><span class="maturity" data-level="3" data-no-tooltip></span>3 · Confirmed</span>
+</div>
+<div class="tabs" role="tablist">
+ <a class="tab" href="eda.html?tab=overview" role="tab" aria-selected="false" style="text-decoration:none">Overview</a>
+ <a class="tab on" href="eda.html" role="tab" aria-selected="true" style="text-decoration:none">Steps</a>
+ <a class="tab soon" href="eda.html?tab=profile" role="tab" aria-selected="false" style="text-decoration:none" title="Opens once the EDA-Setup is complete">Profile</a>
+</div>
+<div class="tab-content card">
+ <div data-pane-group="run" data-pane="before"><a class="text-link back" href="eda.html"><i class="ph ph-arrow-left"></i><span>All EDA-Steps</span></a><header class="pd-head"><span class="meta">Basis · the rows · needed for 4 · Explored</span><h2>The grain holds</h2></header><div class="pd-grid"><div class="pd-form-slot"></div><div><section class="pd-empty">
+  <i class="ph ph-play-circle"></i>
+  <b>The result comes here</b>
+  <p>Run it, and what Weekly lead volume shows appears here: a sentence on top, then how many rows each week and lead source is on.</p>
+</section></div></div></div>
+ <div data-pane-group="run" data-pane="ok" hidden><a class="text-link back" href="eda.html"><i class="ph ph-arrow-left"></i><span>All EDA-Steps</span></a><header class="pd-head"><span class="meta">Basis · the rows · needed for 4 · Explored</span><h2>The grain holds</h2></header><div class="pd-grid ran"><div class="pd-form-slot"></div><div><section class="pd-result sub-tile" aria-label="Result">
+  <div class="res-head"><span class="tone" data-tone="healthy"><i class="ph-fill ph-check-circle"></i>As expected</span><span class="meta">Ran today at 10:42 · read 0.3 MB · its first EDA-Profile</span></div>
+  <p class="res-sentence"><b>Every week and lead source has one row.</b> 16,224 rows, 16,224 grain values, none on more than one row, none with an empty grain field.</p>
+  <figure class="res-chart"><figcaption>How many rows each week and lead source is on</figcaption><svg class="res-svg" viewBox="0 0 480 150" role="img" aria-label="How many weeks and lead sources are on one row, two rows, three rows or more"><rect x="121.0" y="14" width="351.0" height="104" fill="color-mix(in srgb, var(--signal-warn) 9%, transparent)" rx="4"/><text x="127.0" y="28" font-size="8" fill="var(--signal-warn)" text-anchor="start" font-family="var(--font-family)" font-weight="500">wrong: on more than one row</text><text x="64.0" y="28" font-size="8" fill="var(--col-teal-ink)" text-anchor="middle" font-family="var(--font-family)" font-weight="500">good</text><line x1="14" y1="118.5" x2="472" y2="118.5" stroke="var(--sk-line)"/><rect x="18" y="52.0" width="92" height="66.0" rx="3" fill="var(--col-teal)"/><text x="64.0" y="47.0" font-size="9" fill="var(--text-primary)" text-anchor="middle" font-family="var(--font-family)" font-weight="500">16,224</text><text x="64.0" y="131" font-size="9" fill="var(--text-secondary)" text-anchor="middle" font-family="var(--font-family)" font-weight="400">1</text><rect x="132" y="115" width="92" height="3" rx="1.5" fill="none" stroke="var(--sk-line)" stroke-dasharray="2 2"/><text x="178.0" y="111" font-size="9" fill="var(--text-primary)" text-anchor="middle" font-family="var(--font-family)" font-weight="500">0</text><text x="178.0" y="131" font-size="9" fill="var(--text-secondary)" text-anchor="middle" font-family="var(--font-family)" font-weight="400">2</text><rect x="246" y="115" width="92" height="3" rx="1.5" fill="none" stroke="var(--sk-line)" stroke-dasharray="2 2"/><text x="292.0" y="111" font-size="9" fill="var(--text-primary)" text-anchor="middle" font-family="var(--font-family)" font-weight="500">0</text><text x="292.0" y="131" font-size="9" fill="var(--text-secondary)" text-anchor="middle" font-family="var(--font-family)" font-weight="400">3</text><rect x="360" y="115" width="92" height="3" rx="1.5" fill="none" stroke="var(--sk-line)" stroke-dasharray="2 2"/><text x="406.0" y="111" font-size="9" fill="var(--text-primary)" text-anchor="middle" font-family="var(--font-family)" font-weight="500">0</text><text x="406.0" y="131" font-size="9" fill="var(--text-secondary)" text-anchor="middle" font-family="var(--font-family)" font-weight="400">4+</text><text x="242.0" y="145" font-size="8" fill="var(--text-muted)" text-anchor="middle" font-family="var(--font-family)" font-weight="400">rows per week and lead source</text></svg></figure>
+  <div class="res-low"><dl class="res-nums"><div><dt>Rows</dt><dd class="">16,224</dd></div><div><dt>Grain values</dt><dd class="">16,224</dd></div><div><dt>On more than one row</dt><dd class="">0</dd></div><div><dt>Rows they cover</dt><dd class="">0</dd></div><div><dt>An empty grain field</dt><dd class="">0</dd></div></dl></div>
+  <div class="res-reading">
+  <span class="meta">Your reading</span>
+  <div class="rd-opts">
+   <button class="rd" type="button"><i class="ph ph-check"></i><b>Expected</b><small>As it should be.</small></button>
+   <button class="rd" type="button"><i class="ph ph-bookmark-simple"></i><b>Known</b><small>It becomes Known Behaviour on its Resource Card.</small></button>
+   <button class="rd" type="button"><i class="ph ph-flag"></i><b>A problem</b><small>A Signal to the Data Team.</small></button>
+  </div>
+</div>
+</section></div></div></div>
+ <div data-pane-group="run" data-pane="dup" hidden><a class="text-link back" href="eda.html"><i class="ph ph-arrow-left"></i><span>All EDA-Steps</span></a><header class="pd-head"><span class="meta">Basis · the rows · needed for 4 · Explored</span><h2>The grain holds</h2></header><div class="pd-grid ran"><div class="pd-form-slot"></div><div><section class="pd-result sub-tile" aria-label="Result">
+  <div class="res-head"><span class="tone" data-tone="attention"><i class="ph-fill ph-warning-circle"></i>Look at this</span><span class="meta">Ran today at 10:42 · read 0.3 MB · its first EDA-Profile</span></div>
+  <p class="res-sentence"><b>34 weeks and lead sources are on more than one row</b>, covering 70 of 16,260 rows. Counts and sums over them double up.</p>
+  <figure class="res-chart"><figcaption>How many rows each week and lead source is on</figcaption><svg class="res-svg" viewBox="0 0 480 150" role="img" aria-label="How many weeks and lead sources are on one row, two rows, three rows or more"><rect x="121.0" y="14" width="351.0" height="104" fill="color-mix(in srgb, var(--signal-warn) 9%, transparent)" rx="4"/><text x="127.0" y="28" font-size="8" fill="var(--signal-warn)" text-anchor="start" font-family="var(--font-family)" font-weight="500">wrong: on more than one row</text><text x="64.0" y="28" font-size="8" fill="var(--col-teal-ink)" text-anchor="middle" font-family="var(--font-family)" font-weight="500">good</text><line x1="14" y1="118.5" x2="472" y2="118.5" stroke="var(--sk-line)"/><rect x="18" y="52.0" width="92" height="66.0" rx="3" fill="var(--col-teal)"/><text x="64.0" y="47.0" font-size="9" fill="var(--text-primary)" text-anchor="middle" font-family="var(--font-family)" font-weight="500">16,190</text><text x="64.0" y="131" font-size="9" fill="var(--text-secondary)" text-anchor="middle" font-family="var(--font-family)" font-weight="400">1</text><rect x="132" y="115" width="92" height="3" rx="3" fill="var(--signal-warn)"/><text x="178.0" y="110" font-size="9" fill="var(--text-primary)" text-anchor="middle" font-family="var(--font-family)" font-weight="500">32</text><text x="178.0" y="131" font-size="9" fill="var(--text-secondary)" text-anchor="middle" font-family="var(--font-family)" font-weight="400">2</text><rect x="246" y="115" width="92" height="3" rx="3" fill="var(--signal-warn)"/><text x="292.0" y="110" font-size="9" fill="var(--text-primary)" text-anchor="middle" font-family="var(--font-family)" font-weight="500">2</text><text x="292.0" y="131" font-size="9" fill="var(--text-secondary)" text-anchor="middle" font-family="var(--font-family)" font-weight="400">3</text><rect x="360" y="115" width="92" height="3" rx="1.5" fill="none" stroke="var(--sk-line)" stroke-dasharray="2 2"/><text x="406.0" y="111" font-size="9" fill="var(--text-primary)" text-anchor="middle" font-family="var(--font-family)" font-weight="500">0</text><text x="406.0" y="131" font-size="9" fill="var(--text-secondary)" text-anchor="middle" font-family="var(--font-family)" font-weight="400">4+</text><text x="242.0" y="145" font-size="8" fill="var(--text-muted)" text-anchor="middle" font-family="var(--font-family)" font-weight="400">rows per week and lead source</text></svg></figure>
+  <div class="res-low"><dl class="res-nums"><div><dt>Rows</dt><dd class="">16,260</dd></div><div><dt>Grain values</dt><dd class="">16,224</dd></div><div><dt>On more than one row</dt><dd class="warn">34</dd></div><div><dt>Rows they cover</dt><dd class="warn">70</dd></div><div><dt>An empty grain field</dt><dd class="">0</dd></div></dl><div class="res-ex"><span class="meta">Examples, the first 5 of 34</span><table class="ex"><thead><tr><th>week_start</th><th>lead_source</th><th class="num">Rows</th></tr></thead><tbody><tr><td class="mono">2026-08-03</td><td class="mono">partner</td><td class="num">3</td></tr><tr><td class="mono">2026-08-03</td><td class="mono">website</td><td class="num">3</td></tr><tr><td class="mono">2026-05-04</td><td class="mono">app</td><td class="num">2</td></tr><tr><td class="mono">2026-05-04</td><td class="mono">partner</td><td class="num">2</td></tr><tr><td class="mono">2025-12-22</td><td class="mono">website</td><td class="num">2</td></tr></tbody></table></div></div>
+  <div class="res-reading">
+  <span class="meta">Your reading</span>
+  <div class="rd-opts">
+   <button class="rd" type="button"><i class="ph ph-check"></i><b>Expected</b><small>As it should be.</small></button>
+   <button class="rd" type="button"><i class="ph ph-bookmark-simple"></i><b>Known</b><small>It becomes Known Behaviour on its Resource Card.</small></button>
+   <button class="rd" type="button"><i class="ph ph-flag"></i><b>A problem</b><small>A Signal to the Data Team.</small></button>
+  </div>
+</div>
+</section></div></div></div>
+</div>
+<div style="height:90px" aria-hidden="true"></div>
+</main>
+<div class="contents" data-pane-group="run" data-pane="before"><aside class="flowbox eda-flow" aria-label="Flow Box: set up the EDA of Weekly lead volume" data-pane-group="guide" data-pane="open">
+ <div class="fb-inner">
+  <div class="fb-head">
+   <span class="fb-icon" aria-hidden="true"><i class="ph-fill ph-binoculars"></i></span>
+   <div class="fb-titles"><b class="fb-title">Set up its EDA</b><a class="fb-object" href="eda.html?state=new"><i class="ph ph-table" aria-hidden="true"></i>Weekly lead volume</a></div>
+   <button class="icon-btn" type="button" data-go="guide:min" aria-label="Minimize" title="Minimize"><i class="ph ph-arrows-in-simple"></i></button>
+   <button class="icon-btn" type="button" data-go="guide:closed" aria-label="Close" title="Close: Guide me on its EDA brings it back"><i class="ph ph-x"></i></button>
+  </div>
+  <div class="fb-progress"><div class="fb-bar" aria-hidden="true"><span class="now"></span><span class="coming"></span><span class="coming"></span><span class=""></span><span class=""></span><span class="coming"></span><span class="coming"></span><span class=""></span><span class="coming"></span><span class="coming"></span><span class="coming"></span></div><span class="meta">0 of 11 needed EDA-Probes complete</span></div>
+  <div class="fb-body-scroll"><ol class="fb-steps">
+   <li class="fb-group" aria-hidden="true">Basis</li><li class="fb-step now open open">
+      <button class="fb-row" type="button" aria-expanded="true"><span class="fb-num" aria-hidden="true">1</span><span class="fb-name"><b>The grain holds</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      <div class="fb-detail"><span class="fb-here"><i class="ph-fill ph-map-pin" aria-hidden="true"></i>Open on the page</span>
+       <dl class="fb-wwh"><dt>What</dt><dd>It checks that every row is one thing: one row per week_start, lead_source, as the grain of the Resource says.</dd><dt>Why</dt><dd>When a grain value is on two rows, every count and sum over it doubles up, and a join on it gives too many rows. Every other result of the EDA leans on it.</dd><dt>How</dt><dd>On its detail: it is set on the whole grain. Run reads the table once, through Query, as you.</dd></dl>
+       <a class="fb-card" href="learning-float.html"><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><span class="num">2.3.5</span><span class="tt">The grain question</span><i class="ph ph-arrow-up-right" aria-hidden="true"></i></a></div></li><li class="fb-step coming">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">2</span><span class="fb-name"><b>Row count</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-step coming">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">3</span><span class="fb-name"><b>Date range</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-step">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">4</span><span class="fb-name"><b>Volume over time, with empty periods</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-group" aria-hidden="true">Gaps</li><li class="fb-step">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">5</span><span class="fb-name"><b>Nulls per Key Field</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-step coming">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">6</span><span class="fb-name"><b>Disguised nulls</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-step coming">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">7</span><span class="fb-name"><b>Values without a match</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-group" aria-hidden="true">Weight</li><li class="fb-step">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">8</span><span class="fb-name"><b>Distribution of numbers</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-step coming">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">9</span><span class="fb-name"><b>Distribution of categories</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-step coming">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">10</span><span class="fb-name"><b>Spread</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-group" aria-hidden="true">Correctness</li><li class="fb-step coming">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">11</span><span class="fb-name"><b>Impossible values</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li>
+  </ol></div>
+  <div class="fb-foot"><span class="meta">11 to go, of which 7 are coming: they still count. Every run reads the table through Query, as you, and what it reads is in your Query Log.</span></div>
+ </div>
+</aside><aside class="flowstrip" aria-label="Flow Box, folded: set up the EDA of Weekly lead volume, 0 of 11 needed EDA-Probes complete" data-pane-group="guide" data-pane="min" hidden>
+ <button class="icon-btn" type="button" data-go="guide:open" aria-label="Maximize" title="Open the guide"><i class="ph ph-arrows-out-simple"></i></button>
+ <span class="fb-icon" aria-hidden="true"><i class="ph-fill ph-binoculars"></i></span>
+ <span class="fs-count" aria-hidden="true"><b>0</b>/11</span>
+ <ol class="fs-dots" aria-hidden="true"><li class="now"></li><li class="coming"></li><li class="coming"></li><li class=""></li><li class=""></li><li class="coming"></li><li class="coming"></li><li class=""></li><li class="coming"></li><li class="coming"></li><li class="coming"></li></ol>
+ <button class="fs-label" type="button" data-go="guide:open">Set up its EDA · Weekly lead volume</button>
+</aside></div>
+<div class="contents" data-pane-group="run" data-pane="ok dup" hidden><aside class="flowbox eda-flow" aria-label="Flow Box: set up the EDA of Weekly lead volume" data-pane-group="guide" data-pane="open">
+ <div class="fb-inner">
+  <div class="fb-head">
+   <span class="fb-icon" aria-hidden="true"><i class="ph-fill ph-binoculars"></i></span>
+   <div class="fb-titles"><b class="fb-title">Set up its EDA</b><a class="fb-object" href="eda.html?state=new"><i class="ph ph-table" aria-hidden="true"></i>Weekly lead volume</a></div>
+   <button class="icon-btn" type="button" data-go="guide:min" aria-label="Minimize" title="Minimize"><i class="ph ph-arrows-in-simple"></i></button>
+   <button class="icon-btn" type="button" data-go="guide:closed" aria-label="Close" title="Close: Guide me on its EDA brings it back"><i class="ph ph-x"></i></button>
+  </div>
+  <div class="fb-progress"><div class="fb-bar" aria-hidden="true"><span class="done"></span><span class="coming"></span><span class="coming"></span><span class="now"></span><span class=""></span><span class="coming"></span><span class="coming"></span><span class=""></span><span class="coming"></span><span class="coming"></span><span class="coming"></span></div><span class="meta">1 of 11 needed EDA-Probes complete</span></div>
+  <div class="fb-body-scroll"><ol class="fb-steps">
+   <li class="fb-group" aria-hidden="true">Basis</li><li class="fb-step done">
+      <button class="fb-row" type="button" aria-expanded="false"><i class="ph-fill ph-check-circle fb-tick" aria-hidden="true"></i><span class="fb-name"><b>The grain holds</b><span class="fb-said"><span class="fb-reading" data-tone="expected">As expected</span><span>One row per week and lead source; none twice in 16,224 rows</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-step coming">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">2</span><span class="fb-name"><b>Row count</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-step coming">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">3</span><span class="fb-name"><b>Date range</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-step now open open">
+      <button class="fb-row" type="button" aria-expanded="true"><span class="fb-num" aria-hidden="true">4</span><span class="fb-name"><b>Volume over time, with empty periods</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      <div class="fb-detail">
+       <dl class="fb-wwh"><dt>What</dt><dd>It counts what comes in per week, from the first to this one, and finds the weeks without any row.</dd><dt>Why</dt><dd>A period without rows is almost always a break: tracking that stopped, a load that failed. It looks like a quiet period.</dd><dt>How</dt><dd>On its detail: set on week_start, its period; other dates can be added. Run.</dd></dl>
+       <a class="btn-primary fb-go" href="eda-probe.html" style="text-decoration:none">Open the EDA-Probe<i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></li><li class="fb-group" aria-hidden="true">Gaps</li><li class="fb-step">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">5</span><span class="fb-name"><b>Nulls per Key Field</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-step coming">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">6</span><span class="fb-name"><b>Disguised nulls</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-step coming">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">7</span><span class="fb-name"><b>Values without a match</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-group" aria-hidden="true">Weight</li><li class="fb-step">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">8</span><span class="fb-name"><b>Distribution of numbers</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-step coming">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">9</span><span class="fb-name"><b>Distribution of categories</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-step coming">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">10</span><span class="fb-name"><b>Spread</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-group" aria-hidden="true">Correctness</li><li class="fb-step coming">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num coming" aria-hidden="true">11</span><span class="fb-name"><b>Impossible values</b><span class="fb-said"><i class="ph ph-hourglass-medium fb-soon" aria-hidden="true"></i><span>Coming: Data Hub does not run it yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li>
+  </ol></div>
+  <div class="fb-foot"><span class="meta">10 to go, of which 7 are coming: they still count. Every run reads the table through Query, as you, and what it reads is in your Query Log.</span></div>
+ </div>
+</aside><aside class="flowstrip" aria-label="Flow Box, folded: set up the EDA of Weekly lead volume, 1 of 11 needed EDA-Probes complete" data-pane-group="guide" data-pane="min" hidden>
+ <button class="icon-btn" type="button" data-go="guide:open" aria-label="Maximize" title="Open the guide"><i class="ph ph-arrows-out-simple"></i></button>
+ <span class="fb-icon" aria-hidden="true"><i class="ph-fill ph-binoculars"></i></span>
+ <span class="fs-count" aria-hidden="true"><b>1</b>/11</span>
+ <ol class="fs-dots" aria-hidden="true"><li class="done"></li><li class="coming"></li><li class="coming"></li><li class="now"></li><li class=""></li><li class="coming"></li><li class="coming"></li><li class=""></li><li class="coming"></li><li class="coming"></li><li class="coming"></li></ol>
+ <button class="fs-label" type="button" data-go="guide:open">Set up its EDA · Weekly lead volume</button>
+</aside></div>
+</div>
+<div class="proto-switch" data-group="guide" role="tablist" aria-label="Prototype: the guide in the Flow Box" style="right:auto;left:96px;bottom:26px">Guide
+ <button class="seg on" data-target="open" role="tab" aria-selected="true">Open</button>
+ <button class="seg" data-target="min" role="tab" aria-selected="false">Minimized</button>
+ <button class="seg" data-target="closed" role="tab" aria-selected="false">Closed</button>
+</div>
+<template id="pd-form-tpl"><section class="pd-left sub-tile" id="pd-left">
+  <button class="pd-fold" type="button" aria-expanded="true" title="Fold away what it does"><i class="ph ph-caret-double-left"></i></button>
+  <div class="pd-left-body">
+   <figure class="pd-ill"><svg class="pd-ill-svg" viewBox="0 0 250 190" role="img" aria-label="Rows coloured by their week and lead source: two rows share one, so the grain does not hold"><defs><pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="var(--signal-warn)" stroke-width="1.2" opacity=".5"/></pattern></defs><g><rect x="22" y="28" width="208" height="132" fill="var(--sk-paper)" stroke="var(--sk-line)"/>
+<line x1="74" y1="28" x2="74" y2="160" stroke="var(--sk-line)"/>
+<line x1="126" y1="28" x2="126" y2="160" stroke="var(--sk-line)"/>
+<line x1="178" y1="28" x2="178" y2="160" stroke="var(--sk-line)"/>
+<line x1="22" y1="52" x2="230" y2="52" stroke="var(--sk-head)" stroke-width="1.2"/>
+<line x1="22" y1="70" x2="230" y2="70" stroke="var(--sk-line)" stroke-width=".6"/>
+<line x1="22" y1="88" x2="230" y2="88" stroke="var(--sk-line)" stroke-width=".6"/>
+<line x1="22" y1="106" x2="230" y2="106" stroke="var(--sk-line)" stroke-width=".6"/>
+<line x1="22" y1="124" x2="230" y2="124" stroke="var(--sk-line)" stroke-width=".6"/>
+<line x1="22" y1="142" x2="230" y2="142" stroke="var(--sk-line)" stroke-width=".6"/>
+<svg x="41.5" y="33.5" width="13" height="13" viewBox="0 0 256 256" fill="var(--text-primary)"><path d="M72,128a134.63,134.63,0,0,1-14.16,60.47,8,8,0,1,1-14.32-7.12A118.8,118.8,0,0,0,56,128,71.73,71.73,0,0,1,83,71.8,8,8,0,1,1,93,84.29,55.76,55.76,0,0,0,72,128Zm56-8a8,8,0,0,0-8,8,184.12,184.12,0,0,1-23,89.1,8,8,0,0,0,14,7.76A200.19,200.19,0,0,0,136,128,8,8,0,0,0,128,120Zm0-32a40,40,0,0,0-40,40,8,8,0,0,0,16,0,24,24,0,0,1,48,0,214.09,214.09,0,0,1-20.51,92A8,8,0,1,0,146,226.83,230,230,0,0,0,168,128,40,40,0,0,0,128,88Zm0-64A104.11,104.11,0,0,0,24,128a87.76,87.76,0,0,1-5,29.33,8,8,0,0,0,15.09,5.33A103.9,103.9,0,0,0,40,128a88,88,0,0,1,176,0,282.24,282.24,0,0,1-5.29,54.45,8,8,0,0,0,6.3,9.4,8.22,8.22,0,0,0,1.55.15,8,8,0,0,0,7.84-6.45A298.37,298.37,0,0,0,232,128,104.12,104.12,0,0,0,128,24ZM94.4,152.17A8,8,0,0,0,85,158.42a151,151,0,0,1-17.21,45.44,8,8,0,0,0,13.86,8,166.67,166.67,0,0,0,19-50.25A8,8,0,0,0,94.4,152.17ZM128,56a72.85,72.85,0,0,0-9,.56,8,8,0,0,0,2,15.87A56.08,56.08,0,0,1,184,128a252.12,252.12,0,0,1-1.92,31A8,8,0,0,0,189,168a8.39,8.39,0,0,0,1,.06,8,8,0,0,0,7.92-7,266.48,266.48,0,0,0,2-33A72.08,72.08,0,0,0,128,56Zm57.93,128.25a8,8,0,0,0-9.75,5.75c-1.46,5.69-3.15,11.4-5,17a8,8,0,0,0,5,10.13,7.88,7.88,0,0,0,2.55.42,8,8,0,0,0,7.58-5.46c2-5.92,3.79-12,5.35-18.05A8,8,0,0,0,185.94,184.26Z"/></svg>
+<svg x="93.5" y="33.5" width="13" height="13" viewBox="0 0 256 256" fill="var(--text-muted)"><path d="M72,128a134.63,134.63,0,0,1-14.16,60.47,8,8,0,1,1-14.32-7.12A118.8,118.8,0,0,0,56,128,71.73,71.73,0,0,1,83,71.8,8,8,0,1,1,93,84.29,55.76,55.76,0,0,0,72,128Zm56-8a8,8,0,0,0-8,8,184.12,184.12,0,0,1-23,89.1,8,8,0,0,0,14,7.76A200.19,200.19,0,0,0,136,128,8,8,0,0,0,128,120Zm0-32a40,40,0,0,0-40,40,8,8,0,0,0,16,0,24,24,0,0,1,48,0,214.09,214.09,0,0,1-20.51,92A8,8,0,1,0,146,226.83,230,230,0,0,0,168,128,40,40,0,0,0,128,88Zm0-64A104.11,104.11,0,0,0,24,128a87.76,87.76,0,0,1-5,29.33,8,8,0,0,0,15.09,5.33A103.9,103.9,0,0,0,40,128a88,88,0,0,1,176,0,282.24,282.24,0,0,1-5.29,54.45,8,8,0,0,0,6.3,9.4,8.22,8.22,0,0,0,1.55.15,8,8,0,0,0,7.84-6.45A298.37,298.37,0,0,0,232,128,104.12,104.12,0,0,0,128,24ZM94.4,152.17A8,8,0,0,0,85,158.42a151,151,0,0,1-17.21,45.44,8,8,0,0,0,13.86,8,166.67,166.67,0,0,0,19-50.25A8,8,0,0,0,94.4,152.17ZM128,56a72.85,72.85,0,0,0-9,.56,8,8,0,0,0,2,15.87A56.08,56.08,0,0,1,184,128a252.12,252.12,0,0,1-1.92,31A8,8,0,0,0,189,168a8.39,8.39,0,0,0,1,.06,8,8,0,0,0,7.92-7,266.48,266.48,0,0,0,2-33A72.08,72.08,0,0,0,128,56Zm57.93,128.25a8,8,0,0,0-9.75,5.75c-1.46,5.69-3.15,11.4-5,17a8,8,0,0,0,5,10.13,7.88,7.88,0,0,0,2.55.42,8,8,0,0,0,7.58-5.46c2-5.92,3.79-12,5.35-18.05A8,8,0,0,0,185.94,184.26Z"/></svg>
+<svg x="145.5" y="33.5" width="13" height="13" viewBox="0 0 256 256" fill="var(--text-muted)"><path d="M224,88H175.4l8.47-46.57a8,8,0,0,0-15.74-2.86l-9,49.43H111.4l8.47-46.57a8,8,0,0,0-15.74-2.86L95.14,88H48a8,8,0,0,0,0,16H92.23L83.5,152H32a8,8,0,0,0,0,16H80.6l-8.47,46.57a8,8,0,0,0,6.44,9.3A7.79,7.79,0,0,0,80,224a8,8,0,0,0,7.86-6.57l9-49.43H144.6l-8.47,46.57a8,8,0,0,0,6.44,9.3A7.79,7.79,0,0,0,144,224a8,8,0,0,0,7.86-6.57l9-49.43H208a8,8,0,0,0,0-16H163.77l8.73-48H224a8,8,0,0,0,0-16Zm-76.5,64H99.77l8.73-48h47.73Z"/></svg>
+<svg x="197.5" y="33.5" width="13" height="13" viewBox="0 0 256 256" fill="var(--text-muted)"><path d="M243.31,136,144,36.69A15.86,15.86,0,0,0,132.69,32H40a8,8,0,0,0-8,8v92.69A15.86,15.86,0,0,0,36.69,144L136,243.31a16,16,0,0,0,22.63,0l84.68-84.68a16,16,0,0,0,0-22.63Zm-96,96L48,132.69V48h84.69L232,147.31ZM96,84A12,12,0,1,1,84,72,12,12,0,0,1,96,84Z"/></svg>
+<text x="48.0" y="24" font-size="7" fill="var(--text-primary)" text-anchor="middle" font-family="var(--font-mono)" font-weight="500">week_start</text>
+<text x="100.0" y="24" font-size="7" fill="var(--text-muted)" text-anchor="middle" font-family="var(--font-mono)" font-weight="400">lead_source</text>
+</g><g data-t="250" data-a="fade"><rect x="26" y="58.0" width="96" height="6" rx="3" fill="var(--col-magenta)"/><rect x="139.0" y="58.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="191.0" y="58.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/></g><g data-t="470" data-a="fade"><rect x="26" y="76.0" width="96" height="6" rx="3" fill="var(--col-teal)"/><rect x="139.0" y="76.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="191.0" y="76.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/></g><g data-t="690" data-a="fade"><rect x="26" y="94.0" width="96" height="6" rx="3" fill="var(--col-slate)"/><rect x="139.0" y="94.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="191.0" y="94.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/></g><g data-t="910" data-a="fade"><rect x="26" y="112.0" width="96" height="6" rx="3" fill="var(--col-teal)"/><rect x="139.0" y="112.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="191.0" y="112.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/></g><g data-t="1130" data-a="fade"><rect x="26" y="130.0" width="96" height="6" rx="3" fill="var(--col-olive)"/><rect x="139.0" y="130.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="191.0" y="130.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/></g><g data-t="1350" data-a="fade"><rect x="26" y="148.0" width="96" height="6" rx="3" fill="var(--col-bordeaux)"/><rect x="139.0" y="148.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="191.0" y="148.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/></g><g data-t="1900" data-a="fade"><rect x="25" y="72" width="46" height="14" rx="4" fill="none" stroke="var(--signal-warn)" stroke-width="1.3"/><rect x="77" y="72" width="46" height="14" rx="4" fill="none" stroke="var(--signal-warn)" stroke-width="1.3"/><rect x="25" y="108" width="46" height="14" rx="4" fill="none" stroke="var(--signal-warn)" stroke-width="1.3"/><rect x="77" y="108" width="46" height="14" rx="4" fill="none" stroke="var(--signal-warn)" stroke-width="1.3"/><path d="M18 79.0 h-5 v36.0 h5" fill="none" stroke="var(--signal-warn)" stroke-width="1.3"/></g><g data-t="2500" data-a="fade"><g><rect x="4.039999999999992" y="166" width="139.92000000000002" height="15" rx="7.5" fill="color-mix(in srgb, var(--signal-warn) 14%, var(--sk-paper))"/><text x="74.0" y="176.5" font-size="8" fill="var(--signal-warn)" text-anchor="middle" font-family="var(--font-family)" font-weight="600">two rows, one week and source</text></g></g></svg><button class="replay" type="button"><i class="ph ph-arrow-counter-clockwise"></i>Replay</button></figure>
+   <h4>What it does</h4>
+   <p>It checks that every row is one thing: one row per week and lead source, as the grain of Weekly lead volume says. It counts how many rows share a week and lead source.</p>
+   <h4>Why it matters</h4>
+   <p>When a week and lead source are on two rows, every count and sum over them doubles up, and a join on them gives too many rows. Every other result of the EDA leans on it.</p>
+   <div class="pd-params">
+    <h4>Parameters</h4>
+    <dl>
+     <div><dt>Set on</dt><dd><span class="fchip"><i class="ph ph-fingerprint"></i>week_start</span><span class="fchip"><i class="ph ph-fingerprint"></i>lead_source</span><small>Its grain, as the Data Team recorded it. It changes in the Resource, by Edit relations.</small></dd></div>
+     <div><dt>Its own</dt><dd>None: any week and lead source on more than one row counts.</dd></div>
+     <div><dt>Reads</dt><dd>week_start and lead_source, over its whole history: about 0.3 MB, so it runs at once.</dd></div>
+    </dl>
+   </div>
+   <div class="pd-run"><button class="btn-primary pd-runbtn" type="button" data-go="run:ok"><i class="ph-fill ph-play"></i><span class="lbl-first">Run</span><span class="lbl-again">Run again</span></button><span class="meta lbl-first">Adds it to the EDA and runs it now.</span><span class="meta lbl-again">Last run today at 10:42.</span></div>
+  </div>
+  <button class="pd-unfold" type="button" title="Show what it does"><i class="ph ph-caret-double-right"></i><span>What it does</span></button>
+</section></template>
+<div class="proto-switch" data-group="run" role="tablist" aria-label="Prototype: before or after its first run">Run
+ <button class="seg on" data-target="before" role="tab" aria-selected="true">Before</button>
+ <button class="seg" data-target="ok" role="tab" aria-selected="false">The grain holds</button>
+ <button class="seg" data-target="dup" role="tab" aria-selected="false">Values twice</button>
+</div>
+<script src="app.js"></script>
+<script>
+document.querySelectorAll('[data-go="guide:open"]').forEach(b => b.addEventListener('click', () => setTimeout(() =>
+  document.querySelectorAll('.eda-flow .fb-step.now').forEach(s => s.offsetParent && s.scrollIntoView({ block: 'center' })), 40)));
+</script>
+<script>
+{
+  // One form per state, folded once it has run; the drawing comes in once, again on Replay
+  const tpl = document.getElementById('pd-form-tpl');
+  document.querySelectorAll('.pd-form-slot').forEach(slot => slot.replaceWith(tpl.content.cloneNode(true)));
+  const grids = [...document.querySelectorAll('.pd-grid')];
+  grids.forEach(grid => {
+    const fold = on => { grid.classList.toggle('folded', on); grid.querySelector('.pd-fold').setAttribute('aria-expanded', String(!on)); };
+    grid.querySelector('.pd-fold').addEventListener('click', () => fold(true));
+    grid.querySelector('.pd-unfold').addEventListener('click', () => { fold(false); play(grid); });
+  });
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function play(root) {
+    if (still) return;
+    root.querySelectorAll('[data-a]').forEach(el => {
+      el.getAnimations().forEach(a => a.cancel());
+      el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 380, delay: Number(el.dataset.t), fill: 'backwards', easing: 'ease-out' });
+    });
+  }
+  document.querySelectorAll('.replay').forEach(b => b.addEventListener('click', () => play(b.closest('.pd-left'))));
+  grids.forEach(g => play(g));
+}
+</script>
+</body>
+</html>

@@ -8,6 +8,7 @@ import { type BigQuery, BigQueryRefused, BigQueryUnavailable, type Finished, typ
 import { missingIn, missingOf } from './broken.js';
 import { type Catalogue, CatalogueUnavailable, type QueryRequest, type QueryResource } from './catalogue.js';
 import type { NamedResource, QueryKind } from './database.js';
+import { edaRoutes } from './eda-api.js';
 import { lensRoutes } from './lens-api.js';
 import { outsideTable } from './outside.js';
 import type { Lenses } from './lenses.js';
@@ -262,6 +263,11 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     }
     if (query?.kind === 'lens') {
       void reply.code(403).send({ error: 'forbidden', message: 'A Lens runs on its own page.' });
+      return undefined;
+    }
+    // The runs of the EDA-Probes of a Resource are kept by query, but run only from its EDA (TR-ED-04).
+    if (query?.kind === 'eda') {
+      void reply.code(403).send({ error: 'forbidden', message: 'An EDA-Probe runs from the EDA of its Resource.' });
       return undefined;
     }
     return query;
@@ -959,6 +965,9 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       return unavailable(error, reply, request);
     }
   });
+
+  // The EDA-Probes of a Resource, which eda has query run as the User (TR-ED-04).
+  await edaRoutes(app, { queries, bigquery, viewer, resourceOf, check, ownCase, unavailable, label });
 
   // Lenses: made from a query, run on their own page (DEC-PF-30).
   await lensRoutes(app, { lenses, queries, catalogue, thresholds, bigquery, checkers, upkeep, viewer, authorization, readable, resourcesOf, check, ownCase, unavailable, execute, excel });

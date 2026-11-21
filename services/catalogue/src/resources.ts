@@ -14,7 +14,7 @@ import {
 import { type Kysely, type Selectable, sql, type Transaction } from 'kysely';
 import type { Viewer } from './collections.js';
 import type { CatalogueDatabase, MappingKind, MappingOrigin, Origin, Origins, PartitionFilter, PartitionUnit, SchemaChange } from './database.js';
-import { type Column, fingerprint, type LeftOut, levelAtRegistration, retyped, splitColumns } from './fields.js';
+import { type Column, CONFIRMED, EXPLORED, fingerprint, type LeftOut, levelAtRegistration, retyped, splitColumns, withEda } from './fields.js';
 import { logText, type ResourceLogId } from './log.js';
 import { seesAll, seesPublic, theirs } from './viewer.js';
 
@@ -198,6 +198,8 @@ export interface Field extends Column {
 
 /** A Resource with its fields, and the columns of its table left out of it (FR-SR-06, DEC-SR-33). */
 export interface ResourceDetail extends Resource {
+  /** The EDA-Setup of its EDA is complete, as eda said (TR-ED-05): from 3 · Confirmed it is 4 · Explored (DEC-MR-21). */
+  explored: boolean;
   fields: Field[];
   leftOut: LeftOut[];
   /** Empty until it is added to a Collection with them. */
@@ -222,6 +224,9 @@ export type PublishOutcome = 'published' | 'not_found' | 'no_collection' | 'not_
 
 /** What recording an answer in a step of the Owner Journey came to (DEC-MR-16). */
 export type JourneyRecordOutcome = { outcome: 'recorded'; journey: Journey } | { outcome: 'not_found' } | { outcome: 'invalid'; message: string };
+
+/** What eda saying whether a Resource is explored came to (TR-ED-05): whether it is now, and its Level now. */
+export type ExploreOutcome = { outcome: 'done'; explored: boolean; level: number } | { outcome: 'not_found' };
 
 /** What deprecating a Resource, or taking it away, came to (FR-SR-50). */
 export type DeprecateOutcome = 'done' | 'not_found' | 'not_published' | 'not_deprecated' | 'invalid';
@@ -380,6 +385,12 @@ export interface Resources {
   deprecate(id: string, reason: string, insteadOf: string | null, viewer: Viewer): Promise<DeprecateOutcome>;
   /** Takes the mark away again. */
   undeprecate(id: string, viewer: Viewer): Promise<DeprecateOutcome>;
+  /**
+   * Keeps whether a Resource is explored, as eda says (TR-ED-05): explored, 3 · Confirmed becomes 4 · Explored with
+   * `RES-002` in its Log (FR-ED-12); no longer explored, its EDA gone, 4 · Explored drops to 3 · Confirmed with `MAT-021`
+   * and the Message of a Level that drops (FR-MR-07, MSG-RES-05). Said again, it changes nothing (FR-MR-22).
+   */
+  explore(id: string, explored: boolean): Promise<ExploreOutcome>;
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -508,8 +519,6 @@ const gapWords = (text: string) => (text.length > 200 ? `${text.slice(0, 199)}�
 
 /** A Business Description is written from 2 · Described on (DEC-MR-10). */
 const DESCRIBED = 2;
-/** Publishing confirms it: 3 · Confirmed (FR-SR-17). */
-const CONFIRMED = 3;
 
 export function createResources(db: Kysely<CatalogueDatabase>): Resources {
   async function write(trx: Database, resourceId: string, logId: ResourceLogId, params: Record<string, string>, actorId: string | null = null) {
@@ -565,10 +574,11 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
       }
     }
 
-    // Its Level follows dbt: Described with the table and a field described, Confirmed again once it was (DEC-MR-08).
+    // Its Level follows dbt: Described with the table and a field described, Confirmed again once it was (DEC-MR-08),
+    // and Explored again while its EDA-Setup is complete: a new Current Version lowers nothing else (DEC-MR-21, FR-MR-22).
     const confirmation = await trx.selectFrom('resourceConfirmations').select('confirmedAt').where('resourceId', '=', row.id).orderBy('id', 'desc').limit(1).executeTakeFirst();
     const { level: described, reason } = levelAtRegistration(table.description, [...fields]);
-    const level = described === 2 && confirmation ? 3 : described;
+    const level = withEda(described === 2 && confirmation ? CONFIRMED : described, row.explored);
 
     if (confirmation && changes.length > 0) {
       await trx.insertInto('resourceChanges').values(changes.map((change) => ({ resourceId: row.id, ...change, runId: run }))).execute();
@@ -1063,6 +1073,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         .execute();
       return {
         ...present(row),
+        explored: row.explored,
         fields,
         leftOut,
         details,
@@ -1581,9 +1592,12 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
           .insertInto('resourceConfirmations')
           .values({ resourceId: id, ownerId: viewer.id, ownerName: viewer.name, ...print, fields: JSON.stringify(fields.map(({ name, dataType }) => ({ name, dataType }))), declaration })
           .execute();
-        await trx.updateTable('resources').set({ publishedAt: new Date(), publishedBy: viewer.name, level: CONFIRMED, updatedAt: new Date() }).where('id', '=', id).execute();
+        // Explored already, it is 4 · Explored at once; a Resource is explored from 3 · Confirmed on, so hardly ever (DEC-MR-21).
+        const level = withEda(CONFIRMED, row.explored);
+        await trx.updateTable('resources').set({ publishedAt: new Date(), publishedBy: viewer.name, level, updatedAt: new Date() }).where('id', '=', id).execute();
         await write(trx, id, 'PUB-040', { owner: viewer.name, level: String(CONFIRMED) }, viewer.id);
         await write(trx, id, 'MAT-020', { owner: viewer.name, fingerprint: print.structure.slice(0, 12) }, viewer.id);
+        if (level !== CONFIRMED) await write(trx, id, 'RES-002', { level: String(level), reason: 'eda' });
         return 'published';
       });
     },
@@ -1646,6 +1660,35 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         await trx.updateTable('resources').set({ deprecatedAt: null, deprecatedBy: null, deprecationReason: null, insteadOf: null, updatedAt: new Date() }).where('id', '=', id).execute();
         await write(trx, id, 'RES-008', { actor: viewer.name }, viewer.id);
         return 'done';
+      });
+    },
+
+    async explore(id, explored) {
+      if (!UUID.test(id)) {
+        return { outcome: 'not_found' };
+      }
+      return db.transaction().execute(async (trx): Promise<ExploreOutcome> => {
+        const row = await trx.selectFrom('resources').select(['level', 'explored', 'collectionId', 'publishedAt']).where('id', '=', id).forUpdate().executeTakeFirst();
+        if (!row) {
+          return { outcome: 'not_found' };
+        }
+        // Explored, 3 · Confirmed is 4 · Explored; below it, it waits there until it is Confirmed again (DEC-MR-21). Its
+        // EDA gone, 4 · Explored is 3 · Confirmed again (FR-MR-07). An EDA-Rerun says explored again and changes nothing.
+        const level = explored ? withEda(row.level, true) : row.level === EXPLORED ? CONFIRMED : row.level;
+        if (row.explored === explored && level === row.level) {
+          return { outcome: 'done', explored, level };
+        }
+        await trx.updateTable('resources').set({ explored, level, updatedAt: new Date() }).where('id', '=', id).execute();
+        if (level > row.level) {
+          await write(trx, id, 'RES-002', { level: String(level), reason: 'eda' });
+        } else if (level < row.level) {
+          // A drop gives the Owner an alert (FR-MR-09), with the EDA as its cause; it stays published (FR-SR-19).
+          await write(trx, id, 'MAT-021', { level: String(level), reason: 'eda' });
+          if (row.collectionId) {
+            await tell(trx, id, 'MSG-RES-05', { from: String(row.level), to: String(level), cause: 'eda', published: row.publishedAt ? 'yes' : 'no' });
+          }
+        }
+        return { outcome: 'done', explored, level };
       });
     },
   };

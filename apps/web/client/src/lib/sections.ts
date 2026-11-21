@@ -1,13 +1,13 @@
 import type { IconName } from '@datahub/ui/foundations/icons.js';
 import { t } from '@datahub/ui/foundations/texts.svelte.js';
-import { adminOptions, mayQuery, type Permissions } from './permissions.js';
+import { adminOptions, can, mayQuery, type Permissions } from './permissions.js';
 
 /** A section is called by a name, never translated (Collections, Query, Learning Centre), or by a sentence of the translation files. */
 type Label = { readonly name: string } | { readonly text: string };
 
 /**
- * The main sections in the rail, in its order (DEC-UX-89): Collections, Query, Charts, Messages and
- * the Learning Centre, each with its start screen and its panel (DEC-UX-03). Lenses and Reports live
+ * The main sections in the rail, in its order (DEC-UX-89): Collections, Query, Charts, EDA after Charts with the
+ * binoculars (DEC-ED-15, FR-ED-03), Messages and the Learning Centre, each with its start screen and its panel (DEC-UX-03). Lenses and Reports live
  * in their Collections (DEC-UX-66). The Learning Centre stands on top, as the prototypes show it
  * (OP-UX-37). Admin, the section of the Data Team, comes last, a little apart (DEC-UX-130). Which of them a User
  * sees follows from their Permissions, never from a role (FR-PL-14).
@@ -16,6 +16,7 @@ export const SECTIONS = [
   { id: 'collections', path: '/collections', icon: 'stack-fill', label: { name: 'Collections' } },
   { id: 'query', path: '/query', icon: 'terminal-window-fill', label: { name: 'Query' } },
   { id: 'charts', path: '/charts', icon: 'chart-bar-fill', label: { text: 'section.charts' } },
+  { id: 'eda', path: '/eda', icon: 'binoculars-fill', label: { name: 'EDA' } },
   { id: 'messages', path: '/messages', icon: 'chat-circle-text-fill', label: { text: 'section.messages' } },
   { id: 'learning', path: '/learning', icon: 'graduation-cap-fill', label: { name: 'Learning Centre' } },
   { id: 'admin', path: '/admin', icon: 'toolbox-fill', label: { name: 'Admin' } },
@@ -26,10 +27,12 @@ export type SectionId = Section['id'];
 
 /**
  * Whether the User sees a section in the rail (FR-PL-14): Query to a User who may make queries or Preview a
- * Resource, Admin to a User with `admin.open` and at least one of its tools, the others to everyone.
+ * Resource, EDA to a User who may explore Resources (`eda.use`, FR-ED-01), Admin to a User with `admin.open` and at
+ * least one of its tools, the others to everyone.
  */
 export function sectionFor(section: Section, permissions: Permissions): boolean {
   if (section.id === 'query') return mayQuery(permissions);
+  if (section.id === 'eda') return can(permissions, 'eda.use');
   if (section.id === 'admin') return toolsFor(permissions).length > 0;
   return true;
 }

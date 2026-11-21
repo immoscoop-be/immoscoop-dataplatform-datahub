@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<!--
+  Screen: the EDA of a Resource, in the section EDA, designed with Max on 2026-11-21. A Data Admin (eda.use) starts it from the maturity
+  ladder of the Resource (resource-overview.html?ov=maturity&lvl=three), which creates the EDA and opens it here, In
+  progress until its EDA-Setup is complete, then Explored. The page guides the EDA-Setup: its picture is the progress of
+  the setup and the quality of the EDA.
+  Tabs, as on a Resource: Overview, filled in later; Steps, this page; Profile, greyed until the EDA-Setup is complete,
+  with the runs in it later. Profile says what will come.
+  Steps: on the left, 70%, a row per EDA-Step with the EDA-Probes set up, each a card, and one empty tile, the same size,
+  dotted and grey, "Add probe" with what an EDA-Probe is, while the EDA-Step has EDA-Probes left to add. It opens the
+  list to add an EDA-Probe (DEC-UX-328): a sheet with a search, at the EDA-Step of its tile, every EDA-Step below it;
+  each EDA-Probe its question, Needed, Suggested or On request, and Added with its reading, Open, or Coming; a click
+  opens its detail. On the right, 30%, the Resource
+  and the state of its EDA-Setup: how many needed EDA-Probes are complete, what the EDA covers in its four places, the
+  best next step; the EDA-Probes on the table as a whole; and per field what it is covered by, per EDA-Step, Key Fields
+  marked with a key and their needs dashed, in the order of the Resource Card. The cards follow the detail of their
+  EDA-Probe, still to design.
+  The guide (DEC-UX-327): the Flow Box with the flow "Set up its EDA", one step per needed EDA-Probe in the order of
+  the EDA-Steps, those Data Hub does not run yet as Coming. On the tab Steps it is folded to its strip, as the page shows
+  the same; on the detail of an EDA-Probe and everywhere else in Data Hub it is open (eda-probe.html). Close takes it
+  away; Guide me, beside the title, brings it back.
+  Switches: ?state=new (the default), just started, no EDA-Probe yet; ?state=progress, four needed EDA-Probes complete;
+  ?tab=steps (the default), overview or profile; ?guide=min (the default), open or closed; ?list=open, Add probe on Gaps.
+  Requirements: FR-ED-01, FR-ED-02, FR-ED-03, FR-ED-04, FR-ED-05, FR-ED-12, FR-ED-13, FR-ED-14, FR-MR-22
+  Decisions: DEC-ED-05, DEC-ED-07, DEC-ED-12, DEC-ED-15, DEC-ED-16, DEC-ED-17, DEC-ED-19, DEC-ED-20, DEC-UX-266, DEC-UX-268,
+  DEC-UX-320, DEC-UX-321, DEC-UX-322, DEC-UX-323, DEC-UX-327, DEC-UX-328, DEC-ED-27.
+  Open points: OP-UX-91.
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="owner">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — EDA · Weekly lead volume</title>
+<style>
+  :root {
+    --sk-line: color-mix(in srgb, var(--text-muted) 45%, transparent);
+    --sk-head: color-mix(in srgb, var(--text-secondary) 70%, transparent);
+    --sk-ink: color-mix(in srgb, var(--text-muted) 38%, transparent);
+    --sk-paper: var(--surface-solid);
+  }
+
+  .eda-facts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .tone[data-tone="warmup-chip"] { color: var(--text-secondary); background: none; outline: 1.5px dashed var(--text-muted); outline-offset: -1.5px; }
+  .tab.soon { color: color-mix(in srgb, var(--text-muted) 70%, transparent); }
+  .eda-layout { display: grid; grid-template-columns: minmax(0, 7fr) minmax(300px, 3fr); gap: 22px; align-items: start; }
+  .step + .step { margin-top: 24px; }
+  .step-head { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; align-items: baseline; margin-bottom: 10px; }
+  .step-head h3 { font-size: 16px; font-weight: 500; margin: 0; }
+  .step-head p { grid-column: 1 / -1; margin: 0; font-size: var(--text-small); color: var(--text-secondary); }
+  .step-need { display: inline-flex; gap: 5px; align-items: center; font-size: var(--text-meta); }
+  .step-done { color: var(--col-teal-ink); } .step-part { color: var(--signal-warn); } .step-none { color: var(--text-muted); }
+  .pc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); grid-auto-rows: 1fr; gap: 12px; }
+  .pc { display: flex; flex-direction: column; padding: 12px 14px 10px; min-height: 300px; }
+  .pc-head { display: flex; gap: 8px; align-items: flex-start; }
+  .pc-head h4 { flex: 1; font-size: 14px; font-weight: 500; margin: 0; line-height: 1.3; }
+  .pc-draw { width: 100%; height: auto; display: block; margin: 4px 0 2px; }
+  .pc-result { font-size: var(--text-small); line-height: 1.5; margin: 2px 0 8px; }
+  .pc-result b { font-weight: 500; } .pc-result .warn { color: var(--signal-warn); }
+  .pc-foot { display: flex; align-items: center; gap: 8px; margin-top: auto; padding-top: 8px; border-top: 1px solid var(--tint-active); font-size: var(--text-meta); color: var(--text-muted); }
+  .pc-foot span:first-child { flex: 1; min-width: 0; }
+  .pc-need { display: inline-flex; gap: 4px; align-items: center; color: var(--text-secondary); margin-right: 6px; }
+  .add-tile { all: unset; box-sizing: border-box; cursor: pointer; min-height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 18px 22px; text-align: center; border-radius: var(--radius-md); border: 1.5px dashed color-mix(in srgb, var(--text-muted) 55%, transparent); background: color-mix(in srgb, var(--text-muted) 8%, transparent); color: var(--text-secondary); }
+  .add-tile i { font-size: 28px; color: var(--text-muted); }
+  .add-tile b { font-size: 15px; font-weight: 500; color: var(--text-primary); }
+  .add-tile span { font-size: var(--text-small); line-height: 1.5; max-width: 30ch; }
+  .add-tile small { font-size: var(--text-meta); color: var(--text-muted); }
+  .add-tile:hover { background: color-mix(in srgb, var(--text-muted) 14%, transparent); }
+  .add-tile:focus-visible { outline: 2px solid var(--text-secondary); }
+  .side { display: flex; flex-direction: column; gap: 10px; position: sticky; top: 0; }
+  .side h3 { font-size: 14px; font-weight: 500; margin: 0; }
+  .side-top { display: flex; align-items: center; gap: 8px; } .side-top h3 { flex: 1; }
+  .side-meta { display: block; margin: 6px 0 0; line-height: 1.5; }
+  .big { margin: 10px 0 8px; font-size: var(--text-small); color: var(--text-secondary); } .big b { font-size: 22px; font-weight: 500; color: var(--text-primary); margin-right: 4px; }
+  .prog { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 3px; }
+  .prog span { height: 8px; border-radius: 3px; background: color-mix(in srgb, var(--text-muted) 22%, transparent); }
+  .prog span.on { background: var(--col-teal); }
+  .cov { list-style: none; margin: 12px 0 0; padding: 0; }
+  .cov li { display: grid; grid-template-columns: 20px 1fr auto; gap: 8px; align-items: center; padding: 6px 0; border-top: 1px solid var(--tint-active); font-size: var(--text-small); }
+  .cov li i { color: var(--text-muted); font-size: 15px; }
+  .cov b { font-weight: 500; font-size: var(--text-meta); }
+  .cov-part b { color: var(--signal-warn); } .cov-none b { color: var(--signal-warn); } .cov-muted b { color: var(--text-muted); font-weight: 400; } .cov-done b { color: var(--col-teal-ink); }
+  .next { margin-top: 12px; padding: 12px; border-radius: var(--radius-md); background: var(--surface-solid); font-size: var(--text-small); }
+  .next .meta { display: block; margin-bottom: 2px; } .next b { font-weight: 500; } .next p { margin: 4px 0 10px; color: var(--text-secondary); line-height: 1.5; }
+  .next .btn-primary { display: inline-flex; gap: 6px; align-items: center; }
+  .tw { list-style: none; margin: 8px 0 0; padding: 0; }
+  .tw li { display: grid; grid-template-columns: 18px 1fr auto; gap: 8px; align-items: center; padding: 5px 0; font-size: var(--text-small); }
+  .tw small { font-size: var(--text-meta); color: var(--text-muted); }
+  .tw-done i { color: var(--col-teal-ink); } .tw-need i, .tw-need small { color: var(--signal-warn); } .tw-sugg i, .tw-req i { color: var(--text-muted); }
+  .tw-req span { color: var(--text-muted); }
+  .fhead { display: grid; grid-template-columns: repeat(4, 14px); gap: 4px; font-size: 10px; color: var(--text-muted); text-align: center; }
+  .fl { list-style: none; margin: 10px 0 0; padding: 0; }
+  .fr { display: grid; grid-template-columns: 14px 16px 1fr auto; gap: 6px; align-items: center; padding: 6px 0; border-top: 1px solid var(--tint-active); }
+  .fkey { font-size: 12px; color: var(--text-primary); }
+  .fkind { font-size: 14px; color: var(--text-muted); }
+  .fname { min-width: 0; font-size: 12.5px; color: var(--text-muted); }
+  .fname small { display: flex; gap: 4px; align-items: center; font-family: var(--font-family); font-size: 10.5px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fr.key .fname > .mono { color: var(--text-primary); font-weight: 500; }
+  .fr:not(.key) .fkind { opacity: .6; }
+  .fcells { display: grid; grid-template-columns: repeat(4, 14px); gap: 4px; }
+  .fc { display: inline-block; width: 14px; height: 14px; border-radius: 4px; }
+  .fc-done { background: var(--col-teal); }
+  .fc-need { border: 1.5px dashed var(--signal-warn); box-sizing: border-box; }
+  .fc-free { background: color-mix(in srgb, var(--text-muted) 16%, transparent); }
+  .fc-na { background: none; border: 1px solid color-mix(in srgb, var(--text-muted) 25%, transparent); box-sizing: border-box; background-image: linear-gradient(135deg, transparent 45%, color-mix(in srgb, var(--text-muted) 45%, transparent) 45%, color-mix(in srgb, var(--text-muted) 45%, transparent) 55%, transparent 55%); }
+  .flegend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; font-size: 10.5px; color: var(--text-muted); }
+  .flegend > span { display: inline-flex; gap: 5px; align-items: center; } .flegend .fc { width: 11px; height: 11px; }
+  .soon-pane { padding: 40px 20px; text-align: center; color: var(--text-secondary); }
+  .soon-pane i { font-size: 34px; color: var(--text-muted); }
+  .soon-pane h3 { font-size: 17px; font-weight: 500; margin: 10px 0 6px; color: var(--text-primary); }
+  .soon-pane p { max-width: 560px; margin: 0 auto; line-height: 1.55; font-size: var(--text-small); }
+  @media (max-width: 1180px) { .eda-layout { grid-template-columns: 1fr; } .side { position: static; } }
+  .contents:not([hidden]) { display: contents; }
+
+  /* The guide of an EDA in the Flow Box (DEC-UX-327): one step per needed EDA-Probe, grouped by EDA-Step */
+  .eda-flow .fb-group { margin: 6px 4px -2px; font-size: var(--text-meta); font-weight: var(--weight-medium); color: var(--text-muted); list-style: none; }
+  .eda-flow .fb-group:first-child { margin-top: 0; }
+  .fb-bar span.coming { background: repeating-linear-gradient(135deg, var(--tint-active) 0 3px, transparent 3px 5px); }
+  .fs-dots li.coming { outline-style: dashed; }
+  .fb-num.coming { outline-style: dashed; color: var(--text-muted); }
+  .fb-step.coming .fb-name b { color: var(--text-secondary); font-weight: var(--weight-regular); }
+  .fb-said .fb-soon { color: var(--text-muted); }
+  .fb-reading { flex: none; font-size: 10.5px; font-weight: var(--weight-medium); }
+  .fb-reading[data-tone="expected"] { color: var(--col-teal-ink); } .fb-reading[data-tone="look"] { color: var(--signal-warn); } .fb-reading[data-tone="judge"] { color: var(--col-slate); }
+  /* The list to add an EDA-Probe (DEC-UX-328) */
+  .pl-sheet { width: max(520px, var(--sheet-width)); }
+  .pl-why { margin: 10px 0; font-size: var(--text-small); line-height: 1.55; color: var(--text-secondary); }
+  .pl-chips { margin: 10px 0 0; }
+  .pl-group { padding: 10px 6px 6px; border-radius: var(--radius-md); }
+  .pl-group + .pl-group { margin-top: 6px; }
+  .pl-group.at { background: color-mix(in srgb, var(--surface-sub) 70%, transparent); }
+  .pl-head { display: flex; align-items: baseline; gap: 10px; padding: 0 6px; }
+  .pl-head b { font-size: var(--text-body); font-weight: var(--weight-medium); }
+  .pl-count { font-size: var(--text-meta); color: var(--signal-warn); }
+  .pl-from { margin-left: auto; font-size: var(--text-meta); color: var(--text-muted); }
+  .pl-gq { margin: 2px 6px 6px; font-size: var(--text-meta); color: var(--text-muted); }
+  .pl-row { display: grid; grid-template-columns: 20px 1fr auto; gap: 10px; align-items: start; padding: 9px 8px; border-radius: var(--radius-md); color: inherit; text-decoration: none; }
+  a.pl-row:hover { background: var(--tint-hover); }
+  .pl-ic { font-size: 18px; color: var(--text-secondary); margin-top: 1px; } .pl-ic.done { color: var(--col-teal-ink); } .pl-ic.part { color: var(--signal-warn); }
+  .pl-text { display: grid; gap: 2px; min-width: 0; }
+  .pl-text b { font-size: var(--text-small); font-weight: var(--weight-medium); }
+  .pl-q { font-size: var(--text-meta); line-height: 1.45; color: var(--text-secondary); }
+  .pl-meta { font-size: 10.5px; }
+  .pl-level.pl-must { color: var(--signal-warn); } .pl-level.pl-should, .pl-level.pl-could { color: var(--text-muted); }
+  .pl-row.added .pl-level { color: var(--text-muted); }
+  .pl-row.coming b, .pl-row.coming .pl-q { color: var(--text-muted); } .pl-row.coming .pl-ic { color: var(--text-muted); opacity: .7; }
+  .pl-state { display: grid; justify-items: end; gap: 2px; padding-top: 1px; white-space: nowrap; }
+  .pl-state small { font-size: 10.5px; color: var(--text-muted); }
+  .pl-open { display: inline-flex; align-items: center; gap: 4px; font-size: var(--text-meta); color: var(--text-primary); }
+  .pl-coming { display: inline-flex; align-items: center; gap: 4px; }
+
+</style>
+</head>
+<body>
+<div class="app">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <a class="nav-btn" href="collections-start.html" data-label="Collections" aria-label="Collections"><i class="ph-fill ph-stack"></i></a>
+  <a class="nav-btn" href="query.html" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></a>
+  <a class="nav-btn" href="charts.html" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
+  <a class="nav-btn active" href="eda.html" data-label="EDA" aria-label="EDA" aria-current="page"><i class="ph-fill ph-binoculars"></i><span class="flare top"></span><span class="flare bottom"></span></a>
+  <a class="nav-btn" href="monitoring-start.html" data-label="Monitoring" aria-label="Monitoring"><i class="ph-fill ph-pulse"></i></a>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">MP</a>
+</nav>
+<aside class="panel" aria-label="EDA">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:4px">
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0"><a href="eda.html" style="color:inherit;text-decoration:none">EDA</a></h1>
+   <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
+  </div>
+  <label class="search" style="margin-top:12px"><i class="ph ph-magnifying-glass"></i><input type="search" placeholder="Search Resources" aria-label="Search Resources"></label>
+  <div class="panel-label">Credits</div>
+  <a class="mc-filter on" aria-current="page" href="eda.html"><span class="tone-dot" data-tone="warmup" aria-label="In progress"></span><span>Weekly lead volume</span></a>
+  <a class="mc-filter" href="eda.html"><span class="tone-dot" data-tone="healthy" aria-label="Explored"></span><span>Credit leads</span></a>
+  <a class="mc-filter" href="eda.html"><span class="tone-dot" data-tone="healthy" aria-label="Explored"></span><span>Lead sources</span></a>
+  <div class="panel-label">Listings</div>
+  <a class="mc-filter" href="eda.html"><span class="tone-dot" data-tone="healthy" aria-label="Explored"></span><span>Asking prices</span></a>
+  <div class="panel-label">Ready for an EDA</div>
+  <a class="mc-filter" href="eda.html" style="color:var(--text-muted)"><i class="ph ph-plus-circle"></i><span>Listing states</span></a>
+  <a class="mc-filter" href="eda.html" style="color:var(--text-muted)"><i class="ph ph-plus-circle"></i><span>Views</span></a>
+  <a class="mc-filter" href="eda.html" style="color:var(--text-muted)"><i class="ph ph-plus-circle"></i><span>CTAs</span></a>
+ </div>
+</aside>
+<main class="main">
+<div class="breadcrumb"><a href="eda.html" style="color:inherit">EDA</a> · Credits</div>
+<div style="display:flex;align-items:flex-end;gap:12px;margin-top:8px;flex-wrap:wrap">
+ <div style="flex:1;min-width:280px"><h1 class="page-title">Weekly lead volume</h1>
+ <p class="meta" style="display:block;margin-top:4px;line-height:1.5">Its EDA, started on 21 November by An Claes, its Owner. An aggregate: one row per week and lead source.</p></div>
+ <button class="btn-quiet outline" type="button" data-go="guide:open" data-pane-group="guide" data-pane="closed" hidden style="display:inline-flex;gap:6px;align-items:center"><i class="ph-fill ph-signpost"></i>Guide me</button>
+ <a class="btn-quiet outline" href="resource-overview.html?ov=maturity&amp;lvl=eda" style="display:inline-flex;gap:6px;align-items:center;text-decoration:none"><i class="ph ph-arrow-square-out"></i>Open the Resource</a>
+</div>
+<div class="eda-facts">
+ <span class="tone" data-tone="warmup-chip"><i class="ph ph-hourglass-medium"></i>In progress</span>
+ <span class="status"><span class="maturity" data-level="3" data-no-tooltip></span>3 · Confirmed</span>
+ <span class="status" data-pane-group="state" data-pane="new"><i class="ph ph-play-circle"></i>No run yet</span>
+ <span class="status" data-pane-group="state" data-pane="progress" hidden><i class="ph-fill ph-check-circle"></i>Each EDA-Probe ran when it was added</span>
+</div>
+<div class="tabs" data-group="tab" role="tablist">
+ <button class="tab" data-target="overview" role="tab" aria-selected="false">Overview</button>
+ <button class="tab on" data-target="steps" role="tab" aria-selected="true">Steps</button>
+ <button class="tab soon" data-target="profile" role="tab" aria-selected="false" title="Opens once the EDA-Setup is complete">Profile</button>
+</div>
+<div class="tab-content card">
+ <div data-pane-group="tab" data-pane="steps">
+  <div data-pane-group="state" data-pane="new"><div class="eda-layout">
+  <div class="eda-steps">
+<section class="step">
+ <header class="step-head"><h3>Basis</h3><span class="step-need step-part"><i class="ph ph-circle-half"></i>0 of 4 needed</span><p>The rows: is every row one thing, how many are there, and how do they come in over time?</p></header>
+ <div class="pc-grid">
+
+<button class="add-tile" type="button" data-go="list:open" title="Opens the list of EDA-Probes, at Basis">
+  <i class="ph ph-plus-circle"></i>
+  <b>Add probe</b>
+  <span>An EDA-Probe asks the data one question, such as whether there is one row per week and lead source, and shows its answer on a small table.</span>
+  <small>4 needed still in Basis</small>
+</button>
+ </div>
+</section>
+<section class="step">
+ <header class="step-head"><h3>Gaps</h3><span class="step-need step-part"><i class="ph ph-circle-half"></i>0 of 3 needed</span><p>One column: how much is missing in the fields that matter?</p></header>
+ <div class="pc-grid">
+
+<button class="add-tile" type="button" data-go="list:open" title="Opens the list of EDA-Probes, at Gaps">
+  <i class="ph ph-plus-circle"></i>
+  <b>Add probe</b>
+  <span>An EDA-Probe asks the data one question, such as whether there is one row per week and lead source, and shows its answer on a small table.</span>
+  <small>3 needed still in Gaps</small>
+</button>
+ </div>
+</section>
+<section class="step">
+ <header class="step-head"><h3>Weight</h3><span class="step-need step-part"><i class="ph ph-circle-half"></i>0 of 3 needed</span><p>One column: how do the values spread, and where does the weight lie?</p></header>
+ <div class="pc-grid">
+
+<button class="add-tile" type="button" data-go="list:open" title="Opens the list of EDA-Probes, at Weight">
+  <i class="ph ph-plus-circle"></i>
+  <b>Add probe</b>
+  <span>An EDA-Probe asks the data one question, such as whether there is one row per week and lead source, and shows its answer on a small table.</span>
+  <small>3 needed still in Weight</small>
+</button>
+ </div>
+</section>
+<section class="step">
+ <header class="step-head"><h3>Correctness</h3><span class="step-need step-part"><i class="ph ph-circle-half"></i>0 of 1 needed</span><p>One column, and what it points to: are the values right?</p></header>
+ <div class="pc-grid">
+
+<button class="add-tile" type="button" data-go="list:open" title="Opens the list of EDA-Probes, at Correctness">
+  <i class="ph ph-plus-circle"></i>
+  <b>Add probe</b>
+  <span>An EDA-Probe asks the data one question, such as whether there is one row per week and lead source, and shows its answer on a small table.</span>
+  <small>1 needed still in Correctness</small>
+</button>
+ </div>
+</section>
+<section class="step">
+ <header class="step-head"><h3>Relations between fields</h3><span class="step-need step-none"><i class="ph ph-circle"></i>None needed</span><p>Two columns together: do fields agree with each other?</p></header>
+ <div class="pc-grid">
+
+<button class="add-tile" type="button" data-go="list:open" title="Opens the list of EDA-Probes, at Relations between fields">
+  <i class="ph ph-plus-circle"></i>
+  <b>Add probe</b>
+  <span>An EDA-Probe asks the data one question, such as whether there is one row per week and lead source, and shows its answer on a small table.</span>
+  <small>More to add in Relations between fields</small>
+</button>
+ </div>
+</section>
+  </div>
+  <aside class="side">
+ <section class="sub-tile side-state">
+  <div class="side-top"><h3>EDA-Setup</h3><span class="tone" data-tone="warmup-chip"><i class="ph ph-hourglass-medium"></i>In progress</span></div>
+  <p class="big"><b>0 of 11</b> needed EDA-Probes complete</p>
+  <div class="prog" role="img" aria-label="0 of 11 needed EDA-Probes complete"><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span></div>
+  <p class="meta side-meta">Add them all and Weekly lead volume is 4 · Explored. Its EDA has no EDA-Probe yet.</p>
+  <ul class="cov"><li class="cov-none"><i class="ph ph-rows"></i><span>The rows</span><b>0 of 4 needed</b></li><li class="cov-none"><i class="ph ph-columns"></i><span>The Key Fields</span><b>0 of 4 complete</b></li><li class="cov-muted"><i class="ph ph-arrows-left-right"></i><span>Two columns together</span><b>None needed</b></li><li class="cov-none"><i class="ph ph-link"></i><span>Other Resources</span><b>0 of 1 needed</b></li></ul>
+  <div class="next"><span class="meta">Best next step</span><b>The grain holds</b><p>Start with what one row is: is there one row per week and lead source? Every other result leans on it.</p><button class="btn-primary" type="button" title="The probe detail is designed next"><i class="ph ph-plus"></i> Add this EDA-Probe</button></div>
+ </section>
+ <section class="sub-tile">
+  <h3>The table as a whole</h3>
+  <ul class="tw"><li class="tw-need"><i class="ph ph-circle-dashed"></i><span>The grain holds</span><small>Needed</small></li><li class="tw-need"><i class="ph ph-circle-dashed"></i><span>Row count</span><small>Needed</small></li><li class="tw-need"><i class="ph ph-circle-dashed"></i><span>Date range</span><small>Needed</small></li><li class="tw-need"><i class="ph ph-circle-dashed"></i><span>Volume over time, with empty periods</span><small>Needed</small></li><li class="tw-req"><i class="ph ph-circle"></i><span>Settling between EDA-Reruns</span><small>On request</small></li><li class="tw-sugg"><i class="ph ph-circle"></i><span>The aggregate adds up to its source</span><small>Suggested</small></li></ul>
+ </section>
+ <section class="sub-tile">
+  <div class="side-top"><h3>Per field</h3><span class="fhead"><span title="Gaps">G</span><span title="Weight">W</span><span title="Correctness">C</span><span title="Relations">R</span></span></div>
+  <p class="meta side-meta">In the order of its Resource Card. A key marks a Key Field: what it needs, the EDA-Setup waits for.</p>
+  <ul class="fl"><li class="fr key"><i class="ph-fill ph-key fkey" title="Key Field"></i><i class="ph ph-fingerprint fkind" title="DATE"></i><span class="fname"><span class="mono">week_start</span><small>its period</small></span><span class="fcells"><span class="fc fc-need" title="Gaps: needed, not set yet"></span><span class="fc fc-na" title="Weight: not offered for a date"></span><span class="fc fc-need" title="Correctness: needed, not set yet"></span><span class="fc fc-free" title="Relations: not needed"></span></span></li><li class="fr key"><i class="ph-fill ph-key fkey" title="Key Field"></i><i class="ph ph-fingerprint fkind" title="STRING"></i><span class="fname"><span class="mono">lead_source</span><small>grouped by · <i class="ph ph-link"></i> Lead sources</small></span><span class="fcells"><span class="fc fc-need" title="Gaps: needed, not set yet"></span><span class="fc fc-need" title="Weight: needed, not set yet"></span><span class="fc fc-need" title="Correctness: needed, not set yet"></span><span class="fc fc-free" title="Relations: not needed"></span></span></li><li class="fr key"><i class="ph-fill ph-key fkey" title="Key Field"></i><i class="ph ph-hash fkind" title="INT64"></i><span class="fname"><span class="mono">lead_count</span><small>adds up</small></span><span class="fcells"><span class="fc fc-need" title="Gaps: needed, not set yet"></span><span class="fc fc-need" title="Weight: needed, not set yet"></span><span class="fc fc-need" title="Correctness: needed, not set yet"></span><span class="fc fc-free" title="Relations: not needed"></span></span></li><li class="fr key"><i class="ph-fill ph-key fkey" title="Key Field"></i><i class="ph ph-tag fkind" title="STRING"></i><span class="fname"><span class="mono">lead_channel</span><small>added yesterday</small></span><span class="fcells"><span class="fc fc-need" title="Gaps: needed, not set yet"></span><span class="fc fc-need" title="Weight: needed, not set yet"></span><span class="fc fc-need" title="Correctness: needed, not set yet"></span><span class="fc fc-free" title="Relations: not needed"></span></span></li><li class="fr"><span class="fkey"></span><i class="ph ph-tag fkind" title="STRING"></i><span class="fname"><span class="mono">lead_origin</span></span><span class="fcells"><span class="fc fc-free" title="Gaps: not needed"></span><span class="fc fc-free" title="Weight: not needed"></span><span class="fc fc-free" title="Correctness: not needed"></span><span class="fc fc-free" title="Relations: not needed"></span></span></li><li class="fr"><span class="fkey"></span><i class="ph ph-hash fkind" title="INT64"></i><span class="fname"><span class="mono">unique_applicants</span><small>unique count</small></span><span class="fcells"><span class="fc fc-free" title="Gaps: not needed"></span><span class="fc fc-free" title="Weight: not needed"></span><span class="fc fc-free" title="Correctness: not needed"></span><span class="fc fc-free" title="Relations: not needed"></span></span></li><li class="fr"><span class="fkey"></span><i class="ph ph-calendar-blank fkind" title="TIMESTAMP"></i><span class="fname"><span class="mono">loaded_at</span></span><span class="fcells"><span class="fc fc-free" title="Gaps: not needed"></span><span class="fc fc-free" title="Weight: not needed"></span><span class="fc fc-free" title="Correctness: not needed"></span><span class="fc fc-free" title="Relations: not needed"></span></span></li></ul>
+  <div class="flegend"><span><span class="fc fc-done"></span>Covered</span><span><span class="fc fc-need"></span>Needed</span><span><span class="fc fc-free"></span>Not needed</span><span><span class="fc fc-na"></span>Not offered</span></div>
+ </section>
+</aside>
+ </div></div>
+  <div data-pane-group="state" data-pane="progress" hidden><div class="eda-layout">
+  <div class="eda-steps">
+<section class="step">
+ <header class="step-head"><h3>Basis</h3><span class="step-need step-part"><i class="ph ph-circle-half"></i>3 of 4 needed</span><p>The rows: is every row one thing, how many are there, and how do they come in over time?</p></header>
+ <div class="pc-grid">
+<article class="pc sub-tile">
+  <header class="pc-head"><h4>The grain holds</h4><span class="tone" data-tone="healthy"><i class="ph-fill ph-check-circle"></i>As expected</span></header>
+  <svg class="pc-draw" viewBox="0 0 260 186" role="img" aria-label="The grain holds"><defs><pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="var(--signal-warn)" stroke-width="1.2" opacity=".5"/></pattern></defs><g><rect x="18" y="26" width="224" height="132" fill="var(--sk-paper)" stroke="var(--sk-line)"/>
+<line x1="74" y1="26" x2="74" y2="158" stroke="var(--sk-line)"/>
+<line x1="130" y1="26" x2="130" y2="158" stroke="var(--sk-line)"/>
+<line x1="186" y1="26" x2="186" y2="158" stroke="var(--sk-line)"/>
+<line x1="18" y1="50" x2="242" y2="50" stroke="var(--sk-head)" stroke-width="1.2"/>
+<line x1="18" y1="68" x2="242" y2="68" stroke="var(--sk-line)" stroke-width=".6"/>
+<line x1="18" y1="86" x2="242" y2="86" stroke="var(--sk-line)" stroke-width=".6"/>
+<line x1="18" y1="104" x2="242" y2="104" stroke="var(--sk-line)" stroke-width=".6"/>
+<line x1="18" y1="122" x2="242" y2="122" stroke="var(--sk-line)" stroke-width=".6"/>
+<line x1="18" y1="140" x2="242" y2="140" stroke="var(--sk-line)" stroke-width=".6"/>
+<svg x="39.5" y="31.5" width="13" height="13" viewBox="0 0 256 256" fill="var(--text-primary)"><path d="M72,128a134.63,134.63,0,0,1-14.16,60.47,8,8,0,1,1-14.32-7.12A118.8,118.8,0,0,0,56,128,71.73,71.73,0,0,1,83,71.8,8,8,0,1,1,93,84.29,55.76,55.76,0,0,0,72,128Zm56-8a8,8,0,0,0-8,8,184.12,184.12,0,0,1-23,89.1,8,8,0,0,0,14,7.76A200.19,200.19,0,0,0,136,128,8,8,0,0,0,128,120Zm0-32a40,40,0,0,0-40,40,8,8,0,0,0,16,0,24,24,0,0,1,48,0,214.09,214.09,0,0,1-20.51,92A8,8,0,1,0,146,226.83,230,230,0,0,0,168,128,40,40,0,0,0,128,88Zm0-64A104.11,104.11,0,0,0,24,128a87.76,87.76,0,0,1-5,29.33,8,8,0,0,0,15.09,5.33A103.9,103.9,0,0,0,40,128a88,88,0,0,1,176,0,282.24,282.24,0,0,1-5.29,54.45,8,8,0,0,0,6.3,9.4,8.22,8.22,0,0,0,1.55.15,8,8,0,0,0,7.84-6.45A298.37,298.37,0,0,0,232,128,104.12,104.12,0,0,0,128,24ZM94.4,152.17A8,8,0,0,0,85,158.42a151,151,0,0,1-17.21,45.44,8,8,0,0,0,13.86,8,166.67,166.67,0,0,0,19-50.25A8,8,0,0,0,94.4,152.17ZM128,56a72.85,72.85,0,0,0-9,.56,8,8,0,0,0,2,15.87A56.08,56.08,0,0,1,184,128a252.12,252.12,0,0,1-1.92,31A8,8,0,0,0,189,168a8.39,8.39,0,0,0,1,.06,8,8,0,0,0,7.92-7,266.48,266.48,0,0,0,2-33A72.08,72.08,0,0,0,128,56Zm57.93,128.25a8,8,0,0,0-9.75,5.75c-1.46,5.69-3.15,11.4-5,17a8,8,0,0,0,5,10.13,7.88,7.88,0,0,0,2.55.42,8,8,0,0,0,7.58-5.46c2-5.92,3.79-12,5.35-18.05A8,8,0,0,0,185.94,184.26Z"/></svg>
+<svg x="95.5" y="31.5" width="13" height="13" viewBox="0 0 256 256" fill="var(--text-muted)"><path d="M72,128a134.63,134.63,0,0,1-14.16,60.47,8,8,0,1,1-14.32-7.12A118.8,118.8,0,0,0,56,128,71.73,71.73,0,0,1,83,71.8,8,8,0,1,1,93,84.29,55.76,55.76,0,0,0,72,128Zm56-8a8,8,0,0,0-8,8,184.12,184.12,0,0,1-23,89.1,8,8,0,0,0,14,7.76A200.19,200.19,0,0,0,136,128,8,8,0,0,0,128,120Zm0-32a40,40,0,0,0-40,40,8,8,0,0,0,16,0,24,24,0,0,1,48,0,214.09,214.09,0,0,1-20.51,92A8,8,0,1,0,146,226.83,230,230,0,0,0,168,128,40,40,0,0,0,128,88Zm0-64A104.11,104.11,0,0,0,24,128a87.76,87.76,0,0,1-5,29.33,8,8,0,0,0,15.09,5.33A103.9,103.9,0,0,0,40,128a88,88,0,0,1,176,0,282.24,282.24,0,0,1-5.29,54.45,8,8,0,0,0,6.3,9.4,8.22,8.22,0,0,0,1.55.15,8,8,0,0,0,7.84-6.45A298.37,298.37,0,0,0,232,128,104.12,104.12,0,0,0,128,24ZM94.4,152.17A8,8,0,0,0,85,158.42a151,151,0,0,1-17.21,45.44,8,8,0,0,0,13.86,8,166.67,166.67,0,0,0,19-50.25A8,8,0,0,0,94.4,152.17ZM128,56a72.85,72.85,0,0,0-9,.56,8,8,0,0,0,2,15.87A56.08,56.08,0,0,1,184,128a252.12,252.12,0,0,1-1.92,31A8,8,0,0,0,189,168a8.39,8.39,0,0,0,1,.06,8,8,0,0,0,7.92-7,266.48,266.48,0,0,0,2-33A72.08,72.08,0,0,0,128,56Zm57.93,128.25a8,8,0,0,0-9.75,5.75c-1.46,5.69-3.15,11.4-5,17a8,8,0,0,0,5,10.13,7.88,7.88,0,0,0,2.55.42,8,8,0,0,0,7.58-5.46c2-5.92,3.79-12,5.35-18.05A8,8,0,0,0,185.94,184.26Z"/></svg>
+<svg x="151.5" y="31.5" width="13" height="13" viewBox="0 0 256 256" fill="var(--text-muted)"><path d="M224,88H175.4l8.47-46.57a8,8,0,0,0-15.74-2.86l-9,49.43H111.4l8.47-46.57a8,8,0,0,0-15.74-2.86L95.14,88H48a8,8,0,0,0,0,16H92.23L83.5,152H32a8,8,0,0,0,0,16H80.6l-8.47,46.57a8,8,0,0,0,6.44,9.3A7.79,7.79,0,0,0,80,224a8,8,0,0,0,7.86-6.57l9-49.43H144.6l-8.47,46.57a8,8,0,0,0,6.44,9.3A7.79,7.79,0,0,0,144,224a8,8,0,0,0,7.86-6.57l9-49.43H208a8,8,0,0,0,0-16H163.77l8.73-48H224a8,8,0,0,0,0-16Zm-76.5,64H99.77l8.73-48h47.73Z"/></svg>
+<svg x="207.5" y="31.5" width="13" height="13" viewBox="0 0 256 256" fill="var(--text-muted)"><path d="M243.31,136,144,36.69A15.86,15.86,0,0,0,132.69,32H40a8,8,0,0,0-8,8v92.69A15.86,15.86,0,0,0,36.69,144L136,243.31a16,16,0,0,0,22.63,0l84.68-84.68a16,16,0,0,0,0-22.63Zm-96,96L48,132.69V48h84.69L232,147.31ZM96,84A12,12,0,1,1,84,72,12,12,0,0,1,96,84Z"/></svg>
+<text x="46.0" y="22" font-size="7" fill="var(--text-primary)" text-anchor="middle" font-family="var(--font-mono)" font-weight="500">week_start</text>
+<text x="102.0" y="22" font-size="7" fill="var(--text-muted)" text-anchor="middle" font-family="var(--font-mono)" font-weight="400">lead_source</text>
+</g><rect x="22" y="56.0" width="104" height="6" rx="3" fill="var(--col-magenta)"/><rect x="145.0" y="56.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="201.0" y="56.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="22" y="74.0" width="104" height="6" rx="3" fill="var(--col-teal)"/><rect x="145.0" y="74.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="201.0" y="74.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="22" y="92.0" width="104" height="6" rx="3" fill="var(--col-slate)"/><rect x="145.0" y="92.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="201.0" y="92.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="22" y="110.0" width="104" height="6" rx="3" fill="var(--col-olive)"/><rect x="145.0" y="110.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="201.0" y="110.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="22" y="128.0" width="104" height="6" rx="3" fill="var(--col-ochre)"/><rect x="145.0" y="128.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="201.0" y="128.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="22" y="146.0" width="104" height="6" rx="3" fill="var(--col-bordeaux)"/><rect x="145.0" y="146.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="201.0" y="146.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><g><rect x="38.06" y="162.5" width="71.88" height="15.5" rx="7.75" fill="color-mix(in srgb, var(--col-teal-ink) 14%, var(--sk-paper))"/><text x="74.0" y="173.5" font-size="8.5" fill="var(--col-teal-ink)" text-anchor="middle" font-family="var(--font-family)" font-weight="600">no pair twice</text></g></svg>
+  <p class="pc-result"><b>One row per week and lead source</b>: no pair twice in 16,224 rows.</p>
+  <footer class="pc-foot"><span><span class="pc-need" title="Needed for 4 · Explored"><i class="ph-fill ph-seal-check"></i>Needed</span>Set on week_start, lead_source, its grain</span><span>21 Nov</span></footer>
+</article>
+<article class="pc sub-tile">
+  <header class="pc-head"><h4>Row count</h4><span class="tone" data-tone="healthy"><i class="ph-fill ph-check-circle"></i>As expected</span></header>
+  <svg class="pc-draw" viewBox="0 0 260 186" role="img" aria-label="Row count"><defs><pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="var(--signal-warn)" stroke-width="1.2" opacity=".5"/></pattern></defs><g><rect x="18" y="26" width="224" height="132" fill="var(--sk-paper)" stroke="var(--sk-line)"/>
+<line x1="74" y1="26" x2="74" y2="158" stroke="var(--sk-line)"/>
+<line x1="130" y1="26" x2="130" y2="158" stroke="var(--sk-line)"/>
+<line x1="186" y1="26" x2="186" y2="158" stroke="var(--sk-line)"/>
+<line x1="18" y1="50" x2="242" y2="50" stroke="var(--sk-head)" stroke-width="1.2"/>
+<line x1="18" y1="68" x2="242" y2="68" stroke="var(--sk-line)" stroke-width=".6"/>
+<line x1="18" y1="86" x2="242" y2="86" stroke="var(--sk-line)" stroke-width=".6"/>
+<line x1="18" y1="104" x2="242" y2="104" stroke="var(--sk-line)" stroke-width=".6"/>
+<line x1="18" y1="122" x2="242" y2="122" stroke="var(--sk-line)" stroke-width=".6"/>
+<line x1="18" y1="140" x2="242" y2="140" stroke="var(--sk-line)" stroke-width=".6"/>
+<svg x="39.5" y="31.5" width="13" height="13" viewBox="0 0 256 256" fill="var(--text-muted)"><path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Z"/></svg>
+<svg x="95.5" y="31.5" width="13" height="13" viewBox="0 0 256 256" fill="var(--text-muted)"><path d="M243.31,136,144,36.69A15.86,15.86,0,0,0,132.69,32H40a8,8,0,0,0-8,8v92.69A15.86,15.86,0,0,0,36.69,144L136,243.31a16,16,0,0,0,22.63,0l84.68-84.68a16,16,0,0,0,0-22.63Zm-96,96L48,132.69V48h84.69L232,147.31ZM96,84A12,12,0,1,1,84,72,12,12,0,0,1,96,84Z"/></svg>
+<svg x="151.5" y="31.5" width="13" height="13" viewBox="0 0 256 256" fill="var(--text-muted)"><path d="M224,88H175.4l8.47-46.57a8,8,0,0,0-15.74-2.86l-9,49.43H111.4l8.47-46.57a8,8,0,0,0-15.74-2.86L95.14,88H48a8,8,0,0,0,0,16H92.23L83.5,152H32a8,8,0,0,0,0,16H80.6l-8.47,46.57a8,8,0,0,0,6.44,9.3A7.79,7.79,0,0,0,80,224a8,8,0,0,0,7.86-6.57l9-49.43H144.6l-8.47,46.57a8,8,0,0,0,6.44,9.3A7.79,7.79,0,0,0,144,224a8,8,0,0,0,7.86-6.57l9-49.43H208a8,8,0,0,0,0-16H163.77l8.73-48H224a8,8,0,0,0,0-16Zm-76.5,64H99.77l8.73-48h47.73Z"/></svg>
+<svg x="207.5" y="31.5" width="13" height="13" viewBox="0 0 256 256" fill="var(--text-muted)"><path d="M243.31,136,144,36.69A15.86,15.86,0,0,0,132.69,32H40a8,8,0,0,0-8,8v92.69A15.86,15.86,0,0,0,36.69,144L136,243.31a16,16,0,0,0,22.63,0l84.68-84.68a16,16,0,0,0,0-22.63Zm-96,96L48,132.69V48h84.69L232,147.31ZM96,84A12,12,0,1,1,84,72,12,12,0,0,1,96,84Z"/></svg>
+</g><rect x="33.0" y="56.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="89.0" y="56.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="145.0" y="56.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="201.0" y="56.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="33.0" y="74.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="89.0" y="74.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="145.0" y="74.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="201.0" y="74.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="33.0" y="92.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="89.0" y="92.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="145.0" y="92.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="201.0" y="92.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="33.0" y="110.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="89.0" y="110.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="145.0" y="110.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="201.0" y="110.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="33.0" y="128.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="89.0" y="128.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="145.0" y="128.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="201.0" y="128.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="33.0" y="146.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="89.0" y="146.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="145.0" y="146.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="201.0" y="146.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><path d="M11 52 v104" stroke="var(--col-teal-ink)" stroke-width="1.4"/><g><rect x="98.82" y="162.5" width="62.36000000000001" height="15.5" rx="7.75" fill="color-mix(in srgb, var(--col-teal-ink) 14%, var(--sk-paper))"/><text x="130.0" y="173.5" font-size="8.5" fill="var(--col-teal-ink)" text-anchor="middle" font-family="var(--font-family)" font-weight="600">16,224 rows</text></g></svg>
+  <p class="pc-result"><b>16,224 rows</b>, 312 weeks of 52 lead sources.</p>
+  <footer class="pc-foot"><span><span class="pc-need" title="Needed for 4 · Explored"><i class="ph-fill ph-seal-check"></i>Needed</span>Set on the table</span><span>21 Nov</span></footer>
+</article>
+<article class="pc sub-tile">
+  <header class="pc-head"><h4>Date range</h4><span class="tone" data-tone="healthy"><i class="ph-fill ph-check-circle"></i>As expected</span></header>
+  <svg class="pc-draw" viewBox="0 0 260 186" role="img" aria-label="Date range"><defs><pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="var(--signal-warn)" stroke-width="1.2" opacity=".5"/></pattern></defs><g><rect x="18" y="26" width="224" height="132" fill="var(--sk-paper)" stroke="var(--sk-line)"/>
+<line x1="74" y1="26" x2="74" y2="158" stroke="var(--sk-line)"/>
+<line x1="130" y1="26" x2="130" y2="158" stroke="var(--sk-line)"/>
+<line x1="186" y1="26" x2="186" y2="158" stroke="var(--sk-line)"/>
+<line x1="18" y1="50" x2="242" y2="50" stroke="var(--sk-head)" stroke-width="1.2"/>
+<line x1="18" y1="68" x2="242" y2="68" stroke="var(--sk-line)" stroke-width=".6"/>
+<line x1="18" y1="86" x2="242" y2="86" stroke="var(--sk-line)" stroke-width=".6"/>
+<line x1="18" y1="104" x2="242" y2="104" stroke="var(--sk-line)" stroke-width=".6"/>
+<line x1="18" y1="122" x2="242" y2="122" stroke="var(--sk-line)" stroke-width=".6"/>
+<line x1="18" y1="140" x2="242" y2="140" stroke="var(--sk-line)" stroke-width=".6"/>
+<svg x="39.5" y="31.5" width="13" height="13" viewBox="0 0 256 256" fill="var(--text-primary)"><path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Z"/></svg>
+<svg x="95.5" y="31.5" width="13" height="13" viewBox="0 0 256 256" fill="var(--text-muted)"><path d="M243.31,136,144,36.69A15.86,15.86,0,0,0,132.69,32H40a8,8,0,0,0-8,8v92.69A15.86,15.86,0,0,0,36.69,144L136,243.31a16,16,0,0,0,22.63,0l84.68-84.68a16,16,0,0,0,0-22.63Zm-96,96L48,132.69V48h84.69L232,147.31ZM96,84A12,12,0,1,1,84,72,12,12,0,0,1,96,84Z"/></svg>
+<svg x="151.5" y="31.5" width="13" height="13" viewBox="0 0 256 256" fill="var(--text-muted)"><path d="M224,88H175.4l8.47-46.57a8,8,0,0,0-15.74-2.86l-9,49.43H111.4l8.47-46.57a8,8,0,0,0-15.74-2.86L95.14,88H48a8,8,0,0,0,0,16H92.23L83.5,152H32a8,8,0,0,0,0,16H80.6l-8.47,46.57a8,8,0,0,0,6.44,9.3A7.79,7.79,0,0,0,80,224a8,8,0,0,0,7.86-6.57l9-49.43H144.6l-8.47,46.57a8,8,0,0,0,6.44,9.3A7.79,7.79,0,0,0,144,224a8,8,0,0,0,7.86-6.57l9-49.43H208a8,8,0,0,0,0-16H163.77l8.73-48H224a8,8,0,0,0,0-16Zm-76.5,64H99.77l8.73-48h47.73Z"/></svg>
+<svg x="207.5" y="31.5" width="13" height="13" viewBox="0 0 256 256" fill="var(--text-muted)"><path d="M243.31,136,144,36.69A15.86,15.86,0,0,0,132.69,32H40a8,8,0,0,0-8,8v92.69A15.86,15.86,0,0,0,36.69,144L136,243.31a16,16,0,0,0,22.63,0l84.68-84.68a16,16,0,0,0,0-22.63Zm-96,96L48,132.69V48h84.69L232,147.31ZM96,84A12,12,0,1,1,84,72,12,12,0,0,1,96,84Z"/></svg>
+<text x="46.0" y="22" font-size="7" fill="var(--text-primary)" text-anchor="middle" font-family="var(--font-mono)" font-weight="500">week_start</text>
+</g><text x="46.0" y="61.448" font-size="6.8" fill="var(--text-primary)" text-anchor="middle" font-family="var(--font-mono)" font-weight="600">w01 2021</text><rect x="89.0" y="56.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="145.0" y="56.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="201.0" y="56.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="35.0" y="74.0" width="22" height="6.0" rx="3.0" fill="var(--col-teal)"/><rect x="89.0" y="74.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="145.0" y="74.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="201.0" y="74.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="35.0" y="92.0" width="22" height="6.0" rx="3.0" fill="var(--col-teal)"/><rect x="89.0" y="92.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="145.0" y="92.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="201.0" y="92.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="35.0" y="110.0" width="22" height="6.0" rx="3.0" fill="var(--col-teal)"/><rect x="89.0" y="110.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="145.0" y="110.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="201.0" y="110.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="35.0" y="128.0" width="22" height="6.0" rx="3.0" fill="var(--col-teal)"/><rect x="89.0" y="128.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="145.0" y="128.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="201.0" y="128.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><text x="46.0" y="151.448" font-size="6.8" fill="var(--text-primary)" text-anchor="middle" font-family="var(--font-mono)" font-weight="600">w47 2026</text><rect x="89.0" y="146.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="145.0" y="146.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="201.0" y="146.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/></svg>
+  <p class="pc-result">From <b>week 1 of 2021</b> to <b>week 47 of 2026</b>, this week not complete yet.</p>
+  <footer class="pc-foot"><span><span class="pc-need" title="Needed for 4 · Explored"><i class="ph-fill ph-seal-check"></i>Needed</span>Set on week_start, its period</span><span>21 Nov</span></footer>
+</article>
+<button class="add-tile" type="button" data-go="list:open" title="Opens the list of EDA-Probes, at Basis">
+  <i class="ph ph-plus-circle"></i>
+  <b>Add probe</b>
+  <span>An EDA-Probe asks the data one question, such as whether there is one row per week and lead source, and shows its answer on a small table.</span>
+  <small>1 needed still in Basis</small>
+</button>
+ </div>
+</section>
+<section class="step">
+ <header class="step-head"><h3>Gaps</h3><span class="step-need step-part"><i class="ph ph-circle-half"></i>0 of 3 needed</span><p>One column: how much is missing in the fields that matter?</p></header>
+ <div class="pc-grid">
+<article class="pc sub-tile">
+  <header class="pc-head"><h4>Nulls per Key Field</h4><span class="tone" data-tone="attention"><i class="ph-fill ph-warning-circle"></i>Look at this</span></header>
+  <svg class="pc-draw" viewBox="0 0 260 186" role="img" aria-label="Nulls per Key Field"><defs><pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="var(--signal-warn)" stroke-width="1.2" opacity=".5"/></pattern></defs><g><rect x="18" y="26" width="224" height="132" fill="var(--sk-paper)" stroke="var(--sk-line)"/>
+<line x1="74" y1="26" x2="74" y2="158" stroke="var(--sk-line)"/>
+<line x1="130" y1="26" x2="130" y2="158" stroke="var(--sk-line)"/>
+<line x1="186" y1="26" x2="186" y2="158" stroke="var(--sk-line)"/>
+<line x1="18" y1="50" x2="242" y2="50" stroke="var(--sk-head)" stroke-width="1.2"/>
+<line x1="18" y1="68" x2="242" y2="68" stroke="var(--sk-line)" stroke-width=".6"/>
+<line x1="18" y1="86" x2="242" y2="86" stroke="var(--sk-line)" stroke-width=".6"/>
+<line x1="18" y1="104" x2="242" y2="104" stroke="var(--sk-line)" stroke-width=".6"/>
+<line x1="18" y1="122" x2="242" y2="122" stroke="var(--sk-line)" stroke-width=".6"/>
+<line x1="18" y1="140" x2="242" y2="140" stroke="var(--sk-line)" stroke-width=".6"/>
+<svg x="39.5" y="31.5" width="13" height="13" viewBox="0 0 256 256" fill="var(--text-muted)"><path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Z"/></svg>
+<svg x="95.5" y="31.5" width="13" height="13" viewBox="0 0 256 256" fill="var(--text-primary)"><path d="M243.31,136,144,36.69A15.86,15.86,0,0,0,132.69,32H40a8,8,0,0,0-8,8v92.69A15.86,15.86,0,0,0,36.69,144L136,243.31a16,16,0,0,0,22.63,0l84.68-84.68a16,16,0,0,0,0-22.63Zm-96,96L48,132.69V48h84.69L232,147.31ZM96,84A12,12,0,1,1,84,72,12,12,0,0,1,96,84Z"/></svg>
+<svg x="151.5" y="31.5" width="13" height="13" viewBox="0 0 256 256" fill="var(--text-muted)"><path d="M224,88H175.4l8.47-46.57a8,8,0,0,0-15.74-2.86l-9,49.43H111.4l8.47-46.57a8,8,0,0,0-15.74-2.86L95.14,88H48a8,8,0,0,0,0,16H92.23L83.5,152H32a8,8,0,0,0,0,16H80.6l-8.47,46.57a8,8,0,0,0,6.44,9.3A7.79,7.79,0,0,0,80,224a8,8,0,0,0,7.86-6.57l9-49.43H144.6l-8.47,46.57a8,8,0,0,0,6.44,9.3A7.79,7.79,0,0,0,144,224a8,8,0,0,0,7.86-6.57l9-49.43H208a8,8,0,0,0,0-16H163.77l8.73-48H224a8,8,0,0,0,0-16Zm-76.5,64H99.77l8.73-48h47.73Z"/></svg>
+<svg x="207.5" y="31.5" width="13" height="13" viewBox="0 0 256 256" fill="var(--text-muted)"><path d="M243.31,136,144,36.69A15.86,15.86,0,0,0,132.69,32H40a8,8,0,0,0-8,8v92.69A15.86,15.86,0,0,0,36.69,144L136,243.31a16,16,0,0,0,22.63,0l84.68-84.68a16,16,0,0,0,0-22.63Zm-96,96L48,132.69V48h84.69L232,147.31ZM96,84A12,12,0,1,1,84,72,12,12,0,0,1,96,84Z"/></svg>
+<text x="46.0" y="22" font-size="7" fill="var(--text-muted)" text-anchor="middle" font-family="var(--font-mono)" font-weight="400">week_start</text>
+<text x="102.0" y="22" font-size="7" fill="var(--text-primary)" text-anchor="middle" font-family="var(--font-mono)" font-weight="500">lead_source</text>
+<text x="158.0" y="22" font-size="7" fill="var(--text-muted)" text-anchor="middle" font-family="var(--font-mono)" font-weight="400">lead_count</text>
+</g><rect x="33.0" y="56.0" width="26" height="6.0" rx="3.0" fill="var(--col-magenta)"/><rect x="33.0" y="74.0" width="26" height="6.0" rx="3.0" fill="var(--col-magenta)"/><rect x="33.0" y="92.0" width="26" height="6.0" rx="3.0" fill="var(--col-magenta)"/><rect x="33.0" y="110.0" width="26" height="6.0" rx="3.0" fill="var(--col-magenta)"/><rect x="33.0" y="128.0" width="26" height="6.0" rx="3.0" fill="var(--col-magenta)"/><rect x="33.0" y="146.0" width="26" height="6.0" rx="3.0" fill="var(--col-magenta)"/><rect x="89.0" y="56.0" width="26" height="6.0" rx="3.0" fill="var(--col-magenta)"/><rect x="89.0" y="74.0" width="26" height="6.0" rx="3.0" fill="var(--col-magenta)"/><rect x="89.0" y="92.0" width="26" height="6.0" rx="3.0" fill="var(--col-magenta)"/><rect x="89.0" y="110.0" width="26" height="6.0" rx="3.0" fill="var(--col-magenta)"/><rect x="82.0" y="126" width="40" height="10" rx="3" fill="none" stroke="var(--signal-warn)" stroke-dasharray="2 2" stroke-width="1.2"/><rect x="89.0" y="146.0" width="26" height="6.0" rx="3.0" fill="var(--col-magenta)"/><rect x="145.0" y="56.0" width="26" height="6.0" rx="3.0" fill="var(--col-magenta)"/><rect x="145.0" y="74.0" width="26" height="6.0" rx="3.0" fill="var(--col-magenta)"/><rect x="145.0" y="92.0" width="26" height="6.0" rx="3.0" fill="var(--col-magenta)"/><rect x="145.0" y="110.0" width="26" height="6.0" rx="3.0" fill="var(--col-magenta)"/><rect x="145.0" y="128.0" width="26" height="6.0" rx="3.0" fill="var(--col-magenta)"/><rect x="145.0" y="146.0" width="26" height="6.0" rx="3.0" fill="var(--col-magenta)"/><rect x="201.0" y="56.0" width="26" height="6.0" rx="3.0" fill="color-mix(in srgb, var(--text-muted) 20%, transparent)"/><rect x="201.0" y="74.0" width="26" height="6.0" rx="3.0" fill="color-mix(in srgb, var(--text-muted) 20%, transparent)"/><rect x="201.0" y="92.0" width="26" height="6.0" rx="3.0" fill="color-mix(in srgb, var(--text-muted) 20%, transparent)"/><rect x="201.0" y="110.0" width="26" height="6.0" rx="3.0" fill="color-mix(in srgb, var(--text-muted) 20%, transparent)"/><rect x="201.0" y="128.0" width="26" height="6.0" rx="3.0" fill="color-mix(in srgb, var(--text-muted) 20%, transparent)"/><rect x="201.0" y="146.0" width="26" height="6.0" rx="3.0" fill="color-mix(in srgb, var(--text-muted) 20%, transparent)"/><g><rect x="36.239999999999995" y="162.5" width="19.520000000000003" height="15.5" rx="7.75" fill="color-mix(in srgb, var(--col-teal-ink) 14%, var(--sk-paper))"/><text x="46.0" y="173.5" font-size="8.5" fill="var(--col-teal-ink)" text-anchor="middle" font-family="var(--font-family)" font-weight="600">0%</text></g><g><rect x="87.48" y="162.5" width="29.040000000000003" height="15.5" rx="7.75" fill="color-mix(in srgb, var(--signal-warn) 14%, var(--sk-paper))"/><text x="102.0" y="173.5" font-size="8.5" fill="var(--signal-warn)" text-anchor="middle" font-family="var(--font-family)" font-weight="600">0.8%</text></g><g><rect x="148.24" y="162.5" width="19.520000000000003" height="15.5" rx="7.75" fill="color-mix(in srgb, var(--col-teal-ink) 14%, var(--sk-paper))"/><text x="158.0" y="173.5" font-size="8.5" fill="var(--col-teal-ink)" text-anchor="middle" font-family="var(--font-family)" font-weight="600">0%</text></g><text x="214.0" y="173" font-size="7.4" fill="var(--text-muted)" text-anchor="middle" font-family="var(--font-family)" font-weight="400">not set</text></svg>
+  <p class="pc-result"><b>lead_source is empty in 0.8%</b> of rows, 130 of them; week_start and lead_count never. <span class="warn">Not set on lead_channel yet.</span></p>
+  <footer class="pc-foot"><span><span class="pc-need" title="Needed for 4 · Explored"><i class="ph-fill ph-seal-check"></i>Needed</span>Set on week_start, lead_source, lead_count</span><span>21 Nov</span></footer>
+</article>
+<button class="add-tile" type="button" data-go="list:open" title="Opens the list of EDA-Probes, at Gaps">
+  <i class="ph ph-plus-circle"></i>
+  <b>Add probe</b>
+  <span>An EDA-Probe asks the data one question, such as whether there is one row per week and lead source, and shows its answer on a small table.</span>
+  <small>3 needed still in Gaps</small>
+</button>
+ </div>
+</section>
+<section class="step">
+ <header class="step-head"><h3>Weight</h3><span class="step-need step-part"><i class="ph ph-circle-half"></i>1 of 3 needed</span><p>One column: how do the values spread, and where does the weight lie?</p></header>
+ <div class="pc-grid">
+<article class="pc sub-tile">
+  <header class="pc-head"><h4>Distribution of categories</h4><span class="tone" data-tone="healthy"><i class="ph-fill ph-check-circle"></i>As expected</span></header>
+  <svg class="pc-draw" viewBox="0 0 260 186" role="img" aria-label="Distribution of categories"><defs><pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="var(--signal-warn)" stroke-width="1.2" opacity=".5"/></pattern></defs><g><rect x="18" y="26" width="224" height="132" fill="var(--sk-paper)" stroke="var(--sk-line)"/>
+<line x1="74" y1="26" x2="74" y2="158" stroke="var(--sk-line)"/>
+<line x1="130" y1="26" x2="130" y2="158" stroke="var(--sk-line)"/>
+<line x1="186" y1="26" x2="186" y2="158" stroke="var(--sk-line)"/>
+<line x1="18" y1="50" x2="242" y2="50" stroke="var(--sk-head)" stroke-width="1.2"/>
+<line x1="18" y1="68" x2="242" y2="68" stroke="var(--sk-line)" stroke-width=".6"/>
+<line x1="18" y1="86" x2="242" y2="86" stroke="var(--sk-line)" stroke-width=".6"/>
+<line x1="18" y1="104" x2="242" y2="104" stroke="var(--sk-line)" stroke-width=".6"/>
+<line x1="18" y1="122" x2="242" y2="122" stroke="var(--sk-line)" stroke-width=".6"/>
+<line x1="18" y1="140" x2="242" y2="140" stroke="var(--sk-line)" stroke-width=".6"/>
+<svg x="39.5" y="31.5" width="13" height="13" viewBox="0 0 256 256" fill="var(--text-muted)"><path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Z"/></svg>
+<svg x="95.5" y="31.5" width="13" height="13" viewBox="0 0 256 256" fill="var(--text-primary)"><path d="M243.31,136,144,36.69A15.86,15.86,0,0,0,132.69,32H40a8,8,0,0,0-8,8v92.69A15.86,15.86,0,0,0,36.69,144L136,243.31a16,16,0,0,0,22.63,0l84.68-84.68a16,16,0,0,0,0-22.63Zm-96,96L48,132.69V48h84.69L232,147.31ZM96,84A12,12,0,1,1,84,72,12,12,0,0,1,96,84Z"/></svg>
+<svg x="151.5" y="31.5" width="13" height="13" viewBox="0 0 256 256" fill="var(--text-muted)"><path d="M224,88H175.4l8.47-46.57a8,8,0,0,0-15.74-2.86l-9,49.43H111.4l8.47-46.57a8,8,0,0,0-15.74-2.86L95.14,88H48a8,8,0,0,0,0,16H92.23L83.5,152H32a8,8,0,0,0,0,16H80.6l-8.47,46.57a8,8,0,0,0,6.44,9.3A7.79,7.79,0,0,0,80,224a8,8,0,0,0,7.86-6.57l9-49.43H144.6l-8.47,46.57a8,8,0,0,0,6.44,9.3A7.79,7.79,0,0,0,144,224a8,8,0,0,0,7.86-6.57l9-49.43H208a8,8,0,0,0,0-16H163.77l8.73-48H224a8,8,0,0,0,0-16Zm-76.5,64H99.77l8.73-48h47.73Z"/></svg>
+<svg x="207.5" y="31.5" width="13" height="13" viewBox="0 0 256 256" fill="var(--text-muted)"><path d="M243.31,136,144,36.69A15.86,15.86,0,0,0,132.69,32H40a8,8,0,0,0-8,8v92.69A15.86,15.86,0,0,0,36.69,144L136,243.31a16,16,0,0,0,22.63,0l84.68-84.68a16,16,0,0,0,0-22.63Zm-96,96L48,132.69V48h84.69L232,147.31ZM96,84A12,12,0,1,1,84,72,12,12,0,0,1,96,84Z"/></svg>
+<text x="102.0" y="22" font-size="7" fill="var(--text-primary)" text-anchor="middle" font-family="var(--font-mono)" font-weight="500">lead_source</text>
+<text x="214.0" y="22" font-size="7" fill="var(--text-muted)" text-anchor="middle" font-family="var(--font-mono)" font-weight="400">lead_channel</text>
+</g><rect x="33.0" y="56.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="89.0" y="56.0" width="26" height="6.0" rx="3.0" fill="var(--col-teal)"/><rect x="145.0" y="56.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="201.0" y="56.0" width="26" height="6.0" rx="3.0" fill="var(--col-ochre)"/><rect x="33.0" y="74.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="89.0" y="74.0" width="26" height="6.0" rx="3.0" fill="var(--col-olive)"/><rect x="145.0" y="74.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="201.0" y="74.0" width="26" height="6.0" rx="3.0" fill="var(--col-ochre)"/><rect x="33.0" y="92.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="89.0" y="92.0" width="26" height="6.0" rx="3.0" fill="var(--col-teal)"/><rect x="145.0" y="92.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="201.0" y="92.0" width="26" height="6.0" rx="3.0" fill="var(--col-bordeaux)"/><rect x="33.0" y="110.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="89.0" y="110.0" width="26" height="6.0" rx="3.0" fill="var(--col-slate)"/><rect x="145.0" y="110.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="201.0" y="110.0" width="26" height="6.0" rx="3.0" fill="var(--col-ochre)"/><rect x="33.0" y="128.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="89.0" y="128.0" width="26" height="6.0" rx="3.0" fill="var(--col-teal)"/><rect x="145.0" y="128.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="201.0" y="128.0" width="26" height="6.0" rx="3.0" fill="var(--col-bordeaux)"/><rect x="33.0" y="146.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="89.0" y="146.0" width="26" height="6.0" rx="3.0" fill="var(--col-olive)"/><rect x="145.0" y="146.0" width="26" height="6.0" rx="3.0" fill="var(--sk-ink)"/><rect x="201.0" y="146.0" width="26" height="6.0" rx="3.0" fill="var(--col-ochre)"/><g><rect x="77.96" y="162.5" width="48.080000000000005" height="15.5" rx="7.75" fill="color-mix(in srgb, var(--col-teal-ink) 14%, var(--sk-paper))"/><text x="102.0" y="173.5" font-size="8.5" fill="var(--col-teal-ink)" text-anchor="middle" font-family="var(--font-family)" font-weight="600">4 values</text></g><g><rect x="189.96" y="162.5" width="48.080000000000005" height="15.5" rx="7.75" fill="color-mix(in srgb, var(--col-teal-ink) 14%, var(--sk-paper))"/><text x="214.0" y="173.5" font-size="8.5" fill="var(--col-teal-ink)" text-anchor="middle" font-family="var(--font-family)" font-weight="600">3 values</text></g></svg>
+  <p class="pc-result"><b>4 lead sources</b>, the website half of all leads; <b>3 channels</b>.</p>
+  <footer class="pc-foot"><span><span class="pc-need" title="Needed for 4 · Explored"><i class="ph-fill ph-seal-check"></i>Needed</span>Set on lead_source, lead_channel</span><span>21 Nov</span></footer>
+</article>
+<button class="add-tile" type="button" data-go="list:open" title="Opens the list of EDA-Probes, at Weight">
+  <i class="ph ph-plus-circle"></i>
+  <b>Add probe</b>
+  <span>An EDA-Probe asks the data one question, such as whether there is one row per week and lead source, and shows its answer on a small table.</span>
+  <small>2 needed still in Weight</small>
+</button>
+ </div>
+</section>
+<section class="step">
+ <header class="step-head"><h3>Correctness</h3><span class="step-need step-part"><i class="ph ph-circle-half"></i>0 of 1 needed</span><p>One column, and what it points to: are the values right?</p></header>
+ <div class="pc-grid">
+
+<button class="add-tile" type="button" data-go="list:open" title="Opens the list of EDA-Probes, at Correctness">
+  <i class="ph ph-plus-circle"></i>
+  <b>Add probe</b>
+  <span>An EDA-Probe asks the data one question, such as whether there is one row per week and lead source, and shows its answer on a small table.</span>
+  <small>1 needed still in Correctness</small>
+</button>
+ </div>
+</section>
+<section class="step">
+ <header class="step-head"><h3>Relations between fields</h3><span class="step-need step-none"><i class="ph ph-circle"></i>None needed</span><p>Two columns together: do fields agree with each other?</p></header>
+ <div class="pc-grid">
+
+<button class="add-tile" type="button" data-go="list:open" title="Opens the list of EDA-Probes, at Relations between fields">
+  <i class="ph ph-plus-circle"></i>
+  <b>Add probe</b>
+  <span>An EDA-Probe asks the data one question, such as whether there is one row per week and lead source, and shows its answer on a small table.</span>
+  <small>More to add in Relations between fields</small>
+</button>
+ </div>
+</section>
+  </div>
+  <aside class="side">
+ <section class="sub-tile side-state">
+  <div class="side-top"><h3>EDA-Setup</h3><span class="tone" data-tone="warmup-chip"><i class="ph ph-hourglass-medium"></i>In progress</span></div>
+  <p class="big"><b>4 of 11</b> needed EDA-Probes complete</p>
+  <div class="prog" role="img" aria-label="4 of 11 needed EDA-Probes complete"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span></div>
+  <p class="meta side-meta">Complete them all and Weekly lead volume is 4 · Explored. Nulls per Key Field still misses lead_channel.</p>
+  <ul class="cov"><li class="cov-part"><i class="ph ph-rows"></i><span>The rows</span><b>3 of 4 needed</b></li><li class="cov-part"><i class="ph ph-columns"></i><span>The Key Fields</span><b>4 started, 0 complete</b></li><li class="cov-muted"><i class="ph ph-arrows-left-right"></i><span>Two columns together</span><b>None needed</b></li><li class="cov-none"><i class="ph ph-link"></i><span>Other Resources</span><b>0 of 1 needed</b></li></ul>
+  <div class="next"><span class="meta">Best next step</span><b>Impossible values</b><p>It covers Correctness for all four Key Fields at once, such as a week in the future or a negative lead_count.</p><button class="btn-primary" type="button" title="The probe detail is designed next"><i class="ph ph-plus"></i> Add this EDA-Probe</button></div>
+ </section>
+ <section class="sub-tile">
+  <h3>The table as a whole</h3>
+  <ul class="tw"><li class="tw-done"><i class="ph-fill ph-check-circle"></i><span>The grain holds</span><small>Added</small></li><li class="tw-done"><i class="ph-fill ph-check-circle"></i><span>Row count</span><small>Added</small></li><li class="tw-done"><i class="ph-fill ph-check-circle"></i><span>Date range</span><small>Added</small></li><li class="tw-need"><i class="ph ph-circle-dashed"></i><span>Volume over time, with empty periods</span><small>Needed</small></li><li class="tw-req"><i class="ph ph-circle"></i><span>Settling between EDA-Reruns</span><small>On request</small></li><li class="tw-sugg"><i class="ph ph-circle"></i><span>The aggregate adds up to its source</span><small>Suggested</small></li></ul>
+ </section>
+ <section class="sub-tile">
+  <div class="side-top"><h3>Per field</h3><span class="fhead"><span title="Gaps">G</span><span title="Weight">W</span><span title="Correctness">C</span><span title="Relations">R</span></span></div>
+  <p class="meta side-meta">In the order of its Resource Card. A key marks a Key Field: what it needs, the EDA-Setup waits for.</p>
+  <ul class="fl"><li class="fr key"><i class="ph-fill ph-key fkey" title="Key Field"></i><i class="ph ph-fingerprint fkind" title="DATE"></i><span class="fname"><span class="mono">week_start</span><small>its period</small></span><span class="fcells"><span class="fc fc-done" title="Gaps: Nulls per Key Field"></span><span class="fc fc-na" title="Weight: not offered for a date"></span><span class="fc fc-need" title="Correctness: needed, not set yet"></span><span class="fc fc-free" title="Relations: not needed"></span></span></li><li class="fr key"><i class="ph-fill ph-key fkey" title="Key Field"></i><i class="ph ph-fingerprint fkind" title="STRING"></i><span class="fname"><span class="mono">lead_source</span><small>grouped by · <i class="ph ph-link"></i> Lead sources</small></span><span class="fcells"><span class="fc fc-done" title="Gaps: Nulls per Key Field"></span><span class="fc fc-done" title="Weight: Distribution of categories"></span><span class="fc fc-need" title="Correctness: needed, not set yet"></span><span class="fc fc-free" title="Relations: not needed"></span></span></li><li class="fr key"><i class="ph-fill ph-key fkey" title="Key Field"></i><i class="ph ph-hash fkind" title="INT64"></i><span class="fname"><span class="mono">lead_count</span><small>adds up</small></span><span class="fcells"><span class="fc fc-done" title="Gaps: Nulls per Key Field"></span><span class="fc fc-need" title="Weight: needed, not set yet"></span><span class="fc fc-need" title="Correctness: needed, not set yet"></span><span class="fc fc-free" title="Relations: not needed"></span></span></li><li class="fr key"><i class="ph-fill ph-key fkey" title="Key Field"></i><i class="ph ph-tag fkind" title="STRING"></i><span class="fname"><span class="mono">lead_channel</span><small>added yesterday</small></span><span class="fcells"><span class="fc fc-need" title="Gaps: needed, not set yet"></span><span class="fc fc-done" title="Weight: Distribution of categories"></span><span class="fc fc-need" title="Correctness: needed, not set yet"></span><span class="fc fc-free" title="Relations: not needed"></span></span></li><li class="fr"><span class="fkey"></span><i class="ph ph-tag fkind" title="STRING"></i><span class="fname"><span class="mono">lead_origin</span></span><span class="fcells"><span class="fc fc-free" title="Gaps: not needed"></span><span class="fc fc-free" title="Weight: not needed"></span><span class="fc fc-free" title="Correctness: not needed"></span><span class="fc fc-free" title="Relations: not needed"></span></span></li><li class="fr"><span class="fkey"></span><i class="ph ph-hash fkind" title="INT64"></i><span class="fname"><span class="mono">unique_applicants</span><small>unique count</small></span><span class="fcells"><span class="fc fc-free" title="Gaps: not needed"></span><span class="fc fc-free" title="Weight: not needed"></span><span class="fc fc-free" title="Correctness: not needed"></span><span class="fc fc-free" title="Relations: not needed"></span></span></li><li class="fr"><span class="fkey"></span><i class="ph ph-calendar-blank fkind" title="TIMESTAMP"></i><span class="fname"><span class="mono">loaded_at</span></span><span class="fcells"><span class="fc fc-free" title="Gaps: not needed"></span><span class="fc fc-free" title="Weight: not needed"></span><span class="fc fc-free" title="Correctness: not needed"></span><span class="fc fc-free" title="Relations: not needed"></span></span></li></ul>
+  <div class="flegend"><span><span class="fc fc-done"></span>Covered</span><span><span class="fc fc-need"></span>Needed</span><span><span class="fc fc-free"></span>Not needed</span><span><span class="fc fc-na"></span>Not offered</span></div>
+ </section>
+</aside>
+ </div></div>
+ </div>
+ <div data-pane-group="tab" data-pane="overview" hidden><div class="soon-pane"><i class="ph ph-layout"></i><h3>Overview</h3><p>Not designed yet: it is filled in later.</p></div></div>
+ <div data-pane-group="tab" data-pane="profile" hidden><div class="soon-pane"><i class="ph ph-chart-line"></i><h3>The Profile comes once the EDA-Setup is complete</h3><p>When every needed EDA-Probe is added, Weekly lead volume is 4 · Explored and its Profile opens here: what each run of its EDA-Probes found, the EDA-Profile of every run, and how the data changes between them, such as how fast a week settles. Until then, its EDA-Probes are set up under Steps.</p></div></div>
+</div>
+<div style="height:90px" aria-hidden="true"></div>
+</main>
+<div class="contents" data-pane-group="state" data-pane="new"><aside class="flowstrip" aria-label="Flow Box, folded: set up the EDA of Weekly lead volume, 0 of 11 needed EDA-Probes complete" data-pane-group="guide" data-pane="min">
+ <button class="icon-btn" type="button" data-go="guide:open" aria-label="Maximize" title="Open the guide"><i class="ph ph-arrows-out-simple"></i></button>
+ <span class="fb-icon" aria-hidden="true"><i class="ph-fill ph-binoculars"></i></span>
+ <span class="fs-count" aria-hidden="true"><b>0</b>/11</span>
+ <ol class="fs-dots" aria-hidden="true"><li class="now"></li><li class=""></li><li class=""></li><li class=""></li><li class=""></li><li class=""></li><li class=""></li><li class=""></li><li class=""></li><li class=""></li><li class=""></li></ol>
+ <button class="fs-label" type="button" data-go="guide:open">Set up its EDA · Weekly lead volume</button>
+</aside><aside class="flowbox eda-flow" aria-label="Flow Box: set up the EDA of Weekly lead volume" data-pane-group="guide" data-pane="open" hidden>
+ <div class="fb-inner">
+  <div class="fb-head">
+   <span class="fb-icon" aria-hidden="true"><i class="ph-fill ph-binoculars"></i></span>
+   <div class="fb-titles"><b class="fb-title">Set up its EDA</b><a class="fb-object" href="eda.html?state=new"><i class="ph ph-table" aria-hidden="true"></i>Weekly lead volume</a></div>
+   <button class="icon-btn" type="button" data-go="guide:min" aria-label="Minimize" title="Minimize"><i class="ph ph-arrows-in-simple"></i></button>
+   <button class="icon-btn" type="button" data-go="guide:closed" aria-label="Close" title="Close: Guide me on its EDA brings it back"><i class="ph ph-x"></i></button>
+  </div>
+  <div class="fb-progress"><div class="fb-bar" aria-hidden="true"><span class="now"></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span></div><span class="meta">0 of 11 needed EDA-Probes complete</span></div>
+  <div class="fb-body-scroll"><ol class="fb-steps">
+   <li class="fb-group" aria-hidden="true">Basis</li><li class="fb-step now open open">
+      <button class="fb-row" type="button" aria-expanded="true"><span class="fb-num" aria-hidden="true">1</span><span class="fb-name"><b>The grain holds</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      <div class="fb-detail">
+       <dl class="fb-wwh"><dt>What</dt><dd>It checks that every row is one thing: one row per week_start, lead_source, as the grain of the Resource says.</dd><dt>Why</dt><dd>When a grain value is on two rows, every count and sum over it doubles up, and a join on it gives too many rows. Every other result of the EDA leans on it.</dd><dt>How</dt><dd>On its detail: it is set on the whole grain. Run reads the table once, through Query, as you.</dd></dl>
+       <a class="fb-card" href="learning-float.html"><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><span class="num">2.3.5</span><span class="tt">The grain question</span><i class="ph ph-arrow-up-right" aria-hidden="true"></i></a><a class="btn-primary fb-go" href="eda-probe.html" style="text-decoration:none">Open the EDA-Probe<i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></li><li class="fb-step">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">2</span><span class="fb-name"><b>Row count</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-step">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">3</span><span class="fb-name"><b>Date range</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-step">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">4</span><span class="fb-name"><b>Volume over time, with empty periods</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-group" aria-hidden="true">Gaps</li><li class="fb-step">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">5</span><span class="fb-name"><b>Nulls per Key Field</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Set on 3 of 4 Key Fields: lead_channel still missing</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-step">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">6</span><span class="fb-name"><b>Disguised nulls</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-step">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">7</span><span class="fb-name"><b>Values without a match</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-group" aria-hidden="true">Weight</li><li class="fb-step">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">8</span><span class="fb-name"><b>Distribution of numbers</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-step">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">9</span><span class="fb-name"><b>Distribution of categories</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-step">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">10</span><span class="fb-name"><b>Spread</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-group" aria-hidden="true">Correctness</li><li class="fb-step">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">11</span><span class="fb-name"><b>Impossible values</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li>
+  </ol></div>
+  <div class="fb-foot"><span class="meta">11 to go, of which 0 are coming: they still count. Every run reads the table through Query, as you, and what it reads is in your Query Log.</span></div>
+ </div>
+</aside></div>
+<div class="contents" data-pane-group="state" data-pane="progress" hidden><aside class="flowstrip" aria-label="Flow Box, folded: set up the EDA of Weekly lead volume, 4 of 11 needed EDA-Probes complete" data-pane-group="guide" data-pane="min">
+ <button class="icon-btn" type="button" data-go="guide:open" aria-label="Maximize" title="Open the guide"><i class="ph ph-arrows-out-simple"></i></button>
+ <span class="fb-icon" aria-hidden="true"><i class="ph-fill ph-binoculars"></i></span>
+ <span class="fs-count" aria-hidden="true"><b>4</b>/11</span>
+ <ol class="fs-dots" aria-hidden="true"><li class="done"></li><li class="done"></li><li class="done"></li><li class=""></li><li class=""></li><li class=""></li><li class=""></li><li class=""></li><li class="done"></li><li class=""></li><li class="now"></li></ol>
+ <button class="fs-label" type="button" data-go="guide:open">Set up its EDA · Weekly lead volume</button>
+</aside><aside class="flowbox eda-flow" aria-label="Flow Box: set up the EDA of Weekly lead volume" data-pane-group="guide" data-pane="open" hidden>
+ <div class="fb-inner">
+  <div class="fb-head">
+   <span class="fb-icon" aria-hidden="true"><i class="ph-fill ph-binoculars"></i></span>
+   <div class="fb-titles"><b class="fb-title">Set up its EDA</b><a class="fb-object" href="eda.html?state=progress"><i class="ph ph-table" aria-hidden="true"></i>Weekly lead volume</a></div>
+   <button class="icon-btn" type="button" data-go="guide:min" aria-label="Minimize" title="Minimize"><i class="ph ph-arrows-in-simple"></i></button>
+   <button class="icon-btn" type="button" data-go="guide:closed" aria-label="Close" title="Close: Guide me on its EDA brings it back"><i class="ph ph-x"></i></button>
+  </div>
+  <div class="fb-progress"><div class="fb-bar" aria-hidden="true"><span class="done"></span><span class="done"></span><span class="done"></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class=""></span><span class="done"></span><span class=""></span><span class="now"></span></div><span class="meta">4 of 11 needed EDA-Probes complete</span></div>
+  <div class="fb-body-scroll"><ol class="fb-steps">
+   <li class="fb-group" aria-hidden="true">Basis</li><li class="fb-step done">
+      <button class="fb-row" type="button" aria-expanded="false"><i class="ph-fill ph-check-circle fb-tick" aria-hidden="true"></i><span class="fb-name"><b>The grain holds</b><span class="fb-said"><span class="fb-reading" data-tone="expected">As expected</span><span>One row per week and lead source; none twice in 16,224 rows</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-step done">
+      <button class="fb-row" type="button" aria-expanded="false"><i class="ph-fill ph-check-circle fb-tick" aria-hidden="true"></i><span class="fb-name"><b>Row count</b><span class="fb-said"><span class="fb-reading" data-tone="expected">As expected</span><span>16,224 rows, 312 weeks of 52 lead sources</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-step done">
+      <button class="fb-row" type="button" aria-expanded="false"><i class="ph-fill ph-check-circle fb-tick" aria-hidden="true"></i><span class="fb-name"><b>Date range</b><span class="fb-said"><span class="fb-reading" data-tone="expected">As expected</span><span>From week 1 of 2021 to week 47 of 2026</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-step">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">4</span><span class="fb-name"><b>Volume over time, with empty periods</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-group" aria-hidden="true">Gaps</li><li class="fb-step">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">5</span><span class="fb-name"><b>Nulls per Key Field</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Set on 3 of 4 Key Fields: lead_channel still missing</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-step">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">6</span><span class="fb-name"><b>Disguised nulls</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-step">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">7</span><span class="fb-name"><b>Values without a match</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-group" aria-hidden="true">Weight</li><li class="fb-step">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">8</span><span class="fb-name"><b>Distribution of numbers</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-step done">
+      <button class="fb-row" type="button" aria-expanded="false"><i class="ph-fill ph-check-circle fb-tick" aria-hidden="true"></i><span class="fb-name"><b>Distribution of categories</b><span class="fb-said"><span class="fb-reading" data-tone="judge">For you to judge</span><span>Website brings 48% of the leads</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-step">
+      <button class="fb-row" type="button" aria-expanded="false"><span class="fb-num" aria-hidden="true">10</span><span class="fb-name"><b>Spread</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      </li><li class="fb-group" aria-hidden="true">Correctness</li><li class="fb-step now open open">
+      <button class="fb-row" type="button" aria-expanded="true"><span class="fb-num" aria-hidden="true">11</span><span class="fb-name"><b>Impossible values</b><span class="fb-said"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i><span>Not added yet</span></span></span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      <div class="fb-detail">
+       <dl class="fb-wwh"><dt>What</dt><dd>It checks each Key Field against a rule: a count not negative, a week on a Monday.</dd><dt>Why</dt><dd>An impossible value is a mistake upstream, which every total takes along.</dd></dl>
+       <a class="btn-primary fb-go" href="eda-probe.html" style="text-decoration:none">Open the EDA-Probe<i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></li>
+  </ol></div>
+  <div class="fb-foot"><span class="meta">7 to go. The best next step comes first, as on its page; the others can be done in any order.</span></div>
+ </div>
+</aside></div>
+</div>
+<div data-pane-group="state" data-pane="new"><div class="sheet-wrap" data-pane-group="list" data-pane="open" hidden>
+<div class="sheet-backdrop" data-go="list:closed"></div>
+<section class="sheet pl-sheet" role="dialog" aria-modal="true" aria-labelledby="pl-title">
+ <div style="display:flex;align-items:flex-start;gap:10px">
+  <i class="ph ph-plus-circle" style="font-size:22px;color:var(--text-secondary);margin-top:2px" aria-hidden="true"></i>
+  <div style="flex:1;min-width:0"><div class="meta">Weekly lead volume · an aggregate</div><h2 id="pl-title">Add an EDA-Probe</h2></div>
+  <button class="icon-btn" data-go="list:closed" aria-label="Close"><i class="ph ph-x"></i></button>
+ </div>
+ <p class="pl-why">The EDA-Probes an aggregate is offered, per EDA-Step. The needed ones count for 4 · Explored, also those Data Hub does not run yet, which are Coming. A click opens its detail: what it does, what it is set on, and Run.</p>
+ <label class="search" style="background:var(--surface-sub)"><i class="ph ph-magnifying-glass" style="font-size:15px"></i><input placeholder="Search the EDA-Probes, or ask a question such as empty" autocomplete="off" autofocus></label>
+ <div class="mc-chips pl-chips" role="tablist" aria-label="Show"><button class="seg on" role="tab" aria-selected="true">All</button><button class="seg" role="tab" aria-selected="false">Needed</button><button class="seg" role="tab" aria-selected="false">Data Hub runs it</button><button class="seg" role="tab" aria-selected="false">Added</button></div>
+ <div class="sheet-list pl-list">
+  <section class="pl-group" aria-label="Basis">
+   <div class="pl-head"><b>Basis</b><span class="pl-count">0 of 4 needed complete</span></div>
+   <p class="pl-gq">The rows: is every row one thing, how many are there, and how do they come in over time?</p>
+   <a class="pl-row" href="eda-probe.html"><i class="ph ph-plus-circle pl-ic" aria-hidden="true"></i><span class="pl-text"><b>The grain holds</b><span class="pl-q">Is every row one thing: one row per <span class="mono">week_start</span>, <span class="mono">lead_source</span>?</span><span class="pl-meta"><span class="pl-level pl-must">Needed</span></span></span><span class="pl-state"><span class="pl-open">Open<i class="ph ph-arrow-right" aria-hidden="true"></i></span></span></a><a class="pl-row" href="eda-probe.html"><i class="ph ph-plus-circle pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Row count</b><span class="pl-q">How many rows are there, and is that as many as expected?</span><span class="pl-meta"><span class="pl-level pl-must">Needed</span></span></span><span class="pl-state"><span class="pl-open">Open<i class="ph ph-arrow-right" aria-hidden="true"></i></span></span></a><a class="pl-row" href="eda-probe.html"><i class="ph ph-plus-circle pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Date range</b><span class="pl-q">From when to when does it run, on <span class="mono">week_start</span>?</span><span class="pl-meta"><span class="pl-level pl-must">Needed</span></span></span><span class="pl-state"><span class="pl-open">Open<i class="ph ph-arrow-right" aria-hidden="true"></i></span></span></a><a class="pl-row" href="eda-probe.html"><i class="ph ph-plus-circle pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Volume over time, with empty periods</b><span class="pl-q">How much comes in per week, and are there weeks without rows?</span><span class="pl-meta"><span class="pl-level pl-must">Needed</span></span></span><span class="pl-state"><span class="pl-open">Open<i class="ph ph-arrow-right" aria-hidden="true"></i></span></span></a><div class="pl-row coming" aria-disabled="true" title="Data Hub does not run it yet"><i class="ph ph-circle-dashed pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Settling between EDA-Reruns</b><span class="pl-q">How long after a week do its numbers stop changing?</span><span class="pl-meta"><span class="pl-level pl-could">On request</span></span></span><span class="pl-state"><small class="pl-coming"><i class="ph ph-hourglass-medium" aria-hidden="true"></i>Coming</small></span></div>
+  </section><section class="pl-group at" id="pl-at" aria-label="Gaps">
+   <div class="pl-head"><b>Gaps</b><span class="pl-count">0 of 3 needed complete</span><span class="pl-from">From its tile</span></div>
+   <p class="pl-gq">One column: how much is missing in the fields that matter?</p>
+   <a class="pl-row" href="eda-probe-nulls.html"><i class="ph ph-circle-half pl-ic part" aria-hidden="true"></i><span class="pl-text"><b>Nulls per Key Field</b><span class="pl-q">How many rows miss a value, per Key Field?</span><span class="pl-meta"><span class="pl-level pl-must">Needed</span></span></span><span class="pl-state"><span class="pl-open">Open<i class="ph ph-arrow-right" aria-hidden="true"></i></span><small>Added, 3 of 4 Key Fields</small></span></a><a class="pl-row" href="eda-probe.html"><i class="ph ph-plus-circle pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Disguised nulls</b><span class="pl-q">Which values stand for nothing: "N/A", a blank, 1900-01-01?</span><span class="pl-meta"><span class="pl-level pl-must">Needed</span></span></span><span class="pl-state"><span class="pl-open">Open<i class="ph ph-arrow-right" aria-hidden="true"></i></span></span></a><div class="pl-row coming" aria-disabled="true" title="Data Hub does not run it yet"><i class="ph ph-circle-dashed pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Where gaps cluster</b><span class="pl-q">Do the empty values sit in one period or one segment?</span><span class="pl-meta"><span class="pl-level pl-should">Suggested</span></span></span><span class="pl-state"><small class="pl-coming"><i class="ph ph-hourglass-medium" aria-hidden="true"></i>Coming</small></span></div><a class="pl-row" href="eda-probe.html"><i class="ph ph-plus-circle pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Values without a match</b><span class="pl-q">Which values of <span class="mono">lead_source</span> have no match in Lead sources?</span><span class="pl-meta"><span class="pl-level pl-must">Needed</span></span></span><span class="pl-state"><span class="pl-open">Open<i class="ph ph-arrow-right" aria-hidden="true"></i></span></span></a>
+  </section><section class="pl-group" aria-label="Weight">
+   <div class="pl-head"><b>Weight</b><span class="pl-count">0 of 3 needed complete</span></div>
+   <p class="pl-gq">One column: how do the values spread, and where does the weight lie?</p>
+   <a class="pl-row" href="eda-probe.html"><i class="ph ph-plus-circle pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Distribution of numbers</b><span class="pl-q">How do the numbers spread, and does their mean describe them?</span><span class="pl-meta"><span class="pl-level pl-must">Needed</span></span></span><span class="pl-state"><span class="pl-open">Open<i class="ph ph-arrow-right" aria-hidden="true"></i></span></span></a><a class="pl-row" href="eda-probe.html"><i class="ph ph-plus-circle pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Distribution of categories</b><span class="pl-q">Which categories come most, and how many are there?</span><span class="pl-meta"><span class="pl-level pl-must">Needed</span></span></span><span class="pl-state"><span class="pl-open">Open<i class="ph ph-arrow-right" aria-hidden="true"></i></span></span></a><a class="pl-row" href="eda-probe.html"><i class="ph ph-plus-circle pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Spread</b><span class="pl-q">How far do the values lie from their average?</span><span class="pl-meta"><span class="pl-level pl-must">Needed</span></span></span><span class="pl-state"><span class="pl-open">Open<i class="ph ph-arrow-right" aria-hidden="true"></i></span></span></a><div class="pl-row coming" aria-disabled="true" title="Data Hub does not run it yet"><i class="ph ph-circle-dashed pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Share per segment</b><span class="pl-q">What share does each segment hold, and does it shift?</span><span class="pl-meta"><span class="pl-level pl-should">Suggested</span></span></span><span class="pl-state"><small class="pl-coming"><i class="ph ph-hourglass-medium" aria-hidden="true"></i>Coming</small></span></div><div class="pl-row coming" aria-disabled="true" title="Data Hub does not run it yet"><i class="ph ph-circle-dashed pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Outliers</b><span class="pl-q">Which values lie far from the rest?</span><span class="pl-meta"><span class="pl-level pl-should">Suggested</span></span></span><span class="pl-state"><small class="pl-coming"><i class="ph ph-hourglass-medium" aria-hidden="true"></i>Coming</small></span></div><div class="pl-row coming" aria-disabled="true" title="Data Hub does not run it yet"><i class="ph ph-circle-dashed pl-ic" aria-hidden="true"></i><span class="pl-text"><b>The mode</b><span class="pl-q">Which value comes most?</span><span class="pl-meta"><span class="pl-level pl-should">Suggested</span></span></span><span class="pl-state"><small class="pl-coming"><i class="ph ph-hourglass-medium" aria-hidden="true"></i>Coming</small></span></div>
+  </section><section class="pl-group" aria-label="Correctness">
+   <div class="pl-head"><b>Correctness</b><span class="pl-count">0 of 1 needed complete</span></div>
+   <p class="pl-gq">One column, and what it points to: are the values right?</p>
+   <a class="pl-row" href="eda-probe.html"><i class="ph ph-plus-circle pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Impossible values</b><span class="pl-q">Which values cannot be: a negative count, a week not on a Monday?</span><span class="pl-meta"><span class="pl-level pl-must">Needed</span></span></span><span class="pl-state"><span class="pl-open">Open<i class="ph ph-arrow-right" aria-hidden="true"></i></span></span></a><div class="pl-row coming" aria-disabled="true" title="Data Hub does not run it yet"><i class="ph ph-circle-dashed pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Numbers or dates stored as text</b><span class="pl-q">Are numbers or dates kept as text?</span><span class="pl-meta"><span class="pl-level pl-should">Suggested</span></span></span><span class="pl-state"><small class="pl-coming"><i class="ph ph-hourglass-medium" aria-hidden="true"></i>Coming</small></span></div><div class="pl-row coming" aria-disabled="true" title="Data Hub does not run it yet"><i class="ph ph-circle-dashed pl-ic" aria-hidden="true"></i><span class="pl-text"><b>The aggregate adds up to its source</b><span class="pl-q">Does it add up to the table it is made from?</span><span class="pl-meta"><span class="pl-level pl-should">Suggested</span></span></span><span class="pl-state"><small class="pl-coming"><i class="ph ph-hourglass-medium" aria-hidden="true"></i>Coming</small></span></div><div class="pl-row coming" aria-disabled="true" title="Data Hub does not run it yet"><i class="ph ph-circle-dashed pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Variants of one category</b><span class="pl-q">Is one category written in several ways?</span><span class="pl-meta"><span class="pl-level pl-could">On request</span></span></span><span class="pl-state"><small class="pl-coming"><i class="ph ph-hourglass-medium" aria-hidden="true"></i>Coming</small></span></div><div class="pl-row coming" aria-disabled="true" title="Data Hub does not run it yet"><i class="ph ph-circle-dashed pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Relationships hold</b><span class="pl-q">Does every lead source exist in Lead sources?</span><span class="pl-meta"><span class="pl-level pl-could">On request</span></span></span><span class="pl-state"><small class="pl-coming"><i class="ph ph-hourglass-medium" aria-hidden="true"></i>Coming</small></span></div>
+  </section><section class="pl-group" aria-label="Relations between fields">
+   <div class="pl-head"><b>Relations between fields</b><span class="pl-count">None needed</span></div>
+   <p class="pl-gq">Two columns together: do fields agree with each other?</p>
+   <div class="pl-row coming" aria-disabled="true" title="Data Hub does not run it yet"><i class="ph ph-circle-dashed pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Differences between segments</b><span class="pl-q">Do the segments differ more than chance would give?</span><span class="pl-meta"><span class="pl-level pl-should">Suggested</span></span></span><span class="pl-state"><small class="pl-coming"><i class="ph ph-hourglass-medium" aria-hidden="true"></i>Coming</small></span></div><div class="pl-row coming" aria-disabled="true" title="Data Hub does not run it yet"><i class="ph ph-circle-dashed pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Derived values agree</b><span class="pl-q">Do fields made from each other agree?</span><span class="pl-meta"><span class="pl-level pl-could">On request</span></span></span><span class="pl-state"><small class="pl-coming"><i class="ph ph-hourglass-medium" aria-hidden="true"></i>Coming</small></span></div><div class="pl-row coming" aria-disabled="true" title="Data Hub does not run it yet"><i class="ph ph-circle-dashed pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Correlations between Key Fields</b><span class="pl-q">Which Key Fields move together?</span><span class="pl-meta"><span class="pl-level pl-could">On request</span></span></span><span class="pl-state"><small class="pl-coming"><i class="ph ph-hourglass-medium" aria-hidden="true"></i>Coming</small></span></div><div class="pl-row coming" aria-disabled="true" title="Data Hub does not run it yet"><i class="ph ph-circle-dashed pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Chance, per segment</b><span class="pl-q">How likely is an outcome, per segment?</span><span class="pl-meta"><span class="pl-level pl-could">On request</span></span></span><span class="pl-state"><small class="pl-coming"><i class="ph ph-hourglass-medium" aria-hidden="true"></i>Coming</small></span></div>
+  </section>
+ </div>
+ <script>document.querySelectorAll('[data-go="list:open"]').forEach(b => b.addEventListener('click', () => setTimeout(() => document.querySelectorAll('#pl-at').forEach(g => g.offsetParent && g.scrollIntoView({ block: 'start' })), 30)));</script>
+ <div class="sheet-foot"><p class="meta">An EDA-Probe that is not offered for an aggregate is not listed.</p><button class="btn-quiet" data-go="list:closed">Close</button></div>
+</section>
+</div></div>
+<div data-pane-group="state" data-pane="progress" hidden><div class="sheet-wrap" data-pane-group="list" data-pane="open" hidden>
+<div class="sheet-backdrop" data-go="list:closed"></div>
+<section class="sheet pl-sheet" role="dialog" aria-modal="true" aria-labelledby="pl-title">
+ <div style="display:flex;align-items:flex-start;gap:10px">
+  <i class="ph ph-plus-circle" style="font-size:22px;color:var(--text-secondary);margin-top:2px" aria-hidden="true"></i>
+  <div style="flex:1;min-width:0"><div class="meta">Weekly lead volume · an aggregate</div><h2 id="pl-title">Add an EDA-Probe</h2></div>
+  <button class="icon-btn" data-go="list:closed" aria-label="Close"><i class="ph ph-x"></i></button>
+ </div>
+ <p class="pl-why">The EDA-Probes an aggregate is offered, per EDA-Step. The needed ones count for 4 · Explored, also those Data Hub does not run yet, which are Coming. A click opens its detail: what it does, what it is set on, and Run.</p>
+ <label class="search" style="background:var(--surface-sub)"><i class="ph ph-magnifying-glass" style="font-size:15px"></i><input placeholder="Search the EDA-Probes, or ask a question such as empty" autocomplete="off" autofocus></label>
+ <div class="mc-chips pl-chips" role="tablist" aria-label="Show"><button class="seg on" role="tab" aria-selected="true">All</button><button class="seg" role="tab" aria-selected="false">Needed</button><button class="seg" role="tab" aria-selected="false">Data Hub runs it</button><button class="seg" role="tab" aria-selected="false">Added</button></div>
+ <div class="sheet-list pl-list">
+  <section class="pl-group" aria-label="Basis">
+   <div class="pl-head"><b>Basis</b><span class="pl-count">3 of 4 needed complete</span></div>
+   <p class="pl-gq">The rows: is every row one thing, how many are there, and how do they come in over time?</p>
+   <a class="pl-row added" href="eda-probe.html?run=ok"><i class="ph-fill ph-check-circle pl-ic done" aria-hidden="true"></i><span class="pl-text"><b>The grain holds</b><span class="pl-q">Is every row one thing: one row per <span class="mono">week_start</span>, <span class="mono">lead_source</span>?</span><span class="pl-meta"><span class="pl-level pl-must">Needed</span></span></span><span class="pl-state"><span class="fb-reading" data-tone="expected">As expected</span><small>Added</small></span></a><a class="pl-row added" href="eda-probe.html?run=ok"><i class="ph-fill ph-check-circle pl-ic done" aria-hidden="true"></i><span class="pl-text"><b>Row count</b><span class="pl-q">How many rows are there, and is that as many as expected?</span><span class="pl-meta"><span class="pl-level pl-must">Needed</span></span></span><span class="pl-state"><span class="fb-reading" data-tone="expected">As expected</span><small>Added</small></span></a><a class="pl-row added" href="eda-probe.html?run=ok"><i class="ph-fill ph-check-circle pl-ic done" aria-hidden="true"></i><span class="pl-text"><b>Date range</b><span class="pl-q">From when to when does it run, on <span class="mono">week_start</span>?</span><span class="pl-meta"><span class="pl-level pl-must">Needed</span></span></span><span class="pl-state"><span class="fb-reading" data-tone="expected">As expected</span><small>Added</small></span></a><a class="pl-row" href="eda-probe.html"><i class="ph ph-plus-circle pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Volume over time, with empty periods</b><span class="pl-q">How much comes in per week, and are there weeks without rows?</span><span class="pl-meta"><span class="pl-level pl-must">Needed</span></span></span><span class="pl-state"><span class="pl-open">Open<i class="ph ph-arrow-right" aria-hidden="true"></i></span></span></a><div class="pl-row coming" aria-disabled="true" title="Data Hub does not run it yet"><i class="ph ph-circle-dashed pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Settling between EDA-Reruns</b><span class="pl-q">How long after a week do its numbers stop changing?</span><span class="pl-meta"><span class="pl-level pl-could">On request</span></span></span><span class="pl-state"><small class="pl-coming"><i class="ph ph-hourglass-medium" aria-hidden="true"></i>Coming</small></span></div>
+  </section><section class="pl-group at" id="pl-at" aria-label="Gaps">
+   <div class="pl-head"><b>Gaps</b><span class="pl-count">0 of 3 needed complete</span><span class="pl-from">From its tile</span></div>
+   <p class="pl-gq">One column: how much is missing in the fields that matter?</p>
+   <a class="pl-row" href="eda-probe-nulls.html"><i class="ph ph-circle-half pl-ic part" aria-hidden="true"></i><span class="pl-text"><b>Nulls per Key Field</b><span class="pl-q">How many rows miss a value, per Key Field?</span><span class="pl-meta"><span class="pl-level pl-must">Needed</span></span></span><span class="pl-state"><span class="pl-open">Open<i class="ph ph-arrow-right" aria-hidden="true"></i></span><small>Added, 3 of 4 Key Fields</small></span></a><a class="pl-row" href="eda-probe.html"><i class="ph ph-plus-circle pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Disguised nulls</b><span class="pl-q">Which values stand for nothing: "N/A", a blank, 1900-01-01?</span><span class="pl-meta"><span class="pl-level pl-must">Needed</span></span></span><span class="pl-state"><span class="pl-open">Open<i class="ph ph-arrow-right" aria-hidden="true"></i></span></span></a><div class="pl-row coming" aria-disabled="true" title="Data Hub does not run it yet"><i class="ph ph-circle-dashed pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Where gaps cluster</b><span class="pl-q">Do the empty values sit in one period or one segment?</span><span class="pl-meta"><span class="pl-level pl-should">Suggested</span></span></span><span class="pl-state"><small class="pl-coming"><i class="ph ph-hourglass-medium" aria-hidden="true"></i>Coming</small></span></div><a class="pl-row" href="eda-probe.html"><i class="ph ph-plus-circle pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Values without a match</b><span class="pl-q">Which values of <span class="mono">lead_source</span> have no match in Lead sources?</span><span class="pl-meta"><span class="pl-level pl-must">Needed</span></span></span><span class="pl-state"><span class="pl-open">Open<i class="ph ph-arrow-right" aria-hidden="true"></i></span></span></a>
+  </section><section class="pl-group" aria-label="Weight">
+   <div class="pl-head"><b>Weight</b><span class="pl-count">1 of 3 needed complete</span></div>
+   <p class="pl-gq">One column: how do the values spread, and where does the weight lie?</p>
+   <a class="pl-row" href="eda-probe.html"><i class="ph ph-plus-circle pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Distribution of numbers</b><span class="pl-q">How do the numbers spread, and does their mean describe them?</span><span class="pl-meta"><span class="pl-level pl-must">Needed</span></span></span><span class="pl-state"><span class="pl-open">Open<i class="ph ph-arrow-right" aria-hidden="true"></i></span></span></a><a class="pl-row added" href="eda-probe.html?run=ok"><i class="ph-fill ph-check-circle pl-ic done" aria-hidden="true"></i><span class="pl-text"><b>Distribution of categories</b><span class="pl-q">Which categories come most, and how many are there?</span><span class="pl-meta"><span class="pl-level pl-must">Needed</span></span></span><span class="pl-state"><span class="fb-reading" data-tone="judge">For you to judge</span><small>Added</small></span></a><a class="pl-row" href="eda-probe.html"><i class="ph ph-plus-circle pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Spread</b><span class="pl-q">How far do the values lie from their average?</span><span class="pl-meta"><span class="pl-level pl-must">Needed</span></span></span><span class="pl-state"><span class="pl-open">Open<i class="ph ph-arrow-right" aria-hidden="true"></i></span></span></a><div class="pl-row coming" aria-disabled="true" title="Data Hub does not run it yet"><i class="ph ph-circle-dashed pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Share per segment</b><span class="pl-q">What share does each segment hold, and does it shift?</span><span class="pl-meta"><span class="pl-level pl-should">Suggested</span></span></span><span class="pl-state"><small class="pl-coming"><i class="ph ph-hourglass-medium" aria-hidden="true"></i>Coming</small></span></div><div class="pl-row coming" aria-disabled="true" title="Data Hub does not run it yet"><i class="ph ph-circle-dashed pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Outliers</b><span class="pl-q">Which values lie far from the rest?</span><span class="pl-meta"><span class="pl-level pl-should">Suggested</span></span></span><span class="pl-state"><small class="pl-coming"><i class="ph ph-hourglass-medium" aria-hidden="true"></i>Coming</small></span></div><div class="pl-row coming" aria-disabled="true" title="Data Hub does not run it yet"><i class="ph ph-circle-dashed pl-ic" aria-hidden="true"></i><span class="pl-text"><b>The mode</b><span class="pl-q">Which value comes most?</span><span class="pl-meta"><span class="pl-level pl-should">Suggested</span></span></span><span class="pl-state"><small class="pl-coming"><i class="ph ph-hourglass-medium" aria-hidden="true"></i>Coming</small></span></div>
+  </section><section class="pl-group" aria-label="Correctness">
+   <div class="pl-head"><b>Correctness</b><span class="pl-count">0 of 1 needed complete</span></div>
+   <p class="pl-gq">One column, and what it points to: are the values right?</p>
+   <a class="pl-row" href="eda-probe.html"><i class="ph ph-plus-circle pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Impossible values</b><span class="pl-q">Which values cannot be: a negative count, a week not on a Monday?</span><span class="pl-meta"><span class="pl-level pl-must">Needed</span></span></span><span class="pl-state"><span class="pl-open">Open<i class="ph ph-arrow-right" aria-hidden="true"></i></span></span></a><div class="pl-row coming" aria-disabled="true" title="Data Hub does not run it yet"><i class="ph ph-circle-dashed pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Numbers or dates stored as text</b><span class="pl-q">Are numbers or dates kept as text?</span><span class="pl-meta"><span class="pl-level pl-should">Suggested</span></span></span><span class="pl-state"><small class="pl-coming"><i class="ph ph-hourglass-medium" aria-hidden="true"></i>Coming</small></span></div><div class="pl-row coming" aria-disabled="true" title="Data Hub does not run it yet"><i class="ph ph-circle-dashed pl-ic" aria-hidden="true"></i><span class="pl-text"><b>The aggregate adds up to its source</b><span class="pl-q">Does it add up to the table it is made from?</span><span class="pl-meta"><span class="pl-level pl-should">Suggested</span></span></span><span class="pl-state"><small class="pl-coming"><i class="ph ph-hourglass-medium" aria-hidden="true"></i>Coming</small></span></div><div class="pl-row coming" aria-disabled="true" title="Data Hub does not run it yet"><i class="ph ph-circle-dashed pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Variants of one category</b><span class="pl-q">Is one category written in several ways?</span><span class="pl-meta"><span class="pl-level pl-could">On request</span></span></span><span class="pl-state"><small class="pl-coming"><i class="ph ph-hourglass-medium" aria-hidden="true"></i>Coming</small></span></div><div class="pl-row coming" aria-disabled="true" title="Data Hub does not run it yet"><i class="ph ph-circle-dashed pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Relationships hold</b><span class="pl-q">Does every lead source exist in Lead sources?</span><span class="pl-meta"><span class="pl-level pl-could">On request</span></span></span><span class="pl-state"><small class="pl-coming"><i class="ph ph-hourglass-medium" aria-hidden="true"></i>Coming</small></span></div>
+  </section><section class="pl-group" aria-label="Relations between fields">
+   <div class="pl-head"><b>Relations between fields</b><span class="pl-count">None needed</span></div>
+   <p class="pl-gq">Two columns together: do fields agree with each other?</p>
+   <div class="pl-row coming" aria-disabled="true" title="Data Hub does not run it yet"><i class="ph ph-circle-dashed pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Differences between segments</b><span class="pl-q">Do the segments differ more than chance would give?</span><span class="pl-meta"><span class="pl-level pl-should">Suggested</span></span></span><span class="pl-state"><small class="pl-coming"><i class="ph ph-hourglass-medium" aria-hidden="true"></i>Coming</small></span></div><div class="pl-row coming" aria-disabled="true" title="Data Hub does not run it yet"><i class="ph ph-circle-dashed pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Derived values agree</b><span class="pl-q">Do fields made from each other agree?</span><span class="pl-meta"><span class="pl-level pl-could">On request</span></span></span><span class="pl-state"><small class="pl-coming"><i class="ph ph-hourglass-medium" aria-hidden="true"></i>Coming</small></span></div><div class="pl-row coming" aria-disabled="true" title="Data Hub does not run it yet"><i class="ph ph-circle-dashed pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Correlations between Key Fields</b><span class="pl-q">Which Key Fields move together?</span><span class="pl-meta"><span class="pl-level pl-could">On request</span></span></span><span class="pl-state"><small class="pl-coming"><i class="ph ph-hourglass-medium" aria-hidden="true"></i>Coming</small></span></div><div class="pl-row coming" aria-disabled="true" title="Data Hub does not run it yet"><i class="ph ph-circle-dashed pl-ic" aria-hidden="true"></i><span class="pl-text"><b>Chance, per segment</b><span class="pl-q">How likely is an outcome, per segment?</span><span class="pl-meta"><span class="pl-level pl-could">On request</span></span></span><span class="pl-state"><small class="pl-coming"><i class="ph ph-hourglass-medium" aria-hidden="true"></i>Coming</small></span></div>
+  </section>
+ </div>
+ <script>document.querySelectorAll('[data-go="list:open"]').forEach(b => b.addEventListener('click', () => setTimeout(() => document.querySelectorAll('#pl-at').forEach(g => g.offsetParent && g.scrollIntoView({ block: 'start' })), 30)));</script>
+ <div class="sheet-foot"><p class="meta">An EDA-Probe that is not offered for an aggregate is not listed.</p><button class="btn-quiet" data-go="list:closed">Close</button></div>
+</section>
+</div></div>
+<div class="proto-switch" data-group="guide" role="tablist" aria-label="Prototype: the guide in the Flow Box" style="right:auto;left:96px;bottom:26px">Guide
+ <button class="seg on" data-target="min" role="tab" aria-selected="true">Folded, on Steps</button>
+ <button class="seg" data-target="open" role="tab" aria-selected="false">Open</button>
+ <button class="seg" data-target="closed" role="tab" aria-selected="false">Closed</button>
+</div>
+<div class="proto-switch" data-group="list" role="tablist" aria-label="Prototype: the list to add an EDA-Probe" style="right:auto;left:96px;bottom:74px">List
+ <button class="seg on" data-target="closed" role="tab" aria-selected="true">Closed</button>
+ <button class="seg" data-target="open" role="tab" aria-selected="false">Add probe, on Gaps</button>
+</div>
+<div class="proto-switch" data-group="state" role="tablist" aria-label="Prototype: the state of the EDA-Setup">EDA-Setup
+ <button class="seg on" data-target="new" role="tab" aria-selected="true">Just started</button>
+ <button class="seg" data-target="progress" role="tab" aria-selected="false">In progress</button>
+</div>
+<script src="app.js"></script>
+<script>
+document.querySelectorAll('[data-go="guide:open"]').forEach(b => b.addEventListener('click', () => setTimeout(() =>
+  document.querySelectorAll('.eda-flow .fb-step.now').forEach(s => s.offsetParent && s.scrollIntoView({ block: 'center' })), 40)));
+</script>
+</body>
+</html>

@@ -76,6 +76,11 @@ const app = await buildApp({
       audience: catalogueUrl,
       serviceAccounts: [required('DATAHUB_IDENTITY_SERVICE_ACCOUNT')],
     }),
+    // eda says whether the EDA-Setup of a Resource is complete the same way (TR-ED-05).
+    edaCallers: createServiceCallerVerifier({
+      audience: catalogueUrl,
+      serviceAccounts: [required('DATAHUB_EDA_SERVICE_ACCOUNT')],
+    }),
     learning: createLearning(database.db),
     // After a new Current Version, query checks what reads the Resources that changed, asked as catalogue (FR-SR-52).
     query: createQueryService(required('DATAHUB_QUERY_URL'), idToken),

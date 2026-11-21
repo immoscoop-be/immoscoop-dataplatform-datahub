@@ -119,7 +119,7 @@ variable "warm_in_office_hours" {
   default     = []
 
   validation {
-    condition     = alltrue([for name in var.warm_in_office_hours : contains(["identity", "catalogue", "registry", "query", "semgraph", "mcp", "web"], name)])
+    condition     = alltrue([for name in var.warm_in_office_hours : contains(["identity", "catalogue", "registry", "query", "eda", "semgraph", "mcp", "web"], name)])
     error_message = "Only services of Data Hub can be kept warm."
   }
 }

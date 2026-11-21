@@ -10,6 +10,7 @@ const app = await buildApp({
   services: {
     catalogueUrl: required('DATAHUB_CATALOGUE_URL'),
     queryUrl: required('DATAHUB_QUERY_URL'),
+    edaUrl: required('DATAHUB_EDA_URL'),
     webUrl: required('DATAHUB_WEB_URL'),
   },
 });
