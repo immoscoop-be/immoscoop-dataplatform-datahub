@@ -1,5 +1,6 @@
 import type { DataHubReading, ProbeKey, ProbeResult } from '@datahub/contracts/eda';
 import type { EdaSource } from '../catalogue.js';
+import type { Rows } from './sql.js';
 
 /** What a run of an EDA-Probe is set on: its fields, in the order of the Resource Card, and its parameters (DEC-ED-17). */
 export interface ProbeSetting {
@@ -7,8 +8,11 @@ export interface ProbeSetting {
   params: Record<string, unknown>;
 }
 
-/** Everything an EDA-Probe needs to write its SQL and read its answer. */
-export interface ProbeContext extends ProbeSetting {
+/**
+ * Everything an EDA-Probe needs to write its SQL and read its answer: its setting, and the rows it reads, the whole
+ * table or a selection of its rows (OP-ED-12).
+ */
+export interface ProbeContext extends ProbeSetting, Rows {
   source: EdaSource;
   /** Today, `YYYY-MM-DD`, in the time zone of Immoscoop: what makes a period current (DEC-ED-23). */
   today: string;
@@ -26,7 +30,7 @@ export interface RunnableProbe {
   key: ProbeKey;
   /** Its parameters from a request, as kept; a string says what does not fit. */
   params(given: Record<string, unknown>, source: EdaSource, fields: string[]): Record<string, unknown> | string;
-  /** One `SELECT` over its table that returns aggregates only, never rows of the table. */
+  /** One `SELECT` over the rows it runs on, through `whereOf`, that returns aggregates only, never rows of the table. */
   sql(context: ProbeContext): string;
   /** The answer of query as results, per subject, in the order of the Resource Card. */
   results(rows: readonly Record<string, unknown>[], context: ProbeContext): Outcome[];

@@ -27,6 +27,10 @@
 5. Once it ran, eda turns the answer into a result per subject, the table as a whole (`''`) or a field, with Data Hub's reading, adds the EDA-Probe if it is not yet, sets it on what it ran with, and keeps the run with who ran it, when, the bytes it read and its Query ID, in one transaction.
 6. It computes the EDA again from the contracts, with the fields each EDA-Probe last ran on. When every needed EDA-Probe is complete, an EDA in progress becomes Explored and catalogue is told, until it heard it ([TR-ED-05](../../requirements/technical/15-eda.md#tr-ed-05)). An EDA-Probe Data Hub cannot run yet still counts as needed, so in the first build no EDA becomes Explored ([OP-ED-09](../../requirements/functional/15-eda.md#op-ed-09)).
 
+## On a selection of rows
+
+Every EDA-Probe runs on a selection of rows ([OP-ED-12](../../requirements/functional/15-eda.md#op-ed-12)): the whole table, or the rows where every condition holds, so that what a result found can be looked into further. A condition is `saysNothing`, `equals` or `range`. `saysNothing` holds where the field has no value or, by its kind, a value of the lists of the Disguised nulls of the EDA, Data Hub's proposal until it is added with its own ([DEC-ED-35](../../requirements/functional/15-eda.md#dec-ed-35)): a text trimmed and in lower case, the empty text always among them; a date on its day in Brussels; a number of the list or of nines only; never zero. `equals` takes a text, a number, a day or true or false, of the kind of its field; `range` takes numbers or days, `from` inclusive and `before` exclusive. One place in `src/probes/sql.ts` writes the conditions, and `whereOf` puts them beside the filter that keeps every partition, so that each EDA-Probe writes the same SQL as on the whole table, on fewer rows. The conditions come from the User: eda checks them against the Resource first, at most 10, each on a field of it with values of its kind (400 otherwise), and writes every value through a literal of its kind that refuses anything else, a text escaped as a quoted string of BigQuery. A run on a selection is kept with it, but it neither adds its EDA-Probe nor changes what it is set on, is never its last run and does not count for complete. Every `RunView` says what it ran on, `{ where: [] }` for the whole table.
+
 ## The SQL of each EDA-Probe
 
 Each EDA-Probe is a module of its own in `src/probes`, with the SQL it writes and how it reads the answer. Every value of the answer is read as BigQuery writes it, as text.
@@ -51,16 +55,16 @@ Every route needs the Access Token of a User with `eda.use` and answers 403 with
 | `GET /edas` | The EDAs of the Resources the User sees, each with its Resource, Collection, status and needed EDA-Probes complete, as last computed; and, as `ready`, the Resources at 3 · Confirmed or above without one, from the Collections catalogue lists for the User ([FR-ED-03](../../requirements/functional/15-eda.md#fr-ed-03)) |
 | `POST /resources/{id}/eda` | Starts the EDA of a Resource at 3 · Confirmed or above: 201 with the EDA, 409 when it has one, 422 below 3 ([FR-ED-02](../../requirements/functional/15-eda.md#fr-ed-02)) |
 | `GET /resources/{id}/eda` | The EDA as the tab Steps and the Maturity of the Resource show it, `EdaView` of the contracts; 404 without an EDA ([FR-ED-04](../../requirements/functional/15-eda.md#fr-ed-04)) |
-| `POST /resources/{id}/eda/probes/{probe}/runs` | With `{ fields?, params?, approve? }`: adds the EDA-Probe if it is not yet and runs it through query; `{ state: 'ran', eda }`, or what the Pre-flight asks, `{ state: 'approve', bytes }` or `{ state: 'refused', bytes, reason }` ([FR-ED-06](../../requirements/functional/15-eda.md#fr-ed-06)) |
+| `POST /resources/{id}/eda/probes/{probe}/runs` | With `{ fields?, params?, selection?, approve? }`: adds the EDA-Probe if it is not yet and runs it through query; `{ state: 'ran', eda }`, or what the Pre-flight asks, `{ state: 'approve', bytes }` or `{ state: 'refused', bytes, reason }` ([FR-ED-06](../../requirements/functional/15-eda.md#fr-ed-06)). With a `selection`, `{ where: [...] }` of at most 10 conditions, it runs on those rows only and adds nothing: `{ state: 'ran', eda, run }`, the EDA as it was and the run with its `selection` ([OP-ED-12](../../requirements/functional/15-eda.md#op-ed-12)) |
 | `PUT /resources/{id}/eda/probes/{probe}/readings` | With `{ subject, reading }`, `expected`, `known` or `problem`: the reading of a result of its last run, in place of an earlier one; the EDA as it is after ([FR-ED-11](../../requirements/functional/15-eda.md#fr-ed-11)) |
 
 ## Data
 
-The schema `eda` ([TR-ED-01](../../requirements/technical/15-eda.md#tr-ed-01)), migration `0001-edas`:
+The schema `eda` ([TR-ED-01](../../requirements/technical/15-eda.md#tr-ed-01)), migrations `0001-edas` and `0002-selection`:
 
 - `edas`: one per Resource; its status, who started it and when, when it became Explored, when catalogue heard it (`told_at`), and the needed EDA-Probes and how many are complete as last computed, for the panel.
 - `eda_probes`: per EDA and EDA-Probe, the fields and parameters it is set on, who added it and when.
-- `eda_runs`: per run, the fields and parameters it ran with, who ran it and when, the bytes it read and its Query ID in the Query Log of query.
+- `eda_runs`: per run, the fields and parameters it ran with, the selection of rows it ran on (`{"where":[]}` for the whole table, the default), who ran it and when, the bytes it read and its Query ID in the Query Log of query. The last run of an EDA-Probe is its last on the whole table ([OP-ED-12](../../requirements/functional/15-eda.md#op-ed-12)).
 - `eda_results`: per run and subject, its numbers as JSON and Data Hub's reading.
 - `eda_readings`: per EDA, EDA-Probe and subject, the reading of who works on the EDA, with who gave it and when.
 

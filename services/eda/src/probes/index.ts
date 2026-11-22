@@ -10,6 +10,7 @@ import type { ProbeSetting, RunnableProbe } from './probe.js';
 import { volumeOverTime } from './volume.js';
 
 export type { Outcome, ProbeContext, ProbeSetting, RunnableProbe } from './probe.js';
+export { checkSelection, disguisedOf, isWholeTable, parseSelection } from './selection.js';
 export { AnswerMismatch } from './sql.js';
 
 /**

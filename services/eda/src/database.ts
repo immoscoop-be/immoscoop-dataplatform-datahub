@@ -1,4 +1,4 @@
-import type { DataHubReading, EdaStatus, OwnerReading, ProbeKey, ProbeResult } from '@datahub/contracts/eda';
+import type { DataHubReading, EdaStatus, OwnerReading, ProbeKey, ProbeResult, Selection } from '@datahub/contracts/eda';
 import type { ColumnType, Generated } from 'kysely';
 
 /** A timestamp: read as a Date, written as a Date or left to the database. */
@@ -51,6 +51,8 @@ export interface EdaDatabase {
     bytes: ColumnType<string, number, number>;
     /** The ID of its run in the Query Log of query, such as q-20261121-4c2e1a. */
     queryRunId: string;
+    /** The rows it ran on (OP-ED-12): `{"where":[]}` for the whole table, the default. */
+    selection: ColumnType<Selection, string | undefined, string>;
   };
   /** The result of a run per subject: the table as a whole ('') or a field (TR-ED-03). */
   edaResults: {

@@ -582,7 +582,10 @@ export interface RunView {
   bytes: number;
   fields: string[];
   params: Record<string, unknown>;
-  /** The rows it ran on; absent for the whole table, which the runs that make an EDA-Probe complete run on (OP-ED-12). */
+  /**
+   * The rows it ran on (OP-ED-12): eda fills it for every run, `{ where: [] }` for the whole table, which the runs that
+   * make an EDA-Probe complete run on.
+   */
   selection?: Selection;
   results: ResultView[];
 }
@@ -625,7 +628,11 @@ export interface EdaListItem {
 
 /** What a run of an EDA-Probe answers (POST /resources/{id}/eda/probes/{probe}/runs). */
 export type RunAnswer =
-  | { state: 'ran'; eda: EdaView }
+  /**
+   * It ran. On a selection of rows (OP-ED-12) the EDA is unchanged and `run` is the run itself, which is not the last
+   * run of its EDA-Probe; on the whole table there is no `run`, it is the last run in `eda`.
+   */
+  | { state: 'ran'; eda: EdaView; run?: RunView }
   /** It reads more than runs freely: the User approves it, then it runs with `approve`. */
   | { state: 'approve'; bytes: number }
   /** It reads more than the User may approve, or cannot run: why. */
