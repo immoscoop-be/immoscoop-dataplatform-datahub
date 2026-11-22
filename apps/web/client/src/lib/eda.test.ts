@@ -91,6 +91,20 @@ describe('the calls of the page to eda (TR-ED-01)', () => {
     expect(await eda.run('r1', 'grainHolds')).toEqual({ state: 'refused', bytes: null, reason: 'The Data Team records its grain first.' });
   });
 
+  it('digs into a selection with its approval, and answers as a run does (TR-ED-12)', async () => {
+    const selection = { where: [{ kind: 'empty' as const, field: 'lead_channel' }] };
+    const ran = { state: 'ran', selection, result: { rows: { selected: 1, total: 2 }, overTime: null, fields: [] }, ranAt: '2026-11-22T10:00:00Z', bytes: 10 };
+    const { eda, calls } = fake({ 'POST /resources/r1/eda/dig': () => Response.json(ran) });
+    expect(await eda.dig('r1', selection)).toEqual(ran);
+    expect(calls[0]).toMatchObject({ method: 'POST', url: 'https://eda.test/resources/r1/eda/dig', body: { selection } });
+    await eda.dig('r1', selection, true);
+    expect(calls[1]?.body).toEqual({ selection, approve: true });
+    const asked = fake({ 'POST /resources/r1/eda/dig': () => Response.json({ state: 'approve', bytes: 300_000_000 }) });
+    expect(await asked.eda.dig('r1', selection)).toEqual({ state: 'approve', bytes: 300_000_000 });
+    const bad = fake({ 'POST /resources/r1/eda/dig': () => Response.json({ error: 'invalid_request', message: 'lead_x is no field of this Resource.' }, { status: 400 }) });
+    expect(await bad.eda.dig('r1', selection)).toEqual({ state: 'refused', bytes: null, reason: 'lead_x is no field of this Resource.' });
+  });
+
   it('keeps a reading and answers the EDA as it is now', async () => {
     const { eda, calls } = fake({ 'PUT /resources/r1/eda/probes/nullsPerKeyField/readings': () => Response.json(VIEW) });
     expect(await eda.read('r1', 'nullsPerKeyField', 'lead_source', 'known')).toEqual(VIEW);

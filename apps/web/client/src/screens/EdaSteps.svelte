@@ -12,8 +12,8 @@
    * The tab Steps of an EDA (DEC-UX-322, FR-ED-04), in two columns. On the left, 70%, a row per EDA-Step in the order
    * of DEC-ED-11, each saying how many of its needed EDA-Probes are complete, its EDA-Probes added as cards, and, while
    * it has EDA-Probes offered that are not added yet, coming ones too, one empty tile, Add probe, the same size as a
-   * card, dotted and grey, with what an EDA-Probe is. The tile opens the list to add an EDA-Probe at its EDA-Step
-   * (FR-ED-13). On the right, 30%, the state of its EDA-Setup.
+   * card, dotted and grey, with what an EDA-Probe is, at half opacity until it is hovered or focused (DEC-UX-331). The
+   * tile opens the list to add an EDA-Probe at its EDA-Step (FR-ED-13). On the right, 30%, the state of its EDA-Setup.
    */
   let { view }: { view: EdaView } = $props();
 
@@ -81,11 +81,13 @@
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); grid-auto-rows: 1fr; gap: 12px; }
   .add { box-sizing: border-box; min-height: 300px; font: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 18px 22px;
     text-align: center; text-decoration: none; border-radius: var(--radius-md); border: 1.5px dashed color-mix(in srgb, var(--text-muted) 55%, transparent);
-    background: color-mix(in srgb, var(--text-muted) 8%, transparent); color: var(--text-secondary); }
+    background: color-mix(in srgb, var(--text-muted) 8%, transparent); color: var(--text-secondary); opacity: .5; transition: opacity var(--motion-fade), background var(--motion-fade); }
   .add > :global(.icon) { font-size: 28px; color: var(--text-muted); }
   .add b { font-size: 15px; font-weight: var(--weight-medium); color: var(--text-primary); }
   .add span { font-size: var(--text-small); line-height: 1.5; max-width: 30ch; }
   .add small { font-size: var(--text-meta); color: var(--text-muted); }
+  /* Half opacity at rest, in full when hovered or focused, so that it weighs less than the cards beside it (DEC-UX-331). */
+  .add:hover, .add:focus-visible { opacity: 1; }
   .add:hover { background: color-mix(in srgb, var(--text-muted) 14%, transparent); }
   .add:focus-visible { outline: 2px solid var(--text-secondary); }
   @media (max-width: 1180px) { .layout { grid-template-columns: 1fr; } }

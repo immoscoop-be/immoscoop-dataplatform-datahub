@@ -6,6 +6,7 @@
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import IconButton from '@datahub/ui/primitives/IconButton.svelte';
   import type { Field, KnownGap } from '../lib/catalogue.js';
+  import type { GapProposal } from '../lib/gaps.js';
   import GapForm from './GapForm.svelte';
   import GapScopeView from './GapScope.svelte';
 
@@ -13,7 +14,8 @@
    * The Known Gaps of a Resource, a part of its Overview (FR-RC-21, DEC-UX-170): a list, one gap per line, each with
    * who added it and when, and where it holds as chips: a period, fields and rows (FR-RC-24, DEC-UX-177). Its Owner
    * Unit and the Data Team add a gap from the line at the bottom, which opens a form, and change or remove one on its
-   * own line, without editing the others; every change goes into its Log. The why is plain text.
+   * own line, without editing the others; every change goes into its Log. The why is plain text. A gap proposed
+   * elsewhere, such as by Dig into (FR-ED-20), opens in the form of a new gap, filled in, for the User to save or not.
    */
   let {
     gaps,
@@ -24,6 +26,7 @@
     onchange,
     onremove,
     adding = $bindable(false),
+    proposal = $bindable(null),
     none = null,
     onnothing,
   }: {
@@ -39,6 +42,8 @@
     onremove: (gap: KnownGap) => Promise<boolean>;
     /** A new gap being written; the quick window opens it too (DEC-UX-258). */
     adding?: boolean;
+    /** The why and the scope the new gap is filled in with, as proposed elsewhere; gone once it is saved or cancelled. */
+    proposal?: GapProposal | null;
     /** Who said there are none, and when, while none is written (DEC-MR-16). */
     none?: { by: string; at: string } | null;
     /** Says there are none to add; answers whether it worked. Left out for who may not. */
@@ -63,7 +68,12 @@
   }
 
   async function add(text: string, scope: GapScope | null) {
-    if (await attempt(() => onadd(text, scope))) adding = false;
+    if (await attempt(() => onadd(text, scope))) stopAdding();
+  }
+
+  function stopAdding() {
+    adding = false;
+    proposal = null;
   }
 
   async function save(gap: KnownGap, text: string, scope: GapScope | null) {
@@ -104,7 +114,7 @@
                 icon="pencil-simple-line"
                 label={t('gaps.change')}
                 onclick={() => {
-                  adding = false;
+                  stopAdding();
                   changing = gap.id;
                 }}
               />
@@ -129,7 +139,7 @@
 {#if canEdit}
   {#if adding}
     <div class="adding">
-      <GapForm {fields} {dateField} {busy} label={t('gaps.new')} saveLabel={t('gaps.add')} onsave={add} oncancel={() => (adding = false)} />
+      <GapForm text={proposal?.text} scope={proposal?.scope ?? null} {fields} {dateField} {busy} label={t('gaps.new')} saveLabel={t('gaps.add')} onsave={add} oncancel={stopAdding} />
     </div>
   {:else}
     <button

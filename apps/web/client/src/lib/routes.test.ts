@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { chartPath, contextPath, edaPath, probePath, editLensPath, GROUPS, groupPath, learningPath, messagePath, messagesOnPath, NEW_GROUP, newLensForPath, objectPath, queryRunsPath, resourcePath, route, seePath, usersPath } from './routes.js';
+import { chartPath, contextPath, digPath, edaPath, probePath, editLensPath, GROUPS, groupPath, learningPath, messagePath, messagesOnPath, NEW_GROUP, newLensForPath, objectPath, queryRunsPath, resourcePath, route, seePath, usersPath } from './routes.js';
 
 describe('the addresses of the web app', () => {
   it('opens on the start screen of Collections', () => {
@@ -38,6 +38,23 @@ describe('the addresses of the web app', () => {
     expect(route('/eda/r-1/probes/rowsAndMore')).toEqual({ kind: 'notFound' });
     expect(route('/eda/r-1/probes')).toEqual({ kind: 'notFound' });
     expect(route('/eda/%E0%A4%A')).toEqual({ kind: 'notFound' });
+  });
+
+  it('has Dig into a selection of rows in the tab Steps, the selection in the query of its address (FR-ED-20)', () => {
+    const selection = { where: [{ kind: 'saysNothing' as const, field: 'lead_channel' }, { kind: 'equals' as const, field: 'lead_source', value: 'app & more' }] };
+    const path = digPath('r-1', selection, 'disguisedNulls');
+    expect(path.startsWith('/eda/r-1/dig?from=disguisedNulls&selection=')).toBe(true);
+    expect(route(path)).toMatchObject({ kind: 'eda', id: 'r-1', tab: 'steps', probe: null, dig: { selection, from: 'disguisedNulls' }, section: { id: 'eda' } });
+    expect(route(digPath('r-1', selection))).toMatchObject({ kind: 'eda', dig: { selection, from: null } });
+    // The query belongs to Dig into alone: elsewhere it changes nothing.
+    expect(route('/eda/r-1?selection=x')).toMatchObject({ kind: 'eda', tab: 'steps', probe: null });
+    expect(route('/eda/r-1?selection=x')).not.toHaveProperty('dig');
+    expect(route('/resources/r1/gaps?error=x')).toMatchObject({ kind: 'resource', id: 'r1', at: 'gaps' });
+    // No selection, or one eda would not dig into, is no page; an EDA-Probe that does not exist leads nowhere.
+    expect(route('/eda/r-1/dig')).toEqual({ kind: 'notFound' });
+    expect(route(`/eda/r-1/dig?selection=${encodeURIComponent('{"where":[]}')}`)).toEqual({ kind: 'notFound' });
+    expect(route(`/eda/r-1/dig?selection=${encodeURIComponent('{"where":[{"kind":"like","field":"x"}]}')}`)).toEqual({ kind: 'notFound' });
+    expect(route(digPath('r-1', selection).replace('dig?', 'dig?from=rowsAndMore&'))).toMatchObject({ dig: { from: null } });
   });
 
   it('has a page per Resource, in the section Collections', () => {

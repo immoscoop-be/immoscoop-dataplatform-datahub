@@ -335,13 +335,16 @@ export function coverage(resource: EdaResource, runs: readonly RunCover[]): { fi
 }
 
 /**
- * The best next step (DEC-ED-16): the needed EDA-Probe Data Hub can run that covers the most of what is missing,
+ * The best next step: The grain holds while it is open (DEC-ED-37); else the needed EDA-Probe Data Hub can run that
+ * covers the most of what is missing (DEC-ED-16),
  * in the order of the table when they cover as much; null when none is left.
  */
 export function bestNext(resource: EdaResource, runs: readonly RunCover[]): ProbeKey | null {
   const open = probesFor(resource.modelType).filter(
     (probe) => PROBES[probe].runs && isNeeded(probe, resource) && !isComplete(probe, resource, runs) && appliesTo(probe, resource).block === null,
   );
+  // The grain holds comes first while it is open: every other result leans on what one row is (DEC-ED-37).
+  if (open.includes('grainHolds')) return 'grainHolds';
   let best: ProbeKey | null = null;
   let most = -1;
   for (const probe of open) {
@@ -515,10 +518,12 @@ export interface DisguisedResult {
 export type ProbeResult = GrainResult | NullsResult | VolumeResult | DistributionResult | CategoriesResult | DateRangeResult | DisguisedResult;
 
 /**
- * A condition on the rows of a table (OP-ED-12): the field says nothing (no value, or one of the lists of Disguised
- * nulls of its EDA), equals a value, or lies in a range, from inclusive and before exclusive; days as YYYY-MM-DD.
+ * A condition on the rows of a table (OP-ED-12): the field holds no value (empty); says nothing (no value, or one of the
+ * lists of Disguised nulls of its EDA); equals a value; or lies in a range, from inclusive and before exclusive; days as
+ * YYYY-MM-DD.
  */
 export type RowCondition =
+  | { kind: 'empty'; field: string }
   | { kind: 'saysNothing'; field: string }
   | { kind: 'equals'; field: string; value: string | number | boolean }
   | { kind: 'range'; field: string; from?: string | number; before?: string | number };
@@ -533,6 +538,65 @@ export interface Selection {
 
 /** The whole table. */
 export const WHOLE_TABLE: Selection = { where: [] };
+
+/** A selection holds at most this many conditions, and a text in one at most this many characters (TR-ED-11). */
+export const SELECTION_LIMITS = { conditions: 10, text: 1000 } as const;
+
+// ----------------------------------------------------------------------------------------------------------------
+// Dig into a selection against the rest (DEC-ED-36, FR-ED-20, TR-ED-12)
+
+/** A value of a text among the selected rows and the rest: its rows in both, and how it compares. */
+export interface DigValue {
+  /** The value; null for no value. */
+  value: string | null;
+  /** Its rows among the selected rows, and among the rest. */
+  selected: number;
+  rest: number;
+  /** How many times more often it is among the selected rows than among the rest, by share; null when the rest holds none. */
+  ratio: number | null;
+  /** Whether a difference this large is beyond chance, at a margin of 95% (DEC-ED-14). */
+  real: boolean;
+}
+
+/** The middle of a number among some rows; null without any value. */
+export interface DigMiddle {
+  median: number | null;
+  mean: number | null;
+}
+
+/** An other Key Field set against the selection: per text the values that differ most, per number its middle in both. */
+export type DigField =
+  | { field: string; kind: 'text'; values: DigValue[] }
+  | { field: string; kind: 'number'; selected: DigMiddle; rest: DigMiddle };
+
+/** A period of the date the role names: its first day, its rows selected and all its rows. */
+export interface DigPeriod {
+  start: string;
+  selected: number;
+  total: number;
+}
+
+/** What a dig found (TR-ED-12). */
+export interface DigResult {
+  /** The rows selected, and all rows of the table. */
+  rows: { selected: number; total: number };
+  /**
+   * Over time, on the date the role of the model type names: the share of the selection per period, and the first
+   * period after the break, when the share on one side is at least twice the other, beyond chance; with whether the
+   * selection was more or less of the rows before it. Null without such a date.
+   */
+  overTime: { field: string; unit: 'day' | 'week' | 'month'; periods: DigPeriod[]; breakAt: string | null; before: 'more' | 'less' | null } | null;
+  /** The other Key Fields, in the order of the Resource Card. */
+  fields: DigField[];
+}
+
+/** What a dig answers (POST /resources/{id}/eda/dig), as a run of an EDA-Probe does. */
+export type DigAnswer =
+  | { state: 'ran'; selection: Selection; result: DigResult; ranAt: string; bytes: number }
+  /** It reads more than runs freely: the User approves it, then it runs with `approve`. */
+  | { state: 'approve'; bytes: number }
+  /** It reads more than the User may approve, or cannot run: why. */
+  | { state: 'refused'; bytes: number | null; reason: string };
 
 /**
  * Whether a result asks for the reading of who works on the EDA, the same for the web app and Claude (FR-ED-11): not
@@ -642,9 +706,16 @@ export type RunAnswer =
   /** It reads more than the User may approve, or cannot run: why. */
   | { state: 'refused'; bytes: number | null; reason: string };
 
+/** What eda asks query to run: an EDA-Probe, or a dig into a selection (TR-ED-12). */
+export type RunKind = ProbeKey | 'digInto';
+
+/** Every kind of run query takes from eda. */
+export const RUN_KINDS: readonly RunKind[] = [...PROBE_KEYS, 'digInto'];
+
 /** What eda asks query to run (POST /resources/{id}/eda/runs on query, TR-ED-04). */
 export interface ProbeRunRequest {
-  probe: ProbeKey;
+  /** The EDA-Probe, or a dig into a selection (TR-ED-12). */
+  probe: RunKind;
   sql: string;
   approve?: boolean;
 }

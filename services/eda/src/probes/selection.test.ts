@@ -11,9 +11,10 @@ const fieldOf = (name: string, dataType: string | null): EdaField => ({ name, da
 const WIDER = { ...WEEKLY, resource: { ...WEEKLY.resource, fields: [...WEEKLY.resource.fields, fieldOf('is_test', 'BOOL'), fieldOf('payload', 'JSON')] } };
 
 describe('a selection in a request (OP-ED-12)', () => {
-  it('takes at most 10 conditions of the three kinds, each with only its own keys', () => {
+  it('takes at most 10 conditions of the four kinds, each with only its own keys', () => {
     expect(parseSelection({ where: [] })).toEqual({ where: [] });
     const where = [
+      { kind: 'empty', field: 'lead_origin' },
       { kind: 'saysNothing', field: 'lead_channel' },
       { kind: 'equals', field: 'lead_source', value: 'website' },
       { kind: 'equals', field: 'is_test', value: false },
@@ -31,9 +32,13 @@ describe('a selection in a request (OP-ED-12)', () => {
     expect(parseSelection({ where: [], sql: 'true' })).toBe('A selection has no sql.');
     expect(parseSelection({ where: new Array(11).fill({ kind: 'saysNothing', field: 'lead_channel' }) })).toBe('A selection holds at most 10 conditions.');
     expect(parseSelection({ where: [null] })).toBe('Condition 1 is a JSON object.');
-    expect(parseSelection({ where: [{ kind: 'raw', field: 'lead_channel', sql: 'true' }] })).toBe('Condition 1 is saysNothing, equals or range, as its kind.');
+    expect(parseSelection({ where: [{ kind: 'raw', field: 'lead_channel', sql: 'true' }] })).toBe('Condition 1 is empty, saysNothing, equals or range, as its kind.');
     expect(parseSelection({ where: [{ kind: 'saysNothing' }] })).toBe('Condition 1 names its field.');
+    expect(parseSelection({ where: [{ kind: 'empty', field: '' }] })).toBe('Condition 1 names its field.');
+    expect(parseSelection({ where: [{ kind: 'empty', field: 7 }] })).toBe('Condition 1 names its field.');
     expect(parseSelection({ where: [{ kind: 'saysNothing', field: 'lead_channel', value: 'x' }] })).toBe('Condition 1, saysNothing, has no value.');
+    expect(parseSelection({ where: [{ kind: 'empty', field: 'lead_channel', value: null }] })).toBe('Condition 1, empty, has no value.');
+    expect(parseSelection({ where: [{ kind: 'empty', field: 'lead_channel', sql: 'or true' }] })).toBe('Condition 1, empty, has no sql.');
     expect(parseSelection({ where: [{ kind: 'saysNothing', field: 'a' }, { kind: 'equals', field: 'lead_source', value: 'x', sql: 'or true' }] })).toBe(
       'Condition 2, equals, has no sql.',
     );
@@ -49,6 +54,10 @@ describe('a selection in a request (OP-ED-12)', () => {
     expect(check([])).toBeNull();
     expect(
       check([
+        // Empty, as says nothing, is on a field of any kind.
+        { kind: 'empty', field: 'payload' },
+        { kind: 'empty', field: 'is_test' },
+        { kind: 'empty', field: 'week_start' },
         { kind: 'saysNothing', field: 'payload' },
         { kind: 'equals', field: 'lead_source', value: "web'site" },
         { kind: 'equals', field: 'lead_count', value: -1 },
@@ -61,6 +70,8 @@ describe('a selection in a request (OP-ED-12)', () => {
     expect(check([{ kind: 'saysNothing', field: 'lead_chanel' }])).toBe('lead_chanel is no field of this Resource.');
     // The name of a field is a name of the Resource, never SQL.
     expect(check([{ kind: 'saysNothing', field: 'lead_channel` is null or true or `x' }])).toBe('lead_channel` is null or true or `x is no field of this Resource.');
+    expect(check([{ kind: 'empty', field: 'lead_channel` is null or true or `x' }])).toBe('lead_channel` is null or true or `x is no field of this Resource.');
+    expect(check([{ kind: 'empty', field: 'LEAD_CHANNEL' }])).toBe('LEAD_CHANNEL is no field of this Resource.');
     expect(check([{ kind: 'equals', field: 'lead_channel', value: 1 }])).toBe('lead_channel equals a text of at most 1000 characters.');
     expect(check([{ kind: 'equals', field: 'lead_channel', value: 'x'.repeat(1001) }])).toBe('lead_channel equals a text of at most 1000 characters.');
     expect(check([{ kind: 'equals', field: 'lead_channel', value: '\udc00' }])).toBe('lead_channel equals a text of at most 1000 characters.');
@@ -70,7 +81,7 @@ describe('a selection in a request (OP-ED-12)', () => {
     expect(check([{ kind: 'equals', field: 'week_start', value: "2026-01-01' or '1'='1" }])).toBe('week_start equals a day, YYYY-MM-DD.');
     expect(check([{ kind: 'equals', field: 'week_start', value: '2026-02-30' }])).toBe('week_start equals a day, YYYY-MM-DD.');
     expect(check([{ kind: 'equals', field: 'is_test', value: 'true' }])).toBe('is_test equals true or false.');
-    expect(check([{ kind: 'equals', field: 'payload', value: '{}' }])).toBe('payload is a JSON: a selection on it is only saysNothing.');
+    expect(check([{ kind: 'equals', field: 'payload', value: '{}' }])).toBe('payload is a JSON: a selection on it is only empty or saysNothing.');
     expect(check([{ kind: 'range', field: 'lead_channel', from: 'a' }])).toBe('A range is on a number or a date; lead_channel is a text.');
     expect(check([{ kind: 'range', field: 'week_start', from: 20260105 }])).toBe('The range of week_start is of days, YYYY-MM-DD.');
     expect(check([{ kind: 'range', field: 'lead_count', from: '0) or (1=1' }])).toBe('The range of lead_count is of numbers.');
@@ -105,6 +116,7 @@ const SETTINGS: Record<string, Pick<ProbeContext, 'fields' | 'params'>> = {
 describe('every EDA-Probe runs on a selection of rows (OP-ED-12)', () => {
   const selection: Selection = {
     where: [
+      { kind: 'empty', field: 'lead_origin' },
       { kind: 'saysNothing', field: 'lead_channel' },
       { kind: 'range', field: 'week_start', from: '2026-01-05', before: '2026-02-02' },
       { kind: 'equals', field: 'lead_source', value: "web'site" },

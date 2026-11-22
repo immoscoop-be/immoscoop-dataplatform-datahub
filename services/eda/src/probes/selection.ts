@@ -1,4 +1,4 @@
-import { DISGUISED_DEFAULTS, type DisguisedLists, type RowCondition, type Selection } from '@datahub/contracts/eda';
+import { DISGUISED_DEFAULTS, type DisguisedLists, type RowCondition, SELECTION_LIMITS, type Selection } from '@datahub/contracts/eda';
 import type { EdaSource } from '../catalogue.js';
 import { conditionKind, isDay, isText, MAX_TEXT } from './sql.js';
 
@@ -9,10 +9,10 @@ import { conditionKind, isDay, isText, MAX_TEXT } from './sql.js';
  * gets past this all the same.
  */
 
-/** A selection holds at most this many conditions. */
-export const MAX_CONDITIONS = 10;
+/** A selection holds at most this many conditions (TR-ED-11). */
+export const MAX_CONDITIONS = SELECTION_LIMITS.conditions;
 
-const KINDS = ['saysNothing', 'equals', 'range'] as const;
+const KINDS = ['empty', 'saysNothing', 'equals', 'range'] as const;
 
 /** Whether a selection is the whole table: it holds no condition. */
 export const isWholeTable = (selection: Selection): boolean => selection.where.length === 0;
@@ -22,12 +22,12 @@ function conditionIn(value: unknown, place: number): RowCondition | string {
   const which = `Condition ${place + 1}`;
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return `${which} is a JSON object.`;
   const { kind, field, ...rest } = value as Record<string, unknown>;
-  if (typeof kind !== 'string' || !(KINDS as readonly string[]).includes(kind)) return `${which} is saysNothing, equals or range, as its kind.`;
+  if (typeof kind !== 'string' || !(KINDS as readonly string[]).includes(kind)) return `${which} is empty, saysNothing, equals or range, as its kind.`;
   if (typeof field !== 'string' || field === '') return `${which} names its field.`;
   const allowed = kind === 'equals' ? ['value'] : kind === 'range' ? ['from', 'before'] : [];
   const unknown = Object.keys(rest).find((key) => !allowed.includes(key));
   if (unknown !== undefined) return `${which}, ${kind}, has no ${unknown}.`;
-  if (kind === 'saysNothing') return { kind, field };
+  if (kind === 'empty' || kind === 'saysNothing') return { kind, field };
   if (kind === 'equals') {
     const { value: equal } = rest;
     if (typeof equal !== 'string' && typeof equal !== 'number' && typeof equal !== 'boolean') return `${which}, equals, has a value: a text, a number, true or false.`;
@@ -40,7 +40,7 @@ function conditionIn(value: unknown, place: number): RowCondition | string {
 }
 
 /**
- * A selection in a request, by its shape alone: `{ where: [...] }`, at most 10 conditions of the three kinds, each with
+ * A selection in a request, by its shape alone: `{ where: [...] }`, at most 10 conditions of the four kinds, each with
  * only its own keys; a string says what does not fit (400).
  */
 export function parseSelection(value: unknown): Selection | string {
@@ -81,17 +81,17 @@ const EXPECTED = {
 } as const;
 
 /**
- * A selection against the Resource (OP-ED-12): every field one of its fields; a value of equals of the kind of its
- * field, a text, a number, a day or true or false; a range on a number or a date, its bounds of that kind and from
- * before before. A string says what does not fit (400); null when it fits.
+ * A selection against the Resource (OP-ED-12): every field one of its fields; empty and saysNothing on a field of any
+ * kind; a value of equals of the kind of its field, a text, a number, a day or true or false; a range on a number or a
+ * date, its bounds of that kind and from before before. A string says what does not fit (400); null when it fits.
  */
 export function checkSelection(selection: Selection, source: EdaSource): string | null {
   for (const condition of selection.where) {
     const field = source.resource.fields.find((candidate) => candidate.name === condition.field);
     if (!field) return `${condition.field} is no field of this Resource.`;
     const kind = conditionKind(field.dataType);
-    if (condition.kind === 'saysNothing') continue;
-    if (kind === 'other') return `${field.name} is a ${field.dataType ?? 'field without a type'}: a selection on it is only saysNothing.`;
+    if (condition.kind === 'empty' || condition.kind === 'saysNothing') continue;
+    if (kind === 'other') return `${field.name} is a ${field.dataType ?? 'field without a type'}: a selection on it is only empty or saysNothing.`;
     if (condition.kind === 'equals') {
       if (!fits(kind, condition.value)) return `${field.name} equals ${EXPECTED[kind]}.`;
       continue;

@@ -1,5 +1,6 @@
-import { PROBE_KEYS, type ProbeKey } from '@datahub/contracts/eda';
+import { PROBE_KEYS, type ProbeKey, type Selection } from '@datahub/contracts/eda';
 import { FIRST_CHART } from './charts.js';
+import { selectionFrom } from './dig.js';
 import { ADMIN_TOOLS, type AdminTool, SECTIONS, type Section } from './sections.js';
 
 /** The tabs of My page that part 1 builds; Excel keys come with part 9 (DEC-UX-85, DEC-UX-108). */
@@ -22,6 +23,15 @@ export type ResourceSpot = (typeof RESOURCE_SPOTS)[number];
 /** The tabs of the page of an EDA (DEC-UX-321): Steps is where it opens, at the address of the EDA itself. */
 export const EDA_TABS = ['overview', 'steps', 'profile'] as const;
 export type EdaTab = (typeof EDA_TABS)[number];
+
+/**
+ * Dig into what a result found (FR-ED-20), on a page of its own in the tab Steps: the selection of rows, kept in the
+ * query of its address as JSON, and the EDA-Probe whose result it started from, which it leads back to.
+ */
+export interface DigAt {
+  readonly selection: Selection;
+  readonly from: ProbeKey | null;
+}
 
 export type Route =
   | { readonly kind: 'start'; readonly section: Section }
@@ -63,9 +73,9 @@ export type Route =
   | { readonly kind: 'chart'; readonly id: string; readonly section: Section }
   /**
    * The EDA of a Resource, in the section EDA, by the ID of its Resource, on one of its tabs; on Steps, the detail of one
-   * of its EDA-Probes in place of its rows (DEC-UX-321, DEC-UX-324).
+   * of its EDA-Probes in place of its rows (DEC-UX-321, DEC-UX-324), or Dig into a selection of its rows (FR-ED-20).
    */
-  | { readonly kind: 'eda'; readonly id: string; readonly tab: EdaTab; readonly probe: ProbeKey | null; readonly section: Section }
+  | { readonly kind: 'eda'; readonly id: string; readonly tab: EdaTab; readonly probe: ProbeKey | null; readonly dig?: DigAt; readonly section: Section }
   | { readonly kind: 'redirect'; readonly to: string }
   | { readonly kind: 'notFound' };
 
@@ -102,6 +112,9 @@ export const MESSAGES = '/messages';
 export const edaPath = (id: string, tab: EdaTab = 'steps'): string => `/eda/${encodeURIComponent(id)}${tab === 'steps' ? '' : `/${tab}`}`;
 /** The detail of an EDA-Probe of the EDA of a Resource, in its tab Steps (DEC-UX-324). */
 export const probePath = (id: string, probe: ProbeKey): string => `/eda/${encodeURIComponent(id)}/probes/${probe}`;
+/** Dig into a selection of the rows of a Resource, from the result of an EDA-Probe, in the tab Steps of its EDA (FR-ED-20). */
+export const digPath = (id: string, selection: Selection, from?: ProbeKey | null): string =>
+  `/eda/${encodeURIComponent(id)}/dig?${new URLSearchParams({ ...(from ? { from } : {}), selection: JSON.stringify(selection) })}`;
 /** A chart in Charts, by the id semgraph gives it (FR-CH-06). */
 export const chartPath = (id: string): string => `/charts/${encodeURIComponent(id)}`;
 /** A Message opened in the Message Centre. */
@@ -143,7 +156,11 @@ export { contextPath } from '@datahub/contracts/messages';
  * not exist or may not be seen, which does not say which of the two it is (DEC-UX-32, FR-CO-32). Admin opens on
  * the first of the tools the User may open, every tool when they are not given.
  */
-export function route(path: string, adminTools: readonly AdminTool[] = ADMIN_TOOLS.map((tool) => tool.id)): Route {
+export function route(address: string, adminTools: readonly AdminTool[] = ADMIN_TOOLS.map((tool) => tool.id)): Route {
+  // Which page it is follows from the path; only Dig into reads the query (FR-ED-20).
+  const mark = address.indexOf('?');
+  const path = mark < 0 ? address : address.slice(0, mark);
+  const asked = new URLSearchParams(mark < 0 ? '' : address.slice(mark + 1));
   const clean = path.length > 1 ? path.replace(/\/+$/, '') : path;
   if (clean === '/') {
     return { kind: 'redirect', to: HOME };
@@ -194,6 +211,12 @@ export function route(path: string, adminTools: readonly AdminTool[] = ADMIN_TOO
     const tab = EDA_TABS.find((one) => one === edaAt && one !== 'steps');
     if (tab) {
       return { kind: 'eda', id, tab, probe: null, section: eda };
+    }
+    // Dig into: a selection that is no selection eda could dig into is no page (TR-ED-11).
+    if (edaAt === 'dig') {
+      const selection = selectionFrom(asked.get('selection'));
+      const from = PROBE_KEYS.find((key) => key === asked.get('from')) ?? null;
+      return selection ? { kind: 'eda', id, tab: 'steps', probe: null, dig: { selection, from }, section: eda } : { kind: 'notFound' };
     }
     const probe = PROBE_KEYS.find((key) => edaAt === `probes/${key}`);
     return probe ? { kind: 'eda', id, tab: 'steps', probe, section: eda } : { kind: 'notFound' };

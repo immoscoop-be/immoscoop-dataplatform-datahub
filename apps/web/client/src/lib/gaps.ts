@@ -30,3 +30,28 @@ export function scopeLine(scope: GapScope): string {
   if (scope.rows) parts.push(scope.rows.is === 'empty' ? t('gaps.line.empty', { field: scope.rows.field }) : t('gaps.line.rows', { field: scope.rows.field, values: valuesOf(scope.rows.values) }));
   return parts.join(' · ');
 }
+
+/** A Known Gap proposed elsewhere, such as by Dig into (FR-ED-20): its why and its scope, which the User saves, or not. */
+export interface GapProposal {
+  text: string;
+  scope: GapScope | null;
+}
+
+/** The Known Gap proposed for a Resource, until its page opens it in the form of a new gap; it lives in the open app only. */
+let proposed: { resource: string; proposal: GapProposal } | null = null;
+
+/**
+ * Proposes a Known Gap for a Resource, which its Known Gaps open in the form of a new gap, filled in. Nothing is saved:
+ * the User saves it there, as any Known Gap (FR-RC-24).
+ */
+export function proposeGap(resource: string, proposal: GapProposal): void {
+  proposed = { resource, proposal };
+}
+
+/** The Known Gap proposed for a Resource, taken once; null when none is. */
+export function takeProposal(resource: string): GapProposal | null {
+  if (proposed?.resource !== resource) return null;
+  const { proposal } = proposed;
+  proposed = null;
+  return proposal;
+}

@@ -13,7 +13,7 @@
   import Loading from '@datahub/ui/primitives/Loading.svelte';
   import { disguisedListsOf, type EdaClient, MARK_ICONS, markOf, number, PROBE_ABOUT, PROBE_TEXTS, type RunAsk, sameLists, STEP_TEXTS } from '../lib/eda.js';
   import { when } from '../lib/moment.js';
-  import { edaPath } from '../lib/routes.js';
+  import { digPath, edaPath } from '../lib/routes.js';
   import EdaDisguisedLists from './EdaDisguisedLists.svelte';
   import EdaDrawing from './EdaDrawing.svelte';
   import EdaResult from './EdaResult.svelte';
@@ -25,19 +25,23 @@
    * to the EDA and runs it now, then Run again. A run reads through query as the User: above what runs freely the User
    * approves it, as for a query, and above what they may approve it does not run, with why. The left column folds to a
    * strip. On the right, 60%: before a run, where its result will come; after, the result of its last run, drawn by a
-   * component of its own from the run alone (FR-ED-07 to FR-ED-11, OP-ED-12).
+   * component of its own from the run alone (FR-ED-07 to FR-ED-11, OP-ED-12), whose rows with something to read lead to
+   * Dig into (FR-ED-20).
    */
   let {
     view,
     probe,
     client,
     onview,
+    go,
   }: {
     view: EdaView;
     probe: ProbeKey;
     client: EdaClient;
     /** The EDA as eda answers it after a run or a reading. */
     onview: (view: EdaView) => void;
+    /** Goes to an address of the app, for Dig into a value chosen from a menu. */
+    go?: (path: string) => void;
   } = $props();
 
   const language = $derived(currentLanguage());
@@ -374,7 +378,7 @@
           <p><Sentence key={about.empty} values={{ name: view.resource.displayName }} names={{ grain: grain.join(', ') }} /></p>
         </section>
       {:else}
-        <EdaResult {probe} run={lastRun} resource={view.resource} onread={read} />
+        <EdaResult {probe} run={lastRun} resource={view.resource} onread={read} digHref={(selection) => digPath(id, selection, probe)} {go} />
       {/if}
     </div>
   </div>
@@ -395,7 +399,8 @@
   .unfold { display: inline-flex; writing-mode: vertical-rl; gap: 8px; align-items: center; border: 0; background: none; cursor: pointer; font: var(--text-small) var(--font-family);
     color: var(--text-secondary); padding: 10px 0; border-radius: var(--radius-md); }
   .unfold :global(.icon) { writing-mode: horizontal-tb; }
-  .drawing { margin: 0 32px 0 0; padding: 8px; border-radius: var(--radius-md); background: var(--surface-solid); position: relative; max-width: 300px; }
+  /* Replay stands in a strip of its own above the drawing, clear of the names of its columns. */
+  .drawing { margin: 0 32px 0 0; padding: 26px 8px 8px; border-radius: var(--radius-md); background: var(--surface-solid); position: relative; max-width: 300px; }
   .replay { position: absolute; right: 8px; top: 6px; display: inline-flex; gap: 4px; align-items: center; border: 0; background: none; cursor: pointer;
     font: var(--text-meta) var(--font-family); color: var(--text-muted); padding: 2px 6px; border-radius: var(--radius-pill); }
   h4 { font-size: var(--text-small); font-weight: var(--weight-medium); margin: 12px 0 4px; }

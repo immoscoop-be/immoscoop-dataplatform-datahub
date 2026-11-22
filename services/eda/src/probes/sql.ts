@@ -1,4 +1,4 @@
-import { DISGUISED_DEFAULTS, type DisguisedLists, type EdaField, type RowCondition, type Selection } from '@datahub/contracts/eda';
+import { DISGUISED_DEFAULTS, type DisguisedLists, type EdaField, type RowCondition, SELECTION_LIMITS, type Selection } from '@datahub/contracts/eda';
 import { kindOf } from '@datahub/contracts/model-types';
 import type { EdaSource } from '../catalogue.js';
 
@@ -76,8 +76,8 @@ export function whereOf(rows: Rows, conditions: string[] = [], indent = ''): str
 /** A value of a condition that cannot be written as a literal of its kind; checkSelection answers it as 400 first. */
 export class UnsafeValue extends Error {}
 
-/** The longest text a condition compares with. */
-export const MAX_TEXT = 1000;
+/** The longest text a condition compares with (TR-ED-11). */
+export const MAX_TEXT = SELECTION_LIMITS.text;
 
 /** The kind of a field a condition compares: that of the contracts, and true or false for a `BOOL`. */
 export type ConditionKind = 'text' | 'number' | 'date' | 'boolean' | 'other';
@@ -190,13 +190,16 @@ export function saysNothingOf(field: EdaField, disguised: DisguisedLists = DISGU
 }
 
 /**
- * One condition of a selection as SQL (OP-ED-12): the field says nothing; equals a value of its kind; or lies in a
- * range, from inclusive and before exclusive, of numbers or of days. A date is compared on its day.
+ * One condition of a selection as SQL (OP-ED-12): the field is empty, without a value; says nothing; equals a value of
+ * its kind; or lies in a range, from inclusive and before exclusive, of numbers or of days. A date is compared on its
+ * day.
  */
 export function conditionOf(condition: RowCondition, source: EdaSource, disguised: DisguisedLists = DISGUISED_DEFAULTS): string {
   const field = fieldOf(source, condition.field);
   const kind = conditionKind(field.dataType);
   switch (condition.kind) {
+    case 'empty':
+      return `${quote(field.name)} is null`;
     case 'saysNothing':
       return saysNothingOf(field, disguised);
     case 'equals':
@@ -211,7 +214,7 @@ export function conditionOf(condition: RowCondition, source: EdaSource, disguise
       return joined(bounds, 'and');
     }
     default:
-      throw new UnsafeValue('a condition is saysNothing, equals or range');
+      throw new UnsafeValue('a condition is empty, saysNothing, equals or range');
   }
 }
 
