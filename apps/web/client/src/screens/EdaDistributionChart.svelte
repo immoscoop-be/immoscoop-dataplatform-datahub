@@ -67,7 +67,8 @@
 </svg>
 
 <style>
-  .chart { --sk-line: color-mix(in srgb, var(--text-muted) 45%, transparent); width: 100%; height: auto; display: block; margin-top: 6px; }
+  /* Never larger than drawn, so that its words stay the size of the page (DEC-UX-332). */
+  .chart { --sk-line: color-mix(in srgb, var(--text-muted) 45%, transparent); width: 100%; max-width: 520px; height: auto; display: block; margin-top: 6px; }
   .middle { fill: color-mix(in srgb, var(--col-slate) 9%, transparent); }
   .note { font-size: 7.5px; fill: var(--text-muted); }
   .bin { fill: var(--col-slate); }

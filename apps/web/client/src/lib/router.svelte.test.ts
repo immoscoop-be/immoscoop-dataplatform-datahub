@@ -43,6 +43,17 @@ describe('the router', () => {
     }
   });
 
+  it('keeps the query of the address, which Dig into reads (FR-ED-20)', () => {
+    history.replaceState(null, '', '/eda/r2/dig?selection=%7B%7D');
+    const router = new Router();
+    expect(router.path).toBe('/eda/r2/dig?selection=%7B%7D');
+    router.go('/eda/r2/dig?selection=%5B%5D');
+    expect(location.search).toBe('?selection=%5B%5D');
+    history.replaceState(null, '', '/eda/r2?x=1');
+    dispatchEvent(new PopStateEvent('popstate'));
+    expect(router.path).toBe('/eda/r2?x=1');
+  });
+
   it('goes back with the browser', () => {
     const router = new Router();
     router.go('/query');

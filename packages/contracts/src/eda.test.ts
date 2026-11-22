@@ -74,8 +74,11 @@ describe('needed, complete, covered (DEC-ED-17, DEC-ED-21)', () => {
     expect(places.rows).toEqual({ needed: 3, complete: 0 });
   });
 
-  it('proposes as best next step what Data Hub runs that covers most of what is missing', () => {
-    expect(bestNext(weekly, [])).toBe('nullsPerKeyField');
+  it('proposes The grain holds first while it is open (DEC-ED-37), then what Data Hub runs that covers most of what is missing', () => {
+    expect(bestNext(weekly, [])).toBe('grainHolds');
+    // Even after a probe that misses more is half done, The grain holds stays first.
+    expect(bestNext(weekly, [{ probe: 'nullsPerKeyField', fields: ['week_start'] }])).toBe('grainHolds');
+    expect(bestNext(weekly, [{ probe: 'grainHolds', fields: ['week_start', 'lead_source'] }])).toBe('nullsPerKeyField');
     const runs: RunCover[] = [
       { probe: 'nullsPerKeyField', fields: ['week_start', 'lead_source', 'lead_count', 'lead_channel'] },
       { probe: 'grainHolds', fields: ['week_start', 'lead_source'] },

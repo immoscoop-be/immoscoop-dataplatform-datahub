@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { FIELD_STEPS, PROBES, type CoverState, type EdaView, type FieldStep, type ProbeKey } from '@datahub/contracts/eda';
+  import { FIELD_STEPS, PROBES, type CoverState, type EdaView, type FieldStep, type ProbeKey, type ProbeView } from '@datahub/contracts/eda';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import type { IconName } from '@datahub/ui/foundations/icons.js';
   import Sentence from '@datahub/ui/foundations/Sentence.svelte';
@@ -15,7 +15,9 @@
    * are complete, as a number and a bar; what the EDA covers in its four places (DEC-ED-16); the best next step with
    * Add this EDA-Probe; the EDA-Probes on the table as a whole, added, needed, suggested or on request, and coming
    * while Data Hub does not run them (FR-ED-05); and per field, in the order of the Resource Card, what covers it per
-   * EDA-Step, the Key Fields marked with a key and what they still need dashed (DEC-UX-323).
+   * EDA-Step, the Key Fields marked with a key and what they still need dashed (DEC-UX-323). The letters of the EDA-Steps
+   * are named under the intro and on hover, and every square says on hover which EDA-Step it is and how it stands: covered
+   * by which EDA-Probe, needed with the EDA-Probe to add, or nothing needed. A long name is cut short, whole on hover.
    */
   let { view }: { view: EdaView } = $props();
 
@@ -78,6 +80,25 @@
     relations: 'eda.step.relations.short',
   };
   const COVER_TEXTS: Record<CoverState, string> = { covered: 'eda.cover.covered', needed: 'eda.cover.needed', free: 'eda.cover.free', none: 'eda.cover.none' };
+  /** The names of EDA-Probes, as one list. */
+  const probeNames = (probes: readonly ProbeView[]) => probes.map((probe) => t(PROBE_TEXTS[probe.key])).join(', ');
+  /**
+   * How a field stands in an EDA-Step, in words for its square: covered by the EDA-Probes whose last run is set on it;
+   * needed, with the needed EDA-Probes it still waits for; nothing needed; or no EDA-Probe of it fits.
+   */
+  function cellSaid(name: string, step: FieldStep, state: CoverState): string {
+    const stepName = t(STEP_TEXTS[step].name);
+    const of = view.probes.filter((probe) => PROBES[probe.key].step === step);
+    if (state === 'covered') {
+      const by = probeNames(of.filter((probe) => probe.lastRun?.fields.includes(name)));
+      if (by) return t('eda.cover.covered.by', { step: stepName, probes: by });
+    }
+    if (state === 'needed') {
+      const to = probeNames(of.filter((probe) => probe.needed && probe.applies.needs.includes(name) && !probe.lastRun?.fields.includes(name)));
+      if (to) return t('eda.cover.needed.by', { step: stepName, probes: to });
+    }
+    return `${stepName}: ${t(COVER_TEXTS[state])}`;
+  }
   /** The four states of a field in an EDA-Step, as the legend names them. */
   const LEGEND: readonly { state: CoverState; text: string }[] = [
     { state: 'covered', text: 'eda.cover.covered.legend' },
@@ -150,18 +171,20 @@
   <section class="tile">
     <div class="top">
       <h3>{t('eda.fields')}</h3>
-      <span class="steps">{#each FIELD_STEPS as step (step)}<span title={t(STEP_TEXTS[step].name)}>{t(STEP_SHORT[step])}</span>{/each}</span>
+      <span class="steps">{#each FIELD_STEPS as step (step)}<abbr title={t(STEP_TEXTS[step].name)}>{t(STEP_SHORT[step])}</abbr>{/each}</span>
     </div>
     <p class="meta lead">{t('eda.fields.about')}</p>
+    <p class="meta letters">{#each FIELD_STEPS as step, index (step)}{index > 0 ? ' · ' : ''}<b>{t(STEP_SHORT[step])}</b> {t(STEP_TEXTS[step].name)}{/each}</p>
     <ul class="fields">
       {#each fields as { cover, field } (cover.name)}
         <li class:key={cover.keyField}>
           {#if cover.keyField}<span class="mark" title={t('resource.role.keyField')}><Icon name="key-fill" label={t('resource.role.keyField')} /></span>{:else}<span></span>{/if}
           <span class="kind" title={field?.dataType ?? ''}><Icon name={field ? MARK_ICONS[markOf(field)] : 'tag'} /></span>
-          <span class="name"><span class="mono">{cover.name}</span>{#if field?.role}<small>{roleWords(field.role)}</small>{:else if field?.mapped}<small>{t('eda.field.mapped')}</small>{/if}</span>
+          <span class="name"><span class="mono" title={cover.name}>{cover.name}</span>{#if field?.role}<small>{roleWords(field.role)}</small>{:else if field?.mapped}<small>{t('eda.field.mapped')}</small>{/if}</span>
           <span class="cells">
             {#each FIELD_STEPS as step (step)}
-              <span class="cell {cover.steps[step]}" role="img" aria-label="{t(STEP_TEXTS[step].name)}: {t(COVER_TEXTS[cover.steps[step]])}" title="{t(STEP_TEXTS[step].name)}: {t(COVER_TEXTS[cover.steps[step]])}"></span>
+              {@const said = cellSaid(cover.name, step, cover.steps[step])}
+              <span class="cell {cover.steps[step]}" role="img" aria-label={said} title={said}></span>
             {/each}
           </span>
         </li>
@@ -208,6 +231,9 @@
   .table .suggested > :global(.icon), .table .onRequest > :global(.icon) { color: var(--text-muted); }
   .table .onRequest span, .table .onRequest a { color: var(--text-muted); }
   .steps { display: grid; grid-template-columns: repeat(4, 14px); gap: 4px; font-size: 10px; color: var(--text-muted); text-align: center; }
+  .steps abbr { text-decoration: none; cursor: help; }
+  .letters { display: block; margin: 4px 0 0; line-height: 1.5; }
+  .letters b { font-weight: var(--weight-medium); color: var(--text-secondary); }
   .fields { list-style: none; margin: 10px 0 0; padding: 0; }
   .fields li { display: grid; grid-template-columns: 14px 16px 1fr auto; gap: 6px; align-items: center; padding: 6px 0; border-top: 1px solid var(--tint-active); }
   .mark { font-size: 12px; color: var(--text-primary); display: inline-flex; }
@@ -215,9 +241,12 @@
   .fields li:not(.key) .kind { opacity: .6; }
   .name { min-width: 0; font-size: 12.5px; color: var(--text-muted); }
   .key .name .mono { color: var(--text-primary); font-weight: var(--weight-medium); }
+  /* A long name stays in its column, cut short, whole on hover (Max, 2026-11-22). */
+  .name .mono { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .name small { display: block; font-size: 10.5px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .cells { display: grid; grid-template-columns: repeat(4, 14px); gap: 4px; }
-  .cell { display: inline-block; width: 14px; height: 14px; border-radius: var(--radius-mark); }
+  .cell { display: inline-block; width: 14px; height: 14px; border-radius: var(--radius-mark); box-sizing: border-box; }
+  .cells .cell { cursor: help; }
   .cell.covered { background: var(--col-teal); }
   .cell.needed { border: 1.5px dashed var(--signal-warn); }
   .cell.free { background: color-mix(in srgb, var(--text-muted) 16%, transparent); }

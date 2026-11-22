@@ -184,6 +184,7 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | denkniveau: herkennen, toepassen, beoordelen | thinking level: recognise, apply, judge |
 | doe-opdracht, doe-vraag | try-it task, try-it question |
 | domeinmodel | Domain Model |
+| echt, kan toeval zijn (een verschil, Graaf erin) | real, could be chance |
 | escalatieladder | ladder (several Rules on one Metric) |
 | fiche, catalogusfiche | Resource Card, catalogue card |
 | flow box | Flow Box |
@@ -192,6 +193,7 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | gesprek | conversation |
 | gewicht van een lens | weight of a Lens |
 | gezondheidsoverzicht | Health Overview |
+| graaf erin, graaf verder, verfijn (een selectie van rijen) | Dig into, Dig further, Narrow it |
 | grafiekserver | Chart Server |
 | grafiektaal | chart language |
 | holle hoek | concave corner (flare) |

@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { can, rangesOf } from '@datahub/contracts';
-import { PROBE_KEYS, type ProbeKey, type ProbeRunAnswer } from '@datahub/contracts/eda';
+import { type ProbeRunAnswer, RUN_KINDS, type RunKind } from '@datahub/contracts/eda';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { forbidden, permissionsOf } from './access.js';
 import { type BigQuery, BigQueryRefused, type Page } from './bigquery.js';
@@ -25,9 +25,12 @@ export interface EdaContext {
   label(value: string): string;
 }
 
-/** What eda asks query to run: an EDA-Probe, its SQL, and whether the User approves what it reads. */
+/**
+ * What eda asks query to run: an EDA-Probe or a dig into a selection (TR-ED-12), its SQL, and whether the User approves
+ * what it reads. Both are runs of the kind `eda` in the Query Log, checked and run alike.
+ */
 export interface ProbeRun {
-  probe: ProbeKey;
+  probe: RunKind;
   sql: string;
   approve: boolean;
 }
@@ -39,10 +42,10 @@ export const PROBE_ROWS = 10_000;
 export function parseProbeRun(body: unknown): ProbeRun | string {
   if (typeof body !== 'object' || body === null || Array.isArray(body)) return 'Send a JSON object.';
   const { probe, sql, approve = false } = body as Record<string, unknown>;
-  if (typeof probe !== 'string' || !(PROBE_KEYS as readonly string[]).includes(probe)) return 'The probe is one of the EDA-Probes, by its key.';
+  if (typeof probe !== 'string' || !(RUN_KINDS as readonly string[]).includes(probe)) return 'The probe is one of the EDA-Probes, by its key, or digInto.';
   if (typeof sql !== 'string' || sql.trim() === '' || sql.length > 100_000) return 'The SQL has 1 to 100,000 characters.';
   if (typeof approve !== 'boolean') return 'approve is true or false.';
-  return { probe: probe as ProbeKey, sql, approve };
+  return { probe: probe as RunKind, sql, approve };
 }
 
 /** A nested value, a list or a record, which a page of a result keeps as JSON text (see rowsOf in bigquery.ts). */
@@ -94,11 +97,12 @@ export function reasonOf(problem: Problem | undefined): string {
 }
 
 /**
- * The run of an EDA-Probe (TR-ED-04, FR-ED-06, DEC-ED-26): eda asks it with the Access Token of the User who runs it,
- * who holds `eda.use` and sees the Resource. Its SQL reads only the table of that Resource, only reads, and runs within
- * the ranges of the User: up to the first it runs, up to the second only approved, and above them not at all. It runs
- * as a job with a maximum on the bytes billed and the labels of the User and of an EDA run, kept in the Query Log as a
- * run of the kind `eda`, apart from the queries of the panel of the User, as a Preview is.
+ * The run of an EDA-Probe or a dig into a selection (TR-ED-04, TR-ED-12, FR-ED-06, DEC-ED-26): eda asks it with the
+ * Access Token of the User who runs it, who holds `eda.use` and sees the Resource. Its SQL reads only the table of that
+ * Resource, only reads, and runs within the ranges of the User: up to the first it runs, up to the second only
+ * approved, and above them not at all. It runs as a job with a maximum on the bytes billed and the labels of the User
+ * and of an EDA run, kept in the Query Log as a run of the kind `eda`, apart from the queries of the panel of the User,
+ * as a Preview is. A dig is such a run like any EDA-Probe, labelled `diginto`.
  */
 export async function edaRoutes(app: FastifyInstance, context: EdaContext): Promise<void> {
   const { queries, bigquery, viewer, resourceOf, check, ownCase, unavailable, label } = context;

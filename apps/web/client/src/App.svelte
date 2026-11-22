@@ -196,7 +196,8 @@
     const problem = new URLSearchParams(location.search).get('error') ?? undefined;
     const account = new URLSearchParams(location.hash.slice(1)).get('account') ?? undefined;
     if (problem || account) {
-      history.replaceState(null, '', location.pathname);
+      // The router keeps the query of the address: it leaves with the problem, so that signing in again does not bring it back.
+      router.go(location.pathname, { replace: true });
     }
     return { problem, account };
   }
@@ -617,7 +618,7 @@
   }
 
   /** On the tab Steps of the EDA it guides, the guide shows folded until the User opens it there (DEC-UX-327). */
-  const onGuidedSteps = $derived(flowBox.open?.flow === 'eda' && page.kind === 'eda' && page.id === flowBox.open.resource && page.tab === 'steps' && page.probe === null);
+  const onGuidedSteps = $derived(flowBox.open?.flow === 'eda' && page.kind === 'eda' && page.id === flowBox.open.resource && page.tab === 'steps' && page.probe === null && !page.dig);
   /** Whether the Flow Box shows as its strip. */
   const flowFolded = $derived(flowBox.folded(onGuidedSteps));
   /** Minimizes or maximizes the Flow Box; the guide of an EDA opened in a narrow window folds the panel (DEC-UX-307). */
@@ -1345,11 +1346,14 @@
           id={page.id}
           tab={page.tab}
           probe={page.probe}
+          dig={page.dig ?? null}
           client={edaClient}
           onchanged={readEdas}
           onview={showEda}
           guided={exploring === page.id}
           onguide={() => page.kind === 'eda' && guideEda(page.id)}
+          go={(path) => router.go(path)}
+          canQuery={can(permissions, 'queries.make')}
         />
       {/key}
     {:else if page.kind === 'start' && page.section.id === 'learning'}

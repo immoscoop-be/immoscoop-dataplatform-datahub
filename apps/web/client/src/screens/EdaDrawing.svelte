@@ -8,7 +8,9 @@
 
   /**
    * The drawing of an EDA-Probe (DEC-UX-268): one schematic table with fine lines, the kind of each field as an icon in
-   * its header, and in its cells what the EDA-Probe looks at and what a finding looks like, the same on every Resource.
+   * its header, named by its kind, such as id, date or count, never by the fields of the Resource (DEC-UX-330), and in its
+   * cells what the EDA-Probe looks at and what a finding looks like, the same on every Resource. What it says under the
+   * table wraps to fit inside it.
    * The idea, on its detail, comes in once, again on Replay, and stands still for whoever asks for reduced motion
    * (DEC-UX-324, TR-ED-07); on a card it shows the result of the last run on it (DEC-UX-322). Drawn for the EDA, not
    * by semgraph (DEC-UX-325).
@@ -54,6 +56,7 @@
       .filter((field) => chosen.includes(field))
       .map((field) => ({
         name: field.name,
+        kind: kindWord(field),
         icon: MARK_ICONS[markOf(field)] as IconName,
         on: setOn.includes(field.name),
         date: markOf(field) === 'date',
@@ -61,6 +64,15 @@
         text: kindOf(field.dataType) === 'text',
       }));
   });
+  /** A column named by its kind, never by its field (DEC-UX-330): id, date, link, count, number or text. */
+  function kindWord(field: EdaField): string {
+    const mark = markOf(field);
+    if (mark === 'grain') return t('eda.draw.kind.id');
+    if (mark === 'date') return t('eda.draw.kind.date');
+    if (mark === 'mapped') return t('eda.draw.kind.link');
+    if (mark === 'number') return t(field.role === 'addsUp' || field.role === 'uniqueCount' ? 'eda.draw.kind.count' : 'eda.draw.kind.number');
+    return t('eda.draw.kind.text');
+  }
   /** The columns it looks at; the first column when it is set on none of them. */
   const looked = $derived(columns.flatMap((column, index) => (column.on ? [index] : [])));
   const firstOn = $derived(looked[0] ?? 0);
@@ -199,7 +211,21 @@
         return null;
     }
   });
-  const pillWidth = $derived(pill ? Math.min(240, pill.text.length * 4.3 + 18) : 0);
+  /** What it says, on lines that fit inside the drawing: at most 52 characters of its small bold words each. */
+  const PILL_CHARACTERS = 52;
+  const pillLines = $derived.by(() => {
+    if (!pill) return [];
+    const lines: string[] = [];
+    for (const word of pill.text.split(' ')) {
+      const last = lines.at(-1);
+      if (last !== undefined && `${last} ${word}`.length <= PILL_CHARACTERS) lines[lines.length - 1] = `${last} ${word}`;
+      else lines.push(word);
+    }
+    return lines;
+  });
+  const pillWidth = $derived(Math.min(240, Math.max(0, ...pillLines.map((line) => line.length)) * 4.3 + 18));
+  /** The drawing grows by a line for every line more it says. */
+  const height = $derived(190 + Math.max(0, pillLines.length - 1) * 10);
 
   /** The bars of a number per row: most short, one long. */
   const BARS = [10, 14, 8, 44, 12, 18];
@@ -208,7 +234,7 @@
 </script>
 
 {#key play}
-  <svg class="drawing" class:animated viewBox="0 0 252 190" role="img" aria-label={label}>
+  <svg class="drawing" class:animated viewBox="0 0 252 {height}" role="img" aria-label={label}>
     <defs>
       <pattern id="eda-hatch-{probe}" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
         <line class="hatch-line" x1="0" y1="0" x2="0" y2="5" />
@@ -221,7 +247,7 @@
       {#each [70, 88, 106, 124, 142] as y (y)}<line class="line thin" x1={LEFT} y1={y} x2={LEFT + WIDTH} y2={y} />{/each}
       {#each columns as column, index (column.name)}
         <svg class="kind" class:on={column.on} x={center(index) - 6.5} y="33.5" width="13" height="13" viewBox="0 0 256 256">{@html inner(column.icon)}</svg>
-        <text class="name" class:on={column.on} x={center(index)} y="24" text-anchor="middle">{short(column.name)}</text>
+        <text class="name" class:on={column.on} x={center(index)} y="24" text-anchor="middle">{column.kind}</text>
       {/each}
     </g>
     {#each ROWS as row (row)}
@@ -293,8 +319,8 @@
     {/if}
     {#if pill}
       <g class="a" style:--o={10}>
-        <rect class="pill {pill.tone}" x={126 - pillWidth / 2} y="166" width={pillWidth} height="15" rx="7.5" />
-        <text class="pill-text {pill.tone}" x="126" y="176.5" text-anchor="middle">{pill.text}</text>
+        <rect class="pill {pill.tone}" x={126 - pillWidth / 2} y="166" width={pillWidth} height={15 + (pillLines.length - 1) * 10} rx="7.5" />
+        <text class="pill-text {pill.tone}" x="126" y="176.5" text-anchor="middle">{#each pillLines as line, index (index)}<tspan x="126" dy={index === 0 ? 0 : 10}>{line}</tspan>{/each}</text>
       </g>
     {/if}
   </svg>

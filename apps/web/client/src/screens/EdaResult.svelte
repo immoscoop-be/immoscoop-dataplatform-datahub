@@ -11,15 +11,19 @@
     type OwnerReading,
     type ProbeKey,
     type ResultView,
+    type RowCondition,
     type RunView,
     type Selection,
     type VolumeResult,
   } from '@datahub/contracts/eda';
   import { formatBytes } from '@datahub/ui/foundations/bytes.js';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
+  import MenuButton from '@datahub/ui/containers/MenuButton.svelte';
   import Sentence from '@datahub/ui/foundations/Sentence.svelte';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
+  import Button from '@datahub/ui/primitives/Button.svelte';
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
+  import { digFrom } from '../lib/dig.js';
   import { asksReading, BLOCKS, type BlockDays, MARK_ICONS, markOf, number, overallReading, percent } from '../lib/eda.js';
   import {
     categoriesConclusion,
@@ -41,6 +45,7 @@
     periodName,
     periodsOf,
     saidNothingOf,
+    saidText,
     selectionSaid,
     sinceWord,
     topOf,
@@ -66,6 +71,8 @@
    * rows or chart, with what is wrong shaded, its numbers and examples, and the reading of who works on the EDA where
    * there is something to read. A run on a selection says on which rows, in words, above it all. It knows nothing of the
    * page, its form or its route: what the EDA-Probe needs on this Resource follows from the rules of the contracts.
+   * Where it is given where Dig into leads, a row with something to read has Dig into (FR-ED-20): a field with empty
+   * values, a field where rows say nothing, and a value of a text shown, each narrowing the rows the result ran on.
    */
   let {
     probe,
@@ -73,6 +80,8 @@
     resource,
     selection,
     onread,
+    digHref,
+    go,
   }: {
     probe: ProbeKey;
     run: RunView;
@@ -82,6 +91,10 @@
     selection?: Selection;
     /** Keeps the reading of who works on the EDA of a subject, and answers whether it was kept; without it no reading is asked. */
     onread?: (subject: string, reading: OwnerReading) => Promise<boolean>;
+    /** The address of Dig into a selection of rows (FR-ED-20); without it, no Dig into. */
+    digHref?: (selection: Selection) => string;
+    /** Goes to an address of the app, for Dig into a value chosen from a menu. */
+    go?: (path: string) => void;
   } = $props();
 
   const language = $derived(currentLanguage());
@@ -96,6 +109,20 @@
   });
   /** The rows it ran on, in words; none for the whole table. */
   const where = $derived(selectionSaid(selection ?? run.selection, language));
+
+  /** Where Dig into leads from a row: the rows it ran on, narrowed by the condition of the row; null where it cannot. */
+  const digTo = (condition: RowCondition): string | null => {
+    const narrowed = digHref ? digFrom(selection ?? run.selection, condition) : null;
+    return narrowed && digHref ? digHref(narrowed) : null;
+  };
+  /** Dig into, read out with the rows it leads to. */
+  const digLabel = (condition: RowCondition) => t('eda.dig.into.of', { where: saidText(selectionSaid({ where: [condition] }, language)) });
+  /** The values shown of a text to dig into (FR-ED-20), as the choices of its menu. */
+  const valuesToDig = (field: string, data: CategoriesResult) =>
+    data.top.flatMap((one) => {
+      const to = digTo({ kind: 'equals', field, value: one.value });
+      return to && go ? [{ key: one.value, icon: 'tag' as const, label: one.value, hint: percent(one.share, 1, language), run: () => go(to) }] : [];
+    });
 
   const read = (subject: string) => (reading: OwnerReading) => onread?.(subject, reading) ?? Promise.resolve(false);
   /** Whether a result asks for a reading here: when it has something to read, and a reading can be kept. */
@@ -181,8 +208,8 @@
     </div>
     {#if asks(result)}<div class="reading"><EdaReading yours={result.yours} large label={t('eda.yours.of.table')} onread={read(result.subject)} /></div>{/if}
   {:else if probe === 'nullsPerKeyField'}
-    <div class="rows">
-      <div class="rows-head" aria-hidden="true"><span>{t('eda.nulls.field')}</span><span>{t('eda.nulls.bar')}</span><span>{t('eda.nulls.empty')}</span><span>Data Hub</span><span>{readable ? t('eda.yours') : ''}</span></div>
+    <div class="rows" class:digs={digHref !== undefined}>
+      <div class="rows-head" aria-hidden="true"><span>{t('eda.nulls.field')}</span><span>{t('eda.nulls.bar')}</span><span>{t('eda.nulls.empty')}</span><span>Data Hub</span><span>{readable ? t('eda.yours') : ''}</span>{#if digHref}<span></span>{/if}</div>
       <ul>
         {#each results as result (result.subject)}
           {@const data = result.data as NullsResult}
@@ -207,6 +234,11 @@
             {:else}
               <span></span>
             {/if}
+            {#if digHref}
+              {@const condition = { kind: 'empty', field: result.subject } as const}
+              {@const to = data.empty > 0 ? digTo(condition) : null}
+              <span class="dig">{#if to}<Button variant="outline" href={to} label={digLabel(condition)}><Icon name="magnifying-glass" />{t('eda.dig.into')}</Button>{/if}</span>
+            {/if}
           </li>
         {/each}
       </ul>
@@ -216,8 +248,8 @@
       <div class="hint"><Icon name="signpost" /><p><b>{t('eda.nulls.next')}</b> {t('eda.nulls.next.why')}</p><span class="meta">{t('eda.coming')}</span></div>
     {/if}
   {:else if probe === 'disguisedNulls'}
-    <div class="rows disguised">
-      <div class="rows-head" aria-hidden="true"><span>{t('eda.nulls.field')}</span><span>{t('eda.disguised.found')}</span><span>{t('eda.disguised.saysNothing')}</span><span>Data Hub</span><span>{readable ? t('eda.yours') : ''}</span></div>
+    <div class="rows disguised" class:digs={digHref !== undefined}>
+      <div class="rows-head" aria-hidden="true"><span>{t('eda.nulls.field')}</span><span>{t('eda.disguised.found')}</span><span>{t('eda.disguised.saysNothing')}</span><span>Data Hub</span><span>{readable ? t('eda.yours') : ''}</span>{#if digHref}<span></span>{/if}</div>
       <ul>
         {#each results as result (result.subject)}
           {@const data = result.data as DisguisedResult}
@@ -252,6 +284,11 @@
               <span class="nothing">{t('eda.nulls.nothing')}</span>
             {:else}
               <span></span>
+            {/if}
+            {#if digHref}
+              {@const condition = { kind: 'saysNothing', field: result.subject } as const}
+              {@const to = data.saysNothing > 0 ? digTo(condition) : null}
+              <span class="dig">{#if to}<Button variant="outline" href={to} label={digLabel(condition)}><Icon name="magnifying-glass" />{t('eda.dig.into')}</Button>{/if}</span>
             {/if}
           </li>
         {/each}
@@ -325,6 +362,7 @@
         {@const data = result.data as CategoriesResult}
         {@const field = fieldsByName.get(result.subject)}
         {@const top = topOf(data)}
+        {@const digs = valuesToDig(result.subject, data)}
         <article class="block" aria-label={result.subject}>
           <header>
             {#if field?.keyField}<Icon name="key" label={t('resource.role.keyField')} />{/if}<Icon name={field ? MARK_ICONS[markOf(field)] : 'tag'} /><span class="mono">{result.subject}</span>
@@ -346,7 +384,14 @@
               <div><dt>{t('eda.categories.emptyCount')}</dt><dd>{percent(data.empty.share, 1, language)}</dd></div>
             </dl>
           </div>
-          {#if asks(result)}<div class="block-reading"><EdaReading yours={result.yours} label={t('eda.yours.of', { field: result.subject })} onread={read(result.subject)} /></div>{/if}
+          {#if asks(result) || digs.length > 0}
+            <div class="block-reading">
+              {#if asks(result)}<EdaReading yours={result.yours} label={t('eda.yours.of', { field: result.subject })} onread={read(result.subject)} />{/if}
+              {#if digs.length > 0}
+                <span class="dig"><MenuButton icon="magnifying-glass" variant="outline" text={t('eda.dig.into')} label={t('eda.dig.into.value', { field: result.subject })} caption={t('eda.dig.into.caption', { field: result.subject })} choices={digs} /></span>
+              {/if}
+            </div>
+          {/if}
         </article>
       {/each}
     </div>
@@ -433,18 +478,26 @@
   table { width: 100%; border-collapse: collapse; margin-top: 4px; font-size: 12px; }
   th { text-align: left; font-weight: var(--weight-regular); color: var(--text-muted); font-size: var(--text-meta); padding: 3px 6px; }
   td { padding: 4px 6px; border-top: 1px solid var(--tint-active); }
+  /* The rows of an example, as numbers, on the right: the rule of the rows per field below aligns its own numbers left. */
+  th.num, td.num { text-align: right; }
   .reading { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--tint-active); }
   /* A row per field (DEC-UX-326): Nulls per Key Field and Disguised nulls. */
-  .rows { border-radius: var(--radius-md); background: var(--surface-solid); padding: 6px 14px 10px; }
+  .rows { container-type: inline-size; border-radius: var(--radius-md); background: var(--surface-solid); padding: 6px 14px 10px; }
   .rows-head, .rows li { display: grid; grid-template-columns: minmax(120px, 1fr) minmax(90px, 1.2fr) 92px 150px 224px; gap: 14px; align-items: center; }
   .disguised .rows-head, .disguised li { grid-template-columns: minmax(140px, 1fr) minmax(120px, 1.4fr) 104px 150px 190px; }
+  /* Dig into at the end of a row (FR-ED-20). */
+  .digs .rows-head, .digs li { grid-template-columns: minmax(120px, 1fr) minmax(90px, 1.2fr) 92px 150px 224px auto; }
+  .disguised.digs .rows-head, .disguised.digs li { grid-template-columns: minmax(140px, 1fr) minmax(120px, 1.4fr) 104px 150px 190px auto; }
+  .dig { display: inline-flex; justify-content: flex-end; }
+  .dig :global(.button) { white-space: nowrap; }
   .rows-head { padding: 8px 0 6px; font-size: var(--text-meta); color: var(--text-muted); border-bottom: 1px solid var(--tint-active); }
   .rows ul { list-style: none; margin: 0; padding: 0; }
   .rows li { padding: 10px 0; border-bottom: 1px solid var(--tint-hover); font-size: var(--text-small); }
   .field { display: flex; gap: 6px; align-items: flex-start; min-width: 0; }
   .field :global(.icon) { margin-top: 2px; color: var(--text-muted); flex: none; }
   .field .mono { font-weight: var(--weight-medium); }
-  .disguised .field > span { min-width: 0; overflow-wrap: break-word; }
+  /* A long name wraps in its column rather than running into the next one. */
+  .field > span { min-width: 0; overflow-wrap: break-word; }
   .field small, .num small, .tone small { display: block; font-size: var(--text-meta); color: var(--text-muted); }
   .bar { display: flex; height: 12px; border-radius: var(--radius-sm); overflow: hidden; background: var(--surface-sub); }
   .filled { background: var(--col-teal); }
@@ -483,16 +536,26 @@
   .k-box { width: 14px; height: 9px; border: 1.2px solid var(--col-slate); border-radius: var(--radius-mark); }
   .k-median { width: 2px; height: 12px; background: var(--text-primary); }
   .k-sd { width: 18px; height: 11px; border-radius: var(--radius-mark); background: color-mix(in srgb, var(--col-teal) 25%, transparent); }
-  .block-reading { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--tint-active); }
+  .block-reading { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--tint-active); }
+  .block-reading .dig { margin-left: auto; }
   .weights { display: grid; grid-template-columns: minmax(0, 1fr) 150px; gap: 18px; align-items: start; margin-top: 6px; }
   .total { margin: 6px 0 0; font-size: var(--text-meta); color: var(--text-muted); }
   .numbers.stack { grid-template-columns: 1fr; gap: 8px; margin: 0; }
   .numbers.range { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 18px; margin-top: 8px; }
   .numbers small { display: block; font-size: 10.5px; font-weight: var(--weight-regular); color: var(--text-muted); }
   .numbers dd.unset { color: var(--text-muted); }
-  @media (max-width: 1300px) {
+  /* A row per field takes two columns where its own are wider than the place it has, such as beside what it does. */
+  @container (max-width: 760px) {
     .rows-head { display: none; }
     .rows li, .disguised li { grid-template-columns: 1fr 1fr; }
+  }
+  @container (max-width: 880px) {
+    .digs .rows-head { display: none; }
+    .digs li, .disguised.digs li { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 1300px) {
+    .rows-head { display: none; }
+    .rows li, .disguised li, .disguised.digs li { grid-template-columns: 1fr 1fr; }
     .numbers.seven { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   }
   @media (max-width: 960px) {

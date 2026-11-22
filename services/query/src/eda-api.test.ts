@@ -6,10 +6,20 @@ describe('the run of an EDA-Probe, in a request (TR-ED-04)', () => {
     expect(parseProbeRun({ probe: 'nullsPerKeyField', sql: 'select 1' })).toEqual({ probe: 'nullsPerKeyField', sql: 'select 1', approve: false });
     expect(parseProbeRun({ probe: 'grainHolds', sql: 'select 1', approve: true })).toEqual({ probe: 'grainHolds', sql: 'select 1', approve: true });
     expect(parseProbeRun({ probe: 'everything', sql: 'select 1' })).toMatch(/EDA-Probes/);
+    expect(parseProbeRun({ probe: 'DigInto', sql: 'select 1' })).toMatch(/EDA-Probes/);
     expect(parseProbeRun({ probe: 'grainHolds', sql: '' })).toMatch(/SQL/);
     expect(parseProbeRun({ probe: 'grainHolds', sql: 'x'.repeat(100_001) })).toMatch(/SQL/);
     expect(parseProbeRun({ probe: 'grainHolds', sql: 'select 1', approve: 'yes' })).toBe('approve is true or false.');
     expect(parseProbeRun([])).toBe('Send a JSON object.');
+  });
+});
+
+describe('a dig into a selection, in a request (TR-ED-12)', () => {
+  it('is a run of its own kind, beside the EDA-Probes, checked as one', () => {
+    expect(parseProbeRun({ probe: 'digInto', sql: 'select 1' })).toEqual({ probe: 'digInto', sql: 'select 1', approve: false });
+    expect(parseProbeRun({ probe: 'digInto', sql: 'select 1', approve: true })).toEqual({ probe: 'digInto', sql: 'select 1', approve: true });
+    expect(parseProbeRun({ probe: 'digInto', sql: ' ' })).toMatch(/SQL/);
+    expect(parseProbeRun({ probe: 'digInto', sql: 'select 1', approve: 1 })).toBe('approve is true or false.');
   });
 });
 

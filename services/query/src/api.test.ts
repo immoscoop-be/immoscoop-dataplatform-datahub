@@ -1573,6 +1573,32 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
       expect((await call(els, 'GET', `/runs/${ran.runId}/rows`)).statusCode).toBe(200);
     });
 
+    it('run a dig into a selection as one of them: checked alike, labelled as a dig, in the same query of the kind eda (TR-ED-12)', async () => {
+      const els = await explorer();
+      const dig = (sql: string, approve?: boolean) => ({ probe: 'digInto', sql, ...(approve === undefined ? {} : { approve }) });
+      const ran = await runs(els, WEEKLY.id, dig(`${grain} -- reads 5000000`));
+      expect(ran.statusCode).toBe(201);
+      expect(ran.json()).toMatchObject({ state: 'ran', bytes: 4_000_000, runId: expect.stringMatching(/^q-\d{8}-[0-9a-f]{6}$/) });
+      expect(fake.runs.at(-1)?.options).toMatchObject({
+        maximumBytesBilled: 1_000_000_000,
+        labels: { 'datahub-user': '110', 'datahub-query': ran.json().runId, 'datahub-purpose': 'eda', 'datahub-eda-probe': 'diginto' },
+      });
+      // Kept with the runs of the EDA-Probes of this User and Resource, in the one query of the kind eda.
+      const kept = await database.db.selectFrom('queries').select('id').where('kind', '=', 'eda').where('ownerId', '=', '110').execute();
+      expect(kept).toHaveLength(1);
+      const logged = await database.db.selectFrom('runs').select('queryId').where('queryRef', '=', ran.json().runId).executeTakeFirstOrThrow();
+      expect(logged.queryId).toBe(kept[0]!.id);
+
+      // The same Pre-flight: approved within the ranges, refused above them or on another table.
+      expect((await runs(els, WEEKLY.id, dig(`${grain} -- reads 50000000`))).json()).toEqual({ state: 'approve', bytes: 50_000_000 });
+      expect((await runs(els, WEEKLY.id, dig(`${grain} -- reads 50000000`, true))).statusCode).toBe(201);
+      expect((await runs(els, WEEKLY.id, dig(`${grain} -- reads 4800000000`, true))).json()).toMatchObject({ state: 'refused', bytes: 4_800_000_000 });
+      expect((await runs(els, WEEKLY.id, dig(`select count(*) as rows from \`${SOURCES.key}\``))).json()).toMatchObject({ state: 'refused', bytes: null });
+      // Only who explores, and only these kinds.
+      expect((await runs(an, WEEKLY.id, dig(grain))).statusCode).toBe(403);
+      expect((await runs(els, WEEKLY.id, { probe: 'dig', sql: grain })).statusCode).toBe(400);
+    });
+
     it('keep a run BigQuery refused in the Query Log as failed, and say why', async () => {
       const els = await explorer();
       fake.refuse('Query exceeded limit for bytes billed: 1000000000.');

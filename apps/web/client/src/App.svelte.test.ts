@@ -6,6 +6,7 @@ import { appliesTo, bestNext, coverage, isComplete, isNeeded, levelOf, neededOf,
 import { journeyOf, type JourneyFacts } from '@datahub/contracts/journey';
 import { NO_PERMISSIONS, STARTING_GROUPS, type Permissions, type StartingGroup } from '@datahub/contracts/permissions';
 import { flowBox } from './lib/flowBox.svelte.js';
+import { proposeGap } from './lib/gaps.js';
 import App from './App.svelte';
 import type { Config } from './lib/config.js';
 
@@ -2311,18 +2312,19 @@ function edaWith(runs: Partial<Record<ProbeKey, RunView>> = {}): EdaView {
     next: bestNext(EDA_WEEKLY, covers),
   };
 }
-const NULLS_RUN: RunView = {
-  id: 'run-nulls',
-  ranAt: '2026-11-21T10:42:00Z',
+
+const GRAIN_RUN: RunView = {
+  id: 'run-grain',
+  ranAt: '2026-11-21T10:40:00Z',
   ranBy: { id: '2', name: 'An Claes' },
   bytes: 1000,
-  fields: ['week_start', 'lead_source', 'lead_count', 'lead_channel'],
+  fields: ['week_start', 'lead_source'],
   params: {},
-  results: ['week_start', 'lead_source', 'lead_count', 'lead_channel'].map((subject) => ({ subject, data: { rows: 16224, empty: 0, role: null }, reading: 'expected' as const, yours: null })),
+  results: [{ subject: '', data: { rows: 16224, values: 16224, onMoreThanOne: 0, rowsCovered: 0, emptyGrain: 0, buckets: [16224, 0, 0, 0], examples: [] }, reading: 'expected', yours: null }],
 };
 
 describe('the guide of an EDA, in the Flow Box (FR-ED-14, DEC-UX-327, TR-ED-09)', () => {
-  /** eda with the EDA of Weekly lead volume, which a run of Nulls per Key Field changes. */
+  /** eda with the EDA of Weekly lead volume, which a run of The grain holds changes. */
   function serveEda(options: { started?: boolean } = {}) {
     let view = edaWith();
     let started = options.started ?? true;
@@ -2335,8 +2337,8 @@ describe('the guide of an EDA, in the Flow Box (FR-ED-14, DEC-UX-327, TR-ED-09)'
           return answer(view, 201);
         }
         if (path === '/resources/r2/eda') return started ? answer(view) : answer({ error: 'not_found' }, 404);
-        if (path === '/resources/r2/eda/probes/nullsPerKeyField/runs' && method === 'POST') {
-          view = edaWith({ nullsPerKeyField: NULLS_RUN });
+        if (path === '/resources/r2/eda/probes/grainHolds/runs' && method === 'POST') {
+          view = edaWith({ grainHolds: GRAIN_RUN });
           return answer({ state: 'ran', eda: view });
         }
         if (path === '/edas') return answer({ edas: [], ready: [] });
@@ -2370,8 +2372,10 @@ describe('the guide of an EDA, in the Flow Box (FR-ED-14, DEC-UX-327, TR-ED-09)'
     expect(guide.getByRole('button', { name: /^Verkapte lege waarden/ }).textContent).toContain('Nog niet toegevoegd');
     expect(guide.getByRole('button', { name: /^Waarden zonder match/ }).textContent).toContain('Komt eraan: Data Hub voert hem nog niet uit');
     expect(guide.getByRole('button', { name: /^De grain klopt/ }).textContent).toContain('Nog niet toegevoegd');
-    // The step to do now is the best next step, as the page proposes it, unfolded.
-    expect(guide.getByRole('button', { name: /^Lege waarden per sleutelveld/ }).getAttribute('aria-expanded')).toBe('true');
+    // The step to do now is the best next step, as the page proposes it, unfolded: The grain holds, while it is open,
+    // whatever else misses more (DEC-ED-37).
+    expect(guide.getByRole('button', { name: /^De grain klopt/ }).getAttribute('aria-expanded')).toBe('true');
+    expect(guide.getByRole('button', { name: /^Lege waarden per sleutelveld/ }).getAttribute('aria-expanded')).toBe('false');
     expect(guide.getByText(/Nog 10 te gaan, waarvan 3 eraan komen: ze tellen toch mee/)).toBeTruthy();
     // It stays open on every other page; its Resource leads back to its EDA, where, opened there, it stays open.
     await fireEvent.click(within(screen.getByRole('navigation', { name: 'Hoofdnavigatie' })).getByRole('link', { name: 'Query' }));
@@ -2394,21 +2398,22 @@ describe('the guide of an EDA, in the Flow Box (FR-ED-14, DEC-UX-327, TR-ED-09)'
     await fireEvent.click(await main.findByRole('button', { name: 'Begeleid me' }));
     const guide = within(await box());
     expect(main.queryByRole('button', { name: 'Begeleid me' })).toBeNull();
+    // The step to do now is The grain holds, while it is open (DEC-ED-37).
     await fireEvent.click(guide.getByRole('button', { name: /Open de EDA-Probe/ }));
-    await vi.waitFor(() => expect(location.pathname).toBe('/eda/r2/probes/nullsPerKeyField'));
+    await vi.waitFor(() => expect(location.pathname).toBe('/eda/r2/probes/grainHolds'));
     // On the detail it is open as the User left it, its step open on the page, without a way there.
     const here = within(await box());
-    const nulls = here.getByRole('button', { name: /^Lege waarden per sleutelveld/ });
-    expect(nulls.getAttribute('aria-expanded')).toBe('true');
+    const grain = here.getByRole('button', { name: /^De grain klopt/ });
+    expect(grain.getAttribute('aria-expanded')).toBe('true');
     expect(here.getByText('Open op de pagina')).toBeTruthy();
-    expect(within(document.getElementById('flow-step-nullsPerKeyField') as HTMLElement).queryByRole('button', { name: /Open de EDA-Probe/ })).toBeNull();
-    // A run changes the EDA: the step ticks with Data Hub's reading, and the next step unfolds: Disguised nulls, which
-    // misses all four Key Fields (DEC-ED-16).
+    expect(within(document.getElementById('flow-step-grainHolds') as HTMLElement).queryByRole('button', { name: /Open de EDA-Probe/ })).toBeNull();
+    // A run changes the EDA: the step ticks with Data Hub's reading, and the next step unfolds: Nulls per Key Field,
+    // which misses all four Key Fields, first of those that miss as much (DEC-ED-16).
     await fireEvent.click(await main.findByRole('button', { name: /^Uitvoeren$/ }));
-    await vi.waitFor(() => expect(calls).toContainEqual(expect.objectContaining({ method: 'POST', path: 'eda /resources/r2/eda/probes/nullsPerKeyField/runs' })));
+    await vi.waitFor(() => expect(calls).toContainEqual(expect.objectContaining({ method: 'POST', path: 'eda /resources/r2/eda/probes/grainHolds/runs' })));
     await vi.waitFor(() => expect(here.getByText('1 van 10 nodige EDA-Probes af')).toBeTruthy());
-    expect(here.getByRole('button', { name: /^Lege waarden per sleutelveld/ }).textContent).toContain('Zoals verwacht');
-    expect(here.getByRole('button', { name: /^Verkapte lege waarden/ }).getAttribute('aria-expanded')).toBe('true');
+    expect(here.getByRole('button', { name: /^De grain klopt/ }).textContent).toContain('Zoals verwacht');
+    expect(here.getByRole('button', { name: /^Lege waarden per sleutelveld/ }).getAttribute('aria-expanded')).toBe('true');
     // Close takes it away; Guide me brings it back.
     await fireEvent.click(here.getByRole('button', { name: 'Sluiten' }));
     expect(screen.queryByRole('complementary', { name: /Zijn EDA opzetten/ })).toBeNull();
@@ -3116,6 +3121,28 @@ describe('the page of a Resource', () => {
     await fireEvent.click(main.getByRole('button', { name: 'Verwijder deze Known Gap' }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/resources/r2/gaps/gap-1' }));
     expect(await main.findByText('Geen Known Gaps vastgelegd.')).toBeTruthy();
+  });
+
+  it('opens a Known Gap proposed by Dig into in the form of a new gap, filled in, for the User to save or not (FR-ED-20)', async () => {
+    const calls = serve({ groups: ['g1'] });
+    const scope = { period: { from: null, to: '2025-01-05' }, fields: ['lead_channel'], rows: { field: 'lead_source', is: 'oneOf' as const, values: ['app'] } };
+    proposeGap('r2', { text: 'lead_channel is niet ingevuld waar lead_source app is vóór 6 jan 2025.', scope });
+    open('/resources/r2/gaps');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const form = within(await main.findByRole('form', { name: 'Een nieuwe Known Gap' }));
+    expect((form.getByRole('textbox', { name: WHY }) as HTMLTextAreaElement).value).toBe('lead_channel is niet ingevuld waar lead_source app is vóór 6 jan 2025.');
+    expect((form.getByLabelText('Tot') as HTMLInputElement).value).toBe('2025-01-05');
+    expect(form.getByRole('button', { name: 'Verwijder lead_channel' })).toBeTruthy();
+    expect(form.getByRole('button', { name: 'Verwijder app' })).toBeTruthy();
+    // Nothing is saved until the User adds it there.
+    expect(calls.some((call) => call.method === 'POST' && call.path === '/resources/r2/gaps')).toBe(false);
+    await fireEvent.click(form.getByRole('button', { name: 'Voeg toe' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/resources/r2/gaps', body: { text: 'lead_channel is niet ingevuld waar lead_source app is vóór 6 jan 2025.', scope } }));
+    // A gap added later starts empty.
+    await vi.waitFor(() => expect(main.queryByRole('form', { name: 'Een nieuwe Known Gap' })).toBeNull());
+    await fireEvent.click(main.getByRole('button', { name: /^Voeg een Known Gap toe/ }));
+    expect((within(main.getByRole('form', { name: 'Een nieuwe Known Gap' })).getByRole('textbox', { name: WHY }) as HTMLTextAreaElement).value).toBe('');
   });
 
   it('narrows a Known Gap down to a period, fields and rows, shown as chips, in the Summary and on its fields (FR-RC-24, FR-RC-25, FR-RC-26)', async () => {

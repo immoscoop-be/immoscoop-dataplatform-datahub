@@ -24,6 +24,7 @@
   import Button from '@datahub/ui/primitives/Button.svelte';
   import Loading from '@datahub/ui/primitives/Loading.svelte';
   import { flowBox, markPlace } from '../lib/flowBox.svelte.js';
+  import { takeProposal } from '../lib/gaps.js';
   import type { CardChanges, DescribeAttribute, KnownGap, LogEntry, Related, ResourceDetail } from '../lib/catalogue.js';
   import { carriersOf, nounOf } from '../lib/grain.js';
   import type { MarkerPlace } from '../lib/learning.js';
@@ -169,8 +170,18 @@
     await tick();
     document.querySelector<HTMLElement>(field)?.focus();
   }
+  /**
+   * A Known Gap proposed elsewhere, such as by Dig into (FR-ED-20): Known Gaps open on it, filled in, in the form of a new
+   * gap, for who may add one; the User saves it there, or not.
+   */
+  // svelte-ignore state_referenced_locally
+  const offered = takeProposal(resource.id);
+  // svelte-ignore state_referenced_locally
+  const allowed = offered && describes('gaps') ? offered : null;
+  let proposal = $state(allowed);
+  if (allowed) part = 'gaps';
   /** Known Gaps opened on a new gap, the cursor in its text (DEC-UX-258). */
-  let addingGap = $state(false);
+  let addingGap = $state(allowed !== null);
 
   // The Flow Box led here (DEC-UX-303): the part of the step opens for editing, its field in focus and marked.
   $effect(() => {
@@ -471,6 +482,7 @@
       />
       <OverviewGaps
         bind:adding={addingGap}
+        bind:proposal
         gaps={card.knownGaps}
         fields={resource.fields}
         dateField={dateFieldOf(card.dateField, details.modelType, details.typeFields ?? [], resource.fields).field}

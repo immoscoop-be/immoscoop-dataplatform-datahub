@@ -118,7 +118,8 @@
 </svg>
 
 <style>
-  .chart { width: 100%; height: auto; display: block; margin: 8px 0 4px; }
+  /* Never larger than drawn, so that its words stay the size of the page (DEC-UX-332). */
+  .chart { width: 100%; max-width: 640px; height: auto; display: block; margin: 8px 0 4px; }
   .line { fill: var(--col-teal); opacity: .85; }
   .hatch { fill: var(--signal-warn); opacity: .6; }
   .before { fill: var(--surface-solid); opacity: .55; }

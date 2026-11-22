@@ -6,7 +6,9 @@
   /**
    * How calm the volume is per unit (FR-ED-09, DEC-ED-23): a row per unit on one axis, each against its own average,
    * with its lowest to highest, P25 to P75, the median and one standard deviation around the average, also as a share
-   * of the average; its numbers on hover. The narrower, the calmer. An illustration drawn for the EDA (DEC-UX-325).
+   * of the average; its numbers on hover. The narrower, the calmer. Its axis holds at most three steps each side, so
+   * that its labels never run into each other, its average named under its 0. An illustration drawn for the EDA
+   * (DEC-UX-325), never larger than drawn (DEC-UX-332).
    */
   let { units }: { units: readonly VolumeUnit[] } = $props();
 
@@ -21,7 +23,13 @@
   const widest = $derived(
     Math.max(0.25, ...rows.flatMap((unit) => [(unit.average - unit.lowest.value) / unit.average, (unit.highest.value - unit.average) / unit.average, unit.sd / unit.average])),
   );
-  const tickStep = $derived(widest <= 0.3 ? 0.1 : widest <= 0.75 ? 0.25 : 0.5);
+  /** A round step that reaches the widest in three steps at most: 10%, 25%, 50%, 100%, 200%, 250%, 500%, … */
+  const tickStep = $derived.by(() => {
+    for (let power = 0.1; ; power *= 10) {
+      const step = [1, 2.5, 5].map((factor) => factor * power).find((candidate) => widest / candidate <= 3 + 1e-9);
+      if (step !== undefined) return Number(step.toPrecision(6));
+    }
+  });
   const reach = $derived(Math.ceil(widest / tickStep) * tickStep);
   const xOf = (unit: VolumeUnit, value: number) => CENTER + ((value - unit.average) / unit.average / reach) * REACH;
   const ticks = $derived.by(() => {
@@ -29,15 +37,16 @@
     for (let at = -reach; at <= reach + 1e-9; at += tickStep) out.push(Number(at.toFixed(2)));
     return out;
   });
-  const height = $derived(FIRST + rows.length * ROW + 22);
+  const height = $derived(FIRST + rows.length * ROW + 32);
   const share = (value: number) => `${Math.round(value * 100)}%`;
 </script>
 
 <svg class="chart" viewBox="0 0 520 {height}" role="img" aria-label={t('eda.volume.calm.label')}>
   {#each ticks as tick (tick)}
     {@const x = CENTER + (tick / reach) * REACH}
-    <line class={tick === 0 ? 'axis' : 'grid'} x1={x} y1="18" x2={x} y2={height - 20} />
-    <text class={tick === 0 ? 'average' : 'tick'} x={x} y={height - 8} text-anchor="middle">{tick === 0 ? t('eda.volume.calm.average') : `${tick > 0 ? '+' : ''}${share(tick)}`}</text>
+    <line class={tick === 0 ? 'axis' : 'grid'} x1={x} y1="18" x2={x} y2={height - 30} />
+    <text class="tick" x={x} y={height - 18} text-anchor="middle">{`${tick > 0 ? '+' : ''}${share(tick)}`}</text>
+    {#if tick === 0}<text class="average" x={x} y={height - 7} text-anchor="middle">{t('eda.volume.calm.average')}</text>{/if}
   {/each}
   {#each rows as unit, index (unit.days)}
     {@const y = FIRST + index * ROW}
@@ -71,7 +80,8 @@
 </svg>
 
 <style>
-  .chart { --sk-line: color-mix(in srgb, var(--text-muted) 45%, transparent); width: 100%; height: auto; display: block; margin-top: 4px; }
+  /* Never larger than drawn, so that its words stay the size of the page (DEC-UX-332). */
+  .chart { --sk-line: color-mix(in srgb, var(--text-muted) 45%, transparent); width: 100%; max-width: 520px; height: auto; display: block; margin-top: 4px; }
   .grid { stroke: var(--sk-line); stroke-width: .5; stroke-dasharray: 2 3; }
   .axis { stroke: var(--sk-line); stroke-width: 1; }
   .tick { font-size: 8px; fill: var(--text-muted); }

@@ -348,10 +348,58 @@ describe('the page of an EDA (FR-ED-04, DEC-UX-321, DEC-UX-322)', () => {
     expect(rows.map((row) => row.querySelector('.mono')?.textContent)).toEqual(['week_start', 'lead_source', 'lead_count', 'lead_channel', 'unique_applicants', 'loaded_at']);
     expect(rows[0]?.classList.contains('key')).toBe(true);
     expect(rows[4]?.classList.contains('key')).toBe(false);
-    expect(within(rows[2] as HTMLElement).getByRole('img', { name: 'Gaps: needed, not set yet' })).toBeTruthy();
-    expect(within(rows[2] as HTMLElement).getByRole('img', { name: 'Weight: needed, not set yet' })).toBeTruthy();
+    // Every square says on hover which EDA-Step it is and how the field stands, with the EDA-Probes it waits for.
+    expect(within(rows[2] as HTMLElement).getByRole('img', { name: 'Gaps: needed, not covered yet: Nulls per Key Field, Disguised nulls' })).toBeTruthy();
+    expect(within(rows[2] as HTMLElement).getByRole('img', { name: 'Weight: needed, not covered yet: Distribution of numbers, Spread' }).getAttribute('title')).toBe(
+      'Weight: needed, not covered yet: Distribution of numbers, Spread',
+    );
     expect(within(rows[0] as HTMLElement).getByRole('img', { name: 'Weight: not needed' })).toBeTruthy();
-    expect(within(rows[0] as HTMLElement).getByRole('img', { name: 'Gaps: needed, not set yet' })).toBeTruthy();
+    expect(within(rows[0] as HTMLElement).getByRole('img', { name: 'Gaps: needed, not covered yet: Nulls per Key Field, Disguised nulls' })).toBeTruthy();
+    // The letters of the EDA-Steps named under the intro and on hover; a long name whole on hover.
+    expect(fields.querySelector('.letters')?.textContent).toBe('G Gaps · W Weight · C Correctness · R Relations between fields');
+    expect(fields.querySelector('.steps abbr')?.getAttribute('title')).toBe('Gaps');
+    expect(rows[0]?.querySelector('.mono')?.getAttribute('title')).toBe('week_start');
+  });
+
+  it('names the columns of a drawing by their kind, never by the fields of the Resource, and keeps the foot of a card on one line (DEC-UX-330)', async () => {
+    show(viewOf({ grainHolds: GRAIN_HOLDS, nullsPerKeyField: NULLS }));
+    const card = (await screen.findAllByRole('article', { name: 'Nulls per Key Field' }))[0] as HTMLElement;
+    expect([...card.querySelectorAll('svg.drawing text.name')].map((name) => name.textContent)).toEqual(['id', 'id', 'count', 'text']);
+    expect(card.querySelector('svg.drawing')?.textContent).not.toContain('lead_channel');
+    const foot = card.querySelector('footer .set') as HTMLElement;
+    expect(foot.getAttribute('title')).toBe(foot.textContent);
+    expect(foot.textContent).toContain('lead_channel');
+    cleanup();
+    setLanguage('nl');
+    try {
+      show(viewOf({ grainHolds: GRAIN_HOLDS, nullsPerKeyField: NULLS }));
+      const kaart = (await screen.findAllByRole('article', { name: 'Lege waarden per sleutelveld' }))[0] as HTMLElement;
+      expect([...kaart.querySelectorAll('svg.drawing text.name')].map((name) => name.textContent)).toEqual(['id', 'id', 'aantal', 'tekst']);
+    } finally {
+      setLanguage('en');
+    }
+  });
+
+  it('wraps what a drawing says on lines that fit inside it (DEC-UX-330)', async () => {
+    setLanguage('nl');
+    try {
+      show(viewOf(), { probe: 'distributionOfNumbers' });
+      await screen.findByRole('heading', { level: 2 });
+      const drawing = document.querySelector('svg.drawing') as SVGSVGElement;
+      const lines = [...drawing.querySelectorAll('.pill-text tspan')].map((line) => line.textContent);
+      expect(lines).toEqual(['meest klein, één groot: de mediaan en het gemiddelde', 'uit elkaar']);
+      expect(drawing.getAttribute('viewBox')).toBe('0 0 252 200');
+    } finally {
+      setLanguage('en');
+    }
+  });
+
+  it('says on hover which EDA-Probe covers a field (DEC-UX-322)', async () => {
+    show(viewOf({ grainHolds: GRAIN_HOLDS, nullsPerKeyField: NULLS }));
+    const side = within(await screen.findByRole('complementary', { name: 'EDA-Setup' }));
+    const fields = side.getByRole('heading', { name: 'Per field' }).closest('section') as HTMLElement;
+    const channel = [...fields.querySelectorAll('ul li')][3] as HTMLElement;
+    expect(within(channel).getByRole('img', { name: 'Gaps: covered by Nulls per Key Field' })).toBeTruthy();
   });
 
   it('shows on a card of Date range and Distribution of categories their result in a sentence and on their drawing (FR-ED-17, FR-ED-18)', async () => {
@@ -564,6 +612,17 @@ describe('the detail of an EDA-Probe (FR-ED-06, DEC-UX-324)', () => {
     expect(block.getByRole('img', { name: 'The volume per 28 days by week_start' })).toBeTruthy();
     const calm = block.getByRole('img', { name: 'How far each unit swings around its own average' });
     expect(calm.querySelectorAll('title')[0]?.textContent).toBe('Per 7 days: average 2,061 ± 228 (11%), median 2,059 (P25 1,894, P75 2,236), lowest 980 (15 Jun 2026), highest 2,559 (6 Apr 2026)');
+    // At most three round steps each side, so that its labels never run into each other; its average under its 0.
+    expect([...calm.querySelectorAll('text.tick')].map((tick) => tick.textContent)).toEqual(['-100%', '-50%', '0%', '+50%', '+100%']);
+    expect(calm.querySelector('text.average')?.textContent).toBe('its average');
+    // On hover a block of the volume says its first day and its numbers, at a guide line.
+    const volume = block.getByRole('img', { name: 'The volume per 28 days by week_start' });
+    expect(volume.querySelector('.pointed')).toBeNull();
+    await fireEvent.mouseEnter(volume.querySelectorAll('rect.hover')[0] as Element);
+    expect(volume.querySelector('.pointed .said')?.textContent).toBe('18 Mar 2024: 6,040 lead_count, 156 rows');
+    expect(volume.querySelectorAll('.pointed circle')).toHaveLength(2);
+    await fireEvent.mouseLeave(volume.querySelectorAll('rect.hover')[0] as Element);
+    expect(volume.querySelector('.pointed')).toBeNull();
     // Counted per week, its period; the sum of what adds up can be left out.
     expect(screen.getByText(/Per week, its period/)).toBeTruthy();
     expect((screen.getByRole('checkbox', { name: /The sum of lead_count/ }) as HTMLInputElement).checked).toBe(true);
