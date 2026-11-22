@@ -95,16 +95,17 @@ describe('the guide of an EDA in the Flow Box (FR-ED-14, DEC-UX-327)', () => {
       [9, 'Weight', 'Spread'],
       [10, 'Correctness', 'Impossible values'],
     ]);
-    // Date range and Distribution of categories run now (FR-ED-17, FR-ED-18): 4 of the 10 are still coming.
-    expect(flow.steps.filter((step) => step.coming).map((step) => step.id)).toEqual(['disguisedNulls', 'valuesWithoutAMatch', 'spread', 'impossibleValues']);
-    expect(flow.steps.find((step) => step.id === 'disguisedNulls')).toMatchObject({ said: 'Coming: Data Hub does not run it yet', warn: false, done: false });
+    // Date range, Distribution of categories and Disguised nulls run now (FR-ED-17, FR-ED-18, FR-ED-19): 3 of the 10 are still coming.
+    expect(flow.steps.filter((step) => step.coming).map((step) => step.id)).toEqual(['valuesWithoutAMatch', 'spread', 'impossibleValues']);
+    expect(flow.steps.find((step) => step.id === 'valuesWithoutAMatch')).toMatchObject({ said: 'Coming: Data Hub does not run it yet', warn: false, done: false });
     expect(flow.steps.find((step) => step.id === 'dateRange')).toMatchObject({ said: 'Not added yet', warn: true, coming: false, go: 'Open the EDA-Probe' });
+    expect(flow.steps.find((step) => step.id === 'disguisedNulls')).toMatchObject({ said: 'Not added yet', warn: true, coming: false, go: 'Open the EDA-Probe' });
     expect(flow.steps.find((step) => step.id === 'distributionOfCategories')).toMatchObject({ said: 'Not added yet', warn: true, coming: false });
     expect(flow.steps.find((step) => step.id === 'grainHolds')).toMatchObject({ said: 'Not added yet', warn: true, go: 'Open the EDA-Probe' });
     // The step to do now is the best next step of the EDA, as its page proposes.
     expect(flow.now).toBe('nullsPerKeyField');
     expect(flow.progress).toBe('0 of 10 needed EDA-Probes complete');
-    expect(flow.foot).toMatch(/^10 to go, of which 4 are coming: they still count\./);
+    expect(flow.foot).toMatch(/^10 to go, of which 3 are coming: they still count\./);
   });
 
   it('says a step done with Data Hub reading and its result in a few words, and an open one with what it misses', () => {
@@ -113,10 +114,10 @@ describe('the guide of an EDA in the Flow Box (FR-ED-14, DEC-UX-327)', () => {
     expect(grain).toMatchObject({ done: true, tag: { text: 'As expected', tone: 'healthy' } });
     expect(grain?.said).toBe('One row per week_start, lead_source: none twice in 16,224 rows.');
     expect(flow.steps.find((step) => step.id === 'nullsPerKeyField')?.said).toBe('Set on 3 of 4 Key Fields: lead_channel still missing');
-    // Distribution of categories misses both texts among the Key Fields, more than any other: the best next step.
-    expect(flow.now).toBe('distributionOfCategories');
+    // Disguised nulls misses all four Key Fields, more than any other: the best next step.
+    expect(flow.now).toBe('disguisedNulls');
     expect(flow.progress).toBe('1 of 10 needed EDA-Probes complete');
-    expect(flow.foot).toMatch(/^9 to go, of which 4 are coming/);
+    expect(flow.foot).toMatch(/^9 to go, of which 3 are coming/);
   });
 
   it('unfolds What, Why and How, the Learning Card where one is written, and Open the EDA-Probe, except on its own detail', () => {
@@ -215,12 +216,9 @@ describe('the question an EDA-Probe asks of a Resource (FR-ED-13)', () => {
   });
 });
 
-describe('the step of Disguised nulls, once Data Hub runs it (DEC-ED-35)', () => {
-  /** The contracts still say Data Hub does not run it: these tests do not depend on when that changes. */
-  const runnable = (view: EdaView): EdaView => ({ ...view, probes: view.probes.map((one) => (one.key === 'disguisedNulls' ? { ...one, runs: true } : one)) });
-
+describe('the step of Disguised nulls, which Data Hub runs (DEC-ED-35, FR-ED-19)', () => {
   it('unfolds What, Why and How, and leads to its detail', () => {
-    const step = edaFlowOf(runnable(viewOf())).steps.find((one) => one.id === 'disguisedNulls');
+    const step = edaFlowOf(viewOf()).steps.find((one) => one.id === 'disguisedNulls');
     expect(step).toMatchObject({ coming: false, warn: true, said: 'Not added yet', go: 'Open the EDA-Probe' });
     expect(step?.what).toMatch(/^It counts, per field, the rows that say nothing: with no value at all, or with a value that fills the cell but stands for nothing/);
     expect(step?.why).toMatch(/^A null is seen as missing; "unknown" is counted as a value\./);
@@ -234,7 +232,7 @@ describe('the step of Disguised nulls, once Data Hub runs it (DEC-ED-35)', () =>
       { subject: 'lead_count', data: { rows: 16224, saysNothing: 0, nulls: 0, found: [], role: 'addsUp' }, reading: 'expected', yours: null },
       { subject: 'lead_channel', data: { rows: 16224, saysNothing: 2608, nulls: 1947, found: [{ value: 'unknown', rows: 661 }], role: null }, reading: 'judge', yours: null },
     ]);
-    const step = edaFlowOf(runnable(viewOf({ disguisedNulls: disguised }))).steps.find((one) => one.id === 'disguisedNulls');
+    const step = edaFlowOf(viewOf({ disguisedNulls: disguised })).steps.find((one) => one.id === 'disguisedNulls');
     expect(step).toMatchObject({ done: true, tag: { text: 'For you to judge', tone: 'informative' }, said: '1 field says nothing on some rows: lead_channel the most, 16% of its rows.' });
   });
 });

@@ -27,7 +27,7 @@ const id = z.string().min(1).describe('The ID of the Resource, from list_resourc
 const probe = z
   .enum(RUNNABLE_PROBES as unknown as [ProbeKey, ...ProbeKey[]])
   .describe(
-    'The key of an EDA-Probe Data Hub runs: grainHolds (The grain holds), dateRange (Date range), volumeOverTime (Volume over time, with empty periods), nullsPerKeyField (Nulls per Key Field), distributionOfNumbers (Distribution of numbers) or distributionOfCategories (Distribution of categories).',
+    'The key of an EDA-Probe Data Hub runs: grainHolds (The grain holds), dateRange (Date range), volumeOverTime (Volume over time, with empty periods), nullsPerKeyField (Nulls per Key Field), disguisedNulls (Disguised nulls), distributionOfNumbers (Distribution of numbers) or distributionOfCategories (Distribution of categories).',
   );
 const fields = z
   .array(z.string().min(1))
@@ -39,7 +39,7 @@ const params = z
   .record(z.string(), z.unknown())
   .optional()
   .describe(
-    'Its parameters, only when the User asks for them. Volume over time: measure, the field that adds up, or null for rows only, and mayBeEmpty: "weekends" for a count per day. Distribution of numbers: width and tailFrom, a number, or one per field such as {"lead_count": 5}. Distribution of categories: weighedBy, the field that adds up to weigh each value by, or null to weigh by rows; never a unique count. The grain holds, Date range and Nulls per Key Field take none.',
+    'Its parameters, only when the User asks for them. Volume over time: measure, the field that adds up, or null for rows only, and mayBeEmpty: "weekends" for a count per day. Distribution of numbers: width and tailFrom, a number, or one per field such as {"lead_count": 5}. Distribution of categories: weighedBy, the field that adds up to weigh each value by, or null to weigh by rows; never a unique count. Disguised nulls: lists, the values that say nothing, {"text": [...], "date": ["YYYY-MM-DD", ...], "number": [...], "ninesOnly": true or false}, Data Hub\'s proposal for each part left out; once given, the EDA keeps them, and a text is compared trimmed and in lower case; zero never says nothing. The grain holds, Date range and Nulls per Key Field take none.',
   );
 
 /** The reading of each result is the User's, given in the MCP App or in Data Hub, never by Claude (DEC-ED-29). */

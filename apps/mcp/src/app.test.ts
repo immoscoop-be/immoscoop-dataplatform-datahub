@@ -1476,6 +1476,7 @@ describe('the EDA through Claude (FR-ED-15, FR-ED-16, DEC-ED-29, TR-ED-10)', () 
       'dateRange',
       'volumeOverTime',
       'nullsPerKeyField',
+      'disguisedNulls',
       'distributionOfNumbers',
       'distributionOfCategories',
     ]);
@@ -1484,6 +1485,8 @@ describe('the EDA through Claude (FR-ED-15, FR-ED-16, DEC-ED-29, TR-ED-10)', () 
     expect(described.probe?.description).toContain('dateRange (Date range)');
     expect(described.probe?.description).toContain('distributionOfCategories (Distribution of categories)');
     expect(described.params?.description).toContain('Distribution of categories: weighedBy');
+    expect(described.probe?.description).toContain('disguisedNulls (Disguised nulls)');
+    expect(described.params?.description).toContain('Disguised nulls: lists');
     // Explore Resources brings them to any Permission group; without claude.use there is nothing of Data Hub in Claude.
     const exploring = names(await toolsOf(await issuer.sign({ permissions: permissionsOf('businessAnalyst', (permissions) => (permissions['eda.use'].on = true)) })));
     expect(exploring).toEqual(expect.arrayContaining(EDA_TOOLS));
@@ -1507,10 +1510,11 @@ describe('the EDA through Claude (FR-ED-15, FR-ED-16, DEC-ED-29, TR-ED-10)', () 
     // The rows of the table are a fact of the EDA, from the last run that counted them (DEC-ED-32).
     expect(text).toContain('Started on 2026-11-21 by An Claes. The table has 16,224 rows, counted by The grain holds on 2026-11-21.');
     // The needed ones Data Hub does not run yet are named once, and still count (DEC-ED-27).
-    expect(text).toContain('3 needed ones are Coming: Disguised nulls in Gaps, Spread in Weight, Impossible values in Correctness.');
-    // Date range and Distribution of categories Data Hub runs: needed, still to add.
-    expect(text).toContain('Needed, not added yet: Date range, Distribution of categories.');
-    expect(text).toContain('Best next step: Distribution of categories. It shows where the weight of the texts among the Key Fields lies: which few values bring most of it.');
+    expect(text).toContain('2 needed ones are Coming: Spread in Weight, Impossible values in Correctness.');
+    // Date range, Disguised nulls and Distribution of categories Data Hub runs: needed, still to add.
+    expect(text).toContain('Needed, not added yet: Date range, Disguised nulls, Distribution of categories.');
+    // Disguised nulls misses all four Key Fields, more than any other (DEC-ED-16).
+    expect(text).toContain('Best next step: Disguised nulls. It finds the values that fill a field but say nothing, such as n/a or 1900-01-01: Gaps that Nulls per Key Field cannot see.');
     expect(text.indexOf('Look at this, first:')).toBeLessThan(text.indexOf('For the User to judge:'));
     expect(text).toContain('- Nulls per Key Field, `lead_source`: 130 of 16,224 rows empty (0.8%). Data Hub: its role, grouped by, needs it on every row. No reading of the User yet.');
     expect(text).toMatch(/2 periods have no rows at all, the first from 8 Sept? 2025, between periods of about 2,061 per week\./);
@@ -1537,10 +1541,10 @@ describe('the EDA through Claude (FR-ED-15, FR-ED-16, DEC-ED-29, TR-ED-10)', () 
         page: `${WEB}/eda/${RESOURCE_ID}`,
       },
       attention: { ran: 7, look: 2, judge: 2, read: 0 },
-      coming: { count: 3 },
+      coming: { count: 2 },
     });
     const view = shown.structuredContent as { bar: { state: string }[]; steps: { name: string; needed: unknown; probes: { name: string }[] }[] };
-    expect(view.bar.map((part) => part.state)).toEqual(['done', 'open', 'done', 'done', 'coming', 'done', 'open', 'coming', 'coming']);
+    expect(view.bar.map((part) => part.state)).toEqual(['done', 'open', 'done', 'done', 'open', 'done', 'open', 'coming', 'coming']);
     expect(view.steps.map((step) => [step.name, step.needed, step.probes.map((one) => one.name)])).toEqual([
       ['Basis', { total: 3, complete: 2 }, ['The grain holds', 'Volume over time, with empty periods']],
       ['Gaps', { total: 2, complete: 1 }, ['Nulls per Key Field']],
@@ -1556,7 +1560,7 @@ describe('the EDA through Claude (FR-ED-15, FR-ED-16, DEC-ED-29, TR-ED-10)', () 
     expect(html.match(/<i class="ed-(done|open|coming)"/g)).toHaveLength(9);
     expect(html).toContain('<code>lead_source</code> is empty on 130 rows, though its role, grouped by, needs it on every row.');
     expect(html).toContain('Basis<small class="ed-open">2 of 3 needed complete</small>');
-    expect(html).toContain('Coming<small>3 needed, which count already</small>');
+    expect(html).toContain('Coming<small>2 needed, which count already</small>');
     expect(html).toContain('Needed, not added yet: Date range.');
     expect(html).toContain(`data-open="${WEB}/eda/${RESOURCE_ID}"`);
     expect(html).not.toContain('data-reading');

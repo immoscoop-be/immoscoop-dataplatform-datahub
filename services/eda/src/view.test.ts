@@ -26,7 +26,7 @@ describe('the EDA as the tab Steps shows it (FR-ED-04, DEC-ED-16)', () => {
     expect(nulls).toMatchObject({ level: 'must', runs: true, needed: true, added: false, complete: false, fields: [], params: {}, lastRun: null });
     expect(view.probes.find((probe) => probe.key === 'dateRange')).toMatchObject({ runs: true, needed: true, applies: { fields: ['week_start'] } });
     // One Data Hub does not run yet is needed all the same (OP-ED-09).
-    expect(view.probes.find((probe) => probe.key === 'disguisedNulls')).toMatchObject({ runs: false, needed: true });
+    expect(view.probes.find((probe) => probe.key === 'impossibleValues')).toMatchObject({ runs: false, needed: true });
     // Not offered for an aggregate.
     expect(view.probes.some((probe) => probe.key === 'datesInOrder')).toBe(false);
   });
@@ -72,7 +72,8 @@ describe('the EDA as the tab Steps shows it (FR-ED-04, DEC-ED-16)', () => {
     });
     expect(view.needed).toEqual({ total: 10, complete: 1 });
     expect(view.coverage.fields.find((field) => field.name === 'lead_channel')?.steps.gaps).toBe('covered');
-    expect(view.next).toBe('grainHolds');
+    // Disguised nulls is still open on all four Key Fields, the most of what is missing (DEC-ED-16).
+    expect(view.next).toBe('disguisedNulls');
   });
 
   it('shows a run on a selection with what it ran on, without the readings of the results of the whole table (OP-ED-12)', () => {
