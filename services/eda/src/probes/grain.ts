@@ -7,7 +7,8 @@ import { AnswerMismatch, countOf, heading, jsonOf, onlyRow, quote, whereOf } fro
  * groups it by its grain values, a row with an empty grain field among them, and counts how many grain values are on
  * 1, 2, 3, or 4 rows and more, the rows with an empty grain field, and the 5 grain values on the most rows, above one.
  */
-export function grainSql({ source, fields }: ProbeContext): string {
+export function grainSql(context: ProbeContext): string {
+  const { source, fields } = context;
   const names = fields.map((_, index) => `g${index}`);
   const filled = names.map((name) => `${name} is not null`).join(' and ');
   const empty = names.map((name) => `${name} is null`).join(' or ');
@@ -17,7 +18,7 @@ with grain as (
   select
     ${fields.map((field, index) => `${quote(field)} as g${index}`).join(',\n    ')},
     count(*) as row_count
-  from ${quote(source.fullName)}${whereOf(source, [], '  ')}
+  from ${quote(source.fullName)}${whereOf(context, [], '  ')}
   group by ${names.map((_, index) => index + 1).join(', ')}
 )
 select

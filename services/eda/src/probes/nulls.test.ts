@@ -18,6 +18,16 @@ from \`immoscoop-dataplatform.dbt_prod_stacks.Weekly_Lead_Volume\`
 where (\`week_start\` is null or \`week_start\` >= date '0001-01-01')`);
   });
 
+  it('counts on a selection of rows: the rows where lead_channel says nothing, every partition kept (OP-ED-12)', () => {
+    expect(nullsSql({ ...weekly, fields: ['lead_source'], selection: { where: [{ kind: 'saysNothing', field: 'lead_channel' }] } })).toBe(`-- EDA-Probe nullsPerKeyField on Weekly lead volume: aggregates only (TR-ED-03)
+select
+  count(*) as row_count,
+  countif(\`lead_source\` is null) as empty_0
+from \`immoscoop-dataplatform.dbt_prod_stacks.Weekly_Lead_Volume\`
+where (\`week_start\` is null or \`week_start\` >= date '0001-01-01')
+  and (\`lead_channel\` is null or lower(trim(\`lead_channel\`)) in ('', 'n/a', 'na', 'null', 'none', 'unknown', 'onbekend', '-', '?', 'tbd'))`);
+  });
+
   it('reads a field without empty values as expected, with some as for you to judge, and look at this where it holds a role', () => {
     const rows = [{ row_count: '1000', empty_0: '0', empty_1: '12', empty_2: '0', empty_3: '7' }];
     expect(nullsResults(rows, weekly)).toEqual([

@@ -1,7 +1,9 @@
 import {
+  DISGUISED_DEFAULTS,
   EDA_STEPS,
   PROBES,
   type DataHubReading,
+  type DisguisedLists,
   type EdaField,
   type EdaListItem,
   type EdaStep,
@@ -170,6 +172,7 @@ export const PROBE_ABOUT: Readonly<Partial<Record<ProbeKey, { does: string; why:
     empty: 'eda.about.distributionOfCategories.empty',
   },
   dateRange: { does: 'eda.about.dateRange.does', why: 'eda.about.dateRange.why', setOn: 'eda.about.dateRange.setOn', empty: 'eda.about.dateRange.empty' },
+  disguisedNulls: { does: 'eda.about.disguisedNulls.does', why: 'eda.about.disguisedNulls.why', setOn: 'eda.about.disguisedNulls.setOn', empty: 'eda.about.disguisedNulls.empty' },
 };
 
 /** The name and the line of each EDA-Step (DEC-ED-11). */
@@ -204,8 +207,9 @@ export function overallReading(results: readonly Pick<ResultView, 'reading'>[]):
 }
 
 /**
- * Whether a result asks the User for a reading (DEC-UX-326): a field of Nulls per Key Field without any empty value, and
- * a date of Date range that is up to date, have nothing to read (DEC-ED-34); every other result has.
+ * Whether a result asks the User for a reading (DEC-UX-326): a field of Nulls per Key Field without any empty value, a
+ * field of Disguised nulls where every row says something (DEC-ED-35), and a date of Date range that is up to date
+ * (DEC-ED-34) have nothing to read; every other result has. The rule of the contracts, which Claude follows too.
  */
 export { asksReading } from '@datahub/contracts/eda';
 
@@ -291,6 +295,63 @@ export function stillMissing(probe: Pick<ProbeView, 'applies' | 'lastRun'>): str
 
 /** The steps in their order, for whoever lists them. */
 export { EDA_STEPS };
+
+// ----------------------------------------------------------------------------------------------------------------
+// The lists of Disguised nulls (DEC-ED-35)
+
+/** The kinds of field Disguised nulls keeps a list for. */
+export type DisguisedKind = 'text' | 'date' | 'number';
+
+/**
+ * The lists Disguised nulls looks for, as its parameters keep them per EDA (`{ lists }`), each part that is not there
+ * or not of its shape as Data Hub proposes it.
+ */
+export function disguisedListsOf(params: Readonly<Record<string, unknown>> | undefined): DisguisedLists {
+  const set = params?.lists;
+  const lists = (typeof set === 'object' && set !== null ? set : {}) as Partial<Record<keyof DisguisedLists, unknown>>;
+  const texts = (value: unknown, proposed: readonly string[]) => (Array.isArray(value) && value.every((one) => typeof one === 'string') ? [...(value as string[])] : [...proposed]);
+  const numbers = Array.isArray(lists.number) && lists.number.every((one) => typeof one === 'number') ? [...(lists.number as number[])] : [...DISGUISED_DEFAULTS.number];
+  return {
+    text: texts(lists.text, DISGUISED_DEFAULTS.text),
+    date: texts(lists.date, DISGUISED_DEFAULTS.date),
+    number: numbers,
+    ninesOnly: typeof lists.ninesOnly === 'boolean' ? lists.ninesOnly : DISGUISED_DEFAULTS.ninesOnly,
+  };
+}
+
+/** A text as Disguised nulls compares it: whatever its capitals and the spaces around it. */
+const textKey = (value: string) => value.trim().toLocaleLowerCase();
+
+/** Whether two sets of lists look for the same values, in any order. */
+export function sameLists(a: DisguisedLists, b: DisguisedLists): boolean {
+  const same = <T>(one: readonly T[], other: readonly T[]) => one.length === other.length && one.every((value) => other.includes(value));
+  return same(a.text.map(textKey), b.text.map(textKey)) && same(a.date, b.date) && same(a.number, b.number) && a.ninesOnly === b.ninesOnly;
+}
+
+/**
+ * The lists with a value the User adds to one kind: a text trimmed, a day as YYYY-MM-DD, a number. Null when there is
+ * nothing to add: nothing typed, not a day or a number, or already in the list; 'zero' for 0, which never says nothing.
+ */
+export function withValue(lists: DisguisedLists, kind: DisguisedKind, typed: string): DisguisedLists | 'zero' | null {
+  const value = typed.trim();
+  if (value === '') return null;
+  if (kind === 'text') return lists.text.some((one) => textKey(one) === textKey(value)) ? null : { ...lists, text: [...lists.text, value] };
+  if (kind === 'date') {
+    const day = /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`));
+    return day && !lists.date.includes(value) ? { ...lists, date: [...lists.date, value] } : null;
+  }
+  const number = Number(value);
+  if (!Number.isFinite(number)) return null;
+  if (number === 0) return 'zero';
+  return lists.number.includes(number) ? null : { ...lists, number: [...lists.number, number] };
+}
+
+/** The lists without a value of one kind. */
+export function withoutValue(lists: DisguisedLists, kind: DisguisedKind, value: string | number): DisguisedLists {
+  if (kind === 'text') return { ...lists, text: lists.text.filter((one) => one !== value) };
+  if (kind === 'date') return { ...lists, date: lists.date.filter((one) => one !== value) };
+  return { ...lists, number: lists.number.filter((one) => one !== value) };
+}
 
 // ----------------------------------------------------------------------------------------------------------------
 // Numbers

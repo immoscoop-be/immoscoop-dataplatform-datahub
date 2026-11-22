@@ -1,11 +1,14 @@
 import { randomBytes } from 'node:crypto';
 import { createTestIssuer, type TestIssuer } from '@datahub/auth/testing';
-import { type EdaView, isComplete, isNeeded, PROBES, probesFor, type ProbeKey, type ProbeRunAnswer, type ProbeRunRequest, type RunAnswer } from '@datahub/contracts/eda';
+import { type EdaView, isComplete, isNeeded, PROBES, probesFor, type ProbeKey, type ProbeRunAnswer, type ProbeRunRequest, type RunAnswer, type RunView } from '@datahub/contracts/eda';
 import { createDatabase, type Database, migrate } from '@datahub/db';
 import type { FastifyInstance } from 'fastify';
 import { sql } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { parseReading, parseRun, todayAt } from './api.js';
+
+/** What a run on a selection answers: the EDA, and the run itself (OP-ED-12). */
+type RanOnSelection = Extract<RunAnswer, { state: 'ran' }> & { run: RunView };
 import { buildApp } from './app.js';
 import { type Catalogue, type CatalogueResource, CatalogueUnavailable, sourceOf } from './catalogue.js';
 import type { EdaDatabase } from './database.js';
@@ -29,6 +32,15 @@ describe('the requests of eda', () => {
     expect(parseRun({ approve: 'yes' })).toBe('approve is true or false.');
     expect(parseRun({ sql: 'select 1' })).toBe('A run has no field sql.');
     expect(parseRun([])).toBe('Send a JSON object.');
+  });
+
+  it('take the selection of rows a run runs on, of at most 10 conditions (OP-ED-12)', () => {
+    const selection = { where: [{ kind: 'saysNothing', field: 'lead_channel' }] };
+    expect(parseRun({ selection })).toEqual({ selection, approve: false });
+    expect(parseRun({ selection: { where: [] } })).toEqual({ selection: { where: [] }, approve: false });
+    expect(parseRun({ selection: 'lead_channel is null' })).toBe('selection is { where: [conditions] }.');
+    expect(parseRun({ selection: { where: new Array(11).fill(selection.where[0]) } })).toBe('A selection holds at most 10 conditions.');
+    expect(parseRun({ selection: { where: [{ kind: 'sql', field: 'lead_channel' }] } })).toBe('Condition 1 is saysNothing, equals or range, as its kind.');
   });
 
   it('take a reading of a subject as expected, known or a problem (FR-ED-11)', () => {
@@ -266,6 +278,122 @@ describe.skipIf(!url)('the routes of eda (TR-ED-01)', () => {
       expect.objectContaining({ subject: 'week_start', reading: 'expected', data: expect.objectContaining({ unit: 'week', measure: 'lead_count', current: '2026-11-16', empty: [] }) }),
     ]);
     expect(await database.db.selectFrom('edaRuns').select('probe').where('probe', '=', 'volumeOverTime').execute()).toHaveLength(3);
+  });
+
+  it('runs on a selection of rows, which changes nothing of the EDA-Probe and comes back as the run itself (OP-ED-12)', async () => {
+    const before = (await call(dirk, 'GET', edaOf(WEEKLY_ANSWER.id))).json<EdaView>();
+    const probeOf = (view: EdaView, key: ProbeKey) => view.probes.find((probe) => probe.key === key);
+    const nullsBefore = probeOf(before, 'nullsPerKeyField');
+    // Every run in the view says what it ran on: the last run of an EDA-Probe, the whole table.
+    expect(nullsBefore?.lastRun?.selection).toEqual({ where: [] });
+
+    const selection = { where: [{ kind: 'saysNothing', field: 'lead_channel' }] };
+    const answer = await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'nullsPerKeyField'), { selection });
+    expect(answer.statusCode).toBe(200);
+    const ran = answer.json<RanOnSelection>();
+    expect(ran.state).toBe('ran');
+    expect(ran.run).toMatchObject({ ranBy: { id: '103', name: 'Dirk Vos' }, bytes: 1_200_000, fields: nullsBefore?.fields, params: {}, selection });
+    expect(ran.run.results.map((result) => [result.subject, result.reading, result.yours])).toEqual([
+      ['week_start', 'expected', null],
+      ['lead_source', 'look', null],
+      ['lead_count', 'expected', null],
+      ['lead_channel', 'judge', null],
+    ]);
+    // On those rows only, every partition kept, aggregates only.
+    const sqlOf = () => asked.at(-1)?.run.sql ?? '';
+    expect(sqlOf()).toContain(
+      "where (`week_start` is null or `week_start` >= date '0001-01-01')\n  and (`lead_channel` is null or lower(trim(`lead_channel`)) in ('', 'n/a', 'na', 'null', 'none', 'unknown', 'onbekend', '-', '?', 'tbd'))",
+    );
+    expect(sqlOf()).toContain('countif(`lead_channel` is null) as empty_3');
+    // Not its last run, nor counted for complete: the EDA is as it was.
+    expect(ran.run.id).not.toBe(nullsBefore?.lastRun?.id);
+    expect(probeOf(ran.eda, 'nullsPerKeyField')?.lastRun).toEqual(nullsBefore?.lastRun);
+    expect(ran.eda.needed).toEqual(before.needed);
+    expect(ran.eda.next).toBe(before.next);
+
+    // An EDA-Probe not added yet stays so, and one added keeps its setting, whatever the run on a selection is set on.
+    const numbers = (
+      await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'distributionOfNumbers'), {
+        selection: {
+          where: [
+            { kind: 'range', field: 'week_start', from: '2026-01-05', before: '2026-02-02' },
+            { kind: 'equals', field: 'lead_source', value: "web' or true --" },
+          ],
+        },
+      })
+    ).json<RanOnSelection>();
+    expect(sqlOf()).toContain("  and (`week_start` >= date '2026-01-05' and `week_start` < date '2026-02-02')\n    and `lead_source` = 'web\\' or true --'\n");
+    expect(probeOf(numbers.eda, 'distributionOfNumbers')).toMatchObject({ added: false, complete: false, fields: [], lastRun: null });
+    expect(numbers.run).toMatchObject({ fields: ['lead_count'], results: [expect.objectContaining({ subject: 'lead_count', reading: 'judge' })] });
+    const volume = (
+      await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'volumeOverTime'), {
+        fields: ['loaded_at'],
+        params: { measure: null },
+        selection: { where: [{ kind: 'equals', field: 'lead_count', value: 0 }] },
+      })
+    ).json<RanOnSelection>();
+    expect(sqlOf()).toContain('  and `lead_count` = 0\n  and eda_dated.period is not null');
+    expect(volume.run).toMatchObject({ fields: ['loaded_at'], params: { measure: null }, selection: { where: [{ kind: 'equals', field: 'lead_count', value: 0 }] } });
+    expect(probeOf(volume.eda, 'volumeOverTime')).toMatchObject({ fields: ['week_start'], params: {}, lastRun: probeOf(before, 'volumeOverTime')?.lastRun });
+
+    // A selection of the whole table is a run as any other: the last run of its EDA-Probe.
+    const whole = (await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'nullsPerKeyField'), { selection: { where: [] } })).json<RunAnswer>();
+    expect(whole).not.toHaveProperty('run');
+    const last = whole.state === 'ran' ? probeOf(whole.eda, 'nullsPerKeyField')?.lastRun : undefined;
+    expect(last?.id).not.toBe(nullsBefore?.lastRun?.id);
+    expect(last?.selection).toEqual({ where: [] });
+    expect(sqlOf()).not.toContain('lower(trim(');
+
+    // Each run is kept with what it ran on.
+    const kept = await database.db.selectFrom('edaRuns').select(['probe', 'selection']).where(sql<boolean>`selection -> 'where' <> '[]'::jsonb`).orderBy('ranAt').execute();
+    expect(kept.map((run) => [run.probe, run.selection.where.length])).toEqual([
+      ['nullsPerKeyField', 1],
+      ['distributionOfNumbers', 2],
+      ['volumeOverTime', 1],
+    ]);
+  });
+
+  it('says nothing by the lists of the Disguised nulls of the EDA, once added with them (OP-ED-12, DEC-ED-35)', async () => {
+    const eda = await database.db.selectFrom('edas').select('id').where('resourceId', '=', WEEKLY_ANSWER.id).executeTakeFirstOrThrow();
+    // Data Hub does not run Disguised nulls yet: it is added as it will be, with the lists of this EDA.
+    await database.db
+      .insertInto('edaProbes')
+      .values({ edaId: eda.id, probe: 'disguisedNulls', fields: '["lead_channel"]', params: JSON.stringify({ lists: { text: ['Leeg'], ninesOnly: false } }), addedById: '103', addedByName: 'Dirk Vos' })
+      .execute();
+    try {
+      const where = [
+        { kind: 'saysNothing', field: 'lead_channel' },
+        { kind: 'saysNothing', field: 'lead_count' },
+      ];
+      expect((await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'grainHolds'), { selection: { where } })).statusCode).toBe(200);
+      expect(asked.at(-1)?.run.sql).toContain("and (`lead_channel` is null or lower(trim(`lead_channel`)) in ('', 'leeg'))");
+      expect(asked.at(-1)?.run.sql).toContain('and (`lead_count` is null or `lead_count` in (-1))');
+    } finally {
+      await database.db.deleteFrom('edaProbes').where('edaId', '=', eda.id).where('probe', '=', 'disguisedNulls').execute();
+    }
+  });
+
+  it('refuses a selection that does not fit the Resource before anything runs, whatever it holds (OP-ED-12)', async () => {
+    const count = asked.length;
+    const runs = await database.db.selectFrom('edaRuns').select('id').execute();
+    for (const where of [
+      [{ kind: 'saysNothing', field: 'no_such_field' }],
+      [{ kind: 'saysNothing', field: 'lead_channel` is null or true or `lead_channel' }],
+      [{ kind: 'equals', field: 'lead_count', value: '0 or true' }],
+      [{ kind: 'equals', field: 'lead_channel', value: 0 }],
+      [{ kind: 'equals', field: 'week_start', value: "2026-01-05' or true or date '2026-01-05" }],
+      [{ kind: 'range', field: 'lead_count', from: '0) or (true' }],
+      [{ kind: 'range', field: 'lead_channel', from: 'a', before: 'b' }],
+      [{ kind: 'range', field: 'lead_count', from: 10, before: 10 }],
+      [{ kind: 'where', field: 'lead_channel', sql: 'true' }],
+      new Array(11).fill({ kind: 'saysNothing', field: 'lead_channel' }),
+    ]) {
+      const answer = await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'nullsPerKeyField'), { selection: { where } });
+      expect(answer.statusCode, JSON.stringify(where)).toBe(400);
+      expect(answer.json()).toMatchObject({ error: 'invalid_request', message: expect.any(String) });
+    }
+    expect(asked).toHaveLength(count);
+    expect(await database.db.selectFrom('edaRuns').select('id').execute()).toHaveLength(runs.length);
   });
 
   it('says what does not fit, and what cannot run here', async () => {

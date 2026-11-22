@@ -1,12 +1,23 @@
-import { type EdaListItem, type EdaView, type OwnerReading, PROBE_KEYS, type ProbeKey, type ProbeRunAnswer, type RunAnswer } from '@datahub/contracts/eda';
+import {
+  type EdaListItem,
+  type EdaView,
+  type OwnerReading,
+  PROBE_KEYS,
+  type ProbeKey,
+  type ProbeRunAnswer,
+  type RunAnswer,
+  type RunView,
+  type Selection,
+  WHOLE_TABLE,
+} from '@datahub/contracts/eda';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { explores, forbidden, whoOf } from './access.js';
 import { type Catalogue, CatalogueUnavailable, type EdaSource, type SeenResource } from './catalogue.js';
 import type { Eda, Edas } from './edas.js';
-import { AnswerMismatch, type Outcome, RUNNERS, settingOf } from './probes/index.js';
-import { ResultRefused, TIME_ZONE } from './probes/sql.js';
+import { AnswerMismatch, checkSelection, disguisedOf, isWholeTable, type Outcome, parseSelection, RUNNERS, settingOf } from './probes/index.js';
+import { ResultRefused, TIME_ZONE, UnsafeValue } from './probes/sql.js';
 import { type Query, QueryRefused, QueryUnavailable } from './query.js';
-import { coversOf, explorable, NEEDED, type NeededOf, viewOf } from './view.js';
+import { coversOf, explorable, NEEDED, type NeededOf, runView, viewOf } from './view.js';
 
 export interface ApiOptions {
   edas: Edas;
@@ -32,11 +43,14 @@ const READINGS: readonly OwnerReading[] = ['expected', 'known', 'problem'];
 /** An EDA starts from 3 · Confirmed (FR-ED-02). */
 const CONFIRMED = 3;
 
-/** The fields and parameters of a run, and whether the User approves what it reads; a string says what does not fit. */
-export function parseRun(body: unknown): { fields?: string[]; params?: Record<string, unknown>; approve: boolean } | string {
+/**
+ * The fields and parameters of a run, the selection of rows it runs on (OP-ED-12), and whether the User approves what
+ * it reads; a string says what does not fit.
+ */
+export function parseRun(body: unknown): { fields?: string[]; params?: Record<string, unknown>; selection?: Selection; approve: boolean } | string {
   if (body === undefined || body === null) return { approve: false };
   if (typeof body !== 'object' || Array.isArray(body)) return 'Send a JSON object.';
-  const { fields, params, approve = false, ...rest } = body as Record<string, unknown>;
+  const { fields, params, selection, approve = false, ...rest } = body as Record<string, unknown>;
   const unknown = Object.keys(rest)[0];
   if (unknown !== undefined) return `A run has no field ${unknown}.`;
   if (fields !== undefined && (!Array.isArray(fields) || !fields.every((field) => typeof field === 'string') || fields.length > 1000)) {
@@ -44,7 +58,14 @@ export function parseRun(body: unknown): { fields?: string[]; params?: Record<st
   }
   if (params !== undefined && (typeof params !== 'object' || params === null || Array.isArray(params))) return 'params is a JSON object.';
   if (typeof approve !== 'boolean') return 'approve is true or false.';
-  return { ...(fields === undefined ? {} : { fields: fields as string[] }), ...(params === undefined ? {} : { params: params as Record<string, unknown> }), approve };
+  const rows = selection === undefined ? undefined : parseSelection(selection);
+  if (typeof rows === 'string') return rows;
+  return {
+    ...(fields === undefined ? {} : { fields: fields as string[] }),
+    ...(params === undefined ? {} : { params: params as Record<string, unknown> }),
+    ...(rows === undefined ? {} : { selection: rows }),
+    approve,
+  };
 }
 
 /** The reading of a result: its subject, '' for the table as a whole or a field, and the reading (FR-ED-11). */
@@ -178,7 +199,8 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
   });
 
   // Adds an EDA-Probe if it is not yet, with its fields and parameters, and runs it through query as the User
-  // (FR-ED-06, TR-ED-03, TR-ED-04): the EDA as it is after, or what the Pre-flight asks.
+  // (FR-ED-06, TR-ED-03, TR-ED-04): the EDA as it is after, or what the Pre-flight asks. On a selection of rows it runs
+  // on those rows only, and changes nothing of the EDA-Probe: it answers with the run itself (OP-ED-12).
   app.post<{ Params: { id: string; probe: string }; Body: unknown }>('/resources/:id/eda/probes/:probe/runs', async (request, reply) => {
     const probe = request.params.probe;
     if (!isProbe(probe)) return reply.code(404).send(NO_PROBE);
@@ -189,21 +211,35 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       if (!source) return reply.code(404).send(NO_RESOURCE);
       const eda = await edas.ofResource(source.resource.id);
       if (!eda) return reply.code(404).send(NO_EDA);
+      // Its conditions name fields of this Resource, with values of their kind (OP-ED-12).
+      const selection = asked.selection ?? WHOLE_TABLE;
+      const unfit = checkSelection(selection, source);
+      if (unfit !== null) return reply.code(400).send({ error: 'invalid_request', message: unfit });
       // Without fields or parameters, an EDA-Probe added before runs again as it is set: on its own fields and
-      // parameters, not those it would start from (FR-ED-06).
+      // parameters, not those it would start from (FR-ED-06). A field says nothing by the lists of the Disguised nulls
+      // of this EDA, once added with them (DEC-ED-35).
+      const again = asked.fields === undefined && asked.params === undefined;
+      const added = again || selection.where.some((condition) => condition.kind === 'saysNothing') ? (await edas.state(eda.id)).probes : [];
       let given: { fields?: string[]; params?: Record<string, unknown> } = asked;
-      if (asked.fields === undefined && asked.params === undefined) {
-        const kept = (await edas.state(eda.id)).probes.find((one) => one.probe === probe);
-        if (kept) given = { fields: kept.fields, params: kept.params };
-      }
+      const kept = again ? added.find((one) => one.probe === probe) : undefined;
+      if (kept) given = { fields: kept.fields, params: kept.params };
+      const disguised = disguisedOf(added.find((one) => one.probe === 'disguisedNulls')?.params);
       const setting = settingOf(probe, source, given);
       if ('problem' in setting) {
         return reply.code(setting.problem === 'invalid' ? 400 : 422).send({ error: setting.problem === 'invalid' ? 'invalid_request' : 'cannot_run', message: setting.message });
       }
       const runner = RUNNERS[probe];
       if (!runner) return reply.code(422).send({ error: 'cannot_run', message: 'Data Hub does not run this EDA-Probe yet.' });
-      const context = { source, ...setting, today: todayAt(now()) };
-      const sql = runner.sql(context);
+      const context = { source, ...setting, selection, disguised, today: todayAt(now()) };
+      let sql: string;
+      try {
+        sql = runner.sql(context);
+      } catch (error) {
+        // checkSelection lets no such value through; should one get past it, it is refused, never run.
+        if (!(error instanceof UnsafeValue)) throw error;
+        request.log.error({ err: error, probe }, 'A condition of a selection could not be written as SQL');
+        return reply.code(400).send({ error: 'invalid_request', message: 'A condition of the selection does not fit this Resource.' });
+      }
 
       let answer: ProbeRunAnswer;
       try {
@@ -224,8 +260,20 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
         request.log.error({ err: error, probe, runId: answer.runId }, 'The answer of query does not have the shape of the SQL of the EDA-Probe');
         return reply.code(502).send({ error: 'bad_answer', message: 'The answer of this EDA-Probe could not be read; it is in the Query Log.' });
       }
-      await edas.keepRun(eda.id, { probe, fields: setting.fields, params: setting.params, ranBy: whoOf(request), bytes: answer.bytes, queryRunId: answer.runId, results });
-      return { state: 'ran', eda: await settle(request, source, eda) } satisfies RunAnswer;
+      const run = await edas.keepRun(eda.id, {
+        probe,
+        fields: setting.fields,
+        params: setting.params,
+        selection,
+        ranBy: whoOf(request),
+        bytes: answer.bytes,
+        queryRunId: answer.runId,
+        results,
+      });
+      const view = await settle(request, source, eda);
+      if (isWholeTable(selection)) return { state: 'ran', eda: view } satisfies RunAnswer;
+      // Not the last run of its EDA-Probe, nor counted for its completeness: it comes back as itself (OP-ED-12).
+      return { state: 'ran', eda: view, run: runView(run, []) } satisfies RunAnswer;
     } catch (error) {
       return unavailable(error, reply, request);
     }

@@ -104,10 +104,6 @@ The web app calls eda at its address (`DATAHUB_EDA_URL`) with the Access Token o
 
 eda is one of `local.services` in `infra/main.tf`, with its own service account that holds only what every service with a database holds, the Cloud SQL client role and its login to Postgres, and no role on BigQuery, and the addresses of query and catalogue (`DATAHUB_QUERY_URL`, `DATAHUB_CATALOGUE_URL`) and of identity (`DATAHUB_TOKEN_ISSUER`). catalogue gets the service account of eda (`DATAHUB_EDA_SERVICE_ACCOUNT`), and web the address of eda (`DATAHUB_EDA_URL`). A test in `infra/tests/` checks that eda holds no BigQuery role.
 
-## Open points
-
-None yet.
-
 <a id="tr-ed-09"></a>
 ### TR-ED-09 · The web app has the list to add an EDA-Probe and the guide of an EDA
 
@@ -121,3 +117,14 @@ The list to add an EDA-Probe is a sheet of the web app, as [eda](../../design/sc
 **Status:** Implemented · **Realises:** [FR-ED-15](../functional/15-eda.md#fr-ed-15), [FR-ED-16](../functional/15-eda.md#fr-ed-16), [DEC-ED-29](../functional/15-eda.md#dec-ed-29), [DEC-UX-329](../../design/principles.md#dec-ux-329)
 
 mcp calls eda at its address (`DATAHUB_EDA_URL`) with the token of the User, as it calls the other services, and lists the EDA tools only for a User with `eda.use`. `get_eda` answers the EDA of a Resource in words for Claude; `show_eda` shows it in the MCP App, a kind of its own in its one page, or, with `probe`, the last result of one EDA-Probe with the buttons of the User's reading, without running it; `run_eda_probe` runs an EDA-Probe through `POST /resources/{id}/eda/probes/{probe}/runs`, on its own fields and parameters unless others are given, and shows its result, or, when the Pre-flight asks for approval, a frame in which the User approves it, which runs it with `approve` through `run_eda_probe_approved`, a tool only the frame calls, as `run_query_approved` is. The reading of the User is given from the frame, through `PUT …/readings`, by `give_eda_reading`, a tool only the frame calls. The sentences of a result are made once by mcp, for Claude and the frame alike; examples of grain values, which are values of the data, reach Claude only when the Permission group of the User lets results reach Claude. Infrastructure gives mcp `DATAHUB_EDA_URL`.
+
+<a id="tr-ed-11"></a>
+### TR-ED-11 · Every EDA-Probe runs on a selection of rows
+
+**Status:** Implemented · **Realises:** [TR-ED-03](#tr-ed-03) · **Refs:** [OP-ED-12](../functional/15-eda.md#op-ed-12), [DEC-ED-35](../functional/15-eda.md#dec-ed-35)
+
+A run takes a `selection`, `{ where: [conditions] }`: the whole table when it holds none, else the rows where every condition holds. A condition is `saysNothing` (no value, or a value of the lists of Disguised nulls of the EDA), `equals` or `range` (`from` inclusive, `before` exclusive). eda checks the conditions against the Resource before it writes any SQL (at most 10, each on a field of it, with values of the kind of that field; 400 otherwise), and writes every value through a literal of its kind that refuses anything else. One place writes the conditions, beside the filter that keeps every partition, so that each EDA-Probe writes the same SQL on fewer rows, and on the whole table exactly the SQL it wrote before. A run on a selection is kept with its selection, comes back as `run` beside the unchanged EDA, and neither adds its EDA-Probe, changes its setting, becomes its last run nor counts for complete. Every `RunView` says what it ran on. The web app shows a result through one component that takes the run and its selection, so that a result on a selection is shown as a result on the whole table is, with the selection named above it.
+
+## Open points
+
+None yet.

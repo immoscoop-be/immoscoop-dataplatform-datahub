@@ -73,7 +73,8 @@ function volumeParams(given: Record<string, unknown>, source: EdaSource): Record
  * One scan of the table, each date it is set on beside the others: per date and period the rows and the sum of the
  * field that adds up. Rows without a value for a date are left out of that date.
  */
-export function volumeSql({ source, fields, params }: ProbeContext): string {
+export function volumeSql(context: ProbeContext): string {
+  const { source, fields, params } = context;
   const measure = measureOf(source, params);
   const periods = fields.map((field, index) => {
     const type = source.resource.fields.find((candidate) => candidate.name === field)?.dataType ?? null;
@@ -89,7 +90,7 @@ select
 from ${quote(source.fullName)}
 cross join unnest([
   ${periods.join(',\n  ')}
-]) as eda_dated${whereOf(source, ['eda_dated.period is not null'])}
+]) as eda_dated${whereOf(context, ['eda_dated.period is not null'])}
 group by 1, 2
 order by 1, 2`;
 }
