@@ -27,7 +27,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Permissions and Excel keys](functional/12-permissions-and-library-cards.md) | 16 (1 proposed, 15 implemented) | 4 (4 implemented) | 10 | 2 (1 open, 1 done) |
 | [Channels](functional/13-channels.md) | 6 (5 proposed, 1 implemented) | – | 6 | 4 (2 open, 2 done) |
 | [Conversations](functional/14-conversations.md) | 16 (16 implemented) | 2 (2 implemented) | 13 | 9 (9 done) |
-| [EDA](functional/15-eda.md) | 19 (19 implemented) | – | 35 | 12 (7 open, 5 done) |
+| [EDA](functional/15-eda.md) | 20 (1 specified, 19 implemented) | – | 37 | 12 (6 open, 6 done) |
 | [Learning](functional/16-learning.md) | 44 (13 proposed, 15 implemented, 16 withdrawn) | – | 39 | 40 (9 open, 31 done) |
 | [Claude](functional/17-claude.md) | 39 (1 proposed, 38 implemented) | 5 (5 implemented) | 23 | 12 (7 open, 5 done) |
 | [Localisation](non-functional/localisation.md) | 12 (8 specified, 3 implemented, 1 withdrawn) | – | – | – |
@@ -41,7 +41,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Lenses: technical requirements](technical/09-lenses.md) | 10 (10 implemented) | – | – | – |
 | [Permissions and Excel keys: technical requirements](technical/12-permissions-and-library-cards.md) | 9 (9 implemented) | – | – | – |
 | [Conversations: technical requirements](technical/14-conversations.md) | 3 (3 implemented) | – | – | – |
-| [EDA: technical requirements](technical/15-eda.md) | 11 (11 implemented) | – | – | – |
+| [EDA: technical requirements](technical/15-eda.md) | 12 (1 specified, 11 implemented) | – | – | – |
 | [Learning: technical requirements](technical/16-learning.md) | 10 (10 implemented) | – | – | – |
 
 ## Functional requirements
@@ -446,7 +446,8 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-ED-16](functional/15-eda.md#fr-ed-16) | Claude runs an EDA-Probe as the User | Implemented | – | [mcp-eda](../design/screens/mcp-eda.html) | [TR-ED-10](technical/15-eda.md#tr-ed-10) | [af0be89](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/af0be8904320ebaebd3386fb68a78b8768cfbf1e) implements, 2026-11-21<br>[92f8104](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/92f8104ae5f147f02d62e0d49e6fb33f49d14266) refs, 2026-11-21 |
 | [FR-ED-17](functional/15-eda.md#fr-ed-17) | Distribution of categories | Implemented | – | [eda-probe-categories](../design/screens/eda-probe-categories.html) | – | [2fc19b9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2fc19b98eba1a1f18606e3b71add2fd5d79895f2) implements, 2026-11-21<br>[6a76059](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/6a760594b909a3bcce28298e2d95230fe24afd6b) refs, 2026-11-21 |
 | [FR-ED-18](functional/15-eda.md#fr-ed-18) | Date range | Implemented | – | [eda-probe-daterange](../design/screens/eda-probe-daterange.html) | – | [2bdfb7a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2bdfb7acae577d825d28344f07835c7a82e2c3ee) refs, 2026-11-22<br>[2fc19b9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2fc19b98eba1a1f18606e3b71add2fd5d79895f2) implements, 2026-11-21<br>[6a76059](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/6a760594b909a3bcce28298e2d95230fe24afd6b) refs, 2026-11-21 |
-| [FR-ED-19](functional/15-eda.md#fr-ed-19) | Disguised nulls | Implemented | – | [eda-probe-disguised](../design/screens/eda-probe-disguised.html) | – | [d5f12b5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/d5f12b549b2f2e206d2adbaa3791e6a5d91b711e) refs, 2026-11-22<br>[583f671](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/583f671645937b50d8af3590e7b024a57a52a1c9) refs, 2026-11-22 |
+| [FR-ED-19](functional/15-eda.md#fr-ed-19) | Disguised nulls | Implemented | – | [eda-probe-disguised](../design/screens/eda-probe-disguised.html) | – | [5c55657](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/5c556571852ab7acbbf07a1759959cac6ca8c1b5) implements, 2026-11-22<br>[d5f12b5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/d5f12b549b2f2e206d2adbaa3791e6a5d91b711e) refs, 2026-11-22<br>[583f671](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/583f671645937b50d8af3590e7b024a57a52a1c9) refs, 2026-11-22 |
+| [FR-ED-20](functional/15-eda.md#fr-ed-20) | Dig into what a result found | Specified | – | [eda-dig](../design/screens/eda-dig.html) | [TR-ED-12](technical/15-eda.md#tr-ed-12) | – |
 
 ### [Learning](functional/16-learning.md)
 
@@ -820,6 +821,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [TR-ED-09](technical/15-eda.md#tr-ed-09) | The web app has the list to add an EDA-Probe and the guide of an EDA | Implemented | [FR-ED-04](functional/15-eda.md#fr-ed-04), [FR-ED-13](functional/15-eda.md#fr-ed-13), [FR-ED-14](functional/15-eda.md#fr-ed-14), [DEC-UX-327](../design/principles.md#dec-ux-327), [DEC-UX-328](../design/principles.md#dec-ux-328) | [e48bcc2](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/e48bcc2a7216a01f8c118910862a89d234ff32e0) implements, 2026-11-21<br>[92f8104](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/92f8104ae5f147f02d62e0d49e6fb33f49d14266) refs, 2026-11-21 |
 | [TR-ED-10](technical/15-eda.md#tr-ed-10) | The MCP server reads and runs the EDA | Implemented | [FR-ED-15](functional/15-eda.md#fr-ed-15), [FR-ED-16](functional/15-eda.md#fr-ed-16), [DEC-ED-29](functional/15-eda.md#dec-ed-29), [DEC-UX-329](../design/principles.md#dec-ux-329) | [86dc6b5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/86dc6b57e4dd1d62b474286a7c6689f2d9aa8207) refs, 2026-11-21<br>[af0be89](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/af0be8904320ebaebd3386fb68a78b8768cfbf1e) implements, 2026-11-21<br>[92f8104](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/92f8104ae5f147f02d62e0d49e6fb33f49d14266) refs, 2026-11-21 |
 | [TR-ED-11](technical/15-eda.md#tr-ed-11) | Every EDA-Probe runs on a selection of rows | Implemented | [TR-ED-03](technical/15-eda.md#tr-ed-03) | [d5f12b5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/d5f12b549b2f2e206d2adbaa3791e6a5d91b711e) implements, 2026-11-22<br>[0f124a3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/0f124a307dbf9914f7c8b66edec68eb925855aec) implements, 2026-11-22 |
+| [TR-ED-12](technical/15-eda.md#tr-ed-12) | eda digs into a selection against the rest | Specified | [FR-ED-20](functional/15-eda.md#fr-ed-20), [DEC-ED-36](functional/15-eda.md#dec-ed-36) | – |
 
 ### [Learning: technical requirements](technical/16-learning.md)
 
