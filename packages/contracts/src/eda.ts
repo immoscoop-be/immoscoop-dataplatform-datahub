@@ -96,7 +96,7 @@ export const PROBES: Readonly<Record<ProbeKey, ProbeSpec>> = {
   settling: { key: 'settling', name: 'Settling between EDA-Reruns', step: 'basis', place: 'rows', target: 'roleDate', levels: levels(S, null, S, null, C, null), runs: false },
   howOftenThingsChange: { key: 'howOftenThingsChange', name: 'How often things change', step: 'basis', place: 'rows', target: 'updatedAt', levels: levels(null, C, null, null, null, null), runs: false },
   nullsPerKeyField: { key: 'nullsPerKeyField', name: 'Nulls per Key Field', step: 'gaps', place: 'column', target: 'any', levels: levels(M, M, M, M, M, M), runs: true },
-  disguisedNulls: { key: 'disguisedNulls', name: 'Disguised nulls', step: 'gaps', place: 'column', target: 'any', levels: levels(M, M, M, M, M, M), runs: false },
+  disguisedNulls: { key: 'disguisedNulls', name: 'Disguised nulls', step: 'gaps', place: 'column', target: 'any', levels: levels(M, M, M, M, M, M), runs: true },
   whereGapsCluster: { key: 'whereGapsCluster', name: 'Where gaps cluster', step: 'gaps', place: 'column', target: 'any', levels: levels(S, S, S, C, S, C), runs: false },
   valuesWithoutAMatch: { key: 'valuesWithoutAMatch', name: 'Values without a match', step: 'gaps', place: 'resource', target: 'mapped', levels: levels(M, M, M, M, M, M), runs: false },
   distributionOfNumbers: { key: 'distributionOfNumbers', name: 'Distribution of numbers', step: 'weight', place: 'column', target: 'numbers', levels: levels(M, M, M, M, M, M), runs: true },
