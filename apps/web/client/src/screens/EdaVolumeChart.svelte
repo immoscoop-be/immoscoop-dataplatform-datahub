@@ -6,8 +6,9 @@
   /**
    * The volume of a date over its whole history, drawn per block of 7, 14, 21 or 28 days from a Monday as chosen on the
    * chart (FR-ED-09, DEC-ED-23): the sum of the field that adds up on top when there is one, the rows under it; a block
-   * with a period without rows hatched, the current one, not complete yet, dotted; the numbers of a block on hover. An
-   * illustration drawn for the EDA (DEC-UX-325).
+   * with a period without rows hatched, the current one, not complete yet, dotted; on hover a guide line and a dot on
+   * each line at the block, with its first day and its numbers written beside it. An illustration drawn for the EDA
+   * (DEC-UX-325), never larger than drawn (DEC-UX-332).
    */
   let { result, days, field }: { result: VolumeResult; days: BlockDays; /** The date it counts by. */ field: string } = $props();
 
@@ -59,6 +60,15 @@
   const years = $derived(blocks.flatMap((block, index) => (index === 0 || block.start.slice(0, 4) !== blocks[index - 1]?.start.slice(0, 4) ? [{ index, year: block.start.slice(0, 4) }] : [])));
   const empties = $derived(blocks.flatMap((block, index) => (block.empty ? [{ block, index }] : [])));
   const currentAt = $derived(blocks.findIndex((block) => block.current));
+
+  /** The block under the pointer, if any. */
+  let at = $state<number | null>(null);
+  const pointed = $derived.by(() => {
+    const block = at === null ? undefined : blocks[at];
+    return at !== null && block ? { block, index: at } : null;
+  });
+  const blockSaid = (block: (typeof blocks)[number]) =>
+    t(measured ? 'eda.volume.chart.block.sum' : 'eda.volume.chart.block', { day: periodDay(block.start, language), rows: block.rows, sum: number(block.sum ?? 0, language), measure: result.measure ?? '' });
 </script>
 
 <svg class="chart" viewBox="0 0 520 214" role="img" aria-label={t('eda.volume.chart.label', { days, field })}>
@@ -99,15 +109,27 @@
     <line class="grid" x1={xOf(index)} y1="196" x2={xOf(index)} y2="200" />
     <text class="tick year" x={xOf(index) + 3} y="209">{year}</text>
   {/each}
+  {#if pointed}
+    {@const { block, index } = pointed}
+    {@const x = xOf(index)}
+    <g class="pointed">
+      <line class="guide" x1={x} y1="16" x2={x} y2="196" />
+      {#each panels as panel (panel.kind)}
+        <circle class="dot {panel.kind}" cx={x} cy={yOf(panel, valueOf(panel, block))} r="2.8" />
+      {/each}
+      <text class="said" x={x > (LEFT + RIGHT) / 2 ? x - 5 : x + 5} y="20" text-anchor={x > (LEFT + RIGHT) / 2 ? 'end' : 'start'}>{blockSaid(block)}</text>
+    </g>
+  {/if}
   {#each blocks as block, index (block.start)}
-    <rect class="hover" x={xOf(index) - step / 2} y="10" width={step} height="190">
-      <title>{t(measured ? 'eda.volume.chart.block.sum' : 'eda.volume.chart.block', { day: periodDay(block.start, language), rows: block.rows, sum: number(block.sum ?? 0, language), measure: result.measure ?? '' })}</title>
+    <rect class="hover" x={xOf(index) - step / 2} y="10" width={step} height="190" role="presentation" onmouseenter={() => (at = index)} onmouseleave={() => at === index && (at = null)}>
+      <title>{blockSaid(block)}</title>
     </rect>
   {/each}
 </svg>
 
 <style>
-  .chart { --sk-line: color-mix(in srgb, var(--text-muted) 45%, transparent); width: 100%; height: auto; display: block; margin-top: 4px; }
+  /* Never larger than drawn, so that its words stay the size of the page (DEC-UX-332). */
+  .chart { --sk-line: color-mix(in srgb, var(--text-muted) 45%, transparent); width: 100%; max-width: 520px; height: auto; display: block; margin-top: 4px; }
   .hatch-line { stroke: var(--signal-warn); stroke-width: 1.2; opacity: .5; }
   .gap { fill: color-mix(in srgb, var(--signal-warn) 18%, transparent); }
   .gap-text { font-size: 8px; font-weight: var(--weight-semibold); fill: var(--signal-warn); }
@@ -127,4 +149,10 @@
   .current-dot.rows { stroke: var(--col-slate); }
   .hover { fill: transparent; }
   .hover:hover { fill: color-mix(in srgb, var(--text-muted) 10%, transparent); }
+  .pointed { pointer-events: none; }
+  .guide { stroke: var(--text-secondary); stroke-width: .8; stroke-dasharray: 2 2; }
+  .dot { fill: var(--surface-solid); stroke-width: 1.4; }
+  .dot.sum { stroke: var(--col-teal); }
+  .dot.rows { stroke: var(--col-slate); }
+  .said { font-size: 8px; font-weight: var(--weight-medium); fill: var(--text-primary); paint-order: stroke; stroke: var(--surface-solid); stroke-width: 3px; stroke-linejoin: round; }
 </style>

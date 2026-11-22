@@ -38,7 +38,8 @@
 </svg>
 
 <style>
-  .chart { --sk-line: color-mix(in srgb, var(--text-muted) 45%, transparent); width: 100%; height: auto; display: block; margin-top: 6px; }
+  /* Never larger than drawn, so that its words stay the size of the page (DEC-UX-332). */
+  .chart { --sk-line: color-mix(in srgb, var(--text-muted) 45%, transparent); width: 100%; max-width: 480px; height: auto; display: block; margin-top: 6px; }
   .wrong { fill: color-mix(in srgb, var(--signal-warn) 9%, transparent); }
   .wrong-text { font-size: 8px; font-weight: var(--weight-medium); fill: var(--signal-warn); }
   .good-text { font-size: 8px; font-weight: var(--weight-medium); fill: var(--col-teal-ink); }

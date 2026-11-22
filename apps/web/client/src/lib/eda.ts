@@ -3,6 +3,7 @@ import {
   EDA_STEPS,
   PROBES,
   type DataHubReading,
+  type DigAnswer,
   type DisguisedLists,
   type EdaField,
   type EdaListItem,
@@ -13,6 +14,7 @@ import {
   type ProbeView,
   type ResultView,
   type RunAnswer,
+  type Selection,
   type VolumeResult,
 } from '@datahub/contracts/eda';
 import { kindOf } from '@datahub/contracts/model-types';
@@ -68,6 +70,23 @@ export function createEda(config: Config, session: Pick<Session, 'accessToken'>,
     }
   }
 
+  /**
+   * What a run or a dig answers: as eda answers it, also when it says with an error status that it waits for an approval
+   * or does not run; any other refusal, except a missing Permission, says why as a refusal.
+   */
+  async function answerOf<A>(ask: () => Promise<Response>): Promise<A> {
+    try {
+      return (await (await ask()).json()) as A;
+    } catch (error) {
+      const state = error instanceof Refused ? error.body?.state : undefined;
+      if (error instanceof Refused && (state === 'approve' || state === 'refused')) return error.body as unknown as A;
+      if (error instanceof Refused && error.status !== 403 && error.status < 500) {
+        return { state: 'refused', bytes: null, reason: error.detail ?? error.code ?? '' } as A;
+      }
+      throw error;
+    }
+  }
+
   /** The EDA as an answer gives it, or as eda gives it again when the answer holds no EDA. */
   async function viewFrom(response: Response, id: string): Promise<EdaView> {
     const body: unknown = await response.json().catch(() => null);
@@ -104,16 +123,14 @@ export function createEda(config: Config, session: Pick<Session, 'accessToken'>,
      * cannot run, with why. A refusal that eda answers with an error status says the same.
      */
     async run(id: string, probe: ProbeKey, ask: RunAsk = {}): Promise<RunAnswer> {
-      try {
-        return (await (await call(`${of(id)}/probes/${encodeURIComponent(probe)}/runs`, { method: 'POST', body: ask })).json()) as RunAnswer;
-      } catch (error) {
-        const state = error instanceof Refused ? error.body?.state : undefined;
-        if (error instanceof Refused && (state === 'approve' || state === 'refused')) return error.body as unknown as RunAnswer;
-        if (error instanceof Refused && error.status !== 403 && error.status < 500) {
-          return { state: 'refused', bytes: null, reason: error.detail ?? error.code ?? '' };
-        }
-        throw error;
-      }
+      return answerOf<RunAnswer>(() => call(`${of(id)}/probes/${encodeURIComponent(probe)}/runs`, { method: 'POST', body: ask }));
+    },
+    /**
+     * Digs into a selection of its rows against the rest (FR-ED-20, TR-ED-12), as a run does: it ran, it waits for the
+     * User to approve it, or it cannot run, with why. Nothing of it is kept.
+     */
+    async dig(id: string, selection: Selection, approve = false): Promise<DigAnswer> {
+      return answerOf<DigAnswer>(() => call(`${of(id)}/dig`, { method: 'POST', body: { selection, ...(approve ? { approve: true } : {}) } }));
     },
     /** The reading of who works on the EDA, of one subject of an EDA-Probe (FR-ED-11); answers the EDA as it is now. */
     async read(id: string, probe: ProbeKey, subject: string, reading: OwnerReading): Promise<EdaView> {

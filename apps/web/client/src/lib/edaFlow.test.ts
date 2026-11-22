@@ -102,8 +102,9 @@ describe('the guide of an EDA in the Flow Box (FR-ED-14, DEC-UX-327)', () => {
     expect(flow.steps.find((step) => step.id === 'disguisedNulls')).toMatchObject({ said: 'Not added yet', warn: true, coming: false, go: 'Open the EDA-Probe' });
     expect(flow.steps.find((step) => step.id === 'distributionOfCategories')).toMatchObject({ said: 'Not added yet', warn: true, coming: false });
     expect(flow.steps.find((step) => step.id === 'grainHolds')).toMatchObject({ said: 'Not added yet', warn: true, go: 'Open the EDA-Probe' });
-    // The step to do now is the best next step of the EDA, as its page proposes.
-    expect(flow.now).toBe('nullsPerKeyField');
+    // The step to do now is the best next step of the EDA, as its page proposes: The grain holds, while it is open,
+    // whatever else misses more (DEC-ED-37).
+    expect(flow.now).toBe('grainHolds');
     expect(flow.progress).toBe('0 of 10 needed EDA-Probes complete');
     expect(flow.foot).toMatch(/^10 to go, of which 3 are coming: they still count\./);
   });

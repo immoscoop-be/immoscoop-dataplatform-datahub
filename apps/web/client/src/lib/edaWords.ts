@@ -3,6 +3,7 @@ import {
   roleDate,
   type CategoriesResult,
   type DateRangeResult,
+  type DigResult,
   type DisguisedResult,
   type DistributionResult,
   type EdaResource,
@@ -19,6 +20,7 @@ import {
 import type { Language } from '@datahub/contracts/messages';
 import { t } from '@datahub/ui/foundations/texts.svelte.js';
 import { day } from '@datahub/ui/foundations/when.js';
+import { conditionOfValue, sharesOf, splitAt, strongestIn, strongestOf } from './dig.js';
 import { isoWeek, number, percent, periodDay, stillMissing } from './eda.js';
 
 /**
@@ -482,8 +484,12 @@ export function cardSentence(probe: ProbeView, view: Pick<EdaView, 'resource'>, 
 const boundOf = (bound: string | number, language: Language): string =>
   typeof bound === 'number' ? new Intl.NumberFormat(language === 'nl' ? 'nl-BE' : 'en-GB', { maximumFractionDigits: 10 }).format(bound) : dayOfDate(bound, language);
 
-/** A condition on the rows in words, its field as a name: it says nothing, it is a value, or it lies in a range; null for a range without a bound. */
+/**
+ * A condition on the rows in words, its field as a name: it is empty, it says nothing, it is a value, or it lies in a
+ * range; null for a range without a bound.
+ */
 export function conditionSaid(condition: RowCondition, language: Language): Said | null {
+  if (condition.kind === 'empty') return { key: 'eda.selection.empty', names: { field: condition.field } };
   if (condition.kind === 'saysNothing') return { key: 'eda.selection.saysNothing', names: { field: condition.field } };
   if (condition.kind === 'equals') return { key: 'eda.selection.equals', names: { field: condition.field, value: String(condition.value) } };
   const { from, before } = condition;
@@ -497,6 +503,74 @@ export function conditionSaid(condition: RowCondition, language: Language): Said
 /** The conditions of a selection in words; none for the whole table. */
 export function selectionSaid(selection: Selection | undefined, language: Language): Said[] {
   return (selection?.where ?? []).flatMap((condition) => conditionSaid(condition, language) ?? []);
+}
+
+// Dig into what a result found (FR-ED-20)
+
+/** How many times as often, as the language writes it to two digits, such as 3.9 or 0.15. */
+export const timesWord = (ratio: number, language: Language): string => new Intl.NumberFormat(language === 'nl' ? 'nl-BE' : 'en-GB', { maximumSignificantDigits: 2 }).format(ratio);
+
+/** The ratio of a value as its row shows it, such as ×3.9 or ×0.15; null when the rest holds none. */
+export function ratioWord(ratio: number | null, language: Language): string | null {
+  return ratio === null ? null : `×${timesWord(ratio, language)}`;
+}
+
+/** A value of a dig as a sentence takes it: as a name, or no value in words. */
+const valuePart = (value: string | null): { values?: Record<string, string>; names?: Record<string, string> } =>
+  value === null ? { values: { value: t('eda.dig.noValue') } } : { names: { value } };
+
+/**
+ * What the selected rows have in common, in one sentence built from what the dig found (FR-ED-20): on top, how many of
+ * them lie on the side of the break where they are more, and how many hold the value that sets them most apart; then
+ * the share of the rows selected before and after the break, and how many times as often that value is among them.
+ * Nothing found that sets them apart is said too.
+ */
+export function digCommon(result: DigResult, language: Language): Said[] {
+  const time = result.overTime;
+  const strongest = strongestIn(result);
+  const parts: Said[] = [];
+  const named = strongest ? valuePart(strongest.value.value) : null;
+  const value = strongest && named ? { values: { ...named.values, share: percent(sharesOf(strongest.value, result.rows).selected, 1, language) }, names: { field: strongest.field, ...named.names } } : null;
+  if (time?.breakAt && time.before) {
+    const { before, after } = splitAt(time.periods, time.breakAt);
+    const side = time.before === 'more' ? before : after;
+    const when = { when: time.before === 'more' ? 'before' : 'since', day: dayOfDate(time.breakAt, language), time: percent(side.selected, before.selected + after.selected, language) };
+    parts.push(value ? { key: 'eda.dig.common.both', values: { ...when, ...value.values }, names: value.names } : { key: 'eda.dig.common.time', values: when });
+    parts.push({ key: 'eda.dig.common.break', values: { unit: time.unit, before: percent(before.selected, before.total, language), after: percent(after.selected, after.total, language) } });
+  } else if (value) {
+    parts.push({ key: 'eda.dig.common.value', ...value });
+  }
+  if (strongest && named) {
+    const names = { field: strongest.field, ...named.names };
+    parts.push(
+      strongest.value.ratio === null
+        ? { key: 'eda.dig.common.only', values: { ...named.values }, names }
+        : { key: 'eda.dig.common.ratio', values: { ratio: timesWord(strongest.value.ratio, language), ...named.values }, names },
+    );
+  }
+  return parts.length > 0 ? parts : [{ key: 'eda.dig.common.none' }];
+}
+
+/**
+ * The text of the Known Gap a dig proposes (FR-ED-20), plain, as the User reads and changes it in the form of the
+ * Resource Card: the fields of the selection that are empty or say nothing are not filled, where its other conditions
+ * hold and the value its first text sets most apart, before or from the break, as its scope proposes it.
+ */
+export function digGapText(selection: Selection, result: DigResult, language: Language): string {
+  const blank = selection.where.flatMap((condition) => (condition.kind === 'empty' || condition.kind === 'saysNothing' ? [condition.field] : []));
+  const fields = [...new Set(blank)];
+  const first = result.fields.find((field) => field.kind === 'text');
+  const value = first?.kind === 'text' ? strongestOf(first, result.rows) : null;
+  const others = selection.where.filter((condition) => condition.kind !== 'empty' && condition.kind !== 'saysNothing');
+  const where = [...others, ...(first && value ? [conditionOfValue(first.field, value.value)] : [])].flatMap((condition) => conditionSaid(condition, language) ?? []);
+  const time = result.overTime;
+  return t('eda.dig.gap.text', {
+    subject: fields.length > 0 ? t('eda.dig.gap.notFilled', { fields: fields.join(', '), count: fields.length }) : t('eda.dig.gap.rows'),
+    hasWhere: where.length > 0 ? 'yes' : 'no',
+    where: where.map((part) => t(part.key, { ...part.values, ...part.names })).join(` ${t('eda.selection.and')} `),
+    when: time?.breakAt && time.before ? (time.before === 'more' ? 'before' : 'from') : 'none',
+    day: time?.breakAt ? dayOfDate(time.breakAt, language) : '',
+  });
 }
 
 /** Whether a part of a sentence follows the one before without a space, as one that starts with a comma or a colon. */

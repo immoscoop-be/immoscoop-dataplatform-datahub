@@ -21,7 +21,8 @@ describe('the EDA as the tab Steps shows it (FR-ED-04, DEC-ED-16)', () => {
   it('lists the EDA-Probes of its model type, what is needed, and the best next step, before anything ran', () => {
     const view = viewOf(WEEKLY, CREDIT, eda, { probes: [], lastRuns: [], readings: [] });
     expect(view.resource).toMatchObject({ id: WEEKLY.resource.id, collection: CREDIT, modelType: 'aggregate' });
-    expect(view).toMatchObject({ status: 'inProgress', startedBy: AN, startedAt: '2026-11-21T09:00:00.000Z', exploredAt: null, needed: { total: 10, complete: 0 }, next: 'nullsPerKeyField' });
+    // The grain holds is the best next step while it is open, whatever else misses more (DEC-ED-37).
+    expect(view).toMatchObject({ status: 'inProgress', startedBy: AN, startedAt: '2026-11-21T09:00:00.000Z', exploredAt: null, needed: { total: 10, complete: 0 }, next: 'grainHolds' });
     const nulls = view.probes.find((probe) => probe.key === 'nullsPerKeyField');
     expect(nulls).toMatchObject({ level: 'must', runs: true, needed: true, added: false, complete: false, fields: [], params: {}, lastRun: null });
     expect(view.probes.find((probe) => probe.key === 'dateRange')).toMatchObject({ runs: true, needed: true, applies: { fields: ['week_start'] } });
@@ -72,8 +73,11 @@ describe('the EDA as the tab Steps shows it (FR-ED-04, DEC-ED-16)', () => {
     });
     expect(view.needed).toEqual({ total: 10, complete: 1 });
     expect(view.coverage.fields.find((field) => field.name === 'lead_channel')?.steps.gaps).toBe('covered');
-    // Disguised nulls is still open on all four Key Fields, the most of what is missing (DEC-ED-16).
-    expect(view.next).toBe('disguisedNulls');
+    // The grain holds is still open, so it comes first (DEC-ED-37).
+    expect(view.next).toBe('grainHolds');
+    // Once it is complete, Disguised nulls is still open on all four Key Fields, the most of what is missing (DEC-ED-16).
+    const grain: Run = { ...(state.lastRuns[0] as Run), id: 'run-0', probe: 'grainHolds', fields: ['week_start', 'lead_source'], results: [] };
+    expect(viewOf(WEEKLY, CREDIT, eda, { ...state, lastRuns: [grain, ...state.lastRuns] }).next).toBe('disguisedNulls');
   });
 
   it('shows a run on a selection with what it ran on, without the readings of the results of the whole table (OP-ED-12)', () => {

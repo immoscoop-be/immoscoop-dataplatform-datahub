@@ -11,8 +11,9 @@
   import Chip from '@datahub/ui/primitives/Chip.svelte';
   import Loading from '@datahub/ui/primitives/Loading.svelte';
   import { type EdaClient, PROBE_TEXTS } from '../lib/eda.js';
-  import { edaPath, type EdaTab, resourcePath } from '../lib/routes.js';
+  import { type DigAt, edaPath, type EdaTab, resourcePath } from '../lib/routes.js';
   import { shortOf } from '../lib/typeFields.js';
+  import EdaDig from './EdaDig.svelte';
   import EdaProbeDetail from './EdaProbeDetail.svelte';
   import EdaStatus from './EdaStatus.svelte';
   import EdaSteps from './EdaSteps.svelte';
@@ -23,24 +24,29 @@
    * EDA-Setup and the quality of the EDA. Its status beside the title, In progress until the EDA-Setup is complete, then
    * Explored; its Level; the rows of its table, from the last run that counted them (DEC-ED-32); the tabs Overview,
    * still to come, Steps, and Profile, greyed until the EDA-Setup is complete, each saying what will come there. On
-   * Steps, the detail of an EDA-Probe opens in place of the rows (DEC-UX-324).
+   * Steps, the detail of an EDA-Probe opens in place of the rows (DEC-UX-324), and so does Dig into (FR-ED-20).
    * While it is in progress, Guide me beside its title brings back its guide in the Flow Box once it is closed (FR-ED-14).
    */
   let {
     id,
     tab,
     probe,
+    dig = null,
     client,
     onchanged,
     onview,
     guided = false,
     onguide,
+    go = () => {},
+    canQuery = false,
   }: {
     /** The Resource whose EDA it is. */
     id: string;
     tab: EdaTab;
     /** The EDA-Probe whose detail is open on Steps. */
     probe: ProbeKey | null;
+    /** The selection of rows Dig into is open on, on Steps (FR-ED-20). */
+    dig?: DigAt | null;
     client: EdaClient;
     /** After a run or a reading: the panel reads the EDAs again. */
     onchanged: () => void;
@@ -50,6 +56,10 @@
     guided?: boolean;
     /** Opens its guide in the Flow Box, for a User who may explore Resources (FR-ED-14). */
     onguide?: () => void;
+    /** Goes to an address of the app: Dig into, from a menu. */
+    go?: (path: string) => void;
+    /** Whether the User may make a query (`queries.make`), for Query these rows of Dig into. */
+    canQuery?: boolean;
   } = $props();
 
   /** The EDA: undefined while it comes, null when the Resource has none or may not be seen. */
@@ -108,7 +118,7 @@
     steps={[
       { label: 'EDA', href: '/eda' },
       ...(resource.collection ? [{ label: resource.collection.name }] : []),
-      ...(probe ? [{ label: resource.displayName, href: edaPath(id) }] : []),
+      ...(probe || dig ? [{ label: resource.displayName, href: edaPath(id) }] : []),
     ]}
   />
   <div class="head">
@@ -131,15 +141,19 @@
         <Icon name="rows" />{t('eda.page.rows', { count: counted.rows })}
       </Chip>
     {/if}
-    {#if !probe}
+    {#if !probe && !dig}
       <Chip><Icon name={ran ? 'check-circle-fill' : 'play-circle'} />{t(ran ? 'eda.page.ran' : 'eda.page.noRun')}</Chip>
     {/if}
   </div>
   <Tabs {tabs} current={tab} label={t('eda.tabs')}>
     {#if tab === 'steps'}
-      {#if probe}
+      {#if dig}
+        {#key JSON.stringify(dig.selection)}
+          <EdaDig view={eda} {dig} {client} {go} {canQuery} />
+        {/key}
+      {:else if probe}
         {#key probe}
-          <EdaProbeDetail view={eda} {probe} {client} onview={changed} />
+          <EdaProbeDetail view={eda} {probe} {client} onview={changed} {go} />
         {/key}
       {:else}
         <EdaSteps view={eda} />

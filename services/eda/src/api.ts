@@ -1,4 +1,6 @@
 import {
+  type DigAnswer,
+  type DigResult,
   type EdaListItem,
   type EdaView,
   type OwnerReading,
@@ -13,6 +15,7 @@ import {
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { explores, forbidden, whoOf } from './access.js';
 import { type Catalogue, CatalogueUnavailable, type EdaSource, type SeenResource } from './catalogue.js';
+import { digResult, digSql } from './dig.js';
 import type { Eda, Edas } from './edas.js';
 import { AnswerMismatch, checkSelection, disguisedOf, isWholeTable, type Outcome, parseSelection, RUNNERS, settingOf } from './probes/index.js';
 import { ResultRefused, TIME_ZONE, UnsafeValue } from './probes/sql.js';
@@ -68,6 +71,24 @@ export function parseRun(body: unknown): { fields?: string[]; params?: Record<st
   };
 }
 
+/**
+ * A dig into a selection against the rest (TR-ED-12): its selection, of at least one condition, as a run takes one
+ * (TR-ED-11), and whether the User approves what it reads; a string says what does not fit.
+ */
+export function parseDig(body: unknown): { selection: Selection; approve: boolean } | string {
+  if (typeof body !== 'object' || body === null || Array.isArray(body)) return 'Send a JSON object.';
+  const { selection, approve = false, ...rest } = body as Record<string, unknown>;
+  const unknown = Object.keys(rest)[0];
+  if (unknown !== undefined) return `A dig has no field ${unknown}.`;
+  if (typeof approve !== 'boolean') return 'approve is true or false.';
+  if (selection === undefined) return 'A dig takes a selection of at least one condition.';
+  const rows = parseSelection(selection);
+  if (typeof rows === 'string') return rows;
+  // The whole table has no rest to set it against.
+  if (isWholeTable(rows)) return 'A dig takes a selection of at least one condition.';
+  return { selection: rows, approve };
+}
+
 /** The reading of a result: its subject, '' for the table as a whole or a field, and the reading (FR-ED-11). */
 export function parseReading(body: unknown): { subject: string; reading: OwnerReading } | string {
   if (typeof body !== 'object' || body === null || Array.isArray(body)) return 'Send a JSON object.';
@@ -88,8 +109,9 @@ const isProbe = (key: string): key is ProbeKey => (PROBE_KEYS as readonly string
 
 /**
  * The routes of eda (TR-ED-01): the EDAs of the Resources the User sees, starting one, the EDA with everything its tab
- * Steps shows, running an EDA-Probe through query and the readings of its results. Every route needs the Access Token
- * of a User whose Permission group holds `eda.use` (TR-ED-06); a Resource is what catalogue answers with that token.
+ * Steps shows, running an EDA-Probe through query, digging into a selection against the rest (TR-ED-12) and the
+ * readings of its results. Every route needs the Access Token of a User whose Permission group holds `eda.use`
+ * (TR-ED-06); a Resource is what catalogue answers with that token.
  */
 export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Promise<void> {
   const { edas, catalogue, query, needed = NEEDED, now = () => new Date() } = options;
@@ -274,6 +296,59 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       if (isWholeTable(selection)) return { state: 'ran', eda: view } satisfies RunAnswer;
       // Not the last run of its EDA-Probe, nor counted for its completeness: it comes back as itself (OP-ED-12).
       return { state: 'ran', eda: view, run: runView(run, []) } satisfies RunAnswer;
+    } catch (error) {
+      return unavailable(error, reply, request);
+    }
+  });
+
+  // Digs into a selection against the rest of the table, through query as the User (TR-ED-12, FR-ED-20): what it found,
+  // or what the Pre-flight asks. It is not kept and changes nothing of the EDA; the page runs it again when it opens.
+  app.post<{ Params: { id: string }; Body: unknown }>('/resources/:id/eda/dig', async (request, reply) => {
+    const asked = parseDig(request.body);
+    if (typeof asked === 'string') return reply.code(400).send({ error: 'invalid_request', message: asked });
+    try {
+      const source = await sourceOf(request);
+      if (!source) return reply.code(404).send(NO_RESOURCE);
+      const eda = await edas.ofResource(source.resource.id);
+      if (!eda) return reply.code(404).send(NO_EDA);
+      // Its conditions name fields of this Resource, with values of their kind (TR-ED-11).
+      const unfit = checkSelection(asked.selection, source);
+      if (unfit !== null) return reply.code(400).send({ error: 'invalid_request', message: unfit });
+      // A field says nothing by the lists of the Disguised nulls of this EDA, once added with them (DEC-ED-35).
+      const added = asked.selection.where.some((condition) => condition.kind === 'saysNothing') ? (await edas.state(eda.id)).probes : [];
+      const disguised = disguisedOf(added.find((one) => one.probe === 'disguisedNulls')?.params);
+      const context = { source, selection: asked.selection, disguised };
+      let sql: string;
+      try {
+        sql = digSql(context);
+      } catch (error) {
+        // checkSelection lets no such value through; should one get past it, it is refused, never run.
+        if (!(error instanceof UnsafeValue)) throw error;
+        request.log.error({ err: error, probe: 'digInto' }, 'A condition of a selection could not be written as SQL');
+        return reply.code(400).send({ error: 'invalid_request', message: 'A condition of the selection does not fit this Resource.' });
+      }
+
+      let answer: ProbeRunAnswer;
+      try {
+        answer = await query.run(source.resource.id, { probe: 'digInto', sql, approve: asked.approve }, authorization(request));
+      } catch (error) {
+        if (error instanceof QueryRefused) return reply.code(error.status).send({ error: error.status === 404 ? 'not_found' : 'forbidden', message: error.message });
+        throw error;
+      }
+      // What the Pre-flight asks is passed on: to approve, or that it cannot run, as for a run (FR-ED-06).
+      if (answer.state !== 'ran') return answer satisfies DigAnswer;
+
+      let result: DigResult;
+      try {
+        result = digResult(answer.rows, context);
+      } catch (error) {
+        if (!(error instanceof AnswerMismatch)) throw error;
+        request.log.error({ err: error, probe: 'digInto', runId: answer.runId }, 'The answer of query does not have the shape of the SQL of the dig');
+        return reply.code(502).send({ error: 'bad_answer', message: 'The answer of this dig could not be read; it is in the Query Log.' });
+      }
+      // Not kept in eda: the Query Log of query holds the run.
+      request.log.info({ resource: source.resource.id, runId: answer.runId, bytes: answer.bytes }, 'A dig into a selection ran; it is not kept');
+      return { state: 'ran', selection: asked.selection, result, ranAt: now().toISOString(), bytes: answer.bytes } satisfies DigAnswer;
     } catch (error) {
       return unavailable(error, reply, request);
     }

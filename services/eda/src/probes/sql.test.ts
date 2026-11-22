@@ -221,9 +221,24 @@ describe('the selection of rows an EDA-Probe runs on, as SQL (OP-ED-12)', () => 
     expect(conditionOf({ kind: 'saysNothing', field: 'payload' }, WIDER)).toBe('`payload` is null');
   });
 
+  it('writes empty as the field without a value, whatever its kind, its name quoted', () => {
+    expect(conditionOf({ kind: 'empty', field: 'lead_channel' }, WIDER)).toBe('`lead_channel` is null');
+    expect(conditionOf({ kind: 'empty', field: 'lead_count' }, WIDER)).toBe('`lead_count` is null');
+    expect(conditionOf({ kind: 'empty', field: 'loaded_at' }, WIDER)).toBe('`loaded_at` is null');
+    expect(conditionOf({ kind: 'empty', field: 'is_test' }, WIDER)).toBe('`is_test` is null');
+    expect(conditionOf({ kind: 'empty', field: 'payload' }, WIDER)).toBe('`payload` is null');
+    // Not the lists of Disguised nulls: only no value at all.
+    expect(conditionOf({ kind: 'empty', field: 'lead_channel' }, WIDER, { text: ['leeg'], date: [], number: [-1], ninesOnly: true })).toBe('`lead_channel` is null');
+    // A field of the Resource with a backtick in its name stays one name.
+    const odd = { ...WIDER, resource: { ...WIDER.resource, fields: [...WIDER.resource.fields, fieldOf('odd` is null or true or `x', 'STRING')] } };
+    expect(conditionOf({ kind: 'empty', field: 'odd` is null or true or `x' }, odd)).toBe('`odd\\` is null or true or \\`x` is null');
+  });
+
   it('refuses a field that is none of the Resource, and a value that does not fit the kind of its field, rather than write it', () => {
     for (const condition of [
       { kind: 'saysNothing', field: 'lead_channel` is null or true or `x' },
+      { kind: 'empty', field: 'lead_channel` is null or true or `x' },
+      { kind: 'empty', field: 'no_such_field' },
       { kind: 'equals', field: 'lead_count', value: '1 or 1=1' },
       { kind: 'equals', field: 'lead_count', value: Number.NaN },
       { kind: 'equals', field: 'lead_channel', value: 1 },

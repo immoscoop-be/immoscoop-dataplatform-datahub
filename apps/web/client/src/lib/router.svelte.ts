@@ -1,16 +1,17 @@
 /**
  * The address of the page, kept in the history of the browser, so that back, forward and links work.
  * A link to a page of Data Hub changes the page without loading it again; the routes of the server,
- * such as signing in, load as usual.
+ * such as signing in, load as usual. The address keeps its query, which a page such as Dig into reads
+ * (FR-ED-20); which page it is follows from its path alone.
  */
 export class Router {
   path = $state('/');
 
   constructor() {
     if (typeof location !== 'undefined') {
-      this.path = location.pathname;
+      this.path = location.pathname + location.search;
       addEventListener('popstate', () => {
-        this.path = location.pathname;
+        this.path = location.pathname + location.search;
       });
     }
   }

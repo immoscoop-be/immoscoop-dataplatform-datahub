@@ -11,9 +11,10 @@
   import EdaTone from './EdaTone.svelte';
 
   /**
-   * An EDA-Probe added to an EDA, as a card in its EDA-Step (DEC-UX-322): its drawing with the fields of this Resource
-   * and its result on it, the result in a sentence, how Data Hub reads it, and the fields it is set on. The whole card
-   * opens its detail: its title is the link, stretched over the card.
+   * An EDA-Probe added to an EDA, as a card in its EDA-Step (DEC-UX-322): its drawing, its columns named by kind
+   * (DEC-UX-330), with its result on it, the result in a sentence, how Data Hub reads it, and the fields it is set on.
+   * The whole card opens its detail: its title is the link, stretched over the card. Data Hub's reading goes under the
+   * title rather than squeeze it; the fields it is set on stay on one line beside the day it ran, all of them on hover.
    */
   let { probe, view }: { probe: ProbeView; view: EdaView } = $props();
 
@@ -21,6 +22,7 @@
   const name = $derived(t(PROBE_TEXTS[probe.key]));
   const reading = $derived(overallReading(probe.lastRun?.results ?? []));
   const setOn = $derived(probe.fields.length > 0 ? probe.fields : probe.applies.fields);
+  const setOnText = $derived(setOn.length > 0 ? t('eda.card.setOn', { fields: setOn.join(', ') }) : t('eda.card.setOnTable'));
 </script>
 
 <article class="card" aria-label={name}>
@@ -31,11 +33,9 @@
   <EdaDrawing probe={probe.key} fields={view.resource.fields} {setOn} results={probe.lastRun?.results ?? []} label={name} />
   <p class="result"><EdaSaid parts={cardSentence(probe, view, language)} /></p>
   <footer>
-    <span class="set">
-      {#if probe.needed}<span class="need" title={t('eda.card.needed.title')}><Icon name="seal-check-fill" />{t('eda.card.needed')}</span>{/if}
-      {#if setOn.length > 0}{t('eda.card.setOn', { fields: setOn.join(', ') })}{:else}{t('eda.card.setOnTable')}{/if}
-    </span>
-    {#if probe.lastRun}<span>{day(probe.lastRun.ranAt, language)}</span>{/if}
+    {#if probe.needed}<span class="need" title={t('eda.card.needed.title')}><Icon name="seal-check-fill" />{t('eda.card.needed')}</span>{/if}
+    <span class="set" title={setOnText}>{setOnText}</span>
+    {#if probe.lastRun}<span class="ran">{day(probe.lastRun.ranAt, language)}</span>{/if}
   </footer>
 </article>
 
@@ -43,8 +43,9 @@
   .card { position: relative; display: flex; flex-direction: column; padding: 12px 14px 10px; min-height: 300px; border-radius: var(--radius-md); background: var(--surface-sub); min-width: 0; transition: box-shadow var(--motion-fade); }
   .card:hover { box-shadow: 0 0 0 1px var(--tint-active); }
   .card:focus-within { box-shadow: 0 0 0 2px var(--text-secondary); }
-  header { display: flex; gap: 8px; align-items: flex-start; }
-  h4 { flex: 1; font-size: 14px; font-weight: var(--weight-medium); margin: 0; line-height: 1.3; }
+  /* The title takes the line it needs; the reading goes under it when both do not fit (Max, 2026-11-22). */
+  header { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: flex-start; }
+  h4 { flex: 1 0 auto; max-width: 100%; font-size: 14px; font-weight: var(--weight-medium); margin: 0; line-height: 1.3; }
   h4 a { color: inherit; text-decoration: none; outline: none; }
   /* The link covers the whole card, so that a click anywhere on it opens the detail. */
   h4 a::after { content: ''; position: absolute; inset: 0; border-radius: inherit; }
@@ -52,6 +53,8 @@
   .card :global(.drawing) { margin: 4px 0 2px; }
   .result { font-size: var(--text-small); line-height: 1.5; margin: 2px 0 8px; }
   footer { display: flex; align-items: center; gap: 8px; margin-top: auto; padding-top: 8px; border-top: 1px solid var(--tint-active); font-size: var(--text-meta); color: var(--text-muted); }
-  .set { flex: 1; min-width: 0; }
-  .need { display: inline-flex; gap: 4px; align-items: center; color: var(--text-secondary); margin-right: 6px; }
+  /* One line: the fields it is set on cut short, all of them on hover (Max, 2026-11-22). */
+  .set { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .need { display: inline-flex; flex: none; gap: 4px; align-items: center; color: var(--text-secondary); }
+  .ran { flex: none; white-space: nowrap; }
 </style>

@@ -1,11 +1,24 @@
 import { randomBytes } from 'node:crypto';
 import { createTestIssuer, type TestIssuer } from '@datahub/auth/testing';
-import { type EdaView, isComplete, isNeeded, PROBES, probesFor, type ProbeKey, type ProbeRunAnswer, type ProbeRunRequest, type RunAnswer, type RunView } from '@datahub/contracts/eda';
+import {
+  type DigAnswer,
+  type EdaView,
+  isComplete,
+  isNeeded,
+  PROBES,
+  probesFor,
+  type ProbeKey,
+  type ProbeRunAnswer,
+  type ProbeRunRequest,
+  type RunAnswer,
+  type RunKind,
+  type RunView,
+} from '@datahub/contracts/eda';
 import { createDatabase, type Database, migrate } from '@datahub/db';
 import type { FastifyInstance } from 'fastify';
 import { sql } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { parseReading, parseRun, todayAt } from './api.js';
+import { parseDig, parseReading, parseRun, todayAt } from './api.js';
 
 /** What a run on a selection answers: the EDA, and the run itself (OP-ED-12). */
 type RanOnSelection = Extract<RunAnswer, { state: 'ran' }> & { run: RunView };
@@ -40,7 +53,22 @@ describe('the requests of eda', () => {
     expect(parseRun({ selection: { where: [] } })).toEqual({ selection: { where: [] }, approve: false });
     expect(parseRun({ selection: 'lead_channel is null' })).toBe('selection is { where: [conditions] }.');
     expect(parseRun({ selection: { where: new Array(11).fill(selection.where[0]) } })).toBe('A selection holds at most 10 conditions.');
-    expect(parseRun({ selection: { where: [{ kind: 'sql', field: 'lead_channel' }] } })).toBe('Condition 1 is saysNothing, equals or range, as its kind.');
+    expect(parseRun({ selection: { where: [{ kind: 'sql', field: 'lead_channel' }] } })).toBe('Condition 1 is empty, saysNothing, equals or range, as its kind.');
+    expect(parseRun({ selection: { where: [{ kind: 'empty', field: 'lead_channel' }] } })).toEqual({ selection: { where: [{ kind: 'empty', field: 'lead_channel' }] }, approve: false });
+  });
+
+  it('take the selection of a dig, of at least one condition, and its approval (TR-ED-12)', () => {
+    const selection = { where: [{ kind: 'empty', field: 'lead_channel' }] };
+    expect(parseDig({ selection })).toEqual({ selection, approve: false });
+    expect(parseDig({ selection, approve: true })).toEqual({ selection, approve: true });
+    // The whole table has no rest to set it against.
+    expect(parseDig({ selection: { where: [] } })).toBe('A dig takes a selection of at least one condition.');
+    expect(parseDig({})).toBe('A dig takes a selection of at least one condition.');
+    expect(parseDig({ selection, approve: 'yes' })).toBe('approve is true or false.');
+    expect(parseDig({ selection, sql: 'select 1' })).toBe('A dig has no field sql.');
+    expect(parseDig({ selection: { where: [{ kind: 'where', field: 'lead_channel' }] } })).toBe('Condition 1 is empty, saysNothing, equals or range, as its kind.');
+    expect(parseDig(undefined)).toBe('Send a JSON object.');
+    expect(parseDig([])).toBe('Send a JSON object.');
   });
 
   it('take a reading of a subject as expected, known or a problem (FR-ED-11)', () => {
@@ -61,8 +89,8 @@ const DRAFT: CatalogueResource = { ...WEEKLY_ANSWER, id: '8b3e4d6a-0c3f-4e5a-9b4
 /** A Resource at 3 · Confirmed whose grain is not recorded. */
 const BARE: CatalogueResource = { ...WEEKLY_ANSWER, id: '9c4f5e7b-1d4a-4f6b-8c53-4e5f6a7b8c93', displayName: 'Lead sources', details: { ...WEEKLY_ANSWER.details, grain: [] } };
 
-/** The answer of BigQuery to each EDA-Probe, every value as text, as query passes it on (TR-ED-04). */
-const ROWS: Partial<Record<ProbeKey, Record<string, unknown>[]>> = {
+/** The answer of BigQuery to each EDA-Probe and to a dig, every value as text, as query passes it on (TR-ED-04). */
+const ROWS: Partial<Record<RunKind, Record<string, unknown>[]>> = {
   grainHolds: [{ row_count: '312', empty_grain: '0', grain_values: '312', on_one: '312', on_two: '0', on_three: '0', on_four_or_more: '0', rows_covered: '0', examples: 'null' }],
   nullsPerKeyField: [{ row_count: '1000', empty_0: '0', empty_1: '12', empty_2: '0', empty_3: '7' }],
   disguisedNulls: [{ row_count: '1000', says_0: '0', null_0: '0', says_1: '12', null_1: '12', says_2: '0', null_2: '0', says_3: '19', null_3: '7', found_3_0: '4', found_3_1: '8' }],
@@ -75,6 +103,19 @@ const ROWS: Partial<Record<ProbeKey, Record<string, unknown>[]>> = {
     { field_index: '0', value_count: '310', low: '0', p25: '12', median: '20', p75: '41', p95: '108', high: '400', mean: '35', width: '10', tail_from: '110', start: '0', bins: '[{"bin":"0","bin_rows":"300"},{"bin":"-1","bin_rows":"10"}]' },
   ],
   dateRange: [{ first_0: '2021-01-04', last_0: '2026-11-16' }],
+  // One row per part and field: lead_source (0) a text and lead_count (1) a number, against the rows where lead_channel says nothing.
+  digInto: [
+    { part: 'number', field_index: '1', selected_rows: '40', rest_rows: '272', selected_median: '18', selected_mean: '24', rest_median: '26', rest_mean: '38', entries: 'null' },
+    {
+      part: 'period',
+      field_index: '0',
+      selected_rows: '40',
+      rest_rows: '272',
+      entries: '[{"value":"2026-10-26","selected_rows":10,"rest_rows":2},{"value":"2026-11-02","selected_rows":12,"rest_rows":0},{"value":"2026-11-09","selected_rows":1,"rest_rows":90},{"value":"2026-11-16","selected_rows":0,"rest_rows":80}]',
+    },
+    { part: 'rows', field_index: '0', selected_rows: '40', rest_rows: '272', entries: 'null' },
+    { part: 'text', field_index: '0', selected_rows: '40', rest_rows: '272', entries: '[{"value":"app","selected_rows":30,"rest_rows":20},{"value":"website","selected_rows":10,"rest_rows":252}]' },
+  ],
   distributionOfCategories: [
     { field_index: '0', total_weight: '1000', value_count: '3', empty_weight: '0', others_count: '0', others_weight: '0', small_count: '0', top: '[{"value":"website","weight":"600"},{"value":"app","weight":"300"},{"value":"partner","weight":"100"}]' },
     { field_index: '1', total_weight: '1000', value_count: '2', empty_weight: '120', others_count: '0', others_weight: '0', small_count: '0', top: '[{"value":"web","weight":"700"},{"value":"mobile","weight":"180"}]' },
@@ -173,6 +214,7 @@ describe.skipIf(!url)('the routes of eda (TR-ED-01)', () => {
   const edaOf = (id: string) => `/resources/${id}/eda`;
   const runOf = (id: string, probe: string) => `/resources/${id}/eda/probes/${probe}/runs`;
   const readingOf = (id: string, probe: string) => `/resources/${id}/eda/probes/${probe}/readings`;
+  const digOf = (id: string) => `/resources/${id}/eda/dig`;
 
   it('refuses every route to who may not explore Resources, naming eda.use (TR-ED-06)', async () => {
     for (const [method, path, payload] of [
@@ -181,6 +223,7 @@ describe.skipIf(!url)('the routes of eda (TR-ED-01)', () => {
       ['GET', edaOf(WEEKLY_ANSWER.id)],
       ['POST', runOf(WEEKLY_ANSWER.id, 'grainHolds'), {}],
       ['PUT', readingOf(WEEKLY_ANSWER.id, 'grainHolds'), { subject: '', reading: 'known' }],
+      ['POST', digOf(WEEKLY_ANSWER.id), { selection: { where: [{ kind: 'empty', field: 'lead_channel' }] } }],
     ] as const) {
       const answer = await call(karel, method, path, payload);
       expect(answer.statusCode, `${method} ${path}`).toBe(403);
@@ -207,7 +250,8 @@ describe.skipIf(!url)('the routes of eda (TR-ED-01)', () => {
       startedBy: { id: '103', name: 'Dirk Vos' },
       exploredAt: null,
       needed: { total: 10, complete: 0 },
-      next: 'nullsPerKeyField',
+      // The grain holds first, while it is open (DEC-ED-37).
+      next: 'grainHolds',
     });
     expect(view.resource.fields.map((field) => field.name)).toEqual(WEEKLY_ANSWER.fields.map((field) => field.name));
     expect(view.probes.every((probe) => !probe.added && probe.lastRun === null)).toBe(true);
@@ -238,8 +282,8 @@ describe.skipIf(!url)('the routes of eda (TR-ED-01)', () => {
       ['lead_channel', 'judge', null],
     ]);
     expect(eda.needed).toEqual({ total: 10, complete: 1 });
-    // Disguised nulls is still open on all four Key Fields, the most of what is missing (DEC-ED-16).
-    expect(eda.next).toBe('disguisedNulls');
+    // The grain holds is still open, so it stays the best next step (DEC-ED-37).
+    expect(eda.next).toBe('grainHolds');
     const kept = await database.db.selectFrom('edaRuns').select(['queryRunId', 'bytes']).execute();
     expect(kept).toEqual([{ queryRunId: expect.stringMatching(/^q-20261121-[0-9a-f]{6}$/), bytes: '1200000' }]);
   });
@@ -258,6 +302,8 @@ describe.skipIf(!url)('the routes of eda (TR-ED-01)', () => {
     expect(ran.state === 'ran' && ran.eda.probes.find((probe) => probe.key === 'grainHolds')?.lastRun?.results).toEqual([
       { subject: '', reading: 'expected', yours: null, data: { rows: 312, values: 312, onMoreThanOne: 0, rowsCovered: 0, emptyGrain: 0, buckets: [312, 0, 0, 0], examples: [] } },
     ]);
+    // With The grain holds complete, Disguised nulls is still open on all four Key Fields, the most of what is missing (DEC-ED-16).
+    expect(ran.state === 'ran' && ran.eda.next).toBe('disguisedNulls');
   });
 
   it('runs again with other fields and parameters, which the EDA-Probe is then set on (DEC-ED-17)', async () => {
@@ -381,6 +427,8 @@ describe.skipIf(!url)('the routes of eda (TR-ED-01)', () => {
     for (const where of [
       [{ kind: 'saysNothing', field: 'no_such_field' }],
       [{ kind: 'saysNothing', field: 'lead_channel` is null or true or `lead_channel' }],
+      [{ kind: 'empty', field: 'lead_channel` is null or true or `lead_channel' }],
+      [{ kind: 'empty', field: 'lead_channel', sql: 'or true' }],
       [{ kind: 'equals', field: 'lead_count', value: '0 or true' }],
       [{ kind: 'equals', field: 'lead_channel', value: 0 }],
       [{ kind: 'equals', field: 'week_start', value: "2026-01-05' or true or date '2026-01-05" }],
@@ -396,6 +444,107 @@ describe.skipIf(!url)('the routes of eda (TR-ED-01)', () => {
     }
     expect(asked).toHaveLength(count);
     expect(await database.db.selectFrom('edaRuns').select('id').execute()).toHaveLength(runs.length);
+  });
+
+  it('digs into a selection against the rest through query as the User, and keeps nothing of it (TR-ED-12, FR-ED-20)', async () => {
+    const before = (await call(dirk, 'GET', edaOf(WEEKLY_ANSWER.id))).json<EdaView>();
+    const runs = await database.db.selectFrom('edaRuns').select('id').execute();
+    const selection = { where: [{ kind: 'saysNothing', field: 'lead_channel' }] };
+    const answer = await call(dirk, 'POST', digOf(WEEKLY_ANSWER.id), { selection });
+    expect(answer.statusCode).toBe(200);
+
+    // Run as a dig, with the token of the User; the selection a flag on every row, never a filter.
+    const last = asked.at(-1);
+    expect(last).toMatchObject({ resourceId: WEEKLY_ANSWER.id, authorization: dirk, run: { probe: 'digInto', approve: false } });
+    expect(last?.run.sql).toContain(
+      "coalesce((`lead_channel` is null or lower(trim(`lead_channel`)) in ('', 'n/a', 'na', 'null', 'none', 'unknown', 'onbekend', '-', '?', 'tbd')), false) as eda_selected",
+    );
+    expect(last?.run.sql).toContain("  from `immoscoop-dataplatform.dbt_prod_stacks.Weekly_Lead_Volume`\n  where (`week_start` is null or `week_start` >= date '0001-01-01')\n),");
+
+    const dug = answer.json<Extract<DigAnswer, { state: 'ran' }>>();
+    expect(dug).toMatchObject({ state: 'ran', selection, ranAt: '2026-11-21T10:00:00.000Z', bytes: 1_200_000 });
+    expect(dug.result.rows).toEqual({ selected: 40, total: 312 });
+    expect(dug.result.overTime).toEqual({
+      field: 'week_start',
+      unit: 'week',
+      periods: [
+        { start: '2026-10-26', selected: 10, total: 12 },
+        { start: '2026-11-02', selected: 12, total: 12 },
+        { start: '2026-11-09', selected: 1, total: 91 },
+        { start: '2026-11-16', selected: 0, total: 80 },
+      ],
+      breakAt: '2026-11-09',
+      before: 'more',
+    });
+    expect(dug.result.fields).toEqual([
+      { field: 'lead_source', kind: 'text', values: [expect.objectContaining({ value: 'app', selected: 30, rest: 20, real: true }), expect.objectContaining({ value: 'website', selected: 10, rest: 252, real: true })] },
+      { field: 'lead_count', kind: 'number', selected: { median: 18, mean: 24 }, rest: { median: 26, mean: 38 } },
+    ]);
+
+    // Not kept, and the EDA is as it was.
+    expect(await database.db.selectFrom('edaRuns').select('id').execute()).toHaveLength(runs.length);
+    expect((await call(dirk, 'GET', edaOf(WEEKLY_ANSWER.id))).json<EdaView>()).toEqual(before);
+  });
+
+  it('digs by the lists of the Disguised nulls of the EDA, and passes on what the Pre-flight asks (TR-ED-12, DEC-ED-35)', async () => {
+    const eda = await database.db.selectFrom('edas').select('id').where('resourceId', '=', WEEKLY_ANSWER.id).executeTakeFirstOrThrow();
+    const added = await database.db.selectFrom('edaProbes').select('probe').where('edaId', '=', eda.id).where('probe', '=', 'disguisedNulls').execute();
+    expect(added).toHaveLength(0);
+    await database.db
+      .insertInto('edaProbes')
+      .values({ edaId: eda.id, probe: 'disguisedNulls', fields: '["lead_channel"]', params: JSON.stringify({ lists: { text: ['Leeg'] } }), addedById: '103', addedByName: 'Dirk Vos' })
+      .execute();
+    try {
+      const selection = { where: [{ kind: 'saysNothing', field: 'lead_channel' }] };
+      expect((await call(dirk, 'POST', digOf(WEEKLY_ANSWER.id), { selection })).statusCode).toBe(200);
+      expect(asked.at(-1)?.run.sql).toContain("coalesce((`lead_channel` is null or lower(trim(`lead_channel`)) in ('', 'leeg')), false)");
+
+      next = { state: 'approve', bytes: 300_000_000 };
+      expect((await call(dirk, 'POST', digOf(WEEKLY_ANSWER.id), { selection })).json()).toEqual({ state: 'approve', bytes: 300_000_000 });
+      const refused: ProbeRunAnswer = { state: 'refused', bytes: 3_000_000_000, reason: 'It reads 3 GB, more than one run of yours may read (1 GB), so it does not run.' };
+      next = refused;
+      expect((await call(dirk, 'POST', digOf(WEEKLY_ANSWER.id), { selection })).json()).toEqual(refused);
+      const approved = await call(dirk, 'POST', digOf(WEEKLY_ANSWER.id), { selection, approve: true });
+      expect(approved.json<DigAnswer>().state).toBe('ran');
+      expect(asked.at(-1)?.run).toMatchObject({ probe: 'digInto', approve: true });
+    } finally {
+      await database.db.deleteFrom('edaProbes').where('edaId', '=', eda.id).where('probe', '=', 'disguisedNulls').execute();
+    }
+  });
+
+  it('refuses a dig that does not fit before anything runs, and answers as a run does when it cannot', async () => {
+    const count = asked.length;
+    for (const body of [
+      {},
+      { selection: { where: [] } },
+      { selection: { where: [{ kind: 'empty', field: 'lead_channel' }] }, approve: 'yes' },
+      { selection: { where: [{ kind: 'empty', field: 'lead_channel` is null or true or `lead_channel' }] } },
+      { selection: { where: [{ kind: 'equals', field: 'lead_count', value: '0 or true' }] } },
+      { selection: { where: [{ kind: 'range', field: 'lead_channel', from: 'a' }] } },
+      { selection: { where: new Array(11).fill({ kind: 'empty', field: 'lead_channel' }) } },
+      { selection: { where: [{ kind: 'empty', field: 'lead_channel' }] }, sql: 'select 1' },
+    ]) {
+      const answer = await call(dirk, 'POST', digOf(WEEKLY_ANSWER.id), body);
+      expect(answer.statusCode, JSON.stringify(body)).toBe(400);
+      expect(answer.json()).toMatchObject({ error: 'invalid_request', message: expect.any(String) });
+    }
+    expect(asked).toHaveLength(count);
+
+    const selection = { where: [{ kind: 'empty', field: 'lead_channel' }] };
+    // Not seen, not an ID, or without an EDA: not found, as for a run.
+    expect((await call(mia, 'POST', digOf(WEEKLY_ANSWER.id), { selection })).json()).toEqual({ error: 'not_found', message: 'There is no such Resource, or you may not see it.' });
+    expect((await call(dirk, 'POST', digOf('weekly'), { selection })).statusCode).toBe(404);
+    expect((await call(dirk, 'POST', digOf(DRAFT.id), { selection })).json()).toEqual({ error: 'not_found', message: 'This Resource has no EDA yet.' });
+    expect(asked).toHaveLength(count);
+
+    next = 'hidden';
+    expect((await call(dirk, 'POST', digOf(WEEKLY_ANSWER.id), { selection })).statusCode).toBe(404);
+    next = 'down';
+    expect((await call(dirk, 'POST', digOf(WEEKLY_ANSWER.id), { selection })).statusCode).toBe(503);
+    next = { state: 'ran', rows: [{ part: 'everything', field_index: '0' }], bytes: 10, runId: 'q-20261121-eeeeee' };
+    const bad = await call(dirk, 'POST', digOf(WEEKLY_ANSWER.id), { selection });
+    expect(bad.statusCode).toBe(502);
+    expect(bad.json()).toMatchObject({ error: 'bad_answer' });
   });
 
   it('says what does not fit, and what cannot run here', async () => {
