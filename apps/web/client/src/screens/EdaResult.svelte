@@ -482,12 +482,16 @@
   th.num, td.num { text-align: right; }
   .reading { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--tint-active); }
   /* A row per field (DEC-UX-326): Nulls per Key Field and Disguised nulls. */
-  .rows { container-type: inline-size; border-radius: var(--radius-md); background: var(--surface-solid); padding: 6px 14px 10px; }
+  .rows { --dig-width: 124px; container-type: inline-size; border-radius: var(--radius-md); background: var(--surface-solid); padding: 6px 14px 10px; }
   .rows-head, .rows li { display: grid; grid-template-columns: minmax(120px, 1fr) minmax(90px, 1.2fr) 92px 150px 224px; gap: 14px; align-items: center; }
   .disguised .rows-head, .disguised li { grid-template-columns: minmax(140px, 1fr) minmax(120px, 1.4fr) 104px 150px 190px; }
   /* Dig into at the end of a row (FR-ED-20). */
-  .digs .rows-head, .digs li { grid-template-columns: minmax(120px, 1fr) minmax(90px, 1.2fr) 92px 150px 224px auto; }
-  .disguised.digs .rows-head, .disguised.digs li { grid-template-columns: minmax(140px, 1fr) minmax(120px, 1.4fr) 104px 150px 190px auto; }
+  /*
+   * Every row is a grid of its own, so the column of Dig into has a fixed width: a row without the button keeps the
+   * same columns as one with it, and the bars start in one place (Max, 2026-11-22).
+   */
+  .digs .rows-head, .digs li { grid-template-columns: minmax(120px, 1fr) minmax(90px, 1.2fr) 92px 150px 224px var(--dig-width); }
+  .disguised.digs .rows-head, .disguised.digs li { grid-template-columns: minmax(140px, 1fr) minmax(120px, 1.4fr) 104px 150px 190px var(--dig-width); }
   .dig { display: inline-flex; justify-content: flex-end; }
   .dig :global(.button) { white-space: nowrap; }
   .rows-head { padding: 8px 0 6px; font-size: var(--text-meta); color: var(--text-muted); border-bottom: 1px solid var(--tint-active); }
@@ -549,7 +553,7 @@
     .rows-head { display: none; }
     .rows li, .disguised li { grid-template-columns: 1fr 1fr; }
   }
-  @container (max-width: 880px) {
+  @container (max-width: 920px) {
     .digs .rows-head { display: none; }
     .digs li, .disguised.digs li { grid-template-columns: 1fr 1fr; }
   }
