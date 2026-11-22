@@ -19,6 +19,7 @@ const HOW: Readonly<Partial<Record<ProbeKey, string>>> = {
   distributionOfNumbers: 'eda.flow.how.distributionOfNumbers',
   distributionOfCategories: 'eda.flow.how.distributionOfCategories',
   dateRange: 'eda.flow.how.dateRange',
+  disguisedNulls: 'eda.flow.how.disguisedNulls',
 };
 
 /** The Learning Card of an EDA-Probe, where one is written. */

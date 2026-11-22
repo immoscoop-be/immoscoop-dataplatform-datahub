@@ -59,6 +59,7 @@
     distributionOfNumbers: 'eda.next.distributionOfNumbers',
     distributionOfCategories: 'eda.next.distributionOfCategories',
     dateRange: 'eda.next.dateRange',
+    disguisedNulls: 'eda.next.disguisedNulls',
   };
 
   const STANDING_TEXTS: Record<ProbeStanding, string> = {

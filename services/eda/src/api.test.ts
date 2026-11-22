@@ -1,11 +1,14 @@
 import { randomBytes } from 'node:crypto';
 import { createTestIssuer, type TestIssuer } from '@datahub/auth/testing';
-import { type EdaView, isComplete, isNeeded, PROBES, probesFor, type ProbeKey, type ProbeRunAnswer, type ProbeRunRequest, type RunAnswer } from '@datahub/contracts/eda';
+import { type EdaView, isComplete, isNeeded, PROBES, probesFor, type ProbeKey, type ProbeRunAnswer, type ProbeRunRequest, type RunAnswer, type RunView } from '@datahub/contracts/eda';
 import { createDatabase, type Database, migrate } from '@datahub/db';
 import type { FastifyInstance } from 'fastify';
 import { sql } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { parseReading, parseRun, todayAt } from './api.js';
+
+/** What a run on a selection answers: the EDA, and the run itself (OP-ED-12). */
+type RanOnSelection = Extract<RunAnswer, { state: 'ran' }> & { run: RunView };
 import { buildApp } from './app.js';
 import { type Catalogue, type CatalogueResource, CatalogueUnavailable, sourceOf } from './catalogue.js';
 import type { EdaDatabase } from './database.js';
@@ -287,7 +290,7 @@ describe.skipIf(!url)('the routes of eda (TR-ED-01)', () => {
     const selection = { where: [{ kind: 'saysNothing', field: 'lead_channel' }] };
     const answer = await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'nullsPerKeyField'), { selection });
     expect(answer.statusCode).toBe(200);
-    const ran = answer.json<RunAnswer & { state: 'ran' }>();
+    const ran = answer.json<RanOnSelection>();
     expect(ran.state).toBe('ran');
     expect(ran.run).toMatchObject({ ranBy: { id: '103', name: 'Dirk Vos' }, bytes: 1_200_000, fields: nullsBefore?.fields, params: {}, selection });
     expect(ran.run.results.map((result) => [result.subject, result.reading, result.yours])).toEqual([
@@ -318,7 +321,7 @@ describe.skipIf(!url)('the routes of eda (TR-ED-01)', () => {
           ],
         },
       })
-    ).json<RunAnswer & { state: 'ran' }>();
+    ).json<RanOnSelection>();
     expect(sqlOf()).toContain("  and (`week_start` >= date '2026-01-05' and `week_start` < date '2026-02-02')\n    and `lead_source` = 'web\\' or true --'\n");
     expect(probeOf(numbers.eda, 'distributionOfNumbers')).toMatchObject({ added: false, complete: false, fields: [], lastRun: null });
     expect(numbers.run).toMatchObject({ fields: ['lead_count'], results: [expect.objectContaining({ subject: 'lead_count', reading: 'judge' })] });
@@ -328,7 +331,7 @@ describe.skipIf(!url)('the routes of eda (TR-ED-01)', () => {
         params: { measure: null },
         selection: { where: [{ kind: 'equals', field: 'lead_count', value: 0 }] },
       })
-    ).json<RunAnswer & { state: 'ran' }>();
+    ).json<RanOnSelection>();
     expect(sqlOf()).toContain('  and `lead_count` = 0\n  and eda_dated.period is not null');
     expect(volume.run).toMatchObject({ fields: ['loaded_at'], params: { measure: null }, selection: { where: [{ kind: 'equals', field: 'lead_count', value: 0 }] } });
     expect(probeOf(volume.eda, 'volumeOverTime')).toMatchObject({ fields: ['week_start'], params: {}, lastRun: probeOf(before, 'volumeOverTime')?.lastRun });
