@@ -43,7 +43,11 @@ function resultView(run: Run, readings: readonly Reading[]): ResultView[] {
   });
 }
 
-function runView(run: Run, readings: readonly Reading[]): RunView {
+/**
+ * A run as the tab Steps shows it, with the rows it ran on, the whole table too (OP-ED-12). The readings given are of
+ * the results of the last run on the whole table: a run on a selection is shown without them.
+ */
+export function runView(run: Run, readings: readonly Reading[]): RunView {
   return {
     id: run.id,
     ranAt: run.ranAt.toISOString(),
@@ -51,7 +55,8 @@ function runView(run: Run, readings: readonly Reading[]): RunView {
     bytes: run.bytes,
     fields: run.fields,
     params: run.params,
-    results: resultView(run, readings),
+    selection: run.selection,
+    results: resultView(run, run.selection.where.length === 0 ? readings : []),
   };
 }
 

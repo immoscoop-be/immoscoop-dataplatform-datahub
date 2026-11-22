@@ -23,6 +23,7 @@ import type { EdaClient } from '../lib/eda.js';
 import type { EdaTab } from '../lib/routes.js';
 import { TEXTS } from '../texts/index.js';
 import EdaPage from './EdaPage.svelte';
+import EdaResult from './EdaResult.svelte';
 
 beforeAll(() => {
   addTexts(TEXTS);
@@ -194,6 +195,33 @@ const CATEGORIES = ran(['lead_source', 'lead_channel'], [
 const RANGE = { unit: 'week', first: '2021-01-04', last: '2026-11-16', periods: 307, current: '2026-11-16', behind: 0, reliableSince: '2025-01-01', beforeReliable: 208 } as const;
 const UP_TO_DATE = ran(['week_start'], [['week_start', RANGE, 'expected']]);
 const BEHIND = ran(['week_start'], [['week_start', { ...RANGE, last: '2026-10-26', periods: 303, behind: 3 }, 'look']]);
+/** Disguised nulls on the four Key Fields: lead_source says "unknown" besides its empty values, lead_channel much more (DEC-ED-35). */
+const DISGUISED = ran(['week_start', 'lead_source', 'lead_count', 'lead_channel'], [
+  ['week_start', { rows: 16224, saysNothing: 0, nulls: 0, found: [], role: 'period' }, 'expected'],
+  ['lead_source', { rows: 16224, saysNothing: 182, nulls: 130, found: [{ value: 'unknown', rows: 52 }], role: 'groupedBy' }, 'look'],
+  ['lead_count', { rows: 16224, saysNothing: 0, nulls: 0, found: [], role: 'addsUp' }, 'expected'],
+  [
+    'lead_channel',
+    {
+      rows: 16224,
+      saysNothing: 2608,
+      nulls: 1947,
+      found: [
+        { value: 'unknown', rows: 412 },
+        { value: 'n/a', rows: 211 },
+        { value: '', rows: 38 },
+      ],
+      role: null,
+    },
+    'judge',
+  ],
+]);
+
+/**
+ * The EDA with Disguised nulls run by Data Hub, as it will once eda runs it: the contracts still say it does not, and
+ * these tests do not depend on when that changes.
+ */
+const runnable = (view: EdaView): EdaView => ({ ...view, probes: view.probes.map((one) => (one.key === 'disguisedNulls' ? { ...one, runs: true } : one)) });
 
 /** eda as the page meets it: the EDA it holds, and what a run or a reading answers. */
 function fakeEda(view: EdaView | null, answers: RunAnswer[] = []) {
@@ -472,7 +500,8 @@ describe('the detail of an EDA-Probe (FR-ED-06, DEC-UX-324)', () => {
   });
 
   it('runs, asks to approve what reads more than runs freely, runs again with the approval and shows its result', async () => {
-    const after = viewOf({ grainHolds: GRAIN_HOLDS, nullsPerKeyField: NULLS });
+    // It ran just now, whatever day the test runs on.
+    const after = viewOf({ grainHolds: GRAIN_HOLDS, nullsPerKeyField: { ...NULLS, ranAt: new Date().toISOString() } });
     const { client, onchanged } = show(viewOf({ grainHolds: GRAIN_HOLDS }), { probe: 'nullsPerKeyField', answers: [{ state: 'approve', bytes: 840_000_000 }, { state: 'ran', eda: after }] });
     await fireEvent.click(await screen.findByRole('button', { name: /^Run$/ }));
     expect(client.run).toHaveBeenLastCalledWith('r2', 'nullsPerKeyField', { fields: ['week_start', 'lead_source', 'lead_count', 'lead_channel'] });
@@ -679,5 +708,236 @@ describe('the detail of an EDA-Probe (FR-ED-06, DEC-UX-324)', () => {
     await waitFor(() => expect(reading.getByRole('button', { name: /Known/ }).getAttribute('aria-pressed')).toBe('true'));
     expect(reading.getByText('Read by An Claes on 21 Nov')).toBeTruthy();
     expect(onchanged).toHaveBeenCalled();
+  });
+});
+
+describe('the result of an EDA-Probe, on its own (OP-ED-12)', () => {
+  it('draws from a run alone, without the page, its form or its route, and asks no reading without a way to keep one', () => {
+    render(EdaResult, { probe: 'nullsPerKeyField', run: NULLS, resource: WEEKLY });
+    const result = within(screen.getByRole('region', { name: 'Result' }));
+    expect(result.getByText(/Ran .* by An Claes · read 300 kB/)).toBeTruthy();
+    expect(document.querySelector('.conclusion')?.textContent).toBe(
+      'lead_source is empty on 130 rows, though its role, grouped by, needs it on every row. lead_channel is empty on 12% of rows. week_start, lead_count are always filled.',
+    );
+    const rows = result.getAllByRole('listitem');
+    expect(rows.map((row) => row.querySelector('.field .mono')?.textContent)).toEqual(['week_start', 'lead_source', 'lead_count', 'lead_channel']);
+    expect(rows[3]?.textContent).toContain('For you to judge');
+    expect(result.queryByRole('group', { name: /Your reading/ })).toBeNull();
+    expect(result.queryByText('Nothing to read')).toBeNull();
+    // The whole table: no line on the rows it ran on.
+    expect(screen.queryByText(/On the rows where/)).toBeNull();
+    cleanup();
+
+    // Every EDA-Probe that runs draws the same way, here Volume over time with its blocks of days.
+    render(EdaResult, { probe: 'volumeOverTime', run: VOLUME, resource: WEEKLY });
+    expect(within(screen.getByRole('article', { name: 'week_start' })).getByRole('img', { name: 'The volume per 7 days by week_start' })).toBeTruthy();
+  });
+
+  it('keeps a reading through whoever shows it', async () => {
+    const onread = vi.fn(async () => true);
+    render(EdaResult, { probe: 'nullsPerKeyField', run: NULLS, resource: WEEKLY, onread });
+    const reading = within(screen.getByRole('group', { name: 'Your reading of lead_channel' }));
+    await fireEvent.click(reading.getByRole('button', { name: /A problem/ }));
+    expect(onread).toHaveBeenCalledWith('lead_channel', 'problem');
+    expect(screen.getAllByText('Nothing to read')).toHaveLength(2);
+  });
+
+  it('names the rows of a selection above the result, in words, the fields as names', () => {
+    const line = () => screen.getByText(/^On the rows where/).closest('p') as HTMLElement;
+    render(EdaResult, { probe: 'disguisedNulls', run: { ...DISGUISED, selection: { where: [{ kind: 'saysNothing', field: 'lead_channel' }] } }, resource: WEEKLY });
+    expect(line().textContent?.trim()).toBe('On the rows where lead_channel says nothing');
+    expect([...line().querySelectorAll('.mono')].map((name) => name.textContent)).toEqual(['lead_channel']);
+    cleanup();
+
+    // A selection given apart from the run says which rows; a value, a range of days and a number from a bound.
+    render(EdaResult, {
+      probe: 'disguisedNulls',
+      run: DISGUISED,
+      resource: WEEKLY,
+      selection: {
+        where: [
+          { kind: 'equals', field: 'lead_source', value: 'app' },
+          { kind: 'range', field: 'week_start', from: '2024-01-01', before: '2025-01-06' },
+          { kind: 'range', field: 'lead_count', from: 10 },
+        ],
+      },
+    });
+    expect(line().textContent?.trim()).toBe('On the rows where lead_source is app and week_start is on or after 1 Jan 2024 and before 6 Jan 2025 and lead_count is at least 10');
+    cleanup();
+
+    // No condition is the whole table.
+    render(EdaResult, { probe: 'disguisedNulls', run: DISGUISED, resource: WEEKLY, selection: { where: [] } });
+    expect(screen.queryByText(/On the rows where/)).toBeNull();
+    cleanup();
+
+    setLanguage('nl');
+    try {
+      render(EdaResult, { probe: 'disguisedNulls', run: { ...DISGUISED, selection: { where: [{ kind: 'saysNothing', field: 'lead_channel' }, { kind: 'range', field: 'week_start', before: '2025-01-06' }] } }, resource: WEEKLY });
+      expect(screen.getByText(/^Op de rijen waar/).closest('p')?.textContent?.trim()).toBe('Op de rijen waar lead_channel niets zegt en week_start vóór 6 jan 2025 valt');
+    } finally {
+      setLanguage('en');
+    }
+  });
+});
+
+describe('Disguised nulls (DEC-ED-35)', () => {
+  const lookFor = () => within(screen.getByText('Looks for').closest('div') as HTMLElement);
+  const chipsOf = (kind: string) => {
+    const label = lookFor().getByText(kind);
+    return [...(label.nextElementSibling as HTMLElement).querySelectorAll('.lk')].map((chip) => chip.textContent?.trim());
+  };
+
+  it('says what it does, is set on every Key Field, and shows what it looks for per kind of field', async () => {
+    show(runnable(viewOf({ grainHolds: GRAIN_HOLDS })), { probe: 'disguisedNulls' });
+    expect(await screen.findByRole('heading', { level: 2, name: 'Disguised nulls' })).toBeTruthy();
+    expect(screen.getByText('Gaps · one column · needed for 4 · Explored')).toBeTruthy();
+    const drawing = screen.getByRole('img', { name: 'Disguised nulls, drawn on a small table' });
+    expect(within(drawing).getByText('filled, but with nothing in it')).toBeTruthy();
+    expect(within(drawing).getByText('n/a')).toBeTruthy();
+    // A date field of the drawing shows a date that says nothing.
+    expect(within(drawing).queryAllByText(/^(1900-01-01|9999-12-31|unknown)$/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/^It counts, per field, the rows that say nothing/)).toBeTruthy();
+    expect([...document.querySelectorAll('.chip .mono')].map((chip) => chip.textContent)).toEqual(['week_start', 'lead_source', 'lead_count', 'lead_channel']);
+    // Every Key Field, as Nulls per Key Field: none says needed apart, none can be taken off.
+    expect(document.querySelectorAll('.chip .note')).toHaveLength(0);
+    expect(screen.queryByRole('button', { name: /^Remove / })).toBeNull();
+    expect(screen.getByText('All its Key Fields, as Nulls per Key Field; any other field can be added.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Add a field' })).toBeTruthy();
+    // What it looks for, Data Hub's list per kind of field.
+    expect(chipsOf('In a text')).toEqual(['empty text', 'only spaces', 'n/a', 'na', 'null', 'none', 'unknown', 'onbekend', '-', '?', 'tbd']);
+    expect(chipsOf('In a date')).toEqual(['1900-01-01', '1970-01-01', '0001-01-01', '9999-12-31']);
+    expect(chipsOf('In a number')).toEqual(['-1', '999…9']);
+    expect(lookFor().getByRole('button', { name: /Add a value/ })).toBeTruthy();
+    expect(lookFor().getByRole('button', { name: /Add a date/ })).toBeTruthy();
+    expect(lookFor().getByRole('button', { name: /Add a number/ })).toBeTruthy();
+    // The empty text and only spaces always count: they cannot be taken out.
+    expect(lookFor().queryByRole('button', { name: 'Take out empty text' })).toBeNull();
+    expect(lookFor().getByText(/Capitals and spaces around a text do not matter\. 0 is never one/)).toBeTruthy();
+    expect(screen.getByText(/^Only the empty values, apart: Nulls per Key Field\. One value written two ways/)).toBeTruthy();
+    expect(screen.getByText(/^Run it, and a row per field appears here: the values it found that say nothing/)).toBeTruthy();
+  });
+
+  it('runs with Data Hub\'s lists as they are, and sends the lists with the next run once they change (DEC-ED-35)', async () => {
+    const ran = runnable(viewOf({ grainHolds: GRAIN_HOLDS, disguisedNulls: DISGUISED }));
+    const { client } = show(runnable(viewOf({ grainHolds: GRAIN_HOLDS })), { probe: 'disguisedNulls', answers: [{ state: 'ran', eda: ran }, { state: 'ran', eda: ran }] });
+    await fireEvent.click(await screen.findByRole('button', { name: /^Run$/ }));
+    expect(client.run).toHaveBeenLastCalledWith('r2', 'disguisedNulls', { fields: ['week_start', 'lead_source', 'lead_count', 'lead_channel'] });
+    await screen.findByRole('region', { name: 'Result' });
+    // Take out a value that is real here, add one this table uses; one already there, whatever its capitals, is not added twice.
+    await fireEvent.click(lookFor().getByRole('button', { name: 'Take out n/a' }));
+    await fireEvent.click(lookFor().getByRole('button', { name: /Add a value/ }));
+    const text = lookFor().getByRole('textbox', { name: 'A value that says nothing' });
+    await fireEvent.input(text, { target: { value: ' leeg ' } });
+    await fireEvent.keyDown(text, { key: 'Enter' });
+    await fireEvent.input(text, { target: { value: 'UNKNOWN' } });
+    await fireEvent.keyDown(text, { key: 'Enter' });
+    await fireEvent.keyDown(text, { key: 'Escape' });
+    expect(chipsOf('In a text')).toEqual(['empty text', 'only spaces', 'na', 'null', 'none', 'unknown', 'onbekend', '-', '?', 'tbd', 'leeg']);
+    await fireEvent.click(lookFor().getByRole('button', { name: 'Take out 1970-01-01' }));
+    // 0 never says nothing; -99 is added on leaving the field.
+    await fireEvent.click(lookFor().getByRole('button', { name: /Add a number/ }));
+    const typed = lookFor().getByRole('spinbutton', { name: 'A number that says nothing' });
+    await fireEvent.input(typed, { target: { value: '0' } });
+    await fireEvent.keyDown(typed, { key: 'Enter' });
+    expect(lookFor().getByRole('status').textContent).toBe('0 never says nothing: a zero is a value.');
+    await fireEvent.input(typed, { target: { value: '-99' } });
+    await fireEvent.blur(typed);
+    await fireEvent.click(lookFor().getByRole('button', { name: 'Take out 999…9' }));
+    expect(chipsOf('In a number')).toEqual(['-1', '-99', '999…9']);
+    expect(lookFor().getByRole('button', { name: 'Look for nines only again' })).toBeTruthy();
+    await fireEvent.click(screen.getByRole('button', { name: /Run again/ }));
+    expect(client.run).toHaveBeenLastCalledWith('r2', 'disguisedNulls', {
+      fields: ['week_start', 'lead_source', 'lead_count', 'lead_channel'],
+      params: { lists: { text: ['na', 'null', 'none', 'unknown', 'onbekend', '-', '?', 'tbd', 'leeg'], date: ['1900-01-01', '0001-01-01', '9999-12-31'], number: [-1, -99], ninesOnly: false } },
+    });
+  });
+
+  it('starts from the lists kept with the EDA, and sends them again with every run', async () => {
+    const lists = { text: ['n/a'], date: [], number: [-1], ninesOnly: false };
+    const view = runnable(viewOf({ disguisedNulls: { ...DISGUISED, params: { lists } } }));
+    const { client } = show(view, { probe: 'disguisedNulls', answers: [{ state: 'ran', eda: view }] });
+    await screen.findByRole('region', { name: 'Result' });
+    expect(chipsOf('In a text')).toEqual(['empty text', 'only spaces', 'n/a']);
+    expect(chipsOf('In a date')).toEqual([]);
+    await fireEvent.click(screen.getByRole('button', { name: /Run again/ }));
+    expect(client.run).toHaveBeenLastCalledWith('r2', 'disguisedNulls', { fields: DISGUISED.fields, params: { lists } });
+  });
+
+  it('shows a row per field: what says nothing with its rows, how many rows say nothing, and its reading', async () => {
+    const { client } = show(runnable(viewOf({ disguisedNulls: DISGUISED })), { probe: 'disguisedNulls' });
+    const result = within(await screen.findByRole('region', { name: 'Result' }));
+    expect(result.getAllByText('Look at this').length).toBeGreaterThan(0);
+    expect(document.querySelector('.conclusion')?.textContent).toBe(
+      'lead_source says nothing on 182 rows, though its role, grouped by, needs a real value on every row. In lead_channel, 16% of rows say nothing, null the most. week_start, lead_count always say something.',
+    );
+    const rows = result.getAllByRole('listitem');
+    expect(rows.map((row) => row.querySelector('.field .mono')?.textContent)).toEqual(['week_start', 'lead_source', 'lead_count', 'lead_channel']);
+    const values = (row: Element | undefined) => [...(row?.querySelectorAll('.value') ?? [])].map((value) => [value.firstElementChild?.textContent, value.querySelector('small')?.textContent]);
+    // The values found with their rows, null first, the empty text in words.
+    expect(values(rows[3])).toEqual([
+      ['null', '1,947'],
+      ['unknown', '412'],
+      ['n/a', '211'],
+      ['empty text', '38'],
+    ]);
+    expect(rows[3]?.querySelector('.value .word')?.textContent).toBe('null');
+    expect(rows[3]?.textContent).toContain('16%');
+    expect(rows[3]?.textContent).toContain('2,608 rows say nothing');
+    expect(rows[3]?.textContent).toContain('For you to judge');
+    expect(rows[3]?.textContent).toContain('no role needs it');
+    expect(within(rows[3] as HTMLElement).getByRole('img', { name: '16% says nothing' })).toBeTruthy();
+    // A field with a role reads look at this, as Nulls per Key Field does (DEC-ED-22).
+    expect(values(rows[1])).toEqual([
+      ['null', '130'],
+      ['unknown', '52'],
+    ]);
+    expect(rows[1]?.textContent).toContain('1.1%');
+    expect(rows[1]?.textContent).toContain('Look at this');
+    expect(rows[1]?.textContent).toContain('its role, grouped by, needs a real value');
+    // Every row says something: as expected, and nothing to read.
+    expect(values(rows[0])).toEqual([]);
+    expect(rows[0]?.textContent).toContain('none found');
+    expect(rows[0]?.textContent).toContain('0 rows say nothing');
+    expect(rows[0]?.textContent).toContain('every row says something');
+    expect(rows[0]?.textContent).toContain('Nothing to read');
+    expect(within(rows[0] as HTMLElement).queryByRole('group')).toBeNull();
+    const reading = within(within(rows[3] as HTMLElement).getByRole('group', { name: 'Your reading of lead_channel' }));
+    await fireEvent.click(reading.getByRole('button', { name: /Known/ }));
+    expect(client.read).toHaveBeenCalledWith('r2', 'disguisedNulls', 'lead_channel', 'known');
+    cleanup();
+
+    setLanguage('nl');
+    try {
+      show(runnable(viewOf({ disguisedNulls: DISGUISED })), { probe: 'disguisedNulls' });
+      const dutch = within(await screen.findByRole('region', { name: 'Resultaat' }));
+      const channel = dutch.getAllByRole('listitem')[3] as HTMLElement;
+      expect(values(channel)[0]).toEqual(['geen waarde', '1.947']);
+      expect(values(channel)[3]).toEqual(['lege tekst', '38']);
+      expect(channel.textContent).toContain('2.608 rijen zeggen niets');
+      expect(document.querySelector('.conclusion')?.textContent).toContain('In lead_channel zegt 16% van de rijen niets, geen waarde het meest.');
+    } finally {
+      setLanguage('en');
+    }
+  });
+
+  it('shows on its card how many fields say nothing, the values found written dashed in its drawing', async () => {
+    show(runnable(viewOf({ grainHolds: GRAIN_HOLDS, disguisedNulls: DISGUISED })));
+    await screen.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
+    const card = within(step('Gaps').getByRole('article', { name: 'Disguised nulls' }));
+    expect(card.getByText('Look at this')).toBeTruthy();
+    expect(card.getByRole('paragraph').textContent).toBe('2 fields say nothing on some rows: lead_channel the most, 16% of its rows.');
+    const drawing = within(card.getByRole('img', { name: 'Disguised nulls' }));
+    expect(drawing.getByText('2 fields with rows that say nothing')).toBeTruthy();
+    expect(drawing.getAllByText('unknown').length).toBeGreaterThan(0);
+    expect(drawing.getByText('n/a')).toBeTruthy();
+    expect(card.getByRole('link', { name: 'Disguised nulls' }).getAttribute('href')).toBe('/eda/r2/probes/disguisedNulls');
+    cleanup();
+
+    const clean = ran(DISGUISED.fields, DISGUISED.fields.map((field) => [field, { rows: 16224, saysNothing: 0, nulls: 0, found: [], role: null }, 'expected']));
+    show(runnable(viewOf({ disguisedNulls: clean })));
+    await screen.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
+    const quiet = within(step('Gaps').getByRole('article', { name: 'Disguised nulls' }));
+    expect(quiet.getByRole('paragraph').textContent).toBe('Every row says something in all 4 fields.');
+    expect(quiet.getByText('every value says something')).toBeTruthy();
   });
 });

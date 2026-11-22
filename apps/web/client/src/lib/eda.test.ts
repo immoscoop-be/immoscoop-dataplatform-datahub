@@ -1,17 +1,42 @@
-import type { CategoriesResult, DateRangeResult, EdaView, ProbeView, ResultView, VolumeResult } from '@datahub/contracts/eda';
+import { DISGUISED_DEFAULTS, type CategoriesResult, type DateRangeResult, type DisguisedResult, type EdaView, type ProbeView, type ResultView, type VolumeResult } from '@datahub/contracts/eda';
 import { addTexts, setLanguage } from '@datahub/ui/foundations/texts.svelte.js';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { TEXTS } from '../texts/index.js';
-import { askedOf, asksReading, createEda, fitsFilter, hasToAdd, isoWeek, listStateOf, niceTicks, overallReading, percent, standingOf, stepCount, stillMissing, volumeBlocks } from './eda.js';
+import {
+  askedOf,
+  asksReading,
+  createEda,
+  disguisedListsOf,
+  fitsFilter,
+  hasToAdd,
+  isoWeek,
+  listStateOf,
+  niceTicks,
+  overallReading,
+  percent,
+  sameLists,
+  standingOf,
+  stepCount,
+  stillMissing,
+  volumeBlocks,
+  withoutValue,
+  withValue,
+} from './eda.js';
 import {
   cardSentence,
   categoriesConclusion,
   categoriesSentence,
+  conditionSaid,
   dateRangeConclusion,
   dateRangeSentence,
+  disguisedConclusion,
+  disguisedWhy,
   distributionSentence,
   grainConclusion,
+  nothingName,
+  saidNothingOf,
   saidText,
+  selectionSaid,
   shapeOf,
   topOf,
   volumeSentence,
@@ -336,5 +361,84 @@ describe('Date range, in words (FR-ED-18, DEC-ED-34)', () => {
     expect(saidText(card)).toMatch(/^The last day is 2 Nov( 2026)?: 19 days behind today\.$/);
     const upToDate = cardSentence(probe('dateRange', { added: true, complete: true, lastRun: { ...lastRun, results: [lastRun.results[0] as ResultView] } }), { resource: { fields: [] } } as unknown as EdaView, 'en');
     expect(saidText(upToDate)).toBe('From week 1 of 2021 to this week, week 47 of 2026: 307 weeks.');
+  });
+});
+
+describe('Disguised nulls (DEC-ED-35)', () => {
+  it('reads the lists kept with the EDA, each part that is missing or wrong as Data Hub proposes it', () => {
+    expect(disguisedListsOf({})).toEqual(DISGUISED_DEFAULTS);
+    expect(disguisedListsOf(undefined)).toEqual(DISGUISED_DEFAULTS);
+    expect(disguisedListsOf({ lists: { text: ['n/a'], date: 'none', number: [-1, '9'], ninesOnly: false } })).toEqual({ text: ['n/a'], date: DISGUISED_DEFAULTS.date, number: DISGUISED_DEFAULTS.number, ninesOnly: false });
+    // What it reads is its own: changing it leaves what Data Hub proposes as it is.
+    disguisedListsOf({}).text.push('leeg');
+    expect(DISGUISED_DEFAULTS.text).not.toContain('leeg');
+  });
+
+  it('adds a value once, a text whatever its capitals and spaces, never 0, and takes one out', () => {
+    const lists = disguisedListsOf({});
+    expect(withValue(lists, 'text', '  Leeg ')).toMatchObject({ text: [...DISGUISED_DEFAULTS.text, 'Leeg'] });
+    expect(withValue(lists, 'text', ' UNKNOWN')).toBeNull();
+    expect(withValue(lists, 'text', '   ')).toBeNull();
+    expect(withValue(lists, 'date', '2000-01-01')).toMatchObject({ date: [...DISGUISED_DEFAULTS.date, '2000-01-01'] });
+    expect(withValue(lists, 'date', '1900-01-01')).toBeNull();
+    expect(withValue(lists, 'date', '1 Jan 2000')).toBeNull();
+    expect(withValue(lists, 'number', '-99')).toMatchObject({ number: [-1, -99] });
+    expect(withValue(lists, 'number', '-1')).toBeNull();
+    expect(withValue(lists, 'number', 'many')).toBeNull();
+    expect(withValue(lists, 'number', '0')).toBe('zero');
+    expect(withoutValue(lists, 'text', 'n/a').text).not.toContain('n/a');
+    expect(withoutValue(lists, 'number', -1).number).toEqual([]);
+    expect(sameLists(lists, DISGUISED_DEFAULTS)).toBe(true);
+    expect(sameLists({ ...lists, text: [...lists.text].reverse().map((one) => one.toUpperCase()) }, DISGUISED_DEFAULTS)).toBe(true);
+    expect(sameLists({ ...lists, ninesOnly: false }, DISGUISED_DEFAULTS)).toBe(false);
+    expect(sameLists(withoutValue(lists, 'date', '1970-01-01'), DISGUISED_DEFAULTS)).toBe(false);
+  });
+
+  it('asks no reading where every row says something', () => {
+    expect(asksReading('disguisedNulls', { reading: 'expected' })).toBe(false);
+    expect(asksReading('disguisedNulls', { reading: 'judge' })).toBe(true);
+    expect(asksReading('disguisedNulls', { reading: 'look' })).toBe(true);
+  });
+
+  const CHANNEL: DisguisedResult = { rows: 1000, saysNothing: 160, nulls: 20, found: [{ value: 'unknown', rows: 100 }, { value: ' ', rows: 40 }], role: null };
+  const results = [
+    { subject: 'lead_source', data: { ...CHANNEL, saysNothing: 5, nulls: 5, found: [], role: 'groupedBy' }, reading: 'look', yours: null },
+    { subject: 'lead_channel', data: CHANNEL, reading: 'judge', yours: null },
+    { subject: 'week_start', data: { rows: 1000, saysNothing: 0, nulls: 0, found: [], role: 'period' }, reading: 'expected', yours: null },
+  ] satisfies ResultView[];
+
+  it('names what says nothing: no value and blanks in words, a value as it is', () => {
+    expect(saidNothingOf(CHANNEL)).toEqual([
+      { value: null, rows: 20 },
+      { value: 'unknown', rows: 100 },
+      { value: ' ', rows: 40 },
+    ]);
+    expect([null, '', ' ', 'n/a'].map((value) => nothingName(value))).toEqual(['null', 'empty text', 'only spaces', 'n/a']);
+    expect(nothingName('n/a', true)).toBe('"n/a"');
+    expect(disguisedWhy(CHANNEL, null)).toEqual({ key: 'eda.nulls.why.free' });
+    expect(disguisedWhy(CHANNEL, 'grouped by')).toEqual({ key: 'eda.disguised.why.role', values: { role: 'grouped by' } });
+    expect(disguisedWhy({ ...CHANNEL, saysNothing: 0 }, 'grouped by')).toEqual({ key: 'eda.disguised.why.none' });
+  });
+
+  it('says how much of each field says nothing, a field with a role first, and on a card the field that says nothing most', () => {
+    expect(saidText(disguisedConclusion(results, 'en', (result) => (result.subject === 'lead_source' ? 'grouped by' : null)))).toBe(
+      'lead_source says nothing on 5 rows, though its role, grouped by, needs a real value on every row. In lead_channel, 16% of rows say nothing, "unknown" the most. week_start always says something.',
+    );
+    const clean = results.slice(2);
+    expect(saidText(disguisedConclusion(clean, 'en', () => null))).toBe('Every field it is set on always says something. 1 field, 1,000 rows: no null, and no value of the lists.');
+    const lastRun = { id: 'run-1', ranAt: '2026-11-21T10:00:00Z', ranBy: { id: '1', name: 'An Claes' }, bytes: 1, fields: ['lead_source', 'lead_channel', 'week_start'], params: {}, results };
+    const card = (runs: ResultView[]) => saidText(cardSentence(probe('disguisedNulls', { added: true, complete: true, lastRun: { ...lastRun, results: runs } }), { resource: { fields: [] } } as unknown as EdaView, 'en'));
+    expect(card(results)).toBe('2 fields say nothing on some rows: lead_channel the most, 16% of its rows.');
+    expect(card(clean)).toBe('Every row says something in its 1 field.');
+  });
+
+  it('says the rows of a selection in words, the fields as names, a range of days or numbers by its bounds', () => {
+    expect(conditionSaid({ kind: 'saysNothing', field: 'lead_channel' }, 'en')).toEqual({ key: 'eda.selection.saysNothing', names: { field: 'lead_channel' } });
+    expect(conditionSaid({ kind: 'equals', field: 'is_test', value: true }, 'en')).toEqual({ key: 'eda.selection.equals', names: { field: 'is_test', value: 'true' } });
+    expect(saidText([conditionSaid({ kind: 'range', field: 'lead_count', from: 1200, before: 2500.5 }, 'en') as never])).toBe('lead_count is at least 1,200 and below 2,500.5');
+    expect(saidText([conditionSaid({ kind: 'range', field: 'week_start', before: '2025-01-06' }, 'en') as never])).toBe('week_start is before 6 Jan 2025');
+    expect(conditionSaid({ kind: 'range', field: 'week_start' }, 'en')).toBeNull();
+    expect(selectionSaid(undefined, 'en')).toEqual([]);
+    expect(selectionSaid({ where: [{ kind: 'range', field: 'week_start' }, { kind: 'saysNothing', field: 'lead_channel' }] }, 'en')).toHaveLength(1);
   });
 });

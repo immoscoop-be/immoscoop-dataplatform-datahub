@@ -473,14 +473,74 @@ export interface DateRangeResult {
   beforeReliable: number | null;
 }
 
-export type ProbeResult = GrainResult | NullsResult | VolumeResult | DistributionResult | CategoriesResult | DateRangeResult;
+/**
+ * The values Disguised nulls looks for, per kind of field, kept per EDA as the parameters of the EDA-Probe (DEC-ED-35):
+ * Data Hub proposes them, the User takes out a value that is real in this table and adds one it uses. A text also says
+ * nothing when it is empty or only spaces, always; a number never when it is zero.
+ */
+export interface DisguisedLists {
+  /** Compared whatever their capitals and the spaces around them. */
+  text: string[];
+  /** Days, as YYYY-MM-DD. */
+  date: string[];
+  number: number[];
+  /** Whether a number of nines only, such as 999 or 99999, says nothing. */
+  ninesOnly: boolean;
+}
+
+/** What Data Hub proposes (DEC-ED-35). */
+export const DISGUISED_DEFAULTS: DisguisedLists = {
+  text: ['n/a', 'na', 'null', 'none', 'unknown', 'onbekend', '-', '?', 'tbd'],
+  date: ['1900-01-01', '1970-01-01', '0001-01-01', '9999-12-31'],
+  number: [-1],
+  ninesOnly: true,
+};
+
+/** Disguised nulls, per field (DEC-ED-35). */
+/** How the numbers of nines only are named among the values found of Disguised nulls (DEC-ED-35). */
+export const DISGUISED_NINES = '999…9';
+
+export interface DisguisedResult {
+  rows: number;
+  /** The rows that say nothing: no value at all, or a value of the lists. */
+  saysNothing: number;
+  /** Of those, the rows with no value at all. */
+  nulls: number;
+  /** The values of the lists found, with their rows, the most first; the empty text as '' and only spaces as ' '. */
+  found: { value: string; rows: number }[];
+  /** The role the field holds, which makes a value that says nothing look at this (DEC-ED-22). */
+  role: TypeRole | null;
+}
+
+export type ProbeResult = GrainResult | NullsResult | VolumeResult | DistributionResult | CategoriesResult | DateRangeResult | DisguisedResult;
+
+/**
+ * A condition on the rows of a table (OP-ED-12): the field says nothing (no value, or one of the lists of Disguised
+ * nulls of its EDA), equals a value, or lies in a range, from inclusive and before exclusive; days as YYYY-MM-DD.
+ */
+export type RowCondition =
+  | { kind: 'saysNothing'; field: string }
+  | { kind: 'equals'; field: string; value: string | number | boolean }
+  | { kind: 'range'; field: string; from?: string | number; before?: string | number };
+
+/**
+ * The rows an EDA-Probe runs on (OP-ED-12): the whole table when it holds no condition, else the rows where every
+ * condition holds. Every EDA-Probe runs on a selection, so that what a result found can be looked into further.
+ */
+export interface Selection {
+  where: RowCondition[];
+}
+
+/** The whole table. */
+export const WHOLE_TABLE: Selection = { where: [] };
 
 /**
  * Whether a result asks for the reading of who works on the EDA, the same for the web app and Claude (FR-ED-11): not
- * when there is nothing to read, a field without empty values or a date that is up to date.
+ * when there is nothing to read, a field without empty values, one where nothing says nothing, or a date that is up
+ * to date.
  */
 export function asksReading(probe: ProbeKey, result: { reading: DataHubReading }): boolean {
-  return !((probe === 'nullsPerKeyField' || probe === 'dateRange') && result.reading === 'expected');
+  return !((probe === 'nullsPerKeyField' || probe === 'disguisedNulls' || probe === 'dateRange') && result.reading === 'expected');
 }
 
 /** The share of the weight with a value that the head of a field brings (DEC-ED-33): three quarters. */
@@ -526,6 +586,11 @@ export interface RunView {
   bytes: number;
   fields: string[];
   params: Record<string, unknown>;
+  /**
+   * The rows it ran on (OP-ED-12): eda fills it for every run, `{ where: [] }` for the whole table, which the runs that
+   * make an EDA-Probe complete run on.
+   */
+  selection?: Selection;
   results: ResultView[];
 }
 
@@ -567,7 +632,11 @@ export interface EdaListItem {
 
 /** What a run of an EDA-Probe answers (POST /resources/{id}/eda/probes/{probe}/runs). */
 export type RunAnswer =
-  | { state: 'ran'; eda: EdaView }
+  /**
+   * It ran. On a selection of rows (OP-ED-12) the EDA is unchanged and `run` is the run itself, which is not the last
+   * run of its EDA-Probe; on the whole table there is no `run`, it is the last run in `eda`.
+   */
+  | { state: 'ran'; eda: EdaView; run?: RunView }
   /** It reads more than runs freely: the User approves it, then it runs with `approve`. */
   | { state: 'approve'; bytes: number }
   /** It reads more than the User may approve, or cannot run: why. */

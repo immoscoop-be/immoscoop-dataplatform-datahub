@@ -1,5 +1,5 @@
-import type { DataHubReading, EdaStatus, OwnerReading, ProbeKey, ProbeResult, Who } from '@datahub/contracts/eda';
-import type { Kysely, Selectable } from 'kysely';
+import type { DataHubReading, EdaStatus, OwnerReading, ProbeKey, ProbeResult, Selection, Who } from '@datahub/contracts/eda';
+import { type Kysely, type Selectable, sql } from 'kysely';
 import type { EdaDatabase } from './database.js';
 
 /** An EDA of a Resource (DEC-ED-20). */
@@ -31,6 +31,8 @@ export interface Run {
   probe: ProbeKey;
   fields: string[];
   params: Record<string, unknown>;
+  /** The rows it ran on: the whole table, without conditions, or a selection of its rows (OP-ED-12). */
+  selection: Selection;
   ranBy: Who;
   ranAt: Date;
   bytes: number;
@@ -47,7 +49,10 @@ export interface Reading {
   at: Date;
 }
 
-/** What an EDA holds: its EDA-Probes, the last run of each, and the readings of who works on it. */
+/**
+ * What an EDA holds: its EDA-Probes, the last run of each on the whole table, and the readings of who works on it. A
+ * run on a selection of rows is never the last run of its EDA-Probe (OP-ED-12).
+ */
 export interface EdaState {
   probes: AddedProbe[];
   lastRuns: Run[];
@@ -63,8 +68,9 @@ export interface Edas {
   start(resourceId: string, by: Who): Promise<Eda | 'exists'>;
   state(edaId: string): Promise<EdaState>;
   /**
-   * Keeps a run and its results, and adds its EDA-Probe if it is not yet; an EDA-Probe added keeps who added it and
-   * when, and is set on what it last ran with (FR-ED-06, DEC-ED-17).
+   * Keeps a run and its results. A run on the whole table adds its EDA-Probe if it is not yet; an EDA-Probe added keeps
+   * who added it and when, and is set on what it last ran with (FR-ED-06, DEC-ED-17). A run on a selection of rows
+   * changes nothing of its EDA-Probe, which it neither adds nor sets (OP-ED-12).
    */
   keepRun(edaId: string, run: Omit<Run, 'id' | 'ranAt'>): Promise<Run>;
   /** Keeps the reading of a result by who works on the EDA, in place of an earlier one (FR-ED-11). */
@@ -118,12 +124,13 @@ export function createEdas(db: Kysely<EdaDatabase>): Edas {
       const probes = (await db.selectFrom('edaProbes').selectAll().where('edaId', '=', edaId).execute()).map(
         (row): AddedProbe => ({ probe: row.probe, fields: row.fields, params: row.params, addedBy: { id: row.addedById, name: row.addedByName }, addedAt: row.addedAt }),
       );
-      // The last run of each EDA-Probe.
+      // The last run of each EDA-Probe on the whole table (OP-ED-12).
       const runs = await db
         .selectFrom('edaRuns')
         .selectAll()
         .distinctOn('probe')
         .where('edaId', '=', edaId)
+        .where(sql<boolean>`selection -> 'where' = '[]'::jsonb`)
         .orderBy('probe')
         .orderBy('ranAt', 'desc')
         .orderBy('id')
@@ -147,6 +154,7 @@ export function createEdas(db: Kysely<EdaDatabase>): Edas {
           probe: row.probe,
           fields: row.fields,
           params: row.params,
+          selection: row.selection,
           ranBy: { id: row.ranById, name: row.ranByName },
           ranAt: row.ranAt,
           bytes: Number(row.bytes),
@@ -164,14 +172,26 @@ export function createEdas(db: Kysely<EdaDatabase>): Edas {
       return db.transaction().execute(async (trx) => {
         const fields = JSON.stringify(run.fields);
         const params = JSON.stringify(run.params);
-        await trx
-          .insertInto('edaProbes')
-          .values({ edaId, probe: run.probe, fields, params, addedById: run.ranBy.id, addedByName: run.ranBy.name })
-          .onConflict((conflict) => conflict.columns(['edaId', 'probe']).doUpdateSet({ fields, params }))
-          .execute();
+        if (run.selection.where.length === 0) {
+          await trx
+            .insertInto('edaProbes')
+            .values({ edaId, probe: run.probe, fields, params, addedById: run.ranBy.id, addedByName: run.ranBy.name })
+            .onConflict((conflict) => conflict.columns(['edaId', 'probe']).doUpdateSet({ fields, params }))
+            .execute();
+        }
         const row = await trx
           .insertInto('edaRuns')
-          .values({ edaId, probe: run.probe, fields, params, ranById: run.ranBy.id, ranByName: run.ranBy.name, bytes: run.bytes, queryRunId: run.queryRunId })
+          .values({
+            edaId,
+            probe: run.probe,
+            fields,
+            params,
+            selection: JSON.stringify(run.selection),
+            ranById: run.ranBy.id,
+            ranByName: run.ranBy.name,
+            bytes: run.bytes,
+            queryRunId: run.queryRunId,
+          })
           .returning(['id', 'ranAt'])
           .executeTakeFirstOrThrow();
         if (run.results.length) {

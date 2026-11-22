@@ -10,7 +10,8 @@ import { mondayOf, unitOf } from './volume.js';
  * counts it (a day, or the week from a Monday for the period of an aggregate), the current period, how many periods
  * the last is behind it, and how many lie before the Reliable Since of the Resource Card.
  */
-export function dateRangeSql({ source, fields }: ProbeContext): string {
+export function dateRangeSql(context: ProbeContext): string {
+  const { source, fields } = context;
   const columns = fields.flatMap((field, index) => {
     const day = dayOf(field, source.resource.fields.find((candidate) => candidate.name === field)?.dataType ?? null);
     return [`format_date('%F', min(${day})) as first_${index}`, `format_date('%F', max(${day})) as last_${index}`];
@@ -18,7 +19,7 @@ export function dateRangeSql({ source, fields }: ProbeContext): string {
   return `${heading('dateRange', source)}
 select
   ${columns.join(',\n  ')}
-from ${quote(source.fullName)}${whereOf(source)}`;
+from ${quote(source.fullName)}${whereOf(context)}`;
 }
 
 /** The days from one day to another, both `YYYY-MM-DD`. */

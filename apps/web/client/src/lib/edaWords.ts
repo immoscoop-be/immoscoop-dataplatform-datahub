@@ -3,6 +3,7 @@ import {
   roleDate,
   type CategoriesResult,
   type DateRangeResult,
+  type DisguisedResult,
   type DistributionResult,
   type EdaResource,
   type EdaView,
@@ -11,6 +12,8 @@ import {
   type ProbeKey,
   type ProbeView,
   type ResultView,
+  type RowCondition,
+  type Selection,
   type VolumeResult,
 } from '@datahub/contracts/eda';
 import type { Language } from '@datahub/contracts/messages';
@@ -110,6 +113,75 @@ function nullsCard(probe: ProbeView, language: Language): Said[] {
       ]
     : [{ key: 'eda.card.nulls.none' }, { key: 'eda.card.nulls.none.rest', values: { count: results.length } }];
   return parts;
+}
+
+// Disguised nulls (DEC-ED-35)
+
+/** A value that says nothing: null for no value at all, else the value as eda found it. */
+export interface SaidNothing {
+  value: string | null;
+  rows: number;
+}
+
+/** What says nothing in a field, as its row shows it: no value at all first, then the values found, the most first. */
+export function saidNothingOf(result: DisguisedResult): SaidNothing[] {
+  return [...(result.nulls > 0 ? [{ value: null, rows: result.nulls }] : []), ...result.found.filter((one) => one.rows > 0)];
+}
+
+/** Whether a value that says nothing is named in words, rather than shown as it is: no value, the empty text, only spaces. */
+export const isWordOf = (value: string | null): boolean => value === null || value.trim() === '';
+
+/** How a value that says nothing is named: no value, the empty text and only spaces in words; any other as it is, quoted in a sentence. */
+export function nothingName(value: string | null, quoted = false): string {
+  if (value === null) return t('eda.disguised.null');
+  if (value === '') return t('eda.disguised.emptyText');
+  if (value.trim() === '') return t('eda.disguised.spaces');
+  return quoted ? `"${value}"` : value;
+}
+
+/** What says nothing the most in a field, named; null when every row says something. */
+function mostOf(result: DisguisedResult): string | null {
+  const most = [...saidNothingOf(result)].sort((a, b) => b.rows - a.rows)[0];
+  return most ? nothingName(most.value, true) : null;
+}
+
+/** Why Data Hub reads a field as it does, as Nulls per Key Field (DEC-ED-22): every row says something, no role needs it, or its role needs it. */
+export function disguisedWhy(result: DisguisedResult, role: string | null): Said {
+  if (result.saysNothing === 0) return { key: 'eda.disguised.why.none' };
+  return role ? { key: 'eda.disguised.why.role', values: { role } } : { key: 'eda.nulls.why.free' };
+}
+
+export function disguisedConclusion(results: readonly ResultView[], language: Language, roleOf: (result: ResultView) => string | null): Said[] {
+  const data = (result: ResultView) => result.data as DisguisedResult;
+  const parts: Said[] = [];
+  const looks = results.filter((result) => result.reading === 'look' && data(result).saysNothing > 0);
+  const judged = results.filter((result) => result.reading !== 'look' && data(result).saysNothing > 0);
+  const saying = results.filter((result) => data(result).saysNothing === 0).map((result) => result.subject);
+  for (const result of looks) {
+    parts.push({ key: 'eda.disguised.role', values: { count: data(result).saysNothing, role: roleOf(result) ?? '' }, names: { field: result.subject } });
+  }
+  for (const result of judged) {
+    parts.push({ key: 'eda.disguised.some', values: { share: percent(data(result).saysNothing, data(result).rows, language), most: mostOf(data(result)) ?? '' }, names: { field: result.subject } });
+  }
+  if (saying.length > 0 && parts.length === 0) {
+    parts.push({ key: 'eda.disguised.allSay' }, { key: 'eda.disguised.allSay.rest', values: { count: saying.length, rows: data(results[0] as ResultView).rows } });
+  } else if (saying.length > 0) {
+    parts.push({ key: 'eda.disguised.alwaysSays', values: { count: saying.length }, names: { fields: listed(saying) } });
+  }
+  return parts;
+}
+
+function disguisedCard(probe: ProbeView, language: Language): Said[] {
+  const results = probe.lastRun?.results ?? [];
+  const share = (result: ResultView) => (result.data as DisguisedResult).saysNothing / Math.max((result.data as DisguisedResult).rows, 1);
+  const some = results.filter((result) => (result.data as DisguisedResult).saysNothing > 0);
+  const worst = [...some].sort((a, b) => share(b) - share(a))[0];
+  return worst
+    ? [
+        { key: 'eda.card.disguised.some', values: { count: some.length } },
+        { key: 'eda.card.disguised.worst', values: { share: percent((worst.data as DisguisedResult).saysNothing, (worst.data as DisguisedResult).rows, language) }, names: { field: worst.subject } },
+      ]
+    : [{ key: 'eda.card.disguised.none' }, { key: 'eda.card.disguised.none.rest', values: { count: results.length } }];
 }
 
 // Volume over time, with empty periods (FR-ED-09)
@@ -394,12 +466,37 @@ export function cardSentence(probe: ProbeView, view: Pick<EdaView, 'resource'>, 
         return categoriesCard(probe, language);
       case 'dateRange':
         return dateRangeCard(probe, language);
+      case 'disguisedNulls':
+        return disguisedCard(probe, language);
       default:
         return [];
     }
   })(probe.key);
   const missing = probe.needed ? stillMissing(probe) : [];
   return missing.length > 0 ? [...said, { key: 'eda.card.missing', names: { fields: listed(missing) }, warn: true }] : said;
+}
+
+// The rows a run ran on (OP-ED-12)
+
+/** A bound of a range in words: a day as the app writes it, a number as the language writes it, exactly, never rounded. */
+const boundOf = (bound: string | number, language: Language): string =>
+  typeof bound === 'number' ? new Intl.NumberFormat(language === 'nl' ? 'nl-BE' : 'en-GB', { maximumFractionDigits: 10 }).format(bound) : dayOfDate(bound, language);
+
+/** A condition on the rows in words, its field as a name: it says nothing, it is a value, or it lies in a range; null for a range without a bound. */
+export function conditionSaid(condition: RowCondition, language: Language): Said | null {
+  if (condition.kind === 'saysNothing') return { key: 'eda.selection.saysNothing', names: { field: condition.field } };
+  if (condition.kind === 'equals') return { key: 'eda.selection.equals', names: { field: condition.field, value: String(condition.value) } };
+  const { from, before } = condition;
+  const kind = typeof (from ?? before) === 'number' ? 'number' : 'date';
+  if (from !== undefined && before !== undefined) return { key: 'eda.selection.range', values: { kind, from: boundOf(from, language), before: boundOf(before, language) }, names: { field: condition.field } };
+  if (from !== undefined) return { key: 'eda.selection.from', values: { kind, from: boundOf(from, language) }, names: { field: condition.field } };
+  if (before !== undefined) return { key: 'eda.selection.before', values: { kind, before: boundOf(before, language) }, names: { field: condition.field } };
+  return null;
+}
+
+/** The conditions of a selection in words; none for the whole table. */
+export function selectionSaid(selection: Selection | undefined, language: Language): Said[] {
+  return (selection?.where ?? []).flatMap((condition) => conditionSaid(condition, language) ?? []);
 }
 
 /** Whether a part of a sentence follows the one before without a space, as one that starts with a comma or a colon. */

@@ -52,7 +52,8 @@ function categoriesParams(given: Record<string, unknown>, source: EdaSource): Re
  * field, its values ranked by weight, the heaviest first, the weights summed up into what the result holds. Only the
  * 10 heaviest values leave BigQuery, never a row.
  */
-export function categoriesSql({ source, fields, params }: ProbeContext): string {
+export function categoriesSql(context: ProbeContext): string {
+  const { source, fields, params } = context;
   const weighedBy = weighedByOf(source, params);
   const values = fields.map((field, index) => `struct(${index} as field_index, ${quote(field)} as v)`);
   return `${heading('distributionOfCategories', source)}
@@ -61,7 +62,7 @@ with weighed as (
   from ${quote(source.fullName)}
   cross join unnest([
     ${values.join(',\n    ')}
-  ]) as eda_value${whereOf(source, [], '  ')}
+  ]) as eda_value${whereOf(context, [], '  ')}
   group by 1, 2
 ),
 ranked as (

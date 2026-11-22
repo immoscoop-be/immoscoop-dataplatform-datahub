@@ -208,8 +208,33 @@ describe('the question an EDA-Probe asks of a Resource (FR-ED-13)', () => {
     expect(saidText([askOf('dateRange', WEEKLY)])).toBe('From when to when does it run, on week_start?');
     expect(saidText([askOf('volumeOverTime', WEEKLY)])).toBe('How much comes in per week, and are there weeks without rows?');
     expect(saidText([askOf('valuesWithoutAMatch', WEEKLY)])).toBe('Which values of lead_source have no match in what they are mapped to?');
+    expect(saidText([askOf('disguisedNulls', WEEKLY)])).toBe('How many rows say nothing, per Key Field: no value, "n/a", "unknown" or 1900-01-01?');
     const plain = { ...WEEKLY, fields: WEEKLY.fields.map((field) => ({ ...field, grain: false, mapped: false, role: null })) };
     expect(saidText([askOf('grainHolds', plain)])).toBe('Is every row one thing, one row per value of its grain?');
     expect(saidText([askOf('volumeOverTime', plain)])).toBe('How much comes in per day, and are there days without rows?');
+  });
+});
+
+describe('the step of Disguised nulls, once Data Hub runs it (DEC-ED-35)', () => {
+  /** The contracts still say Data Hub does not run it: these tests do not depend on when that changes. */
+  const runnable = (view: EdaView): EdaView => ({ ...view, probes: view.probes.map((one) => (one.key === 'disguisedNulls' ? { ...one, runs: true } : one)) });
+
+  it('unfolds What, Why and How, and leads to its detail', () => {
+    const step = edaFlowOf(runnable(viewOf())).steps.find((one) => one.id === 'disguisedNulls');
+    expect(step).toMatchObject({ coming: false, warn: true, said: 'Not added yet', go: 'Open the EDA-Probe' });
+    expect(step?.what).toMatch(/^It counts, per field, the rows that say nothing: with no value at all, or with a value that fills the cell but stands for nothing/);
+    expect(step?.why).toMatch(/^A null is seen as missing; "unknown" is counted as a value\./);
+    expect(step?.how).toBe('On its detail: set on every Key Field, as Nulls per Key Field; the values it looks for are kept per EDA and can be changed. Run.');
+  });
+
+  it('says its result in a few words once it is complete, as its card does', () => {
+    const disguised = run(['week_start', 'lead_source', 'lead_count', 'lead_channel'], [
+      { subject: 'week_start', data: { rows: 16224, saysNothing: 0, nulls: 0, found: [], role: 'period' }, reading: 'expected', yours: null },
+      { subject: 'lead_source', data: { rows: 16224, saysNothing: 0, nulls: 0, found: [], role: 'groupedBy' }, reading: 'expected', yours: null },
+      { subject: 'lead_count', data: { rows: 16224, saysNothing: 0, nulls: 0, found: [], role: 'addsUp' }, reading: 'expected', yours: null },
+      { subject: 'lead_channel', data: { rows: 16224, saysNothing: 2608, nulls: 1947, found: [{ value: 'unknown', rows: 661 }], role: null }, reading: 'judge', yours: null },
+    ]);
+    const step = edaFlowOf(runnable(viewOf({ disguisedNulls: disguised }))).steps.find((one) => one.id === 'disguisedNulls');
+    expect(step).toMatchObject({ done: true, tag: { text: 'For you to judge', tone: 'informative' }, said: '1 field says nothing on some rows: lead_channel the most, 16% of its rows.' });
   });
 });

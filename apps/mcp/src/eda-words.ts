@@ -2,6 +2,7 @@ import type {
   CategoriesResult,
   DataHubReading,
   DateRangeResult,
+  DisguisedResult,
   DistributionResult,
   EdaStatus,
   EdaStep,
@@ -15,7 +16,7 @@ import type {
   VolumeResult,
 } from '@datahub/contracts/eda';
 import type { TypeRole } from '@datahub/contracts/model-types';
-import { asksReading, headOf } from '@datahub/contracts/eda';
+import { asksReading, DISGUISED_NINES, headOf } from '@datahub/contracts/eda';
 
 /**
  * The EDA of a Resource in words (FR-ED-15, FR-ED-16): the result of each EDA-Probe Data Hub runs in a sentence, and its
@@ -74,6 +75,8 @@ export function nextWhy(probe: ProbeKey, fields: readonly string[]): string {
       return `It shows whether the table is still loaded: the first and the last ${listed(fields)}, set against today.`;
     case 'distributionOfCategories':
       return 'It shows where the weight of the texts among the Key Fields lies: which few values bring most of it.';
+    case 'disguisedNulls':
+      return 'It finds the values that fill a field but say nothing, such as n/a or 1900-01-01: Gaps that Nulls per Key Field cannot see.';
     default:
       return '';
   }
@@ -151,6 +154,44 @@ function nullsSentence(results: readonly ResultView[]): string {
   const first = results[0];
   if (parts.length === 0 && first) return `Every field it is set on is always filled: ${many(filled.length, 'field', 'fields')}, ${many(data(first).rows, 'row', 'rows')}.`;
   if (filled.length > 0) parts.push(`${listed(filled)} ${filled.length === 1 ? 'is' : 'are'} always filled.`);
+  return parts.join(' ');
+}
+
+// ----------------------------------------------------------------------------------------------------------------
+// Disguised nulls (DEC-ED-35)
+
+/** A value found that says nothing, inside a sentence: the empty text, nines only, or the value in quotes. */
+export function foundName(value: string): string {
+  if (value === '') return 'the empty text';
+  if (value === DISGUISED_NINES) return `nines only (${DISGUISED_NINES})`;
+  return JSON.stringify(value);
+}
+
+/** The rows of a field that say nothing, by what they hold: without a value, and each value found. */
+export function saysNothingParts(result: DisguisedResult): string {
+  const parts = [...(result.nulls > 0 ? [`${number(result.nulls)} without a value`] : []), ...result.found.map((one) => `${foundName(one.value)} on ${number(one.rows)}`)];
+  return parts.join(', ');
+}
+
+/** Why Data Hub reads a field as it does (DEC-ED-35, as DEC-ED-22): nothing says nothing, no role needs it, or its role does. */
+function disguisedWhy(result: DisguisedResult): string {
+  if (result.saysNothing === 0) return 'every row says something';
+  return result.role ? `its role, ${ROLES[result.role]}, needs a value on every row` : 'whether a value says nothing depends on the table';
+}
+
+function disguisedSentence(results: readonly ResultView[]): string {
+  const data = (result: ResultView) => result.data as DisguisedResult;
+  const some = results.filter((result) => data(result).saysNothing > 0);
+  const clean = results.filter((result) => data(result).saysNothing === 0).map((result) => result.subject);
+  const parts = some.map((result) => {
+    const one = data(result);
+    const how = result.reading === 'look' ? many(one.saysNothing, 'row', 'rows') : `${percent(one.saysNothing, one.rows)} of rows`;
+    const role = result.reading === 'look' && one.role ? `, though its role, ${ROLES[one.role]}, needs a value on every row` : '';
+    return `${code(result.subject)} says nothing on ${how}${role}: ${saysNothingParts(one)}.`;
+  });
+  const first = results[0];
+  if (parts.length === 0 && first) return `No field it is set on says nothing: ${many(clean.length, 'field', 'fields')}, ${many(data(first).rows, 'row', 'rows')}.`;
+  if (clean.length > 0) parts.push(`${listed(clean)} never ${clean.length === 1 ? 'says' : 'say'} nothing.`);
   return parts.join(' ');
 }
 
@@ -378,6 +419,8 @@ export function conclusionOf(probe: ProbeKey, results: readonly ResultView[], gr
       return dateRangeSentences(results);
     case 'distributionOfCategories':
       return categoriesSentences(results);
+    case 'disguisedNulls':
+      return disguisedSentence(results);
     default:
       return '';
   }
@@ -497,6 +540,18 @@ export function resultTable(probe: ProbeKey, results: readonly ResultView[], gra
           const others = data.others.values > 0 ? ` The other ${many(data.others.values, 'value brings', 'values bring')} ${share(data.others.share)}.` : '';
           const detail = `${categoriesSentence(result.subject, data)}${named}${others} Weighed by ${weighedWord(data)}: ${number(data.total)} in all.`;
           return row(result, [number(data.values), lies, number(data.small), share(data.empty.share)], 'a spread of values is neither right nor wrong', detail, null, values ? categoriesBars(data) : null);
+        }),
+      };
+    case 'disguisedNulls':
+      return {
+        columns: ['Field', 'Says nothing', 'Values found'],
+        bar: false,
+        rows: results.map((result) => {
+          const data = result.data as DisguisedResult;
+          const cell = data.saysNothing === 0 ? '0' : `${number(data.saysNothing)} · ${percent(data.saysNothing, data.rows)}`;
+          const found = data.found.length === 0 ? '–' : data.found.map((one) => `${foundName(one.value)} ${number(one.rows)}`).join(' · ');
+          const detail = data.saysNothing === 0 ? `None of ${many(data.rows, 'row', 'rows')} says nothing.` : `${number(data.saysNothing)} of ${many(data.rows, 'row', 'rows')} say nothing (${percent(data.saysNothing, data.rows)}): ${saysNothingParts(data)}.`;
+          return row(result, [cell, found], disguisedWhy(data), detail);
         }),
       };
     default:

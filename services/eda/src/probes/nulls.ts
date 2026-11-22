@@ -6,12 +6,13 @@ import { countOf, heading, onlyRow, quote, whereOf } from './sql.js';
  * Nulls per Key Field (FR-ED-08, DEC-ED-22, TR-ED-03): set on every Key Field, without parameters. One scan of the
  * table counts its rows, and per field the rows where it is empty.
  */
-export function nullsSql({ source, fields }: ProbeContext): string {
+export function nullsSql(context: ProbeContext): string {
+  const { source, fields } = context;
   return `${heading('nullsPerKeyField', source)}
 select
   count(*) as row_count,
   ${fields.map((field, index) => `countif(${quote(field)} is null) as empty_${index}`).join(',\n  ')}
-from ${quote(source.fullName)}${whereOf(source)}`;
+from ${quote(source.fullName)}${whereOf(context)}`;
 }
 
 /**

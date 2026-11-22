@@ -1,10 +1,10 @@
 <script lang="ts">
-  import type { CategoriesResult, DateRangeResult, DistributionResult, EdaField, GrainResult, NullsResult, ProbeKey, ResultView, VolumeResult } from '@datahub/contracts/eda';
+  import type { CategoriesResult, DateRangeResult, DisguisedResult, DistributionResult, EdaField, GrainResult, NullsResult, ProbeKey, ResultView, VolumeResult } from '@datahub/contracts/eda';
   import { kindOf } from '@datahub/contracts/model-types';
   import { ICONS, type IconName } from '@datahub/ui/foundations/icons.js';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import { isoWeek, MARK_ICONS, markOf, number, percent } from '../lib/eda.js';
-  import { isUpToDate, periodsOf } from '../lib/edaWords.js';
+  import { isUpToDate, periodsOf, saidNothingOf } from '../lib/edaWords.js';
 
   /**
    * The drawing of an EDA-Probe (DEC-UX-268): one schematic table with fine lines, the kind of each field as an icon in
@@ -102,6 +102,39 @@
     });
     return cells;
   });
+  /**
+   * Disguised nulls: cells that look filled but say nothing, written in their column and dashed. In the idea a value of
+   * the lists that fits the kind of its field; on a card, in each field where rows say nothing, the two values found the
+   * most, the empty text as "", or an empty cell where it found no value of the lists, only rows without a value.
+   */
+  const IDEA_VALUES: Readonly<Record<'text' | 'date' | 'number', [string, string]>> = { text: ['n/a', 'unknown'], date: ['1900-01-01', '9999-12-31'], number: ['-1', '999'] };
+  const ideaValue = (index: number, which: 0 | 1) => {
+    const column = columns[index];
+    return IDEA_VALUES[column?.date ? 'date' : column?.number ? 'number' : 'text'][which];
+  };
+  const cellValue = (value: string | null) => (value === null ? '' : value.trim() === '' ? `"${value}"` : value.length > 11 ? `${value.slice(0, 10)}…` : value);
+  const disguisedCells = $derived.by(() => {
+    const cells = new Map<string, string>();
+    if (probe !== 'disguisedNulls') return cells;
+    if (!results) {
+      // The idea: a value that says nothing in one field, two in another.
+      const some = looked[1] ?? looked[0] ?? 1;
+      const more = looked.at(-1) ?? 3;
+      cells.set(`1:${more}`, ideaValue(more, 0));
+      cells.set(`3:${some}`, ideaValue(some, 1));
+      cells.set(`4:${more}`, ideaValue(more, 1));
+      return cells;
+    }
+    columns.forEach((column, index) => {
+      const data = result<DisguisedResult>(column.name);
+      if (!data || data.saysNothing <= 0) return;
+      const [first, second] = saidNothingOf(data).filter((one) => one.value !== null);
+      cells.set(`${(index * 2 + 1) % 6}:${index}`, first ? cellValue(first.value) : '');
+      cells.set(`${(index * 2 + 4) % 6}:${index}`, cellValue((second ?? first)?.value ?? null));
+    });
+    return cells;
+  });
+  const disguisedFields = $derived((results ?? []).filter((one) => (one.data as DisguisedResult).saysNothing > 0).length);
   const volume = $derived(results ? results.map((one) => one.data as VolumeResult) : undefined);
   const emptyPeriods = $derived(volume ? volume.reduce((sum, one) => sum + (one.empty?.length ?? 0), 0) : 1);
   const dateColumn = $derived(columns.findIndex((column) => column.on && column.date));
@@ -154,6 +187,9 @@
       case 'distributionOfCategories':
         if (!results) return { text: t('eda.draw.categories.idea'), tone: 'fine' };
         return heaviest ? { text: t('eda.draw.categories.result', { value: short(heaviest.value), share: percent(heaviest.share, 1, language) }), tone: 'judge' } : null;
+      case 'disguisedNulls':
+        if (!results) return { text: t('eda.draw.disguised.idea'), tone: 'warn' };
+        return disguisedFields > 0 ? { text: t('eda.draw.disguised.some', { count: disguisedFields }), tone: 'warn' } : { text: t('eda.draw.disguised.none'), tone: 'fine' };
       case 'dateRange':
         if (!results) return { text: t('eda.draw.dateRange.idea'), tone: 'fine' };
         if (!range) return null;
@@ -203,6 +239,11 @@
               <!-- An empty cell: nothing in it. -->
             {:else if probe === 'nullsPerKeyField' && column.on}
               <rect class={index % 2 === 0 ? 'c-teal' : 'c-magenta'} x={center(index) - 13} y={top(row)} width="26" height="6" rx="3" />
+            {:else if probe === 'disguisedNulls' && disguisedCells.has(`${row}:${index}`)}
+              <!-- A cell that looks filled but says nothing: its value written, or nothing in it. -->
+              <text class="said" x={center(index)} y={top(row) + 5.34} text-anchor="middle">{disguisedCells.get(`${row}:${index}`)}</text>
+            {:else if probe === 'disguisedNulls' && column.on}
+              <rect class={index % 2 === 0 ? 'c-teal' : 'c-magenta'} x={center(index) - 13} y={top(row)} width="26" height="6" rx="3" />
             {:else if probe === 'volumeOverTime' && index === (dateColumn >= 0 ? dateColumn : 0)}
               <text class="period" x={center(index)} y={top(row) + 5.8} text-anchor="middle">w{11 + row}</text>
             {:else if probe === 'volumeOverTime' && column.on}
@@ -235,6 +276,13 @@
         {#each [...emptyCells] as cell (cell)}
           {@const [row, index] = cell.split(':').map(Number) as [number, number]}
           <rect class="empty" x={center(index) - 20} y={top(row) - 2} width="40" height="10" rx="3" />
+        {/each}
+      </g>
+    {:else if probe === 'disguisedNulls'}
+      <g class="a" style:--o={8}>
+        {#each [...disguisedCells.keys()] as cell (cell)}
+          {@const [row, index] = cell.split(':').map(Number) as [number, number]}
+          <rect class="disguised" x={center(index) - 25} y={top(row) - 4} width="50" height="14" rx="3" />
         {/each}
       </g>
     {:else if probe === 'distributionOfNumbers'}
@@ -281,6 +329,8 @@
   .gap { font-size: 8px; font-weight: var(--weight-medium); fill: var(--signal-warn); }
   .finding { fill: none; stroke: var(--signal-warn); stroke-width: 1.3; }
   .empty { fill: none; stroke: var(--signal-warn); stroke-width: 1.2; stroke-dasharray: 2 2; }
+  .said { font-family: var(--font-mono); font-size: 6.5px; font-weight: var(--weight-semibold); fill: var(--text-primary); }
+  .disguised { fill: none; stroke: var(--signal-warn); stroke-width: 1.2; stroke-dasharray: 3 2; }
   .median { stroke: var(--text-primary); stroke-width: 1.4; }
   .mean { stroke: var(--col-teal-ink); stroke-width: 1.4; stroke-dasharray: 3 2; }
   .pill.warn { fill: color-mix(in srgb, var(--signal-warn) 14%, var(--surface-solid)); }

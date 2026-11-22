@@ -112,6 +112,8 @@ describe('the reading of who works on the EDA (FR-ED-11)', () => {
   it('is not asked where there is nothing to read: a field always filled, a date up to date', () => {
     expect(asksReading('nullsPerKeyField', { reading: 'expected' })).toBe(false);
     expect(asksReading('dateRange', { reading: 'expected' })).toBe(false);
+    expect(asksReading('disguisedNulls', { reading: 'expected' })).toBe(false);
+    expect(asksReading('disguisedNulls', { reading: 'judge' })).toBe(true);
     expect(asksReading('dateRange', { reading: 'look' })).toBe(true);
     expect(asksReading('grainHolds', { reading: 'expected' })).toBe(true);
   });

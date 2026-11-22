@@ -52,7 +52,8 @@ const float = (value: number | null) => (value === null ? 'cast(null as float64)
  * the start of the tail follow, unless given; the second counts the rows per bin and in the tail. The bins start at
  * 0, or at a round number at or below the lowest when it is below 0.
  */
-export function distributionSql({ source, fields, params }: ProbeContext): string {
+export function distributionSql(context: ProbeContext): string {
+  const { source, fields, params } = context;
   const values = fields.map((field, index) => `struct(${index} as field_index, cast(${quote(field)} as float64) as v)`);
   const choices = fields.map(
     (field, index) => `struct(${index} as field_index, ${float(given(params.width as Given | undefined, field))} as width, ${float(given(params.tailFrom as Given | undefined, field))} as tail_from)`,
@@ -63,7 +64,7 @@ with base as (
   from ${quote(source.fullName)}
   cross join unnest([
     ${values.join(',\n    ')}
-  ]) as eda_value${whereOf(source, [], '  ')}
+  ]) as eda_value${whereOf(context, [], '  ')}
 ),
 chosen as (
   select * from unnest([
