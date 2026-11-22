@@ -7,13 +7,13 @@
   text, the empty text, only spaces, and words such as n/a, null, unknown, onbekend, - or ?, whatever their capitals and
   the spaces around them; in a date, 1900-01-01, 1970-01-01, 0001-01-01 and 9999-12-31; in a number, -1 and nines only.
   Zero is never one. The User takes out a value that is real in this table and adds one it uses.
-  Its result is a row per field (DEC-UX-326): the values found with their rows, a bar of real values, values that only
-  look filled and, from Nulls per Key Field when it ran, the empty ones, so that it shows how much of the field says
-  nothing. Data Hub reads none found as expected, some as for you to judge, and some in a field that holds a role of its
-  model type as look at this, as Nulls per Key Field (DEC-ED-22).
+  Its result is a row per field (DEC-UX-326): how many rows say nothing, those without a value counted too, and the
+  values found with their rows. Data Hub reads none as expected, asking no reading, some as for you to judge, and some
+  in a field that holds a role of its model type as look at this, as Nulls per Key Field (DEC-ED-22). Decided by Max on
+  2026-11-22 (DEC-ED-35): the says-nothing count and the values found, no bar of real and empty values.
   Switches: ?run=before (the default), ?run=after, its result.
-  Requirements: none yet: an EDA-Probe becomes a requirement once its detail is designed.
-  Decisions: DEC-ED-17, DEC-ED-21, DEC-ED-22, DEC-UX-266, DEC-UX-268, DEC-UX-323, DEC-UX-324, DEC-UX-325, DEC-UX-326.
+  Requirements: FR-ED-19
+  Decisions: DEC-ED-17, DEC-ED-21, DEC-ED-22, DEC-ED-35, DEC-UX-266, DEC-UX-268, DEC-UX-323, DEC-UX-324, DEC-UX-325, DEC-UX-326.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="owner">

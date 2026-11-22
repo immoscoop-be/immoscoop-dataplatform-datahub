@@ -149,19 +149,19 @@ function literalOf(kind: ConditionKind, value: string | number | boolean): strin
 }
 
 /** A field of the Resource, by its name; anything else is refused, never written as a name. */
-function fieldOf(source: EdaSource, name: string): EdaField {
+export function fieldOf(source: EdaSource, name: string): EdaField {
   const field = source.resource.fields.find((candidate) => candidate.name === name);
   if (!field) throw new UnsafeValue(`${name} is no field of this Resource`);
   return field;
 }
 
 /** What a condition compares of a field: a date by its day, a moment in Brussels as the EDA-Probes take it. */
-function comparedOf(field: EdaField, kind: ConditionKind): string {
+export function comparedOf(field: EdaField, kind: ConditionKind): string {
   return kind === 'date' ? dayOf(field.name, field.dataType) : quote(field.name);
 }
 
 /** A number of nines only, at least three, such as 999 or -99999.0 (DEC-ED-35); never zero. */
-const NINES_ONLY = String.raw`r'^-?9{3,}(\.0+)?$'`;
+export const NINES_ONLY = String.raw`r'^-?9{3,}(\.0+)?$'`;
 
 /** Conditions that hold together or apart, in parentheses when there is more than one. */
 const joined = (parts: readonly string[], by: 'and' | 'or') => (parts.length > 1 ? `(${parts.join(` ${by} `)})` : parts.join(''));

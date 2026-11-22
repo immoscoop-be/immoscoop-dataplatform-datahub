@@ -277,6 +277,15 @@ Date range is set on the date its role names, which it needs, and on any other d
 
 **Makes easy:** seeing at once whether a table is still loaded. **Makes hard:** taking a table that stopped weeks ago for a quiet one.
 
+<a id="fr-ed-19"></a>
+### FR-ED-19 · Disguised nulls
+
+**Status:** Specified · **Source:** Max, 2026-11-22 ([DEC-ED-35](#dec-ed-35)) · **Screens:** [eda-probe-disguised](../../design/screens/eda-probe-disguised.html)
+
+Disguised nulls is set on every Key Field and on any other field added, each with its own result: how many rows say nothing, those without a value among them, and the values found that fill the field but stand for nothing, each with its rows. It looks for the values of the lists Data Hub proposes per kind of field, which the EDA keeps as they are edited: a value that is real in this table is taken out, one the table uses is added. Zero is never one. Data Hub reads a field where nothing says nothing as expected and asks no reading for it, one with some as for you to judge, and one with some that holds a role of its model type as look at this.
+
+**Makes easy:** finding the Gaps that a count of empty values cannot see, such as a field full of n/a or 1900-01-01. **Makes hard:** taking a field for complete because every cell holds something.
+
 ## Out of scope
 
 - Personal data, for now ([DEC-ED-08](#dec-ed-08)).

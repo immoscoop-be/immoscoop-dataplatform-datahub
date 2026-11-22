@@ -99,6 +99,7 @@ const SETTINGS: Record<string, Pick<ProbeContext, 'fields' | 'params'>> = {
   nullsPerKeyField: { fields: ['week_start', 'lead_source', 'lead_count', 'lead_channel'], params: {} },
   distributionOfNumbers: { fields: ['lead_count'], params: {} },
   distributionOfCategories: { fields: ['lead_source', 'lead_channel'], params: {} },
+  disguisedNulls: { fields: ['week_start', 'lead_source', 'lead_count', 'lead_channel'], params: {} },
 };
 
 describe('every EDA-Probe runs on a selection of rows (OP-ED-12)', () => {

@@ -497,6 +497,9 @@ export const DISGUISED_DEFAULTS: DisguisedLists = {
 };
 
 /** Disguised nulls, per field (DEC-ED-35). */
+/** How the numbers of nines only are named among the values found of Disguised nulls (DEC-ED-35). */
+export const DISGUISED_NINES = '999…9';
+
 export interface DisguisedResult {
   rows: number;
   /** The rows that say nothing: no value at all, or a value of the lists. */
@@ -533,10 +536,11 @@ export const WHOLE_TABLE: Selection = { where: [] };
 
 /**
  * Whether a result asks for the reading of who works on the EDA, the same for the web app and Claude (FR-ED-11): not
- * when there is nothing to read, a field without empty values or a date that is up to date.
+ * when there is nothing to read, a field without empty values, one where nothing says nothing, or a date that is up
+ * to date.
  */
 export function asksReading(probe: ProbeKey, result: { reading: DataHubReading }): boolean {
-  return !((probe === 'nullsPerKeyField' || probe === 'dateRange') && result.reading === 'expected');
+  return !((probe === 'nullsPerKeyField' || probe === 'disguisedNulls' || probe === 'dateRange') && result.reading === 'expected');
 }
 
 /** The share of the weight with a value that the head of a field brings (DEC-ED-33): three quarters. */

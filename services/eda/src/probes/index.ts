@@ -3,6 +3,7 @@ import { kindOf } from '@datahub/contracts/model-types';
 import type { EdaSource } from '../catalogue.js';
 import { distributionOfCategories } from './categories.js';
 import { dateRange } from './daterange.js';
+import { disguisedNulls } from './disguised.js';
 import { distributionOfNumbers } from './distribution.js';
 import { grainHolds } from './grain.js';
 import { nullsPerKeyField } from './nulls.js';
@@ -15,13 +16,14 @@ export { AnswerMismatch } from './sql.js';
 
 /**
  * The EDA-Probes Data Hub runs, each in a module of its own, in the order of the table: the four of the first build
- * (DEC-ED-26), and Date range and Distribution of categories (FR-ED-17, FR-ED-18).
+ * (DEC-ED-26), Date range and Distribution of categories (FR-ED-17, FR-ED-18), and Disguised nulls (DEC-ED-35).
  */
 export const RUNNERS: Readonly<Partial<Record<ProbeKey, RunnableProbe>>> = {
   grainHolds,
   dateRange,
   volumeOverTime,
   nullsPerKeyField,
+  disguisedNulls,
   distributionOfNumbers,
   distributionOfCategories,
 };
