@@ -19,9 +19,9 @@ const weekly: EdaResource = {
 };
 
 describe('the catalogue of EDA-Probes (TR-ED-02)', () => {
-  it('holds the 25 EDA-Probes of the table (DEC-ED-32), six of which Data Hub runs', () => {
+  it('holds the 25 EDA-Probes of the table (DEC-ED-32), seven of which Data Hub runs', () => {
     expect(PROBE_KEYS).toHaveLength(25);
-    expect(RUNNABLE_PROBES).toEqual(['grainHolds', 'dateRange', 'volumeOverTime', 'nullsPerKeyField', 'distributionOfNumbers', 'distributionOfCategories']);
+    expect(RUNNABLE_PROBES).toEqual(['grainHolds', 'dateRange', 'volumeOverTime', 'nullsPerKeyField', 'disguisedNulls', 'distributionOfNumbers', 'distributionOfCategories']);
     expect(PROBES.spread.levels).toMatchObject({ fact: 'must', aggregate: 'must', event: 'should' });
   });
 
@@ -84,6 +84,8 @@ describe('needed, complete, covered (DEC-ED-17, DEC-ED-21)', () => {
     ];
     expect(bestNext(weekly, runs)).not.toBeNull();
     runs.push({ probe: 'dateRange', fields: ['week_start'] }, { probe: 'distributionOfCategories', fields: ['lead_source', 'lead_channel'] });
+    expect(bestNext(weekly, runs)).toBe('disguisedNulls');
+    runs.push({ probe: 'disguisedNulls', fields: ['week_start', 'lead_source', 'lead_count', 'lead_channel'] });
     expect(bestNext(weekly, runs)).toBeNull();
   });
 });

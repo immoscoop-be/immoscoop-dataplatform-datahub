@@ -65,6 +65,7 @@ const BARE: CatalogueResource = { ...WEEKLY_ANSWER, id: '9c4f5e7b-1d4a-4f6b-8c53
 const ROWS: Partial<Record<ProbeKey, Record<string, unknown>[]>> = {
   grainHolds: [{ row_count: '312', empty_grain: '0', grain_values: '312', on_one: '312', on_two: '0', on_three: '0', on_four_or_more: '0', rows_covered: '0', examples: 'null' }],
   nullsPerKeyField: [{ row_count: '1000', empty_0: '0', empty_1: '12', empty_2: '0', empty_3: '7' }],
+  disguisedNulls: [{ row_count: '1000', says_0: '0', null_0: '0', says_1: '12', null_1: '12', says_2: '0', null_2: '0', says_3: '19', null_3: '7', found_3_0: '4', found_3_1: '8' }],
   volumeOverTime: [
     { date_index: '0', period_start: '2026-11-02', row_count: '2', measure_sum: '90' },
     { date_index: '0', period_start: '2026-11-09', row_count: '2', measure_sum: '110' },
@@ -237,7 +238,8 @@ describe.skipIf(!url)('the routes of eda (TR-ED-01)', () => {
       ['lead_channel', 'judge', null],
     ]);
     expect(eda.needed).toEqual({ total: 10, complete: 1 });
-    expect(eda.next).toBe('grainHolds');
+    // Disguised nulls is still open on all four Key Fields, the most of what is missing (DEC-ED-16).
+    expect(eda.next).toBe('disguisedNulls');
     const kept = await database.db.selectFrom('edaRuns').select(['queryRunId', 'bytes']).execute();
     expect(kept).toEqual([{ queryRunId: expect.stringMatching(/^q-20261121-[0-9a-f]{6}$/), bytes: '1200000' }]);
   });
@@ -355,7 +357,7 @@ describe.skipIf(!url)('the routes of eda (TR-ED-01)', () => {
 
   it('says nothing by the lists of the Disguised nulls of the EDA, once added with them (OP-ED-12, DEC-ED-35)', async () => {
     const eda = await database.db.selectFrom('edas').select('id').where('resourceId', '=', WEEKLY_ANSWER.id).executeTakeFirstOrThrow();
-    // Data Hub does not run Disguised nulls yet: it is added as it will be, with the lists of this EDA.
+    // Disguised nulls is added here as a run of it adds it, with the lists of this EDA, and taken out again after.
     await database.db
       .insertInto('edaProbes')
       .values({ edaId: eda.id, probe: 'disguisedNulls', fields: '["lead_channel"]', params: JSON.stringify({ lists: { text: ['Leeg'], ninesOnly: false } }), addedById: '103', addedByName: 'Dirk Vos' })
@@ -398,7 +400,7 @@ describe.skipIf(!url)('the routes of eda (TR-ED-01)', () => {
 
   it('says what does not fit, and what cannot run here', async () => {
     expect((await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'noSuchProbe'))).statusCode).toBe(404);
-    expect((await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'disguisedNulls'))).json()).toEqual({ error: 'cannot_run', message: 'Data Hub does not run Disguised nulls yet (OP-ED-09).' });
+    expect((await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'impossibleValues'))).json()).toEqual({ error: 'cannot_run', message: 'Data Hub does not run Impossible values yet (OP-ED-09).' });
     expect((await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'distributionOfNumbers'), { fields: ['lead_channel'] })).statusCode).toBe(400);
     expect((await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, 'nullsPerKeyField'), { sql: 'select 1' })).statusCode).toBe(400);
     expect((await call(dirk, 'POST', runOf(DRAFT.id, 'nullsPerKeyField'))).json()).toEqual({ error: 'not_found', message: 'This Resource has no EDA yet.' });
@@ -512,18 +514,19 @@ describe.skipIf(!url)('the routes of eda (TR-ED-01)', () => {
   });
 
   it('never becomes Explored while a needed EDA-Probe Data Hub cannot run yet is not complete (OP-ED-09)', async () => {
-    for (const probe of ['grainHolds', 'dateRange', 'volumeOverTime', 'nullsPerKeyField', 'distributionOfNumbers', 'distributionOfCategories']) {
-      await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, probe));
+    for (const probe of ['grainHolds', 'dateRange', 'volumeOverTime', 'nullsPerKeyField', 'disguisedNulls', 'distributionOfNumbers', 'distributionOfCategories']) {
+      expect((await call(dirk, 'POST', runOf(WEEKLY_ANSWER.id, probe))).statusCode, probe).toBe(200);
     }
+    // Every EDA-Probe Data Hub runs is complete; Values without a match, Spread and Impossible values are not.
     const view = (await call(dirk, 'GET', edaOf(WEEKLY_ANSWER.id))).json<EdaView>();
-    expect(view).toMatchObject({ status: 'inProgress', exploredAt: null, needed: { total: 10, complete: 6 }, next: null });
+    expect(view).toMatchObject({ status: 'inProgress', exploredAt: null, needed: { total: 10, complete: 7 }, next: null });
     expect(told).toHaveLength(0);
   });
 
   it('becomes Explored once every needed EDA-Probe is complete, and tells catalogue until it heard it (FR-ED-12, TR-ED-05)', async () => {
     const started = await call(dirk, 'POST', edaOf(LEADS_ANSWER.id), undefined, explorer);
-    expect(started.json<EdaView>().needed).toEqual({ total: 6, complete: 0 });
-    for (const probe of ['grainHolds', 'dateRange', 'nullsPerKeyField', 'volumeOverTime', 'distributionOfCategories']) {
+    expect(started.json<EdaView>().needed).toEqual({ total: 7, complete: 0 });
+    for (const probe of ['grainHolds', 'dateRange', 'nullsPerKeyField', 'disguisedNulls', 'volumeOverTime', 'distributionOfCategories']) {
       const ran = (await call(dirk, 'POST', runOf(LEADS_ANSWER.id, probe), {}, explorer)).json<RunAnswer>();
       expect(ran.state === 'ran' && ran.eda.status).toBe('inProgress');
     }
@@ -531,7 +534,7 @@ describe.skipIf(!url)('the routes of eda (TR-ED-01)', () => {
     catalogueDeaf = true;
     const last = (await call(dirk, 'POST', runOf(LEADS_ANSWER.id, 'distributionOfNumbers'), {}, explorer)).json<RunAnswer>();
     catalogueDeaf = false;
-    expect(last.state === 'ran' && last.eda).toMatchObject({ status: 'explored', exploredAt: expect.any(String), needed: { total: 6, complete: 6 } });
+    expect(last.state === 'ran' && last.eda).toMatchObject({ status: 'explored', exploredAt: expect.any(String), needed: { total: 7, complete: 7 } });
     expect(told).toHaveLength(0);
     const row = () => database.db.selectFrom('edas').select(['status', 'exploredAt', 'toldAt']).where('resourceId', '=', LEADS_ANSWER.id).executeTakeFirstOrThrow();
     expect(await row()).toMatchObject({ status: 'explored', toldAt: null });
