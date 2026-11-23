@@ -6,9 +6,10 @@
   Lens the User ran, the last one first, as the cards of a search; off, the search stands alone in the middle; with a
   search, on, only the Lenses the User ran are found (DEC-UX-348, OP-UX-126). At the foot, one quiet line with the newest
   Lenses and "More".
-  The rail starts with Welcome, a button that leads here, then Collections, Query, Charts and EDA; Admin follows, a little
-  apart, for the Data Team; Messages and the Learning Centre stand at its foot, then My page, and under it the switch of
-  light and dark (DEC-UX-334, DEC-UX-343, DEC-UX-350). Every prototype shows this rail.
+  The rail starts with Welcome, a button that leads here, then Collections, Query and EDA; Admin follows, a little apart,
+  for the Data Team. At its foot the quick window, a command sign with its keys on a hover, then Messages and the
+  Learning Centre, My page, and under it the switch of light and dark (DEC-UX-334, DEC-UX-343, DEC-UX-350, DEC-UX-351).
+  Every prototype shows this rail.
   A question, sent with Enter, opens the screen up into the Lenses that answer it, the best first: first those colleagues
   found with a similar question, then by the words of their author, pushed up by how often they are used (DEC-UX-335,
   DEC-UX-336). Each is a card (DEC-UX-346): the icon of its Collection, thin, in the upper right corner; the question it
@@ -21,7 +22,7 @@
   Recently used switches on a click, on the screen before a search and on the results; ?recent=off opens with it off. Typing a question and Enter shows the results; one that starts with "how do agencies" finds none.
   Requirements: FR-LE-20, FR-LE-21, FR-LE-22, FR-LE-23, FR-LE-24, FR-LE-25
   Builds on: FR-LE-06, FR-LE-11, FR-LE-19, FR-SR-48, FR-CO-37, FR-PL-14.
-  Decisions: DEC-UX-350, DEC-UX-333, DEC-UX-334, DEC-UX-335, DEC-UX-336, DEC-UX-339, DEC-UX-341, DEC-UX-343, DEC-UX-346, DEC-UX-347, DEC-UX-348, DEC-UX-126, DEC-PL-07, DEC-CO-23.
+  Decisions: DEC-UX-351, DEC-UX-350, DEC-UX-333, DEC-UX-334, DEC-UX-335, DEC-UX-336, DEC-UX-339, DEC-UX-341, DEC-UX-343, DEC-UX-346, DEC-UX-347, DEC-UX-348, DEC-UX-126, DEC-PL-07, DEC-CO-23.
   Open: OP-UX-121, OP-UX-124, OP-UX-126.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -44,10 +45,10 @@
   <a class="nav-btn active" href="welcome.html" data-label="Welcome" aria-label="Welcome" aria-current="page"><i class="ph-fill ph-house-simple"></i></a>
   <a class="nav-btn" href="collections-start.html" data-label="Collections" aria-label="Collections"><i class="ph-fill ph-stack"></i></a>
   <a class="nav-btn" href="query.html" data-label="Query" aria-label="Query" data-for="colleague owner datateam"><i class="ph-fill ph-terminal-window"></i></a>
-  <a class="nav-btn" href="charts.html" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
   <a class="nav-btn" href="eda.html" data-label="EDA" aria-label="EDA"><i class="ph-fill ph-binoculars"></i></a>
   <a class="nav-btn nav-admin" href="admin-webhooks.html" data-label="Admin" aria-label="Admin, for the Data Team" data-for="datateam"><i class="ph-fill ph-toolbox"></i></a>
   <div class="spacer"></div>
+  <button class="nav-btn" type="button" data-quick-open data-label="Quick window · ⌘⇧P" aria-label="Open the quick window: ⌘⇧P or ⌘K" aria-keyshortcuts="Meta+Shift+P Meta+K"><i class="ph-fill ph-command"></i></button>
   <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
   <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
   <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">MP</a>

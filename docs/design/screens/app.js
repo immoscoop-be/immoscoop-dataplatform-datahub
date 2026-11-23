@@ -2007,9 +2007,12 @@ document.addEventListener('click', e => {
     { title: 'Saved searches by price band', meta: '⌘4', href: 'query.html' },
   ];
   const GO = [
-    { icon: 'ph-fill ph-stack', title: 'Collections', href: 'collections-start.html', words: 'home start' },
+    // Go to follows the rail (DEC-UX-351); Charts left it and shows here for the Data Team only, as OP-UX-127 proposes
+    { icon: 'ph-fill ph-house-simple', title: 'Welcome', href: 'welcome.html', words: 'home start search question lenses' },
+    { icon: 'ph-fill ph-stack', title: 'Collections', href: 'collections-start.html', words: 'shelves resources' },
     { icon: 'ph-fill ph-terminal-window', title: 'Query', href: 'query-new.html', words: 'sql' },
-    { icon: 'ph-fill ph-chart-bar', title: 'Charts', href: 'charts.html', words: 'semgraph gallery' },
+    { icon: 'ph-fill ph-binoculars', title: 'EDA', href: 'eda.html', words: 'explore exploration data analysis' },
+    { icon: 'ph-fill ph-chart-bar', title: 'Charts', href: 'charts.html', for: 'datateam', words: 'semgraph gallery' },
     { icon: 'ph-fill ph-chat-circle-text', title: 'Messages', href: 'messages.html', meta: '3 unread', words: 'message centre inbox' },
     { icon: 'ph-fill ph-graduation-cap', title: 'Learning Centre', href: 'learning-start.html', words: 'cards learn' },
     { icon: 'ph ph-user-circle', title: 'My page', href: 'my-page.html', words: 'profile background language slack' },
