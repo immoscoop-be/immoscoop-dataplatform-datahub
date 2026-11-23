@@ -3,11 +3,11 @@
 | | |
 | --- | --- |
 | Domain | 9 of Data Hub · code `LE` |
-| Status | Making a Lens and running it implemented; updating it, growth and Broken follow |
+| Status | Making a Lens and running it implemented; updating it, growth and Broken follow; finding Lenses on Welcome specified |
 | Source of truth | This file |
 | Origin | Listed in the domain overview on Confluence; no page of its own yet (Confluence name: Lenzen) |
 
-**Scope:** Lens types, Parameters and their Level.
+**Scope:** Lens types, Parameters and their Level, and how a Lens is found.
 
 *Functional domain 9 of Data Hub. Overview of all domains: [Functional domains](README.md).*
 
@@ -30,9 +30,9 @@ Pointers to material this domain will build on, collected during the migration. 
 - <a id="dec-le-07"></a>**DEC-LE-07** · The kinds of a Parameter are basic types, enough for Data Hub: Date, Period, Whole number, Decimal number, Text, Choice, Several choices and Yes or no ([DEC-UX-71](../../design/principles.md#dec-ux-71)). They are aligned with the primitives that the datatypes of the Domain Model cascade down to, `date`, `integer`, `number`, `string`, `list` and `boolean`, with the same BigQuery types, but not derived from them: an Entity such as an agency is not a kind of its own, but a Text or a Choice. A Parameter is named as the Domain Model names things, in camelCase, such as `@dateFrom` or `@agencyId`, by whoever writes the query; its name is not derived either. *Decided on 2026-10-28, by Max ([OP-DH-10](../../overview/open-themes.md#op-dh-10)).*
 - <a id="dec-le-08"></a>**DEC-LE-08** · In v1, the result of a Lens is a simple table: the same grid as the result of a query in Query ([DEC-UX-72](../../design/principles.md#dec-ux-72)), in Data Hub and in Claude. A Lens has no chart in v1. Visualisations come with Reports, and with them how they render, in the browser or as SVG, and in which mode in Claude. *Decided on 2026-10-28, by Max ([OP-DH-11](../../overview/open-themes.md#op-dh-11)).*
 - <a id="dec-le-09"></a>**DEC-LE-09** · A Lens is made public the same way as a Resource ([FR-SR-31](04-stacks-and-resources.md#fr-sr-31)): published in a public Collection, it is available to the entire company. Not published, only its Owner Unit and the Data Team see it. Who sees it stays bounded by the Resources beneath it ([DEC-CO-16](03-collections.md#dec-co-16)). *Decided on 2026-10-28, by Max ([OP-LN-02](07-log-and-notifications.md#op-ln-02)).*
-- <a id="dec-le-10"></a>**DEC-LE-10** · In version 1 the story of a Lens is a field of the Lens, which its author fills in, as the question of a query, "What do you want to know?", is today. No skill and no separate form. *Decided on 2026-10-28, by Max ([OP-LE-01](#op-le-01)).*
+- <a id="dec-le-10"></a>**DEC-LE-10** · In version 1 the story of a Lens is a field of the Lens, which its author fills in, as the question of a query, "What do you want to know?", is today. No skill and no separate form. *Decided on 2026-10-28, by Max ([OP-LE-01](#op-le-01)).* *Note of 2026-11-23: a Lens answers more questions than its own ([DEC-LE-27](#dec-le-27)).*
 - <a id="dec-le-11"></a>**DEC-LE-11** · A published Lens that grows into very large stops: it does not run for anyone until the Data Team accepts it again. Data Hub tells its Owner and the Data Team. *Decided on 2026-10-28, by Max ([OP-LE-05](#op-le-05)).*
-- <a id="dec-le-12"></a>**DEC-LE-12** · A Lens runs only when a User runs it, never when it is opened: every run is a query with its Pre-flight. *Decided on 2026-10-28, by Max ([OP-LE-06](#op-le-06)).*
+- <a id="dec-le-12"></a>**DEC-LE-12** · A Lens runs only when a User runs it, never when it is opened: every run is a query with its Pre-flight. *Decided on 2026-10-28, by Max ([OP-LE-06](#op-le-06)).* *Note of 2026-11-23: before its first run it shows its example, which is no run ([DEC-LE-29](#dec-le-29)).*
 - <a id="dec-le-13"></a>**DEC-LE-13** · Version 1 has one kind of Lens, a query with its Parameters ([FR-LE-11](#fr-le-11)); no flavours such as filtered or aggregated. *Decided on 2026-10-28, by Max ([OP-LE-07](#op-le-07)).*
 - <a id="dec-le-14"></a>**DEC-LE-14** · A default, and any value of a Parameter, is a value or any SQL function, worked out at every run. The field suggests the common ones: today, today minus 3 days, the start of this week, month, quarter or year, and the end of the last complete week or month, as in Query ([DEC-UX-71](../../design/principles.md#dec-ux-71)). *Decided on 2026-10-28, by Max ([OP-LE-08](#op-le-08)).*
 - <a id="dec-le-15"></a>**DEC-LE-15** · A Request has no timeout: it waits until the Data Team accepts or refuses it, however long that takes. This holds for a very large Lens and for a query above 1 GB ([DEC-SR-36](04-stacks-and-resources.md#dec-sr-36)). *Decided on 2026-10-28, by Max ([OP-LE-10](#op-le-10)).*
@@ -43,6 +43,13 @@ Pointers to material this domain will build on, collected during the migration. 
 - <a id="dec-le-20"></a>**DEC-LE-20** · To start with, Data Hub finds a Broken Lens when its Pre-flight or a run fails on a table or column that is not found, and once a day, when it dry-runs every Lens; the check right after a new Current Version of a dbt project ([FR-SR-52](04-stacks-and-resources.md#fr-sr-52)) comes later, and until then the daily check finds it within a day. *Decided on 2026-10-29, by Max.*
 - <a id="dec-le-21"></a>**DEC-LE-21** · A Lens can be deleted, by its Owner Unit and the Data Team. Deleting is for good and for everyone: the Lens is gone from every list, search, Claude and Excel, and runs for nobody; its address tells whoever saw it that it was deleted, by whom, when and why. What hangs on it is kept for the record: its runs in the Query Log, its versions and its Log, and the Messages on it, which still show for whoever saw it, with the Lens marked as deleted. A Request on it that still waits is withdrawn. The queries made from it stay, as they are their owners' own. Whoever ran it in the 30 days before, also from Excel, is told, with the reason when one was given; never who deleted it. *Decided on 2026-11-04, by Max: who may delete, what goes and what stays, and who is told, each as proposed.*
 - <a id="dec-le-22"></a>**DEC-LE-22** · A Lens is made only from a query whose Resources are all published ([FR-SR-31](04-stacks-and-resources.md#fr-sr-31)): a Lens is meant to be shared and relied on, and a Resource that is not published is not confirmed by its Owner yet. On a query that reads a Resource not published, "Make it a lens" is greyed and says which Resource, and query refuses to make the Lens; once its Owner publishes the Resource, the query can become a Lens. Lenses made before this rule stay as they are. *Decided on 2026-11-13, by Max.*
+- <a id="dec-le-23"></a>**DEC-LE-23** · Data Hub keeps every search for a Lens: its words, who searched, when, and where, on [Welcome](../../design/principles.md#welcome), through Claude or as the question of a new query. A search leads to a Lens when that Lens runs in the same visit after it, on its page or through Claude; one search can lead to more than one Lens. A search that leads to none is kept too. *Decided on 2026-11-18, by Max: "i would like to store the search and when a search leads to an execution of the lens it is hooked. this also enables us to find 'links' between lensen trough it's search. so we start storing the lens searches"; on only a run counting, through Claude too, "agree".*
+- <a id="dec-le-24"></a>**DEC-LE-24** · The Owner Unit of a Lens and the Data Team see the searches that led to it, with who searched and when. A colleague sees them on its card on Welcome without who searched ([DEC-UX-347](../../design/principles.md#dec-ux-347)). *Decided on 2026-11-18, by Max: "the owner of a lens may in my opinion see it", and on who searched, "yes, we know each other this is company property and we want opennes"; for colleagues, "anonymous".*
+- <a id="dec-le-25"></a>**DEC-LE-25** · A search is kept for 12 months, and a User does not delete their searches. Under the search on Welcome one line says so: "Your searches are stored, to make Lenses easier to find." ([DEC-UX-339](../../design/principles.md#dec-ux-339)). *Decided on 2026-11-18, by Max: on 12 months and deleting, "ok, I see no use in deleting"; on telling Users, "idd a message we just say your searches are stored to make easier to find".*
+- <a id="dec-le-26"></a>**DEC-LE-26** · Everyone who sees a Lens sees how many colleagues ran it in the last 30 days, on its page, through Claude or from Excel: a number, never who. It pushes a Lens up among those a search finds. For Lenses, this replaces the part of [DEC-DH-75](../../overview/data-hub.md#dec-dh-75) that keeps who uses what out of v1. *Decided on 2026-11-18, by Max: "also the popularity of a lens pushes it up and is made visible", and "visible to everyone".*
+- <a id="dec-le-27"></a>**DEC-LE-27** · A Lens answers more than one question: its own, which its author writes ([DEC-LE-10](#dec-le-10)), and the questions its Owner Unit takes from the searches that led to it, or writes. Each counts in the search for Lenses. *Decided on 2026-11-18, by Max, who asked "isn't this behaviour real good input towards the extending lens-info?", and on a list of Questions it answers kept by its Owner Unit, "yes certainly".*
+- <a id="dec-le-28"></a>**DEC-LE-28** · Two Lenses are linked when the same searches led to runs of both, or one colleague ran both after one search; a link counts from three colleagues on, so that none shows what one person did. Colleagues see the Lenses linked to one, and its Owner Unit sees a Lens that answers the same searches. *Decided on 2026-11-18, by Max: "Your suggestions on links between lenses are good. Let's keep it this way."*
+- <a id="dec-le-29"></a>**DEC-LE-29** · A Lens has an example of what it gives: rows of the result its query showed when the Lens was made, which its author confirms, or none. The example shows on its page before its first run, as a picture of what it gives and not of today's figures; showing it is no run ([DEC-LE-12](#dec-le-12)). A Lens made before gets one from a run with its defaults, which its Owner Unit starts in Edit more. *Decided on 2026-11-18, by Max: "b, you can use what has been shown just before the lens is created and ask the lens publisher to confirm", and on its page before the first run, "yes" ([DEC-UX-345](../../design/principles.md#dec-ux-345)).*
 
 ## Requirements
 
@@ -257,6 +264,100 @@ Making a Lens lists each field of its result with its type and a description. A 
 
 **Makes easy:** a Lens whose figures say what they mean, mostly from descriptions already written, with a quick way to reuse one for a field that was renamed or computed. **Makes hard:** a Lens whose columns nobody can read without its author, and descriptions written twice for the same field.
 
+## Finding Lenses
+
+How a User finds the Lenses that answer their question, on [Welcome](../../design/principles.md#welcome), where Data Hub opens, and what a Lens learns from how colleagues find it. The screens are in the design: [Welcome](../../design/principles.md#welcome) and [Page of a Lens](../../design/principles.md#page-of-a-lens). Specified on 2026-11-23, once the design was approved.
+
+<a id="fr-le-20"></a>
+### FR-LE-20 · Data Hub opens on Welcome, a search for the Lenses that answer a question
+
+**Status:** Specified · **Source:** Max, 2026-11-18 ([DEC-UX-333](../../design/principles.md#dec-ux-333), [DEC-UX-334](../../design/principles.md#dec-ux-334), [DEC-UX-350](../../design/principles.md#dec-ux-350)) · **Screens:** [welcome](../../design/screens/welcome.html)
+
+Every User lands on Welcome after signing in, a Lens user too ([DEC-PL-07](12-permissions-and-library-cards.md#dec-pl-07)), and its button is the first item of the rail. Welcome has no panel: its one job is the search, "What do you want to know?", over the Lenses the User may use ([DEC-CO-16](03-collections.md#dec-co-16)). Under the search, one line says that searches are stored ([DEC-LE-25](#dec-le-25)). At its foot, one line with the newest Lenses, as [DEC-UX-126](../../design/principles.md#dec-ux-126) counts them, and More, which lists them all with the question each answers, its Collection and how many colleagues used it this month.
+
+**Makes easy:** a colleague who never opened Data Hub asking their question in their own words and landing on a Lens. **Makes hard:** having to know which Collection holds an answer before finding it.
+
+<a id="fr-le-21"></a>
+### FR-LE-21 · A search on Welcome finds the Lenses that answer, the best first
+
+**Status:** Specified · **Source:** Max, 2026-11-18 ([DEC-UX-335](../../design/principles.md#dec-ux-335), [DEC-UX-336](../../design/principles.md#dec-ux-336)) · **Screens:** [welcome](../../design/screens/welcome.html)
+
+A question, sent with Enter, opens Welcome up into the Lenses that answer it, only those the User may use ([DEC-CO-16](03-collections.md#dec-co-16)). A Lens matches by the words of its author, its name, its Questions it answers, what it shows and its tags ([FR-LE-27](#fr-le-27)), and by the searches that led colleagues to it ([DEC-LE-23](#dec-le-23)), word by word as a new query finds Lenses ([FR-SR-48](04-stacks-and-resources.md#fr-sr-48)). Those colleagues found with a similar search come first, then those by the words of their author; how many colleagues used a Lens pushes it up among those that match ([DEC-LE-26](#dec-le-26)), never one that matches nothing. Whoever may query also gets the Resources and Collections that share words with the question, and "New query with this question", which starts a query with the question filled in; a Lens user gets only Lenses. Which languages and typos the search understands is [OP-LE-11](#op-le-11); what Welcome does when it finds no Lens is [OP-LE-12](#op-le-12).
+
+**Makes easy:** the Lens colleagues use for a question coming out on top, found in their own words. **Makes hard:** a Lens that matches only its author's words hiding the one everyone uses; a popular Lens showing up for a question it does not answer.
+
+<a id="fr-le-22"></a>
+### FR-LE-22 · Each Lens found shows its question, its domain and how colleagues found it
+
+**Status:** Specified · **Source:** Max, 2026-11-18 ([DEC-UX-346](../../design/principles.md#dec-ux-346), [DEC-UX-347](../../design/principles.md#dec-ux-347)) · **Screens:** [welcome](../../design/screens/welcome.html)
+
+Each Lens a search finds is a card: the icon of its Collection, the domain it belongs to; the question it answers, the words it shares with the search marked; its name with its Level ([DEC-DH-10](../../overview/data-hub.md#dec-dh-10)); up to two searches that led colleagues to it, in quotes, without who searched, and how many more ([DEC-LE-24](#dec-le-24)); and its Collection and how many colleagues used it this month ([FR-LE-25](#fr-le-25)). A click opens the Lens.
+
+**Makes easy:** telling at a glance which question a Lens answers, where it comes from and whether colleagues rely on it. **Makes hard:** choosing a Lens by its name alone.
+
+<a id="fr-le-23"></a>
+### FR-LE-23 · Recently used shows the Lenses a User ran
+
+**Status:** Specified · **Source:** Max, 2026-11-18 ([DEC-UX-348](../../design/principles.md#dec-ux-348)) · **Screens:** [welcome](../../design/screens/welcome.html)
+
+Under the search on Welcome, the filter Recently used. Before a search, on, it shows every Lens the User ran, the last one first, as the cards of a search, each with when they ran it; off, the search stands alone. With a search, on, only the Lenses the User ran are found. How far back it reaches, and when it is on, is [OP-UX-126](../../design/principles.md#op-ux-126).
+
+**Makes easy:** going back to the Lens used yesterday without typing a word. **Makes hard:** losing a Lens one used once.
+
+<a id="fr-le-24"></a>
+### FR-LE-24 · Data Hub keeps every search for a Lens and the Lens it led to
+
+**Status:** Specified · **Source:** Max, 2026-11-18 ([DEC-LE-23](#dec-le-23), [DEC-LE-25](#dec-le-25)) · **Screens:** [welcome](../../design/screens/welcome.html)
+
+Data Hub keeps every search for a Lens, on Welcome, through Claude ([FR-CL-17](17-claude.md#fr-cl-17)) and as the question of a new query ([FR-SR-48](04-stacks-and-resources.md#fr-sr-48)): its words, who searched, when, and where. A search leads to a Lens when that Lens runs in the same visit after it, on its page or through Claude; how long a visit is, is [OP-LE-13](#op-le-13). A search is kept for 12 months, and a User does not delete it. The searches that led to a Lens count in its search ([FR-LE-21](#fr-le-21)), show on its card without who ([FR-LE-22](#fr-le-22)) and to its Owner Unit with who ([FR-LE-26](#fr-le-26)), and link Lenses ([FR-LE-28](#fr-le-28)).
+
+**Makes easy:** Lenses that get easier to find the more they are used, in the words of those who use them. **Makes hard:** a search counting for a Lens nobody ran after it.
+
+<a id="fr-le-25"></a>
+### FR-LE-25 · A Lens shows how many colleagues used it this month
+
+**Status:** Specified · **Source:** Max, 2026-11-18 ([DEC-LE-26](#dec-le-26)) · **Screens:** [welcome](../../design/screens/welcome.html), [lens](../../design/screens/lens.html)
+
+Everyone who sees a Lens sees how many colleagues ran it in the last 30 days, on its page, through Claude or from Excel: on its page under its name, and on its card on Welcome. Never who.
+
+**Makes easy:** trusting, and finding, a Lens colleagues rely on. **Makes hard:** ranking colleagues by what they run.
+
+<a id="fr-le-26"></a>
+### FR-LE-26 · Its Owner Unit sees how colleagues find a Lens
+
+**Status:** Specified · **Source:** Max, 2026-11-18 ([DEC-UX-349](../../design/principles.md#dec-ux-349), [DEC-LE-24](#dec-le-24), [DEC-LE-28](#dec-le-28)) · **Screens:** [lens](../../design/screens/lens.html)
+
+Its Owner Unit and the Data Team see, under About of a Lens, how colleagues find it: how many searches led to a run of it in the last 30 days and by how many colleagues; each of those searches with who searched and when, and "Add to its questions", or that it is in them ([FR-LE-27](#fr-le-27)); and the Lenses that answer the same searches, each with how many colleagues found both. Nobody else sees who searched.
+
+**Makes easy:** an Owner Unit learning how colleagues ask for its Lens, and spotting a second Lens for the same question. **Makes hard:** a Lens whose questions only its author ever wrote; two Lenses for one question going unnoticed.
+
+<a id="fr-le-27"></a>
+### FR-LE-27 · A Lens answers more than one question
+
+**Status:** Specified · **Source:** Max, 2026-11-18 ([DEC-LE-27](#dec-le-27)) · **Screens:** [lens](../../design/screens/lens.html), [lens-edit](../../design/screens/lens-edit.html)
+
+Besides its own question, a Lens has More questions it answers, which its Owner Unit keeps in Edit more: each taken from a search that led to it, saying whose search it came from, or written, and removed with a cross; the searches colleagues found it with are offered, the most frequent first. Everyone sees them under About, after its own question. They count in the search for Lenses ([FR-LE-21](#fr-le-21)).
+
+**Makes easy:** a Lens found by the questions colleagues really ask. **Makes hard:** a Lens hidden behind the one way its author put the question.
+
+<a id="fr-le-28"></a>
+### FR-LE-28 · A Lens shows the Lenses colleagues used with it
+
+**Status:** Specified · **Source:** Max, 2026-11-18 ([DEC-LE-28](#dec-le-28), [DEC-UX-340](../../design/principles.md#dec-ux-340)) · **Screens:** [lens](../../design/screens/lens.html)
+
+Under About, Colleagues who found this also used: up to three Lenses linked to it, only those the User may use, each with the icon of its Collection, its question and its name with its Level.
+
+**Makes easy:** going from one answer to the next question colleagues asked. **Makes hard:** a link that shows what one person did.
+
+<a id="fr-le-29"></a>
+### FR-LE-29 · A Lens has an example of what it gives
+
+**Status:** Specified · **Source:** Max, 2026-11-18 ([DEC-LE-29](#dec-le-29), [DEC-UX-345](../../design/principles.md#dec-ux-345)) · **Screens:** [lens-new](../../design/screens/lens-new.html), [lens](../../design/screens/lens.html), [lens-edit](../../design/screens/lens-edit.html)
+
+Making a Lens, the step Its fields shows the first rows of the result its query showed, with "Use these rows as its example", ticked; its author leaves it off when the rows should not be shown. A new version of the Lens asks again. Its page shows the example before its first run, faded, with the day it is from and that a run gives today's figures; a Lens without one says it has not run yet. For a Lens made before, its Owner Unit takes one in Edit more, from a run with its defaults, which passes the Pre-flight as every run ([FR-LE-12](#fr-le-12)). How many rows an example keeps is [OP-LE-14](#op-le-14).
+
+**Makes easy:** seeing what a Lens gives before spending a run on it. **Makes hard:** taking the example for today's figures; showing rows its author did not choose.
+
 ## Open points
 
 - [x] <a id="op-le-01"></a>**OP-LE-01** · Decide the form in which the story of a Lens is asked ([FR-LE-05](#fr-le-05)): a skill, a form or the interface. The meeting notes ask Hannelore to help shape how a question becomes actionable before a Lens is built. *Decided on 2026-10-28, by Max: in v1, a field of the Lens ([DEC-LE-10](#dec-le-10)).*
@@ -269,6 +370,10 @@ Making a Lens lists each field of its result with its type and a description. A 
 - [x] <a id="op-le-08"></a>**OP-LE-08** · Decide which functions a default may use ([FR-LE-13](#fr-le-13)). A first list: today, today minus a number of days, the start of this week, month or year, and the last complete week or month. *Raised on 2026-10-23.* *Note of 2026-10-27: in Query, the value of a Parameter is a value or any SQL function, worked out at every run; the field suggests today, today minus 3 days, the start of this week, month, quarter or year, and the end of the last complete week or month ([DEC-UX-71](../../design/principles.md#dec-ux-71)).* *Decided on 2026-10-28, by Max: as suggested ([DEC-LE-14](#dec-le-14)).*
 - [x] <a id="op-le-09"></a>**OP-LE-09** · Decide whether a very large Lens can change while its Request waits for the Data Team ([FR-LE-09](#fr-le-09)), by its author or by the Data Team, and what then happens to the Request: a change can bring the Lens into another range, such as a default for From that makes it large. *Raised on 2026-10-23, while designing a Request opened in context.* *Decided on 2026-10-27, by Max: no; the Lens is frozen and waits, with a reasonable timeout ([DEC-LE-05](#dec-le-05)).*
 - [x] <a id="op-le-10"></a>**OP-LE-10** · Decide the timeout of a Request for a very large Lens ([DEC-LE-05](#dec-le-05)), and what happens when it runs out. Proposal: five working days; then the Request lapses, its author is told in the Message Centre, and the Lens stays unpublished, to be changed and sent again. *Raised on 2026-10-27, in the review of Max.* *Decided on 2026-10-28, by Max: no timeout; a Request waits indefinitely ([DEC-LE-15](#dec-le-15)).*
+- [ ] <a id="op-le-11"></a>**OP-LE-11** · Decide which languages and typos the search for Lenses understands ([FR-LE-21](#fr-le-21)). Today a word counts by its English stem, so a Dutch question such as "hoeveel kredietleads dit weekend" finds little, and "creditleads" does not match "credit leads". Proposal: words in Dutch and in English, and trigrams for typos and joined words, as [DEC-SR-10](04-stacks-and-resources.md#dec-sr-10) plans; search by meaning later. *Raised on 2026-11-18, while discussing Welcome with Max.*
+- [ ] <a id="op-le-12"></a>**OP-LE-12** · Decide what Welcome does when a search finds no Lens ([FR-LE-21](#fr-le-21)): a search that finds nothing is a question nobody answers yet. Until then it says so in one sentence, with "New query with this question" for whoever may query ([OP-UX-121](../../design/principles.md#op-ux-121)). *Raised on 2026-11-18; set aside by Max: "leave it out for now need to think about it first".*
+- [ ] <a id="op-le-13"></a>**OP-LE-13** · Decide how long a visit is, in which a run of a Lens follows from a search ([DEC-LE-23](#dec-le-23)). Proposal: 30 minutes from the search; through Claude, the same session of the MCP. *Raised on 2026-11-18.*
+- [ ] <a id="op-le-14"></a>**OP-LE-14** · Decide how many rows the example of a Lens keeps ([FR-LE-29](#fr-le-29)). Proposal: the first ten rows of the result, as it showed them. *Raised on 2026-11-23, while writing the requirements of Welcome.*
 
 ## Builds on
 
