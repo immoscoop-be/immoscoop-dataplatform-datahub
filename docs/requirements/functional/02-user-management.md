@@ -194,6 +194,8 @@ A colleague is added by name, suggested while typing, or by an address of an own
 
 A Group that is the Owner Unit of a Collection, or manages another Group, cannot be deleted until those move to another Group: the page says which. Otherwise it is deleted once confirmed; its members are taken out, and what it did stays in the history.
 
+*Note of 2026-11-23: likewise a Group that is the Owner Unit of a Dock with a Feed that an Application reads, once [Applications](18-applications.md) are built ([DEC-AP-15](18-applications.md#dec-ap-15), [FR-AP-36](18-applications.md#fr-ap-36)).*
+
 <a id="fr-um-17"></a>
 ### FR-UM-17 · The history of a Group
 

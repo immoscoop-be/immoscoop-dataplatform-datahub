@@ -4,7 +4,7 @@ The qualities Data Hub must have, across domains: how secure, how fast, how chea
 
 | | |
 | --- | --- |
-| Status | [Security](security.md) started; [Localisation](localisation.md) specified; the other categories follow |
+| Status | [Security](security.md) started; [Localisation](localisation.md) specified; [Availability](availability.md) proposed; the other categories follow |
 | Source of truth | This folder |
 
 ## Categories
@@ -16,7 +16,7 @@ Each category gets its own file and code. The categories below are a proposal; a
 | `SEC` | Security: authentication, authorisation, secrets | [security.md](security.md) |
 | `PRV` | Privacy and data protection: personal data, access classification | `privacy.md` |
 | `PRF` | Performance and scalability | `performance.md` |
-| `AVL` | Availability and resilience | `availability.md` |
+| `AVL` | Availability and resilience | [availability.md](availability.md) |
 | `CST` | Cost: BigQuery scanning, infrastructure | `cost.md` |
 | `OBS` | Observability: logging, monitoring, alerting of Data Hub itself | `observability.md` |
 | `MNT` | Maintainability: migrations, deployment, tests | `maintainability.md` |

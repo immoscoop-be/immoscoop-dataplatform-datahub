@@ -2801,3 +2801,23 @@ html[data-bg] :is(.flowbox, .flowstrip) { -webkit-backdrop-filter: var(--blur-fr
 .pw-list span { font-size: var(--text-meta); color: var(--text-muted); }
 .pw-acts { display: flex; flex-wrap: wrap; gap: 8px; }
 .pw-claude { display: block; margin: 0; line-height: 1.5; }
+
+/* Applications (2026-11-23, proposal, OP-UX-122): the state of a Feed or an Application, in a word and a colour, wherever it is listed. */
+.app-state { display: inline-flex; align-items: center; gap: 5px; font-size: var(--text-meta); white-space: nowrap; color: var(--text-secondary); padding: 2px 8px; border-radius: var(--radius-pill); background: var(--tint-hover); }
+.app-state::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
+.app-state.ok::before { background: var(--text-muted); }
+.app-state.waiting { color: var(--text-primary); }
+.app-state.waiting::before { background: transparent; border: 1.5px solid var(--text-secondary); width: 5px; height: 5px; }
+.app-state.late, .app-state.held, .app-state.phasing { color: var(--signal-warn); background: color-mix(in srgb, var(--signal-warn) 12%, transparent); }
+.app-state.cutoff { color: var(--signal-urgent); background: color-mix(in srgb, var(--signal-urgent) 11%, transparent); }
+.app-state.draft { color: var(--text-muted); }
+.app-state.draft::before { background: transparent; border: 1.5px dashed var(--text-muted); width: 5px; height: 5px; }
+/* A Binding Rule written out: the sentence, then the code. */
+.binding-rule { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface-sub); }
+.binding-rule code { font-family: var(--font-mono, ui-monospace, monospace); font-size: var(--text-small); color: var(--text-primary); }
+/* A strip of deliveries: one cell per day. */
+.delivery-strip { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 3px; }
+.delivery-strip span { height: 22px; border-radius: 4px; background: var(--tint-active); }
+.delivery-strip span.late, .delivery-strip span.held { background: color-mix(in srgb, var(--signal-warn) 55%, transparent); }
+.delivery-strip span.cutoff { background: color-mix(in srgb, var(--signal-urgent) 60%, transparent); }
+.delivery-strip span.none { background: transparent; border: 1px dashed var(--line, var(--tint-active)); }

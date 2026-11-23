@@ -7,7 +7,7 @@
 | Source of truth | This file |
 | Origin | Listed in the domain overview on Confluence; no page of its own yet (Confluence name: Kanalen) |
 
-**Scope:** Data Hub itself, Claude as an MCP App, Excel and HTML reports.
+**Scope:** Data Hub itself, Claude as an MCP App, Excel and HTML reports. Applications that read data permanently have a domain of their own, [Applications](18-applications.md).
 
 *Functional domain 13 of Data Hub. Overview of all domains: [Functional domains](README.md).*
 
@@ -24,13 +24,14 @@
 
 ## Channels per asset
 
-| Asset | Data Hub, the web app | Claude, through the MCP | Excel | HTML report |
-| --- | --- | --- | --- | --- |
-| Resource | Every screen ([DEC-CH-01](#dec-ch-01)) | Version 2 ([DEC-CH-02](#dec-ch-02)) | No ([DEC-CH-03](#dec-ch-03)) | No |
-| Query | Query ([FR-SR-41](04-stacks-and-resources.md#fr-sr-41)) | Version 2 | No | No |
-| Lens | Its page, a table ([DEC-LE-08](09-lenses.md#dec-le-08)) | Version 2 | Its result as data, default Parameters ([DEC-CH-03](#dec-ch-03)) | Not in v1 ([DEC-CH-05](#dec-ch-05)) |
-| Report | When [Reports](10-reports.md) are specified | Version 2 | No | Not in v1 ([DEC-CH-05](#dec-ch-05)) |
-| Learning Card | Its page and the floating window ([DEC-LR-08](16-learning.md#dec-lr-08)) | Version 2 | No | No |
+| Asset | Data Hub, the web app | Claude, through the MCP | Excel | HTML report | An Application |
+| --- | --- | --- | --- | --- | --- |
+| Resource | Every screen ([DEC-CH-01](#dec-ch-01)) | Version 2 ([DEC-CH-02](#dec-ch-02)) | No ([DEC-CH-03](#dec-ch-03)) | No | No: through a Feed |
+| Query | Query ([FR-SR-41](04-stacks-and-resources.md#fr-sr-41)) | Version 2 | No | No | Made into a Feed ([DEC-AP-02](18-applications.md#dec-ap-02)) |
+| Lens | Its page, a table ([DEC-LE-08](09-lenses.md#dec-le-08)) | Version 2 | Its result as data, default Parameters ([DEC-CH-03](#dec-ch-03)) | Not in v1 ([DEC-CH-05](#dec-ch-05)) | No: a Feed is made from the query |
+| Report | When [Reports](10-reports.md) are specified | Version 2 | No | Not in v1 ([DEC-CH-05](#dec-ch-05)) | No |
+| Learning Card | Its page and the floating window ([DEC-LR-08](16-learning.md#dec-lr-08)) | Version 2 | No | No | No |
+| Feed | Its page, in its Dock ([DEC-AP-02](18-applications.md#dec-ap-02)) | Version 2 | No | No | Its Editions, prepared or live ([DEC-AP-08](18-applications.md#dec-ap-08)) |
 
 ## Already touched on elsewhere
 
@@ -42,6 +43,7 @@ Pointers to material this domain will build on, collected during the migration. 
 - Excel through Power Query: [DEC-DH-46](../../overview/data-hub.md#dec-dh-46), [DEC-DH-47](../../overview/data-hub.md#dec-dh-47)
 - Free SQL via Claude: [FR-SR-26](04-stacks-and-resources.md#fr-sr-26), [FR-SR-27](04-stacks-and-resources.md#fr-sr-27)
 - Messages in Slack and through the MCP server, from the texts of the [Message catalogue](message-catalogue.md): [FR-CV-15](14-conversations.md#fr-cv-15)
+- Delivery to registered Applications, through a Feed, with the consent of every Owner: [Applications](18-applications.md) ([DEC-DH-85](../../overview/data-hub.md#dec-dh-85))
 - Open themes: [OP-DH-12](../../overview/open-themes.md#op-dh-12) (channels per asset), [OP-DH-36](../../overview/open-themes.md#op-dh-36) (Excel pilot)
 
 ## Requirements
@@ -61,6 +63,8 @@ Large or frequent, structural exports do not run through Data Hub: not through t
 
 *Note of 2026-11-19: the result of a query in Query is copied as JSON or CSV up to its first 100 rows, its row limit ([FR-SR-70](04-stacks-and-resources.md#fr-sr-70)).*
 
+*Note of 2026-11-23: delivery to a registered Application is not an export in this sense. It is permanent and structural, but every Owner involved says yes to it, and it is governed in [Applications](18-applications.md) ([DEC-DH-85](../../overview/data-hub.md#dec-dh-85)).*
+
 <a id="fr-ch-02"></a>
 ### FR-CH-02 · A structural export goes to the Data Team
 
@@ -69,6 +73,8 @@ Large or frequent, structural exports do not run through Data Hub: not through t
 *Note of 2026-10-29: the Preview of a Resource no longer points to this route with a tile; which screen does is open with the Message Centre ([DEC-UX-120](../../design/principles.md#dec-ux-120)).*
 
 Structural exports are for data from Level 2, Described. When business wants to export a Lens, a new concept, structurally, that goes back to the Data Team, which sets up the export from dbt or the Domain Model ([DEC-DH-44](../../overview/data-hub.md#dec-dh-44)). Above the row limit, Data Hub shows a clear message that points to that route.
+
+*Note of 2026-11-23: delivery to a registered Application is not an export in this sense. It is permanent and structural, but every Owner involved says yes to it, and it is governed in [Applications](18-applications.md) ([DEC-DH-85](../../overview/data-hub.md#dec-dh-85)).*
 
 <a id="fr-ch-03"></a>
 ### FR-CH-03 · Claude works through the MCP of Data Hub only

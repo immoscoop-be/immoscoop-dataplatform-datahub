@@ -104,6 +104,7 @@ These are the behaviours the prototypes repeat across screens. Each belongs to o
 | Not published | A Resource only its Owner Unit and the Data Team see: a lighter name, no icon | – | – | panel | [DEC-UX-12](principles.md#dec-ux-12) |
 | Broken mark | A Lens, Report or query reads what no longer exists: a red dot on its kind icon; a red chip "Broken" on a tile and in a status row | What is missing on hover | kind icon, chip | every list, tiles, object pages | [DEC-UX-81](principles.md#dec-ux-81) |
 | Deprecated mark | A Resource that is deprecated: a chip "Deprecated" next to its Level, a tag in the panel | The reason on hover | chip | wherever its Level shows | [DEC-UX-101](principles.md#dec-ux-101) |
+| State of a Feed or Application | Up to date, Late, Held, Cut off, Waiting for consent, Phasing out or Draft, in a word and a colour: warning for Late, Held and Phasing out, urgent red for Cut off (proposal, 2026-11-23) | Since when, and why, on hover | chip, tokens | Docks, Feeds, Applications, Resource tab Applications, Admin | [Applications](principles.md#applications) |
 
 ## 4 · Containers and layers
 
@@ -208,6 +209,22 @@ Grouped by the object or task they serve. Each is built from the layers above; i
 | Change list | What a change does for one User: what they gain, what they lose, what stays, the old value struck through | – | list, icon | User sheet | [Admin](principles.md#admin) |
 | Permission group item | A Permission group in the list: name, sentence, number of Users, "Default for new Users", changes not saved, a lock for the Data Team | Opens it | tag, chip | Permission groups | [Admin](principles.md#admin) |
 | Permission | One Permission of a group: name, what it allows, yes or no; while yes, its values under it, each with a field of its kind (whole number with unit, choice, several choices, yes or no, text); marked "changed" until saved; locked for the Data Team | **Switch a pane** (its values) | segmented control, field, radio, chip | Permission groups | [DEC-UX-71](principles.md#dec-ux-71), [OP-UX-57](principles.md#op-ux-57) |
+
+### Applications
+
+*Proposals of 2026-11-23, with the screens of [Applications](principles.md#applications); to review ([OP-UX-120](principles.md#op-ux-120) to [OP-UX-131](principles.md#op-ux-131)).*
+
+| Component | What it is | Behaviour | Built from | Used on | Rules |
+| --- | --- | --- | --- | --- | --- |
+| Tree of Docks | The panel of Docks: a card per Dock, unfolding to its Feeds, then its Applications | As the Tree of Collections | tree, kind icon, state | every screen of Docks | [OP-UX-120](principles.md#op-ux-120) |
+| Delivery strip | The deliveries of a Feed over 14 days, one cell per day: delivered, late, held, cut off, none | The day and what happened on hover | tokens | Feed | [OP-UX-124](principles.md#op-ux-124) |
+| Edition switch | The Editions of a Feed, the one shown, which are live and when one ends | Switches the page to another Edition | segmented control, state | Feed, new Edition | [OP-UX-124](principles.md#op-ux-124) |
+| Binding Rule | A Binding Rule as a sentence, as code, and what it means for one user | – | tile, mono text | registration, Application, Request for consent | [OP-UX-126](principles.md#op-ux-126) |
+| Answers of the Owners | Per Owner Unit of a Resource under a Feed: waiting, yes with when and by whom, no with why | Opens the Request | avatar, state, chip | Feed, Application, Request for consent | [OP-UX-127](principles.md#op-ux-127) |
+| Fill from the platform | A field to paste or drop the JSON of a Footprint; what it filled is marked "From the platform" | Refuses a JSON it cannot read, with why | field, origin tag | registration | [OP-UX-126](principles.md#op-ux-126) |
+| Key shown once | A new key of an Application, to copy, with the warning that it is not shown again | Copy; gone when the page is left | field, button, callout | Application | [OP-UX-127](principles.md#op-ux-127) |
+| Withdraw in place | Phase out by a date, or Cut off now with a reason, asked in the row of the Application | Confirms in place, as revoking a key | radio, date field, text field, button | Resource tab Applications | [OP-UX-129](principles.md#op-ux-129) |
+| Errors per cause | The answers of the front door that were no data, per day and per cause: Cut off by an Owner, Not allowed, Data Hub unavailable | The day on hover | small bars, tokens | Application, Admin | [OP-UX-127](principles.md#op-ux-127) |
 
 ### Learning
 

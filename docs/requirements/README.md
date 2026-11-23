@@ -47,6 +47,7 @@ Every item has an ID of the form `<TYPE>-<CODE>-<NN>`.
 | `ED` | EDA | [15-eda.md](functional/15-eda.md) |
 | `LR` | Learning | [16-learning.md](functional/16-learning.md) |
 | `CL` | Claude, through the MCP | [17-claude.md](functional/17-claude.md) |
+| `AP` | Applications | [18-applications.md](functional/18-applications.md) |
 | `PF` | Platform: technical choices not tied to one domain (technical requirements only) | [00-platform.md](technical/00-platform.md) |
 | `UX` | Design of the web app: its look, navigation and screens (decisions and open points) | [principles.md](../design/principles.md) |
 

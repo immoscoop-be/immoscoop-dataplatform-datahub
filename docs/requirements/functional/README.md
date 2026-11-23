@@ -34,11 +34,13 @@
 | 15 | [EDA](15-eda.md) | `ED` | How the Owner takes a Resource through the EDA in Data Hub: EDA-Setup, EDA-Rerun and EDA-Revalidation, so that business understands the data before monitoring it | First build implemented ² |
 | 16 | [Learning](16-learning.md) | `LR` | The Learning Centre: a page for every Learning Card of the master learning plan, by Learning Level and section, in five steps; links to cards anywhere; a silent count of the cards seen | To be specified ³ |
 | 17 | [Claude](17-claude.md) | `CL` | Claude through the MCP of Data Hub, endpoint by endpoint: what it finds, reads and does as the signed-in User, what it shows in an MCP App, the concepts and the how-to-use; version 2 ⁴ | To be specified |
+| 18 | [Applications](18-applications.md) | `AP` | Delivering data to applications: registering an Application with its Footprint, Feeds made from a Query in a Dock, the consent of every Owner, the Binding Rule per user pool, prepared or live delivery, Editions and withdrawal; not in v1 ⁵ | To be specified |
 
 ¹ The Confluence overview still listed this domain as "to be described", but its page already holds six decisions and ten rules.
 ² Not in the Confluence overview; proposed in [OP-MR-01](06-maturity-and-release.md#op-mr-01).
 ³ Not in the Confluence overview; asked for by Max on 2026-10-24 ([DEC-LR-01](16-learning.md#dec-lr-01)).
 ⁴ Not in the Confluence overview; asked for by Max on 2026-10-29, as the going-over of the endpoints that [DEC-CH-02](13-channels.md#dec-ch-02) foresees.
+⁵ Not in the Confluence overview; decided by Max on 2026-11-23, in the [interview on delivery to applications](../../workshops/2026-11-23-delivery-to-applications.md).
 
 The number of requirements per domain and status is in the [traceability matrix](../traceability.md).
 

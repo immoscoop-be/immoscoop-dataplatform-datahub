@@ -37,3 +37,12 @@ A change in Workspace, such as a removed Group membership or a suspended account
 **Status:** Implemented · **Applies to:** [DEC-PF-14](../technical/00-platform.md#dec-pf-14), [DEC-PF-16](../technical/00-platform.md#dec-pf-16)
 
 Nothing outside the branch `main` can change the prod project: GitHub Actions may only act as the prod Terraform identity on `main`, and as the uat Terraform identity only on `uat`. A pull request or a feature branch cannot act as either, even with a changed workflow. No service account key exists that could bypass this.
+
+<a id="nfr-sec-05"></a>
+### NFR-SEC-05 · An Application proves itself and its user on every question
+
+**Status:** Proposed · **Applies to:** [FR-AP-24](../functional/18-applications.md#fr-ap-24), [FR-AP-25](../functional/18-applications.md#fr-ap-25)
+
+Every question of an Application is checked on its own: its key, stored by Data Hub only as a hash, and, for an Application with users, the signature, expiry, user pool and claims of the Cognito token of its user, against the published keys of that pool. Nothing is trusted because of where the question comes from, as for every service ([NFR-SEC-01](#nfr-sec-01)). A key is shown once and never kept in clear.
+
+*Could, not in v1: set on 2026-11-23, by Max ([DEC-AP-18](../functional/18-applications.md#dec-ap-18)).*
