@@ -7,7 +7,7 @@
   - Its head: what the flow does, the object it is about as a link to it, Minimize and Close. Under it the progress, one
     segment per step.
   - Each step: done or open, its number and name, and folded what it holds or what it misses. The step open now unfolds:
-    What, Why and How, its Learning Card, and one button that goes to the place where the step is done and opens it for
+    Why, What and How (DEC-UX-334), its Learning Card, and one button that goes to the place where the step is done and opens it for
     editing, its field in focus and marked for a moment (DEC-UX-303). The Flow Box writes nothing itself: it is purely a
     guide; also "Nothing to add" is said on the page.
   - It stays open on every page of Data Hub until it is closed: in Query, on a Lens, on another Resource, in Messages,
@@ -130,10 +130,9 @@
    <button class="btn-primary" type="button" id="publish-btn" aria-haspopup="dialog"><i class="ph-fill ph-globe-simple" style="font-size:15px"></i>Publish</button>
    <div class="pub-warn" role="dialog" aria-labelledby="pw-title" data-pane-group="flow" data-pane="warn" hidden>
     <p class="pw-title" id="pw-title"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i>Not ready to publish yet</p>
-    <p class="pw-lead">2 of the 7 steps required to publish are still open:</p>
+    <p class="pw-lead">1 of the 6 steps required to publish is still open:</p>
     <ul class="pw-list">
      <li><a href="#" data-go="flow:open"><b>Pitfalls</b><span>Not written, and nobody said there are none</span></a></li>
-     <li><a href="#" data-go="flow:open"><b>Known Gaps</b><span>None written, and nobody said there are none</span></a></li>
     </ul>
     <div class="pw-acts">
      <button class="btn-primary" type="button" data-go="flow:open"><i class="ph-fill ph-signpost" style="font-size:15px"></i>Guide me</button>
@@ -257,7 +256,7 @@
 </aside>
 
 <!-- Minimized: a strip on the right edge with the progress; the strip opens it again (DEC-UX-301) -->
-<aside class="flowstrip" aria-label="Flow Box, minimized: describe and publish Weekly lead volume, 5 of 7 steps done" data-pane-group="flow" data-pane="min" hidden>
+<aside class="flowstrip" aria-label="Flow Box, minimized: describe and publish Weekly lead volume, 5 of 6 steps done" data-pane-group="flow" data-pane="min" hidden>
  <button class="icon-btn" type="button" data-go="flow:open" aria-label="Maximize" title="Maximize"><i class="ph ph-arrows-out-simple"></i></button>
  <span class="fb-icon" aria-hidden="true"><i class="ph-fill ph-signpost"></i></span>
  <span class="fs-count" aria-hidden="true"><b>5</b>/7</span>
@@ -281,7 +280,7 @@
 
 <script>
 // Prototype only: the steps of the Flow Box of the Owner Journey, the steps required to publish (DEC-MR-16), each with
-// What, Why and How, its Learning Card and the place where it is done. The real Flow Box reads them from the journey of
+// Why, What and How, its Learning Card and the place where it is done. The real Flow Box reads them from the journey of
 // the Resource, the same as Maturity, the publication and Claude (DEC-MR-15).
 const STEPS = [
   { name: 'Business Description', done: 'Written by An Claes, 12 Nov', missing: 'Not written yet', card: ['K5.14', 'The Business Description'], go: 'Go to Description',
@@ -308,22 +307,19 @@ const STEPS = [
     what: 'From which day the whole table can be relied on, and why not earlier; or from its first row.',
     why: 'A trend that starts too early compares with a start-up period that was never complete.',
     how: 'On Known Gaps, choose one of the two in the tile on top.' },
-  { name: 'Known Gaps', done: '1 gap, by An Claes, today', missing: 'None written, and nobody said there are none', card: ['K5.3', 'The Known Gaps of a Resource'], go: 'Add the Known Gaps',
-    what: 'Each hole in its data that you know of: a period, fields or rows that are missing or wrong.',
-    why: 'A gap nobody wrote down reads as a real drop, or a real zero.',
-    how: 'On Known Gaps, add each one with where it holds, or press Nothing to add when there are none.' },
   { name: 'Read back and publish', done: 'Published today', missing: 'After the steps above', card: ['K5.13', 'Publishing a Resource'], go: 'Publish',
     what: 'Read the whole card as a colleague will see it, and publish it.',
     why: 'Publishing is its first Confirmation: everyone who sees Credit leads sees it then, and it cannot be undone.',
     how: 'Publish opens the card read back, with the declaration to tick.' },
 ];
 // What is done, and which step is open, in each state of the prototype: on the page of the Resource the User is writing
-// the pitfalls (step 5); in Query they wrote them and look for the Known Gaps (step 7)
+// the pitfalls (step 5); in Query they look up from which day it is reliable (step 6). The Known Gaps are advised, so no
+// step of it (DEC-UX-333).
 const STATES = {
   resource: { done: [0, 1, 2, 3, 5], now: 4, here: 4 },
-  query: { done: [0, 1, 2, 3, 4, 5], now: 6, here: -1 },
-  ready: { done: [0, 1, 2, 3, 4, 5, 6], now: 7, here: -1 },
-  published: { done: [0, 1, 2, 3, 4, 5, 6, 7], now: -1, here: -1 },
+  query: { done: [0, 1, 2, 3, 4], now: 5, here: -1 },
+  ready: { done: [0, 1, 2, 3, 4, 5], now: 6, here: -1 },
+  published: { done: [0, 1, 2, 3, 4, 5, 6], now: -1, here: -1 },
 };
 let page = 'resource', flow = 'open', opened = null;
 const esc = s => s.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
@@ -349,7 +345,7 @@ function render() {
     return `<li class="fb-step${isDone ? ' done' : ''}${isNow ? ' now' : ''}${isOpen ? ' open' : ''}">
       <button class="fb-row" type="button" aria-expanded="${isOpen}" data-step="${i}">${icon}<span class="fb-name"><b>${esc(step.name)}</b><span class="fb-said">${warn ? '<i class="ph-fill ph-warning-circle" aria-hidden="true"></i>' : ''}<span>${mono(said)}</span></span></span><span class="sr-only">${isDone ? ', done' : ', open'}</span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
       <div class="fb-detail"${isOpen ? '' : ' hidden'}>${here}
-       <dl class="fb-wwh"><dt>What</dt><dd>${esc(step.what)}</dd><dt>Why</dt><dd>${esc(step.why)}</dd><dt>How</dt><dd>${esc(step.how)}</dd></dl>
+       <dl class="fb-wwh"><dt>Why</dt><dd>${esc(step.why)}</dd><dt>What</dt><dd>${esc(step.what)}</dd><dt>How</dt><dd>${esc(step.how)}</dd></dl>
        <a class="fb-card" href="learning-float.html"><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><span class="num">${step.card[0]}</span><span class="tt">${esc(step.card[1])}</span><i class="ph ph-arrow-up-right" aria-hidden="true"></i></a>
        ${last && !isNow ? '' : `<a class="${isNow ? 'btn-primary' : 'btn-quiet outline'} fb-go" href="${last ? 'resource-publish.html' : '?page=resource'}">${esc(goLabel)}<i class="ph ph-arrow-right" aria-hidden="true"></i></a>`}
       </div></li>`;

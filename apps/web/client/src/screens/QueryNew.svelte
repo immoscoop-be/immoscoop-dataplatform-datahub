@@ -141,6 +141,7 @@
   <h1 class="page-title">{t('query.new')}</h1>
 </header>
 
+<div class="room">
 <div class="halves">
   <section class="card own" aria-label={t('query.yourQuery')}>
     <h2>{t('query.yourQuery')}</h2>
@@ -201,6 +202,7 @@
     {#if chosen.length}<LensSuggestions found={lenses} resources={chosen} {collections} />{/if}
   </section>
 </div>
+</div>
 
 <div class="foot">
   {#if failed}<p class="failed" role="alert">{t('query.startFailed')}</p>{/if}
@@ -210,6 +212,8 @@
 
 <style>
   .head { margin-top: 8px; }
+  /* The halves follow the room the page has, not the window, which the panel and the Flow Box share (DEC-UX-336). */
+  .room { container-type: inline-size; }
   .halves { display: grid; grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); gap: 14px; margin-top: 18px; align-items: start; }
   .card { border-radius: var(--radius-xl); padding: 18px 20px 20px; }
   h2 { font-size: var(--text-section); font-weight: var(--weight-medium); margin: 0 0 12px; }
@@ -218,7 +222,8 @@
     background: var(--surface-solid); border: 1px solid var(--tint-active); border-radius: var(--radius-field); padding: 8px 10px; }
   textarea { resize: vertical; }
   input:focus, textarea:focus { outline: 2px solid var(--text-secondary); outline-offset: 1px; }
-  .resources { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+  /* One column no wider than the card: a long name is cut, it never pushes the row out of the card. */
+  .resources { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 7px; }
   .resource { display: flex; align-items: center; gap: 10px; padding: 9px 10px 9px 16px; border-radius: var(--radius-md); background: var(--surface-sub); }
   .what { flex: 1; min-width: 0; display: flex; flex-direction: column; }
   .name { font-size: var(--text-small); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -243,5 +248,5 @@
   .none { margin: 0; padding: 14px 16px; border-radius: var(--radius-md); background: var(--surface-sub); font-size: var(--text-small); color: var(--text-secondary); }
   .foot { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
   .failed { flex: 1 1 100%; text-align: right; margin: 0; font-size: var(--text-small); color: var(--signal-urgent); }
-  @media (max-width: 900px) { .halves { grid-template-columns: 1fr; } }
+  @container (max-width: 720px) { .halves { grid-template-columns: minmax(0, 1fr); } }
 </style>

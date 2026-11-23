@@ -11,7 +11,8 @@
    * of its own, and its arrow unfolds what it holds (Tree, DEC-UX-10). The group whose page is open
    * has an outline. Its icon is one of the interface, or its own mark, such as the icon of a
    * Collection. "Without a Collection" is in the urgent red: it is no Collection, and it waits for the
-   * Data Team (DEC-UX-16). Something dragged onto its head goes to the top of the Collection (DEC-UX-157):
+   * Data Team (DEC-UX-16); how many wait stands before its name (DEC-UX-335). Something dragged onto its head goes to
+   * the top of the Collection (DEC-UX-157):
    * `drop` marks it, and what is left of the props goes on the head.
    */
   let {
@@ -22,6 +23,7 @@
     urgent = false,
     current = false,
     open = $bindable(true),
+    count,
     meta,
     children,
     drop = false,
@@ -34,6 +36,8 @@
     urgent?: boolean;
     current?: boolean;
     open?: boolean;
+    /** How many it holds, before its name, such as what waits (DEC-UX-335). */
+    count?: Snippet;
     meta: Snippet;
     children: Snippet;
     /** What is dragged would go here. */
@@ -46,7 +50,9 @@
     {#snippet head()}
       <svelte:element this={href ? 'a' : 'div'} {...rest} class="link" class:drop {href} aria-current={href && current ? 'page' : undefined}>
         {#if mark}{@render mark()}{:else if icon}<span class="icon"><Icon name={icon} /></span>{/if}
-        <span class="text"><span class="item-title name" title={name}>{name}</span><span class="meta">{@render meta()}</span></span>
+        <span class="text"
+          ><span class="title-line">{#if count}{@render count()}{/if}<span class="item-title name" title={name}>{name}</span></span><span class="meta">{@render meta()}</span></span
+        >
       </svelte:element>
     {/snippet}
     <div class="children">{@render children()}</div>
@@ -62,7 +68,8 @@
   .link.drop { background: var(--tint-hover); outline: 1.5px dashed var(--text-muted); }
   .icon { width: 26px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; color: var(--text-secondary); }
   .text { flex: 1; min-width: 0; }
-  .name { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .title-line { display: flex; align-items: center; gap: 7px; min-width: 0; }
+  .name { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .meta { display: flex; align-items: center; gap: 5px; }
   .children { display: grid; grid-template-columns: minmax(0, 1fr); padding: 0 6px 8px; }
   .urgent { background: color-mix(in srgb, var(--signal-urgent) 9%, var(--surface-solid)); outline: 1px solid color-mix(in srgb, var(--signal-urgent) 35%, transparent); }

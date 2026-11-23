@@ -25,13 +25,16 @@ function box(props: Partial<Parameters<typeof render<typeof FlowBox>>[1] & objec
 }
 
 describe('a Flow Box (DEC-UX-299)', () => {
-  it('names its flow and its object, with its progress, and opens on the step to do now with What, Why and How', () => {
+  it('names its flow and its object, with its progress, and opens on the step to do now with Why, What and How, in that order (DEC-UX-334)', () => {
     box();
     const aside = within(screen.getByRole('complementary', { name: 'Describe and publish · Weekly lead volume' }));
     expect(aside.getByText('1 of 3 done')).toBeTruthy();
     expect(aside.getByRole('button', { name: /^Step b/ }).getAttribute('aria-expanded')).toBe('true');
     expect(aside.getByRole('button', { name: /^Step a/ }).getAttribute('aria-expanded')).toBe('false');
     expect(aside.getByText('Why of b')).toBeTruthy();
+    const terms = [...(aside.getByText('Why of b').closest('dl')?.querySelectorAll('dt') ?? [])].map((term) => term.textContent);
+    expect(terms).toHaveLength(3);
+    expect(aside.getByText('Why of b').previousElementSibling?.textContent).toBe(terms[0]);
     expect(aside.getByText('Open op de pagina')).toBeTruthy();
     expect(aside.getByText('Two to go.')).toBeTruthy();
   });

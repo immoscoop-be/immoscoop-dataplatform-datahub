@@ -1,5 +1,4 @@
 <script lang="ts">
-  import Button from '@datahub/ui/primitives/Button.svelte';
   import type { GapScope } from '@datahub/contracts/gaps';
   import { hasScope } from '@datahub/contracts/gaps';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
@@ -16,6 +15,8 @@
    * Unit and the Data Team add a gap from the line at the bottom, which opens a form, and change or remove one on its
    * own line, without editing the others; every change goes into its Log. The why is plain text. A gap proposed
    * elsewhere, such as by Dig into (FR-ED-20), opens in the form of a new gap, filled in, for the User to save or not.
+   * The Known Gaps are advised, not required to publish: without one, a Resource has none known, and there is no
+   * "Nothing to add" (DEC-MR-22, DEC-UX-333).
    */
   let {
     gaps,
@@ -27,8 +28,6 @@
     onremove,
     adding = $bindable(false),
     proposal = $bindable(null),
-    none = null,
-    onnothing,
   }: {
     gaps: readonly KnownGap[];
     /** The fields of the Resource, to narrow a gap down by. */
@@ -44,10 +43,6 @@
     adding?: boolean;
     /** The why and the scope the new gap is filled in with, as proposed elsewhere; gone once it is saved or cancelled. */
     proposal?: GapProposal | null;
-    /** Who said there are none, and when, while none is written (DEC-MR-16). */
-    none?: { by: string; at: string } | null;
-    /** Says there are none to add; answers whether it worked. Left out for who may not. */
-    onnothing?: () => Promise<boolean>;
   } = $props();
 
   let changing: string | undefined = $state();
@@ -125,15 +120,8 @@
       </li>
     {/each}
   </ul>
-{:else if none}
-  <p class="empty">{t('overview.nothing.gaps.said', { by: none.by, date: new Intl.DateTimeFormat(currentLanguage() === 'nl' ? 'nl-BE' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(none.at)) })}</p>
 {:else}
   <p class="empty">{t('gaps.none')}</p>
-  <!-- Required to publish: the gaps, or "Nothing to add", kept with who and when (DEC-MR-16). -->
-  {#if canEdit && onnothing}
-    <p class="why">{t('overview.nothing.gaps')}</p>
-    <div class="nothing"><Button variant="outline" disabled={busy} onclick={() => attempt(onnothing)}><Icon name="check" />{t('overview.nothing')}</Button></div>
-  {/if}
 {/if}
 
 {#if canEdit}
@@ -176,6 +164,4 @@
   .empty { margin: 0; font-size: var(--text-small); color: var(--text-muted); line-height: 1.5; }
   .help { margin: 8px 0 0; font-size: var(--text-meta); color: var(--text-muted); line-height: 1.5; }
   .failed { margin: 8px 0 0; font-size: var(--text-small); color: var(--signal-urgent); }
-  .why { margin: 4px 0 8px; font-size: var(--text-meta); color: var(--text-muted); }
-  .nothing { margin-bottom: 12px; }
 </style>

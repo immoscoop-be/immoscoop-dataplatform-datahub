@@ -356,8 +356,8 @@
     change: (known: KnownGap, text: string, scope: GapScope | null) => gap(() => catalogue.changeGap(resource.id, known.id, text, scope)),
     remove: (known: KnownGap) => gap(() => catalogue.removeGap(resource.id, known.id)),
   };
-  /** Nothing to add to its pitfalls or Known Gaps, kept with who and when (DEC-MR-16); the Resource is read again. */
-  const nothing = (step: 'pitfalls' | 'gaps') => gap(() => catalogue.recordStep(resource.id, step, 'nothing'));
+  /** Nothing to add to its pitfalls, kept with who and when (DEC-MR-16); the Known Gaps have none (DEC-MR-22). The Resource is read again. */
+  const nothing = (step: 'pitfalls') => gap(() => catalogue.recordStep(resource.id, step, 'nothing'));
 
   async function saveFields(fields: { name: string; businessDescription: string }[]): Promise<boolean> {
     try {

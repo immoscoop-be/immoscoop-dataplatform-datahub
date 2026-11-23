@@ -229,6 +229,9 @@ td { padding: 10px; border-top: 1px solid var(--tint-hover); vertical-align: top
 .tree-link:focus-visible, .tree-toggle:focus-visible { outline: 2px solid var(--text-secondary); }
 .tree-group.current { outline: 1.5px solid var(--text-muted); }
 .tree-name { flex: 1; min-width: 0; }
+/* How many a group of the tree holds, before its name, such as what waits (DEC-UX-335) */
+.tree-title-line { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.tree-title-line .item-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .caret { color: var(--text-muted); font-size: 14px; transition: transform var(--motion-fold); }
 .tree-group:not(.open) .caret { transform: rotate(-90deg); }
 .tree-children { display: grid; grid-template-columns: minmax(0, 1fr); padding: 0 6px 8px; }
@@ -692,7 +695,10 @@ button.menu-item { width: 100%; border: 0; background: none; font: var(--text-sm
 .lens-card.best { outline: 1.5px solid var(--text-muted); }
 .pill-best { color: var(--surface-solid); background: var(--text-primary); }
 /* Make it a lens: left the lens, right its size check (DEC-UX-25) */
-.make-lens { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 14px; margin-top: 14px; align-items: start; }
+/* Make it a Lens: the step about 70% of the main area, its steps and size check about 30%, never wider than their
+   column; one column when the main area is narrow, whatever the window (DEC-UX-336) */
+.make-lens { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 3fr); gap: 14px; margin-top: 14px; align-items: start; container-type: inline-size; }
+@container (max-width: 720px) { .make-lens { grid-template-columns: minmax(0, 1fr); } }
 .size-state { display: flex; gap: 10px; align-items: flex-start; margin-top: 12px; padding: 10px 12px; border-radius: var(--radius-md); font-size: var(--text-small); line-height: 1.5; }
 .size-state p { margin: 0; }
 .size-state b { font-weight: var(--weight-medium); }
@@ -2295,9 +2301,9 @@ svg.mp, svg.mp-g { display: block; width: 100%; height: auto; overflow: visible;
 .lf-option .lf-text { color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Making a Lens as a flow (DEC-UX-229): one step at a time on the left, the steps with how far each is above the size check */
-.ml-side { display: grid; gap: 14px; align-items: start; }
+.ml-side { display: grid; gap: 14px; align-items: start; min-width: 0; }
 .ml-steps { border-radius: var(--radius-xl); padding: 8px; display: grid; gap: 2px; }
-.ml-stepbtn { all: unset; box-sizing: border-box; display: flex; align-items: flex-start; gap: 10px; padding: 9px 10px; border-radius: var(--radius-md); cursor: pointer; }
+.ml-stepbtn { all: unset; box-sizing: border-box; min-width: 0; display: flex; align-items: flex-start; gap: 10px; padding: 9px 10px; border-radius: var(--radius-md); cursor: pointer; }
 .ml-stepbtn:hover { background: var(--tint-hover); }
 .ml-stepbtn.on { background: var(--surface-sub); }
 .ml-stepbtn:focus-visible { outline: 2px solid var(--text-secondary); }
