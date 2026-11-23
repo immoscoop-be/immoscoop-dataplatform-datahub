@@ -118,6 +118,7 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="synchronisation"></a>**Synchronisation** | Pulling in the Groups a User is in from Google, when they sign in ([DEC-UM-08](requirements/functional/02-user-management.md#dec-um-08)). No longer done since Groups are kept in Data Hub ([DEC-UM-10](requirements/functional/02-user-management.md#dec-um-10)). | [User management](requirements/functional/02-user-management.md#terms) |
 | <a id="tone"></a>**Tone** | The label an Owner gives a Rule, which sets how its Findings look: opportunity, informative, attention or problem. | [FR-CM-13](requirements/functional/08-checks-and-monitoring.md#fr-cm-13) |
 | <a id="user"></a>**User** | Someone with an Immoscoop Google Workspace account who has logged in to Data Hub at least once. | [User management](requirements/functional/02-user-management.md#terms) |
+| <a id="welcome"></a>**Welcome** | The screen where Data Hub opens, for every User: a search that brings them to the Lenses that answer their question, each with why it comes up, and the Lenses they used last and the newest. The first item of the rail. | [DEC-UX-333](design/principles.md#dec-ux-333) |
 
 Data Hub, Domain Hub, Colleciónes, Workspace and the names of products such as BigQuery are proper names and are capitalised as such.
 

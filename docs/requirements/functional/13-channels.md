@@ -104,6 +104,8 @@ Updating that documentation is part of every feature.
 
 The web app shows under Charts every chart semgraph draws, grouped by the question it answers, so that a User sees which chart answers theirs ([DEC-UX-89](../../design/principles.md#dec-ux-89), [DEC-DH-64](../../overview/data-hub.md#dec-dh-64)). A chart opened shows its icon, name and the question it answers; its examples, each drawn by semgraph in the theme of the page, with the warning or the caution semgraph gives, or why it refuses one; and the questions it is for, what to use instead, what it needs and where a User meets it. All of it comes from semgraph, in the language of the User; the web app draws no chart itself ([DEC-PF-23](../technical/00-platform.md#dec-pf-23)).
 
+*Note of 2026-11-23: Charts left the rail, as the gallery of semgraph is not for production ([DEC-UX-351](../../design/principles.md#dec-ux-351)); where it can still be reached is [OP-UX-127](../../design/principles.md#op-ux-127).*
+
 ## Open points
 
 - [x] <a id="op-ch-01"></a>**OP-CH-01** · Decide where the documentation of [FR-CH-04](#fr-ch-04) lives and how it is served: as part of `docs/`, which describes what Data Hub must do, or as a guide of its own; and how the web app and the MCP server link to the right passage. *Raised while taking in the workshop of 2026-10-22.* *Decided on 2026-10-28, by Max: the Learning Cards in Data Hub are the documentation ([DEC-CH-04](#dec-ch-04)).*

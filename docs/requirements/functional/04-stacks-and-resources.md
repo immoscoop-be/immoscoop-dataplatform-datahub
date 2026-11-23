@@ -819,6 +819,8 @@ A new query has a question: what the User wants to know, in a sentence. Its word
 
 *Note of 2026-10-29, on building part 6d: the search of the start screen of Collections matches words the same way ([TR-CO-06](../technical/03-collections.md#tr-co-06)). Typos and half-remembered names, by trigrams ([Search](#search)), are not built yet, for a new query nor for the start screen.*
 
+*Note of 2026-11-23: the search on Welcome matches the same way, and the searches that led colleagues to a Lens count too ([FR-LE-21](09-lenses.md#fr-le-21)).*
+
 <a id="fr-sr-49"></a>
 ### FR-SR-49 · Publishing says who will see the Resource and asks for the Confirmation
 

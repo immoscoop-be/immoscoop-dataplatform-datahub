@@ -162,6 +162,22 @@ document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', 
   e.preventDefault();
   if (b.getAttribute('aria-disabled') !== 'true') go(b.dataset.go);
 }));
+// Welcome (DEC-UX-333): a question sent with Enter opens the screen up into the Lenses that answer it; in the prototype
+// every question gives the same results, and one that starts with "how do agencies" finds none
+document.querySelectorAll('form.wl-find').forEach(f => f.addEventListener('submit', e => {
+  e.preventDefault();
+  const q = f.querySelector('input')?.value.trim().toLowerCase() || '';
+  go(q.startsWith('how do agencies') ? 'search:none' : 'search:results');
+}));
+// Welcome (DEC-UX-348): the filter Recently used. Before a search it shows every Lens the User ran, or, off, leaves the
+// search alone in the middle; on the results it keeps only the Lenses the User ran. ?recent=off opens with it off
+document.querySelectorAll('[data-wl-recent]').forEach(btn => btn.addEventListener('click', () => {
+  const on = btn.getAttribute('aria-pressed') !== 'true';
+  btn.setAttribute('aria-pressed', String(on));
+  btn.closest('.wl-start')?.classList.toggle('recent-on', on);
+  btn.closest('.wl-results')?.classList.toggle('only-recent', on);
+}));
+if (new URLSearchParams(location.search).get('recent') === 'off') document.querySelector('.wl-start [data-wl-recent]')?.click();
 // A group marked data-scroll brings what it switches back to the top
 document.querySelectorAll('[data-group][data-scroll]').forEach(g => g.querySelectorAll('[data-target]').forEach(b => b.addEventListener('click', () => {
   const box = g.closest('.float-win')?.querySelector('.float-body') || g.closest('.main');
@@ -1991,9 +2007,12 @@ document.addEventListener('click', e => {
     { title: 'Saved searches by price band', meta: '⌘4', href: 'query.html' },
   ];
   const GO = [
-    { icon: 'ph-fill ph-stack', title: 'Collections', href: 'collections-start.html', words: 'home start' },
+    // Go to follows the rail (DEC-UX-351); Charts left it and shows here for the Data Team only, as OP-UX-127 proposes
+    { icon: 'ph-fill ph-house-simple', title: 'Welcome', href: 'welcome.html', words: 'home start search question lenses' },
+    { icon: 'ph-fill ph-stack', title: 'Collections', href: 'collections-start.html', words: 'shelves resources' },
     { icon: 'ph-fill ph-terminal-window', title: 'Query', href: 'query-new.html', words: 'sql' },
-    { icon: 'ph-fill ph-chart-bar', title: 'Charts', href: 'charts.html', words: 'semgraph gallery' },
+    { icon: 'ph-fill ph-binoculars', title: 'EDA', href: 'eda.html', words: 'explore exploration data analysis' },
+    { icon: 'ph-fill ph-chart-bar', title: 'Charts', href: 'charts.html', for: 'datateam', words: 'semgraph gallery' },
     { icon: 'ph-fill ph-chat-circle-text', title: 'Messages', href: 'messages.html', meta: '3 unread', words: 'message centre inbox' },
     { icon: 'ph-fill ph-graduation-cap', title: 'Learning Centre', href: 'learning-start.html', words: 'cards learn' },
     { icon: 'ph ph-user-circle', title: 'My page', href: 'my-page.html', words: 'profile background language slack' },

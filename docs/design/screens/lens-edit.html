@@ -9,8 +9,10 @@
   Under Save, small: "Delete this lens…" (DEC-UX-185, DEC-LE-21), which opens a sheet: what deleting does, explained
   first, with how many colleagues used it in the last 30 days, also from Excel; why, optional; and "Keep it" or
   "Delete for good". A deleted Lens: lens-deleted.html.
-  Requirements: FR-LE-06, FR-LE-18, FR-LE-19
-  Decisions: DEC-UX-231, DEC-UX-229, DEC-UX-227, DEC-UX-162, DEC-UX-174, DEC-UX-185, DEC-UX-27, DEC-LE-04, DEC-LE-16, DEC-LE-21.
+  More questions it answers, in What it is, kept from how colleagues found it or written (OP-UX-124); its example, in Its
+  fields, taken from a run with its defaults for a Lens made before (DEC-UX-345).
+  Requirements: FR-LE-27, FR-LE-29, FR-LE-06, FR-LE-18, FR-LE-19
+  Decisions: DEC-UX-345, DEC-UX-231, DEC-UX-229, DEC-UX-227, DEC-UX-162, DEC-UX-174, DEC-UX-185, DEC-UX-27, DEC-LE-04, DEC-LE-16, DEC-LE-21.
   Related screens: lens.html (Edit more), lens-new.html (Make it a lens), lens-deleted.html.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -18,7 +20,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
 <link rel="stylesheet" href="../tokens.css">
@@ -29,15 +31,17 @@
 <div class="app panel-open">
 <nav class="rail" aria-label="Main navigation">
   <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <a class="nav-btn" href="welcome.html" data-label="Welcome" aria-label="Welcome"><i class="ph-fill ph-house-simple"></i></a>
   <button class="nav-btn active" data-label="Collections" aria-label="Collections" aria-current="page"><i class="ph-fill ph-stack"></i><span class="flare top"></span><span class="flare bottom"></span></button>
   <a class="nav-btn" href="query.html" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></a>
-  <a class="nav-btn" href="#" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
-  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
-  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <a class="nav-btn" href="eda.html" data-label="EDA" aria-label="EDA"><i class="ph-fill ph-binoculars"></i></a>
   <a class="nav-btn nav-admin" href="admin-webhooks.html" data-label="Admin" aria-label="Admin, for the Data Team" data-for="datateam"><i class="ph-fill ph-toolbox"></i></a>
   <div class="spacer"></div>
-  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <button class="nav-btn" type="button" data-quick-open data-label="Quick window · ⌘⇧P" aria-label="Open the quick window: ⌘⇧P or ⌘K" aria-keyshortcuts="Meta+Shift+P Meta+K"><i class="ph-fill ph-command"></i></button>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
   <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">MP</a>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
 </nav>
 <aside class="panel" aria-label="Collections">
  <div class="panel-inner">
@@ -121,7 +125,21 @@
   <h2 id="ml-lens" class="nq-title">What it is</h2>
   <label class="field" style="margin-top:12px"><span>Name</span><input value="Leads per source name" required></label>
   <label class="field"><span>The question it answers</span><input value="Which sources bring the most leads?"></label>
-  <p class="meta" style="display:block;line-height:1.5;margin:-6px 0 12px">Its words help colleagues find this Lens when they start a query.</p>
+  <!-- More questions it answers, taken from how colleagues found it or written (OP-UX-124) -->
+  <div class="field eq-field"><span>More questions it answers</span>
+   <ul class="eq-list">
+    <li><span>“Where do our credit leads come from?”</span><span class="meta">from a search of Karel Leys</span><button class="icon-btn" type="button" aria-label="Remove this question"><i class="ph ph-x"></i></button></li>
+    <li><span>“Which channel brings the most leads?”</span><span class="meta">from a search of Jonas De Smet</span><button class="icon-btn" type="button" aria-label="Remove this question"><i class="ph ph-x"></i></button></li>
+   </ul>
+   <div class="eq-pick">
+    <span class="meta">From how colleagues found it, the most frequent first</span>
+    <button class="eq-sugg" type="button"><i class="ph ph-plus"></i>“leads per channel last week”<span class="count">4</span></button>
+    <button class="eq-sugg" type="button"><i class="ph ph-plus"></i>“welke bron brengt de meeste leads”<span class="count">3</span></button>
+    <button class="eq-sugg" type="button"><i class="ph ph-plus"></i>“top lead sources”<span class="count">2</span></button>
+    <button class="text-link" type="button"><i class="ph ph-pencil-simple"></i><span>Write one</span></button>
+   </div>
+  </div>
+  <p class="meta" style="display:block;line-height:1.5;margin:-6px 0 12px">Its questions help colleagues find this Lens on Welcome and when they start a query; the searches that led to it count too.</p>
   <label class="field"><span>What it shows</span><textarea rows="2">How many leads each lead source brings in, from a week you choose.</textarea></label>
   <label class="field" style="margin-bottom:4px"><span>What it does, step by step</span><textarea rows="3">Takes the weekly lead volume between From and To.
 Adds the name of each lead source.
@@ -194,15 +212,19 @@ Adds up the leads per source and puts the largest first.</textarea></label>
     </div>
    </div>
   </div>
+  <!-- Its example (DEC-UX-345): a Lens made before has none; its Owner Unit takes one from a run with its defaults -->
+  <div class="ex-field">
+   <div class="ex-none"><i class="ph ph-table" aria-hidden="true"></i><p><b>No example yet.</b> This Lens was made before Lenses had one, so its page opens empty until someone runs it. Take the first rows of a run with its defaults as its example: colleagues see them on its page before they run it, not today's figures.</p><button class="btn-quiet outline" type="button"><i class="ph-fill ph-play"></i>Take one · 80 MB</button></div>
+  </div>
   <div class="ml-nav"><button class="btn-quiet outline" type="button" data-step-go="3"><i class="ph ph-arrow-left"></i>Back</button><span style="flex:1"></span><span class="meta">Save on the right, when it reads right.</span></div>
   </div>
  </section>
  <div class="ml-side">
  <nav class="card ml-steps" aria-label="Steps of the Lens" data-group="step">
-  <button class="ml-stepbtn on" type="button" data-target="1" aria-selected="true"><span class="ml-n">1</span><span class="ml-t"><b>What it is</b><span class="meta">Leads per source name · Credit leads</span></span></button>
+  <button class="ml-stepbtn on" type="button" data-target="1" aria-selected="true"><span class="ml-n">1</span><span class="ml-t"><b>What it is</b><span class="meta">Leads per source name · Credit leads · 3 questions</span></span></button>
   <button class="ml-stepbtn" type="button" data-target="2" aria-selected="false"><span class="ml-n">2</span><span class="ml-t"><b>Tags</b><span class="meta">3 tags</span></span></button>
   <button class="ml-stepbtn" type="button" data-target="3" aria-selected="false"><span class="ml-n">3</span><span class="ml-t"><b>Parameters</b><span class="meta">3 Parameters</span></span></button>
-  <button class="ml-stepbtn" type="button" data-target="4" aria-selected="false"><span class="ml-n">4</span><span class="ml-t"><b>Its fields</b><span class="meta">5 fields · <span class="ml-warn">1 without a description</span></span></span></button>
+  <button class="ml-stepbtn" type="button" data-target="4" aria-selected="false"><span class="ml-n">4</span><span class="ml-t"><b>Its fields</b><span class="meta">5 fields · <span class="ml-warn">1 without a description</span> · no example</span></span></button>
  </nav>
  <aside class="card nq-right" aria-labelledby="le-size">
   <h2 id="le-size" class="nq-title">Size</h2>

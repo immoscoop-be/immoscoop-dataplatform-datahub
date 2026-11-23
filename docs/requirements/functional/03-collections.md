@@ -307,6 +307,8 @@ Lenses have no section of their own; everything is reached through its Collectio
 
 *Note of 2026-10-29, on building part 6d: its search is built as [TR-CO-06](../technical/03-collections.md#tr-co-06).*
 
+*Note of 2026-11-23: its search moved to Welcome ([FR-LE-21](09-lenses.md#fr-le-21)), and New Lenses to the foot of Welcome ([FR-LE-20](09-lenses.md#fr-le-20)); the start screen of Collections keeps its intro, Yours and Recently ([DEC-UX-344](../../design/principles.md#dec-ux-344)).*
+
 ## Folders
 
 How a Collection keeps a growing number of Resources and Lenses easy to oversee ([DEC-CO-26](#dec-co-26)). The screens are in the [design](../../design/principles.md#page-of-a-collection). Specified on 2026-10-31, when the design was approved.

@@ -255,10 +255,12 @@ td { padding: 10px; border-top: 1px solid var(--tint-hover); vertical-align: top
 /* One line per name: too long ends in an ellipsis, and shows in full on hover */
 .clip, .tree-name .item-title, .panel .list-item .item-title { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* Prototype only: what a role sees. <html data-role="datateam|owner|colleague">; data-for lists the roles that see an element */
+/* Prototype only: what a role sees. <html data-role="datateam|owner|colleague|lensuser">; data-for lists the roles that see an
+   element. lensuser is a User of the Permission group Lens user, who only finds and runs Lenses (DEC-PL-07) */
 html[data-role="datateam"] [data-for]:not([data-for~="datateam"]),
 html[data-role="owner"] [data-for]:not([data-for~="owner"]),
-html[data-role="colleague"] [data-for]:not([data-for~="colleague"]) { display: none !important; }
+html[data-role="colleague"] [data-for]:not([data-for~="colleague"]),
+html[data-role="lensuser"] [data-for]:not([data-for~="lensuser"]) { display: none !important; }
 .role-switch, .proto-switch { position: fixed; right: 34px; bottom: 26px; z-index: 20; display: flex; align-items: center; gap: 4px; padding: 5px 6px 5px 12px;
   border-radius: var(--radius-pill); background: var(--surface-solid); outline: 1px dashed var(--text-muted); box-shadow: 0 6px 24px rgba(0,0,0,.08); font-size: var(--text-meta); color: var(--text-muted); }
 .role-switch .seg, .proto-switch .seg { font-size: var(--text-meta); }
@@ -2706,6 +2708,7 @@ body.oj-plain .oj-tag { visibility: hidden; }
   .mf-key { min-height: 44px; }
   .mf-foot #mf-saves { flex: none; min-width: 0; }
   .mf-foot .btn-primary { width: 100%; justify-content: center; min-height: 44px; }
+
 }
 
 /* The page of a Project: the foot of its Danger zone */
@@ -2801,3 +2804,143 @@ html[data-bg] :is(.flowbox, .flowstrip) { -webkit-backdrop-filter: var(--blur-fr
 .pw-list span { font-size: var(--text-meta); color: var(--text-muted); }
 .pw-acts { display: flex; flex-wrap: wrap; gap: 8px; }
 .pw-claude { display: block; margin: 0; line-height: 1.5; }
+
+/* The example of a Lens (DEC-UX-345): rows of the result its query showed, confirmed by its author when making it; shown on
+   Welcome and, faded, on its page before its first run */
+.ex-field { margin-top: 18px; }
+.ex-check { display: flex; align-items: flex-start; gap: 10px; font-size: var(--text-small); cursor: pointer; }
+.ex-check input { margin-top: 3px; }
+.ex-check b { font-weight: var(--weight-medium); }
+.ex-check .meta { display: block; margin-top: 3px; line-height: 1.5; }
+.ex-rows { margin-top: 10px; padding: 10px 14px; border-radius: var(--radius-md); background: var(--surface-sub); overflow-x: auto; }
+.ex-rows table { width: 100%; border-collapse: collapse; font-size: var(--text-small); }
+.ex-rows th { padding: 2px 12px 7px 0; border-bottom: 1px solid var(--tint-active); text-align: left; font-weight: var(--weight-medium); color: var(--text-secondary); white-space: nowrap; }
+.ex-rows th small { display: block; font-size: var(--text-meta); font-weight: var(--weight-regular); color: var(--text-muted); }
+.ex-rows td { padding: 6px 12px 6px 0; border-bottom: 1px solid var(--tint-hover); white-space: nowrap; }
+.ex-rows tbody tr:last-child td { border-bottom: 0; }
+.ex-rows .num { text-align: right; font-variant-numeric: tabular-nums; }
+.ex-rows.faded { opacity: .55; }
+.result-bar .meta > i { font-size: 13px; }
+
+/* Welcome, where Data Hub opens (DEC-UX-333): no panel, a search for Lenses that takes the screen, and at its foot, small,
+   the Lenses the User used last and the newest. A search opens the screen up into the Lenses that answer, as cards
+   (DEC-UX-346): the thin icon of their Collection in the upper right corner, the question with the words it shares with
+   the search in bold, the Lens with its Level, the searches of colleagues quoted (DEC-UX-347), and its Collection and use
+   as chips. No colour per Collection (DEC-CO-23) */
+.main.welcome { display: flex; flex-direction: column; }
+.wl-start { flex: 1; display: flex; flex-direction: column; min-height: 100%; }
+.wl-hero { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 48px 0 32px; }
+/* With Recently used on, the search moves up and the Lenses the User ran fill the screen under it (DEC-UX-348) */
+.wl-start.recent-on .wl-hero { flex: none; padding: 28px 0 8px; }
+.wl-start:not(.recent-on) .wl-recent { display: none; }
+.wl-filters { display: flex; justify-content: center; gap: 8px; margin-top: 16px; }
+.wl-results > .wl-filters { justify-content: flex-start; margin-top: 14px; }
+.wl-filter { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 0; border-radius: var(--radius-pill); background: var(--surface-soft); outline: 1px dashed var(--tint-active);
+  font: var(--text-small) var(--font-family); color: var(--text-secondary); cursor: pointer; }
+.wl-filter i { font-size: 14px; }
+.wl-filter[aria-pressed="true"] { background: var(--text-primary); color: var(--surface-solid); outline: 0; }
+.wl-filter[aria-pressed="true"] .count { background: color-mix(in srgb, var(--surface-solid) 22%, transparent); color: var(--surface-solid); }
+.wl-recent { width: min(1320px, 100%); margin: 0 auto 24px; }
+.wl-recent .wl-cards { margin-top: 10px; }
+.wl-recent-head { justify-content: center; }
+.wl-ran { margin-left: auto; }
+/* With Recently used on, a search finds only the Lenses the User ran */
+.wl-results.only-recent .wl-card:not([data-recent]) { display: none; }
+.wl-hero h1 { font-size: 32px; font-weight: var(--weight-medium); letter-spacing: -.01em; margin: 0; }
+.wl-hero > p { font-size: var(--text-body); color: var(--text-secondary); margin: 10px 0 0; }
+.wl-find { display: flex; align-items: center; gap: 12px; width: min(720px, 100%); margin: 28px auto 0; padding: 7px 7px 7px 22px;
+  border-radius: var(--radius-pill); background: var(--surface-solid); box-shadow: 0 14px 44px -20px color-mix(in srgb, var(--text-primary) 40%, transparent); }
+.wl-find > i { font-size: 20px; color: var(--text-secondary); flex: none; }
+.wl-find input { flex: 1; min-width: 0; border: 0; background: none; outline: none; padding: 10px 0; font: 16px var(--font-family); color: var(--text-primary); }
+.wl-find input::placeholder { color: var(--text-muted); }
+.wl-find .btn-primary { border-radius: var(--radius-pill); padding: 10px 18px; display: inline-flex; align-items: center; gap: 6px; flex: none; }
+.wl-find.top { width: 100%; margin: 0; padding: 4px 6px 4px 18px; box-shadow: none; }
+.wl-find.top input { font-size: var(--text-section); padding: 8px 0; }
+.wl-find.top .text-link { padding: 0 10px; flex: none; }
+.wl-note { justify-content: center; margin-top: 12px; }
+.wl-foot { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px 18px; width: min(1320px, 100%); margin: auto auto 0; padding-top: 14px; border-top: 1px solid var(--tint-hover); }
+.wl-foot-label { font-size: var(--text-meta); font-weight: var(--weight-medium); color: var(--text-muted); }
+.wl-foot .wl-link { margin: 0; }
+.wl-foot-more { font-size: var(--text-meta); }
+.wl-link { display: flex; align-items: center; gap: 8px; margin: 0 -8px; padding: 5px 8px; border-radius: var(--radius-sm); color: inherit; text-decoration: none; font-size: var(--text-small); }
+.wl-link:hover { background: var(--tint-hover); }
+.wl-link .clip { flex: 1; }
+.wl-link .meta { flex: none; }
+.wl-results { width: min(1320px, 100%); margin: 0 auto; }
+.wl-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }
+.wl-card { position: relative; display: flex; flex-direction: column; gap: 8px; min-height: 250px; padding: 22px 22px 18px; border-radius: var(--radius-lg); background: var(--surface-solid); color: inherit; text-decoration: none;
+  box-shadow: 0 18px 36px -28px color-mix(in srgb, var(--text-primary) 45%, transparent); transition: transform var(--motion-tooltip), box-shadow var(--motion-tooltip); }
+.wl-card:hover { transform: translateY(-2px); box-shadow: 0 22px 40px -24px color-mix(in srgb, var(--text-primary) 55%, transparent); }
+.wl-card-icon { position: absolute; top: 18px; right: 18px; font-size: 38px; color: var(--text-secondary); }
+.wl-qtitle { margin: 34px 44px 0 0; font-size: 18px; font-style: italic; font-weight: var(--weight-light); line-height: 1.4; }
+.wl-qtitle b { font-weight: var(--weight-semibold); }
+.wl-card-lens { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: var(--text-body); font-weight: var(--weight-semibold); }
+.wl-card-lens > i { font-size: 14px; color: var(--text-muted); }
+.wl-card-lens .maturity { margin-left: 4px; }
+.wl-qlevel { font-size: var(--text-meta); font-weight: var(--weight-regular); color: var(--text-muted); }
+.wl-quotes { display: flex; flex-direction: column; gap: 3px; margin: 4px 0 0; padding: 0; list-style: none; }
+.wl-quotes li { font-size: var(--text-small); color: var(--text-secondary); }
+.wl-quotes li.wl-qmore { color: var(--text-muted); }
+.wl-card-foot { display: flex; align-items: center; gap: 6px; margin-top: auto; padding-top: 14px; }
+.wl-qchip, .wl-qused { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: var(--radius-pill); background: var(--surface-sub); font-size: var(--text-meta); color: var(--text-secondary); white-space: nowrap; }
+.wl-qchip i, .wl-qused i { font-size: 13px; color: var(--text-muted); }
+.wl-shelves { margin-top: 18px; }
+.wl-shelf { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: var(--radius-md); background: var(--surface-soft); margin-bottom: 6px; color: inherit; text-decoration: none; font-size: var(--text-small); }
+.wl-shelf .wl-shelf-text { flex: 1; min-width: 0; }
+.wl-shelf .wl-shelf-text .meta { display: block; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wl-list-head { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.wl-list-head .text-link { align-self: flex-start; }
+.wl-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 14px; align-items: center; padding: 12px 16px; border-radius: var(--radius-md); background: var(--surface-solid); margin-bottom: 6px; color: inherit; text-decoration: none; }
+.wl-row:hover { outline: 1px solid var(--tint-active); }
+.wl-row p { margin: 4px 0 0; font-size: var(--text-small); color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wl-row .wl-domain { margin-top: 6px; }
+.wl-domain { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px 2px 3px; border-radius: var(--radius-pill); background: var(--surface-sub); font-size: var(--text-meta); font-weight: var(--weight-medium); color: var(--text-primary); white-space: nowrap; }
+.wl-domain > i { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--tint-active); font-size: 12px; }
+.wl-pop { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: var(--radius-pill); background: var(--surface-sub); font-size: var(--text-meta); color: var(--text-secondary); white-space: nowrap; }
+.wl-pop i { font-size: 13px; }
+@media (max-width: 1200px) { .wl-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 1000px) {
+  .wl-row { grid-template-columns: auto minmax(0, 1fr); }
+  .wl-row > :nth-child(n+3) { grid-column: 2; }
+}
+@media (max-width: 700px) { .wl-cards { grid-template-columns: minmax(0, 1fr); } }
+
+/* What a Lens shows of how it is found (OP-UX-124): for everyone, how many colleagues used it this month, its Questions it
+   answers and the Lenses colleagues who found it also used; for its Owner Unit and the Data Team, the searches that led
+   to a run of it with who and when, and the Lenses that answer the same searches; in Edit more, its Questions it answers */
+.fo-head-use { margin-top: 10px; }
+.fo-qs { margin: 6px 0 0; padding: 0; list-style: none; display: grid; gap: 3px; }
+.fo-qs li { font-style: italic; font-weight: var(--weight-light); font-size: var(--text-body); color: var(--text-primary); }
+.fo-also { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 8px; }
+.fo-also-item, .fo-same { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface-solid); color: inherit; text-decoration: none; }
+.fo-also-item:hover, .fo-same:hover { outline: 1px solid var(--tint-active); }
+.fo-also-item > i, .fo-same > i { font-size: 30px; color: var(--text-secondary); flex: none; }
+.fo-also-item > span, .fo-same-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.fo-also-q { font-style: italic; font-weight: var(--weight-light); font-size: var(--text-body); line-height: 1.4; }
+.fo-also-lens { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-small); font-weight: var(--weight-semibold); }
+.fo-owner { outline: 1px dashed var(--tint-active); }
+.fo-owner-label { display: flex; align-items: center; gap: 8px; }
+.fo-searches { width: 100%; }
+.fo-searches td:first-child { font-size: var(--text-body); }
+.fo-who { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.fo-act { text-align: right; white-space: nowrap; }
+.fo-add { padding: 4px 10px; font-size: var(--text-meta); display: inline-flex; align-items: center; gap: 4px; }
+.fo-added { display: inline-flex; align-items: center; gap: 4px; font-size: var(--text-meta); color: var(--col-teal-ink); }
+.fo-same { margin-top: 8px; align-items: center; }
+.fo-same .fo-same-text { flex: 1; }
+.fo-same > .meta { flex: none; }
+.eq-field { display: flex; flex-direction: column; gap: 8px; }
+.eq-list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.eq-list li { display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 12px; border-radius: var(--radius-field); background: var(--surface-sub); font-size: var(--text-body); }
+.eq-list li > span:first-child { flex: 1; font-style: italic; }
+.eq-list .icon-btn { width: 26px; height: 26px; font-size: 13px; }
+.eq-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.eq-pick > .meta { flex-basis: 100%; }
+.eq-sugg { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border: 0; border-radius: var(--radius-pill); background: var(--surface-soft); outline: 1px dashed var(--tint-active); font: var(--text-small) var(--font-family); color: var(--text-secondary); cursor: pointer; }
+.eq-sugg:hover { background: var(--tint-hover); }
+.ex-none { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: var(--radius-md); background: var(--surface-sub); font-size: var(--text-small); line-height: 1.5; }
+.ex-none > i { font-size: 22px; color: var(--text-secondary); flex: none; }
+.ex-none p { flex: 1; margin: 0; }
+.ex-none b { font-weight: var(--weight-medium); }
+.ex-none .btn-quiet { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+@media (max-width: 1000px) { .fo-also { grid-template-columns: minmax(0, 1fr); } .ex-none { flex-wrap: wrap; } }

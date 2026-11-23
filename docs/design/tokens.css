@@ -7,6 +7,7 @@
   --font-family: 'Poppins', system-ui, sans-serif;
   --font-mono: ui-monospace, Menlo, monospace;
   --font-symbol: 'Segoe UI Symbol', 'Apple Symbols', 'Noto Sans Symbols 2', 'DejaVu Sans', sans-serif; /* the marker ⓘ, which Poppins has not (OP-UX-22) */
+  --weight-light: 300;   /* the question of a Lens found on Welcome, in italic (DEC-UX-346) */
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-semibold: 600;

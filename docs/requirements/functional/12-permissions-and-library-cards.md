@@ -137,6 +137,8 @@ My page shows a User the name of their Permission group and what it allows, read
 
 From the moment a User signs in, every service knows their Permissions. Every service refuses what the User may not do, whatever the channel: the web app, Claude or Excel. The web app shows a section of the rail, a page or an action only when the User may use it, from what the services say, never from a role: Query, for example, only to a User who may make queries or Preview a Resource, and Admin only to a User with `admin.open`. No service decides by a role any more.
 
+*Note of 2026-11-23: Welcome, where Data Hub opens, is a section of the rail that every User sees, a Lens user too; the order of the rail is [DEC-UX-350](../../design/principles.md#dec-ux-350).*
+
 <a id="fr-pl-15"></a>
 ### FR-PL-15 · Permission groups replace the Role Groups
 
