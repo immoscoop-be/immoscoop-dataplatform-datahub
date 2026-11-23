@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick, untrack } from 'svelte';
   import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import EditBar from '@datahub/ui/containers/EditBar.svelte';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
@@ -7,6 +8,7 @@
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import type { Field, KnownGap, ResourceDetail } from '../lib/catalogue.js';
   import { scopeLine } from '../lib/gaps.js';
+  import { flowBox, markPlace } from '../lib/flowBox.svelte.js';
   import LearningRef from './LearningRef.svelte';
 
   /**
@@ -56,14 +58,13 @@
   let show = $state<'all' | 'changed'>('all');
   const listed = $derived(show === 'changed' ? resource.fields.filter((field) => changedInDbt.has(field.name)) : resource.fields);
 
-  /** What a field serves as, in the order of the design: a Key Field first (DEC-UX-266), the partition, a cluster column, a Parameter. */
+  /** What a field serves as, in the order of the design: a Key Field first (DEC-UX-266), the partition, a cluster column. */
   function roles(field: Field): { label: string; strong: boolean; warn?: boolean; key?: boolean }[] {
     const cluster = details.clusterBy.indexOf(field.name);
     return [
       ...(resource.card.keyFields.includes(field.name) ? [{ label: t('resource.role.keyField'), strong: false, key: true }] : []),
       ...(details.partition?.field === field.name ? [{ label: t('resource.role.partition'), strong: true }] : []),
       ...(cluster >= 0 ? [{ label: t('resource.role.cluster', { number: cluster + 1 }), strong: true }] : []),
-      ...(resource.card.parameters.includes(field.name) ? [{ label: t('resource.role.parameter'), strong: false }] : []),
       ...(added.has(field.name) ? [{ label: t('resource.role.new'), strong: false, warn: true }] : []),
     ];
   }
@@ -78,6 +79,25 @@
     failed = false;
     editing = true;
   }
+
+  // The Flow Box led here to describe the Key Fields (DEC-UX-303): Columns opens for editing, the first Key Field
+  // without a Business Description in focus and marked.
+  $effect(() => {
+    if (flowBox.aim?.resource !== resource.id) return;
+    untrack(() => {
+      if (!flowBox.take(resource.id, ['fields']) || !editable) return;
+      if (!editing) start();
+      show = 'all';
+      const missing = resource.journey?.steps.find((step) => step.id === 'fields')?.fieldsMissing ?? [];
+      const first = missing[0] ?? resource.card.keyFields[0] ?? resource.fields[0]?.name;
+      void tick().then(() => {
+        const field = first ? document.querySelector<HTMLTextAreaElement>(`textarea[data-field="${CSS.escape(first)}"]`) : null;
+        field?.focus();
+        field?.scrollIntoView({ block: 'center' });
+        markPlace(field);
+      });
+    });
+  });
 
   async function save(event: SubmitEvent) {
     event.preventDefault();
@@ -137,7 +157,7 @@
             <div class="type">{field.dataType ?? ''}</div>
             <div class="roles">{@render pills(field)}</div>
           </div>
-          <textarea {...NO_PASSWORD_MANAGER} bind:value={texts[field.name]} rows="3" maxlength="2000" aria-label={`${t('description.business')} · ${field.name}`} placeholder={t('resource.fields.placeholder')}></textarea>
+          <textarea {...NO_PASSWORD_MANAGER} data-field={field.name} bind:value={texts[field.name]} rows="3" maxlength="2000" aria-label={`${t('description.business')} · ${field.name}`} placeholder={t('resource.fields.placeholder')}></textarea>
           <div>
             {#if changed}<span class="pill warn">{t('resource.changedInDbt', { date: day(changed.at) })}</span>{/if}
             <p class="dbt">{field.description || '–'}</p>

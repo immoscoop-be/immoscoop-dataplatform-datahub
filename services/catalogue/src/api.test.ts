@@ -111,13 +111,17 @@ describe('the Resources to add, in a request (FR-CO-31, FR-CO-33, FR-CO-34)', ()
 });
 
 describe('what changes about a Resource, in a request (FR-RC-15, FR-RC-16)', () => {
-  it('takes texts, a list of gaps, a day and lists of fields, trimmed', () => {
-    expect(parseCard({ businessDescription: ' Leads per week. ', knownGaps: [' no partner leads before March ', ' '], reliableSince: '2025-01-01', keyFields: ['week_start'] })).toEqual({
+  it('takes texts, a list of gaps, Reliable since, the Date Field and lists of fields, trimmed (FR-RC-31, FR-RC-32)', () => {
+    expect(
+      parseCard({ businessDescription: ' Leads per week. ', knownGaps: [' no partner leads before March ', ' '], reliableSince: { from: 'day', day: '2025-01-01', why: ' 2024 was a test. ' }, dateField: 'week_start', keyFields: ['week_start'] }),
+    ).toEqual({
       businessDescription: 'Leads per week.',
       knownGaps: ['no partner leads before March'],
-      reliableSince: '2025-01-01',
+      reliableSince: { from: 'day', day: '2025-01-01', why: '2024 was a test.' },
+      dateField: 'week_start',
       keyFields: ['week_start'],
     });
+    expect(parseCard({ reliableSince: { from: 'firstRow' }, dateField: null })).toEqual({ reliableSince: { from: 'firstRow', day: null, why: '' }, dateField: null });
     expect(parseCard({ reliableSince: null, pitfalls: '' })).toEqual({ reliableSince: null, pitfalls: '' });
   });
 
@@ -125,8 +129,11 @@ describe('what changes about a Resource, in a request (FR-RC-15, FR-RC-16)', () 
     expect(parseCard({})).toBe('Send at least one thing to change.');
     expect(parseCard({ stability: 'D-3' })).toBe('A Resource has no stability to change.');
     expect(parseCard({ intendedUse: 'x'.repeat(2001) })).toMatch(/at most 2000/);
-    expect(parseCard({ reliableSince: '2025-02-30' })).toMatch(/YYYY-MM-DD/);
-    expect(parseCard({ reliableSince: 'yesterday' })).toMatch(/YYYY-MM-DD/);
+    expect(parseCard({ reliableSince: { from: 'day', day: '2025-02-30', why: 'Why.' } })).toMatch(/YYYY-MM-DD/);
+    // A later day without why, or a bare day as before, is refused: why not earlier is required (FR-RC-31).
+    expect(parseCard({ reliableSince: { from: 'day', day: '2025-01-01', why: ' ' } })).toMatch(/Why not earlier is required/);
+    expect(parseCard({ reliableSince: '2025-01-01' })).toMatch(/Reliable since is/);
+    expect(parseCard({ dateField: 3 })).toMatch(/Date Field/);
     expect(parseCard({ keyFields: ['a', 'a'] })).toMatch(/different fields/);
     expect(parseCard({ knownGaps: 'none' })).toMatch(/Known Gaps/);
   });
@@ -272,6 +279,15 @@ describe.skipIf(!url)('the routes of Collections', () => {
             return 'datahub-identity@project.iam.gserviceaccount.com';
           },
         },
+        // eda says whether the EDA-Setup of a Resource is complete (TR-ED-05).
+        edaCallers: {
+          async verify(token) {
+            if (token !== 'eda-token') {
+              throw new TokenError('Service token rejected: ERR_JWS_INVALID');
+            }
+            return 'datahub-eda@project.iam.gserviceaccount.com';
+          },
+        },
       },
     });
   });
@@ -296,7 +312,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
 
   /** Every step required to publish, done by who may describe it, so that its Owner may publish it (DEC-MR-15, DEC-MR-16). */
   async function makeReady(as: Awaited<ReturnType<typeof user>>, id: string | undefined, keyField: string) {
-    expect((await as('PATCH', `/resources/${id}`, { businessDescription: 'What it is.', keyFields: [keyField], intendedUse: 'What it is for.', pitfalls: 'Where it trips people up.', reliableSince: '2025-01-01' })).statusCode).toBe(200);
+    expect((await as('PATCH', `/resources/${id}`, { businessDescription: 'What it is.', keyFields: [keyField], intendedUse: 'What it is for.', pitfalls: 'Where it trips people up.', reliableSince: { from: 'firstRow' } })).statusCode).toBe(200);
     expect((await as('PUT', `/resources/${id}/fields`, { fields: [{ name: keyField, businessDescription: 'What the field is.' }] })).statusCode).toBe(200);
     expect((await as('POST', `/resources/${id}/journey/gaps`, { answer: 'nothing' })).statusCode).toBe(200);
   }
@@ -808,9 +824,8 @@ describe.skipIf(!url)('the routes of Collections', () => {
         businessDescription: 'The cards we send each week.',
         intendedUse: 'Trends.',
         knownGaps: ['No cards before March.'],
-        reliableSince: '2025-01-01',
+        reliableSince: { from: 'day', day: '2025-01-01', why: 'The cards of 2024 were loaded once, incomplete.' },
         keyFields: ['cards_id'],
-        parameters: ['listing_id'],
       });
       expect(edited.statusCode).toBe(200);
       expect(edited.json().resource.card).toEqual({
@@ -818,21 +833,29 @@ describe.skipIf(!url)('the routes of Collections', () => {
         intendedUse: 'Trends.',
         pitfalls: '',
         knownGaps: [{ id: expect.any(String), text: 'No cards before March.', scope: null, addedBy: 'An', addedAt: expect.any(String) }],
-        reliableSince: '2025-01-01',
+        reliableSince: { from: 'day', day: '2025-01-01', why: 'The cards of 2024 were loaded once, incomplete.', setBy: 'An', setAt: expect.any(String) },
+        dateField: null,
         keyFields: ['cards_id'],
-        parameters: ['listing_id'],
       });
       // Only what changed goes into the Log.
       expect((await dirk('PATCH', `/resources/${cards}`, { intendedUse: 'Trends.', pitfalls: 'Weeks overlap.' })).statusCode).toBe(200);
-      expect((await an('GET', `/resources/${cards}/log`)).json().entries.slice(0, 7).map((entry: { text: string }) => entry.text)).toEqual([
+      expect((await an('GET', `/resources/${cards}/log`)).json().entries.slice(0, 6).map((entry: { text: string }) => entry.text)).toEqual([
         'Pitfalls updated by Dirk',
         'Known Gap added by An: No cards before March.',
-        'Parameters updated by An',
         'Key fields updated by An',
         'Reliable since updated by An',
         'Intended use updated by An',
         'Business Description updated by An',
       ]);
+
+      // The Date Field is one of its date fields; From its first row needs no day nor why (FR-RC-31, FR-RC-32).
+      expect((await an('PATCH', `/resources/${cards}`, { dateField: 'listing_id' })).json().message).toMatch(/listing_id holds no date/);
+      expect((await an('PATCH', `/resources/${cards}`, { dateField: 'nope' })).json().message).toBe('cards has no field nope.');
+      const first = await an('PATCH', `/resources/${cards}`, { reliableSince: { from: 'firstRow' } });
+      expect(first.json().resource.card.reliableSince).toEqual({ from: 'firstRow', day: null, why: '', setBy: 'An', setAt: expect.any(String) });
+      expect((await an('PATCH', `/resources/${cards}`, { reliableSince: null })).json().resource.card.reliableSince).toBeNull();
+      // Set again for the publication below.
+      expect((await an('PATCH', `/resources/${cards}`, { reliableSince: { from: 'day', day: '2025-01-01', why: 'The cards of 2024 were loaded once, incomplete.' } })).statusCode).toBe(200);
 
       // The Known Gaps one at a time, each with who added it; who added one stays when it changes (FR-RC-21).
       const newGap = await dirk('POST', `/resources/${cards}/gaps`, { text: '  visitorId is missing for MySQL leads. ' });
@@ -853,6 +876,12 @@ describe.skipIf(!url)('the routes of Collections', () => {
         'Known Gap changed by An: visitorId is missing for leads from MySQL.',
         'Known Gap added by Dirk: visitorId is missing for MySQL leads.',
       ]);
+      // The period of a gap may name its date field, a field that holds a date; one day has both sides the same (FR-RC-33, FR-RC-34).
+      const onLoad = { text: 'Fair leads entered a week late.', scope: { period: { from: '2026-10-21', to: '2026-10-21', dateField: 'listing_id' } } };
+      expect((await dirk('POST', `/resources/${cards}/gaps`, onLoad)).json().message).toMatch(/listing_id holds no date/);
+      const fair = await dirk('POST', `/resources/${cards}/gaps`, { ...onLoad, scope: { period: { ...onLoad.scope.period, dateField: 'week' } } });
+      expect(fair.json().gap.scope).toEqual({ period: { from: '2026-10-21', to: '2026-10-21', dateField: 'week' } });
+      expect((await dirk('DELETE', `/resources/${cards}/gaps/${fair.json().gap.id}`)).statusCode).toBe(204);
       // The whole list at once, as Claude sends it: a gap that stays keeps who added it.
       await an('PATCH', `/resources/${cards}`, { knownGaps: ['No cards before March.', 'No decks.'] });
       expect((await an('GET', `/resources/${cards}`)).json().resource.card.knownGaps).toEqual([
@@ -1059,6 +1088,36 @@ describe.skipIf(!url)('the routes of Collections', () => {
         'Deprecation taken away by An',
         'Marked deprecated by Dirk',
       ]);
+    });
+
+    it('hears from eda alone whether a Resource is explored: 3 · Confirmed becomes 4 · Explored, and back when its EDA goes (TR-ED-05, FR-ED-12)', async () => {
+      const dirk = await user('Dirk', [], 'admin');
+      const fromEda = (id: string, payload: unknown, token = 'eda-token') =>
+        app.inject({ method: 'POST', url: `/internal/resources/${id}/eda`, headers: { authorization: `Bearer ${token}` }, payload: payload as object });
+      await fromRegistry({ ...update('1', ['explored_visits']), projectId: '8181', tables: [{ ...update('1', ['explored_visits']).tables[0]!, description: 'Visits.' }] });
+      const { id } = (await dirk('GET', '/resources?collection=none')).json().resources.find((resource: { name: string }) => resource.name === 'explored_visits');
+      // As its Publication leaves it: Confirmed.
+      await database.db.updateTable('resources').set({ level: 3, publishedAt: new Date(), publishedBy: 'An' }).where('id', '=', id).execute();
+
+      // Only eda, with its Google ID token: not a User, not another service. Refused before the body is read.
+      expect((await fromEda(id, { explored: true }, 'registry-id-token')).statusCode).toBe(401);
+      expect((await dirk('POST', `/internal/resources/${id}/eda`, { explored: true })).statusCode).toBe(401);
+      expect((await fromEda(id, { explored: 'yes' })).statusCode).toBe(400);
+      expect((await fromEda(id, [])).statusCode).toBe(400);
+      expect((await fromEda('00000000-0000-4000-8000-000000000000', { explored: true })).statusCode).toBe(404);
+
+      const explored = await fromEda(id, { explored: true });
+      expect(explored.statusCode).toBe(200);
+      expect(explored.json()).toEqual({ explored: true, level: 4 });
+      expect((await dirk('GET', `/resources/${id}`)).json().resource).toMatchObject({ level: 4, explored: true });
+      expect((await dirk('GET', `/resources/${id}/log`)).json().entries[0]).toMatchObject({ logId: 'RES-002', text: 'Maturity assessed at Level 4', params: { level: '4', reason: 'eda' } });
+      // Said again, as after an EDA-Rerun, it lowers nothing (FR-MR-22).
+      expect((await fromEda(id, { explored: true })).json()).toEqual({ explored: true, level: 4 });
+
+      // Its EDA gone: back to 3 · Confirmed (FR-MR-07).
+      expect((await fromEda(id, { explored: false })).json()).toEqual({ explored: false, level: 3 });
+      expect((await dirk('GET', `/resources/${id}`)).json().resource).toMatchObject({ level: 3, explored: false });
+      expect((await dirk('GET', `/resources/${id}/log`)).json().entries[0]).toMatchObject({ logId: 'MAT-021', params: { level: '3', reason: 'eda' } });
     });
 
     it('finds the Collections and Resources the User sees by the words of a question (FR-CO-37, DEC-UX-127)', async () => {
@@ -1844,6 +1903,50 @@ describe.skipIf(!url)('the routes of Collections', () => {
       expect((await mo('GET', `/messages/${fresh.json().id}`)).statusCode).toBe(404);
       expect((await mo('GET', '/messages?view=everything')).json().messages.map((message: { id: string }) => message.id)).not.toContain(fresh.json().id);
       expect((await (await user('Paul', [PLANNING]))('GET', `/messages/${fresh.json().id}`)).statusCode).toBe(404);
+    });
+
+    it('puts what query tells about a Project to the colleague it is about alone (FR-SR-65, FR-SR-66, MSG-QRY-03 to MSG-QRY-05)', async () => {
+      const notice = (payload: object, token = 'query-token') =>
+        app.inject({ method: 'POST', url: '/internal/projects/notices', headers: { authorization: `Bearer ${token}` }, payload });
+      const mo = await user('Mo', [PLANNING]);
+      const paul = await user('Paul', [PLANNING]);
+      const projectId = '7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d';
+      const shared = { type: 'MSG-QRY-03', recipient: { id: 'u-Mo', name: 'Mo' }, projectId, project: 'Credit leads Q4', actor: 'Paul', queries: 3, canRun: false };
+      expect((await notice(shared, 'identity-token')).statusCode).toBe(401);
+      expect((await paul('POST', '/internal/projects/notices', shared)).statusCode).toBe(401);
+      expect((await notice({ ...shared, type: 'MSG-QRY-02' })).statusCode).toBe(400);
+      expect((await notice({ ...shared, recipient: { id: 'u-Mo' } })).statusCode).toBe(400);
+      expect((await notice({ ...shared, projectId: 'p-1' })).statusCode).toBe(400);
+      expect((await notice({ ...shared, canRun: 'no' })).statusCode).toBe(400);
+      expect((await notice({ ...shared, queries: -1 })).statusCode).toBe(400);
+
+      const told = await notice(shared);
+      expect(told.statusCode).toBe(201);
+      const id = told.json().message.id as string;
+      const forMo = (await mo('GET', '/messages?view=forYou')).json().messages.find((message: { id: string }) => message.id === id);
+      expect(forMo).toMatchObject({
+        type: 'MSG-QRY-03',
+        kind: 'dataHub',
+        writer: null,
+        subject: { kind: 'user', id: 'u-Mo', exists: true },
+        params: { actor: 'Paul', project: 'Credit leads Q4', projectId, queries: '3', canRun: 'no' },
+        mayReply: false,
+      });
+      // Only Mo sees it, not who shared the Project with him.
+      expect((await paul('GET', `/messages/${id}`)).statusCode).toBe(404);
+
+      const out = await notice({ type: 'MSG-QRY-04', recipient: { id: 'u-Mo', name: 'Mo' }, projectId, project: 'Credit leads Q4', actor: 'Paul' });
+      expect(out.statusCode).toBe(201);
+      expect((await mo('GET', `/messages/${out.json().message.id}`)).statusCode).toBe(200);
+
+      const deleted = { type: 'MSG-QRY-05', recipient: { id: 'u-Mo', name: 'Mo' }, projectId, project: 'Credit leads Q4', actor: 'Paul', mine: 2, reason: 'The quarter is closed.' };
+      expect((await notice({ ...deleted, mine: undefined })).statusCode).toBe(400);
+      expect((await notice({ ...deleted, reason: 'x'.repeat(501) })).statusCode).toBe(400);
+      const gone = await notice(deleted);
+      expect(gone.statusCode).toBe(201);
+      const lost = (await mo('GET', `/messages/${gone.json().message.id}`)).json();
+      expect(JSON.stringify(lost)).toContain('The quarter is closed.');
+      expect(JSON.stringify(lost)).toContain('"mine":"2"');
     });
   });
 

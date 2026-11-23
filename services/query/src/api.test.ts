@@ -17,6 +17,7 @@ import type { QueryDatabase } from './database.js';
 import { migrations } from './migrations/index.js';
 import { createBeneath } from './preflight.js';
 import { createStorage } from './preview.js';
+import { createProjects } from './projects.js';
 import { createQueries, queryRefOf } from './queries.js';
 
 const url = process.env.DATAHUB_TEST_DATABASE_URL;
@@ -46,7 +47,7 @@ const WEEKLY: QueryResource = {
     { name: 'week_start', dataType: 'DATE', description: 'The Monday of the week.', businessDescription: '' },
     { name: 'lead_source', dataType: 'STRING', description: 'Source system code.', businessDescription: 'Where the lead came in.' },
   ],
-  parameters: ['lead_source'],
+  keyFields: ['lead_source'],
 };
 const SOURCES: QueryResource = { ...WEEKLY, id: '7a2d3c5f-9b2e-4d4f-8a31-2c3d4e5f6a71', key: `${PROJECT}.dbt_prod_stacks.lead_sources`, fullName: `${PROJECT}.dbt_prod_stacks.lead_sources`, displayName: 'Lead sources', partition: null, clusterBy: [] };
 const SECRET: QueryResource = { ...SOURCES, id: '8b3e4d6a-0c3f-4e5a-9b42-3d4e5f6a7b82', key: `${PROJECT}.dbt_prod_stacks.salaries`, fullName: `${PROJECT}.dbt_prod_stacks.salaries`, displayName: 'Salaries' };
@@ -155,10 +156,12 @@ describe('the fields of a query, in a request', () => {
     expect(parseQuery({ forCollection: CREDIT }, false)).toBe('A query has no field forCollection here.');
   });
 
-  it('change at least one of its name, question and SQL, never its Resources (DEC-UX-73)', () => {
+  it('change at least one of its name, question, SQL and Resources, which change in it (DEC-SR-48)', () => {
     expect(parseQuery({ sql: 'select 1' }, false)).toEqual({ sql: 'select 1' });
     expect(parseQuery({}, false)).toBe('Send at least one field to change.');
-    expect(parseQuery({ resources: [SOURCES.id] }, false)).toBe('A query has no field resources here.');
+    expect(parseQuery({ resources: [SOURCES.id] }, false)).toEqual({ resources: [SOURCES.id] });
+    expect(parseQuery({ resources: 'all' }, false)).toBe('A query reads 1 to 10 Resources, each named once by its ID.');
+    expect(parseQuery({ project: SOURCES.id }, false)).toBe('A query has no field project here.');
     expect(parseQuery({ name: ' ' }, false)).toBe('The name has 1 to 120 characters.');
   });
 
@@ -205,6 +208,19 @@ function fakeBigQuery() {
         refuseNext = null;
         throw new BigQueryRefused(message);
       }
+      // An EDA-Probe: aggregates only, a list and a list of records among them, as rowsOf keeps them (TR-ED-03).
+      if (text.includes('approx_quantiles')) {
+        return {
+          jobId: `job_${runs.length}`,
+          location: 'europe-west1',
+          columns: [{ name: 'rows', type: 'INT64' }, { name: 'quantiles', type: 'ARRAY<INT64>' }, { name: 'top', type: 'ARRAY<STRUCT>' }, { name: 'empty', type: 'INT64' }],
+          totalRows: 1,
+          rows: [['1560', '["0","3","7","12","88"]', '[{"value":"app","rows":"4"}]', null]],
+          processedBytes: 4_000_000,
+          billedBytes: 10_000_000,
+          partitions: 312,
+        };
+      }
       return {
         jobId: `job_${runs.length}`,
         location: 'europe-west1',
@@ -229,6 +245,12 @@ function fakeBigQuery() {
     },
     async partitions(_key, limit) {
       return ['20261019', '20261012', '20261005', '20260928', '20260921'].slice(0, limit);
+    },
+    async firstPartition() {
+      return '20240108';
+    },
+    async lowestDay(_key, field) {
+      return field === 'created_at' ? '2023-05-02' : null;
     },
     // The staging table of the leads, as BigQuery keeps it: by its full name in its own case (FR-SR-62).
     async describe(key) {
@@ -406,6 +428,7 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
       logger: false,
       api: {
         queries: createQueries(database.db),
+        projects: createProjects(database.db),
         lenses: createLenses(database.db),
         catalogue,
         bigquery: fake.bigquery,
@@ -635,6 +658,10 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     const storage = (await call(an, 'GET', `/resources/${WEEKLY.id}/storage`)).json().storage;
     expect(storage).toEqual({ key: WEEKLY.key, bytes: 4_200_000_000, rows: 1_560, partitions: 312, modifiedAt: '2026-10-28T06:00:00.000Z', beneath: false });
     expect((await call(an, 'GET', `/resources/${SECRET.id}/storage`)).statusCode).toBe(404);
+    // The first row on its Date Field, for the line under Reliable Since: from its oldest partition (DEC-RC-33).
+    expect((await call(an, 'GET', `/resources/${WEEKLY.id}/first-row?field=week_start`)).json().firstRow).toEqual({ day: '2024-01-08', from: 'partitions' });
+    expect((await call(an, 'GET', `/resources/${WEEKLY.id}/first-row?field=lead_source`)).statusCode).toBe(400);
+    expect((await call(an, 'GET', `/resources/${SECRET.id}/first-row?field=week_start`)).statusCode).toBe(404);
   });
 
   it('offers the choices of a Preview, their values read once and kept out of its history (DEC-SR-37, DEC-SR-39, DEC-SR-40)', async () => {
@@ -1458,6 +1485,131 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     expect((await call(miaNoLenses, 'POST', `/lenses/${waiting.id}/requests`, {})).json()).toMatchObject({ error: 'forbidden', permission: 'lenses.make' });
   });
 
+  describe('the EDA-Probes, run as the User who explores (TR-ED-04, FR-ED-06)', () => {
+    const grain = `select count(*) as rows, approx_quantiles(leads, 4) as quantiles from \`${WEEKLY.key}\``;
+    const probe = (sql: string, approve?: boolean) => ({ probe: 'grainHolds', sql, ...(approve === undefined ? {} : { approve }) });
+    /** A Data Admin, free up to 10 MB and approving up to 1 GB, who sees Weekly lead volume only. */
+    const explorer = () =>
+      userOf('110', 'Els Janssens', 'admin', (permissions) => {
+        permissions['runs.ranges'].values = { freeMb: 10, approveGb: 1, above: 'request' };
+      });
+    const runs = (authorization: string, id: string, payload: unknown) => call(authorization, 'POST', `/resources/${id}/eda/runs`, payload);
+
+    it('are run only by who holds eda.use, on a Resource they see, with an EDA-Probe and its SQL (DEC-ED-25)', async () => {
+      // A Business analyst does not explore, even a Resource they see.
+      const refused = await runs(an, WEEKLY.id, probe(grain));
+      expect(refused.statusCode).toBe(403);
+      expect(refused.json()).toMatchObject({ error: 'forbidden', permission: 'eda.use' });
+      const els = await explorer();
+      expect((await runs(els, SOURCES.id, probe(`select count(*) from \`${SOURCES.key}\``))).statusCode).toBe(404);
+      expect((await runs(els, 'weekly', probe(grain))).statusCode).toBe(404);
+      for (const wrong of [{ probe: 'everything', sql: grain }, { probe: 'grainHolds' }, { probe: 'grainHolds', sql: ' ' }, { probe: 'grainHolds', sql: grain, approve: 'yes' }]) {
+        expect((await runs(els, WEEKLY.id, wrong)).statusCode).toBe(400);
+      }
+      expect(fake.runs.some((run) => run.options.labels['datahub-purpose'] === 'eda')).toBe(false);
+    });
+
+    it('read only the table of their Resource: another Resource or a table outside Data Hub is refused, also for a power user', async () => {
+      const els = await explorer();
+      const before = fake.runs.length;
+      const joined = await runs(els, WEEKLY.id, probe(`select count(*) as rows from \`${WEEKLY.key}\` join \`${SOURCES.key}\` using (lead_source)`));
+      expect(joined.statusCode).toBe(200);
+      expect(joined.json()).toEqual({ state: 'refused', bytes: null, reason: expect.stringContaining(SOURCES.key) });
+      // A Data Admin may query tables outside Data Hub, but an EDA-Probe reads none, and registry is not asked.
+      const asked = knownAsked.length;
+      const outside = (await runs(els, WEEKLY.id, probe(`select count(*) as rows from \`${STG.key}\``))).json();
+      expect(outside).toMatchObject({ state: 'refused', bytes: null });
+      expect(knownAsked).toHaveLength(asked);
+      expect(fake.runs).toHaveLength(before);
+    });
+
+    it('run within the ranges of the User: freely, once approved, and above them not at all (runs.ranges)', async () => {
+      const els = await explorer();
+      const ran = await runs(els, WEEKLY.id, probe(`${grain} -- reads 5000000`));
+      expect(ran.statusCode).toBe(201);
+      expect(ran.json()).toMatchObject({ state: 'ran', bytes: 4_000_000, runId: expect.stringMatching(/^q-\d{8}-[0-9a-f]{6}$/) });
+      // As a job billed at most the second range of the User, labelled with the User, the run and the EDA-Probe.
+      expect(fake.runs.at(-1)?.options).toMatchObject({
+        maximumBytesBilled: 1_000_000_000,
+        labels: { 'datahub-user': '110', 'datahub-query': ran.json().runId, 'datahub-purpose': 'eda', 'datahub-eda-probe': 'grainholds' },
+      });
+
+      const medium = probe(`${grain} -- reads 50000000`);
+      expect((await runs(els, WEEKLY.id, medium)).json()).toEqual({ state: 'approve', bytes: 50_000_000 });
+      const approved = await runs(els, WEEKLY.id, { ...medium, approve: true });
+      expect(approved.statusCode).toBe(201);
+      expect((await database.db.selectFrom('runs').select('approved').where('queryRef', '=', approved.json().runId).executeTakeFirstOrThrow()).approved).toBe(true);
+
+      // Above them it does not run, approved or not: a Request for an EDA-Probe comes later (OP-ED-05).
+      const before = fake.runs.length;
+      for (const approve of [false, true]) {
+        const huge = await runs(els, WEEKLY.id, probe(`${grain} -- reads 4800000000`, approve));
+        expect(huge.statusCode).toBe(200);
+        expect(huge.json()).toEqual({ state: 'refused', bytes: 4_800_000_000, reason: expect.stringContaining('4.8 GB') });
+      }
+      expect(fake.runs).toHaveLength(before);
+    });
+
+    it('answer their rows with lists and records as JSON values, and keep each run in the Query Log, apart from the panel (DEC-ED-26)', async () => {
+      const els = await explorer();
+      const small = `${grain} -- reads 5000000`;
+      const ran = (await runs(els, WEEKLY.id, probe(small))).json();
+      expect(ran.rows).toEqual([{ rows: '1560', quantiles: ['0', '3', '7', '12', '88'], top: [{ value: 'app', rows: '4' }], empty: null }]);
+
+      // One query of the kind eda per User and Resource holds the runs, each with its own Query ID.
+      const kept = await database.db.selectFrom('queries').selectAll().where('kind', '=', 'eda').where('ownerId', '=', '110').execute();
+      expect(kept).toMatchObject([{ name: 'EDA · Weekly lead volume', edaOf: WEEKLY.id, ownerName: 'Els Janssens' }]);
+      const logged = await database.db.selectFrom('runs').select(['queryRef', 'state', 'userId', 'sql']).where('queryId', '=', kept[0]!.id).orderBy('number').execute();
+      expect(logged.length).toBe(3);
+      expect(logged.at(-1)).toEqual({ queryRef: ran.runId, state: 'done', userId: '110', sql: small });
+
+      // Not in the panel of Query, nor counted per day, nor among the queries on the Resource; it runs only from its EDA.
+      expect((await call(els, 'GET', '/queries')).json().queries).toEqual([]);
+      expect((await call(els, 'GET', '/queries?all=true')).json().queries.map((query: { kind: string }) => query.kind)).not.toContain('eda');
+      expect((await call(els, 'GET', '/queries/days?tz=UTC')).json().days).toEqual([]);
+      expect((await call(els, 'GET', `/resources/${WEEKLY.id}/queries`)).json().queries.map((query: { id: string }) => query.id)).not.toContain(kept[0]!.id);
+      expect((await call(els, 'POST', `/queries/${kept[0]!.id}/runs`, { sql: small })).statusCode).toBe(403);
+      // Its User reads its rows again from the same job, as for every run.
+      expect((await call(els, 'GET', `/runs/${ran.runId}/rows`)).statusCode).toBe(200);
+    });
+
+    it('run a dig into a selection as one of them: checked alike, labelled as a dig, in the same query of the kind eda (TR-ED-12)', async () => {
+      const els = await explorer();
+      const dig = (sql: string, approve?: boolean) => ({ probe: 'digInto', sql, ...(approve === undefined ? {} : { approve }) });
+      const ran = await runs(els, WEEKLY.id, dig(`${grain} -- reads 5000000`));
+      expect(ran.statusCode).toBe(201);
+      expect(ran.json()).toMatchObject({ state: 'ran', bytes: 4_000_000, runId: expect.stringMatching(/^q-\d{8}-[0-9a-f]{6}$/) });
+      expect(fake.runs.at(-1)?.options).toMatchObject({
+        maximumBytesBilled: 1_000_000_000,
+        labels: { 'datahub-user': '110', 'datahub-query': ran.json().runId, 'datahub-purpose': 'eda', 'datahub-eda-probe': 'diginto' },
+      });
+      // Kept with the runs of the EDA-Probes of this User and Resource, in the one query of the kind eda.
+      const kept = await database.db.selectFrom('queries').select('id').where('kind', '=', 'eda').where('ownerId', '=', '110').execute();
+      expect(kept).toHaveLength(1);
+      const logged = await database.db.selectFrom('runs').select('queryId').where('queryRef', '=', ran.json().runId).executeTakeFirstOrThrow();
+      expect(logged.queryId).toBe(kept[0]!.id);
+
+      // The same Pre-flight: approved within the ranges, refused above them or on another table.
+      expect((await runs(els, WEEKLY.id, dig(`${grain} -- reads 50000000`))).json()).toEqual({ state: 'approve', bytes: 50_000_000 });
+      expect((await runs(els, WEEKLY.id, dig(`${grain} -- reads 50000000`, true))).statusCode).toBe(201);
+      expect((await runs(els, WEEKLY.id, dig(`${grain} -- reads 4800000000`, true))).json()).toMatchObject({ state: 'refused', bytes: 4_800_000_000 });
+      expect((await runs(els, WEEKLY.id, dig(`select count(*) as rows from \`${SOURCES.key}\``))).json()).toMatchObject({ state: 'refused', bytes: null });
+      // Only who explores, and only these kinds.
+      expect((await runs(an, WEEKLY.id, dig(grain))).statusCode).toBe(403);
+      expect((await runs(els, WEEKLY.id, { probe: 'dig', sql: grain })).statusCode).toBe(400);
+    });
+
+    it('keep a run BigQuery refused in the Query Log as failed, and say why', async () => {
+      const els = await explorer();
+      fake.refuse('Query exceeded limit for bytes billed: 1000000000.');
+      const refused = await runs(els, WEEKLY.id, probe(`select count(*) as rows from \`${WEEKLY.key}\``, true));
+      expect(refused.statusCode).toBe(200);
+      expect(refused.json()).toEqual({ state: 'refused', bytes: 80_000_000, reason: 'BigQuery refused it: Query exceeded limit for bytes billed: 1000000000.' });
+      const last = await database.db.selectFrom('runs').select(['state', 'error']).where('userId', '=', '110').orderBy('id', 'desc').limit(1).executeTakeFirstOrThrow();
+      expect(last).toEqual({ state: 'failed', error: 'Query exceeded limit for bytes billed: 1000000000.' });
+    });
+  });
+
   describe('a power user, with tables outside Data Hub (FR-SR-56, DEC-SR-46)', () => {
     const raw = `select lead_id, created_date from \`${STG.key}\``;
 
@@ -1579,5 +1731,144 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
       expect((await call(dataTeam, 'GET', '/outside-table?key=dbt_prod_staging.stg_oltp__leads')).statusCode).toBe(400);
     });
   });
-});
 
+  describe('Projects: queries worked on together (FR-SR-63 to FR-SR-68, DEC-SR-47, DEC-SR-48)', () => {
+    let projectId: string;
+    let both: string;
+    let onlyWeekly: string;
+
+    it('makes a Project with queries of its maker, and lists it with how many queries and who is in it (FR-SR-63)', async () => {
+      both = (await call(an, 'POST', '/queries', { name: 'Leads per source, Q4', resources: [WEEKLY.id, SOURCES.id] })).json().query.id;
+      onlyWeekly = (await call(an, 'POST', '/queries', { name: 'Weekly leads, Q4', resources: [WEEKLY.id] })).json().query.id;
+      const made = await call(an, 'POST', '/projects', { name: ' Credit leads Q4 ', description: 'The quarterly review.', queries: [both, onlyWeekly] });
+      expect(made.statusCode).toBe(201);
+      projectId = made.json().project.id;
+      expect(made.json().project).toMatchObject({ name: 'Credit leads Q4', description: 'The quarterly review.', madeBy: { id: '101', name: 'An Claes' }, members: [{ id: '101', name: 'An Claes', queriesMade: 2 }] });
+      expect(made.json().project.queries.map((query: { name: string; locked: boolean }) => [query.name, query.locked])).toEqual([
+        ['Leads per source, Q4', false],
+        ['Weekly leads, Q4', false],
+      ]);
+      expect((await call(an, 'GET', '/projects')).json().projects).toMatchObject([{ id: projectId, name: 'Credit leads Q4', queries: 2, members: [{ id: '101', name: 'An Claes' }] }]);
+      // Only queries its maker writes; a name is required.
+      const karels = (await call(karel, 'POST', '/queries', { name: 'Karel alone', resources: [WEEKLY.id] })).json().query.id;
+      expect((await call(an, 'POST', '/projects', { name: 'Not mine', queries: [karels] })).statusCode).toBe(400);
+      expect((await call(an, 'POST', '/projects', { name: ' ' })).statusCode).toBe(400);
+      // The history names the Project of a query (OP-UX-103).
+      expect((await call(an, 'GET', '/queries')).json().queries.find((query: { id: string }) => query.id === both).project).toEqual({ id: projectId, name: 'Credit leads Q4' });
+    });
+
+    it('is shared: who is in it reads, changes and runs its queries, locked where they may not see a Resource (FR-SR-65, OP-UX-97)', async () => {
+      expect((await call(karel, 'GET', `/projects/${projectId}`)).statusCode).toBe(404);
+      expect((await call(an, 'PUT', `/projects/${projectId}/members/102`, { name: 'Karel Leys' })).statusCode).toBe(201);
+      const seenByKarel = (await call(karel, 'GET', `/projects/${projectId}`)).json().project;
+      // Karel does not see Lead sources: that query is locked to him, its name and what he may not see only.
+      expect(seenByKarel.queries[0]).toEqual({ id: both, name: 'Leads per source, Q4', owner: { id: '101', name: 'An Claes' }, lastRun: null, position: 0, locked: true, notSeen: ['Lead sources'] });
+      expect(seenByKarel.queries[1]).toMatchObject({ id: onlyWeekly, locked: false, resources: [{ id: WEEKLY.id, displayName: 'Weekly lead volume' }] });
+      expect((await call(karel, 'GET', `/queries/${both}`)).statusCode).toBe(404);
+      const opened = (await call(karel, 'GET', `/queries/${onlyWeekly}`)).json().query;
+      expect(opened).toMatchObject({ mine: false, editable: true, project: { id: projectId, name: 'Credit leads Q4' } });
+      // He changes and runs it, with his own rights; the run says who ran it.
+      expect((await call(karel, 'PATCH', `/queries/${onlyWeekly}`, { name: 'Weekly leads, Q4, by source' })).statusCode).toBe(200);
+      const ran = await call(karel, 'POST', `/queries/${onlyWeekly}/runs`, { sql: weekly });
+      expect(ran.statusCode).toBe(201);
+      expect(ran.json().run.userName).toBe('Karel Leys');
+      expect(fake.runs.at(-1)?.options).toMatchObject({ labels: { 'datahub-user': '102' } });
+      // A query he ran is in his history, with its Project (OP-UX-103).
+      expect((await call(karel, 'GET', '/queries')).json().queries.find((query: { id: string }) => query.id === onlyWeekly)).toMatchObject({ ownerName: 'An Claes', project: { name: 'Credit leads Q4' } });
+      expect((await call(karel, 'PATCH', `/queries/${both}`, { name: 'Mine now' })).statusCode).toBe(404);
+    });
+
+    it('changes the Resources of a query in it, each run keeping those it read (FR-SR-67, DEC-SR-48)', async () => {
+      const changed = await call(an, 'PATCH', `/queries/${onlyWeekly}`, { resources: [WEEKLY.id, SOURCES.id] });
+      expect(changed.statusCode).toBe(200);
+      expect(changed.json().query.resources.map((resource: { displayName: string }) => resource.displayName)).toEqual(['Weekly lead volume', 'Lead sources']);
+      const runs = (await call(an, 'GET', `/queries/${onlyWeekly}/runs`)).json().runs;
+      expect(runs[0].number).toBe(1);
+      // Only Resources the User sees; Karel no longer reads it now that it reads Lead sources.
+      expect((await call(karel, 'PATCH', `/queries/${onlyWeekly}`, { resources: [WEEKLY.id, SECRET.id] })).statusCode).toBe(404);
+      expect((await call(an, 'PATCH', `/queries/${onlyWeekly}`, { resources: [WEEKLY.id, SECRET.id] })).statusCode).toBe(400);
+      await call(an, 'PATCH', `/queries/${onlyWeekly}`, { resources: [WEEKLY.id] });
+    });
+
+    it('says who else is in a query, and who changed its SQL last (OP-UX-99)', async () => {
+      expect((await call(an, 'PUT', `/queries/${onlyWeekly}/presence`)).json()).toMatchObject({ others: [] });
+      const present = (await call(karel, 'PUT', `/queries/${onlyWeekly}/presence`)).json();
+      expect(present.others).toEqual([{ id: '101', name: 'An Claes' }]);
+      await call(karel, 'POST', `/queries/${onlyWeekly}/preflight`, { sql: `${weekly}\n-- by Karel` });
+      const seenByAn = (await call(an, 'PUT', `/queries/${onlyWeekly}/presence`)).json();
+      expect(seenByAn).toMatchObject({ others: [{ id: '102', name: 'Karel Leys' }], sqlChanged: { by: { id: '102', name: 'Karel Leys' } } });
+      expect((await call(an, 'GET', `/queries/${onlyWeekly}`)).json().query.sqlChanged).toMatchObject({ by: { name: 'Karel Leys' } });
+      // Who only reads it, as the Data Team may, sees them without being seen.
+      expect((await call(mia, 'PUT', `/queries/${onlyWeekly}/presence`)).json().others).toHaveLength(2);
+      expect((await call(an, 'PUT', `/queries/${onlyWeekly}/presence`)).json().others).toEqual([{ id: '102', name: 'Karel Leys' }]);
+    });
+
+    it('makes an empty query in it, at the end of its row (FR-SR-68)', async () => {
+      const empty = await call(karel, 'POST', '/queries', { name: 'New query, 19 Nov', resources: [], sql: '', project: projectId });
+      expect(empty.statusCode).toBe(201);
+      expect(empty.json().query).toMatchObject({ resources: [], project: { id: projectId }, editable: true });
+      const { queries } = (await call(an, 'GET', `/projects/${projectId}`)).json().project;
+      expect(queries.at(-1)).toMatchObject({ name: 'New query, 19 Nov', owner: { name: 'Karel Leys' } });
+      // Not without a Project, and not in one the User is not in.
+      expect((await call(karel, 'POST', '/queries', { name: 'Empty', resources: [] })).statusCode).toBe(400);
+      expect((await call(mia, 'POST', '/queries', { name: 'Empty', resources: [], project: projectId })).statusCode).toBe(404);
+    });
+
+    it('keeps one order for everyone, and removes a query without asking (OP-UX-95, FR-SR-66)', async () => {
+      const ids = (await call(an, 'GET', `/projects/${projectId}`)).json().project.queries.map((query: { id: string }) => query.id);
+      const ordered = await call(karel, 'PUT', `/projects/${projectId}/order`, { queries: [...ids].reverse() });
+      expect(ordered.json().queries).toEqual([...ids].reverse());
+      expect((await call(an, 'DELETE', `/projects/${projectId}/queries/${onlyWeekly}`)).json()).toEqual({ removed: true });
+      // It stays with An, who made it; Karel no longer reads it.
+      expect((await call(an, 'GET', `/queries/${onlyWeekly}`)).json().query.project).toBeNull();
+      expect((await call(karel, 'GET', `/queries/${onlyWeekly}`)).statusCode).toBe(404);
+      // Put back in, at the end.
+      expect((await call(an, 'PUT', `/projects/${projectId}/queries/${onlyWeekly}`)).json()).toEqual({ added: true });
+      expect((await call(an, 'GET', `/projects/${projectId}`)).json().project.queries.at(-1).id).toBe(onlyWeekly);
+    });
+
+    it('holds any number of queries, more than 50 too, in one order (DEC-SR-49)', async () => {
+      const queries = createQueries(database.db);
+      const week = (n: number) => queries.create({ owner: { id: '102', name: 'Karel Leys' }, name: `Week ${n}`, question: '', resources: [], sql: '' });
+      const many = await Promise.all(Array.from({ length: 51 }, (_, n) => week(n + 1)));
+      const made = await call(karel, 'POST', '/projects', { name: 'Every week of the year', queries: many.map((query) => query.id) });
+      expect(made.statusCode).toBe(201);
+      const big = made.json().project.id as string;
+      expect(made.json().project.queries).toHaveLength(51);
+      // One more put in it, and one more made in it, each at the end of its row.
+      const extra = await week(52);
+      expect((await call(karel, 'PUT', `/projects/${big}/queries/${extra.id}`)).json()).toEqual({ added: true });
+      const empty = await call(karel, 'POST', '/queries', { name: 'Week 53', resources: [], sql: '', project: big });
+      expect(empty.statusCode).toBe(201);
+      const ids: string[] = (await call(karel, 'GET', `/projects/${big}`)).json().project.queries.map((query: { id: string }) => query.id);
+      expect(ids).toHaveLength(53);
+      expect(ids.slice(-2)).toEqual([extra.id, empty.json().query.id]);
+      // Its order names them all.
+      expect((await call(karel, 'PUT', `/projects/${big}/order`, { queries: [...ids].reverse() })).json().queries).toEqual([...ids].reverse());
+      expect((await call(karel, 'GET', '/projects')).json().projects.find((one: { id: string }) => one.id === big)).toMatchObject({ queries: 53 });
+      expect((await call(karel, 'DELETE', `/projects/${big}`)).statusCode).toBe(204);
+    });
+
+    it('lets a colleague who cannot run queries in, to read, rename and share, not to change its queries (OP-UX-98)', async () => {
+      const lotte = await userOf('108', 'Lotte Dewulf', 'lensUser', undefined, [], [WEEKLY.id]);
+      await call(an, 'PUT', `/projects/${projectId}/members/108`, { name: 'Lotte Dewulf' });
+      expect((await call(lotte, 'GET', `/projects/${projectId}`)).statusCode).toBe(200);
+      expect((await call(lotte, 'PATCH', `/projects/${projectId}`, { name: 'Credit leads, Q4' })).json().project).toMatchObject({ name: 'Credit leads, Q4' });
+      expect((await call(lotte, 'DELETE', `/projects/${projectId}/queries/${onlyWeekly}`)).json()).toMatchObject({ permission: 'queries.make' });
+      expect((await call(lotte, 'PATCH', `/queries/${onlyWeekly}`, { name: 'x' })).json()).toMatchObject({ permission: 'queries.make' });
+      expect((await call(lotte, 'DELETE', `/projects/${projectId}/members/108`)).json()).toEqual({ left: 2, deleted: false });
+    });
+
+    it('is left and deleted: its queries stay with whoever made them, and it says who deleted it (FR-SR-66, OP-UX-100)', async () => {
+      expect((await call(karel, 'DELETE', `/projects/${projectId}`, { reason: 'The quarter is closed.' })).statusCode).toBe(204);
+      expect((await call(an, 'GET', '/projects')).json().projects).toEqual([]);
+      expect((await call(an, 'GET', `/projects/${projectId}`)).json().project).toMatchObject({ name: 'Credit leads, Q4', deleted: { by: 'Karel Leys', reason: 'The quarter is closed.' } });
+      expect((await call(an, 'GET', `/queries/${both}`)).json().query).toMatchObject({ mine: true, project: null });
+      expect((await call(mia, 'GET', `/projects/${projectId}`)).statusCode).toBe(404);
+      // The last one out of a Project deletes it.
+      const alone = (await call(mia, 'POST', '/projects', { name: 'Alone' })).json().project.id;
+      expect((await call(mia, 'DELETE', `/projects/${alone}/members/104`)).json()).toEqual({ left: 0, deleted: true });
+      expect((await call(mia, 'GET', '/projects')).json().projects).toEqual([]);
+    });
+  });
+});

@@ -76,7 +76,10 @@ describe('the Message Catalogue (FR-CV-10)', () => {
       expect(match, type.id).not.toBeNull();
       const prefix = match?.[1] as keyof typeof PREFIXES;
       expect(Object.keys(PREFIXES), type.id).toContain(prefix);
-      if (PREFIXES[prefix]) {
+      // A personal notice is on its User; its prefix names the part of Data Hub it comes from, such as a Project in
+      // Query, which has no Messages of its own (MSG-QRY-03 to MSG-QRY-05).
+      const personal = type.subjects.join() === 'user' && type.to.join() === 'author';
+      if (PREFIXES[prefix] && !personal) {
         expect(type.subjects, `${type.id}: its prefix names its object`).toEqual([PREFIXES[prefix]]);
       }
     }

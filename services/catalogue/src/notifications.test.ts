@@ -306,6 +306,24 @@ describe.skipIf(!url)('notifications by e-mail and in Slack (DEC-LN-02, DEC-LN-0
     expect(asked).toEqual([{ users: [], groups: [], permissions: ['messages.dataTeam'] }]);
   });
 
+  it('tells a colleague alone that a Project was shared with them (FR-SR-65, MSG-QRY-03)', async () => {
+    await messages.projectNotice({
+      type: 'MSG-QRY-03',
+      recipient: { id: 'u-karel', name: 'Karel Leys' },
+      projectId: '7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d',
+      project: 'Credit leads Q4',
+      actor: 'Dirk Vos',
+      queries: 3,
+      canRun: false,
+    });
+    await notifications.deliver();
+    expect(mails.map((mail) => [mail.to, mail.subject])).toEqual([['karel@immoscoop.be', 'Dirk Vos deelde het Project Credit leads Q4 met je, met 3 queries.']]);
+    expect(mails[0]?.html).toContain('Je Permission group laat je geen queries maken of draaien');
+    expect(mails[0]?.html).toContain('Je krijgt dit omdat het over jou gaat.');
+    expect(slacked.map((sent) => sent.email)).toEqual(['karel@immoscoop.be']);
+    expect(asked).toEqual([{ users: ['u-karel'], groups: [], permissions: [] }]);
+  });
+
   it('tells the Data Team of a new User, and not that User (FR-PL-16, MSG-USR-03)', async () => {
     await messages.userNotice({ type: 'MSG-USR-03', userId: 'u-karel', name: 'Karel Leys', email: 'karel@immoscoop.be', group: 'Lens user' });
     await notifications.deliver();

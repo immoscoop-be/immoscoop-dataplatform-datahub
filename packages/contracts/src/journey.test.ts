@@ -13,7 +13,6 @@ const SEARCH_CONSOLE: JourneyFacts = {
   pitfalls: 'Do not average the position.',
   knownGaps: 0,
   reliableSince: null,
-  parameters: [],
   modelType: null,
   grain: [],
   mappings: 0,
@@ -27,15 +26,15 @@ const FILLED: JourneyFacts = {
   keyFields: ['data_date', 'impressions'],
   fields: SEARCH_CONSOLE.fields.map((field) => (['data_date', 'impressions'].includes(field.name) ? { ...field, businessDescription: 'Described.' } : field)),
   knownGaps: 1,
-  reliableSince: '2025-03-01',
+  reliableSince: { from: 'day', day: '2025-03-01', why: 'February 2025 was a test of the export.' },
 };
 
 const status = (facts: JourneyFacts) => Object.fromEntries(journeyOf(facts).steps.map((step) => [step.id, step.status]));
 
 describe('the Owner Journey (OP-CL-12)', () => {
-  it('has thirteen steps in one order, the Key Fields before the fields, each with its mark and its Learning Card', () => {
+  it('has fourteen steps in one order, the Key Fields before the fields, Reliable since before the gaps, each with its mark and its Learning Card', () => {
     expect(JOURNEY_STEPS.map((step) => `${step.number} ${step.id}`)).toEqual([
-      '0 start', '1 data', '2 businessDescription', '3 keyFields', '4 fields', '5 intendedUse', '6 pitfalls', '7 gaps', '8 parameters', '9 admin', '10 messages', '11 publish', '12 after',
+      '0 start', '1 data', '2 businessDescription', '3 keyFields', '4 fields', '5 intendedUse', '6 pitfalls', '7 since', '8 gaps', '9 admin', '10 messages', '11 publish', '12 after',
     ]);
     expect(JOURNEY_STEPS.filter((step) => step.mark === 'required').map((step) => step.id)).toEqual([...REQUIRED_TO_PUBLISH, 'publish']);
     expect(JOURNEY_STEPS.find((step) => step.id === 'admin')?.mark).toBe('eda');
@@ -45,7 +44,7 @@ describe('the Owner Journey (OP-CL-12)', () => {
   it('is not ready while a step required to publish is open, and says which, in the order of the journey (DEC-MR-15, DEC-MR-16)', () => {
     const journey = journeyOf(SEARCH_CONSOLE);
     expect(journey.ready).toBe(false);
-    expect(journey.open).toEqual(['businessDescription', 'keyFields', 'fields', 'gaps']);
+    expect(journey.open).toEqual(['businessDescription', 'keyFields', 'fields', 'since', 'gaps']);
     expect(journey.next).toBe('data');
     // The step Fields waits for the Key Fields.
     expect(status(SEARCH_CONSOLE).fields).toBe('blocked');
@@ -60,7 +59,7 @@ describe('the Owner Journey (OP-CL-12)', () => {
     expect(journey.ready).toBe(true);
     const fields = journey.steps.find((step) => step.id === 'fields');
     expect(fields).toMatchObject({ status: 'done', fieldsMissing: [], othersMissing: 4, missing: ['otherFieldDescriptions'] });
-    expect(status(FILLED)).toMatchObject({ parameters: 'open', admin: 'open', messages: 'open', publish: 'open' });
+    expect(status(FILLED)).toMatchObject({ admin: 'open', messages: 'open', publish: 'open' });
   });
 
   it('takes "nothing to add" as an answer where none is one, with who and when (DEC-MR-16)', () => {
@@ -76,8 +75,14 @@ describe('the Owner Journey (OP-CL-12)', () => {
     const journey = journeyOf(said);
     expect(journey.ready).toBe(true);
     expect(journey.steps.find((step) => step.id === 'pitfalls')?.records).toEqual([{ step: 'pitfalls', answer: 'nothing', by: 'An Claes', at: '2026-11-15T10:00:00Z' }]);
-    // Reliable since is no answer of "nothing": the gaps need a date as well.
-    expect(journeyOf({ ...said, reliableSince: null }).open).toEqual(['gaps']);
+    // Reliable since is a step of its own, and "nothing" is no answer to it (DEC-MR-18).
+    expect(journeyOf({ ...said, reliableSince: null }).open).toEqual(['since']);
+  });
+
+  it('takes From its first row as Reliable since, and not set as neither (FR-RC-31)', () => {
+    const since = (reliableSince: JourneyFacts['reliableSince']) => journeyOf({ ...FILLED, reliableSince }).steps.find((step) => step.id === 'since');
+    expect(since({ from: 'firstRow', day: null, why: '' })).toMatchObject({ status: 'done', missing: [] });
+    expect(since(null)).toMatchObject({ status: 'open', missing: ['reliableSince'] });
   });
 
   it('a Key Field without a Business Description keeps the step Fields open, and names it', () => {
@@ -87,10 +92,10 @@ describe('the Owner Journey (OP-CL-12)', () => {
   });
 
   it('goes on where it stopped: the next step is the first not gone through, an advised one passed on purpose', () => {
-    expect(journeyOf({ ...FILLED, records: [{ step: 'data', answer: 'goneThrough', by: 'An', at: '2026-11-12T09:00:00Z' }] }).next).toBe('parameters');
+    expect(journeyOf({ ...FILLED, records: [{ step: 'data', answer: 'goneThrough', by: 'An', at: '2026-11-12T09:00:00Z' }] }).next).toBe('admin');
     const passed: JourneyFacts = {
       ...FILLED,
-      records: ['data', 'admin', 'messages'].map((step) => ({ step: step as 'data', answer: 'goneThrough' as const, by: 'An', at: '2026-11-12T09:00:00Z' })).concat([{ step: 'parameters' as 'data', answer: 'nothing' as 'goneThrough', by: 'An', at: '2026-11-12T09:00:00Z' }]),
+      records: ['data', 'admin', 'messages'].map((step) => ({ step: step as 'data', answer: 'goneThrough' as const, by: 'An', at: '2026-11-12T09:00:00Z' })),
     };
     expect(journeyOf(passed).next).toBe('publish');
     expect(journeyOf({ ...passed, published: true }).next).toBe('after');

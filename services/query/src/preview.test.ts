@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { type BigQuery, BigQueryRefused, type TableFacts } from './bigquery.js';
 import type { QueryResource } from './catalogue.js';
-import { choicesOf, chosenParameters, createStorage, partitionStart, previewSql, valuesSql, windowFilter } from './preview.js';
+import { choicesOf, chosenParameters, createStorage, FIRST_ROW_BYTES, partitionStart, previewSql, valuesSql, windowFilter } from './preview.js';
 
 const WEEKLY: QueryResource = {
   id: '6f1c2b4e-8a1d-4c3e-9f20-1b2c3d4e5f60',
@@ -21,8 +21,10 @@ const WEEKLY: QueryResource = {
     { name: 'lead_count', dataType: 'INT64', description: '', businessDescription: '' },
     { name: 'created_at', dataType: 'TIMESTAMP', description: '', businessDescription: '' },
     { name: 'is_partner', dataType: 'BOOL', description: '', businessDescription: '' },
+    { name: 'lead_status', dataType: 'STRING', description: '', businessDescription: '' },
+    { name: 'leadId', dataType: 'STRING', description: '', businessDescription: '' },
   ],
-  parameters: ['week_start', 'lead_count', 'created_at', 'is_partner', 'lead_source'],
+  keyFields: ['week_start', 'lead_count', 'created_at', 'is_partner', 'lead_source', 'lead_status', 'leadId'],
 };
 
 describe('the window of a Preview (DEC-SR-39)', () => {
@@ -45,11 +47,18 @@ describe('the window of a Preview (DEC-SR-39)', () => {
 });
 
 describe('the choices of a Preview (FR-SR-38)', () => {
-  it('are its first cluster column, then the Parameters of its Card, of types it can offer', () => {
+  it('are its first cluster column, then the Key Fields of its Card that sort its rows: text or yes/no, no identifier (DEC-RC-34)', () => {
     expect(choicesOf(WEEKLY).map(({ field, role, kind }) => [field, role, kind])).toEqual([
       ['lead_source', 'cluster', 'choice'],
-      ['lead_count', 'parameter', 'number'],
-      ['is_partner', 'parameter', 'yesno'],
+      ['is_partner', 'keyField', 'yesno'],
+      ['lead_status', 'keyField', 'choice'],
+    ]);
+    // A cluster column is offered whatever its kind.
+    expect(choicesOf({ ...WEEKLY, clusterBy: ['lead_count'] }).map(({ field, role }) => [field, role])).toEqual([
+      ['lead_count', 'cluster'],
+      ['is_partner', 'keyField'],
+      ['lead_source', 'keyField'],
+      ['lead_status', 'keyField'],
     ]);
   });
 
@@ -61,7 +70,7 @@ describe('the choices of a Preview (FR-SR-38)', () => {
   });
 
   it('take a value of their column, never SQL', () => {
-    const choices = choicesOf(WEEKLY);
+    const choices = choicesOf({ ...WEEKLY, clusterBy: ['lead_count'] });
     expect(chosenParameters(choices, { lead_source: 'app', lead_count: '12', is_partner: 'true' })).toEqual([
       { name: 'lead_source', kind: 'choice', value: 'app', list: ['app'] },
       { name: 'lead_count', kind: 'number', value: '12' },
@@ -78,7 +87,7 @@ describe('the SQL of a Preview', () => {
   it('reads its fields within its window and choices, newest first, at most 1000 rows', () => {
     expect(previewSql(WEEKLY, "`week_start` >= DATE '2026-09-28'", ['lead_source'])).toBe(
       [
-        'select `week_start`, `lead_source`, `lead_count`, `created_at`, `is_partner`',
+        'select `week_start`, `lead_source`, `lead_count`, `created_at`, `is_partner`, `lead_status`, `leadId`',
         'from `immoscoop-dataplatform.dbt_prod_stacks.weekly_lead_volume`',
         "where `week_start` >= DATE '2026-09-28'\n  and `lead_source` = @lead_source",
         'order by `week_start` desc',
@@ -129,5 +138,50 @@ describe('the size and partitions of a Resource (FR-SR-39)', () => {
   it('say nothing of the newest partitions where BigQuery does not tell them', async () => {
     const { bigquery } = fake({ [WEEKLY.key]: facts({ partitionField: 'week_start' }) }, new BigQueryRefused('Access Denied'));
     expect(await createStorage(bigquery, async () => []).newest(WEEKLY, 4)).toBeNull();
+  });
+});
+
+describe('the first row of a Resource on its Date Field (DEC-RC-33)', () => {
+  const facts = (extra: Partial<TableFacts>): TableFacts => ({ type: 'TABLE', bytes: 10, rows: 1, partitions: null, partitionField: null, modifiedAt: null, ...extra });
+  function fake(partitionField: string | null, bytes: number) {
+    const asked: string[] = [];
+    const bigquery = {
+      async table() {
+        return facts({ partitionField });
+      },
+      async firstPartition() {
+        asked.push('partitions');
+        return '20240108';
+      },
+      async dryRun(sql: string) {
+        asked.push(`dry ${sql}`);
+        return { statementType: 'SELECT', bytes, referencedTables: [], partitions: null };
+      },
+      async lowestDay(_key: string, field: string, most: number) {
+        asked.push(`lowest ${field} ${most}`);
+        return '2023-05-02';
+      },
+    } as unknown as BigQuery;
+    return { bigquery, asked };
+  }
+
+  it('comes from its oldest partition when it is partitioned on that field, at no cost, once a day', async () => {
+    const { bigquery, asked } = fake('week_start', 0);
+    const storage = createStorage(bigquery, async () => []);
+    expect(await storage.firstRow(WEEKLY, 'week_start')).toEqual({ day: '2024-01-08', from: 'partitions' });
+    expect(await storage.firstRow(WEEKLY, 'week_start')).toEqual({ day: '2024-01-08', from: 'partitions' });
+    expect(asked).toEqual(['partitions']);
+  });
+
+  it('is otherwise the lowest value of the field, when it reads at most 100 MB; else none', async () => {
+    const small = fake('week_start', 2_000_000);
+    expect(await createStorage(small.bigquery, async () => []).firstRow(WEEKLY, 'created_at')).toEqual({ day: '2023-05-02', from: 'lowest' });
+    expect(small.asked).toEqual([
+      'dry select cast(min(`created_at`) as date) as first_day from `immoscoop-dataplatform.dbt_prod_stacks.weekly_lead_volume`',
+      `lowest created_at ${FIRST_ROW_BYTES}`,
+    ]);
+    const large = fake(null, 400_000_000);
+    expect(await createStorage(large.bigquery, async () => []).firstRow(WEEKLY, 'created_at')).toEqual({ day: null, from: null });
+    expect(large.asked.some((what) => what.startsWith('lowest'))).toBe(false);
   });
 });

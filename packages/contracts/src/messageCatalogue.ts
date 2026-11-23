@@ -776,7 +776,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     subjects: ['resource'],
     from: 'dataHub',
     to: ['owner'],
-    when: 'The Level of a Resource drops: a description goes missing, its EDA document is no longer linked, or its last active check is switched off.',
+    when: 'The Level of a Resource drops: a description goes missing, its EDA goes, or its last active check is switched off.',
     status: 'Implemented',
     sources: ['FR-MR-09', 'DEC-SR-08', 'DEC-MR-08'],
     openPoints: ['OP-MR-04'],
@@ -789,22 +789,22 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     ],
     text: {
       nl: {
-        plain: '{subject} is gezakt van {from} naar {to}: {cause, select, description {er ontbreekt een beschrijving} eda {het EDA-document is niet meer gekoppeld} other {de laatste actieve check werd uitgeschakeld}}.',
+        plain: '{subject} is gezakt van {from} naar {to}: {cause, select, description {er ontbreekt een beschrijving} eda {haar EDA is weg} other {de laatste actieve check werd uitgeschakeld}}.',
         rich: lines(
           '**{subject} is gezakt van {from} naar {to}**',
           '',
-          '{cause, select, description {Er ontbreekt een beschrijving in dbt, en geen businessbeschrijving vult dat aan.} eda {Het EDA-document is niet meer gekoppeld.} other {De laatste actieve check werd uitgeschakeld.}}',
+          '{cause, select, description {Er ontbreekt een beschrijving in dbt, en geen businessbeschrijving vult dat aan.} eda {Haar EDA is weg.} other {De laatste actieve check werd uitgeschakeld.}}',
           '- Veld zonder beschrijving: `{field}`',
           '',
           '{published, select, yes {Hij blijft gepubliceerd, en iedereen die hem ziet, ziet het lagere level: op de resource en op elke lens en elk report die erop steunen. } other {}}Zodra de oorzaak weg is, stijgt hij opnieuw, en je bekrachtiging blijft gelden.',
         ),
       },
       en: {
-        plain: '{subject} dropped from {from} to {to}: {cause, select, description {a description is missing} eda {its EDA document is no longer linked} other {its last active check was switched off}}.',
+        plain: '{subject} dropped from {from} to {to}: {cause, select, description {a description is missing} eda {its EDA is gone} other {its last active check was switched off}}.',
         rich: lines(
           '**{subject} dropped from {from} to {to}**',
           '',
-          '{cause, select, description {A description is missing in dbt, and no business description covers it.} eda {Its EDA document is no longer linked.} other {Its last active check was switched off.}}',
+          '{cause, select, description {A description is missing in dbt, and no business description covers it.} eda {Its EDA is gone.} other {Its last active check was switched off.}}',
           '- Field without a description: `{field}`',
           '',
           '{published, select, yes {It stays published, and everyone who sees it sees the lower level, on the resource and on every lens and report built on it. } other {}}When the cause is gone, it rises again, and your confirmation still holds.',
@@ -819,7 +819,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     action: {
       asks: 'act',
       of: ['owner'],
-      what: 'The Owner takes the cause away: a description, the EDA document or a check. The Publication stays (DEC-SR-08).',
+      what: 'The Owner takes the cause away: a description, the EDA or a check. The Publication stays (DEC-SR-08).',
       buttons: [{ label: { nl: 'Naar de oorzaak', en: 'Go to the cause' }, opens: 'The page of the Resource at the cause: the Columns tab, the EDA tab or its checks' }],
       states: ['open', 'restored'],
       done: 'When the Level rises again, it shows that it is restored.',
@@ -1691,6 +1691,123 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
         { kind: 'resource', resource: 'Partner contracts' },
       ],
     },
+  },
+
+  {
+    id: 'MSG-QRY-03',
+    title: 'A Project is shared with you',
+    kind: 'dataHub',
+    subjects: ['user'],
+    from: 'dataHub',
+    to: ['author'],
+    when: 'Someone in a Project of Query adds a colleague to it (FR-SR-65).',
+    per: 'One per colleague added; only they see it.',
+    status: 'Implemented',
+    sources: ['FR-SR-65', 'DEC-SR-47', 'DEC-UX-286', 'OP-UX-101'],
+    parameters: [
+      { name: 'actor', type: 'person', about: 'Who added them' },
+      { name: 'project', type: 'name', about: 'The name of the Project' },
+      { name: 'queries', type: 'count', about: 'How many queries it holds' },
+      { name: 'canRun', type: 'choice', about: 'Whether their Permission group lets them make and run queries', values: ['yes', 'no'] },
+    ],
+    text: {
+      nl: {
+        plain: '{actor} deelde het Project {project} met je, met {queries, plural, one {# query} other {# queries}}.',
+        rich: lines(
+          '**{actor} deelde het Project {project} met je**',
+          '',
+          'Het telt {queries, plural, one {# query} other {# queries}}. Wie erin zit, opent, wijzigt en draait ze, elk met de eigen rechten. {canRun, select, no {Je Permission group laat je geen queries maken of draaien: je leest ze en hun SQL, maar draait of wijzigt ze niet.} other {}}',
+        ),
+      },
+      en: {
+        plain: '{actor} shared the Project {project} with you, with {queries, plural, one {# query} other {# queries}}.',
+        rich: lines(
+          '**{actor} shared the Project {project} with you**',
+          '',
+          'It holds {queries, plural, one {# query} other {# queries}}. Everyone in it opens, changes and runs them, each with their own rights. {canRun, select, no {Your Permission group does not let you make or run queries: you read them and their SQL, but do not run or change them.} other {}}',
+        ),
+      },
+    },
+    learningCard: { fit: 'proposed', card: { number: 'K5.8', title: 'A Lens or your own query' }, why: 'A query a team keeps coming back to may answer better as a Lens, for everyone.' },
+    action: {
+      asks: 'nothing',
+      what: 'The colleague opens the Project: it is then active, its queries the row on top of Query.',
+      buttons: [{ label: { nl: 'Project openen', en: 'Open the Project' }, opens: 'Query, the page of the Project' }],
+      done: 'When it is read.',
+    },
+    example: { subject: 'Karel Leys', actor: 'Maxime Passenier', project: 'Credit leads Q4', queries: 14, canRun: 'yes' },
+  },
+  {
+    id: 'MSG-QRY-04',
+    title: 'You were taken out of a Project',
+    kind: 'dataHub',
+    subjects: ['user'],
+    from: 'dataHub',
+    to: ['author'],
+    when: 'Someone in a Project of Query takes a colleague out of it; leaving it oneself sends none (FR-SR-65).',
+    per: 'One per colleague taken out; only they see it.',
+    status: 'Implemented',
+    sources: ['FR-SR-65', 'OP-UX-101'],
+    parameters: [
+      { name: 'actor', type: 'person', about: 'Who took them out' },
+      { name: 'project', type: 'name', about: 'The name of the Project' },
+    ],
+    text: {
+      nl: {
+        plain: '{actor} haalde je uit het Project {project}. De queries die je maakte, blijven van jou.',
+        rich: lines('**{actor} haalde je uit het Project {project}**', '', 'Je ziet het niet meer, en ook niet de queries van anderen erin. De queries die je zelf maakte, blijven van jou, in je historiek.'),
+      },
+      en: {
+        plain: '{actor} took you out of the Project {project}. The queries you made stay yours.',
+        rich: lines('**{actor} took you out of the Project {project}**', '', 'You no longer see it, nor the queries of others in it. The queries you made yourself stay yours, in your history.'),
+      },
+    },
+    learningCard: { fit: 'proposed', card: { number: 'K5.8', title: 'A Lens or your own query' }, why: 'A query a team keeps coming back to may answer better as a Lens, for everyone.' },
+    action: { asks: 'nothing', what: 'Nothing: whoever needs it again asks someone in it to add them.', buttons: [], done: 'When it is read.' },
+    example: { subject: 'Lotte Dewulf', actor: 'An Claes', project: 'Credit leads Q4' },
+  },
+  {
+    id: 'MSG-QRY-05',
+    title: 'A Project you are in was deleted',
+    kind: 'dataHub',
+    subjects: ['user'],
+    from: 'dataHub',
+    to: ['author'],
+    when: 'Someone in a Project of Query deletes it; everyone else in it gets one (FR-SR-66).',
+    per: 'One per colleague in the Project, besides who deleted it.',
+    status: 'Implemented',
+    sources: ['FR-SR-66', 'OP-UX-100'],
+    parameters: [
+      { name: 'actor', type: 'person', about: 'Who deleted it' },
+      { name: 'project', type: 'name', about: 'The name of the Project' },
+      { name: 'reason', type: 'text', about: 'Why, as they wrote it', optional: true },
+      { name: 'mine', type: 'count', about: 'How many of its queries they made, which stay theirs' },
+    ],
+    text: {
+      nl: {
+        plain: '{actor} verwijderde het Project {project}. Je {mine, plural, one {# query blijft} other {# queries blijven}} van jou.',
+        rich: lines(
+          '**{actor} verwijderde het Project {project}**',
+          '',
+          '{reason}',
+          '',
+          '{mine, plural, =0 {Je maakte er zelf geen queries in.} one {De query die je erin maakte, blijft van jou, in je historiek.} other {De # queries die je erin maakte, blijven van jou, in je historiek.}} De queries van anderen zie je niet meer.',
+        ),
+      },
+      en: {
+        plain: '{actor} deleted the Project {project}. Your {mine, plural, one {# query stays} other {# queries stay}} yours.',
+        rich: lines(
+          '**{actor} deleted the Project {project}**',
+          '',
+          '{reason}',
+          '',
+          '{mine, plural, =0 {You made no queries in it yourself.} one {The query you made in it stays yours, in your history.} other {The # queries you made in it stay yours, in your history.}} You no longer see the queries of others.',
+        ),
+      },
+    },
+    learningCard: { fit: 'proposed', card: { number: 'K5.8', title: 'A Lens or your own query' }, why: 'A query a team keeps coming back to may answer better as a Lens, for everyone.' },
+    action: { asks: 'nothing', what: 'Nothing: their own queries are in their history.', buttons: [], done: 'When it is read.' },
+    example: { subject: 'Karel Leys', actor: 'An Claes', project: 'Credit leads Q4', reason: 'The review is done; the quarter is closed.', mine: 4 },
   },
 
   // Reports

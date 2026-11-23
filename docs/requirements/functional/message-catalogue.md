@@ -9,7 +9,7 @@
 
 Every type of Message in Data Hub, between the four actors: a User, the Owner of an object, the Data Team, and Data Hub itself ([DEC-CV-07](14-conversations.md#dec-cv-07), [FR-CV-10](14-conversations.md#fr-cv-10)). For each, the catalogue says who sends it to whom and when; its texts, plain and laid out, in Dutch and English ([FR-CV-11](14-conversations.md#fr-cv-11), [FR-CV-12](14-conversations.md#fr-cv-12)); the Learning Card that explains it ([FR-CV-14](14-conversations.md#fr-cv-14)); and what it asks of whoever receives it, with the buttons that link the Message to that action ([FR-CV-13](14-conversations.md#fr-cv-13)).
 
-The catalogue itself is code, in [`packages/contracts/src/messageCatalogue.ts`](../../../packages/contracts/src/messageCatalogue.ts): the web app takes its texts from there, and so will Slack and the MCP server ([FR-CV-15](14-conversations.md#fr-cv-15)). A test checks it: the same parameters in both languages and both layouts, a value for every placeholder, and every example filled in. A Message ID, such as `MSG-RES-02`, is fixed: never renumbered or reused. It is neither a requirement ID nor a Log ID of the [Log catalogue](log-catalogue.md).
+The catalogue itself is code, in [`packages/contracts/src/messageCatalogue.ts`](../../../packages/contracts/src/messageCatalogue.ts): the web app takes its texts from there, and so will Slack and the MCP server ([FR-CV-15](14-conversations.md#fr-cv-15)). A test checks it: the same parameters in both languages and both layouts, a value for every placeholder, every example filled in, and a prefix of its ID that names what it is about: its object, or, for a personal notice to its User, the part of Data Hub it comes from, such as a Project in Query, which has no Messages of its own. A Message ID, such as `MSG-RES-02`, is fixed: never renumbered or reused. It is neither a requirement ID nor a Log ID of the [Log catalogue](log-catalogue.md).
 
 ## How to read it
 
@@ -30,7 +30,7 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | User | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-04](#msg-cnv-04), [MSG-CNV-07](#msg-cnv-07) | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-03](#msg-cnv-03), [MSG-LRN-01](#msg-lrn-01) | [MSG-CNV-03](#msg-cnv-03), [MSG-LEN-01](#msg-len-01), [MSG-QRY-01](#msg-qry-01) |
 | Owner | [MSG-RES-07](#msg-res-07) | – | – |
 | Data Team | [MSG-CNV-05](#msg-cnv-05) | – | – |
-| Data Hub | [MSG-CNV-06](#msg-cnv-06), [MSG-LEN-02](#msg-len-02), [MSG-LEN-06](#msg-len-06), [MSG-KEY-01](#msg-key-01), [MSG-KEY-02](#msg-key-02), [MSG-USR-01](#msg-usr-01) | [MSG-RES-02](#msg-res-02), [MSG-RES-03](#msg-res-03), [MSG-RES-04](#msg-res-04), [MSG-RES-05](#msg-res-05), [MSG-RES-06](#msg-res-06), [MSG-RES-08](#msg-res-08), [MSG-LEN-03](#msg-len-03), [MSG-LEN-04](#msg-len-04), [MSG-LEN-05](#msg-len-05), [MSG-QRY-02](#msg-qry-02), [MSG-RPT-01](#msg-rpt-01) | [MSG-COL-01](#msg-col-01), [MSG-RES-01](#msg-res-01), [MSG-RES-09](#msg-res-09), [MSG-LEN-03](#msg-len-03), [MSG-USR-02](#msg-usr-02), [MSG-USR-03](#msg-usr-03) |
+| Data Hub | [MSG-CNV-06](#msg-cnv-06), [MSG-LEN-02](#msg-len-02), [MSG-LEN-06](#msg-len-06), [MSG-KEY-01](#msg-key-01), [MSG-KEY-02](#msg-key-02), [MSG-USR-01](#msg-usr-01), [MSG-QRY-03](#msg-qry-03), [MSG-QRY-04](#msg-qry-04), [MSG-QRY-05](#msg-qry-05) | [MSG-RES-02](#msg-res-02), [MSG-RES-03](#msg-res-03), [MSG-RES-04](#msg-res-04), [MSG-RES-05](#msg-res-05), [MSG-RES-06](#msg-res-06), [MSG-RES-08](#msg-res-08), [MSG-LEN-03](#msg-len-03), [MSG-LEN-04](#msg-len-04), [MSG-LEN-05](#msg-len-05), [MSG-QRY-02](#msg-qry-02), [MSG-RPT-01](#msg-rpt-01) | [MSG-COL-01](#msg-col-01), [MSG-RES-01](#msg-res-01), [MSG-RES-09](#msg-res-09), [MSG-LEN-03](#msg-len-03), [MSG-USR-02](#msg-usr-02), [MSG-USR-03](#msg-usr-03) |
 
 ## Overview
 
@@ -66,6 +66,9 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | [MSG-USR-03](#msg-usr-03) | A new User signed in for the first time | User | Data Hub → Data Team | Nothing | Named: K5.10 | Implemented |
 | [MSG-QRY-01](#msg-qry-01) | Request to run a very large query | query | User → Data Team | A decision | By the writer | Implemented |
 | [MSG-QRY-02](#msg-qry-02) | A query is Broken | query | Data Hub → Owner | Something to do | Named: K5.7 | Implemented |
+| [MSG-QRY-03](#msg-qry-03) | A Project is shared with you | User | Data Hub → its author | Nothing | Proposed: K5.8 | Implemented |
+| [MSG-QRY-04](#msg-qry-04) | You were taken out of a Project | User | Data Hub → its author | Nothing | Proposed: K5.8 | Implemented |
+| [MSG-QRY-05](#msg-qry-05) | A Project you are in was deleted | User | Data Hub → its author | Nothing | Proposed: K5.8 | Implemented |
 | [MSG-RPT-01](#msg-rpt-01) | A Report is Broken | Report | Data Hub → Owner | Something to do | Named: K5.7 | Proposed |
 | [MSG-LRN-01](#msg-lrn-01) | A colleague wants a card | Learning Card | User → Owner | An answer | By the writer | Proposed |
 
@@ -1665,12 +1668,12 @@ The dbt run of {run} changed the code of `{node}`, {distance, plural, =0 {the ta
 | Kind | Data Hub |
 | About | Resource |
 | From → to | Data Hub → Owner |
-| When | The Level of a Resource drops: a description goes missing, its EDA document is no longer linked, or its last active check is switched off. |
+| When | The Level of a Resource drops: a description goes missing, its EDA goes, or its last active check is switched off. |
 | Status | Implemented |
 | Comes from | [FR-MR-09](06-maturity-and-release.md#fr-mr-09), [DEC-SR-08](04-stacks-and-resources.md#dec-sr-08), [DEC-MR-08](06-maturity-and-release.md#dec-mr-08) |
 | Open points | [OP-MR-04](06-maturity-and-release.md#op-mr-04) |
 
-**What it asks:** Something to do, of the Owner. The Owner takes the cause away: a description, the EDA document or a check. The Publication stays ([DEC-SR-08](04-stacks-and-resources.md#dec-sr-08)).
+**What it asks:** Something to do, of the Owner. The Owner takes the cause away: a description, the EDA or a check. The Publication stays ([DEC-SR-08](04-stacks-and-resources.md#dec-sr-08)).
 
 **How it ends:** When the Level rises again, it shows that it is restored. It starts `open` and ends `restored`.
 
@@ -1724,7 +1727,7 @@ Weekly lead volume dropped from 4 · Explored to 1 · Available: a description i
 Template, Dutch, plain:
 
 ```text
-{subject} is gezakt van {from} naar {to}: {cause, select, description {er ontbreekt een beschrijving} eda {het EDA-document is niet meer gekoppeld} other {de laatste actieve check werd uitgeschakeld}}.
+{subject} is gezakt van {from} naar {to}: {cause, select, description {er ontbreekt een beschrijving} eda {haar EDA is weg} other {de laatste actieve check werd uitgeschakeld}}.
 ```
 
 Template, Dutch, laid out:
@@ -1732,7 +1735,7 @@ Template, Dutch, laid out:
 ```markdown
 **{subject} is gezakt van {from} naar {to}**
 
-{cause, select, description {Er ontbreekt een beschrijving in dbt, en geen businessbeschrijving vult dat aan.} eda {Het EDA-document is niet meer gekoppeld.} other {De laatste actieve check werd uitgeschakeld.}}
+{cause, select, description {Er ontbreekt een beschrijving in dbt, en geen businessbeschrijving vult dat aan.} eda {Haar EDA is weg.} other {De laatste actieve check werd uitgeschakeld.}}
 - Veld zonder beschrijving: `{field}`
 
 {published, select, yes {Hij blijft gepubliceerd, en iedereen die hem ziet, ziet het lagere level: op de resource en op elke lens en elk report die erop steunen. } other {}}Zodra de oorzaak weg is, stijgt hij opnieuw, en je bekrachtiging blijft gelden.
@@ -1741,7 +1744,7 @@ Template, Dutch, laid out:
 Template, English, plain:
 
 ```text
-{subject} dropped from {from} to {to}: {cause, select, description {a description is missing} eda {its EDA document is no longer linked} other {its last active check was switched off}}.
+{subject} dropped from {from} to {to}: {cause, select, description {a description is missing} eda {its EDA is gone} other {its last active check was switched off}}.
 ```
 
 Template, English, laid out:
@@ -1749,7 +1752,7 @@ Template, English, laid out:
 ```markdown
 **{subject} dropped from {from} to {to}**
 
-{cause, select, description {A description is missing in dbt, and no business description covers it.} eda {Its EDA document is no longer linked.} other {Its last active check was switched off.}}
+{cause, select, description {A description is missing in dbt, and no business description covers it.} eda {Its EDA is gone.} other {Its last active check was switched off.}}
 - Field without a description: `{field}`
 
 {published, select, yes {It stays published, and everyone who sees it sees the lower level, on the resource and on every lens and report built on it. } other {}}When the cause is gone, it rises again, and your confirmation still holds.
@@ -3208,6 +3211,268 @@ One item of `missing`, English, laid out:
 
 ```markdown
 - {kind, select, resource {the resource {resource}} other {the column `{column}` of {resource}}}
+```
+
+</details>
+
+<a id="msg-qry-03"></a>
+
+### MSG-QRY-03 · A Project is shared with you
+
+| | |
+| --- | --- |
+| Kind | Data Hub |
+| About | User |
+| From → to | Data Hub → its author |
+| When | Someone in a Project of Query adds a colleague to it ([FR-SR-65](04-stacks-and-resources.md#fr-sr-65)). |
+| How many | One per colleague added; only they see it. |
+| Status | Implemented |
+| Comes from | [FR-SR-65](04-stacks-and-resources.md#fr-sr-65), [DEC-SR-47](04-stacks-and-resources.md#dec-sr-47), [DEC-UX-286](../../design/principles.md#dec-ux-286), [OP-UX-101](../../design/principles.md#op-ux-101) |
+
+**What it asks:** Nothing. The colleague opens the Project: it is then active, its queries the row on top of Query.
+
+**How it ends:** When it is read.
+
+| Button | Opens | For |
+| --- | --- | --- |
+| Open the Project · *Project openen* | Query, the page of the Project | every recipient |
+
+**Learning Card:** Proposed: **K5.8 A Lens or your own query**. A query a team keeps coming back to may answer better as a Lens, for everyone.
+
+**Dutch, laid out**, with the example:
+
+> **Maxime Passenier deelde het Project Credit leads Q4 met je**
+>
+> Het telt 14 queries. Wie erin zit, opent, wijzigt en draait ze, elk met de eigen rechten.
+
+**Dutch, plain:**
+
+```text
+Maxime Passenier deelde het Project Credit leads Q4 met je, met 14 queries.
+```
+
+**English, laid out**, with the example:
+
+> **Maxime Passenier shared the Project Credit leads Q4 with you**
+>
+> It holds 14 queries. Everyone in it opens, changes and runs them, each with their own rights.
+
+**English, plain:**
+
+```text
+Maxime Passenier shared the Project Credit leads Q4 with you, with 14 queries.
+```
+
+<details>
+<summary>Parameters and templates</summary>
+
+| Parameter | Type | Holds |
+| --- | --- | --- |
+| `actor` | person | Who added them |
+| `project` | name | The name of the Project |
+| `queries` | count | How many queries it holds |
+| `canRun` | choice: `yes`, `no` | Whether their Permission group lets them make and run queries |
+
+Template, Dutch, plain:
+
+```text
+{actor} deelde het Project {project} met je, met {queries, plural, one {# query} other {# queries}}.
+```
+
+Template, Dutch, laid out:
+
+```markdown
+**{actor} deelde het Project {project} met je**
+
+Het telt {queries, plural, one {# query} other {# queries}}. Wie erin zit, opent, wijzigt en draait ze, elk met de eigen rechten. {canRun, select, no {Je Permission group laat je geen queries maken of draaien: je leest ze en hun SQL, maar draait of wijzigt ze niet.} other {}}
+```
+
+Template, English, plain:
+
+```text
+{actor} shared the Project {project} with you, with {queries, plural, one {# query} other {# queries}}.
+```
+
+Template, English, laid out:
+
+```markdown
+**{actor} shared the Project {project} with you**
+
+It holds {queries, plural, one {# query} other {# queries}}. Everyone in it opens, changes and runs them, each with their own rights. {canRun, select, no {Your Permission group does not let you make or run queries: you read them and their SQL, but do not run or change them.} other {}}
+```
+
+</details>
+
+<a id="msg-qry-04"></a>
+
+### MSG-QRY-04 · You were taken out of a Project
+
+| | |
+| --- | --- |
+| Kind | Data Hub |
+| About | User |
+| From → to | Data Hub → its author |
+| When | Someone in a Project of Query takes a colleague out of it; leaving it oneself sends none ([FR-SR-65](04-stacks-and-resources.md#fr-sr-65)). |
+| How many | One per colleague taken out; only they see it. |
+| Status | Implemented |
+| Comes from | [FR-SR-65](04-stacks-and-resources.md#fr-sr-65), [OP-UX-101](../../design/principles.md#op-ux-101) |
+
+**What it asks:** Nothing. Nothing: whoever needs it again asks someone in it to add them.
+
+**How it ends:** When it is read.
+
+**Learning Card:** Proposed: **K5.8 A Lens or your own query**. A query a team keeps coming back to may answer better as a Lens, for everyone.
+
+**Dutch, laid out**, with the example:
+
+> **An Claes haalde je uit het Project Credit leads Q4**
+>
+> Je ziet het niet meer, en ook niet de queries van anderen erin. De queries die je zelf maakte, blijven van jou, in je historiek.
+
+**Dutch, plain:**
+
+```text
+An Claes haalde je uit het Project Credit leads Q4. De queries die je maakte, blijven van jou.
+```
+
+**English, laid out**, with the example:
+
+> **An Claes took you out of the Project Credit leads Q4**
+>
+> You no longer see it, nor the queries of others in it. The queries you made yourself stay yours, in your history.
+
+**English, plain:**
+
+```text
+An Claes took you out of the Project Credit leads Q4. The queries you made stay yours.
+```
+
+<details>
+<summary>Parameters and templates</summary>
+
+| Parameter | Type | Holds |
+| --- | --- | --- |
+| `actor` | person | Who took them out |
+| `project` | name | The name of the Project |
+
+Template, Dutch, plain:
+
+```text
+{actor} haalde je uit het Project {project}. De queries die je maakte, blijven van jou.
+```
+
+Template, Dutch, laid out:
+
+```markdown
+**{actor} haalde je uit het Project {project}**
+
+Je ziet het niet meer, en ook niet de queries van anderen erin. De queries die je zelf maakte, blijven van jou, in je historiek.
+```
+
+Template, English, plain:
+
+```text
+{actor} took you out of the Project {project}. The queries you made stay yours.
+```
+
+Template, English, laid out:
+
+```markdown
+**{actor} took you out of the Project {project}**
+
+You no longer see it, nor the queries of others in it. The queries you made yourself stay yours, in your history.
+```
+
+</details>
+
+<a id="msg-qry-05"></a>
+
+### MSG-QRY-05 · A Project you are in was deleted
+
+| | |
+| --- | --- |
+| Kind | Data Hub |
+| About | User |
+| From → to | Data Hub → its author |
+| When | Someone in a Project of Query deletes it; everyone else in it gets one ([FR-SR-66](04-stacks-and-resources.md#fr-sr-66)). |
+| How many | One per colleague in the Project, besides who deleted it. |
+| Status | Implemented |
+| Comes from | [FR-SR-66](04-stacks-and-resources.md#fr-sr-66), [OP-UX-100](../../design/principles.md#op-ux-100) |
+
+**What it asks:** Nothing. Nothing: their own queries are in their history.
+
+**How it ends:** When it is read.
+
+**Learning Card:** Proposed: **K5.8 A Lens or your own query**. A query a team keeps coming back to may answer better as a Lens, for everyone.
+
+**Dutch, laid out**, with the example:
+
+> **An Claes verwijderde het Project Credit leads Q4**
+>
+> The review is done; the quarter is closed.
+>
+> De 4 queries die je erin maakte, blijven van jou, in je historiek. De queries van anderen zie je niet meer.
+
+**Dutch, plain:**
+
+```text
+An Claes verwijderde het Project Credit leads Q4. Je 4 queries blijven van jou.
+```
+
+**English, laid out**, with the example:
+
+> **An Claes deleted the Project Credit leads Q4**
+>
+> The review is done; the quarter is closed.
+>
+> The 4 queries you made in it stay yours, in your history. You no longer see the queries of others.
+
+**English, plain:**
+
+```text
+An Claes deleted the Project Credit leads Q4. Your 4 queries stay yours.
+```
+
+<details>
+<summary>Parameters and templates</summary>
+
+| Parameter | Type | Holds |
+| --- | --- | --- |
+| `actor` | person | Who deleted it |
+| `project` | name | The name of the Project |
+| `reason` | text, optional | Why, as they wrote it |
+| `mine` | count | How many of its queries they made, which stay theirs |
+
+Template, Dutch, plain:
+
+```text
+{actor} verwijderde het Project {project}. Je {mine, plural, one {# query blijft} other {# queries blijven}} van jou.
+```
+
+Template, Dutch, laid out:
+
+```markdown
+**{actor} verwijderde het Project {project}**
+
+{reason}
+
+{mine, plural, =0 {Je maakte er zelf geen queries in.} one {De query die je erin maakte, blijft van jou, in je historiek.} other {De # queries die je erin maakte, blijven van jou, in je historiek.}} De queries van anderen zie je niet meer.
+```
+
+Template, English, plain:
+
+```text
+{actor} deleted the Project {project}. Your {mine, plural, one {# query stays} other {# queries stay}} yours.
+```
+
+Template, English, laid out:
+
+```markdown
+**{actor} deleted the Project {project}**
+
+{reason}
+
+{mine, plural, =0 {You made no queries in it yourself.} one {The query you made in it stays yours, in your history.} other {The # queries you made in it stay yours, in your history.}} You no longer see the queries of others.
 ```
 
 </details>

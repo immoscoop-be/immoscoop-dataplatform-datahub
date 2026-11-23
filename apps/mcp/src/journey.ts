@@ -1,6 +1,7 @@
 import type { GapScope } from '@datahub/contracts/gaps';
-import { type Journey, type JourneyMissing, type JourneyStepId, type JourneyStepState, JOURNEY_STEPS, journeyStep } from '@datahub/contracts/journey';
-import type { ModelType } from '@datahub/contracts/model-types';
+import { type Journey, type JourneyMissing, type JourneyStepId, type JourneyStepState, JOURNEY_STEPS, journeyStep, REQUIRED_TO_PUBLISH } from '@datahub/contracts/journey';
+import type { ModelType, TypeField } from '@datahub/contracts/model-types';
+import { dateFieldOf, dateFieldsOf, type ReliableSince } from '@datahub/contracts/reliable';
 import { shownIn, TERMS, type TermKey, TOPICS } from '@datahub/learning';
 import { z } from 'zod';
 import { answer, attempt, refusal } from './answers.js';
@@ -22,8 +23,8 @@ export interface JourneyResource {
   /** What the window of a step shows of it: its description from dbt, its card, its fields and what a Data Admin recorded. */
   description?: string;
   card?: Record<string, unknown>;
-  fields?: readonly { name: string; businessDescription: string }[];
-  details?: { grain?: string[]; grainSentence?: string; modelType?: ModelType | null; mappings?: unknown[] } | null;
+  fields?: readonly { name: string; businessDescription: string; dataType?: string | null }[];
+  details?: { grain?: string[]; grainSentence?: string; modelType?: ModelType | null; typeFields?: TypeField[]; mappings?: unknown[] } | null;
 }
 
 /** One thing the window of a step shows of the Resource now (DEC-UX-261): a text, chips or lines, or what is not there. */
@@ -41,6 +42,46 @@ export interface Held {
 }
 
 const dayOf = (value: string) => new Date(value).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+
+/** The steps of the journey after the start, as the window counts them: 13. */
+export const STEPS_AFTER_START = JOURNEY_STEPS.length - 1;
+/** The number of a step, as the texts of the window name it. */
+const numberOf = (id: JourneyStepId) => journeyStep(id).number;
+
+/** Reliable Since as the card gives it, also a bare day of an older catalogue (FR-RC-31). */
+export function reliableOf(value: unknown): ReliableSince | null {
+  if (typeof value === 'string' && value) return { from: 'day', day: value, why: '' };
+  if (value === null || typeof value !== 'object') return null;
+  const given = value as { from?: unknown; day?: unknown; why?: unknown };
+  if (given.from === 'firstRow') return { from: 'firstRow', day: null, why: '' };
+  return given.from === 'day' && typeof given.day === 'string' ? { from: 'day', day: given.day, why: typeof given.why === 'string' ? given.why : '' } : null;
+}
+
+/** The held facts of the step Reliable since (DEC-RC-29, FR-RC-31, FR-RC-32): its value, its Date Field and the date fields. */
+function sinceHeld(resource: JourneyResource): Held[] {
+  const card = resource.card ?? {};
+  const reliable = reliableOf(card.reliableSince);
+  const fields = (resource.fields ?? []).map((field) => ({ name: field.name, dataType: field.dataType ?? null }));
+  const chosen = typeof card.dateField === 'string' ? card.dateField : null;
+  const date = dateFieldOf(chosen, resource.details?.modelType ?? null, resource.details?.typeFields ?? [], fields);
+  const type = resource.details?.modelType;
+  const on = date.field
+    ? date.source === 'type'
+      ? `${date.field}, from its table type: ${date.typeField?.role} of ${/^[aeiou]/.test(type ?? '') ? 'an' : 'a'} ${type}.`
+      : date.unusual && date.typeField
+        ? `${date.field}, chosen. Unusual: its table type gives ${date.typeField.field} (${date.typeField.role} of ${/^[aeiou]/.test(type ?? '') ? 'an' : 'a'} ${type}); on ${date.field}, Reliable since says when a row was made, not the time it counts.`
+        : `${date.field}, chosen${date.gone ? ': it left the Resource, choose another' : ''}.`
+    : undefined;
+  return [
+    {
+      label: 'Reliable since',
+      text: reliable ? (reliable.from === 'firstRow' ? 'From its first row: the whole table can be relied on, as far back as it goes.' : `${dayOf(reliable.day ?? '')}. Why not earlier: ${reliable.why || 'not written yet.'}`) : undefined,
+      none: 'Not set: neither from its first row nor from a later day. Ask the Owner for one of the two.',
+    },
+    { label: 'Read on', text: on, none: type ? `Its table type, ${type}, gives no Date Field: choose one of its date fields.` : 'No table type recorded yet: choose one of its date fields.' },
+    { label: 'Its date fields', chips: dateFieldsOf(fields), none: 'It has no date field: Reliable since can only be from its first row.' },
+  ];
+}
 
 /** What a step holds now, as its window shows it before Claude proposes: the texts on the card, or what is missing. */
 export function heldOf(step: JourneyStepState, resource: JourneyResource, journey: Journey, mayDescribe = false): Held[] {
@@ -66,7 +107,7 @@ export function heldOf(step: JourneyStepState, resource: JourneyResource, journe
           text: resource.mayPublish
             ? `You are in ${owner}, the Owner Unit of ${where}: you may describe this Resource and publish it.`
             : mayDescribe
-              ? `You may describe this Resource, step by step. Publishing it is for an Owner of ${owner}; you hand it over at step 11.`
+              ? `You may describe this Resource, step by step. Publishing it is for an Owner of ${owner}; you hand it over at step ${numberOf('publish')}.`
               : `Only ${owner} describes and publishes it.`,
         },
         {
@@ -82,7 +123,7 @@ export function heldOf(step: JourneyStepState, resource: JourneyResource, journe
     case 'data':
       return [
         { ...dbt, label: 'One row, says dbt' },
-        { label: 'Grain', text: grain || undefined, none: 'Not recorded by a Data Admin yet: step 9.' },
+        { label: 'Grain', text: grain || undefined, none: `Not recorded by a Data Admin yet: step ${numberOf('admin')}.` },
       ];
     case 'businessDescription':
       return [{ label: 'On the card now', origin: 'From the Owner', text: text('businessDescription') || undefined, none: 'Nothing yet.' }, dbt];
@@ -99,19 +140,15 @@ export function heldOf(step: JourneyStepState, resource: JourneyResource, journe
       return [{ label: 'On the card now', text: text('intendedUse') || undefined, none: 'Nothing yet.' }];
     case 'pitfalls':
       return [{ label: 'On the card now', text: text('pitfalls') || undefined, none: saidNone ?? 'Nothing yet, and nobody said there are none.' }];
+    case 'since':
+      return sinceHeld(resource);
     case 'gaps': {
       const gaps = list('knownGaps')
         .map((gap) => gap as { text?: string; scope?: GapScope | null })
         .filter((gap) => gap.text)
         .map((gap) => ({ text: gap.text as string, scope: gap.scope ?? null }));
-      const since = text('reliableSince');
-      return [
-        { label: 'Known Gaps', gaps, none: saidNone ?? 'None written, and nobody said there are none.' },
-        { label: 'Reliable since', text: since ? dayOf(since) : undefined, none: 'No day yet.' },
-      ];
+      return [{ label: 'Known Gaps', gaps, none: saidNone ?? 'None written, and nobody said there are none.' }];
     }
-    case 'parameters':
-      return [{ label: 'Parameters now', chips: list('parameters').filter((name): name is string => typeof name === 'string'), none: saidNone ?? 'None.' }];
     case 'admin':
       return [
         { label: 'Table type', text: details?.modelType ?? undefined, none: 'Not recorded yet.' },
@@ -149,7 +186,7 @@ export const GUIDE: Readonly<Record<JourneyStepId, { say: string; present: strin
     ask: 'What it is for in their work. Propose a text, and say where each part comes from.',
   },
   keyFields: {
-    say: 'The few fields a colleague should look at first. The EDA, which takes a Resource to 4 · Explored, explores at least its Key Fields.',
+    say: 'The few fields a colleague should look at first. Its Preview offers those that are text or yes/no to filter on, and the EDA, which takes a Resource to 4 · Explored, explores at least its Key Fields.',
     present: 'Your suggestion of its Key Fields, in the card of suggest_fields, together with a description for every field that has none: the User ticks, edits and saves there (DEC-CL-22). Base it on its fields, how often the queries on it use each (get_resource_queries) and, where you may, a small Preview.',
     ask: 'Whether the suggestion is right; the User saves it in the card.',
   },
@@ -168,15 +205,15 @@ export const GUIDE: Readonly<Record<JourneyStepId, { say: string; present: strin
     present: 'The pitfalls on the card, and any you see in the data.',
     ask: 'What else goes wrong with it. When a text the User proposes would go away if the data were repaired, it is a Known Gap: say so, and offer to keep it for the next step. "None" is an answer: once the User says so, record "nothing" with record_journey_step.',
   },
-  gaps: {
-    say: 'Where data is missing, and the day from which it can be relied on. A Known Gap is in the data itself: it would go away if the data were repaired; how the data is misread is a pitfall.',
-    present: 'Its Known Gaps, the day it is reliable since, and holes you find in the data, such as empty periods or fields empty for part of the rows. Propose each gap with the scope where it holds: a period, fields, rows.',
-    ask: 'Which gaps to write down, each on its own with add_known_gap and its scope, and from which day it is reliable, with update_resource_card. When a proposed gap is a misreading, say so with the test and offer to write it under the pitfalls instead; the User decides. "No gaps" is an answer: record "nothing" with record_journey_step; the day is still needed.',
+  since: {
+    say: 'Reliable since: the day from which the whole table can be relied on. Rows before it stay, but nobody should read them as reliable: a trend or a comparison starts there. It may simply be its first row. It is read on one date field, its Date Field, which its table type gives. A hole after that day, or in part of the rows, is a Known Gap: that is the next step.',
+    present: 'What the data says: its first row on the Date Field, and how full its first weeks are against later ones, from a Preview or a small query of your own. The Date Field its table type gives, which the window shows: happened at of an event, occurred at of a fact, the period of an aggregate, created at or updated at of a state. Where none is given, propose one of its date fields and say why; where another one was chosen, say that it is unusual and what it changes.',
+    ask: 'Explicitly for one of the two answers: from its first row, or from a later day, with why not earlier in a sentence a colleague understands. Never choose one for the Owner, and never set it by default. Then write it with update_resource_card: reliableSince {"from":"firstRow"} or {"from":"day","day","why"}, and dateField only when the Owner chose another than the one its table type gives, or none is given.',
   },
-  parameters: {
-    say: 'The fields a Preview offers to filter on.',
-    present: 'The Parameters on the card, and the fields colleagues filter on in their queries.',
-    ask: 'Which ones. "None" is an answer: record "nothing" with record_journey_step.',
+  gaps: {
+    say: 'Where data is missing after the day it is reliable since, or only for part of the rows. A Known Gap is in the data itself: it would go away if the data were repaired; how the data is misread is a pitfall.',
+    present: 'Its Known Gaps, and holes you find in the data, such as empty periods or fields empty for part of the rows. Propose each gap with the scope where it holds: a period, one day or from until, read on the Date Field unless it names another; fields; rows.',
+    ask: 'Which gaps to write down, each on its own with add_known_gap and its scope. When a proposed gap is a misreading, say so with the test and offer to write it under the pitfalls instead; the User decides. "No gaps" is an answer: record "nothing" with record_journey_step.',
   },
   admin: {
     say: 'The table type, the grain and the mappings, which a Data Admin records in Data Hub. They hold up no publication, but the EDA starts from the table type and the grain.',
@@ -214,6 +251,7 @@ export const TERMS_OF: Partial<Record<JourneyStepId, readonly TermKey[]>> = {
   keyFields: ['keyField'],
   fields: ['businessDescription'],
   pitfalls: ['pitfall', 'knownGap'],
+  since: ['reliableSince', 'dateField', 'knownGap'],
   gaps: ['knownGap', 'pitfall'],
 };
 /** The terms of a step with their definitions, in English as the conversation is (TR-LR-10). */
@@ -234,6 +272,8 @@ const SPOT_NAMES: Record<string, string> = {
 
 /** The spot a step writes, as an address after the Resource, and its link in words; the start opens the Resource. */
 export function spotOf(step: JourneyStepState): { at?: string; label: string } {
+  // Reliable since is the tile on top of the Known Gaps (DEC-UX-296).
+  if (step.id === 'since') return { at: 'gaps', label: 'Open Reliable since in Data Hub' };
   const at = step.id === 'start' ? undefined : step.parts[0];
   return at && SPOT_NAMES[at] ? { at, label: `Open ${SPOT_NAMES[at]} in Data Hub` } : { label: 'Open the Resource in Data Hub' };
 }
@@ -307,9 +347,7 @@ function missingText(step: JourneyStepState, missing: JourneyMissing): string {
     case 'knownGaps':
       return 'no Known Gap written, and nobody said there are none';
     case 'reliableSince':
-      return 'no day it is reliable since';
-    case 'parameters':
-      return 'no Parameters';
+      return 'not set: neither from its first row nor from a later day';
     case 'modelType':
       return 'no table type recorded';
     case 'grain':
@@ -326,7 +364,7 @@ function missingText(step: JourneyStepState, missing: JourneyMissing): string {
 /** The one list of what makes a Resource ready to publish, in words (DEC-MR-15, DEC-MR-16). */
 export function checklist(journey: Journey) {
   const of = (step: JourneyStepState) => ({ step: step.id, name: step.name, what: step.missing.map((missing) => missingText(step, missing)).join('; ') });
-  const required = journey.steps.filter((step) => ['businessDescription', 'keyFields', 'fields', 'intendedUse', 'pitfalls', 'gaps'].includes(step.id));
+  const required = journey.steps.filter((step) => REQUIRED_TO_PUBLISH.includes(step.id));
   return {
     ready: journey.ready,
     done: required.filter((step) => step.status === 'done').map((step) => step.name),
@@ -400,7 +438,7 @@ export function journeyTools({ server, hub, permits }: Context, read: (id: strin
           window: {
             collection: resource.collection,
             held: heldOf(next, resource, journey, mayDescribe),
-            total: 12,
+            total: STEPS_AFTER_START,
             overview: overviewOf(journey, next.id),
             ...(next.id === 'start' ? { start: startOf(resource) } : {}),
             ...(TERMS_OF[next.id] ? { terms: termsOf(next.id) } : {}),
@@ -428,7 +466,7 @@ export function journeyTools({ server, hub, permits }: Context, read: (id: strin
           : resource.published
             ? `${resource.displayName} is published, at ${resource.levelName}. Tell the User what staying Owner asks, and what the EDA needs for 4 · Explored.`
             : [
-                `Step ${next.number} of 12 is next: ${next.name}${next.mark !== 'none' ? `, ${MARKS[next.mark]}` : ''}.`,
+                `Step ${next.number} of ${STEPS_AFTER_START} is next: ${next.name}${next.mark !== 'none' ? `, ${MARKS[next.mark]}` : ''}.`,
                 journey.open.length > 0 ? `Still open before it can be published: ${checklist(journey).open.map((step) => step.name).join(', ')}.` : 'Every step required to publish is done.',
                 resource.mayPublish ? '' : `The User may go through the steps; publishing is for an Owner of ${owner}, who sees what was done.`,
                 'Say what the step is and why, with the link to its Learning Card; present what is there; propose with the source of each part; ask what only the User knows; show the final text; write only once they agree, passing before; then call guide_owner_journey again.',
@@ -446,11 +484,11 @@ export function journeyTools({ server, hub, permits }: Context, read: (id: strin
       {
         title: 'Record a step of the Owner Journey',
         description:
-          'Keeps what the User said in a step of the Owner Journey where the card cannot tell it, with who and when, in the Log of the Resource: "nothing" for the pitfalls, the Known Gaps or the Parameters when there are none; "goneThrough" for a step gone through without writing, such as looking at the data, leaving the other fields for later, asking the Data Team about the table type and grain, or leaving open Messages knowingly. Only once the User said so.',
+          'Keeps what the User said in a step of the Owner Journey where the card cannot tell it, with who and when, in the Log of the Resource: "nothing" for the pitfalls or the Known Gaps when there are none; "goneThrough" for a step gone through without writing, such as looking at the data, leaving the other fields for later, asking the Data Team about the table type and grain, or leaving open Messages knowingly. Only once the User said so.',
         inputSchema: {
           id,
-          step: z.enum(recordable).describe('The step: data, fields, pitfalls, gaps, parameters, admin or messages.'),
-          answer: z.enum(['goneThrough', 'nothing']).describe('goneThrough, or nothing for the pitfalls, the Known Gaps or the Parameters.'),
+          step: z.enum(recordable).describe('The step: data, fields, pitfalls, gaps, admin or messages.'),
+          answer: z.enum(['goneThrough', 'nothing']).describe('goneThrough, or nothing for the pitfalls or the Known Gaps.'),
         },
         annotations: WRITE,
       },

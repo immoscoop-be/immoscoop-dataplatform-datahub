@@ -36,8 +36,11 @@ export interface ResultColumn {
 
 export type RunState = 'running' | 'done' | 'failed';
 
-/** A query written in Query, the previews of a Resource by one User (FR-SR-38), or the runs of a Lens by one User (FR-LE-12). */
-export type QueryKind = 'query' | 'preview' | 'lens';
+/**
+ * A query written in Query, the previews of a Resource by one User (FR-SR-38), the runs of a Lens by one User
+ * (FR-LE-12), or the runs of the EDA-Probes of a Resource by one User, which eda has query run (TR-ED-04).
+ */
+export type QueryKind = 'query' | 'preview' | 'lens' | 'eda';
 
 /**
  * A Lens is published; waits for the Data Team while one run reads more than 1 GB (FR-LE-09); or stopped,
@@ -85,6 +88,8 @@ export interface QueryDatabase {
     previewOf: string | null;
     /** For the runs of a Lens by one User, the Lens. */
     lensOf: string | null;
+    /** For the runs of the EDA-Probes of a Resource by one User, its ID in catalogue (TR-ED-04). */
+    edaOf: string | null;
     /** The Lens this query is used as, when "Open in Query" made it for someone of its Owner Unit (DEC-LE-18). */
     forLens: string | null;
     /** The Collection whose "New Lens" started it, offered first when it becomes a Lens (DEC-UX-123). */
@@ -98,6 +103,10 @@ export interface QueryDatabase {
     checkSql: ColumnType<string | null, string | null | undefined, string | null>;
     /** The Parameters that SQL was checked with. */
     checkParameters: ColumnType<Parameter[], string | undefined, string>;
+    /** Who changed its SQL last, and when; null before anyone did (OP-UX-99). */
+    sqlChangedById: Generated<string | null>;
+    sqlChangedByName: Generated<string | null>;
+    sqlChangedAt: Generated<Date | null>;
   };
   /** One row per Lens: a query with its Parameters, in a Collection (DEC-LE-06, DEC-CO-20). */
   lenses: {
@@ -198,6 +207,44 @@ export interface QueryDatabase {
     columns: ColumnType<ResultColumn[] | null, string | null, string | null>;
     startedAt: Timestamp;
     finishedAt: Date | null;
+  };
+  /** A Project: a set of queries Users work on together (FR-SR-63); deleted, it keeps when, by whom and why (OP-UX-100). */
+  projects: {
+    id: Generated<string>;
+    name: string;
+    description: Generated<string>;
+    madeById: string;
+    madeByName: string;
+    createdAt: Timestamp;
+    updatedAt: Timestamp;
+    deletedAt: ColumnType<Date | null, Date | null | undefined, Date | null>;
+    deletedById: ColumnType<string | null, string | null | undefined, string | null>;
+    deletedByName: ColumnType<string | null, string | null | undefined, string | null>;
+    deletedReason: ColumnType<string | null, string | null | undefined, string | null>;
+  };
+  /** Who is in a Project, and who added them (FR-SR-65). */
+  projectMembers: {
+    projectId: string;
+    userId: string;
+    userName: string;
+    addedById: string | null;
+    addedByName: string | null;
+    addedAt: Timestamp;
+  };
+  /** The queries of a Project, in one order for everyone in it (OP-UX-95); a query is in one Project at most (OP-UX-93). */
+  projectQueries: {
+    projectId: string;
+    queryId: string;
+    position: number;
+    addedById: string;
+    addedAt: Timestamp;
+  };
+  /** Who has a query of a Project open now, as their page tells every few seconds (OP-UX-99). */
+  queryPresence: {
+    queryId: string;
+    userId: string;
+    userName: string;
+    seenAt: Timestamp;
   };
   /** The queries a User hid from their panel of Query, for them alone (DEC-UX-138). */
   hiddenQueries: {

@@ -184,8 +184,11 @@ describe.skipIf(!url)('Groups kept in Data Hub (FR-UM-12 to FR-UM-20, TR-UM-02)'
 
   it('suggests colleagues by name or address while adding one (FR-UM-15)', async () => {
     const people = (await (await as('an'))('GET', '/people?q=pee')).json().people;
-    expect(people).toEqual([{ email: 'jan@immoscoop.be', name: 'Jan Peeters' }]);
+    expect(people).toEqual([{ id: 'jan', email: 'jan@immoscoop.be', name: 'Jan Peeters', permissionGroup: expect.any(String), canQuery: expect.any(Boolean) }]);
     expect((await (await as('an'))('GET', '/people?q=p')).json().people).toEqual([]);
+    // By their IDs too, for who is in a Project, with whether they may run queries (OP-UX-98).
+    const byId = (await (await as('an'))('GET', '/people?ids=jan,dirk,nobody')).json().people;
+    expect(byId.map((person: { id: string }) => person.id)).toEqual(['dirk', 'jan']);
   });
 
   it('deletes a Group only once it manages no Group and owns no Collection (FR-UM-16)', async () => {

@@ -73,6 +73,8 @@ export interface QueryItem {
   request: QueryRequest | null;
   /** Whether the User hid it from their panel (DEC-UX-138). */
   hidden?: boolean;
+  /** The Project it is in, named in its line in the history (OP-UX-103). */
+  project?: { id: string; name: string } | null;
   /** Made through Claude, which it keeps once its User goes on in Query (DEC-CL-11). */
   through?: 'claude' | null;
   /** What it misses while it is Broken, for the red dot in the panel (FR-SR-53, DEC-UX-81). */
@@ -158,6 +160,18 @@ export interface Query {
   forCollection: string | null;
   /** What it misses while it is Broken: Run is off, and a callout names it (FR-SR-53, DEC-UX-160). */
   broken?: Missing | null;
+  /** The Project it is in, if any (FR-SR-63). */
+  project?: { id: string; name: string } | null;
+  /** Whether the User writes and runs it: theirs, or of a Project they are in, and they may make queries (DEC-SR-47). */
+  editable?: boolean;
+  /** Who changed its SQL last, and when (OP-UX-99). */
+  sqlChanged?: { at: string; by: { id: string; name: string } } | null;
+}
+
+/** Who else is in a query of a Project now, and who changed its SQL last (OP-UX-99). */
+export interface Presence {
+  others: { id: string; name: string }[];
+  sqlChanged: { at: string; by: { id: string; name: string } } | null;
 }
 
 /**
@@ -397,13 +411,19 @@ export interface Storage {
   beneath: boolean;
 }
 
+/** The first row of a Resource on a date field (DEC-RC-33): its day, and where it came from; none when it cannot be told cheaply. */
+export interface FirstRow {
+  day: string | null;
+  from: 'partitions' | 'lowest' | null;
+}
+
 /** The window of a Preview: its newest 1, 4 or 12 partitions that hold rows (DEC-SR-39). */
 export type PreviewWindow = 1 | 4 | 12;
 
 /** What a Preview offers to choose by (FR-SR-38, DEC-SR-37). */
 export interface PreviewChoices {
   window: { field: string; unit: string | null; from: string | null; window: PreviewWindow } | null;
-  choices: { field: string; dataType: string; role: 'cluster' | 'parameter'; kind: ParameterKind; values: string[] | null }[];
+  choices: { field: string; dataType: string; role: 'cluster' | 'keyField'; kind: ParameterKind; values: string[] | null }[];
 }
 
 /** The values chosen in a Preview, by column; null for all. */
@@ -438,6 +458,8 @@ export interface NewQuery {
   startedFrom?: string;
   /** Started from "New Lens" on this Collection (DEC-UX-123). */
   forCollection?: string;
+  /** Made in this Project, at the end of its row; then also without Resources (FR-SR-68). */
+  project?: string;
 }
 
 /** A run of a Lens that did not run because the Lens stopped or is Broken: its page reads it again. */
@@ -513,6 +535,17 @@ export function createQuery(config: Config, session: Pick<Session, 'accessToken'
     async get(id: string): Promise<Query> {
       return ((await (await call(query(id))).json()) as { query: Query }).query;
     },
+    /**
+     * Changes its Resources in it (FR-SR-67, DEC-SR-48): it reads the new set from its next run, each run keeping
+     * those it read.
+     */
+    async changeResources(id: string, resources: readonly string[]): Promise<void> {
+      await call(query(id), { method: 'PATCH', body: { resources } });
+    },
+    /** Says the User has it open, and answers who else does, and who changed its SQL last (OP-UX-99). */
+    async presence(id: string): Promise<Presence> {
+      return (await (await call(`${query(id)}/presence`, { method: 'PUT' })).json()) as Presence;
+    },
     /** Changes its name or question, for who made it (DEC-UX-119). */
     async rename(id: string, fields: { name: string; question: string }): Promise<void> {
       await call(query(id), { method: 'PATCH', body: fields });
@@ -520,6 +553,10 @@ export function createQuery(config: Config, session: Pick<Session, 'accessToken'
     /** The size and partitions of a Resource; null where BigQuery does not tell them. */
     async storage(resourceId: string): Promise<Storage | null> {
       return ((await (await call(`${resource(resourceId)}/storage`)).json()) as { storage: Storage | null }).storage;
+    },
+    /** The first row of a Resource on one of its date fields, for the line under Reliable Since (DEC-RC-33). */
+    async firstRow(resourceId: string, field: string): Promise<FirstRow> {
+      return ((await (await call(`${resource(resourceId)}/first-row?field=${encodeURIComponent(field)}`)).json()) as { firstRow: FirstRow }).firstRow;
     },
     /** The choices of a Preview for its window, their values read once (DEC-SR-37). */
     async previewChoices(resourceId: string, window: PreviewWindow): Promise<PreviewChoices> {

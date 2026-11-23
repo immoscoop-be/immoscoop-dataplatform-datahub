@@ -1,10 +1,11 @@
 /**
  * The page of the MCP App of Data Hub (FR-CL-01): one page that shows a Resource (FR-CL-07), a Preview
  * (FR-CL-09), a publication (FR-CL-12), the result of a query (FR-CL-21), a step of the Owner Journey with its
- * overview and its Learning Cards folded (FR-CL-30, FR-CL-33) or a whole Learning Card (FR-LR-26), by the `view` of
- * the tool result. It stands on its own, without the navigation of Data Hub, and carries a link to the spot in Data
+ * overview and its Learning Cards folded (FR-CL-30, FR-CL-33), a whole Learning Card (FR-LR-26) or the EDA of a
+ * Resource (FR-ED-15, FR-ED-16), by the `view` of the tool result. It stands on its own, without the navigation of Data Hub, and carries a link to the spot in Data
  * Hub, in one form with the mark of Data Hub (FR-CL-06, DEC-CL-19). The
- * buttons that approve, send a Request or publish call tools only the MCP App may call (DEC-CL-07). For a User
+ * buttons that approve, send a Request, publish or give the reading of a result of the EDA call tools only the MCP App
+ * may call (DEC-CL-07, DEC-ED-29). For a User
  * whose results show in a card only, it reads the rows itself, through tools only it may call, says under the grid
  * that Claude does not read them, and tells Claude no value of them (FR-CL-28, DEC-UX-193).
  *
@@ -31,7 +32,9 @@ export const VIEW_PAGE = String.raw`<!doctype html>
   --radius-md: 14px;
   --radius-pill: 999px;
   --col-magenta: #DD2C88;
+  --col-teal: #3CB8B1;
   --col-teal-ink: #2A9690;
+  --col-slate: #4A7698;
   --surface-solid: #FFFFFF;
   --surface-sub: #F7F5F2;
   --tint-hover: #EFECE8;
@@ -257,6 +260,72 @@ blockquote.quote .meta { margin-top: 4px; }
 .sum-main code { font: 11px var(--font-mono); }
 .sum-main .origin { margin: 0 6px 0 0; background: var(--surface-solid); }
 .link { font: inherit; background: none; border: 0; padding: 0; color: var(--text-secondary); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+/* The EDA of a Resource (FR-ED-15, FR-ED-16, DEC-UX-329): where it stands with the bar of its EDA-Setup, what needs a
+   look first, and per EDA-Step its EDA-Probes in words and numbers, without charts; the result of one EDA-Probe per
+   field with the buttons of the User's reading; and the run the User approves, with its gauge */
+.ed-bar { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 3px; }
+.ed-bar i { height: 5px; border-radius: 3px; background: var(--tint-active); }
+.ed-bar i.ed-done { background: var(--col-teal); }
+.ed-bar i.ed-coming { background: repeating-linear-gradient(135deg, var(--tint-active) 0 3px, transparent 3px 5px); }
+.status .ic { font-size: 13px; }
+.status.ed-explored, .status .ed-ok { color: var(--col-teal-ink); }
+.ed-look { color: var(--signal-warn); }
+.ed-expected { color: var(--col-teal-ink); }
+.ed-judge { color: var(--col-slate); }
+.ed-att { display: flex; gap: 8px; align-items: flex-start; padding: 10px 12px; border-radius: var(--radius-md); background: color-mix(in srgb, var(--signal-warn) 8%, var(--surface-solid)); font-size: var(--text-small); line-height: 1.5; }
+.ed-att.quiet { background: var(--surface-sub); }
+.ed-att b { font-weight: var(--weight-medium); }
+.ed-att > .ic, .ed-probe > .ic { font-size: 16px; margin-top: 2px; }
+.ed-sec h3 { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; margin: 0 0 6px; font-size: var(--text-small); font-weight: var(--weight-medium); }
+.ed-sec h3 small { font-size: var(--text-meta); font-weight: normal; color: var(--text-muted); }
+.ed-sec h3 small.ed-open { color: var(--signal-warn); }
+.ed-sec code, .ed-att code { font-family: var(--font-mono); font-size: .92em; }
+.ed-probe { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 8px; padding: 8px 10px; border-radius: var(--radius-md); background: var(--surface-sub); }
+.ed-probe + .ed-probe { margin-top: 6px; }
+.ed-probe b { font-size: var(--text-small); font-weight: var(--weight-medium); }
+.ed-probe p { margin: 2px 0 0; font-size: var(--text-small); line-height: 1.5; }
+.ed-probe .meta { margin-top: 3px; }
+.ed-probe .ed-miss { color: var(--signal-warn); }
+.ed-tone { font-size: 10.5px; font-weight: var(--weight-medium); margin-left: 6px; }
+.ed-quiet { display: flex; gap: 8px; align-items: baseline; margin: 6px 0 0; padding: 0 10px; font-size: var(--text-meta); color: var(--text-muted); line-height: 1.5; }
+.ed-lead { margin: 0; line-height: 1.5; }
+.ed-lead .ed-tone { margin: 0 6px 0 0; }
+.ed-rows { margin-top: 8px; }
+.ed-rows td { font-variant-numeric: tabular-nums; }
+.ed-rows td .meta { display: block; }
+.ed-fill { display: inline-block; position: relative; overflow: hidden; width: 90px; height: 6px; border-radius: 3px; background: var(--col-teal); vertical-align: middle; }
+.ed-fill i { position: absolute; top: 0; right: 0; bottom: 0; background: repeating-linear-gradient(135deg, var(--signal-warn) 0 2px, transparent 2px 4px); }
+.ed-sub td { padding-top: 0; }
+.ed-top { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }
+.ed-top li { display: grid; grid-template-columns: minmax(0, 11em) minmax(0, 1fr) 4.5em; gap: 8px; align-items: center; font-size: var(--text-meta); }
+.ed-top li > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ed-top li > span:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.ed-share { display: block; height: 6px; border-radius: 3px; background: var(--tint-active); overflow: hidden; }
+.ed-share i { display: block; height: 100%; border-radius: 3px; background: var(--col-teal); }
+.ed-top li.ed-others, .ed-top li.ed-empty { color: var(--text-muted); }
+.ed-top li.ed-others .ed-share i { background: var(--text-muted); }
+.ed-top li.ed-empty .ed-share i { background: repeating-linear-gradient(135deg, var(--signal-warn) 0 2px, transparent 2px 4px); }
+.ed-reads { display: grid; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--tint-hover); }
+.ed-read { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: var(--text-meta); color: var(--text-muted); }
+.ed-read .ed-of { margin-right: 4px; }
+.ed-read button.quiet { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; font-size: var(--text-meta); white-space: nowrap; }
+.ed-read button.quiet.on { background: var(--text-primary); color: var(--surface-solid); outline-color: var(--text-primary); }
+.ed-go { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.ed-go button .ic { margin-right: 6px; vertical-align: -2px; }
+.ed-gauge { display: block; flex: 1; min-width: 200px; }
+.ed-track { position: relative; display: block; height: 6px; border-radius: 3px; background: var(--tint-active); }
+.ed-gfill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: var(--signal-warn); }
+.ed-mark { position: absolute; top: -3px; width: 2px; height: 12px; margin-left: -1px; background: var(--text-primary); }
+.ed-legend { position: relative; display: block; height: 12px; margin-top: 4px; font-size: 10px; color: var(--text-muted); }
+.ed-legend span { position: absolute; white-space: nowrap; }
+.ed-legend span:last-child { transform: translateX(-100%); }
+.ed-why { margin: 12px 0 0; line-height: 1.5; }
+.ed-why b { font-weight: var(--weight-medium); color: var(--text-primary); }
+@media (max-width: 520px) {
+  .ed-gauge { min-width: 0; width: 100%; }
+  .ed-read .ed-of { flex-basis: 100%; }
+  .ed-read button.quiet { flex: 1 1 30%; width: auto; justify-content: center; }
+}
 /* Fold: every MCP App folds to its head with the button at its top right (FR-CL-27, DEC-UX-181) */
 #root > .head, #root > .head-row { position: relative; }
 .fold { flex: none; width: 28px; height: 28px; margin: -4px -6px 0 0; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: var(--radius-sm); background: none; color: var(--text-muted); cursor: pointer; }
@@ -340,6 +409,14 @@ const PATHS = {
   caret: 'M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z',
   info: 'M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z',
   help: 'M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm39.1,131.79a47.84,47.84,0,0,0,0-55.58l28.5-28.49a87.83,87.83,0,0,1,0,112.56ZM96,128a32,32,0,1,1,32,32A32,32,0,0,1,96,128Zm88.28-67.6L155.79,88.9a47.84,47.84,0,0,0-55.58,0L71.72,60.4a87.83,87.83,0,0,1,112.56,0ZM60.4,71.72l28.5,28.49a47.84,47.84,0,0,0,0,55.58L60.4,184.28a87.83,87.83,0,0,1,0-112.56ZM71.72,195.6l28.49-28.5a47.84,47.84,0,0,0,55.58,0l28.49,28.5a87.83,87.83,0,0,1-112.56,0Z',
+  warn: 'M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm-8,56a8,8,0,0,1,16,0v56a8,8,0,0,1-16,0Zm8,104a12,12,0,1,1,12-12A12,12,0,0,1,128,184Z',
+  ok: 'M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,85.66-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32Z',
+  ask: 'M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,168a12,12,0,1,1,12-12A12,12,0,0,1,128,192Zm8-48.72V144a8,8,0,0,1-16,0v-8a8,8,0,0,1,8-8c13.23,0,24-9,24-20s-10.77-20-24-20-24,9-24,20v4a8,8,0,0,1-16,0v-4c0-19.85,17.94-36,40-36s40,16.15,40,36C168,125.38,154.24,139.93,136,143.28Z',
+  hourglass: 'M200,75.64V40a16,16,0,0,0-16-16H72A16,16,0,0,0,56,40V76a16.07,16.07,0,0,0,6.4,12.8L114.67,128,62.4,167.2A16.07,16.07,0,0,0,56,180v36a16,16,0,0,0,16,16H184a16,16,0,0,0,16-16V180.36a16.09,16.09,0,0,0-6.35-12.77L141.27,128l52.38-39.6A16.05,16.05,0,0,0,200,75.64ZM72,40H184V75.64L178.23,80H77.33L72,76Zm56,78L98.67,96h58.4Zm56,98H72V180l48-36v24a8,8,0,0,0,16,0V144.08l48,36.28Z',
+  tick: 'M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z',
+  bookmark: 'M184,32H72A16,16,0,0,0,56,48V224a8,8,0,0,0,12.24,6.78L128,193.43l59.77,37.35A8,8,0,0,0,200,224V48A16,16,0,0,0,184,32Zm0,177.57-51.77-32.35a8,8,0,0,0-8.48,0L72,209.57V48H184Z',
+  flag: 'M42.76,50A8,8,0,0,0,40,56V224a8,8,0,0,0,16,0V179.77c26.79-21.16,49.87-9.75,76.45,3.41,16.4,8.11,34.06,16.85,53,16.85,13.93,0,28.54-4.75,43.82-18a8,8,0,0,0,2.76-6V56A8,8,0,0,0,218.76,50c-28,24.23-51.72,12.49-79.21-1.12C111.07,34.76,78.78,18.79,42.76,50ZM216,172.25c-26.79,21.16-49.87,9.74-76.45-3.41-25-12.35-52.81-26.13-83.55-8.4V59.79c26.79-21.16,49.87-9.75,76.45,3.4,25,12.35,52.82,26.13,83.55,8.4Z',
+  play: 'M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z',
 };
 const ic = (name, cls = '') => '<span class="ic' + (cls ? ' ' + cls : '') + '" aria-hidden="true"><svg viewBox="0 0 256 256" fill="currentColor"><path d="' + PATHS[name] + '"/></svg></span>';
 // The Collection of a card, with its icon: a drawing of Phosphor that mcp read itself, never text of a User (DEC-UX-164).
@@ -452,7 +529,7 @@ function renderResource(r, parts) {
       '<ol class="sum">' + parts.map((part) => '<li class="sum-part"><div class="sum-side"><span class="sum-n">' + (part.number ?? '!') + '</span><span class="weight w' + part.rank + '">' + esc(part.weightName) + '</span></div>' +
         '<div class="sum-main"><div class="sum-title"><h3>' + esc(part.title) + '</h3>' + (part.part === 'fields' ? '<button class="link" data-tab="columns">Columns</button>' : '') + '</div>' + partLines(part.lines) + '</div></li>').join('') + '</ol>'
     : '<p class="meta">Data Hub has nothing to summarise about it yet.</p>';
-  const role = (name) => [(card.keyFields ?? []).includes(name) ? '<span class="pill">Key Field</span>' : '', details.partition?.field === name ? '<span class="pill">Partition</span>' : '', (details.clusterBy ?? []).includes(name) ? '<span class="pill">Cluster ' + ((details.clusterBy ?? []).indexOf(name) + 1) + '</span>' : '', (card.parameters ?? []).includes(name) ? '<span class="pill">Parameter</span>' : ''].join('');
+  const role = (name) => [(card.keyFields ?? []).includes(name) ? '<span class="pill">Key Field</span>' : '', details.partition?.field === name ? '<span class="pill">Partition</span>' : '', (details.clusterBy ?? []).includes(name) ? '<span class="pill">Cluster ' + ((details.clusterBy ?? []).indexOf(name) + 1) + '</span>' : ''].join('');
   const columns = '<table class="stack"><thead><tr><th>Column</th><th>Type</th><th>Business Description</th><th>Description, from dbt</th><th></th></tr></thead><tbody>' +
     (r.fields ?? []).map((f) => '<tr><td class="mono name">' + esc(f.name) + '</td><td class="meta type">' + esc(f.dataType) + '</td><td data-label="Business Description, from the Owner">' + (esc(f.businessDescription) || '–') + '</td><td data-label="Description, from dbt">' + (esc(f.description) || '–') + '</td><td>' + role(f.name) + '</td></tr>').join('') + '</tbody></table>';
   root.innerHTML = head(kind, r.displayName, r.key, '', r.collection) + state + dep + changes +
@@ -501,11 +578,18 @@ function renderPublish(v) {
   const card = r.card || {};
   const part = (label, text) => (text ? '<span class="label">' + esc(label) + '</span><p style="margin:2px 0 8px">' + esc(text) + '</p>' : '');
   const gaps = (card.knownGaps || []).map((gap) => gap.text).join(' ');
+  // Reliable since on a line of its own, with its Date Field and why not earlier, before the Known Gaps (FR-RC-31)
+  const reliable = (since, field) => {
+    if (!since) return '';
+    const on = field ? ', on ' + field : '';
+    if (typeof since === 'string') return part('Reliable since · ' + since + on, 'Earlier rows are not to be read as reliable.');
+    return since.from === 'firstRow' ? part('Reliable since', 'From its first row' + on + ': the whole table can be relied on.') : part('Reliable since · ' + since.day + on, since.why ? 'Why not earlier: ' + since.why : 'Earlier rows are not to be read as reliable.');
+  };
   const read = '<div><div class="label">What you confirm · the card, read back</div><p class="meta">Publishing is also the first Confirmation: for ' + esc(owner) + ', you confirm what this Resource is and what it stands for, in every text on it; not the figures in it.</p><div class="tile">' +
     part('Business Description', card.businessDescription) + '<span class="label">Description</span><span class="origin">From dbt</span><p style="margin:2px 0 8px">' + esc(r.description) + '</p>' +
     part('Intended use', card.intendedUse) + part('Pitfalls', card.pitfalls) +
-    part('Known Gaps' + (card.reliableSince ? ' · reliable since ' + card.reliableSince : ''), gaps || (card.reliableSince ? 'None known.' : '')) +
-    part('Key Fields · Parameters', (card.keyFields || []).join(', ') + ' · ' + ((card.parameters || []).join(', ') || 'none')) + '</div></div>';
+    reliable(card.reliableSince, r.dateField && r.dateField.field) + part('Known Gaps', gaps || 'None known.') +
+    part('Key Fields', (card.keyFields || []).join(', ') || 'none') + '</div></div>';
   const declaration = 'For ' + owner + ', I have read this card and confirm that this Resource is correct: what it is and what it stands for, in every text on it.';
   root.innerHTML = head('Publish · Resource', r.displayName, null, level(r.levelName), r.collection) +
     '<div><div class="label">Who will see it</div><div class="checks"><div><b>Everyone who sees ' + esc(r.collection?.name ?? 'its Collection') + ':</b> ' + esc(who) + '. Now only ' + esc(owner) + ' and the Data Team see it.</div></div></div>' +
@@ -608,7 +692,7 @@ let termsAt = null;
 function renderJourney(v) {
   const w = v.window || {};
   const r = v.resource;
-  const total = w.total || 12;
+  const total = w.total || 13;
   const at = v.next.number;
   const start = v.next.step === 'start';
   const o = w.overview || { steps: [], done: 0, open: 0 };
@@ -770,6 +854,115 @@ const fieldsArgs = () => {
   return { id: view.resource.id, ...(keyFields && (c.added || c.removed) ? { keyFields } : {}), fields: c.fields, before: view.before };
 };
 
+// begin eda
+// The EDA of a Resource (FR-ED-15, FR-ED-16, DEC-UX-329): mcp says each result in words, once for Claude and for this
+// card; the card draws them. Its head says where the EDA stands, with the rows of its table once a run counted them
+// (DEC-ED-32) and the bar of its EDA-Setup. The whole EDA says what needs a look first, then per EDA-Step each EDA-Probe
+// added with its reading, its result in a sentence and what it is set on, then the needed ones Coming, named once; its
+// charts stay in Data Hub. A run shows that EDA-Probe, its conclusion, its result per field and the buttons of the
+// User's reading, which only the User presses (DEC-ED-29); a run above what runs freely waits for the User to approve
+// it, with its gauge, as a query does.
+const ED_ICON = { expected: 'ok', look: 'warn', judge: 'ask' };
+const ED_YOURS = [['expected', 'Expected', 'tick'], ['known', 'Known', 'bookmark'], ['problem', 'A problem', 'flag']];
+const edCount = (n, one, more) => n + ' ' + (n === 1 ? one : more);
+const edTone = (reading, name) => (reading ? '<span class="ed-tone ed-' + esc(reading) + '">' + esc(name) + '</span>' : '');
+const edField = (name) => '<code>' + esc(name) + '</code>';
+const edSetOn = (fields) => (fields.length === 0 ? 'Set on the table' : fields.length > 4 ? 'Set on ' + fields.length + ' fields' : 'Set on ' + fields.join(', '));
+const edWhen = (at) => (at && Date.now() - new Date(at).getTime() < 120000 ? 'just now' : 'on ' + day(at));
+function edHead(v) {
+  const r = v.resource;
+  const e = v.eda;
+  const sub = e ? 'Its EDA, started on ' + day(e.startedAt) + ' by ' + e.startedBy : null;
+  const needed = e ? '<span class="status">' + ic('ok', 'ed-ok') + esc(e.needed.complete + ' of ' + e.needed.total + ' needed EDA-Probes complete') + '</span>' : '';
+  const status = e ? '<span class="status ed-' + esc(e.status) + '">' + ic(e.status === 'explored' ? 'ok' : 'hourglass') + esc(e.statusName) + '</span>' : '';
+  // The rows of the table, from the last run that counted them, only when one did (DEC-ED-32).
+  const rows = e && e.rows ? '<span class="status" title="' + esc('Counted by ' + e.rows.probeName + ' on ' + day(e.rows.at)) + '">' + esc(e.rows.text) + '</span>' : '';
+  const parts = v.bar || [];
+  const bar = parts.length ? '<div class="ed-bar" role="img" aria-label="' + esc((e ? e.needed.complete : 0) + ' of ' + parts.length + ' needed EDA-Probes complete') + '">' + parts.map((p) => '<i class="ed-' + esc(p.state) + '" title="' + esc(p.name + (p.state === 'done' ? ' · complete' : p.state === 'coming' ? ' · Coming' : ' · open')) + '"></i>').join('') + '</div>' : '';
+  return head('EDA', r.displayName, sub, '', r.collection) + '<div class="row">' + status + level(r.levelName) + rows + needed + '</div>' + bar;
+}
+// What needs a look first: the results Data Hub reads as look at this, then those for the User to judge, and whether they read them.
+function edAttention(a) {
+  const asked = a.look + a.judge;
+  if (a.ran === 0) return '<div class="ed-att quiet">' + ic('hourglass') + '<span>No EDA-Probe has run yet.</span></div>';
+  if (asked === 0) return '<div class="ed-att quiet">' + ic('ok', 'ed-expected') + '<span>Nothing to look at: every result Data Hub read is as expected.</span></div>';
+  const what = a.look ? '<b>' + esc(edCount(a.look, 'result', 'results')) + ' to look at</b>' + (a.judge ? ', ' + a.judge + ' for you to judge' : '') : '<b>' + esc(edCount(a.judge, 'result', 'results')) + ' for you to judge</b>';
+  const read = a.read === 0 ? 'No reading of yours yet.' : a.read === asked ? 'You read them all.' : 'You read ' + a.read + ' of them.';
+  return '<div class="ed-att" role="status">' + ic(a.look ? 'warn' : 'ask', a.look ? 'ed-look' : 'ed-judge') + '<span>' + what + '. ' + esc(read) + '</span></div>';
+}
+const edProbe = (p) => '<div class="ed-probe">' + ic(ED_ICON[p.reading] || 'hourglass', p.reading ? 'ed-' + p.reading : '') + '<div><b>' + esc(p.name) + '</b>' + edTone(p.reading, p.readingName) +
+  '<p>' + inline(p.sentence) + '</p>' + (p.missing.length ? '<p class="ed-miss">Not set on ' + p.missing.map(edField).join(', ') + ' yet.</p>' : '') +
+  '<span class="meta">' + esc(edSetOn(p.setOn)) + (p.ranAt ? ' · ' + esc(day(p.ranAt)) : '') + '</span></div></div>';
+const edStep = (s) => '<div class="ed-sec"><h3>' + esc(s.name) + '<small' + (s.needed.total > s.needed.complete ? ' class="ed-open"' : '') + '>' + esc(s.needed.total ? s.needed.complete + ' of ' + s.needed.total + ' needed complete' : 'None needed') + '</small></h3>' +
+  s.probes.map(edProbe).join('') + (s.toAdd.length ? '<p class="ed-quiet">Needed, not added yet: ' + esc(s.toAdd.join(', ')) + '.</p>' : '') + '</div>';
+function edWhole(v) {
+  const coming = v.coming && v.coming.count ? '<div class="ed-sec"><h3>Coming<small>' + esc(v.coming.count + ' needed, which count already') + '</small></h3><p class="ed-quiet">' + ic('hourglass') + '<span>' + esc(v.coming.text) + '. Data Hub does not run them yet.</span></p></div>' : '';
+  return edAttention(v.attention) + (v.steps || []).map(edStep).join('') + coming + foot('As you see it in Data Hub', v.eda.page, 'Open in Data Hub');
+}
+// The heaviest values of a text with their share, the others together and the empty ones apart (DEC-ED-33); mcp gives
+// them only when the values of the data may reach Claude (FR-CL-28).
+const edShare = (t) => '<li' + (t.kind === 'value' ? '' : ' class="ed-' + esc(t.kind) + '"') + '><span>' + (t.kind === 'value' ? edField(t.label) : esc(t.label)) + '</span>' +
+  '<span class="ed-share"><i style="width:' + Math.min(100, Math.max(t.width > 0 ? 1 : 0, Math.round(t.width * 100))) + '%"></i></span><span>' + esc(t.share) + '</span></li>';
+// The result of one EDA-Probe per field: its numbers, Data Hub's reading with why, and the reading of the User.
+function edRun(v) {
+  const r = v.run;
+  const ran = [r.ranAt ? 'ran ' + edWhen(r.ranAt) : '', r.reads ? 'read ' + r.reads : ''].filter(Boolean).join(' · ');
+  const heads = r.columns.map((c, i) => '<th>' + esc(c) + '</th>').join('') + '<th>Data Hub</th>';
+  const rows = r.rows.map((row) => {
+    const name = row.subject ? edField(row.subject) : esc(row.label);
+    const fill = r.bar ? '<td data-label="' + esc(r.columns[1] || '') + '"><span class="ed-fill" title="' + esc(row.cells[0]) + '"><i style="width:' + (row.empty > 0 ? Math.max(2, Math.round(row.empty * 100)) : 0) + '%"></i></span></td>' : '';
+    const cells = row.cells.map((cell, i) => '<td data-label="' + esc(r.columns[i + (r.bar ? 2 : 1)] || '') + '">' + esc(cell) + '</td>').join('');
+    const why = row.why && !(row.reading === 'expected' && r.probe === 'nullsPerKeyField') ? '<span class="meta">' + esc(row.why) + '</span>' : '';
+    const top = row.top && row.top.length ? '<tr class="ed-sub"><td colspan="' + (r.columns.length + 1) + '"><ul class="ed-top" aria-label="' + esc('The heaviest values of ' + row.subject) + '">' + row.top.map(edShare).join('') + '</ul></td></tr>' : '';
+    return '<tr><td class="name">' + name + '</td>' + fill + cells + '<td data-label="Data Hub" class="ed-' + esc(row.reading) + '">' + esc(row.readingName) + why + '</td></tr>' + top;
+  }).join('');
+  const asks = r.rows.filter((row) => row.asks);
+  const reads = asks.length ? '<div class="ed-reads">' + asks.map((row) => '<div class="ed-read"><span class="ed-of">Your reading of ' + (row.subject ? edField(row.subject) : 'the table as a whole') + '</span>' +
+    ED_YOURS.map(([key, word, icon]) => {
+      const on = row.yours && row.yours.reading === key;
+      return '<button class="quiet' + (on ? ' on' : '') + '" type="button" data-reading="' + key + '" data-subject="' + esc(row.subject) + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + ic(icon) + esc(word) + '</button>';
+    }).join('') + (row.yours ? '<span class="meta">Read by ' + esc(row.yours.by) + ' on ' + esc(day(row.yours.at)) + '</span>' : '') + '</div>').join('') +
+    '<span class="meta">You give it here, or in Data Hub; Claude does not give it for you.</span></div>' : '';
+  return '<div class="ed-sec"><h3>' + esc(r.name) + (ran ? '<small>' + esc(ran) + '</small>' : '') + '</h3>' +
+    '<p class="ed-lead">' + edTone(r.reading, r.readingName) + inline(r.conclusion) + '</p>' +
+    '<table class="stack ed-rows"><thead><tr>' + heads + '</tr></thead><tbody>' + rows + '</tbody></table>' + reads + '</div>' +
+    foot('As you see it in Data Hub', r.page, 'Open in Data Hub');
+}
+// Above what runs freely: the User approves it, as a query, with its gauge; Claude cannot (FR-ED-16).
+function edApprove(v) {
+  const a = v.approve;
+  const top = a.thresholds.request || a.bytes || 1;
+  const fill = Math.min(100, Math.round((a.bytes / top) * 100));
+  const mark = Math.min(100, Math.round((a.thresholds.approve / top) * 100));
+  const free = a.free || '100 MB';
+  const gauge = '<span class="ed-gauge" aria-hidden="true"><span class="ed-track"><span class="ed-gfill" style="width:' + fill + '%"></span><span class="ed-mark" style="left:' + mark + '%"></span><span class="ed-mark" style="left:100%"></span></span>' +
+    '<span class="ed-legend"><span>0</span><span style="left:' + mark + '%">' + esc(free) + '</span><span style="left:100%">' + esc(a.large || '1 GB') + '</span></span></span>';
+  const names = a.setOn.length ? a.setOn.map(edField).join(', ') : 'the table';
+  return '<div class="ed-sec"><h3>' + esc(a.name) + '<small>on ' + esc(a.setOn.length ? a.setOn.join(', ') : 'the table') + '</small></h3><div class="tile"><div class="ed-go">' + gauge +
+    '<button class="primary high" data-act="approve-eda">' + ic('play') + 'Approve and run · ' + esc(a.reads) + '</button></div>' +
+    '<p class="meta ed-why"><b>' + esc(a.reads) + ' at most, above ' + esc(free) + ':</b> you approve this run yourself; Claude cannot do it for you. It reads ' + names + ' over the whole of ' + esc(v.resource.displayName) + ', and gives back counts and figures only, never its rows.</p></div></div>' +
+    foot('As you see it in Data Hub', a.page, 'Open in Data Hub');
+}
+function edRefused(v) {
+  const x = v.refused;
+  return '<div class="ed-sec"><h3>' + esc(x.name) + '<small>on ' + esc(x.setOn.length ? x.setOn.join(', ') : 'the table') + '</small></h3><div class="alert"><span><b>It does not run.</b> ' + esc(x.reason) + '</span></div></div>' +
+    foot('As you see it in Data Hub', x.page, 'Open in Data Hub');
+}
+/** The card of the EDA of a Resource, by its mode: the whole EDA, a run, a run to approve, one refused, or none yet. */
+function edaHtml(v) {
+  if (v.mode === 'none') {
+    const r = v.resource;
+    return head('EDA', r.displayName, null, '', r.collection) + '<div class="row">' + level(r.levelName) + '</div>' +
+      '<p class="ed-lead">It has no EDA yet. Starting one stays in Data Hub, on its Maturity, from 3 · Confirmed.</p>' + foot('Only you start it, in Data Hub.', v.maturity, 'Open Maturity in Data Hub');
+  }
+  const body = v.mode === 'run' ? edRun(v) : v.mode === 'approve' ? edApprove(v) : v.mode === 'refused' ? edRefused(v) : edWhole(v);
+  return edHead(v) + body;
+}
+// end eda
+function renderEda(v) {
+  root.innerHTML = edaHtml(v);
+}
+
 function render() {
   if (!view) return;
   if (view.view === 'resource') renderResource(view.resource, view.parts);
@@ -780,6 +973,7 @@ function render() {
   else if (view.view === 'journey') renderJourney(view);
   else if (view.view === 'card') renderCard(view);
   else if (view.view === 'fields') renderFields(view);
+  else if (view.view === 'eda') renderEda(view);
   else if (view.view === 'sent') root.innerHTML = '<div>Sent to the Data Team. Their answer comes in your Message Centre.</div>';
   setFold();
 }
@@ -887,7 +1081,7 @@ const keepLens = () => {
 };
 
 root.addEventListener('click', (event) => {
-  const target = event.target.closest('[data-open],[data-tab],[data-act],[data-page],[data-fold],[data-card],[data-step],[data-answer],[data-default],[data-show],[data-theirs],[data-mine]');
+  const target = event.target.closest('[data-open],[data-tab],[data-act],[data-page],[data-fold],[data-card],[data-step],[data-answer],[data-default],[data-show],[data-theirs],[data-mine],[data-reading]');
   if (!target || target.disabled) return;
   if (target.dataset.fold !== undefined) { folded = !folded; setFold(); return; }
   // The fields card: the filter, and the choice between a colleague's text and the User's own (FR-CL-38).
@@ -930,6 +1124,13 @@ root.addEventListener('click', (event) => {
     render();
     return;
   }
+  // The reading of a result of the EDA, which only the User gives, with these buttons or in Data Hub (DEC-ED-29).
+  if (target.dataset.reading && view?.view === 'eda' && view.run) {
+    const subject = target.dataset.subject ?? '';
+    const word = ED_YOURS.find(([key]) => key === target.dataset.reading)?.[1] ?? target.dataset.reading;
+    call('give_eda_reading', { id: view.resource.id, probe: view.run.probe, subject, reading: target.dataset.reading }, 'The User gave their reading of ' + (subject || 'the table as a whole') + ' in ' + view.run.name + ': ' + word + '.');
+    return;
+  }
   if (target.dataset.open) { event.preventDefault(); app.openLink({ url: target.dataset.open }); return; }
   if (target.dataset.tab) { tab = target.dataset.tab; render(); return; }
   if (target.dataset.page) {
@@ -953,12 +1154,15 @@ root.addEventListener('click', (event) => {
     if (act === 'approve') call('run_lens_approved', { id: view.lens.id, values: view.given }, 'The User approved and ran the Lens in Data Hub.');
   } else if (view.view === 'fields' && act === 'save-fields') {
     call('save_fields', fieldsArgs(), 'The User saved the fields in the card.');
+  } else if (view.view === 'eda' && act === 'approve-eda') {
+    const a = view.approve;
+    call('run_eda_probe_approved', { id: view.resource.id, probe: a.probe, ...(a.fields ? { fields: a.fields } : {}), ...(a.params ? { params: a.params } : {}) }, 'The User approved and ran ' + a.name + ' in Data Hub.');
   } else if (view.view === 'publish' && act === 'publish') {
     call('confirm_publication', { id: view.resource.id, declaration: target.dataset.declaration || undefined }, 'The User published and confirmed the Resource in Data Hub.');
   }
 });
 
-// A Parameter of a Preview changed in the window: the Preview again, through its Pre-flight (FR-CL-09).
+// A choice of a Preview changed in the window: the Preview again, through its Pre-flight (FR-CL-09).
 root.addEventListener('change', (event) => {
   if (view?.view === 'preview' && event.target.closest('[data-choice],[data-param]')) call('preview_resource', previewArgs());
 });

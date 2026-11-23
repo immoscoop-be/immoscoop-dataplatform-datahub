@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<!--
+  Screen: the Flow Box, designed with Max on 2026-11-20 (a proposal). A Flow Box takes a User through the steps of one
+  flow, in a frame of its own docked on the right of the main area: the page narrows to make room, nothing is covered
+  (DEC-UX-299). It is a general component; its first flow is describing and publishing a Resource, the steps required to
+  publish, the same list as Maturity shows (DEC-UX-304, DEC-MR-16).
+  - Its head: what the flow does, the object it is about as a link to it, Minimize and Close. Under it the progress, one
+    segment per step.
+  - Each step: done or open, its number and name, and folded what it holds or what it misses. The step open now unfolds:
+    What, Why and How, its Learning Card, and one button that goes to the place where the step is done and opens it for
+    editing, its field in focus and marked for a moment (DEC-UX-303). The Flow Box writes nothing itself: it is purely a
+    guide; also "Nothing to add" is said on the page.
+  - It stays open on every page of Data Hub until it is closed: in Query, on a Lens, on another Resource, in Messages,
+    the Learning Centre, My page and Admin; its steps lead back to the page of its Resource (DEC-UX-300). ?page=query shows it in Query, after the pitfalls were written.
+  - Minimize folds it to a strip on the right edge with its progress; the strip, or Maximize on it, opens it again
+    (DEC-UX-301). ?flow=min.
+  - Close takes it away; Publish brings it back (DEC-UX-302). While a step required to publish is open, Publish first
+    warns: what is still open, each with a link, "Guide me", which opens the Flow Box at the first open step, and "I'll do
+    it myself". The Publish sheet itself opens only once every step is done (DEC-MR-20). ?flow=warn.
+  - ?flow=ready: every step but the last is done, and the Flow Box ends on Publish; ?flow=published: after publishing,
+    it says so once and closes.
+  Who sees it: whoever may describe the Resource, its Owner Unit and the Data Team, while it is not published.
+  Requirements: FR-MR-20, FR-MR-21, FR-MR-17
+  Decisions: DEC-UX-299, DEC-UX-300, DEC-UX-301, DEC-UX-302, DEC-UX-303, DEC-UX-304, DEC-UX-305, DEC-UX-306, DEC-UX-307, DEC-UX-308, DEC-MR-15, DEC-MR-16, DEC-MR-20.
+  Decided by Max on 2026-11-20 (OP-UX-111 to OP-UX-114): the look and the texts as drawn (DEC-UX-305); it keeps nothing,
+  reads the state of the Resource and opens from the beginning (DEC-UX-306); below 1360 px the panel folds (DEC-UX-307);
+  one at a time (DEC-UX-308).
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="owner">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — The Flow Box: describe and publish a Resource</title>
+<style>
+ /* A stand-in for the page of a query (query.html), only to show the Flow Box staying open in Query */
+ .fbq-scope { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+ .fbq-scope .status { background: var(--card); }
+ .fbq-sql { margin: 14px 0 0; padding: 14px 16px; border-radius: var(--radius-md); font: 13px/1.6 var(--font-mono); white-space: pre; overflow: auto; }
+ .fbq-sql .kw { color: var(--text-secondary); font-weight: var(--weight-medium); }
+ .fbq-sql .str { color: var(--col-olive); }
+ .fbq-run { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+ .fbq-grid { width: 100%; margin-top: 12px; border-collapse: collapse; border-radius: var(--radius-md); overflow: hidden; font-size: var(--text-small); }
+ .fbq-grid th, .fbq-grid td { padding: 7px 12px; text-align: left; border-bottom: 1px solid var(--tint-hover); }
+ .fbq-grid th span { display: block; font: 10.5px var(--font-mono); color: var(--text-muted); }
+ .fbq-grid td:first-child, .fbq-grid th:first-child { width: 40px; color: var(--text-muted); }
+</style>
+</head>
+<body>
+<div class="app panel-open">
+
+<!-- The rail and the panel of the section the User is in: Collections on the page of the Resource, Query in Query -->
+<nav class="rail" aria-label="Main navigation" data-pane-group="page" data-pane="resource">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <button class="nav-btn active" data-label="Collections" aria-label="Collections" aria-current="page"><i class="ph-fill ph-stack"></i><span class="flare top"></span><span class="flare bottom"></span></button>
+  <a class="nav-btn" href="?page=query" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></a>
+  <a class="nav-btn" href="charts.html" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">AC</a>
+</nav>
+<nav class="rail" aria-label="Main navigation" data-pane-group="page" data-pane="query" hidden>
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <a class="nav-btn" href="?page=resource" data-label="Collections" aria-label="Collections"><i class="ph-fill ph-stack"></i></a>
+  <button class="nav-btn active" data-label="Query" aria-label="Query" aria-current="page"><i class="ph-fill ph-terminal-window"></i><span class="flare top"></span><span class="flare bottom"></span></button>
+  <a class="nav-btn" href="charts.html" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <div class="spacer"></div>
+  <button class="nav-btn" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">AC</a>
+</nav>
+
+<aside class="panel" aria-label="Collections" data-pane-group="page" data-pane="resource">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:4px">
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Collections</h1>
+   <button class="icon-btn" aria-label="New Collection"><i class="ph-fill ph-plus-circle"></i></button>
+   <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
+  </div>
+  <label class="search card" style="margin:16px 0 4px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input placeholder="Search Resources and Lenses"></label>
+  <div class="tree-group card open">
+   <div class="tree-head"><a class="tree-link" href="collection-overview.html"><span class="item-icon"><i class="ph ph-coins"></i></span><span class="tree-name"><span class="item-title">Credit leads</span><span class="meta">6 Resources · <i class="ph-fill ph-globe-simple"></i>Public</span></span></a><button class="tree-toggle" aria-expanded="true" aria-label="Show what Credit leads holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res unpublished current" aria-current="page" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Weekly lead volume · not published">Weekly lead volume<span class="hidden-label">, not published</span></span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Credit lead funnel">Credit lead funnel</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead sources">Lead sources</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead response time">Lead response time</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res unpublished" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Rejected leads · not published">Rejected leads<span class="hidden-label">, not published</span></span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res" href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span class="tree-res-name"><span class="clip" title="Leads per source name">Leads per source name</span></span><span class="maturity" data-level="4"></span></a>
+   </div>
+  </div>
+  <div class="tree-group card">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-house-line"></i></span><span class="tree-name"><span class="item-title">Listing leads</span><span class="meta">15 Resources</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Listing leads holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+  </div>
+ </div>
+</aside>
+<aside class="panel" aria-label="Query" data-pane-group="page" data-pane="query" hidden>
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:4px">
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Query</h1>
+   <button class="icon-btn" aria-label="New query"><i class="ph-fill ph-plus-circle"></i></button>
+   <button class="icon-btn" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
+  </div>
+  <label class="search card" style="margin:16px 0 4px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input placeholder="Search your queries"></label>
+  <p class="panel-label">Today</p>
+  <a class="list-item card current" href="#"><i class="ph ph-terminal-window" style="color:var(--text-secondary)"></i><span style="min-width:0"><span class="item-title" style="font-size:var(--text-small)">Partner leads per week</span><span class="meta">Weekly lead volume · 2 min ago</span></span></a>
+  <a class="list-item card" href="#"><i class="ph ph-terminal-window" style="color:var(--text-secondary)"></i><span style="min-width:0"><span class="item-title" style="font-size:var(--text-small)">First weeks, row by row</span><span class="meta">Weekly lead volume · 14 min ago</span></span></a>
+  <p class="panel-label">This week</p>
+  <a class="list-item card" href="#"><i class="ph ph-terminal-window" style="color:var(--text-secondary)"></i><span style="min-width:0"><span class="item-title" style="font-size:var(--text-small)">Response time by source</span><span class="meta">Lead response time · Tue</span></span></a>
+ </div>
+</aside>
+
+<!-- ───────────── The page of the Resource, not published yet ───────────── -->
+<main class="main" data-pane-group="page" data-pane="resource">
+ <div class="breadcrumb">Collections / Credit leads</div>
+ <div style="display:flex;align-items:flex-start;gap:12px;margin-top:8px;flex-wrap:wrap">
+  <div style="flex:1;min-width:220px"><h1 class="page-title">Weekly lead volume</h1><div class="meta mono" style="margin-top:4px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">immoscoop-dataplatform-398214.dbt_prod_stacks.weekly_lead_volume</div></div>
+  <a class="btn-quiet outline" href="?page=query" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-terminal-window"></i>Query</a>
+  <a class="btn-quiet outline" href="resource-messages.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-chat-circle-text"></i>Messages<span class="count">2</span></a>
+  <!-- Publish: while a step is open it warns first (DEC-MR-20); once every step is done it opens the Publish sheet -->
+  <span class="fb-anchor" data-pane-group="flow" data-pane="open min closed warn ready">
+   <button class="btn-primary" type="button" id="publish-btn" aria-haspopup="dialog"><i class="ph-fill ph-globe-simple" style="font-size:15px"></i>Publish</button>
+   <div class="pub-warn" role="dialog" aria-labelledby="pw-title" data-pane-group="flow" data-pane="warn" hidden>
+    <p class="pw-title" id="pw-title"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i>Not ready to publish yet</p>
+    <p class="pw-lead">2 of the 7 steps required to publish are still open:</p>
+    <ul class="pw-list">
+     <li><a href="#" data-go="flow:open"><b>Pitfalls</b><span>Not written, and nobody said there are none</span></a></li>
+     <li><a href="#" data-go="flow:open"><b>Known Gaps</b><span>None written, and nobody said there are none</span></a></li>
+    </ul>
+    <div class="pw-acts">
+     <button class="btn-primary" type="button" data-go="flow:open"><i class="ph-fill ph-signpost" style="font-size:15px"></i>Guide me</button>
+     <button class="btn-quiet" type="button" data-go="flow:closed">I'll do it myself</button>
+    </div>
+    <p class="meta pw-claude">Or let Claude take you through them, one at a time, with the Data Hub connector.</p>
+   </div>
+  </span>
+ </div>
+ <div class="status-row" data-pane-group="flow" data-pane="open min closed warn ready">
+  <span class="status"><span class="maturity" data-level="2" data-no-tooltip></span>2 · Described</span>
+  <span class="status"><i class="ph-fill ph-eye-slash"></i>Not published</span>
+  <span class="status"><i class="ph-fill ph-users-three"></i>Owner: Credit team</span>
+ </div>
+ <div class="status-row" data-pane-group="flow" data-pane="published" hidden>
+  <span class="status"><span class="maturity" data-level="3" data-no-tooltip></span>3 · Confirmed</span>
+  <span class="status"><i class="ph-fill ph-globe-simple"></i>Published</span>
+  <span class="status"><i class="ph-fill ph-users-three"></i>Owner: Credit team</span>
+ </div>
+ <div class="alert" role="status" data-pane-group="flow" data-pane="open min closed warn ready"><i class="ph-fill ph-eye-slash"></i><p><b style="font-weight:500">Not published yet.</b> Only the Credit team and the Data Team see it. Once published, everyone who sees Credit leads does.</p></div>
+ <div class="tabs" role="tablist">
+  <button class="tab on" role="tab" aria-selected="true">Overview</button>
+  <a class="tab" href="resource-detail.html?tabs=columns" role="tab" aria-selected="false" style="text-decoration:none">Columns</a>
+  <a class="tab" href="resource-lineage.html" role="tab" aria-selected="false" style="text-decoration:none">Lineage</a>
+  <a class="tab" href="resource-preview.html" role="tab" aria-selected="false" style="text-decoration:none">Preview</a>
+ </div>
+ <div class="tab-content card">
+  <div class="ov">
+   <nav class="ov-nav" aria-label="Parts of the Overview" aria-orientation="vertical">
+    <button class="ov-item" type="button"><i class="ph ph-list-numbers" aria-hidden="true"></i><span class="ov-name">Summary</span></button>
+    <div class="ov-sep" role="presentation"></div>
+    <button class="ov-item" type="button"><i class="ph ph-text-align-left" aria-hidden="true"></i><span class="ov-name">Description</span></button>
+    <button class="ov-item on" type="button" aria-current="true"><i class="ph ph-compass" aria-hidden="true"></i><span class="ov-name">Known behaviour</span></button>
+    <button class="ov-item" type="button"><i class="ph ph-circle-dashed" aria-hidden="true"></i><span class="ov-name">Known Gaps</span></button>
+    <button class="ov-item" type="button"><i class="ph ph-funnel" aria-hidden="true"></i><span class="ov-name">Querying</span></button>
+    <button class="ov-item" type="button"><i class="ph ph-graph" aria-hidden="true"></i><span class="ov-name">Entities</span></button>
+    <div class="ov-sep" role="presentation"></div>
+    <button class="ov-item" type="button"><i class="ph ph-stairs" aria-hidden="true"></i><span class="ov-name">Maturity</span></button>
+   </nav>
+   <section class="ov-pane" aria-label="Known behaviour">
+    <div class="ov-head">
+     <div style="flex:1;min-width:0"><h2 class="ov-title">Known behaviour</h2><p class="ov-lead">What it is meant for, and where it trips people up.</p></div>
+    </div>
+    <div class="ov-grid">
+     <div class="sub-tile"><div class="said"><i class="ph-fill ph-check-circle"></i>Intended use</div><div class="md"><p>Weekly trends, and comparing <b>lead sources</b>: the review with KBC on Monday, the share of partner leads.</p></div></div>
+     <!-- Arrived from the Flow Box: the part opens for editing, its field in focus and marked for a moment (DEC-UX-303) -->
+     <div class="sub-tile fb-target" data-pane-group="flow" data-pane="open min">
+      <div class="said"><i class="ph-fill ph-warning"></i>Pitfalls<span class="fb-from"><i class="ph-fill ph-signpost" aria-hidden="true"></i>Step 4 of the Flow Box</span></div>
+      <textarea class="fb-field" rows="5" aria-label="Pitfalls, in Markdown" placeholder="Where does a reader trip up? A field that means something else than its name says, a count that doubles, a week that is not complete yet."></textarea>
+      <p class="meta" style="display:block;margin:6px 0 0">Markdown: bold, italic, lists and links.</p>
+      <div class="fb-field-foot">
+       <button class="btn-quiet outline sm" type="button"><i class="ph ph-check" aria-hidden="true"></i>Nothing to add</button>
+       <span style="flex:1"></span>
+       <button class="btn-quiet sm" type="button">Cancel</button>
+       <button class="btn-primary sm" type="button">Save</button>
+      </div>
+     </div>
+     <!-- Not arrived from the Flow Box: the part as it is, empty and required to publish (DEC-MR-16), or written -->
+     <div class="sub-tile" data-pane-group="flow" data-pane="closed warn ready published" hidden>
+      <div class="said"><i class="ph-fill ph-warning"></i>Pitfalls</div>
+      <div data-pane-group="flow" data-pane="closed warn" hidden><p class="prose none">Nothing written yet.</p><p class="meta nothing-why">Required to publish: write them, or say there are none.</p><button class="btn-quiet outline sm" type="button"><i class="ph ph-check" aria-hidden="true"></i>Nothing to add</button></div>
+      <div class="md" data-pane-group="flow" data-pane="ready published" hidden><p>The <b>current week</b> is incomplete until Monday morning.</p><p>Don’t sum across sources for <i>unique</i> people.</p></div>
+     </div>
+    </div>
+   </section>
+  </div>
+ </div>
+</main>
+
+<!-- ───────────── Query: the User looked for holes in the data; the Flow Box stays open (DEC-UX-300) ───────────── -->
+<main class="main" data-pane-group="page" data-pane="query" hidden>
+ <div class="breadcrumb">Query</div>
+ <h1 class="page-title" style="margin-top:8px">Partner leads per week</h1>
+ <div class="fbq-scope"><span class="status"><i class="ph ph-table" aria-hidden="true"></i>Weekly lead volume</span><span class="meta">Started from its page, 2 minutes ago</span></div>
+ <pre class="fbq-sql card"><span class="kw">select</span>
+    week_start,
+    <span class="kw">sum</span>(lead_count) <span class="kw">as</span> leads
+<span class="kw">from</span> weekly_lead_volume
+<span class="kw">where</span> <span class="kw">true</span>
+    <span class="kw">and</span> lead_source = <span class="str">'partner'</span>
+    <span class="kw">and</span> week_start <span class="kw">between</span> <span class="str">'2025-01-01'</span> <span class="kw">and</span> <span class="str">'2025-06-30'</span>
+<span class="kw">group by</span> week_start
+<span class="kw">order by</span> week_start</pre>
+ <div class="fbq-run"><button class="btn-primary" type="button"><i class="ph-fill ph-play" style="font-size:14px"></i>Run</button><span class="meta">Reads 1.2 MB · ran 2 min ago in 1.4 s</span></div>
+ <table class="fbq-grid card">
+  <thead><tr><th>#</th><th>week_start<span>DATE</span></th><th>leads<span>INT64</span></th></tr></thead>
+  <tbody>
+   <tr><td>1</td><td>2025-03-03</td><td>41</td></tr>
+   <tr><td>2</td><td>2025-03-10</td><td>58</td></tr>
+   <tr><td>3</td><td>2025-03-17</td><td>63</td></tr>
+   <tr><td>4</td><td>2025-03-24</td><td>60</td></tr>
+   <tr><td>5</td><td>2025-03-31</td><td>66</td></tr>
+  </tbody>
+ </table>
+ <p class="meta" style="display:block;margin-top:10px;line-height:1.5">No partner leads before 3 March 2025: the first week of the partner feed. A Known Gap, to add on its page.</p>
+</main>
+
+<!-- ───────────── The Flow Box (DEC-UX-299): docked on the right; the page narrows ───────────── -->
+<aside class="flowbox" aria-label="Flow Box: describe and publish Weekly lead volume" data-pane-group="flow" data-pane="open ready published">
+ <div class="fb-inner">
+  <div class="fb-head">
+   <span class="fb-icon" aria-hidden="true"><i class="ph-fill ph-signpost"></i></span>
+   <div class="fb-titles"><b class="fb-title">Describe and publish</b><a class="fb-object" href="?page=resource"><i class="ph ph-table" aria-hidden="true"></i>Weekly lead volume</a></div>
+   <button class="icon-btn" type="button" data-go="flow:min" aria-label="Minimize" title="Minimize"><i class="ph ph-arrows-in-simple"></i></button>
+   <button class="icon-btn" type="button" data-go="flow:closed" aria-label="Close" title="Close: Publish brings it back"><i class="ph ph-x"></i></button>
+  </div>
+  <div class="fb-progress" id="fb-progress"></div>
+  <div class="fb-body-scroll">
+   <ol class="fb-steps" id="fb-steps"></ol>
+   <!-- After publishing: said once, then it closes -->
+   <div class="fb-done" id="fb-done" hidden>
+    <i class="ph-fill ph-check-circle" aria-hidden="true"></i>
+    <p class="fb-done-title">Published and confirmed</p>
+    <p>Weekly lead volume is 3 · Confirmed. Everyone who sees Credit leads sees it now, and it is in their search.</p>
+    <p class="meta" style="display:block;line-height:1.5">What 4 · Explored and the advised steps still take stays on its Maturity.</p>
+    <button class="btn-quiet outline" type="button" data-go="flow:closed">Close</button>
+   </div>
+  </div>
+  <div class="fb-foot" id="fb-foot"></div>
+ </div>
+</aside>
+
+<!-- Minimized: a strip on the right edge with the progress; the strip opens it again (DEC-UX-301) -->
+<aside class="flowstrip" aria-label="Flow Box, minimized: describe and publish Weekly lead volume, 5 of 7 steps done" data-pane-group="flow" data-pane="min" hidden>
+ <button class="icon-btn" type="button" data-go="flow:open" aria-label="Maximize" title="Maximize"><i class="ph ph-arrows-out-simple"></i></button>
+ <span class="fb-icon" aria-hidden="true"><i class="ph-fill ph-signpost"></i></span>
+ <span class="fs-count" aria-hidden="true"><b>5</b>/7</span>
+ <ol class="fs-dots" aria-hidden="true"><li class="done"></li><li class="done"></li><li class="done"></li><li class="done"></li><li class="now"></li><li class="done"></li><li></li></ol>
+ <button class="fs-label" type="button" data-go="flow:open">Describe and publish · Weekly lead volume</button>
+</aside>
+</div>
+
+<div class="proto-switch" data-group="flow" role="tablist" aria-label="Prototype: the Flow Box" style="right:auto;left:96px;bottom:26px">Flow Box
+ <button class="seg on" data-target="open" role="tab" aria-selected="true">Open</button>
+ <button class="seg" data-target="min" role="tab" aria-selected="false">Minimized</button>
+ <button class="seg" data-target="closed" role="tab" aria-selected="false">Closed</button>
+ <button class="seg" data-target="warn" role="tab" aria-selected="false">Publish, not ready</button>
+ <button class="seg" data-target="ready" role="tab" aria-selected="false">Ready</button>
+ <button class="seg" data-target="published" role="tab" aria-selected="false">Published</button>
+</div>
+<div class="proto-switch" data-group="page" role="tablist" aria-label="Prototype: where the User is" style="right:auto;left:96px;bottom:74px">Page
+ <button class="seg on" data-target="resource" role="tab" aria-selected="true">The Resource</button>
+ <button class="seg" data-target="query" role="tab" aria-selected="false">Query</button>
+</div>
+
+<script>
+// Prototype only: the steps of the Flow Box of the Owner Journey, the steps required to publish (DEC-MR-16), each with
+// What, Why and How, its Learning Card and the place where it is done. The real Flow Box reads them from the journey of
+// the Resource, the same as Maturity, the publication and Claude (DEC-MR-15).
+const STEPS = [
+  { name: 'Business Description', done: 'Written by An Claes, 12 Nov', missing: 'Not written yet', card: ['K5.14', 'The Business Description'], go: 'Go to Description',
+    what: 'In a few sentences: what this table is, and what one row stands for, in the words of the business.',
+    why: 'The description from dbt says how the table is made, not what it means. Without yours, a colleague guesses, or asks you.',
+    how: 'On Description, Edit: write it in Markdown, with the description from dbt beside it.' },
+  { name: 'Key Fields', done: 'week_start', missing: 'No Key Fields chosen', card: ['K5.15', 'Key Fields'], go: 'Go to Querying',
+    what: 'The two to five fields a reader starts from.',
+    why: 'Most tables hold more fields than anyone reads. The Key Fields say where to start.',
+    how: 'On Querying, Edit: choose them from its fields.' },
+  { name: 'Fields', done: 'Every Key Field described; 3 other fields without a Business Description', missing: 'A Key Field without a Business Description', card: ['K5.14', 'The Business Description'], go: 'Go to Columns',
+    what: 'A Business Description for each Key Field: what it holds, in the words of the business.',
+    why: 'A field name says little to a colleague outside your team, and the Key Fields are where they start.',
+    how: 'On Columns, Edit: describe each Key Field. Describing the other fields is advised, not required.' },
+  { name: 'Intended use', done: 'Written by An Claes, 12 Nov', missing: 'Not written yet', card: ['3.3.3', 'Reliable for which purpose'], go: 'Go to Known Behaviour',
+    what: 'What the table is meant for, and what it is not meant for.',
+    why: 'A table answers some questions well and others badly. A colleague who knows which uses it for the right one.',
+    how: 'On Known behaviour, Edit the intended use, in Markdown.' },
+  { name: 'Pitfalls', done: 'Written by An Claes, today', missing: 'Not written, and nobody said there are none', card: ['K5.16', 'Pitfalls'], go: 'Write the pitfalls',
+    what: 'Where a reader trips up: a field that means something else than its name says, a count that doubles, a week that is not complete yet.',
+    why: 'You know the traps; a colleague only finds them by falling in. Written down, nobody falls in twice.',
+    how: 'On Known behaviour, write them in Markdown, or press Nothing to add when there are none.' },
+  { name: 'Reliable since', done: '1 Jan 2025, on week_start', missing: 'Not set yet', card: ['K5.17', 'Reliable since'], go: 'Go to Known Gaps',
+    what: 'From which day the whole table can be relied on, and why not earlier; or from its first row.',
+    why: 'A trend that starts too early compares with a start-up period that was never complete.',
+    how: 'On Known Gaps, choose one of the two in the tile on top.' },
+  { name: 'Known Gaps', done: '1 gap, by An Claes, today', missing: 'None written, and nobody said there are none', card: ['K5.3', 'The Known Gaps of a Resource'], go: 'Add the Known Gaps',
+    what: 'Each hole in its data that you know of: a period, fields or rows that are missing or wrong.',
+    why: 'A gap nobody wrote down reads as a real drop, or a real zero.',
+    how: 'On Known Gaps, add each one with where it holds, or press Nothing to add when there are none.' },
+  { name: 'Read back and publish', done: 'Published today', missing: 'After the steps above', card: ['K5.13', 'Publishing a Resource'], go: 'Publish',
+    what: 'Read the whole card as a colleague will see it, and publish it.',
+    why: 'Publishing is its first Confirmation: everyone who sees Credit leads sees it then, and it cannot be undone.',
+    how: 'Publish opens the card read back, with the declaration to tick.' },
+];
+// What is done, and which step is open, in each state of the prototype: on the page of the Resource the User is writing
+// the pitfalls (step 5); in Query they wrote them and look for the Known Gaps (step 7)
+const STATES = {
+  resource: { done: [0, 1, 2, 3, 5], now: 4, here: 4 },
+  query: { done: [0, 1, 2, 3, 4, 5], now: 6, here: -1 },
+  ready: { done: [0, 1, 2, 3, 4, 5, 6], now: 7, here: -1 },
+  published: { done: [0, 1, 2, 3, 4, 5, 6, 7], now: -1, here: -1 },
+};
+let page = 'resource', flow = 'open', opened = null;
+const esc = s => s.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+const mono = s => esc(s).replace(/(week_start|lead_count)/g, '<span class="mono">$1</span>');
+function state() { return flow === 'ready' ? STATES.ready : flow === 'published' ? STATES.published : STATES[page]; }
+function render() {
+  const s = state(), done = new Set(s.done), at = opened ?? s.now;
+  // The steps required to publish are counted; reading it back and publishing ends the flow (DEC-UX-304)
+  const required = STEPS.length - 1, n = [...done].filter(i => i < required).length;
+  document.getElementById('fb-progress').innerHTML =
+    `<div class="fb-bar" aria-hidden="true">${STEPS.map((_, i) => `<span class="${done.has(i) ? 'done' : i === s.now ? 'now' : ''}"></span>`).join('')}</div>` +
+    `<span class="meta">${n} of ${required} steps required to publish done</span>`;
+  document.getElementById('fb-steps').hidden = flow === 'published';
+  document.getElementById('fb-done').hidden = flow !== 'published';
+  document.getElementById('fb-steps').innerHTML = STEPS.map((step, i) => {
+    const isDone = done.has(i), isOpen = i === at, isNow = i === s.now;
+    const icon = isDone ? '<i class="ph-fill ph-check-circle fb-tick" aria-hidden="true"></i>' : `<span class="fb-num" aria-hidden="true">${i + 1}</span>`;
+    const last = i === STEPS.length - 1;
+    const said = isDone ? step.done : last ? (isNow ? 'Every step above is done' : step.missing) : step.missing;
+    const warn = !isDone && !last;
+    const goLabel = isDone && !last ? 'Look at it' : step.go;
+    const here = i === s.here ? '<span class="fb-here"><i class="ph-fill ph-map-pin" aria-hidden="true"></i>Open on the page</span>' : '';
+    return `<li class="fb-step${isDone ? ' done' : ''}${isNow ? ' now' : ''}${isOpen ? ' open' : ''}">
+      <button class="fb-row" type="button" aria-expanded="${isOpen}" data-step="${i}">${icon}<span class="fb-name"><b>${esc(step.name)}</b><span class="fb-said">${warn ? '<i class="ph-fill ph-warning-circle" aria-hidden="true"></i>' : ''}<span>${mono(said)}</span></span></span><span class="sr-only">${isDone ? ', done' : ', open'}</span><i class="ph ph-caret-down chev" aria-hidden="true"></i></button>
+      <div class="fb-detail"${isOpen ? '' : ' hidden'}>${here}
+       <dl class="fb-wwh"><dt>What</dt><dd>${esc(step.what)}</dd><dt>Why</dt><dd>${esc(step.why)}</dd><dt>How</dt><dd>${esc(step.how)}</dd></dl>
+       <a class="fb-card" href="learning-float.html"><i class="ph-fill ph-graduation-cap" aria-hidden="true"></i><span class="num">${step.card[0]}</span><span class="tt">${esc(step.card[1])}</span><i class="ph ph-arrow-up-right" aria-hidden="true"></i></a>
+       ${last && !isNow ? '' : `<a class="${isNow ? 'btn-primary' : 'btn-quiet outline'} fb-go" href="${last ? 'resource-publish.html' : '?page=resource'}">${esc(goLabel)}<i class="ph ph-arrow-right" aria-hidden="true"></i></a>`}
+      </div></li>`;
+  }).join('');
+  const open = required - n;
+  document.getElementById('fb-foot').innerHTML = flow === 'published' ? '' : flow === 'ready'
+    ? '<span class="meta">Every step required to publish is done. Publish reads the whole card back first.</span>'
+    : `<span class="meta">${open} ${open === 1 ? 'step' : 'steps'} to go, then read it back and publish. Everything you write can change later; only publishing is for good.</span>`;
+  document.querySelectorAll('.fb-row').forEach(b => b.addEventListener('click', () => { const i = +b.dataset.step; opened = opened === i ? -1 : i; render(); }));
+}
+document.querySelectorAll('[data-group="page"] [data-target]').forEach(b => b.addEventListener('click', () => { page = b.dataset.target; opened = null; render(); }));
+document.querySelectorAll('[data-group="flow"] [data-target]').forEach(b => b.addEventListener('click', () => { flow = b.dataset.target; opened = null; render(); }));
+// Publish: with a step open it warns first; once every step is done, it opens the Publish sheet (DEC-MR-20)
+document.getElementById('publish-btn').addEventListener('click', () => {
+  if (flow === 'ready') location.href = 'resource-publish.html';
+  else document.querySelector('[data-group="flow"] [data-target="warn"]').click();
+});
+render();
+</script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -42,6 +42,9 @@
   --nav-rail-width: 52px;
   --nav-to-panel-gap: 8px;
   --panel-width: 300px;
+  --flow-box-width: 340px;    /* the Flow Box, docked on the right; the main area narrows (DEC-UX-299) */
+  --flow-strip-width: 56px;   /* the Flow Box minimized to a strip (DEC-UX-301) */
+  --flow-box-fold-below: 1360px; /* narrower, opening the Flow Box folds the panel (DEC-UX-307) */
   --tile-min: 240px;          /* grid is always 100% wide; tiles grow until a column fits */
   --tile-min-compact: 190px;
   --app-min-width: 900px;     /* narrower, Data Hub shows one message instead (DEC-UX-91) */
@@ -49,6 +52,8 @@
   /* Motion: slow, swept, never on-off */
   --motion-focus: 700ms ease;       /* window becoming opaque on hover */
   --motion-panel: 350ms ease;       /* slide-out panel */
+  --motion-flow-mark: 2400ms ease;  /* the mark on a field the Flow Box led to, fading (DEC-UX-303) */
+  --delay-flow-mark: 1000ms;        /* how long that mark stays before it fades */
   --motion-fade: 250ms;             /* the panel fades as it slides */
   --motion-ring: 150ms;             /* the ring of the initials */
   --motion-fold: 200ms;             /* the caret of a fold box turning */

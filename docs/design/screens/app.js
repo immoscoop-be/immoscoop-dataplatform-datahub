@@ -110,6 +110,9 @@ document.getElementById('panel-search')?.addEventListener('input', e => {
     if (!q) unfolded.delete(g);
   });
   document.querySelectorAll('.panel .list-item[data-name]').forEach(el => { const m = el.dataset.name.includes(q); el.hidden = !m; if (m) n++; });
+  // The Projects of Query (DEC-UX-285): a Project goes with its item; one that matches unfolds while the search lasts
+  document.querySelectorAll('.proj-entry').forEach(en => { en.hidden = !!en.querySelector('.proj-item')?.hidden || (!q && en.classList.contains('more') && !en.dataset.shown); if (q && !en.hidden) en.classList.add('open'); });
+  document.querySelectorAll('.proj-more').forEach(b => { b.hidden = !!q || !!document.querySelector('.proj-entry.more[data-shown]'); });
   // A heading such as "Shared resources" goes when nothing under it is left
   document.querySelectorAll('.panel-label').forEach(label => {
     let el = label.nextElementSibling, shown = false;
@@ -117,6 +120,15 @@ document.getElementById('panel-search')?.addEventListener('input', e => {
     label.hidden = !shown;
   });
   const empty = document.getElementById('no-results'); if (empty) empty.hidden = n > 0;
+});
+
+// The Projects of Query (DEC-UX-285): "Show all 5" shows the others in the panel itself, and an arrow unfolds the
+// queries of a Project, on every screen of Query
+document.querySelector('.proj-list')?.addEventListener('click', e => {
+  const more = e.target.closest('.proj-more');
+  if (more) { document.querySelectorAll('.proj-entry.more').forEach(en => { en.hidden = false; en.dataset.shown = '1'; }); more.hidden = true; return; }
+  const unfold = e.target.closest('.proj-entry > .q-unfold');
+  if (unfold && !document.getElementById('q-scope')) { const en = unfold.closest('.proj-entry'); en.classList.toggle('open'); unfold.setAttribute('aria-expanded', en.classList.contains('open')); }
 });
 
 // Segmented controls and tabs: show the matching [data-pane]
@@ -1045,8 +1057,8 @@ if (sqlEditor) {
 
 // What keeps a query from running (Proposal): an @name in the SQL that is not a Parameter, or a table that is not one of
 // the Resources of the query. Both stand out in the SQL, a folded CTE shows it on its "⋯ n lines", and the bar at the
-// foot says so in place of the Pre-flight, with Run off. A table outside the Resources also shows next to them, with a
-// new query to start with it
+// foot says so in place of the Pre-flight, with Run off. A table outside the Resources also shows next to them, with
+// "Add it to this query" (DEC-UX-287)
 let removedRes = null;
 // A Resource that requires a partition filter blocks a query without one, and offers to add it (?pf=nofilter)
 let noFilter = new URLSearchParams(location.search).get('pf') === 'nofilter';
@@ -1064,7 +1076,7 @@ const syncRun = () => {
     [...editor.querySelectorAll(`[data-fold-in="${st.dataset.foldStart}"]:not(.off)`)].some(l => l.querySelector('.sql-key.outside, .sql-param.undefined'))));
   const out = document.getElementById('scope-outside');
   if (out) out.innerHTML = tables.map(t => `<span class="scope-chip outside"><i class="ph-fill ph-warning"></i><span class="mono">${t}</span> is not a resource of this query`
-    + (t === removedRes ? '' : `<button class="text-link" type="button" data-add-res="${t}">Start a new query with it</button>`) + '</span>').join('')
+    + (t === removedRes ? '' : `<button class="text-link" type="button" data-add-res="${t}">Add it to this query</button>`) + '</span>').join('')
     + known.map(([t, layer]) => `<span class="scope-chip known" title="${layer} · a table Data Hub knows from a dbt project it follows; no Resource, so no Owner, Level or Publication. Double-click its name in the SQL for what dbt and BigQuery know of it"><i class="ph ph-cube kind-icon" role="img" aria-label="Model"></i><span class="mono">${t}</span></span>`).join('');
   const knownLine = document.getElementById('q-known');
   if (knownLine) knownLine.hidden = !known.length;
@@ -1423,7 +1435,7 @@ if (document.querySelector('.sql-editor')) colourSql(document.querySelector('.sq
       if (FIELDS[word] && sel.rangeCount) showField(word, sel.getRangeAt(0).getBoundingClientRect());
     });
     // A click on a Resource on top of the frame opens what a double-click on its name opens; a table outside Data Hub
-    // its window (DEC-UX-259). The × on it still starts a new query without it
+    // its window (DEC-UX-259). The × on it takes it out of this query (DEC-UX-287)
     document.getElementById('scope-chips')?.addEventListener('click', e => {
       if (e.target.closest('.scope-x')) return;
       const chip = e.target.closest('.scope-chip');
@@ -1586,9 +1598,10 @@ if (grid) {
   document.fonts.ready.then(() => COLS.forEach((c, i) => fit(i)));
 }
 
-// A query is bounded by its Resources (Proposal): it reads only those, on top of its frame. Adding or removing one
-// starts a new query in a sheet, which takes the SQL and its Parameters along and remembers where it came from; the old
-// query stays as it was. "Lenses on these resources" shows the lenses that already use them, as for a new query. The
+// A query is bounded by its Resources (DEC-UX-73): it reads only those, on top of its frame. Adding or taking out one
+// changes this query, in a sheet (DEC-UX-287): it reads the new set from its next run, and its history keeps what each
+// run read. "Start a new query" in the same sheet still makes a new one, which takes the SQL and its Parameters along
+// and remembers where it came from, the old query staying as it was. "Lenses on these resources" shows the lenses that already use them, as for a new query. The
 // panel lists one item per query, with its last runs; the history holds every run, each a variation
 const scopeBox = document.getElementById('q-scope');
 if (scopeBox) {
@@ -1618,7 +1631,7 @@ if (scopeBox) {
     syncRun();
   }));
 
-  // A new query, with one more Resource or one less
+  // One more Resource or one less: in this query, or in a new one (DEC-UX-287)
   const sheet = $('newq-sheet');
   let mode = 'add', removing = null;
   const picks = () => [...sheet.querySelectorAll('input[name="newq-pick"]:checked')].map(i => i.value);
@@ -1670,13 +1683,24 @@ if (scopeBox) {
   const nameFor = set => { const n = set.map((r, i) => i ? NAMES[r].toLowerCase() : NAMES[r]); return (n.length > 1 ? n.slice(0, -1).join(', ') + ' and ' + n.at(-1) : n[0]) + ', 27 Oct'; };
   const update = () => {
     const set = newSet(), cur = scopeNow(), n = set.length, these = n === 1 ? 'this resource' : `these ${n} resources`;
+    const title = $('q-title').textContent;
+    // Two buttons, side by side (DEC-UX-289): Just add, or New query; "New query from this one" has the second only
+    $('newq-here').hidden = mode === 'same';
+    $('newq-new').className = mode === 'same' ? 'btn-primary' : 'btn-quiet outline';
+    $('newq-here-icon').className = mode === 'remove' ? 'ph ph-minus' : 'ph ph-plus';
+    $('newq-icon').className = mode === 'remove' ? 'ph ph-minus-circle' : mode === 'same' ? 'ph ph-git-branch' : 'ph ph-plus-circle';
+    $('newq-kicker').textContent = title;
+    $('newq-why').innerHTML = mode === 'same' ? `A new query with the same Resources, its SQL and Parameters along. ${title} stays as it is.`
+      : mode === 'remove' ? `<b>Just take it out</b> changes ${title}: its next run no longer reads it. <b>New query</b> starts another without it, and ${title} stays as it is.`
+      : `<b>Just add</b> changes ${title}: its next run reads them, and its history keeps what each run read. <b>New query</b> starts another with them, its SQL and Parameters along, and ${title} stays as it is.`;
     $('newq-set').innerHTML = [...new Set([...cur, ...set])].map(r => `<span class="use-chip on${set.includes(r) ? '' : ' removed'}"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>${cur.includes(r) ? '' : '+ '}${NAMES[r]}</span>`).join('');
-    $('newq-name').value = nameFor(set);
     const added = set.filter(r => !cur.includes(r));
     if (mode === 'add') {
       $('newq-ctes').textContent = added.map(r => cteText(SOURCES[r])).join(',\n\n') || 'Tick a Resource to add.';
-      $('newq-title').textContent = added.length > 1 ? `With ${added.length} more resources` : 'With one more resource';
-      $('newq-start').disabled = !added.length;
+      $('newq-title').textContent = added.length > 1 ? `Add ${added.length} Resources` : 'Add a Resource';
+      $('newq-here-text').textContent = 'Just add';
+      $('newq-new-text').textContent = 'New query';
+      $('newq-here').disabled = $('newq-new').disabled = !added.length;
       sheet.querySelectorAll('.pick').forEach(p => p.classList.toggle('on', p.querySelector('input').checked));
     }
     const l = LENSES(set), list = l.names.length ? `<ul>${l.names.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '';
@@ -1685,13 +1709,15 @@ if (scopeBox) {
       : l.more ? `No lens uses exactly ${these} yet; <b>${l.more}</b> use${l.more > 1 ? '' : 's'} them and more.` : `No lens uses ${these} yet.`)
       + (mode === 'remove' ? ' A different list from that of Leads per source name.' : '') + list + '</div>';
     if (mode === 'remove') sheet.querySelector('[data-newq="remove"]').hidden = !document.querySelector(`.sql-editor .sql-key[data-table="${removing}"]`);
+    if (mode === 'remove') { $('newq-here-text').textContent = 'Just take it out'; $('newq-new-text').textContent = 'New query'; }
+    if (mode === 'same') $('newq-new-text').textContent = 'Start the new query';
   };
   const openNew = (m, res) => {
     mode = m; removing = m === 'remove' ? res : null;
-    // "New query from this one", in the quick window (DEC-UX-237): the same Resources, the SQL and Parameters along
-    $('newq-title').textContent = m === 'add' ? 'With more resources' : m === 'same' ? 'With the same resources' : `Without ${NAMES[res]}`;
-    $('newq-why-what').textContent = m === 'add' ? 'Adding Resources' : m === 'same' ? 'Starting from this one' : 'Removing one';
-    $('newq-start').disabled = false;
+    // "New query from this one", in the quick window (DEC-UX-237): the same Resources, the SQL and Parameters along;
+    // adding or taking out offers both: Just add, or New query (DEC-UX-287, DEC-UX-289)
+    $('newq-title').textContent = m === 'add' ? 'Add Resources' : m === 'same' ? 'With the same resources' : `Take out ${NAMES[res]}`;
+    $('newq-here').disabled = $('newq-new').disabled = false;
     sheet.querySelector('[data-newq="add"]').hidden = m !== 'add';
     sheet.querySelector('[data-newq="remove"]').hidden = m !== 'remove';
     if (m === 'add') sheet.querySelectorAll('input[name="newq-pick"]').forEach(i => { i.checked = res ? i.value === res : i.value === 'listings'; });
@@ -1706,8 +1732,18 @@ if (scopeBox) {
     if (remove) openNew('remove', remove.dataset.removeRes);
     if (e.target.closest('#lenses-btn')) lensButton();
   });
-  $('newq-start').addEventListener('click', () => {
-    const set = newSet(), name = $('newq-name').value.trim() || nameFor(set), from = $('q-title').textContent, added = set.filter(r => !scopeNow().includes(r));
+  const finish = where => {
+    const set = newSet(), name = nameFor(set), from = $('q-title').textContent, added = set.filter(r => !scopeNow().includes(r));
+    // In this query: its Resources change, each one added comes as a CTE at the start of its SQL, and its name, its
+    // question, its result and its history stay (DEC-UX-287)
+    if (where === 'here') {
+      document.querySelectorAll('#scope-chips [data-res]').forEach(c => { c.hidden = !set.includes(c.dataset.res); });
+      removedRes = null;
+      sheet.hidden = true;
+      if (mode === 'add') addCtes(added.map(r => ({ ...SOURCES[r], key: r })));
+      lensButton(); syncRun();
+      return;
+    }
     // The panel: the new query on top, open; the old one stays, folded
     const old = document.querySelector('.q-item.current');
     old.classList.remove('current'); old.removeAttribute('aria-current'); old.closest('.q-entry').classList.remove('open');
@@ -1719,7 +1755,6 @@ if (scopeBox) {
     // The page: its name and its question, its Resources; no result and no history yet. Where it came from is in its
     // History, not under its question (DEC-UX-250)
     $('q-title').textContent = name; $('q-title').title = name;
-    $('q-question').textContent = $('newq-question').value;
     document.querySelectorAll('#scope-chips [data-res]').forEach(c => { c.hidden = !set.includes(c.dataset.res); });
     removedRes = mode === 'remove' ? removing : null;
     const card = document.querySelector('.result-card');
@@ -1732,10 +1767,13 @@ if (scopeBox) {
     // Each Resource added comes as a CTE at the start of its SQL (DEC-UX-225)
     if (mode === 'add') addCtes(added.map(r => ({ ...SOURCES[r], key: r })));
     lensButton(); syncRun();
-  });
+  };
+  // Two buttons side by side (DEC-UX-289): Just add changes this query, New query starts another
+  $('newq-here').addEventListener('click', () => finish('here'));
+  $('newq-new').addEventListener('click', () => finish('new'));
 
   // Find a table, for a power user (DEC-UX-224): the tables Data Hub knows from the dbt projects it follows, ticked one
-  // or more at once and added as CTEs at the start of the SQL of this query; a Resource starts a new query with it
+  // or more at once and added as CTEs at the start of the SQL of this query; a Resource is added to it (DEC-UX-287)
   const find = $('find-sheet');
   if (find) {
     const TABLES = [
@@ -1762,7 +1800,7 @@ if (scopeBox) {
         + (t.resource ? '<i class="ph ph-table" style="margin-top:3px;color:var(--text-secondary)" aria-label="Resource"></i>' : `<input type="checkbox" aria-label="Add ${t.name}"${picked.has(t.name) ? ' checked' : ''}>`)
         + `<button type="button" class="ft-open" aria-expanded="${unfolded.has(t.name)}"><i class="ph ph-caret-right"></i><span class="ft-name">${t.name}</span><span class="pill">${LAYER[t.layer]}</span><span class="ft-where">${t.project} · ${t.dataset}</span></button>`
         + `<p class="ft-desc">${esc(t.desc)}</p>`
-        + (t.resource ? `<div class="ft-res"><span class="pill pill-strong">Resource</span>${t.resource.collection} · Level ${t.resource.level}<button class="text-link" type="button" data-add-res="${t.name}">Start a new query with it</button></div>` : '')
+        + (t.resource ? `<div class="ft-res"><span class="pill pill-strong">Resource</span>${t.resource.collection} · Level ${t.resource.level}<button class="text-link" type="button" data-add-res="${t.name}">Add it to this query</button></div>` : '')
         + (unfolded.has(t.name) ? `<div class="ft-cols">${t.cols.map(([c, type, role, d]) => `<div class="ft-col"><span><span class="mono">${c}</span>${role ? `<span class="pill pill-strong">${role}</span>` : ''}</span><span class="meta">${type}</span><span class="muted">${esc(d)}</span></div>`).join('')}</div>` : '')
         + '</div>').join('') || '<p class="meta" style="padding:10px">No table Data Hub knows by these words.</p>';
       const list = TABLES.filter(t => picked.has(t.name));
@@ -1801,7 +1839,7 @@ if (scopeBox) {
   // The panel: a query unfolds to its last runs; a run opens in its history
   document.querySelector('.panel').addEventListener('click', e => {
     const unfold = e.target.closest('.q-unfold');
-    if (unfold) { const entry = unfold.closest('.q-entry'); entry.classList.toggle('open'); unfold.setAttribute('aria-expanded', entry.classList.contains('open')); return; }
+    if (unfold) { const entry = unfold.closest('.q-entry, .proj-entry'); entry.classList.toggle('open'); unfold.setAttribute('aria-expanded', entry.classList.contains('open')); return; }
     const run = e.target.closest('.q-run'); if (!run) return;
     document.querySelector('[data-group="rtab"] [data-target="history"]').click();
     const row = document.querySelector(`.hist-run[data-run="${run.dataset.run}"]`);
@@ -1950,17 +1988,18 @@ document.addEventListener('click', e => {
 });
 
 // The quick window (DEC-UX-237): Cmd+Shift+P or Cmd+K (Ctrl on Windows), anywhere in Data Hub, also while typing in the SQL
-// editor. Empty, it lists the commands of the screen it opened on (a page declares them in window.QUICK), the flagged
-// queries with their keys, and Go to: every section. Typed, it searches those and everything the User may see,
+// editor. Empty, it lists the commands of the screen it opened on (a page declares them in window.QUICK), the queries
+// of the active Project with their keys (DEC-UX-317), and Go to: every section. Typed, it searches those and everything the User may see,
 // Resources, Collections, Lenses, their queries and Learning Cards, grouped by kind, each with its kind on the right.
 // Up and Down move, Enter does what the row says, Escape, the shortcut again or a click beside it closes it.
 // Empty, it lists first what the User did from it in this session, most recent first, five at most (DEC-UX-242). The
 // first nine rows that can be done carry ⌘1 to ⌘9: that key highlights the row, and Enter then does it; while the window
-// is open, ⌘1 to ⌘9 no longer open a flagged query, whose key shows in its name line.
+// is open, ⌘1 to ⌘9 no longer open a query of the row, whose key shows in its name line.
 // What the User may never do is not listed; what they cannot do right now is greyed, with why (DEC-UX-207).
 // Prototype: ?quick=open opens it, ?quick=open&q=lead with a search typed.
 (() => {
   const role = () => document.documentElement.dataset.role || 'colleague';
+  // The queries of the active Project, in its row (DEC-UX-317)
   const FLAGGED = [
     { title: 'Leads per source name', meta: '⌘1', href: 'query.html' },
     { title: 'Partner share per week', meta: '⌘2', href: 'query.html' },
@@ -1980,11 +2019,17 @@ document.addEventListener('click', e => {
     { icon: 'ph-fill ph-toolbox', title: 'Admin · Permission groups', href: 'admin-permission-groups.html', for: 'datateam' },
   ];
   const COMMANDS = [
-    { icon: 'ph-fill ph-plus-circle', title: 'New query', href: 'query-new.html', words: 'start sql' },
+    { icon: 'ph-fill ph-plus-circle', title: 'New query', meta: 'choose its Resources, the Lenses on them first', href: 'query-new.html', words: 'start sql' },
+    // A blank query, without Resources, only for a power user, who may write SQL on tables outside Data Hub (DEC-UX-293)
+    { icon: 'ph ph-file-plus', title: 'New blank query', meta: 'no Resources yet: SQL on any table Data Hub knows', href: 'query.html?empty=1&blank=1', for: 'datateam', words: 'empty blank sql outside power start' },
+    // An empty query in a Project, one row for each, the Project worked in first (DEC-UX-293, DEC-UX-290)
+    ...['Credit leads Q4', 'Partner review', 'Listings audit'].map(name => ({ icon: 'ph ph-folders', title: `New query in ${name}`, meta: 'an empty query at the end of its row; you work in it', href: 'query.html?empty=1', words: 'project new empty blank start' })),
     { icon: 'ph ph-moon', title: 'Switch light or dark', run: () => document.getElementById('theme')?.click(), words: 'theme day night' },
     // The panel, on every screen that has one, and on Query reading the queries again (DEC-UX-254)
     { icon: 'ph ph-sidebar-simple', title: 'Hide the panel', run: () => document.querySelector('.panel')?.toggleAttribute('hidden'), words: 'toggle side menu sidebar collapse expand panel' },
     ...(location.pathname.includes('query') ? [{ icon: 'ph ph-arrows-clockwise', title: 'Refresh the queries', meta: 'reads them again, such as those Claude made', run: () => {}, words: 'reload update refresh claude' }] : []),
+    // On the screens of Query, a new Project, as the + over the Projects in the panel does (DEC-UX-288)
+    ...(location.pathname.includes('query') && !location.pathname.includes('query.html') ? [{ icon: 'ph ph-folder-simple-plus', title: 'New project', meta: 'a set of queries to work on, alone or together', run: () => window.openRowPop?.('newproj'), words: 'project create make folder' }] : []),
   ];
   const ITEMS = [
     { group: 'Resources', icon: 'ph ph-table', title: 'Weekly lead volume', meta: 'Credit leads · 4 · Explored', href: 'resource-overview.html' },
@@ -1996,13 +2041,17 @@ document.addEventListener('click', e => {
     { group: 'Collections', icon: 'ph ph-house-line', title: 'Listings and sales', meta: '9 Resources', href: 'collection-overview.html' },
     { group: 'Lenses', icon: 'ph ph-aperture', title: 'Leads per source name', meta: 'Credit leads', href: 'lens.html' },
     { group: 'Lenses', icon: 'ph ph-aperture', title: 'Lead quality by partner', meta: 'Credit leads', href: 'lens.html' },
+    // The Projects the User is in (DEC-UX-285, DEC-UX-288)
+    { group: 'Projects', icon: 'ph-fill ph-folders', title: 'Credit leads Q4', meta: '14 queries · with 3 colleagues', href: 'query-project.html', words: 'project' },
+    { group: 'Projects', icon: 'ph-fill ph-folders', title: 'Partner review', meta: '4 queries · only you', href: 'query-project.html', words: 'project' },
+    { group: 'Projects', icon: 'ph-fill ph-folders', title: 'Listings audit', meta: '6 queries · with 4 colleagues', href: 'query-project.html', words: 'project' },
     { group: 'Your queries', icon: 'ph ph-table', title: 'Lead volume per province', meta: 'Mon 26 Oct', href: 'query.html' },
     { group: 'Your queries', icon: 'ph ph-table', title: 'Leads that came back within a week', meta: 'yesterday', href: 'query.html' },
     { group: 'Learning Cards', icon: 'ph ph-graduation-cap', title: 'What one row stands for', meta: '2.1.3 · grain', href: 'learning-card.html' },
     { group: 'Learning Cards', icon: 'ph ph-graduation-cap', title: 'When a figure is final', meta: 'K5.4', href: 'learning-card.html' },
   ];
-  const KIND = { Resources: 'Resource', Collections: 'Collection', Lenses: 'Lens', 'Your queries': 'Query', 'Learning Cards': 'Learning Card' };
-  const ORDER = ['Commands', 'Flagged queries', 'Resources', 'Collections', 'Lenses', 'Your queries', 'Learning Cards', 'Go to'];
+  const KIND = { Resources: 'Resource', Collections: 'Collection', Lenses: 'Lens', Projects: 'Project', 'Your queries': 'Query', 'Learning Cards': 'Learning Card' };
+  const ORDER = ['Commands', 'This project', 'Projects', 'Resources', 'Collections', 'Lenses', 'Your queries', 'Learning Cards', 'Go to'];
   const back = document.createElement('div');
   back.className = 'quick-backdrop'; back.hidden = true;
   const win = document.createElement('section');
@@ -2029,18 +2078,18 @@ document.addEventListener('click', e => {
     const all = [
       ...here,
       ...COMMANDS.map(r => ({ ...r, group: 'Commands', kind: 'Command' })),
-      // On a flagged query, the next and the previous one, round the row (DEC-UX-241)
+      // On a query of the active Project, the next and the previous one, round the row (DEC-UX-241)
       ...(document.querySelector('.q-flag.current') ? [
-        { icon: 'ph ph-arrow-right', title: 'Next flagged query', meta: 'Partner share per week · ⌘2', href: 'query.html', group: 'Flagged queries', kind: 'Command', words: 'next flagged tab switch' },
-        { icon: 'ph ph-arrow-left', title: 'Previous flagged query', meta: 'Saved searches by price band · ⌘4', href: 'query.html', group: 'Flagged queries', kind: 'Command', words: 'previous flagged tab switch back' },
+        { icon: 'ph ph-arrow-right', title: 'Next query in the row', meta: 'Partner share per week · ⌘2', href: 'query.html', group: 'This project', kind: 'Command', words: 'next tab switch project row' },
+        { icon: 'ph ph-arrow-left', title: 'Previous query in the row', meta: 'Saved searches by price band · ⌘4', href: 'query.html', group: 'This project', kind: 'Command', words: 'previous tab switch back project row' },
       ] : []),
-      ...FLAGGED.map(r => ({ ...r, icon: 'ph-fill ph-flag', group: 'Flagged queries', kind: 'Query' })),
+      ...(document.querySelector('.q-flags:not([hidden]) .q-proj') ? FLAGGED.map(r => ({ ...r, icon: 'ph ph-table', group: 'This project', kind: 'Query' })) : []),
       ...ITEMS.map(r => ({ ...r, kind: KIND[r.group] })),
       ...GO.filter(visible).map(r => ({ ...r, group: 'Go to', kind: 'Section' })),
     ];
     let shown;
     if (!q) {
-      const usual = [...here, ...all.filter(r => r.group === 'Flagged queries'), ...all.filter(r => r.group === 'Go to')];
+      const usual = [...here, ...all.filter(r => r.group === 'This project'), ...all.filter(r => r.group === 'Go to')];
       const used = recent.map(title => usual.find(r => r.title === title)).filter(Boolean).slice(0, 5);
       shown = [...used.map(r => ({ ...r, group: 'Recently used' })), ...usual.filter(r => !used.includes(r))];
     }
@@ -2116,3 +2165,9 @@ document.addEventListener('click', e => {
   const params = new URLSearchParams(location.search);
   if (params.get('quick') === 'open') { open(); if (params.get('q')) { input.value = params.get('q'); draw(); } }
 })();
+
+// A period of the history of Query folds open and shut with a click on its name (DEC-UX-139).
+document.querySelectorAll('.q-period').forEach(b => b.addEventListener('click', () => {
+  const group = b.closest('.q-group'), on = !group.classList.contains('open');
+  group.classList.toggle('open', on); b.setAttribute('aria-expanded', String(on));
+}));

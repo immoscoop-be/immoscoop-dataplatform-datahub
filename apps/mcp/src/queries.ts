@@ -123,25 +123,45 @@ export function queryTools({ server, hub, user, permits }: Context): void {
       'create_query',
       {
         title: 'Make a query',
-        description: permits.outside
-          ? 'Makes a query of the User on up to 10 Resources, with a name and their question. Without SQL, Data Hub writes a start that filters on the partition column. To add a Resource later, make a new query with startedFrom. The User is a power user: the query also reads every table Data Hub knows that is no Resource, and may be made without Resources, on SQL alone (FR-SR-56). Prefer the Resources: a table that is a Resource is read as that Resource, and a query that reads a table outside Data Hub never becomes a Lens.'
-          : 'Makes a query of the User on 1 to 10 Resources, with a name and their question; it reads only those Resources, so choose them first. Without SQL, Data Hub writes a start that filters on the partition column. To add a Resource later, make a new query with startedFrom.',
+        description: `${
+          permits.outside
+            ? 'Makes a query of the User on up to 10 Resources, with a name and their question. Without SQL, Data Hub writes a start that filters on the partition column. To add a Resource later, make a new query with startedFrom. The User is a power user: the query also reads every table Data Hub knows that is no Resource, and may be made without Resources, on SQL alone (FR-SR-56). Prefer the Resources: a table that is a Resource is read as that Resource, and a query that reads a table outside Data Hub never becomes a Lens.'
+            : 'Makes a query of the User on 1 to 10 Resources, with a name and their question; it reads only those Resources, so choose them first. Without SQL, Data Hub writes a start that filters on the partition column. To add a Resource later, make a new query with startedFrom.'
+        } With project, it is made in a Project the User is in, at the end of its row; there it may start empty, without Resources, which it gets later (FR-SR-68).`,
         inputSchema: {
           name: z.string().min(1).max(120).describe('A short name, such as "Partner share per week".'),
           question: z.string().max(500).optional().describe('The question of the User, in their words.'),
-          resources: permits.outside
-            ? z.array(z.string()).max(10).describe('The IDs of the Resources it reads; none for SQL alone on tables outside Data Hub.')
-            : z.array(z.string()).min(1).max(10).describe('The IDs of the Resources it reads.'),
+          // Empty only for a power user's SQL alone, or an empty query in a Project; the handler refuses otherwise.
+          resources: z
+            .array(z.string())
+            .max(10)
+            .describe(
+              permits.outside
+                ? 'The IDs of the Resources it reads; none for SQL alone on tables outside Data Hub, or for an empty query in a Project.'
+                : 'The IDs of the Resources it reads, 1 to 10; none only for an empty query in a Project.',
+            ),
           sql: z.string().max(100_000).optional().describe('The SQL; name a Resource by its Key, in backticks.'),
           parameters,
           startedFrom: z.string().optional().describe('The ID of the query this one starts from, when it needs another set of Resources.'),
+          project: z.string().optional().describe('The ID of a Project the User is in: the query is made in it, at the end of its row.'),
         },
         annotations: WRITE,
       },
       (args) =>
         attempt(async () => {
+          if (args.resources.length === 0 && !args.project && !permits.outside) {
+            return refusal('A query reads 1 to 10 Resources: name them by their ID. Only an empty query in a Project, made with project, starts without them.');
+          }
           const { query } = await hub.send<{ query: Query }>('query', 'POST', '/queries', args);
-          return answer({ query: linked(query) }, 'The query is in the panel of Query of the User. Check its SQL with check_query until it can run.');
+          const inProject = (query.project ?? null) as { id: string; name: string } | null;
+          const empty = args.resources.length === 0;
+          const note = [
+            'The query is in the panel of Query of the User.',
+            inProject && `It is in the Project ${inProject.name}, at the end of its row: ${hub.page(pages.project(inProject.id))}.`,
+            inProject && empty && 'It has no Resources yet: they come later, added by the User in Data Hub, or with a new query on them, made with startedFrom and project.',
+            (!empty || permits.outside) && 'Check its SQL with check_query until it can run.',
+          ];
+          return answer({ query: linked(query), ...(inProject ? { project: { ...inProject, page: hub.page(pages.project(inProject.id)) } } : {}) }, note.filter(Boolean).join(' '));
         }),
     );
 

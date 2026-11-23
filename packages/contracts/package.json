@@ -20,6 +20,10 @@
       "types": "./dist/dates.d.ts",
       "default": "./dist/dates.js"
     },
+    "./eda": {
+      "types": "./dist/eda.d.ts",
+      "default": "./dist/eda.js"
+    },
     "./permissions": {
       "types": "./dist/permissions.d.ts",
       "default": "./dist/permissions.js"
@@ -27,6 +31,10 @@
     "./gaps": {
       "types": "./dist/gaps.d.ts",
       "default": "./dist/gaps.js"
+    },
+    "./reliable": {
+      "types": "./dist/reliable.d.ts",
+      "default": "./dist/reliable.js"
     },
     "./log": {
       "types": "./dist/log.d.ts",

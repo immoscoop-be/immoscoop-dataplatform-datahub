@@ -21,8 +21,8 @@ export const CARD_ATTRIBUTES = {
   intendedUse: 'behaviour',
   pitfalls: 'pitfalls',
   reliableSince: 'availableSince',
+  dateField: 'availableSince',
   keyFields: 'keyFields',
-  parameters: 'keyFields',
 } as const;
 
 export type CardKey = keyof typeof CARD_ATTRIBUTES;
@@ -62,6 +62,8 @@ export interface Permits {
   deprecate: boolean;
   /** `resources.publish`: open the publication, which only the User confirms (DEC-CL-07). */
   publish: boolean;
+  /** `eda.use`: read and show the EDA of a Resource and run its EDA-Probes as the User (DEC-ED-25, DEC-ED-29). */
+  eda: boolean;
   /** The note of their Permission group for Claude, given with the how-to-use; empty when it has none. */
   note: string;
 }
@@ -111,6 +113,7 @@ export function permitsOf(permissions: Permissions): Permits {
     replyToOthers: can(permissions, 'messages.reply'),
     deprecate: claudeWrites(permissions, 'deprecations') && can(permissions, 'resources.deprecate'),
     publish: can(permissions, 'resources.publish'),
+    eda: can(permissions, 'eda.use'),
     note: claude && typeof note === 'string' ? note.trim() : '',
   };
 }

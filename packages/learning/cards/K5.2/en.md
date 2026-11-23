@@ -71,7 +71,7 @@ Why: at 2 · Described the choices are those of the Data Team; you may use it, k
 - [ ] Someone found an error in its figures
 - [ ] It moved to another Collection
 
-Why: a Resource drops when what its Level stood on goes away: a description, its EDA document or its last active check. The Level says nothing about whether a figure is wrong.
+Why: a Resource drops when what its Level stood on goes away: a description, its EDA or its last active check. The Level says nothing about whether a figure is wrong.
 
 ## Open a Collection and look at the Levels of its Resources. Which Level tells you that someone in the business vouches for a Resource?
 

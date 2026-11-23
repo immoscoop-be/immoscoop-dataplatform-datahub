@@ -30,6 +30,8 @@ export interface Query {
   previewOf: string | null;
   /** For the runs of a Lens by one User, the Lens (FR-LE-12). */
   lensOf: string | null;
+  /** For the runs of the EDA-Probes of a Resource by one User, the Resource (TR-ED-04). */
+  edaOf: string | null;
   /** The Lens this query is used as, when "Open in Query" made it (DEC-LE-18). */
   forLens: string | null;
   /** The Collection whose "New Lens" started it (DEC-UX-123). */
@@ -42,6 +44,10 @@ export interface Query {
   /** Its SQL as BigQuery reads it, and its Parameters, kept at its last Pre-flight that passed, for a dry run without its User (DEC-SR-44). */
   checkSql: string | null;
   checkParameters: Parameter[];
+  /** Who changed its SQL last, and when; null before anyone did (OP-UX-99). */
+  sqlChangedById?: string | null;
+  sqlChangedByName?: string | null;
+  sqlChangedAt?: Date | null;
 }
 
 /** A query in the panel of Query: one item per query, with how many runs (DEC-UX-74). */
@@ -50,6 +56,8 @@ export interface QueryItem extends Pick<Query, 'id' | 'name' | 'ownerName' | 'ki
   runs: number;
   /** Whether the User who asks hid it from their panel (DEC-UX-138). */
   hidden: boolean;
+  /** The Project it is in, named in its line (OP-UX-103). */
+  project: { id: string; name: string } | null;
 }
 
 /** What the panel of Query leaves out until its chip is on (DEC-UX-137): a hidden query counts as hidden, whatever its kind. */
@@ -146,11 +154,22 @@ export interface Queries {
   /** Whether this User hid the query. */
   hidden(queryId: string, userId: string): Promise<boolean>;
   get(id: string): Promise<Query | undefined>;
-  update(id: string, fields: Partial<Pick<Query, 'name' | 'question' | 'sql' | 'parameters'>>): Promise<Query | undefined>;
+  /** Changes it; with who changes it, a new SQL says who changed it last (OP-UX-99). */
+  update(id: string, fields: Partial<Pick<Query, 'name' | 'question' | 'sql' | 'parameters' | 'resources'>>, by?: Viewer): Promise<Query | undefined>;
+  /**
+   * Marks the User as having the query open now, unless mark is false, and answers the others who had it open in the
+   * last 40 seconds (OP-UX-99).
+   */
+  present(queryId: string, viewer: Viewer, mark?: boolean): Promise<{ id: string; name: string }[]>;
   /** The previews of a Resource by this User, made the first time they are asked for (FR-SR-38). */
   previewFor(owner: Viewer, resource: NamedResource, name: string): Promise<Query>;
   /** The previews of a Resource by this User, if there are. */
   previewOf(owner: Viewer, resourceId: string): Promise<Query | undefined>;
+  /**
+   * The runs of the EDA-Probes of a Resource by this User, made the first time eda has one run for them (TR-ED-04):
+   * in the Query Log, never in their panel.
+   */
+  edaFor(owner: Viewer, resource: NamedResource, name: string): Promise<Query>;
   /**
    * The query of this User used as a Lens, made from its SQL and Parameters the first time they open it in
    * Query (DEC-LE-18); `created` says whether it is new.
@@ -251,7 +270,13 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
         .select(['q.id', 'q.name', 'q.ownerName', 'q.through', 'q.kind', 'q.lensOf', 'q.resources', 'q.createdAt', 'q.lastRunAt', 'q.broken'])
         .select((eb) => eb.selectFrom('runs').whereRef('runs.queryId', '=', 'q.id').where('runs.purpose', '=', 'run').select(sql<string>`count(*)`.as('count')).as('runs'))
         .select(hidden.as('hidden'))
-        .$if(!all, (query) => query.where('q.ownerId', '=', viewer.id))
+        .select(
+          sql<{ id: string; name: string } | null>`(select json_build_object('id', p.id, 'name', p.name) from project_queries pq join projects p on p.id = pq.project_id where pq.query_id = q.id and p.deleted_at is null)`.as('project'),
+        )
+        // The runs of the EDA-Probes are in the Query Log, never in the panel (TR-ED-04).
+        .where('q.kind', '!=', 'eda')
+        // Their own queries, and those of others they ran, such as in a Project (OP-UX-103).
+        .$if(!all, (query) => query.where((eb) => eb.or([eb('q.ownerId', '=', viewer.id), sql<boolean>`exists (select 1 from runs r where r.query_id = q.id and r.user_id = ${viewer.id})`])))
         .$if(from !== undefined, (query) => query.where(sql<boolean>`coalesce(q.last_run_at, q.created_at) >= ${from}`))
         .$if(to !== undefined, (query) => query.where(sql<boolean>`coalesce(q.last_run_at, q.created_at) < ${to}`))
         // The plain queries, and of what the panel leaves out only what is asked for (DEC-UX-137).
@@ -280,6 +305,7 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
         resources: row.resources.map(({ id, displayName }) => ({ id, displayName })),
         runs: Number(row.runs ?? 0),
         hidden: row.hidden === true,
+        project: row.project ?? null,
       }));
     },
 
@@ -290,7 +316,7 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
             case when exists (select 1 from hidden_queries h where h.query_id = q.id and h.user_id = ${viewer.id}) then 'hidden'
               when q.kind = 'preview' then 'previews' when q.kind = 'lens' then 'lenses' else 'queries' end as shown
           from queries q
-          where ${all} or q.owner_id = ${viewer.id}
+          where q.kind <> 'eda' and (${all} or q.owner_id = ${viewer.id} or exists (select 1 from runs r where r.query_id = q.id and r.user_id = ${viewer.id}))
         )
         select day,
           count(*) filter (where shown = 'queries') as queries,
@@ -312,14 +338,37 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
 
     get: queryById,
 
-    async update(id, { parameters, ...fields }) {
-      if (!(await queryById(id))) return undefined;
+    async update(id, { parameters, resources, ...fields }, by) {
+      const found = await queryById(id);
+      if (!found) return undefined;
+      const now = new Date();
+      // A new SQL says who wrote it, so that someone else in it sees who changed it (OP-UX-99).
+      const changed = by && fields.sql !== undefined && fields.sql !== found.sql ? { sqlChangedById: by.id, sqlChangedByName: by.name, sqlChangedAt: now } : {};
       return db
         .updateTable('queries')
-        .set({ ...fields, ...(parameters ? { parameters: JSON.stringify(parameters) } : {}), updatedAt: new Date() })
+        .set({ ...fields, ...changed, ...(parameters ? { parameters: JSON.stringify(parameters) } : {}), ...(resources ? { resources: JSON.stringify(resources) } : {}), updatedAt: now })
         .where('id', '=', id)
         .returningAll()
         .executeTakeFirstOrThrow();
+    },
+
+    async present(queryId, viewer, mark = true) {
+      if (mark) {
+        await db
+        .insertInto('queryPresence')
+        .values({ queryId, userId: viewer.id, userName: viewer.name, seenAt: new Date() })
+          .onConflict((conflict) => conflict.columns(['queryId', 'userId']).doUpdateSet({ userName: viewer.name, seenAt: new Date() }))
+          .execute();
+      }
+      const rows = await db
+        .selectFrom('queryPresence')
+        .select(['userId', 'userName'])
+        .where('queryId', '=', queryId)
+        .where('userId', '!=', viewer.id)
+        .where('seenAt', '>', new Date(Date.now() - 40_000))
+        .orderBy('seenAt', 'desc')
+        .execute();
+      return rows.map((row) => ({ id: row.userId, name: row.userName }));
     },
 
     async previewFor(owner, resource, name) {
@@ -335,6 +384,19 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
     },
 
     previewOf,
+
+    async edaFor(owner, resource, name) {
+      const find = () => db.selectFrom('queries').selectAll().where('kind', '=', 'eda').where('ownerId', '=', owner.id).where('edaOf', '=', resource.id).executeTakeFirst();
+      const found = await find();
+      if (found) return found;
+      // Two first runs at once: one of them makes it, the other finds it.
+      await db
+        .insertInto('queries')
+        .values({ ownerId: owner.id, ownerName: owner.name, name, question: '', resources: JSON.stringify([resource]), sql: '', kind: 'eda', edaOf: resource.id })
+        .onConflict((conflict) => conflict.columns(['ownerId', 'edaOf']).where('kind', '=', 'eda').doNothing())
+        .execute();
+      return (await find()) as Query;
+    },
 
     async lensRuns(ownerId) {
       const rows = await db
@@ -421,6 +483,8 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
         .innerJoin('runs as last', (join) => join.onRef('last.queryId', '=', 'q.id').onRef('last.number', '=', 'counted.last').on('last.purpose', '=', 'run'))
         .select(['q.id', 'q.name', 'q.ownerId', 'q.ownerName', 'q.through', 'q.kind', 'q.lensOf', 'q.lastRunAt', 'q.broken', 'counted.runs', 'last.processedBytes', 'last.estimatedBytes', 'last.state'])
         .where(sql<boolean>`q.resources @> ${JSON.stringify([{ id: resourceId }])}::jsonb`)
+        // The runs of its EDA-Probes are kept with its EDA, not among the queries on it (TR-ED-04).
+        .where('q.kind', '!=', 'eda')
         .orderBy('q.lastRunAt', 'desc')
         .limit(200)
         .execute();

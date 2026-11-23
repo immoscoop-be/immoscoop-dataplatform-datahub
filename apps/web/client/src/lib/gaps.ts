@@ -10,8 +10,9 @@ export function gapDay(value: string): string {
   return new Intl.DateTimeFormat(LOCALES[currentLanguage()], { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${value}T00:00:00Z`));
 }
 
-/** The span of a period: "until 28 Feb 2025", "from 2 Sep 2025", or "2 Sep 2025 – 8 Sep 2025". */
+/** The span of a period: "until 28 Feb 2025", "from 2 Sep 2025", "2 Sep 2025 – 8 Sep 2025", or one day, "on 14 Sep 2025" (FR-RC-33). */
 export function spanOf(period: NonNullable<GapScope['period']>): string {
+  if (period.from && period.from === period.to) return t('gaps.span.on', { day: gapDay(period.from) });
   if (period.from && period.to) return t('gaps.span.between', { from: gapDay(period.from), to: gapDay(period.to) });
   return period.from ? t('gaps.span.from', { from: gapDay(period.from) }) : t('gaps.span.until', { to: gapDay(period.to ?? '') });
 }
@@ -24,8 +25,33 @@ export function valuesOf(values: readonly string[]): string {
 /** The scope in one line of plain text, for a hover: "until 28 Feb 2025 · fields lead_channel · lead_source is app". */
 export function scopeLine(scope: GapScope): string {
   const parts: string[] = [];
-  if (scope.period) parts.push(spanOf(scope.period));
+  if (scope.period) parts.push(scope.period.dateField ? t('gaps.span.onField', { span: spanOf(scope.period), field: scope.period.dateField }) : spanOf(scope.period));
   if (scope.fields && scope.fields.length > 0) parts.push(t('gaps.line.fields', { names: scope.fields.join(', ') }));
   if (scope.rows) parts.push(scope.rows.is === 'empty' ? t('gaps.line.empty', { field: scope.rows.field }) : t('gaps.line.rows', { field: scope.rows.field, values: valuesOf(scope.rows.values) }));
   return parts.join(' · ');
+}
+
+/** A Known Gap proposed elsewhere, such as by Dig into (FR-ED-20): its why and its scope, which the User saves, or not. */
+export interface GapProposal {
+  text: string;
+  scope: GapScope | null;
+}
+
+/** The Known Gap proposed for a Resource, until its page opens it in the form of a new gap; it lives in the open app only. */
+let proposed: { resource: string; proposal: GapProposal } | null = null;
+
+/**
+ * Proposes a Known Gap for a Resource, which its Known Gaps open in the form of a new gap, filled in. Nothing is saved:
+ * the User saves it there, as any Known Gap (FR-RC-24).
+ */
+export function proposeGap(resource: string, proposal: GapProposal): void {
+  proposed = { resource, proposal };
+}
+
+/** The Known Gap proposed for a Resource, taken once; null when none is. */
+export function takeProposal(resource: string): GapProposal | null {
+  if (proposed?.resource !== resource) return null;
+  const { proposal } = proposed;
+  proposed = null;
+  return proposal;
 }

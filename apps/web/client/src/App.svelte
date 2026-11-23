@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, untrack } from 'svelte';
   import DragGhost from '@datahub/ui/components/DragGhost.svelte';
   import EnvRibbon from '@datahub/ui/marks/EnvRibbon.svelte';
   import type { RailItem } from '@datahub/ui/components/Rail.svelte';
   import Toast from '@datahub/ui/components/Toast.svelte';
   import { addTexts, setLanguage, currentLanguage, type Language } from '@datahub/ui/foundations/texts.svelte.js';
+  import { tokenPixels } from '@datahub/ui/foundations/tokens.js';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
   import IconButton from '@datahub/ui/primitives/IconButton.svelte';
   import { levelName } from '@datahub/ui/foundations/levels.js';
@@ -13,6 +14,8 @@
   import { Backgrounds } from './lib/background.svelte.js';
   import { createCatalogue, type Collection, type LogEntry, type Resource, type ResourceDetail, type ToComplete } from './lib/catalogue.js';
   import { type ChartsOverview, createCharts } from './lib/charts.js';
+  import type { EdaView } from '@datahub/contracts/eda';
+  import { createEda, type EdaList } from './lib/eda.js';
   import { dragging, type Mover } from './lib/dragging.svelte.js';
   import type { Config } from './lib/config.js';
   import { createIdentity, type GroupSummary, SignedOut, type Me } from './lib/identity.js';
@@ -22,10 +25,11 @@
   import { type Card, cardsIn, createLearning, drawExample, LEVELS, type LevelId, type Progress, type Step, suggestedLevels, topicOf, writtenCards } from './lib/learning.js';
   import { createQuery, type DeletedLens, type Lens, LensDeleted, type LensItem, type Run } from './lib/query.js';
   import { createRegistry } from './lib/registry.js';
-  import { digitOf, flag, markOf, modLabel, MOST_FLAGGED, moveFlag, onMac, placeOf, type QueryStatus, unflag, withMod } from './lib/flags.js';
+  import { digitOf, type FlagMark, keyed, markOf, modLabel, onMac, placeOf, type QueryStatus, withMod } from './lib/flags.js';
+  import { createProjects, isDeleted, moved as reordered, type Project, type ProjectItem, projectPath } from './lib/projects.js';
   import { type QuickRow, used } from './lib/quick.js';
   import { provideScreenCommands } from './lib/commands.svelte.js';
-  import { collectionPath, GROUPS, learningPath, lensPath, messagesOnPath, myPagePath, NEW_COLLECTION, NEW_QUERY, objectPath, queryPath, resourcePath, route } from './lib/routes.js';
+  import { collectionPath, edaPath, GROUPS, learningPath, lensPath, messagesOnPath, myPagePath, NEW_COLLECTION, NEW_QUERY, objectPath, probePath, queryPath, resourcePath, route } from './lib/routes.js';
   import { Router } from './lib/router.svelte.js';
   import { can, mayQuery, NO_PERMISSIONS, PERMISSION_KEYS, PERMISSION_TEXTS, reach, sees } from './lib/permissions.js';
   import { ADMIN_TOOLS, type AdminTool, SECTIONS, sectionFor, sectionLabel, toolsFor } from './lib/sections.js';
@@ -41,6 +45,9 @@
   import AdminWithdrawn from './screens/AdminWithdrawn.svelte';
   import ChartPage from './screens/ChartPage.svelte';
   import ChartsPanel from './screens/ChartsPanel.svelte';
+  import EdaFlow from './screens/EdaFlow.svelte';
+  import EdaPage from './screens/EdaPage.svelte';
+  import EdaPanel from './screens/EdaPanel.svelte';
   import CollectionPage from './screens/CollectionPage.svelte';
   import CollectionsPanel from './screens/CollectionsPanel.svelte';
   import CollectionsStart from './screens/CollectionsStart.svelte';
@@ -61,9 +68,15 @@
   import MyPage from './screens/MyPage.svelte';
   import NotFound from './screens/NotFound.svelte';
   import QueryNew from './screens/QueryNew.svelte';
+  import { day } from '@datahub/ui/foundations/when.js';
   import QueryFlags from './screens/QueryFlags.svelte';
+  import ProjectSheet from './screens/ProjectSheet.svelte';
+  import ProjectPage from './screens/ProjectPage.svelte';
   import QueryPanel from './screens/QueryPanel.svelte';
   import QuickWindow from './screens/QuickWindow.svelte';
+  import PublishFlow from './screens/PublishFlow.svelte';
+  import { flowBox } from './lib/flowBox.svelte.js';
+  import { FLOW_PLACES, type FlowStepId } from './lib/flowBox.js';
   import ResourcePage from './screens/ResourcePage.svelte';
   import AppShell from './templates/AppShell.svelte';
   import SignIn from './templates/SignIn.svelte';
@@ -77,7 +90,10 @@
   const catalogue = $derived(createCatalogue(config, session));
   const registry = $derived(createRegistry(config, session));
   const queries = $derived(createQuery(config, session));
+  const projectsClient = $derived(createProjects(config, session));
   const messages = $derived(createMessages(config, session));
+  /** eda, the EDA of each Resource, for a User who may explore Resources (TR-ED-07). */
+  const edaClient = $derived(createEda(config, session));
   const learning = $derived(createLearning(config, session));
   /** semgraph, whose gallery Charts shows; open to everyone, so without Access Token (TR-PF-34). */
   const charts = $derived(createCharts(config));
@@ -99,8 +115,11 @@
   let collections: readonly Collection[] | undefined = $state();
   /** Grows after a new query, a run or a Request: the panel of Query reads its periods again (DEC-UX-139). */
   let queriesVersion = $state(0);
-  /** The name of the query that is open, for the breadcrumb. */
-  let queryName: { id: string; name: string } | undefined = $state();
+  /**
+   * The name of the query that is open, for the breadcrumb; the Project it is in, and whether the User writes it, for
+   * the row on top (DEC-UX-282).
+   */
+  let queryName: { id: string; name: string; project?: { id: string; name: string } | null; editable?: boolean; kind?: string } | undefined = $state();
   /** A query hidden or shown again from the panel, which its page then shows so (DEC-UX-138). */
   let queryHidden: { id: string; hidden: boolean } | undefined = $state();
   /** The name of a new query being made: it stands in the panel as not run yet. */
@@ -177,7 +196,8 @@
     const problem = new URLSearchParams(location.search).get('error') ?? undefined;
     const account = new URLSearchParams(location.hash.slice(1)).get('account') ?? undefined;
     if (problem || account) {
-      history.replaceState(null, '', location.pathname);
+      // The router keeps the query of the address: it leaves with the problem, so that signing in again does not bring it back.
+      router.go(location.pathname, { replace: true });
     }
     return { problem, account };
   }
@@ -279,6 +299,24 @@
   }
   /** Who sees all of the catalogue sees the Resources without a Collection too (DEC-PL-02, FR-SR-35). */
   const seesAll = $derived(sees(permissions) === 'all');
+  /** Who may explore Resources sees the section EDA and Start the EDA (`eda.use`, FR-ED-01). */
+  const mayExplore = $derived(can(permissions, 'eda.use'));
+  /** The EDAs of the Resources the User sees, for the panel of EDA: undefined until read, null when eda did not answer (FR-ED-03). */
+  let edas: EdaList | null | undefined = $state();
+  /** Reads the EDAs again, after one started, ran or was read. */
+  function readEdas(): void {
+    edaClient.list().then(
+      (found) => (edas = found),
+      (error: unknown) => {
+        console.error('The EDAs could not be read', error);
+        edas = null;
+      },
+    );
+  }
+  // The panel of EDA reads the EDAs when the section opens.
+  $effect(() => {
+    if (status.kind === 'signedIn' && mayExplore && section?.id === 'eda' && untrack(() => edas) === undefined) readEdas();
+  });
 
   /** The Permission a service last refused for, by its name, for the line on screen (EC-PL-01); a new key shows it again. */
   let lost = $state({ key: 0, name: '' });
@@ -380,7 +418,7 @@
     const id = page.id;
     void queriesVersion;
     queries.get(id).then(
-      (found) => (queryName = { id, name: found.name }),
+      (found) => (queryName = { id, name: found.name, project: found.project ?? null, editable: found.editable ?? found.mine, kind: found.kind }),
       () => undefined,
     );
   });
@@ -473,6 +511,131 @@
     catalogue.resource(id).then((resource) => opened?.id === id && (opened = { ...opened, resource }), missing);
     catalogue.log(id).then((log) => opened?.id === id && (opened = { ...opened, log }), missing);
   });
+
+  /**
+   * The Resource of the Flow Box (DEC-UX-299), read afresh each time it opens and each time the User goes elsewhere,
+   * and taken from the page of the Resource while that is open, so that a step ticks as soon as it is saved. Nothing of
+   * it is stored (DEC-UX-306).
+   */
+  let flowResource: ResourceDetail | undefined = $state();
+  /** The Resource the Flow Box guides through publishing, while that is the flow open. */
+  const publishing = $derived(flowBox.open?.flow === 'publish' ? flowBox.open.resource : undefined);
+  $effect(() => {
+    const id = publishing;
+    void router.path;
+    if (!id) {
+      flowResource = undefined;
+      return;
+    }
+    const shown = untrack(() => opened);
+    if (shown?.id === id && shown.resource) {
+      flowResource = shown.resource;
+      return;
+    }
+    catalogue.resource(id).then(
+      (found) => publishing === id && (flowResource = found),
+      (error: unknown) => {
+        if (error instanceof Missing && publishing === id) flowBox.close();
+        else console.error(`The Resource ${id} of the Flow Box could not be read`, error);
+      },
+    );
+  });
+  $effect(() => {
+    if (opened?.resource && opened.id === publishing) flowResource = opened.resource;
+  });
+
+  /** In a narrow window, opening the Flow Box folds the panel to make room (DEC-UX-307). */
+  function foldPanel(): void {
+    if (matchMedia(`(max-width: ${tokenPixels('--flow-box-fold-below') - 0.02}px)`).matches) settings?.set('panel.open', false);
+  }
+
+  /** Opens the Flow Box on a Resource, to describe and publish it (FR-MR-20). */
+  function guide(id: string): void {
+    flowBox.show(id);
+    foldPanel();
+  }
+
+  /**
+   * The EDA of the guide in the Flow Box (FR-ED-14): read afresh each time it opens and each time the User goes
+   * elsewhere, and taken from the page of its EDA while that is open, so that its steps follow each run and reading
+   * (TR-ED-09). Nothing of it is stored (DEC-UX-306).
+   */
+  let flowEda: { id: string; view: EdaView } | undefined = $state();
+  /** The EDA as the page of an EDA last had it; `edaShownAt` counts them, so that a slower read never overtakes one. */
+  let edaShown: { id: string; view: EdaView } | undefined = $state();
+  let edaShownAt = 0;
+  function showEda(view: EdaView): void {
+    edaShownAt += 1;
+    edaShown = { id: view.resource.id, view };
+  }
+  /** The Resource whose EDA the Flow Box guides through its EDA-Setup, while that is the flow open. */
+  const exploring = $derived(flowBox.open?.flow === 'eda' ? flowBox.open.resource : undefined);
+  $effect(() => {
+    const id = exploring;
+    void router.path;
+    if (!id) {
+      flowEda = undefined;
+      return;
+    }
+    if (status.kind !== 'signedIn') return;
+    // Only for a User who may explore Resources (FR-ED-01).
+    if (!mayExplore) {
+      flowBox.close();
+      return;
+    }
+    const shown = untrack(() => edaShown);
+    if (shown?.id === id && untrack(() => page.kind === 'eda' && page.id === id)) {
+      flowEda = shown;
+      return;
+    }
+    const since = edaShownAt;
+    edaClient.get(id).then(
+      (found) => {
+        if (exploring !== id) return;
+        if (!found) flowBox.close();
+        else if (edaShownAt === since || edaShown?.id !== id) flowEda = { id, view: found };
+      },
+      (error: unknown) => console.error(`The EDA of ${id} of the Flow Box could not be read`, error),
+    );
+  });
+  $effect(() => {
+    if (edaShown && edaShown.id === exploring) flowEda = edaShown;
+  });
+  // The guide is there while the EDA is in progress (FR-ED-14).
+  $effect(() => {
+    if (flowEda && flowEda.id === exploring && flowEda.view.status !== 'inProgress') flowBox.close();
+  });
+
+  /**
+   * Opens the guide of the EDA of a Resource in the Flow Box (FR-ED-14), in place of the one open (DEC-UX-308). Opened
+   * by starting the EDA, it is folded on the tab Steps of its EDA; opened by Guide me, it shows open, and in a narrow
+   * window the panel folds (DEC-UX-307).
+   */
+  function guideEda(id: string, started?: EdaView): void {
+    if (started) showEda(started);
+    flowBox.show(id, 'eda', { foldsOnSteps: started !== undefined });
+    if (!started) foldPanel();
+  }
+
+  /** On the tab Steps of the EDA it guides, the guide shows folded until the User opens it there (DEC-UX-327). */
+  const onGuidedSteps = $derived(flowBox.open?.flow === 'eda' && page.kind === 'eda' && page.id === flowBox.open.resource && page.tab === 'steps' && page.probe === null && !page.dig);
+  /** Whether the Flow Box shows as its strip. */
+  const flowFolded = $derived(flowBox.folded(onGuidedSteps));
+  /** Minimizes or maximizes the Flow Box; the guide of an EDA opened in a narrow window folds the panel (DEC-UX-307). */
+  function minimizeFlow(minimized: boolean): void {
+    flowBox.minimize(minimized, onGuidedSteps);
+    if (!minimized && flowBox.open?.flow === 'eda') foldPanel();
+  }
+
+  /** A step of the Flow Box: its place on the page of its Resource, opened for editing (DEC-UX-303). */
+  function toStep(step: FlowStepId): void {
+    const id = flowBox.open?.resource;
+    if (!id) return;
+    flowBox.aimAt(id, step);
+    const place = FLOW_PLACES[step];
+    if (page.kind === 'resource' && page.id === id && (place === null || page.at === place)) return;
+    router.go(resourcePath(id, place ?? undefined));
+  }
   $effect(() => {
     if (status.kind !== 'signedIn' || (page.kind !== 'lens' && page.kind !== 'editLens') || openedLens?.id === page.id) {
       return;
@@ -689,6 +852,8 @@
                   ? t('query.new')
                   : page.kind === 'query'
                     ? (queryName?.id === page.id ? queryName.name : 'Query')
+                    : page.kind === 'project'
+                      ? (projectList?.find((one) => one.id === page.id)?.name ?? 'Query')
                     : page.kind === 'newLens'
                       ? t('lens.make.title')
                       : page.kind === 'lens'
@@ -699,7 +864,9 @@
                             ? cardTitle(page.id)
                             : page.kind === 'chart'
                               ? (chartsShown?.charts.find((chart) => chart.id === page.id)?.title ?? sectionLabel(page.section))
-                              : undefined;
+                              : page.kind === 'eda'
+                                ? [sectionLabel(page.section), edas?.edas.find((one) => one.resource.id === page.id)?.resource.displayName].filter(Boolean).join(' · ')
+                                : undefined;
     // The title of the tab begins with the environment, as its ribbon does; prod wears nothing (DEC-UX-203).
     const environment = config.environment ?? 'local';
     const named = title ? `Data Hub — ${title}` : 'Data Hub';
@@ -726,25 +893,20 @@
       page.kind === 'newCollection' ||
       page.kind === 'newQuery' ||
       page.kind === 'query' ||
+      page.kind === 'project' ||
       page.kind === 'newLens' ||
       page.kind === 'lens' ||
       page.kind === 'editLens' ||
       page.kind === 'learningCard' ||
       page.kind === 'learningSee' ||
       page.kind === 'admin' ||
-      page.kind === 'chart'
+      page.kind === 'chart' ||
+      page.kind === 'eda'
       ? page.section
       : undefined,
   );
   /** Cmd on a Mac, Ctrl elsewhere: how the keys are pressed and written. */
   const mac = onMac();
-  /** The queries the User flagged, in their order on top of Query (DEC-UX-236): kept with their settings (OP-UX-84). */
-  const flagged: readonly string[] = $derived(settings?.values['query.flagged'] ?? []);
-  function setFlagged(ids: string[]): void {
-    settings?.set('query.flagged', ids);
-  }
-  /** The names on the tabs of the flagged queries, as query gives them. */
-  let flagNames = $state<Record<string, string>>({});
   /** What each open query tells, for the mark on its tab: a run going, a failure, Broken. */
   let queryStatus = $state<Record<string, QueryStatus>>({});
   /** A run ended while the User was in another query: its tab says so until they open it again. */
@@ -754,7 +916,7 @@
   /** What every other screen can do now, as it tells it (DEC-UX-240). */
   const screenCommands = provideScreenCommands((path) => router.go(path));
   /**
-   * The flagged queries opened since this browser tab loaded: each stays as the User left it while they work in another,
+   * The queries of the row opened since this browser tab loaded: each stays as the User left it while they work in another,
    * its result, its tab and a run still going, until the tab closes or reloads (OP-UX-85).
    */
   let kept = $state<string[]>([]);
@@ -762,15 +924,15 @@
   $effect(() => {
     const id = openId;
     if (!id) return;
-    if (flagged.includes(id) && !kept.includes(id)) kept = [...kept, id];
+    if (row.includes(id) && !kept.includes(id)) kept = [...kept, id];
     if (unseen[id]) unseen = { ...unseen, [id]: false };
   });
   /**
-   * The query pages that live: those kept and still flagged, and the one open, always, also when it was just unflagged:
-   * unflagging takes it off the row on top, never off the screen (DEC-UX-236).
+   * The query pages that live: those kept and still in the row, and the one open, always, also when it was just taken out
+   * of its Project: that takes it off the row on top, never off the screen (DEC-UX-291).
    */
   const alive = $derived.by(() => {
-    const live = kept.filter((id) => flagged.includes(id));
+    const live = kept.filter((id) => row.includes(id));
     return openId && !live.includes(openId) ? [...live, openId] : live;
   });
   function statusOf(id: string, now: QueryStatus): void {
@@ -778,27 +940,148 @@
     queryStatus = { ...queryStatus, [id]: now };
     if (before?.running && !now.running && openId !== id) unseen = { ...unseen, [id]: true };
   }
-  // The names of the flagged queries; one that the User may no longer see leaves the row.
+
+  /** A Project the open query was just put in, or taken out of (null), here: its page and the row follow at once. */
+  let placed = $state<Record<string, { id: string; name: string } | null>>({});
+  /** The Project the open query is in: what was just done here, else what query said of it; undefined while not known. */
+  const openProject = $derived.by((): { id: string; name: string } | null | undefined => {
+    if (page.kind !== 'query') return null;
+    const id = page.id;
+    if (id in placed) return placed[id];
+    return queryName?.id === id ? (queryName.project ?? null) : undefined;
+  });
+  /**
+   * The active Project, which follows what is open (DEC-UX-317): its details, or the Project of the open query; none on
+   * a query in no Project, on a new query and elsewhere. While the open query is still read, the one before stays.
+   */
+  let working = $state<string | null>(null);
   $effect(() => {
-    if (status.kind !== 'signedIn') return;
-    for (const id of flagged) {
-      if (flagNames[id] !== undefined) continue;
-      flagNames = { ...flagNames, [id]: '' };
-      queries.get(id).then(
-        (found) => (flagNames = { ...flagNames, [id]: found.name }),
-        (error: unknown) => {
-          if (error instanceof Missing) setFlagged(unflag(flagged, id));
-          else console.error(`The name of the query ${id} could not be read`, error);
-        },
-      );
+    const next = page.kind === 'project' ? page.id : page.kind === 'query' ? openProject === undefined ? undefined : (openProject?.id ?? null) : null;
+    if (next !== undefined && next !== untrack(() => working)) working = next;
+  });
+  /** The Projects the User is in, for the panel, the Project button and the quick window (DEC-UX-285). */
+  let projectList = $state<ProjectItem[] | undefined>();
+  /** The active Project, its queries in the one order of everyone in it (OP-UX-95). */
+  let workProject = $state<Project | undefined>();
+  /** Grows after a change to a Project: its list and the row are read again. */
+  let projectsVersion = $state(0);
+  /** The pop-out of the row that is open: the whole row. */
+  let rowPop = $state<'all' | null>(null);
+  /** The sheet of the Project button or of New project (DEC-UX-318): for which query, and what it does. */
+  let projectSheet = $state<{ mode: 'add' | 'move' | 'new'; query: { id: string; name: string } | null } | null>(null);
+  function refreshProjects(): void {
+    projectsVersion += 1;
+  }
+  $effect(() => {
+    if (status.kind !== 'signedIn' || !mayQuery(permissions)) return;
+    void projectsVersion;
+    projectsClient.list().then(
+      (found) => (projectList = found),
+      (error: unknown) => console.error('The projects could not be read', error),
+    );
+  });
+  // The queries of the active Project; one the User is no longer in, or that was deleted, is not shown.
+  $effect(() => {
+    if (status.kind !== 'signedIn' || !working) {
+      workProject = undefined;
+      return;
     }
+    const id = working;
+    void projectsVersion;
+    projectsClient.get(id).then(
+      (found) => {
+        if (working !== id) return;
+        workProject = isDeleted(found) ? undefined : found;
+      },
+      (error: unknown) => {
+        if (working === id) workProject = undefined;
+        if (!(error instanceof Missing)) console.error('The project could not be read', error);
+      },
+    );
   });
-  // A rename of the open query shows on its tab.
-  $effect(() => {
-    if (queryName && flagNames[queryName.id] !== undefined && flagNames[queryName.id] !== queryName.name) flagNames = { ...flagNames, [queryName.id]: queryName.name };
-  });
-  const flagItems = $derived(flagged.map((id) => ({ id, name: flagNames[id] || null, mark: markOf(queryStatus[id], unseen[id] ?? false) })));
-  /** On the screens of Query, Cmd+1 to Cmd+0 open the flagged queries; elsewhere they stay the browser's (OP-UX-86). */
+  /** What a query of the Project shows on its tab: what its page tells, else its last run (DEC-UX-236). */
+  function projectMark(query: Project['queries'][number]): FlagMark {
+    const told = markOf(queryStatus[query.id], unseen[query.id] ?? false);
+    if (told || queryStatus[query.id]) return told;
+    if (query.lastRun?.state === 'running') return 'running';
+    return query.broken ? 'broken' : null;
+  }
+  /** The row on top: the queries of the active Project (DEC-UX-317); none without one. */
+  const rowItems = $derived(
+    working && workProject?.id === working
+      ? workProject.queries.map((query) => ({ id: query.id, name: query.name, mark: query.locked ? null : projectMark(query), by: query.owner.name, locked: query.locked }))
+      : [],
+  );
+  const row: readonly string[] = $derived(rowItems.map((item) => item.id));
+  /** Puts a query in a Project, out of the one it was in: that Project is then active, as the query is open (DEC-UX-318). */
+  async function putInProject(query: string, target: { to: string } | { name: string; description?: string }): Promise<void> {
+    if ('name' in target) {
+      const made = await projectsClient.create({ name: target.name, description: target.description ?? '', queries: [query] });
+      placed = { ...placed, [query]: { id: made.id, name: made.name } };
+    } else {
+      await projectsClient.addQuery(target.to, query);
+      const name = projectList?.find((one) => one.id === target.to)?.name ?? '';
+      placed = { ...placed, [query]: { id: target.to, name } };
+    }
+    refreshProjects();
+    refreshQueries();
+  }
+  /** Takes the open query out of its Project, at once (DEC-UX-291): no Project is active then (DEC-UX-317). */
+  async function takeOutOfProject(query: string, project: string): Promise<void> {
+    placed = { ...placed, [query]: null };
+    if (workProject?.id === project) workProject = { ...workProject, queries: workProject.queries.filter((one) => one.id !== query) };
+    try {
+      await projectsClient.removeQuery(project, query);
+    } catch (error) {
+      console.error('The query could not be taken out of the project', error);
+    }
+    refreshProjects();
+    refreshQueries();
+  }
+  /** The × on a tab: at once, without asking; it stays with whoever made it, in their history (OP-UX-106). */
+  async function removeFromRow(id: string): Promise<void> {
+    if (working) await takeOutOfProject(id, working);
+  }
+  async function moveInRow(from: number, to: number): Promise<void> {
+    if (!working || !workProject) return;
+    // One order for everyone in it (OP-UX-95).
+    const next = reordered(workProject.queries, from, to);
+    workProject = { ...workProject, queries: next };
+    try {
+      await projectsClient.order(working, next.map((query) => query.id));
+    } catch (error) {
+      console.error('The order could not be kept', error);
+      refreshProjects();
+    }
+  }
+  /**
+   * New query on the page of a Project: an empty query in it, named "New query" and the date, opened at once without
+   * the screen of a new query (DEC-UX-290, OP-UX-105).
+   */
+  async function newEmptyQuery(projectId: string | null): Promise<void> {
+    const name = t('query.empty.name', { date: day(new Date(), currentLanguage()) });
+    const made = await queries.create({ name, question: '', resources: [], sql: '', ...(projectId ? { project: projectId } : {}) });
+    if (projectId) {
+      // Made in it, so that Project is active as soon as it opens (DEC-UX-317).
+      placed = { ...placed, [made.id]: { id: projectId, name: projectList?.find((one) => one.id === projectId)?.name ?? '' } };
+      refreshProjects();
+    }
+    await refreshQueries();
+    router.go(queryPath(made.id));
+  }
+  /** New query in a Project, from the quick window: an empty query in it, opened, so that Project is active (DEC-UX-293). */
+  function newQueryIn(projectId: string): void {
+    void newEmptyQuery(projectId).catch((error: unknown) => console.error('The query could not be made', error));
+  }
+  /** New project, from the panel or the quick window: the User is in it alone, and its details open (DEC-UX-317). */
+  async function newProject(fields: { name: string; description: string }): Promise<void> {
+    const made = await projectsClient.create({ name: fields.name, description: fields.description, queries: [] });
+    refreshProjects();
+    router.go(projectPath(made.id));
+  }
+  /** The open query that the Project button acts on, for who writes it (DEC-UX-318, OP-UX-98). */
+  const placeable = $derived(page.kind === 'query' && queryName?.id === page.id && queryName.kind === 'query' && queryName.editable === true && can(permissions, 'queries.make'));
+  /** On the screens of Query, Cmd+1 to Cmd+0 open the queries of the active Project; elsewhere they stay the browser's (OP-UX-86). */
   const inQuery = $derived(section?.id === 'query' && mayQuery(permissions));
 
   /** The quick window, Cmd+Shift+P or Cmd+K anywhere in Data Hub (DEC-UX-237, OP-UX-87). */
@@ -821,12 +1104,13 @@
       // By where the key is, so that a keyboard that needs Shift for its digits, such as AZERTY, works too.
       const digit = /^Digit([0-9])$/.exec(event.code)?.[1] ?? (/^[0-9]$/.test(event.key) ? event.key : undefined);
       if (!event.shiftKey && digit !== undefined && inQuery) {
-        const id = flagged[placeOf(digit)];
-        if (id) {
+        // The first ten of the row; a locked query of a Project opens the page of the Project (OP-UX-97).
+        const item = rowItems[placeOf(digit)];
+        if (item) {
           event.preventDefault();
           event.stopPropagation();
           quickOpen = false;
-          router.go(queryPath(id));
+          router.go(item.locked && working ? projectPath(working) : queryPath(item.id));
         }
       }
     };
@@ -841,14 +1125,28 @@
         : 'Query'
       : (screenCommands.where ?? (section ? sectionLabel(section) : page.kind === 'me' ? 'My page' : page.kind === 'groups' ? 'Groups' : null)),
   );
-  /** Every row of the quick window: the commands of the screen and of Data Hub, the flagged queries, the places and what the User may see (OP-UX-88). */
+  /** Every row of the quick window: the commands of the screen and of Data Hub, the queries of the row, the places and what the User may see (OP-UX-88). */
   const quickRows: QuickRow[] = $derived.by(() => {
     if (status.kind !== 'signedIn') return [];
     const language = currentLanguage();
     const rows: QuickRow[] = [...(page.kind === 'query' ? (queryCommands[page.id] ?? []) : screenCommands.rows)];
     const command = t('quick.kind.command');
     if (mayQuery(permissions) && can(permissions, 'queries.make')) {
-      rows.push({ key: 'new-query', group: 'commands', icon: 'plus-circle-fill', title: t('query.new'), kind: command, words: t('quick.new.words'), does: 'do', run: () => router.go(NEW_QUERY) });
+      rows.push({ key: 'new-query', group: 'commands', icon: 'plus-circle-fill', title: t('query.new'), meta: t('quick.new.meta'), kind: command, words: t('quick.new.words'), does: 'do', run: () => router.go(NEW_QUERY) });
+      // A blank query, in no Project, only for a power user, who may write SQL without Resources (DEC-UX-293, DEC-SR-46).
+      if (can(permissions, 'queries.outside')) {
+        rows.push({ key: 'new-blank', group: 'commands', icon: 'file-plus', title: t('quick.newBlank'), meta: t('quick.newBlank.meta'), kind: command, words: t('quick.newBlank.words'), does: 'do', run: () => void newEmptyQuery(null).catch((error: unknown) => console.error('The query could not be made', error)) });
+      }
+      // An empty query in each Project the User is in, the active one first (DEC-UX-293).
+      const ins = [...(projectList ?? [])].sort((a, b) => Number(b.id === working) - Number(a.id === working));
+      for (const one of ins) {
+        rows.push({ key: `new-in:${one.id}`, group: 'commands', icon: 'folders-fill', title: t('quick.newIn', { name: one.name }), meta: t('quick.newIn.meta'), kind: command, words: t('quick.newIn.words'), does: 'do', run: () => newQueryIn(one.id) });
+      }
+    }
+    if (flowBox.open) {
+      const minimized = flowFolded;
+      rows.push({ key: 'flowbox:size', group: 'commands', icon: minimized ? 'arrows-out-simple' : 'arrows-in-simple', title: t(minimized ? 'quick.flow.maximize' : 'quick.flow.minimize'), kind: command, words: t('quick.flow.words'), does: 'do', run: () => minimizeFlow(!minimized) });
+      rows.push({ key: 'flowbox:close', group: 'commands', icon: 'x', title: t('quick.flow.close'), kind: command, words: t('quick.flow.words'), does: 'do', run: () => flowBox.close() });
     }
     rows.push({ key: 'theme', group: 'commands', icon: theme === 'dark' ? 'sun-fill' : 'moon-fill', title: t('quick.theme'), kind: command, words: t('quick.theme.words'), does: 'do', run: () => themeOnScreen.switch() });
     // The panel, on every screen that has one, as « in its head does; one key for both, as a pair (DEC-UX-254).
@@ -860,19 +1158,29 @@
     if (section?.id === 'query') {
       rows.push({ key: 'refresh-queries', group: 'commands', icon: 'arrows-clockwise', title: t('quick.query.refresh'), meta: t('quick.query.refresh.meta'), kind: command, words: t('quick.query.refresh.words'), does: 'do', run: () => void refreshQueries() });
     }
-    // On a flagged query, the next and the previous one, round the row (DEC-UX-241).
-    const here = openId ? flagged.indexOf(openId) : -1;
-    if (here >= 0 && flagged.length > 1) {
-      const step = (by: 1 | -1) => (here + by + flagged.length) % flagged.length;
-      for (const [by, key, icon] of [[1, 'quick.flags.next', 'arrow-right'], [-1, 'quick.flags.previous', 'arrow-left']] as const) {
+    // On a query of the row, the next and the previous one, round the row (DEC-UX-241).
+    const open = (item: (typeof rowItems)[number]) => router.go(item.locked && working ? projectPath(working) : queryPath(item.id));
+    const here = openId ? row.indexOf(openId) : -1;
+    if (here >= 0 && row.length > 1) {
+      const step = (by: 1 | -1) => (here + by + row.length) % row.length;
+      for (const [by, key, icon] of [[1, 'quick.row.next', 'arrow-right'], [-1, 'quick.row.previous', 'arrow-left']] as const) {
         const at = step(by);
-        const id = flagged[at];
-        if (id) rows.push({ key: `flags:${by > 0 ? 'next' : 'previous'}`, group: 'flagged', icon, title: t(key), meta: `${flagNames[id] || '…'} · ${modLabel(mac)}${digitOf(at)}`, kind: command, words: t('quick.flags.words'), does: 'go', run: () => router.go(queryPath(id)) });
+        const item = rowItems[at];
+        if (item) rows.push({ key: `row:${by > 0 ? 'next' : 'previous'}`, group: 'row', icon, title: t(key), meta: `${item.name || '…'}${keyed(at) ? ` · ${modLabel(mac)}${digitOf(at)}` : ''}`, kind: command, words: t('quick.row.words'), does: 'go', run: () => open(item) });
       }
     }
-    flagged.forEach((id, at) =>
-      rows.push({ key: `flag:${id}`, group: 'flagged', icon: 'flag-fill', title: flagNames[id] || '…', meta: `${modLabel(mac)}${digitOf(at)}`, kind: t('quick.kind.query'), does: 'open', run: () => router.go(queryPath(id)) }),
+    rowItems.forEach((item, at) =>
+      rows.push({ key: `row:${item.id}`, group: 'row', icon: 'folders-fill', title: item.name || '…', meta: keyed(at) ? `${modLabel(mac)}${digitOf(at)}` : undefined, kind: t('quick.kind.query'), does: 'open', run: () => open(item) }),
     );
+    // New project, on every screen of Query (DEC-UX-288, FR-SR-69); the Project button of the open query is a command of
+    // its page (DEC-UX-318).
+    if (section?.id === 'query' && can(permissions, 'queries.make')) {
+      rows.push({ key: 'project:new', group: 'commands', icon: 'plus', title: t('row.newProject'), kind: command, words: t('quick.project.words'), does: 'do', run: () => (projectSheet = { mode: 'new', query: null }) });
+    }
+    // Each Project is a place to go to, after the queries of the row (DEC-UX-288).
+    for (const one of projectList ?? []) {
+      rows.push({ key: `projectPage:${one.id}`, group: 'projects', icon: 'folders-fill', title: one.name, meta: t('row.queries', { count: one.queries }), words: one.description, kind: 'Project', does: 'open', run: () => router.go(projectPath(one.id)) });
+    }
     for (const collection of collections ?? []) {
       rows.push({ key: `collection:${collection.id}`, group: 'collections', icon: 'stack', title: collection.name, meta: t('quick.collection.meta', { count: collection.resources.filter((item) => !item.withdrawn).length }), kind: 'Collection', does: 'open', run: () => router.go(collectionPath(collection.id)) });
       for (const item of collection.resources) {
@@ -939,7 +1247,7 @@
       : suggestedLevels({ dataAdmin: false, owner: false }),
   );
   /** A page of Query, which a User who may neither make queries nor Preview does not have (FR-PL-14). */
-  const queryPage = $derived(page.kind === 'newQuery' || page.kind === 'query' || page.kind === 'newLens' || (page.kind === 'start' && page.section.id === 'query'));
+  const queryPage = $derived(page.kind === 'newQuery' || page.kind === 'query' || page.kind === 'project' || page.kind === 'newLens' || (page.kind === 'start' && page.section.id === 'query'));
   /** The kinds of Message the User may write (`messages.write`, DEC-PL-04). */
   const writes = $derived.by(() => {
     const kinds = permissions['messages.write'].values.kinds;
@@ -989,9 +1297,10 @@
     oncollapse={() => signedIn.settings.set('panel.open', false)}
     panel={section ? panel : undefined}
     panelActions={section?.id === 'collections' && can(permissions, 'collections.make') ? newCollection : section?.id === 'query' && can(permissions, 'queries.make') ? newQuery : undefined}
+    side={(flowBox.open?.flow === 'publish' && flowResource) || (flowBox.open?.flow === 'eda' && flowEda?.id === flowBox.open.resource) ? flowSide : undefined}
   >
     {#if inQuery && page.kind !== 'query'}
-      <!-- The flagged queries on top of every screen of Query (DEC-UX-236). -->
+      <!-- The row of the active Project on top of every screen of Query (DEC-UX-317). -->
       {@render flagsBar()}
     {/if}
     {#if page.kind === 'start' && page.section.id === 'collections'}
@@ -1023,6 +1332,30 @@
       />
     {:else if queryPage && !mayQuery(permissions)}
       <NotFound />
+    {:else if (page.kind === 'eda' || (page.kind === 'start' && page.section.id === 'eda')) && !mayExplore}
+      <!-- The section EDA is for who may explore Resources; to anyone else it is what may not be seen (FR-ED-01). -->
+      <NotFound />
+    {:else if page.kind === 'start' && page.section.id === 'eda'}
+      <div class="eda-start">
+        <h1 class="page-title">EDA</h1>
+        <p>{t('eda.start.text')}</p>
+      </div>
+    {:else if page.kind === 'eda'}
+      {#key page.id}
+        <EdaPage
+          id={page.id}
+          tab={page.tab}
+          probe={page.probe}
+          dig={page.dig ?? null}
+          client={edaClient}
+          onchanged={readEdas}
+          onview={showEda}
+          guided={exploring === page.id}
+          onguide={() => page.kind === 'eda' && guideEda(page.id)}
+          go={(path) => router.go(path)}
+          canQuery={can(permissions, 'queries.make')}
+        />
+      {/key}
     {:else if page.kind === 'start' && page.section.id === 'learning'}
       <LearningStart
         shown={shownCards}
@@ -1098,7 +1431,25 @@
         />
       {/key}
     {:else if page.kind === 'query'}
-      <!-- Its page lives below the others, where the flagged queries stay open (OP-UX-85). -->
+      <!-- Its page lives below the others, where the queries of the row stay open (OP-UX-85). -->
+    {:else if page.kind === 'project'}
+      <!-- The page of a Project: its queries in one order, who is in it, Share, Leave and Delete (DEC-UX-285). -->
+      {#key page.id}
+        {@const projectId = page.id}
+        <ProjectPage
+          id={projectId}
+          projects={projectsClient}
+          {identity}
+          me={{ id: signedIn.me.sub, name: signedIn.me.name }}
+          canMake={can(permissions, 'queries.make')}
+          onnewquery={() => newEmptyQuery(projectId)}
+          onchanged={() => {
+            refreshProjects();
+            refreshQueries();
+          }}
+          go={(path) => router.go(path)}
+        />
+      {/key}
     {:else if page.kind === 'newLens'}
       {#key page.query}
         <LensNew
@@ -1258,6 +1609,17 @@
             refresh();
           }}
           onrun={() => refreshQueries()}
+          onguide={() => guide(resource.id)}
+          explore={mayExplore
+            ? {
+                client: edaClient,
+                go: (path) => router.go(path),
+                onstarted: (view) => {
+                  readEdas();
+                  guideEda(view.resource.id, view);
+                },
+              }
+            : undefined}
         />
       {:else if opened?.resource === null}
         <NotFound />
@@ -1297,7 +1659,7 @@
       <NotFound />
     {/if}
     {#if mayQuery(permissions) && alive.length > 0}
-      <!-- Every flagged query opened since this tab loaded stays as the User left it; only the open one shows (OP-UX-85). -->
+      <!-- Every query of the row opened since this tab loaded stays as the User left it; only the open one shows (OP-UX-85). -->
       <div class="query-screen" style:display={page.kind === 'query' ? undefined : 'none'}>
         {#if page.kind === 'query'}{@render flagsBar()}{/if}
         <div class="query-pages">
@@ -1327,9 +1689,12 @@
                     queryHidden = { id, hidden };
                     refreshQueries();
                   }}
-                  flagAt={flagged.includes(id) ? flagged.indexOf(id) : null}
-                  flagsFull={flagged.length >= MOST_FLAGGED}
-                  onflag={(on) => setFlagged(on ? flag(flagged, id) : unflag(flagged, id))}
+                  {shown}
+                  me={signedIn.me.sub}
+                  projectNow={id in placed ? placed[id] : undefined}
+                  placeable={shown && placeable}
+                  onproject={(kind, query, inIt) =>
+                    kind === 'remove' && inIt ? void takeOutOfProject(query.id, inIt.id) : kind !== 'remove' && (projectSheet = { mode: kind, query })}
                   onstatus={statusOf}
                   oncommands={(of, rows) => (queryCommands = { ...queryCommands, [of]: rows })}
                   go={(path) => router.go(path)}
@@ -1435,6 +1800,37 @@
   <Toast key={lost.key} tone="failed">{t('permissions.changed', { permission: lost.name })}</Toast>
 {/if}
 
+{#snippet flowSide()}
+  {#if flowBox.open?.flow === 'publish' && flowResource}
+    {@const resource = flowResource}
+    <PublishFlow
+      {resource}
+      collection={collections?.find((collection) => collection.id === resource.collectionId)?.name ?? ''}
+      minimized={flowBox.open.minimized}
+      here={page.kind === 'resource' && page.id === resource.id ? (page.at ?? null) : null}
+      cardTitle={(card) => (localCards.has(card) ? topicOf(card)?.title[currentLanguage()] : undefined)}
+      onstep={toStep}
+      oncard={(card) => (windowCard = { card, from: 'flow' })}
+      onobject={() => router.go(resourcePath(resource.id))}
+      onminimize={(minimized) => flowBox.minimize(minimized)}
+      onclose={() => flowBox.close()}
+    />
+  {:else if flowBox.open?.flow === 'eda' && flowEda && flowEda.id === flowBox.open.resource}
+    {@const eda = flowEda.view}
+    <EdaFlow
+      view={eda}
+      minimized={flowFolded}
+      here={page.kind === 'eda' && page.id === eda.resource.id ? page.probe : null}
+      cardTitle={(card) => (localCards.has(card) ? topicOf(card)?.title[currentLanguage()] : undefined)}
+      onstep={(probe) => router.go(probePath(eda.resource.id, probe))}
+      oncard={(card) => (windowCard = { card, from: 'flow' })}
+      onobject={() => router.go(edaPath(eda.resource.id))}
+      onminimize={minimizeFlow}
+      onclose={() => flowBox.close()}
+    />
+  {/if}
+{/snippet}
+
 {#snippet panel()}
   {#if section?.id === 'collections' && status.kind === 'signedIn'}
     <CollectionsPanel
@@ -1475,8 +1871,15 @@
       draft={page.kind === 'newQuery' ? draft : null}
       version={queriesVersion}
       onhidden={(id, hidden) => (queryHidden = { id, hidden })}
-      {flagged}
+      projects={projectList}
+      active={working}
+      me={status.me.sub}
+      currentProject={page.kind === 'project' ? page.id : undefined}
+      loadProject={(id) => projectsClient.get(id)}
+      onnewproject={can(permissions, 'queries.make') ? () => (projectSheet = { mode: 'new', query: null }) : undefined}
     />
+  {:else if section?.id === 'eda' && status.kind === 'signedIn' && mayExplore}
+    <EdaPanel list={edas} {collections} current={page.kind === 'eda' ? page.id : undefined} />
   {:else if section?.id === 'charts' && status.kind === 'signedIn'}
     <ChartsPanel overview={chartsShown} current={page.kind === 'chart' ? page.id : undefined} iconUrl={(id) => charts.iconUrl(id)} />
   {/if}
@@ -1489,17 +1892,30 @@
 {/snippet}
 
 {#snippet flagsBar()}
-  <!-- With nothing flagged, no row: the quick window flags the first (DEC-UX-253). -->
-  {#if flagItems.length > 0}
-  <QueryFlags
-    items={flagItems}
-    current={openId}
-    {mac}
-    onunflag={(id) => setFlagged(unflag(flagged, id))}
-    onmove={(from, to) => setFlagged(moveFlag(flagged, from, to))}
-    onquick={() => (quickOpen = true)}
-    onflag={page.kind === 'query' && !flagged.includes(page.id) && flagged.length < MOST_FLAGGED ? () => openId && setFlagged(flag(flagged, openId)) : undefined}
-  />
+  <!-- With no Project active, no row (DEC-UX-317). -->
+  {#if working && workProject?.id === working}
+    <QueryFlags
+      items={rowItems}
+      current={page.kind === 'query' ? openId : undefined}
+      details={page.kind === 'project'}
+      {mac}
+      project={{ id: workProject.id, name: workProject.name, people: workProject.members.length }}
+      bind:pop={rowPop}
+      onremove={(id) => void removeFromRow(id)}
+      onmove={(from, to) => void moveInRow(from, to)}
+    />
+  {/if}
+  {#if projectSheet}
+    {@const asked = projectSheet}
+    <ProjectSheet
+      mode={asked.mode}
+      query={asked.query}
+      projects={projectList ?? []}
+      current={asked.query ? (asked.query.id in placed ? (placed[asked.query.id] ?? null) : asked.query.id === queryName?.id ? (queryName.project ?? null) : null) : null}
+      me={status.kind === 'signedIn' ? status.me.sub : ''}
+      onput={(target) => (asked.query ? putInProject(asked.query.id, target) : newProject({ name: 'name' in target ? target.name : '', description: 'name' in target ? (target.description ?? '') : '' }))}
+      onclose={() => (projectSheet = null)}
+    />
   {/if}
 {/snippet}
 
@@ -1508,8 +1924,10 @@
 {/snippet}
 
 <style>
-  /* A query fills the height of the screen under the row of flagged queries (DEC-UX-144, DEC-UX-236). */
+  /* A query fills the height of the screen under the row of the active Project (DEC-UX-144, DEC-UX-317). */
   .query-screen { height: 100%; min-height: 0; display: flex; flex-direction: column; }
   .query-pages { flex: 1; min-height: 0; }
   .query-kept { height: 100%; }
+  .eda-start { margin-top: 8px; max-width: 640px; }
+  .eda-start p { margin: 10px 0 0; font-size: var(--text-small); line-height: 1.55; color: var(--text-secondary); }
 </style>

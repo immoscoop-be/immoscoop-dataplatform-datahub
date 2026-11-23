@@ -36,7 +36,15 @@ Rules
 11. Data Hub has no exports: show the User what answers the question, never whole tables to copy elsewhere.
 12. When the User wants to publish, describe or take on a Resource, call guide_owner_journey first and follow it, one step at a time, in their language: it says the step that is next, what to present and ask, and the tool that writes. Never open the publication before it says the Resource is ready; name the steps still open instead.
 13. The Owner is the reference of the truth: they stand for every text on the Resource Card. Say where each proposal comes from: dbt, the data you saw, a named web source, or your own suggestion. Once the Owner agrees, the text is theirs; also a text written before is theirs only once they read it as theirs.
-14. A Known Gap is in the data itself: it would go away if the data were repaired, such as a period, a field or rows that are missing. A pitfall is in how the data is read: it stays true even when every row is right, such as what a field means or what a figure counts. When a text the User proposes reads as the other one, say so with this test and offer to write it there instead; the User decides. Write each Known Gap on its own with add_known_gap, with the scope where it holds: a period, fields, rows.`;
+14. A Known Gap is in the data itself: it would go away if the data were repaired, such as a period, a field or rows that are missing. A pitfall is in how the data is read: it stays true even when every row is right, such as what a field means or what a figure counts. When a text the User proposes reads as the other one, say so with this test and offer to write it there instead; the User decides. Write each Known Gap on its own with add_known_gap, with the scope where it holds: a period, fields, rows. Reliable since is not a Known Gap: it is the day from which the whole table can be relied on, or from its first row, written with update_resource_card; set it only once the Owner chose one of the two.
+15. When the User analyses something that takes many queries, you may set up a Project for it with create_project and keep its queries there: make them in it with create_query and project, put others in it with add_query_to_project, and set their order with update_project. A query is in one Project at most: putting it in another moves it out of the one it is in, so say so to the User first. Sharing a Project with colleagues and deleting it are for the User, in Data Hub.`;
+
+/**
+ * The rule of the EDA, for a User who may explore Resources (`eda.use`): only they have its tools, so only they get the
+ * rule, after the others (DEC-ED-29, TR-ED-10).
+ */
+export const EDA_RULE =
+  '16. The EDA of a Resource explores its data, EDA-Step by EDA-Step, until every needed EDA-Probe is complete and it is 4 · Explored. Read it with get_eda, or show it with show_eda, and start from what Data Hub reads as look at this; run an EDA-Probe with run_eda_probe when the User asks. You never approve a run above 100 MB and never give the reading of a result: the User does both in the window Data Hub shows, or in Data Hub itself. Starting an EDA stays in Data Hub.';
 
 /** The User as the guide reads them: their Permission group and its Permissions (FR-PL-04). */
 type Member = Pick<AccessTokenClaims, 'permissionGroup' | 'permissions'>;
@@ -56,8 +64,9 @@ export function instructionsFor(user: Member, permits: Permits): string {
     if (permits.results === 'card') lines.push(`A result of a query, a Preview or a Lens shows in a card only. ${CARD_RULE}`);
     if (permits.results === 'none') lines.push(`A result of a query, a Preview or a Lens is not shown in Claude. ${NONE_RULE}`);
   }
-  if (lines.length === 0) return INSTRUCTIONS;
-  return `${INSTRUCTIONS}\n\nThis User, of the Permission group ${user.permissionGroup.name}\n${lines.map((line) => `- ${line}`).join('\n')}`;
+  const rules = permits.claude && permits.eda ? `${INSTRUCTIONS}\n${EDA_RULE}` : INSTRUCTIONS;
+  if (lines.length === 0) return rules;
+  return `${rules}\n\nThis User, of the Permission group ${user.permissionGroup.name}\n${lines.map((line) => `- ${line}`).join('\n')}`;
 }
 
 /** Items as a sentence names them: a, b and c. */
@@ -78,9 +87,9 @@ const ATTRIBUTE = named({
   description: 'the Business Descriptions of a Resource and its fields',
   behaviour: 'its intended use and Anomalies',
   pitfalls: 'its pitfalls',
-  availableSince: 'since when it is reliable',
+  availableSince: 'its Reliable since and its Date Field',
   gaps: 'its Known Gaps',
-  keyFields: 'its key fields and Parameters',
+  keyFields: 'its Key Fields',
   entityMapping: 'its Entity mapping',
 });
 const KIND = named({ question: 'Questions', remark: 'Remarks', signal: 'Signals' });
@@ -124,6 +133,7 @@ export function mayDo(permissions: Permissions, permits: Permits): string[] {
     'Find and run the Lenses you see',
     can(permissions, 'lenses.make') && 'Make a query a Lens',
     can(permissions, 'lenses.manage') && where('lenses.manage', 'Change and delete the Lenses of your Owner Units', 'Change and delete every Lens'),
+    can(permissions, 'eda.use') && 'Explore Resources: start the EDA of a Resource you see at 3 · Confirmed or above, and run and read its EDA-Probes',
     can(permissions, 'messages.write') && `Write ${list(several(permissions, 'messages.write', 'kinds').map(KIND)) || 'no Messages'}`,
     can(permissions, 'messages.reply') && where('messages.reply', 'Reply to the Messages of others on what your Owner Units hold', 'Reply to every Message you see'),
     can(permissions, 'messages.close') &&
@@ -159,6 +169,7 @@ export function howToUse(user: Member, permits: Permits, home: string): string {
   const look = [
     permits.preview && '- "Show me some rows of last week." Claude opens the Preview in the conversation.',
     permits.query && '- "What share of the credit leads came from partners, per week?" Claude first looks for a Lens and runs it, else writes a query of yours, checks it and runs it.',
+    permits.query && '- "Set up a Project for the review of the credit leads." Claude makes it and keeps the queries of the analysis in it, in the order you want; you share it with colleagues, or delete it, in Data Hub.',
     !permits.query && '- "Is there a Lens on the share of partner leads?" Claude finds the Lenses that answer it and runs one for you, with the values of your question.',
     (permits.query || permits.preview) &&
       `- Up to ${bytes(ranges.approve)} a run goes at once. Above that, you approve it yourself in the window${ranges.above === 'request' ? `; above ${bytes(ranges.request)} you can send a Request to the Data Team` : `, up to ${bytes(ranges.request)}`}.`,
@@ -175,8 +186,13 @@ export function howToUse(user: Member, permits: Permits, home: string): string {
     permits.deprecate && '- "Deprecate it, use v2 instead": Claude shows the reason first, and deprecates it once you agree.',
     permits.changesSeen && '- "Mark its changes seen", once you checked them.',
     permits.publish &&
-      '- "Help me publish it": Claude takes you through the Owner Journey, one step at a time: what the data is, its Business Description, Key Fields and fields, intended use, pitfalls, Known Gaps and the day it is reliable since, then the rest that is advised. Each step comes with its Learning Card. Once every required step is done, Claude opens the publication with the whole card read back; only you tick the declaration and publish.',
+      '- "Help me publish it": Claude takes you through the Owner Journey, one step at a time: what the data is, its Business Description, Key Fields and fields, intended use, pitfalls, Reliable since, Known Gaps, then the rest that is advised. Each step comes with its Learning Card. Once every required step is done, Claude opens the publication with the whole card read back; only you tick the declaration and publish.',
     !permits.publish && (permits.card.length > 0 || permits.fields || permits.gaps) && '- "Help me describe it": Claude takes you through the Owner Journey, one step at a time; an Owner of its Owner Unit publishes it.',
+  ];
+  const explore = [
+    permits.eda && '- "How far is the EDA of Weekly lead volume? Anything I should look at?" Claude shows its EDA, what Data Hub reads as look at this first.',
+    permits.eda &&
+      `- "Run the nulls again." Claude runs the EDA-Probe as you; above ${bytes(ranges.approve)} you approve it yourself in the window. The reading of a result is always yours, given in the window or in Data Hub. Starting an EDA stays in Data Hub.`,
   ];
   const others = [permits.queriesOnResource && '- "Which queries ran on this Resource?"', permits.everyQuery && '- "What did everyone query this week?"'];
   const section = (title: string, lines: (string | false)[]) => {
@@ -193,6 +209,7 @@ export function howToUse(user: Member, permits: Permits, home: string): string {
     ...section(permits.query ? 'Look at the data and query it' : 'Look at the data', look),
     ...section('Discuss', discuss),
     ...section('If you are in the Owner Unit of a Collection', own),
+    ...section('Explore a Resource', explore),
     ...section('The queries of others', others),
     ...section('Explain', ['- "What is a Lens?" or "What does the Level mean?" Claude answers with the Learning Cards of Data Hub.']),
     '',

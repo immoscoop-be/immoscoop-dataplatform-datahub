@@ -53,7 +53,7 @@ Decided on 2026-10-17, on the proposal for the architecture and technology.
 
 **Status:** Implemented · **Realises:** [DEC-PF-01](#dec-pf-01), [DEC-DH-53](../../overview/data-hub.md#dec-dh-53), [DEC-DH-54](../../overview/data-hub.md#dec-dh-54)
 
-Every backend service and client application is a TypeScript Node.js application in its own container, deployed as its own Cloud Run service. In v1: the services identity, catalogue, registry and query, and the applications web and mcp. See the [service map](../../architecture/README.md#services).
+Every backend service and client application is a TypeScript Node.js application in its own container, deployed as its own Cloud Run service. In v1: the services identity, catalogue, registry and query, and the applications web and mcp. See the [service map](../../architecture/README.md#services). *Note of 2026-11-19: a new revision gets two minutes to answer `/health` (`startup_probe` in `infra/services.tf`, five seconds apart, 24 tries). With the default of three tries ten seconds apart, a cold instance of web, which reads every file of the web app as it starts, and of query, which first connects to Cloud SQL, did not answer in time; the revision was never given traffic and the one before it kept serving.*
 
 <a id="tr-pf-02"></a>
 ### TR-PF-02 · identity issues short-lived Access Tokens
@@ -137,6 +137,7 @@ The request and response schemas of every service are defined with zod in `packa
 | catalogue | Cloud SQL client |
 | registry | Cloud SQL client; write access to the artifact bucket; the dbt Cloud token and the webhook secret from Secret Manager; starting its ingest job ([TR-AR-01](01-artifact-registry.md#tr-ar-01)), which runs as the same service account; BigQuery Metadata Viewer on the project of Data Hub, for the schemas of the tables a catalog lacks, never their rows ([TR-AR-15](01-artifact-registry.md#tr-ar-15)) |
 | query | BigQuery Data Viewer on the project of Data Hub, where the tables of its dbt projects are ([DEC-SR-32](../functional/04-stacks-and-resources.md#dec-sr-32)), and BigQuery Job User; Cloud SQL client, for its queries and the Query Log ([DEC-PF-29](#dec-pf-29)) |
+| eda | Cloud SQL client, and its login as every service with a database; no role on BigQuery: query reads the data for it ([TR-ED-08](15-eda.md#tr-ed-08)) |
 | semgraph | None: no data and no secrets, as it is open to everyone ([DEC-PF-24](#dec-pf-24)) |
 | web, mcp | None beyond calling the services; web keeps the Refresh Tokens of its Users in their cookies, not in a store of its own |
 | `datahub-scheduler`, not a service | None: Cloud Scheduler calls query with its Google ID token once a day to check every Lens and query, and query checks the token itself ([TR-LE-06](09-lenses.md#tr-le-06), [TR-SR-23](04-stacks-and-resources.md#tr-sr-23)) |

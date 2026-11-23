@@ -1,17 +1,21 @@
 import { randomUUID } from 'node:crypto';
 import type { ExcelKeyExchanger, ServiceCallerVerifier, TokenVerifier } from '@datahub/auth';
 import { can, rangesOf, reach } from '@datahub/contracts';
+import { kindOf } from '@datahub/contracts/model-types';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { forbidden, ownerUnitsOf, permissionsOf } from './access.js';
 import { type BigQuery, BigQueryRefused, BigQueryUnavailable, type Finished, type Page, ResultExpired } from './bigquery.js';
 import { missingIn, missingOf } from './broken.js';
 import { type Catalogue, CatalogueUnavailable, type QueryRequest, type QueryResource } from './catalogue.js';
 import type { NamedResource, QueryKind } from './database.js';
+import { edaRoutes } from './eda-api.js';
 import { lensRoutes } from './lens-api.js';
 import { outsideTable } from './outside.js';
 import type { Lenses } from './lenses.js';
 import { bind, type Parameter, parseParameters } from './parameters.js';
 import { type Preflight, preflight, type ResourceOfQuery, sound, type Thresholds } from './preflight.js';
+import { projectRoutes } from './project-api.js';
+import type { Projects } from './projects.js';
 import { type Choice, choicesOf, chosenParameters, previewSql, type StorageReader, valuesSql, type Window, WINDOWS, windowFilter } from './preview.js';
 import { type ListOptions, type Queries, type Query, type QueryOnResource, type Run, SHOWN, type Shown, type Viewer } from './queries.js';
 import { type KnownTable, type Registry, RegistryUnavailable } from './registry.js';
@@ -20,6 +24,8 @@ import { createUpkeep, type Lost } from './upkeep.js';
 
 export interface ApiOptions {
   queries: Queries;
+  /** The Projects of Query, whose members share their queries (FR-SR-63, DEC-SR-47). */
+  projects: Projects;
   /** Who may start a check of Lenses and queries: the scheduler once a day (DEC-LE-20), catalogue after a new Current Version (FR-SR-52). */
   checkers: ServiceCallerVerifier;
   /** The Lenses, made from queries and run on their pages (DEC-PF-30). */
@@ -53,7 +59,7 @@ const NO_QUERY = { error: 'not_found', message: 'There is no such query, or it i
 const NO_RESOURCE = { error: 'not_found', message: 'There is no such Resource, or you may not see it.' };
 /** The numbers on top of the tab History count the last 30 days (FR-SR-44). */
 const MONTH = 30 * 86_400_000;
-const NOT_YOURS = { error: 'forbidden', message: 'Only who made a query writes and runs it.' };
+const NOT_YOURS = { error: 'forbidden', message: 'Only who made a query, or who is in its Project, writes and runs it.' };
 const ALL_QUERIES = 'Only who sees every query lists the queries of everyone.';
 
 /** A query as the web app gets it: without the SQL Data Hub keeps for its own checks (DEC-SR-44). */
@@ -97,6 +103,8 @@ export interface QueryFields {
   parameters?: Parameter[];
   /** The query a new one is started from, with another set of Resources (DEC-UX-73). */
   startedFrom?: string;
+  /** The Project a new query is made in, at the end of its row (FR-SR-68). */
+  project?: string;
   /** The Collection whose page started it with "New Lens", offered first when it becomes a Lens (DEC-UX-123). */
   forCollection?: string;
 }
@@ -107,7 +115,8 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export function parseQuery(body: unknown, creating: boolean): QueryFields | string {
   if (typeof body !== 'object' || body === null || Array.isArray(body)) return 'Send a JSON object.';
   const fields = body as Record<string, unknown>;
-  const known = new Set(creating ? ['name', 'question', 'resources', 'sql', 'parameters', 'startedFrom', 'forCollection'] : ['name', 'question', 'sql', 'parameters']);
+  // Its Resources change in it too (FR-SR-67, DEC-SR-48).
+  const known = new Set(creating ? ['name', 'question', 'resources', 'sql', 'parameters', 'startedFrom', 'forCollection', 'project'] : ['name', 'question', 'resources', 'sql', 'parameters']);
   const unknown = Object.keys(fields).find((key) => !known.has(key));
   if (unknown) return `A query has no field ${unknown} here.`;
   const result: QueryFields = {};
@@ -120,9 +129,9 @@ export function parseQuery(body: unknown, creating: boolean): QueryFields | stri
     if (typeof fields.question !== 'string' || fields.question.trim().length > 500) return 'The question has at most 500 characters.';
     result.question = fields.question.trim();
   }
-  if (creating) {
+  if (creating || fields.resources !== undefined) {
     const ids = fields.resources;
-    // None only for a power user, who starts from SQL (FR-SR-56): the route checks that.
+    // None only for a power user, who starts from SQL (FR-SR-56), or an empty query in a Project (FR-SR-68): the route checks that.
     if (!Array.isArray(ids) || ids.length > 10 || !ids.every((id) => typeof id === 'string' && /^[0-9a-f-]{36}$/i.test(id)) || new Set(ids).size !== ids.length) {
       return 'A query reads 1 to 10 Resources, each named once by its ID.';
     }
@@ -144,6 +153,10 @@ export function parseQuery(body: unknown, creating: boolean): QueryFields | stri
   if (fields.forCollection !== undefined) {
     if (typeof fields.forCollection !== 'string' || !UUID.test(fields.forCollection)) return 'A query is started for a Collection by its ID.';
     result.forCollection = fields.forCollection.toLowerCase();
+  }
+  if (fields.project !== undefined) {
+    if (typeof fields.project !== 'string' || !UUID.test(fields.project)) return 'A query is made in a Project by its ID.';
+    result.project = fields.project.toLowerCase();
   }
   if (!creating && Object.keys(result).length === 0) return 'Send at least one field to change.';
   return result;
@@ -171,7 +184,7 @@ const same = (a: readonly Parameter[], b: readonly Parameter[]) => JSON.stringif
  * of others (DEC-LN-01, `queries.seeOthers`).
  */
 export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Promise<void> {
-  const { queries, lenses, catalogue, bigquery, beneath, project, thresholds, storage, checkers, excel, registry } = options;
+  const { queries, projects, lenses, catalogue, bigquery, beneath, project, thresholds, storage, checkers, excel, registry } = options;
   /** What keeps queries and Lenses Broken while what they read is missing, and working again (FR-SR-52). */
   const upkeep = createUpkeep({ queries, lenses, catalogue, bigquery });
 
@@ -199,6 +212,12 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     if (others === 'every') return true;
     if (query.kind === 'lens') return false;
     if (query.ownerId === viewer(request).id) return true;
+    // In a Project, everyone in it reads its queries, unless one reads a Resource they may not see: then it is locked
+    // to them, its name only on the page of the Project (DEC-SR-47, OP-UX-97).
+    if (query.kind === 'query' && (await projects.ofQuery(query.id, viewer(request).id))?.member) {
+      const seenNow = await Promise.all(query.resources.map((named) => catalogue.resource(named.id, authorization(request))));
+      if (seenNow.every((resource) => resource !== null)) return true;
+    }
     if (others !== 'theirs') return false;
     for (const named of query.resources) {
       const resource = await catalogue.resource(named.id, authorization(request));
@@ -222,19 +241,33 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     return query;
   }
 
-  /** The query, if it is the User's own, to write or run, and they may make queries (`queries.make`). */
+  /** Whether the User writes and runs this query: they made it, or they are in its Project (DEC-SR-47). */
+  async function writable(request: FastifyRequest, query: Query): Promise<boolean> {
+    if (query.ownerId === viewer(request).id) return true;
+    return query.kind === 'query' && (await projects.ofQuery(query.id, viewer(request).id))?.member === true;
+  }
+
+  /**
+   * The query, if the User writes and runs it, theirs or one of a Project they are in, and they may make queries
+   * (`queries.make`, OP-UX-98).
+   */
   async function own(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply): Promise<Query | undefined> {
     if (!can(permissionsOf(request), 'queries.make')) {
       void forbidden(reply, 'queries.make', 'Only who may make queries writes and runs one.');
       return undefined;
     }
     const query = await seen(request, reply);
-    if (query && query.ownerId !== viewer(request).id) {
+    if (query && !(await writable(request, query))) {
       void reply.code(403).send(NOT_YOURS);
       return undefined;
     }
     if (query?.kind === 'lens') {
       void reply.code(403).send({ error: 'forbidden', message: 'A Lens runs on its own page.' });
+      return undefined;
+    }
+    // The runs of the EDA-Probes of a Resource are kept by query, but run only from its EDA (TR-ED-04).
+    if (query?.kind === 'eda') {
+      void reply.code(403).send({ error: 'forbidden', message: 'An EDA-Probe runs from the EDA of its Resource.' });
       return undefined;
     }
     return query;
@@ -269,9 +302,12 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
   const ownCase = (sql: string, resources: ResourceOfQuery[], outside: Preflight['tables'] = []): string =>
     inOwnCase(sql, [...resources.flatMap((entry) => (entry.resource ? [entry.resource] : [])), ...outside], project);
 
-  /** The Requests of who made the query on it, newest first (DEC-SR-36). */
+  /**
+   * The Requests on the query of who runs it, newest first (DEC-SR-36): a query runs with the rights of whoever runs
+   * it, its maker or someone of its Project (FR-SR-65).
+   */
   async function requestsOf(request: FastifyRequest, query: Query): Promise<QueryRequest[]> {
-    return (await catalogue.requests(query.id, authorization(request))).filter((sent) => sent.writerId === query.ownerId);
+    return (await catalogue.requests(query.id, authorization(request))).filter((sent) => sent.writerId === viewer(request).id);
   }
 
   /** Where a query started: the query, by its name now, and after which of its runs (DEC-UX-73). */
@@ -286,7 +322,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     const resources = (await resourcesOf(request, query)).map(({ named, resource }) =>
       resource ? { visible: true, ...resource } : { visible: false, id: named.id, displayName: named.displayName },
     );
-    const [last, runs, requests, startedFrom, lens, hidden] = await Promise.all([
+    const [last, runs, requests, startedFrom, lens, hidden, inProject, mayWrite] = await Promise.all([
       queries.lastRun(query.id),
       queries.runCount(query.id),
       requestsOf(request, query),
@@ -294,10 +330,17 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       // The Lens it is used as: made from it, or opened as it in Query (DEC-LE-03, DEC-LE-18).
       lenses.ofQuery(query.id).then((made) => made ?? (query.forLens ? lenses.get(query.forLens) : undefined)),
       queries.hidden(query.id, viewer(request).id),
+      projects.ofQuery(query.id, viewer(request).id),
+      writable(request, query),
     ]);
     return {
       ...shown(query),
       mine: query.ownerId === viewer(request).id,
+      // The Project it is in, and whether the User writes and runs it: theirs, or of a Project they are in (DEC-SR-47).
+      project: inProject ? { id: inProject.id, name: inProject.name } : null,
+      // Who changed its SQL last, and when, so that two in it at once see each other's changes (OP-UX-99).
+      sqlChanged: query.sqlChangedAt ? { at: query.sqlChangedAt, by: { id: query.sqlChangedById, name: query.sqlChangedByName } } : null,
+      editable: mayWrite && can(permissionsOf(request), 'queries.make'),
       // Whether the User hid it from their panel (DEC-UX-138).
       hidden,
       resources,
@@ -340,6 +383,19 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
   });
 
   // How many queries each day holds, in the time zone of the User, for the periods and chips of the panel (DEC-UX-137, DEC-UX-139).
+
+  // Who else has a query of a Project open, while the User has it open too; and who changed its SQL last (OP-UX-99).
+  app.put<{ Params: { id: string } }>('/queries/:id/presence', async (request, reply) => {
+    const query = await seen(request, reply);
+    if (!query) return reply;
+    // Only who writes it is in it; who only reads it, as the Data Team may, sees them without being seen.
+    const others = (await queries.present(query.id, viewer(request), await writable(request, query))).filter((one) => one.id !== viewer(request).id);
+    const now = await queries.get(query.id);
+    return {
+      others,
+      sqlChanged: now?.sqlChangedAt ? { at: now.sqlChangedAt, by: { id: now.sqlChangedById, name: now.sqlChangedByName } } : null,
+    };
+  });
   app.get<{ Querystring: { all?: string; tz?: string } }>('/queries/days', async (request, reply) => {
     const who = viewer(request);
     const all = request.query.all === 'true';
@@ -367,11 +423,13 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     if (!can(permissionsOf(request), 'queries.make')) return forbidden(reply, 'queries.make', 'Only who may make queries makes one.');
     const fields = parseQuery(request.body, true);
     if (typeof fields === 'string') return reply.code(400).send({ error: 'invalid_request', message: fields });
-    // Without Resources only for a power user, who starts from SQL and reads tables outside Data Hub (FR-SR-56).
-    if (fields.resources?.length === 0 && !can(permissionsOf(request), 'queries.outside')) {
+    // Without Resources only for a power user, who starts from SQL and reads tables outside Data Hub (FR-SR-56), and
+    // as an empty query in a Project, which gets its Resources in it (FR-SR-68).
+    if (fields.resources?.length === 0 && !fields.project && !can(permissionsOf(request), 'queries.outside')) {
       return reply.code(400).send({ error: 'invalid_request', message: 'A query reads 1 to 10 Resources, each named once by its ID.' });
     }
     const who = viewer(request);
+    if (fields.project && !(await projects.isMember(fields.project, who.id))) return reply.code(404).send({ error: 'not_found', message: 'There is no such Project, or you are not in it.' });
     try {
       // Another set of Resources is a new query, started from one the User may read, after its last run (DEC-UX-73).
       let startedFrom: { id: string; afterRun: number | null } | undefined;
@@ -394,6 +452,8 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
         startedFrom,
         forCollection: fields.forCollection,
       });
+      // At the end of the row of its Project (FR-SR-68), which holds any number of queries (DEC-SR-49).
+      if (fields.project) await projects.addQuery(fields.project, query.id, who);
       return reply.code(201).send({ query: await queryView(request, query) });
     } catch (error) {
       return unavailable(error, reply, request);
@@ -482,7 +542,19 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     const fields = parseQuery(request.body, false);
     if (typeof fields === 'string') return reply.code(400).send({ error: 'invalid_request', message: fields });
     if (!(await own(request, reply))) return reply;
-    const query = await queries.update(request.params.id, fields);
+    const { resources: ids, ...rest } = fields;
+    // Its Resources change in it, each one the User may see (FR-SR-67, DEC-SR-48); each run keeps those it read.
+    let resources: NamedResource[] | undefined;
+    if (ids) {
+      try {
+        const found = await Promise.all(ids.map((id) => catalogue.resource(id, authorization(request))));
+        if (found.some((resource) => resource === null)) return reply.code(400).send({ error: 'invalid_request', message: 'A query reads only Resources you may see.' });
+        resources = (found as QueryResource[]).map(({ id, key, displayName }) => ({ id, key, displayName }));
+      } catch (error) {
+        return unavailable(error, reply, request);
+      }
+    }
+    const query = await queries.update(request.params.id, { ...rest, ...(resources ? { resources } : {}) }, viewer(request));
     return { query: query && shown(query) };
   });
 
@@ -526,7 +598,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     if (!query) return reply;
     try {
       const changed = body.sql !== query.sql || !same(body.parameters, query.parameters);
-      const current = changed ? ((await queries.update(query.id, { sql: body.sql, parameters: body.parameters })) ?? query) : query;
+      const current = changed ? ((await queries.update(query.id, { sql: body.sql, parameters: body.parameters }, viewer(request))) ?? query) : query;
       const resources = await resourcesOf(request, current);
       const checked = await check(body.sql, body.parameters, resources, rangesFor(request, current.kind), request);
       // Whether it is Broken now, for the callout on top of it and Run (FR-SR-53, DEC-UX-160).
@@ -650,7 +722,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       const checked = await check(body.sql, body.parameters, await resourcesOf(request, query), ranges, request);
       if (!checked.runnable) return reply.code(409).send({ error: 'not_runnable', message: 'This query cannot run as it is.', preflight: checked });
       if (checked.range !== 'request') return reply.code(409).send({ error: 'not_needed', message: 'This query runs without the Data Team.', preflight: checked });
-      if (body.sql !== query.sql || !same(body.parameters, query.parameters)) await queries.update(query.id, { sql: body.sql, parameters: body.parameters });
+      if (body.sql !== query.sql || !same(body.parameters, query.parameters)) await queries.update(query.id, { sql: body.sql, parameters: body.parameters }, viewer(request));
       const sent = await catalogue.sendRequest({ queryId: query.id, name: query.name, reads: checked.bytes ?? 0, threshold: ranges.request, text: body.text }, authorization(request));
       return reply.code(201).send({ request: requestView(sent), preflight: checked, queryId: query.id });
     } catch (error) {
@@ -681,6 +753,21 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       };
     } catch (error) {
       if (error instanceof BigQueryRefused) return { storage: null };
+      return unavailable(error, reply, request);
+    }
+  });
+
+  // The first row of a Resource on one of its date fields, for the line under Reliable Since (FR-RC-31, DEC-RC-33).
+  app.get<{ Params: { id: string }; Querystring: { field?: string } }>('/resources/:id/first-row', async (request, reply) => {
+    const resource = await resourceOf(request, reply);
+    if (!resource) return reply;
+    const field = resource.fields.find((one) => one.name === request.query.field);
+    if (!field || kindOf(field.dataType) !== 'date' || !/^[A-Za-z_][A-Za-z0-9_]{0,299}$/.test(field.name)) {
+      return reply.code(400).send({ error: 'invalid_request', message: 'The field is one of its fields of type DATE, DATETIME or TIMESTAMP.' });
+    }
+    try {
+      return { firstRow: await storage.firstRow(resource, field.name) };
+    } catch (error) {
       return unavailable(error, reply, request);
     }
   });
@@ -879,8 +966,12 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     }
   });
 
+  // The EDA-Probes of a Resource, which eda has query run as the User (TR-ED-04).
+  await edaRoutes(app, { queries, bigquery, viewer, resourceOf, check, ownCase, unavailable, label });
+
   // Lenses: made from a query, run on their own page (DEC-PF-30).
   await lensRoutes(app, { lenses, queries, catalogue, thresholds, bigquery, checkers, upkeep, viewer, authorization, readable, resourcesOf, check, ownCase, unavailable, execute, excel });
+  await projectRoutes(app, { projects, queries, catalogue, viewer, authorization, writable, unavailable });
 }
 
 function pageView(page: Page, number: number) {

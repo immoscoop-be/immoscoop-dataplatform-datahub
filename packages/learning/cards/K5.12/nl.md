@@ -3,9 +3,9 @@ number: K5.12
 status: reviewed
 minutes: 5
 added: 2026-11-15
-changed: 2026-11-15
+changed: 2026-11-20
 gain: Je weet wat het beschrijven en publiceren van een Resource van je vraagt voor je begint, en waar je gebleven was als je terugkomt.
-translatedFrom: d261e32393d8
+translatedFrom: f1c62e7d6cd2
 ---
 
 # Why now
@@ -23,7 +23,7 @@ De **Owner Journey** brengt een Resource stap voor stap van beschreven naar gepu
 
 ## Bij Immoscoop
 
-Claude neemt de collega van SEO stap voor stap mee door Search Console impressions, whole site. Eerst wat ze is: samen naar de data kijken, de Business Description, dan de Key Fields en hun beschrijvingen, vóór die van de andere velden, want collega's en de EDA vertrekken van de Key Fields. Dan hoe je ze gebruikt en waar mensen erover struikelen: het beoogd gebruik, de valkuilen, en de Known Gaps met de dag vanaf wanneer ze betrouwbaar is. De Parameters, wat de Data Admin vastlegt en de open Questions en Signals komen daarna; aangeraden, of pas later nodig voor de EDA, houden ze niets tegen. Als laatste wordt de kaart voorgelezen en gepubliceerd, want de verklaring staat in voor elke tekst die ervoor komt. Bij elke tekst zegt Claude waar het voorstel vandaan komt, en Claude schrijft hem pas als de collega akkoord gaat: vanaf dan is het de tekst van de collega. De collega stopt na het beoogd gebruik. Drie dagen later vraagt een collega van SEO in een nieuw gesprek aan Claude waar ze gebleven waren, en gaat verder bij de valkuilen: de Owner Journey wordt bij de Resource bewaard, niet bij het gesprek.
+Claude neemt de collega van SEO stap voor stap mee door Search Console impressions, whole site. Eerst wat ze is: samen naar de data kijken, de Business Description, dan de Key Fields en hun beschrijvingen, vóór die van de andere velden, want collega's en de EDA vertrekken van de Key Fields. Dan hoe je ze gebruikt en waar mensen erover struikelen: het beoogd gebruik, de valkuilen, en de Known Gaps met de dag vanaf wanneer ze betrouwbaar is. Wat de Data Admin vastlegt en de open Questions en Signals komen daarna; aangeraden, of pas later nodig voor de EDA, houden ze niets tegen. Als laatste wordt de kaart voorgelezen en gepubliceerd, want de verklaring staat in voor elke tekst die ervoor komt. Bij elke tekst zegt Claude waar het voorstel vandaan komt, en Claude schrijft hem pas als de collega akkoord gaat: vanaf dan is het de tekst van de collega. De collega stopt na het beoogd gebruik. Drie dagen later vraagt een collega van SEO in een nieuw gesprek aan Claude waar ze gebleven waren, en gaat verder bij de valkuilen: de Owner Journey wordt bij de Resource bewaard, niet bij het gesprek.
 
 # Check your understanding
 
@@ -35,11 +35,11 @@ Claude neemt de collega van SEO stap voor stap mee door Search Console impressio
 
 Why: de journey wordt gelezen uit de Resource, uit wat haar kaart bevat en wat de Owner Unit zei, nooit uit een gesprek. Wat je doorliep, blijft gedaan, met wie het deed en wanneer.
 
-## De kaart van een Resource heeft alles behalve haar beoogd gebruik en haar Parameters. Wat houdt haar publicatie tegen?
+## De kaart van een Resource heeft alles behalve haar beoogd gebruik en de Business Descriptions van haar velden buiten haar Key Fields. Wat houdt haar publicatie tegen?
 
 - [ ] Beide: elke stap van de journey is gedaan voor een Resource gepubliceerd wordt
 - [ ] Geen van beide: de verklaring aanvinken dekt wat nog openstaat
-- [x] Het beoogd gebruik, dat nodig is om te publiceren; de Parameters zijn aangeraden en houden niets tegen
+- [x] Het beoogd gebruik, dat nodig is om te publiceren; de andere velden beschrijven is aangeraden en houdt niets tegen
 
 Why: elke stap is nodig om te publiceren, later nodig voor de EDA, of aangeraden. De catalogus weigert een publicatie zolang een verplichte stap openstaat, in Data Hub net zo goed als in Claude, en beide tonen dezelfde lijst van wat openstaat en wat alleen aangeraden is.
 

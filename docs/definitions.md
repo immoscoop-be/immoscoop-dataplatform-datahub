@@ -40,11 +40,12 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="current-version"></a>**Current Version** | Per dbt project, the most recent fully processed Artifact Set; the rest of Data Hub works on it. | [Artifact registry](requirements/functional/01-artifact-registry.md#terms) |
 | <a id="data-admin"></a>**Data Admin** | A User who registers and manages Resources: a member of the Role Group of the Data Team, and once Permission groups are built, a User whose Permission group has `resources.assign`. | [Resources](requirements/functional/04-stacks-and-resources.md#terms) |
 | <a id="data-team"></a>**Data Team** | The team that takes data in, describes it and makes it a Resource with an exposure in its dbt project. In Data Hub: the members of its Role Group. | [DEC-CO-03](requirements/functional/03-collections.md#dec-co-03) |
+| <a id="date-field"></a>**Date Field** | The one date field of a Resource that its Reliable Since is read on: a field of type DATE, DATETIME or TIMESTAMP. Its table type gives it: the happened-at field of an `event`, the occurred-at field of a `fact`, the period of an `aggregate`, the created-at or updated-at field of a `state`. Its Owner may choose another, with a warning. An ordinary date field of a Resource stays lowercase. | [DEC-RC-29](requirements/functional/05-resource-card.md#dec-rc-29), [FR-RC-32](requirements/functional/05-resource-card.md#fr-rc-32) |
 | <a id="display-name"></a>**Display Name** | The readable, unique name of a Resource, as business sees it, for example "Agency purity". | [Resources](requirements/functional/04-stacks-and-resources.md#terms) |
 | <a id="domain-model"></a>**Domain Model** | The description of the entities of the business, maintained with Domain Hub and delivered to Data Hub as dbt Artifacts and as the overview the server of Colleciónes deploys ([FR-AR-15](requirements/functional/01-artifact-registry.md#fr-ar-15)). Data Hub describes the data; the Domain Model describes the business. | [Relation to existing work](overview/data-hub.md#relation-to-existing-work) |
 | <a id="eda"></a>**EDA** | Exploratory data analysis: a function of Data Hub in which the Owner takes a Resource through a predefined set of EDA-Steps that explore its data, its gaps, its weight and its correctness. Completing the EDA-Steps makes a Resource Explored. It has three phases: EDA-Setup, EDA-Rerun and EDA-Revalidation. | [DEC-ED-01](requirements/functional/15-eda.md#dec-ed-01), [FR-MR-03](requirements/functional/06-maturity-and-release.md#fr-mr-03) |
-| <a id="eda-probe"></a>**EDA-Probe** | One query of an EDA-Step that measures one aspect of the data of a Resource, such as the nulls of a Key Field or the distribution of a field. | [DEC-ED-09](requirements/functional/15-eda.md#dec-ed-09) |
-| <a id="eda-profile"></a>**EDA-Profile** | The registered results of one run of the EDA-Probes of an EDA: a picture of the data of a Resource at that moment. The EDA-Setup gives the first; each EDA-Rerun gives a new one. | [EDA](requirements/functional/15-eda.md#terms) |
+| <a id="eda-probe"></a>**EDA-Probe** | One query of an EDA-Step that measures one aspect of the data of a Resource, on the fields it is set on: one field, a pair or group of fields, or the table as a whole. It gives a result per field, or per pair or group, such as the nulls of each Key Field. | [DEC-ED-09](requirements/functional/15-eda.md#dec-ed-09), [DEC-ED-17](requirements/functional/15-eda.md#dec-ed-17) |
+| <a id="eda-profile"></a>**EDA-Profile** | The registered results of one run of the EDA-Probes of an EDA: a picture of the data of a Resource at that moment. The EDA-Setup gives the first; each EDA-Rerun gives a new one. Runs are compared on their EDA-Profiles, never on the table as it was. | [EDA](requirements/functional/15-eda.md#terms), [DEC-ED-18](requirements/functional/15-eda.md#dec-ed-18) |
 | <a id="eda-rerun"></a>**EDA-Rerun** | Running the EDA-Probes of an EDA again, which gives a new EDA-Profile. Registering it is the whole re-evaluation. | [DEC-ED-06](requirements/functional/15-eda.md#dec-ed-06) |
 | <a id="eda-revalidation"></a>**EDA-Revalidation** | Reconsidering the EDA-Setup of a Resource, triggered by a change to its table, by heavy use of fields the EDA does not include, or by other triggers still to decide. | [EDA](requirements/functional/15-eda.md#terms) |
 | <a id="eda-setup"></a>**EDA-Setup** | The first phase of an EDA: applying it to a Resource, choosing which EDA, for which kind of table and which fields matter. It gives the EDA-Probes and the first EDA-Profile, and sets how often the EDA-Probes run again. | [EDA](requirements/functional/15-eda.md#terms) |
@@ -54,10 +55,11 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="excel-key"></a>**Excel key** | The personal key with which Excel signs in to Data Hub through Power Query, in the name of its User. A User makes one on My page and sees it once; it lasts a year and can be revoked. Formerly called Library Card. | [DEC-DH-79](overview/data-hub.md#dec-dh-79) |
 | <a id="finding"></a>**Finding** | What a Rule gives when it fires: for one Segment value, or a list of them, in the Tone of the Rule. Not bad news by definition; not a Signal, which a User raises. | [DEC-CM-08](requirements/functional/08-checks-and-monitoring.md#dec-cm-08) |
 | <a id="fingerprint"></a>**Fingerprint** | A set of hashes of the structure, the types and the descriptions of a Resource at a given moment, plus the checksum of its code. | [FR-SR-08](requirements/functional/04-stacks-and-resources.md#fr-sr-08) |
+| <a id="flow-box"></a>**Flow Box** | A frame of the web app, docked on the right of the page, that takes a User through the steps of one flow: each step done or open, with what it asks, why and how, its Learning Card and the way to where it is done. It is a guide and writes nothing itself. The page narrows to make room, and it stays open on every page of Data Hub until it is closed. Its flows are describing and publishing a Resource, and setting up its EDA. | [DEC-UX-299](design/principles.md#dec-ux-299), [FR-MR-20](requirements/functional/06-maturity-and-release.md#fr-mr-20), [FR-ED-14](requirements/functional/15-eda.md#fr-ed-14) |
 | <a id="group"></a>**Group** | A set of Users kept in Data Hub, managed by another Group or by itself, with a name and a sentence on who is in it. An Owner Unit is a Group. A Group is who you work with; a Permission group is what you may do. Until 2026-11-10 a Group was a Google group of the own Workspace domain ([DEC-UM-10](requirements/functional/02-user-management.md#dec-um-10)). | [User management](requirements/functional/02-user-management.md#terms) |
 | <a id="health-overview"></a>**Health Overview** | What a Monitor says about itself: Rules that never or always fire, Findings marked noise, and Segment values with too little data; for the review of the Owner with the Data Team. | [FR-CM-18](requirements/functional/08-checks-and-monitoring.md#fr-cm-18) |
 | <a id="key"></a>**Key** | The full name of the view of a Resource in BigQuery, `project.dataset.table`, in lower case; Data Hub keeps it in its own case too, for BigQuery ([DEC-SR-44](requirements/functional/04-stacks-and-resources.md#dec-sr-44)). | [Resources](requirements/functional/04-stacks-and-resources.md#terms) |
-| <a id="key-field"></a>**Key Field** | A field of a Resource that matters, marked on its Resource Card by its Owner or the Data Team. An EDA covers at least the Key Fields of its Resource. | [DEC-SR-19](requirements/functional/04-stacks-and-resources.md#dec-sr-19), [DEC-ED-07](requirements/functional/15-eda.md#dec-ed-07) |
+| <a id="key-field"></a>**Key Field** | A field of a Resource that matters, marked on its Resource Card by its Owner or the Data Team: where a colleague starts. An EDA covers at least the Key Fields of its Resource, and for a Key Field mapped to an Entity also its relationship; a relationship matters when its field is a Key Field. Its Preview offers those that sort its rows to filter on. | [DEC-SR-19](requirements/functional/04-stacks-and-resources.md#dec-sr-19), [DEC-ED-07](requirements/functional/15-eda.md#dec-ed-07), [DEC-RC-34](requirements/functional/05-resource-card.md#dec-rc-34), [DEC-ED-19](requirements/functional/15-eda.md#dec-ed-19) |
 | <a id="known-behaviour"></a>**Known Behaviour** | The block on the Resource Card with the intended use, the pitfalls, the Known Gaps and the Anomalies of a Resource. | [DEC-DH-18](overview/data-hub.md#dec-dh-18), [DEC-RC-12](requirements/functional/05-resource-card.md#dec-rc-12) |
 | <a id="known-gap"></a>**Known Gap** | A structural gap in the data of a Resource, not an error in the strict sense: for example a field that was never stored for part of the rows. It is in the data itself: it would go away if the data were repaired. What stays true even when every row is right is a [Pitfall](#pitfall). Part of the Known Behaviour. | [FR-RC-04](requirements/functional/05-resource-card.md#fr-rc-04), [DEC-RC-12](requirements/functional/05-resource-card.md#dec-rc-12) |
 | <a id="learning-card"></a>**Learning Card** | One topic of the master learning plan, with a page in Data Hub in five steps, from Why now to You can now. A User marks it understood with "I understand it". | [DEC-LR-01](requirements/functional/16-learning.md#dec-lr-01), [DEC-LR-10](requirements/functional/16-learning.md#dec-lr-10), [FR-LR-01](requirements/functional/16-learning.md#fr-lr-01) |
@@ -80,13 +82,14 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="node"></a>**Node** | A model, seed, snapshot, source or exposure in the manifest of a dbt project, with its columns. | [Artifact registry](requirements/functional/01-artifact-registry.md#terms) |
 | <a id="operational-status"></a>**Operational Status** | Whether a Monitored Resource can be trusted now: healthy, a Finding in its Tone, or Quarantine. An axis of its own, next to the Level, which it never lowers. | [DEC-CM-11](requirements/functional/08-checks-and-monitoring.md#dec-cm-11), [FR-CM-26](requirements/functional/08-checks-and-monitoring.md#fr-cm-26) |
 | <a id="owner"></a>**Owner** | The Owner Unit of the Collection a Resource is in. It vouches for the Collection and confirms its Resources. | [DEC-CO-04](requirements/functional/03-collections.md#dec-co-04) |
-| <a id="owner-journey"></a>**Owner Journey** | The guided flow in which Claude takes the Owner of a Resource, step by step and always in the same order, from 2 · Described to its Publication, each step with its Learning Card. It is kept with the Resource, so it resumes in any conversation, for any member of the Owner Unit. | [DEC-CL-17](requirements/functional/17-claude.md#dec-cl-17), [FR-CL-30](requirements/functional/17-claude.md#fr-cl-30) |
+| <a id="owner-journey"></a>**Owner Journey** | The guided flow in which Claude takes the Owner of a Resource, step by step and always in the same order, from 2 · Described to its Publication, each step with its Learning Card. It is kept with the Resource, so it resumes in any conversation, for any member of the Owner Unit. In Data Hub, the Flow Box takes the Owner through its steps required to publish. | [DEC-CL-17](requirements/functional/17-claude.md#dec-cl-17), [FR-CL-30](requirements/functional/17-claude.md#fr-cl-30) |
 | <a id="owner-unit"></a>**Owner Unit** | The Group that takes care of a Collection, chosen by whoever creates the Collection from the Groups they are in. | [DEC-CO-09](requirements/functional/03-collections.md#dec-co-09) |
 | <a id="parameter"></a>**Parameter** | A functionally named and typed input of a Lens, for example `dateFrom`, that can be combined across Lenses. | [DEC-DH-11](overview/data-hub.md#dec-dh-11) |
 | <a id="permission"></a>**Permission** | What a User may do in Data Hub, such as making queries or seeing every Collection: yes or no, or always on, with values that say how far it goes. Every Permission group holds every Permission. | [The Permissions](requirements/functional/12-permissions-and-library-cards.md#the-permissions) |
 | <a id="permission-group"></a>**Permission group** | The set of Permissions a User has. Every User is in one; a new User gets the default. The Data Team gives it on Users, in Admin, and changes it on Permission groups. Not a Group: a Group is who you work with, a Permission group what you may do. | [DEC-PL-01](requirements/functional/12-permissions-and-library-cards.md#dec-pl-01) |
 | <a id="pitfall"></a>**Pitfall** | A way to read a Resource wrongly that looks right, written on its Resource Card by its Owner: what a field means, what a figure counts, or when it is final. It is about how the data is read, its metadata, not about the data itself: it stays true even when every row is right. A gap in the data is a [Known Gap](#known-gap). Part of the Known Behaviour. | [FR-RC-04](requirements/functional/05-resource-card.md#fr-rc-04), [DEC-RC-26](requirements/functional/05-resource-card.md#dec-rc-26) |
 | <a id="pre-flight"></a>**Pre-flight** | What Data Hub shows before a query runs: the volume it will process, against the thresholds for approval and for a block. | [FR-SR-36](requirements/functional/04-stacks-and-resources.md#fr-sr-36), [FR-SR-37](requirements/functional/04-stacks-and-resources.md#fr-sr-37) |
+| <a id="project"></a>**Project** | A set of queries a User works on, alone or with colleagues they share it with, with a name and a sentence on what it is for. Everyone in it may open, change and run its queries; while it is active, opened or holding the query that is open, its queries are the row on top of Query. Not a dbt project, nor a project of Google Cloud, which stay lowercase. | [Projects](design/principles.md#projects), [DEC-UX-282](design/principles.md#dec-ux-282) |
 | <a id="promotion-loop"></a>**Promotion Loop** | Hardening a Beta Concept into a Resource, with the beta query as its specification. | [The promotion loop](overview/open-themes.md#3-the-promotion-loop) |
 | <a id="publication"></a>**Publication** | The switch with which the Owner makes a Resource visible to everyone who sees its Collection: the whole company when the Collection is public. | [Resources](requirements/functional/04-stacks-and-resources.md#terms) |
 | <a id="quarantine"></a>**Quarantine** | The Action that reaches furthest: the whole Resource is no longer served until its Owner lifts it. | [DEC-CM-10](requirements/functional/08-checks-and-monitoring.md#dec-cm-10), [FR-CM-25](requirements/functional/08-checks-and-monitoring.md#fr-cm-25) |
@@ -98,6 +101,7 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="refresh-token"></a>**Refresh Token** | The long-lived token, usable once, with which a client that signs in on behalf of a User (the server of the web app, or Claude) gets a new Access Token without a new login. Only identity accepts it; the other services never see it. | [DEC-PF-18](requirements/technical/00-platform.md#dec-pf-18), [TR-PF-25](requirements/technical/00-platform.md#tr-pf-25) |
 | <a id="registration"></a>**Registration** | Making a table a Resource: an exposure with the tag `datahub` in its dbt project that depends on it. The Registrations together are the index of Data Hub. | [DEC-SR-22](requirements/functional/04-stacks-and-resources.md#dec-sr-22) |
 | <a id="release"></a>**Release** | Making data available, in two steps that Data Hub enforces: from the Data Team to the Owner (Registration in a Collection), then from the Owner to everyone who sees the Collection (Publication). | [Release in two steps](overview/data-hub.md#release-in-two-steps) |
+| <a id="reliable-since"></a>**Reliable Since** | The day from which the whole table of a Resource can be relied on, read on its Date Field, set by its Owner Unit or the Data Team with why not earlier; or from its first row. Rows before it stay, but are not to be read as reliable: a trend or a comparison starts there. A hole after that day, or in part of the rows, is a [Known Gap](#known-gap). | [DEC-RC-29](requirements/functional/05-resource-card.md#dec-rc-29), [FR-RC-31](requirements/functional/05-resource-card.md#fr-rc-31) |
 | <a id="report"></a>**Report** | One or more Lenses around a question, with text and explanation, made by business. It shares its Parameters with its Lenses; its Level is the lowest Level of the Lenses in it. | [Reports](overview/data-hub.md#reports) |
 | <a id="request"></a>**Request** | A Message that asks the Data Team for a decision on its object, such as accepting a very large Lens. It is waiting, accepted or refused, and its reply is the decision. | [DEC-CV-06](requirements/functional/14-conversations.md#dec-cv-06) |
 | <a id="resource"></a>**Resource** | A registered table of a dbt project: one book on the shelves. | [Resources](requirements/functional/04-stacks-and-resources.md#terms) |
@@ -130,7 +134,7 @@ The ladder itself is defined on [Maturity levels of data](https://immoscoop.atla
 | 1 | <a id="available"></a>**Available** | Registered; the description is incomplete |
 | 2 | <a id="described"></a>**Described** | The table and at least one field have a description in dbt |
 | 3 | <a id="confirmed"></a>**Confirmed** | The Owner has confirmed the Resource |
-| 4 | <a id="explored"></a>**Explored** | An EDA document is linked |
+| 4 | <a id="explored"></a>**Explored** | Its EDA-Setup is complete: every EDA-Probe its model type must have is added and set on its fields |
 | 5 | <a id="monitored"></a>**Monitored** | Its Monitor has at least one active Rule ([DEC-CM-12](requirements/functional/08-checks-and-monitoring.md#dec-cm-12)) |
 
 ## The library metaphor
@@ -150,6 +154,7 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | afgeleide metriek, basismetriek | derived Metric, base Metric |
 | actie (van een regel) | Action |
 | aggregaattabel | Aggregate Table |
+| Basis, Hiaten, Gewicht, Juistheid, Relaties tussen velden (de EDA-Steps) | Basis, Gaps, Weight, Correctness, Relations between fields |
 | begrip, beta-begrip | concept, Beta Concept |
 | bekend gedrag | Known Behaviour |
 | bekende hiaten | Known Gaps |
@@ -160,11 +165,15 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | berichtencentrum | Message Centre |
 | beslisregel | decision rule |
 | beslissing | decision |
+| betrouwbaar sinds | Reliable Since |
 | bibliothecaris | librarian |
 | bronjob | Source Job |
 | bucket, bucketgrootte | bucket, size of a bucket |
 | businessbeschrijving | Business Description |
+| datumveld (van een Resource) | Date Field |
+| De grain klopt, Datumbereik, Lege waarden per sleutelveld, Verkapte lege waarden, Volume in de tijd met lege periodes, Verdeling van getallen, Verdeling van categorieën (EDA-Probes) | The grain holds, Date range, Nulls per Key Field, Disguised nulls, Volume over time with empty periods, Distribution of numbers, Distribution of categories |
 | defect, werkt niet meer | Broken |
+| zegt niets (een waarde, Verkapte lege waarden) | says nothing |
 | collectie | Collection |
 | collectiebeheer en wieden | collection management and weeding |
 | confidentialiteitsniveau | level of confidentiality |
@@ -176,13 +185,16 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | denkniveau: herkennen, toepassen, beoordelen | thinking level: recognise, apply, judge |
 | doe-opdracht, doe-vraag | try-it task, try-it question |
 | domeinmodel | Domain Model |
+| echt, kan toeval zijn (een verschil, Graaf erin) | real, could be chance |
 | escalatieladder | ladder (several Rules on one Metric) |
 | fiche, catalogusfiche | Resource Card, catalogue card |
+| flow box | Flow Box |
 | functionele regel | functional requirement |
 | Gebruikersbeheer | User management |
 | gesprek | conversation |
 | gewicht van een lens | weight of a Lens |
 | gezondheidsoverzicht | Health Overview |
+| graaf erin, graaf verder, verfijn (een selectie van rijen) | Dig into, Dig further, Narrow it |
 | grafiekserver | Chart Server |
 | grafiektaal | chart language |
 | holle hoek | concave corner (flare) |
@@ -224,6 +236,7 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | opportuniteit, informatief, aandacht, probleem | opportunity, informative, attention, problem |
 | owner, owner unit (in the Dutch texts of the app) | Owner, Owner Unit |
 | pre-flight | Pre-flight |
+| project (van queries) | Project |
 | promotielus | Promotion Loop |
 | quarantaine | Quarantine |
 | query-ID, SQL-log | Query ID, Query Log |
@@ -237,6 +250,7 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | signaal, opmerking, vraag | Signal, Remark, Question |
 | signaalkleur | signal colour |
 | sleutel | Key |
+| sleutelveld | Key Field |
 | snel pad, volledig pad | quick path, full path |
 | stabiliteit | Stability |
 | startscherm | start screen |

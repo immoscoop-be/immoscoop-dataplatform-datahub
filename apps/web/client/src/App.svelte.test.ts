@@ -2,8 +2,11 @@ import { formatBigQuery } from '@datahub/ui/components/sqlFormat.js';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/svelte';
 import { setLanguage } from '@datahub/ui/foundations/texts.svelte.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { appliesTo, bestNext, coverage, isComplete, isNeeded, levelOf, neededOf, PROBES, probesFor, type EdaResource, type EdaView, type ProbeKey, type RunView } from '@datahub/contracts/eda';
 import { journeyOf, type JourneyFacts } from '@datahub/contracts/journey';
 import { NO_PERMISSIONS, STARTING_GROUPS, type Permissions, type StartingGroup } from '@datahub/contracts/permissions';
+import { flowBox } from './lib/flowBox.svelte.js';
+import { proposeGap } from './lib/gaps.js';
 import App from './App.svelte';
 import type { Config } from './lib/config.js';
 
@@ -12,6 +15,7 @@ const CONFIG: Config = {
   catalogueUrl: 'https://catalogue.test',
   registryUrl: 'https://registry.test',
   queryUrl: 'https://query.test',
+  edaUrl: 'https://eda.test',
   semgraphUrl: 'https://semgraph.test',
 };
 
@@ -19,6 +23,7 @@ const CONFIG: Config = {
 const WHY = 'Wat ontbreekt of maar deels aanwezig is, en waarom · gewone tekst';
 
 const ME = { sub: '1', email: 'max@thenextimmoscoop.be', name: 'Max Verstraete', groups: [] as string[] };
+const ME_ID = ME.sub;
 
 /** A Question on Credit leads, unread for its Owner Unit (MSG-CNV-01). */
 const QUESTION = {
@@ -92,7 +97,7 @@ const SAVED_SEARCHES = {
   ],
   leftOut: [],
   details: { partition: null, clusterBy: [], partitionFilter: 'none', grain: [], grainSentence: '', modelType: null, origins: {}, release: null, mappings: [] },
-  card: { businessDescription: '', intendedUse: '', pitfalls: '', knownGaps: [], reliableSince: null, keyFields: [], parameters: [] },
+  card: { businessDescription: '', intendedUse: '', pitfalls: '', knownGaps: [], reliableSince: null, dateField: null, keyFields: [] },
   published: false,
   deprecated: false,
   publication: null,
@@ -262,8 +267,7 @@ const READY: JourneyFacts = {
   intendedUse: 'Weekly trends.',
   pitfalls: 'The current week is incomplete.',
   knownGaps: 1,
-  reliableSince: '2025-01-01',
-  parameters: [],
+  reliableSince: { from: 'day', day: '2025-01-01', why: 'Earlier weeks are incomplete.' },
   modelType: null,
   grain: [],
   mappings: 0,
@@ -637,6 +641,12 @@ function serve({
   meanwhile = undefined as JourneyFacts | undefined,
   /** The Resources whose model type is incomplete, as catalogue lists them to a Data Admin (FR-CO-45). */
   toComplete = [] as Record<string, unknown>[],
+  /** The Projects of Query, as query keeps them, changed by what the page asks (FR-SR-63). */
+  projects = [] as FakeProject[],
+  /** Who else is in a query of a Project, and who changed its SQL last (OP-UX-99). */
+  presence = { others: [], sqlChanged: null } as Record<string, unknown>,
+  /** eda, by what it answers a call; without it, eda knows no EDA (TR-ED-01). */
+  edaService = undefined as ((method: string, path: string, body?: unknown) => Response | undefined) | undefined,
 } = {}): Saved[] {
   const calls: Saved[] = [];
   // The Users and Permission groups as identity keeps them, changed by what the page asks (TR-PL-07).
@@ -674,6 +684,13 @@ function serve({
     const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
     if (path === '/auth/token') {
       return signedIn ? json({ access_token: 'token', expires_in: 3600 }) : json({ error: 'no_session' }, 401);
+    }
+    // eda, apart from the other services: its calls are kept as "eda <path>".
+    if (input.startsWith(CONFIG.edaUrl)) {
+      const at = input.slice(CONFIG.edaUrl.length);
+      const body: unknown = init.body ? JSON.parse(init.body as string) : undefined;
+      calls.push({ method, path: `eda ${at}`, ...(body ? { body } : {}) });
+      return edaService?.(method, at, body) ?? json({ error: 'not_found' }, 404);
     }
     calls.push({ method, path, ...(init.body ? { body: JSON.parse(init.body as string) } : {}) });
     if (sessionEndsAt !== undefined && path === sessionEndsAt) {
@@ -899,6 +916,10 @@ function serve({
       });
     }
     // query, as it tells the size of a Resource, previews it and lists the queries on it (FR-SR-38, FR-SR-39, FR-SR-44).
+    // Its first row on its Date Field, for the line under Reliable since (DEC-RC-33).
+    if (path.startsWith('/resources/r2/first-row')) {
+      return json({ firstRow: { day: '2024-01-08', from: 'partitions' } });
+    }
     if (path === '/resources/r2/storage') {
       return json({ storage: { key: WEEKLY_DETAIL.key, bytes: 6_200_000_000, rows: 41_000, partitions: 312, modifiedAt: '2026-10-28T06:00:00Z', beneath: false } });
     }
@@ -1098,18 +1119,65 @@ function serve({
       });
     }
     if (path === '/queries' && method === 'POST') {
-      const { name, question } = JSON.parse(init.body as string) as { name: string; question: string };
+      const { name, question, project: into } = JSON.parse(init.body as string) as { name: string; question: string; project?: string };
       const made = { ...QUERY, name, question, id: 'q-made', lastRun: null, lastRunAt: null };
       queries.unshift(made);
+      projects.find((one) => one.id === into)?.queries.push(made.id);
       return json({ query: made }, 201);
     }
+    // The Projects of Query (TR-SR-33).
+    const listItem = (one: FakeProject) => ({ id: one.id, name: one.name, description: one.description, updatedAt: '2026-11-19T09:00:00Z', queries: one.queries.length, members: one.members.map(({ id, name }) => ({ id, name })) });
+    if (path === '/projects' && method === 'GET') return json({ projects: projects.map(listItem) });
+    if (path === '/projects' && method === 'POST') {
+      const body = JSON.parse(init.body as string) as { name: string; description?: string; queries?: string[] };
+      for (const one of projects) one.queries = one.queries.filter((id) => !(body.queries ?? []).includes(id));
+      const made: FakeProject = { id: `p-${projects.length + 1}`, name: body.name, description: body.description ?? '', members: [{ id: ME_ID, name: ME.name }], queries: [...(body.queries ?? [])] };
+      projects.push(made);
+      return json({ project: projectView(made, queries) }, 201);
+    }
+    const [, projectId, rest] = /^\/projects\/([^/]+)(\/.*)?$/.exec(path) ?? [];
+    const project = projects.find((one) => one.id === projectId);
+    if (projectId && !project) return json({ error: 'not_found' }, 404);
+    if (project && !rest && method === 'GET') return json({ project: projectView(project, queries) });
+    if (project && !rest && method === 'PATCH') {
+      Object.assign(project, JSON.parse(init.body as string));
+      return json({ project: projectView(project, queries) });
+    }
+    if (project && !rest && method === 'DELETE') {
+      projects.splice(projects.indexOf(project), 1);
+      return new Response(null, { status: 204 });
+    }
+    const [, inQueries, queryId] = /^\/(queries)\/([^/]+)$/.exec(rest ?? '') ?? [];
+    if (project && inQueries && method === 'PUT') {
+      for (const one of projects) one.queries = one.queries.filter((id) => id !== queryId);
+      project.queries.push(queryId as string);
+      return json({ added: true });
+    }
+    if (project && inQueries && method === 'DELETE') {
+      project.queries = project.queries.filter((id) => id !== queryId);
+      return json({ removed: true });
+    }
+    if (project && rest === '/order' && method === 'PUT') {
+      const order = (JSON.parse(init.body as string) as { queries: string[] }).queries;
+      project.queries = [...order.filter((id) => project.queries.includes(id)), ...project.queries.filter((id) => !order.includes(id))];
+      return json({ queries: project.queries });
+    }
     const query = queries.find((candidate) => path.startsWith(`/queries/${candidate.id as string}`));
+    if (query && path === `/queries/${query.id as string}/presence` && method === 'PUT') return json(presence);
     if (query && path === `/queries/${query.id as string}` && method === 'PATCH') {
-      Object.assign(query, JSON.parse(init.body as string));
+      const changes = JSON.parse(init.body as string) as Record<string, unknown>;
+      // Its Resources change in it, by their IDs (FR-SR-67).
+      if (Array.isArray(changes.resources)) {
+        const known = [...(query.resources as { id: string }[]), ...CREDIT.resources.map((resource) => ({ ...QUERY.resources[0], ...resource, visible: true }))];
+        changes.resources = (changes.resources as string[]).map((id) => known.find((resource) => resource.id === id) ?? { id, displayName: id, visible: false });
+      }
+      Object.assign(query, changes);
       return json({ query });
     }
     if (query && path === `/queries/${query.id as string}`) {
-      return json({ query });
+      // The Project it is in, as query tells it (TR-SR-33).
+      const holder = projects.find((one) => one.queries.includes(query.id as string));
+      return json({ query: { ...query, project: holder ? { id: holder.id, name: holder.name } : null } });
     }
     if (query && path.endsWith('/preflight')) {
       const body = JSON.parse(init.body as string) as { sql: string; parameters: { name: string }[] };
@@ -1365,12 +1433,15 @@ function open(path: string): void {
 beforeEach(() => {
   // The narrowest window, as tokens.css gives it, and a wide window with a light system and no wish for less motion.
   document.documentElement.style.setProperty('--app-min-width', '900px');
+  document.documentElement.style.setProperty('--flow-box-fold-below', '1360px');
   vi.stubGlobal('matchMedia', (query: string) => ({ matches: false, media: query, addEventListener() {}, removeEventListener() {} }));
   // Random picks the first of each set: the gradient, which needs no WebGL, and the first photo.
   vi.spyOn(Math, 'random').mockReturnValue(0);
 });
 
 afterEach(() => {
+  // The Flow Box lives in the open app only (DEC-UX-306).
+  flowBox.close();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   setLanguage('nl');
@@ -2096,6 +2167,300 @@ describe('the Permissions of the User (FR-PL-14)', () => {
   });
 });
 
+/** Weekly lead volume as eda sees it: an aggregate at 3 · Confirmed, with four Key Fields. */
+const EDA_WEEKLY: EdaResource = {
+  id: 'r2',
+  displayName: 'Weekly lead volume',
+  modelType: 'aggregate',
+  level: 3,
+  fields: [
+    { name: 'week_start', dataType: 'DATE', keyField: true, role: 'period', grain: true, mapped: false },
+    { name: 'lead_source', dataType: 'STRING', keyField: true, role: 'groupedBy', grain: true, mapped: true },
+    { name: 'lead_count', dataType: 'INT64', keyField: true, role: 'addsUp', grain: false, mapped: false },
+    { name: 'lead_channel', dataType: 'STRING', keyField: true, role: null, grain: false, mapped: false },
+  ],
+};
+
+/** The EDA of Weekly lead volume, In progress, with how many of its needed EDA-Probes are complete. */
+function edaOf(complete = 0): EdaView {
+  return {
+    resource: { ...EDA_WEEKLY, collection: { id: 'c1', name: 'Credit leads' } },
+    status: 'inProgress',
+    startedBy: { id: '2', name: 'An Claes' },
+    startedAt: '2026-11-21T09:00:00Z',
+    exploredAt: null,
+    needed: { total: 10, complete },
+    probes: [],
+    coverage: coverage(EDA_WEEKLY, []),
+    next: null,
+  };
+}
+
+const answer = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+/** Weekly lead volume, published: 3 · Confirmed. */
+const CONFIRMED = { level: 3, published: true, publication: { publishedAt: '2026-11-02T09:00:00Z', publishedBy: 'An Claes', confirmedAt: '2026-11-02T09:00:00Z', confirmedBy: 'An Claes' } };
+
+describe('the section EDA (FR-ED-01 to FR-ED-04, TR-ED-07)', () => {
+  it('is in the rail after Charts only for who may explore Resources; to anyone else it is what may not be seen (FR-ED-01)', async () => {
+    const calls = serve();
+    open('/eda');
+    render(App, { config: CONFIG });
+    expect(await screen.findByRole('heading', { level: 1, name: 'Hier is niets voor jou' })).toBeTruthy();
+    expect(within(screen.getByRole('navigation', { name: 'Hoofdnavigatie' })).queryByRole('link', { name: 'EDA' })).toBeNull();
+    expect(calls.some((call) => call.path.startsWith('eda '))).toBe(false);
+  });
+
+  it('lists the EDAs by Collection, with where each stands and how many needed EDA-Probes it still has to go, and the Resources ready for one (FR-ED-03)', async () => {
+    serve({
+      as: 'admin',
+      edaService: (method, path) =>
+        method === 'GET' && path === '/edas'
+          ? answer({
+              edas: [{ resource: { id: 'r2', displayName: 'Weekly lead volume', collection: { id: 'c1', name: 'Credit leads' } }, status: 'inProgress', needed: { total: 10, complete: 4 } }],
+              ready: [{ resource: { id: 'r7', displayName: 'Listing states', collection: { id: 'c2', name: 'Listings' } }, level: 3 }],
+            })
+          : undefined,
+    });
+    open('/eda');
+    render(App, { config: CONFIG });
+    const rail = within(await screen.findByRole('navigation', { name: 'Hoofdnavigatie' }));
+    const eda = await rail.findByRole('link', { name: 'EDA' });
+    expect(eda.getAttribute('aria-current')).toBe('page');
+    const links = rail.getAllByRole('link').map((link) => link.getAttribute('aria-label'));
+    expect(links.indexOf('EDA')).toBe(links.indexOf('Grafieken') + 1);
+    const panel = within(screen.getByRole('complementary', { name: 'EDA' }));
+    const weekly = await panel.findByRole('link', { name: /Weekly lead volume/ });
+    expect(weekly.getAttribute('href')).toBe('/eda/r2');
+    expect(weekly.textContent).toContain('nog 6');
+    expect(within(weekly).getByRole('img', { name: 'Bezig' })).toBeTruthy();
+    expect(panel.getByText('Credit leads')).toBeTruthy();
+    expect(panel.getByText('Klaar voor een EDA')).toBeTruthy();
+    expect(panel.getByRole('link', { name: /Listing states/ }).getAttribute('href')).toBe('/resources/r7/maturity');
+    expect(within(screen.getByRole('main')).getByRole('heading', { level: 1, name: 'EDA' })).toBeTruthy();
+    expect(document.title).toBe('local · Data Hub — EDA');
+  });
+
+  it('starts the EDA from the maturity ladder at 3 · Confirmed, and opens it in the section EDA (FR-ED-02, DEC-UX-320)', async () => {
+    let started = false;
+    const calls = serve({
+      as: 'admin',
+      weekly: CONFIRMED,
+      edaService: (method, path) => {
+        if (path === '/resources/r2/eda' && method === 'POST') {
+          started = true;
+          return answer(edaOf(), 201);
+        }
+        if (path === '/resources/r2/eda') return started ? answer(edaOf()) : answer({ error: 'not_found' }, 404);
+        if (path === '/edas') return answer({ edas: [], ready: [] });
+        return undefined;
+      },
+    });
+    open('/resources/r2/maturity');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const start = await main.findByRole('button', { name: 'Start de EDA' });
+    expect(main.getByText(/Vraagt een EDA: Data Hub neemt de Resource door zijn EDA-Steps/)).toBeTruthy();
+    await fireEvent.click(start);
+    await vi.waitFor(() => expect(location.pathname).toBe('/eda/r2'));
+    expect(calls).toContainEqual({ method: 'POST', path: 'eda /resources/r2/eda' });
+    expect(await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' })).toBeTruthy();
+    expect(main.getByRole('tab', { name: 'Stappen' }).getAttribute('aria-selected')).toBe('true');
+    expect(main.getByText('0 van 10')).toBeTruthy();
+  });
+
+  it('shows on the ladder how far its EDA is, with a bar and Open its EDA; without eda.use the Levels read as before (FR-ED-01, FR-ED-02)', async () => {
+    serve({ as: 'admin', weekly: CONFIRMED, edaService: (method, path) => (method === 'GET' && path === '/resources/r2/eda' ? answer(edaOf(4)) : undefined) });
+    open('/resources/r2/maturity');
+    const { unmount } = render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByText(/Zijn EDA, gestart op .* door An Claes: 4 van 10 nodige EDA-Probes af\./)).toBeTruthy();
+    expect(main.getByRole('img', { name: '4 van 10 nodige EDA-Probes af' }).querySelectorAll('span.on')).toHaveLength(4);
+    expect(main.getByRole('link', { name: /Open zijn EDA/ }).getAttribute('href')).toBe('/eda/r2');
+    expect(main.queryByRole('button', { name: 'Start de EDA' })).toBeNull();
+    unmount();
+    cleanup();
+
+    const calls = serve({ weekly: CONFIRMED });
+    open('/resources/r2/maturity');
+    render(App, { config: CONFIG });
+    const page = within(await screen.findByRole('main'));
+    expect(await page.findByText(/Vraagt een EDA, voorlopig door een Data Admin/)).toBeTruthy();
+    expect(page.queryByRole('button', { name: 'Start de EDA' })).toBeNull();
+    expect(calls.some((call) => call.path.startsWith('eda '))).toBe(false);
+  });
+});
+
+/** The EDA of Weekly lead volume with what its EDA-Probes ran on, from the rules of the contracts, as eda answers it. */
+function edaWith(runs: Partial<Record<ProbeKey, RunView>> = {}): EdaView {
+  const covers = Object.entries(runs).map(([probe, run]) => ({ probe: probe as ProbeKey, fields: run.fields }));
+  return {
+    ...edaOf(),
+    needed: neededOf(EDA_WEEKLY, covers),
+    probes: probesFor(EDA_WEEKLY.modelType).map((key) => ({
+      key,
+      level: levelOf(key, EDA_WEEKLY.modelType) ?? 'could',
+      runs: PROBES[key].runs,
+      needed: isNeeded(key, EDA_WEEKLY),
+      added: runs[key] !== undefined,
+      complete: isComplete(key, EDA_WEEKLY, covers),
+      applies: appliesTo(key, EDA_WEEKLY),
+      fields: runs[key]?.fields ?? [],
+      params: {},
+      lastRun: runs[key] ?? null,
+    })),
+    coverage: coverage(EDA_WEEKLY, covers),
+    next: bestNext(EDA_WEEKLY, covers),
+  };
+}
+
+const GRAIN_RUN: RunView = {
+  id: 'run-grain',
+  ranAt: '2026-11-21T10:40:00Z',
+  ranBy: { id: '2', name: 'An Claes' },
+  bytes: 1000,
+  fields: ['week_start', 'lead_source'],
+  params: {},
+  results: [{ subject: '', data: { rows: 16224, values: 16224, onMoreThanOne: 0, rowsCovered: 0, emptyGrain: 0, buckets: [16224, 0, 0, 0], examples: [] }, reading: 'expected', yours: null }],
+};
+
+describe('the guide of an EDA, in the Flow Box (FR-ED-14, DEC-UX-327, TR-ED-09)', () => {
+  /** eda with the EDA of Weekly lead volume, which a run of The grain holds changes. */
+  function serveEda(options: { started?: boolean } = {}) {
+    let view = edaWith();
+    let started = options.started ?? true;
+    const calls = serve({
+      as: 'admin',
+      weekly: CONFIRMED,
+      edaService: (method, path) => {
+        if (path === '/resources/r2/eda' && method === 'POST') {
+          started = true;
+          return answer(view, 201);
+        }
+        if (path === '/resources/r2/eda') return started ? answer(view) : answer({ error: 'not_found' }, 404);
+        if (path === '/resources/r2/eda/probes/grainHolds/runs' && method === 'POST') {
+          view = edaWith({ grainHolds: GRAIN_RUN });
+          return answer({ state: 'ran', eda: view });
+        }
+        if (path === '/edas') return answer({ edas: [], ready: [] });
+        return undefined;
+      },
+    });
+    return calls;
+  }
+  const box = () => screen.findByRole('complementary', { name: 'Zijn EDA opzetten · Weekly lead volume' });
+
+  it('opens as the EDA starts, folded to its strip on the tab Steps, until it is opened there', async () => {
+    serveEda({ started: false });
+    open('/resources/r2/maturity');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('button', { name: 'Start de EDA' }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/eda/r2'));
+    const strip = within(await screen.findByRole('complementary', { name: 'Zijn EDA opzetten · Weekly lead volume · 0 van 10 nodige EDA-Probes af' }));
+    expect(strip.getByText('0')).toBeTruthy();
+    expect(document.querySelectorAll('.dots li')).toHaveLength(10);
+    expect(document.querySelectorAll('.dots li.coming')).toHaveLength(3);
+    // Its guide is open: Guide me is not there.
+    expect(main.queryByRole('button', { name: 'Begeleid me' })).toBeNull();
+    await fireEvent.click(strip.getByRole('button', { name: 'Maximaliseren' }));
+    const guide = within(await box());
+    // One step per needed EDA-Probe, grouped under its EDA-Step, the coming ones counted.
+    expect([...document.querySelectorAll('.box li.group')].map((group) => group.textContent)).toEqual(['Basis', 'Hiaten', 'Gewicht', 'Juistheid']);
+    expect(guide.getByText('0 van 10 nodige EDA-Probes af')).toBeTruthy();
+    // Date range and Disguised nulls run now (FR-ED-18, FR-ED-19); Values without a match is still coming.
+    expect(guide.getByRole('button', { name: /^Datumbereik/ }).textContent).toContain('Nog niet toegevoegd');
+    expect(guide.getByRole('button', { name: /^Verkapte lege waarden/ }).textContent).toContain('Nog niet toegevoegd');
+    expect(guide.getByRole('button', { name: /^Waarden zonder match/ }).textContent).toContain('Komt eraan: Data Hub voert hem nog niet uit');
+    expect(guide.getByRole('button', { name: /^De grain klopt/ }).textContent).toContain('Nog niet toegevoegd');
+    // The step to do now is the best next step, as the page proposes it, unfolded: The grain holds, while it is open,
+    // whatever else misses more (DEC-ED-37).
+    expect(guide.getByRole('button', { name: /^De grain klopt/ }).getAttribute('aria-expanded')).toBe('true');
+    expect(guide.getByRole('button', { name: /^Lege waarden per sleutelveld/ }).getAttribute('aria-expanded')).toBe('false');
+    expect(guide.getByText(/Nog 10 te gaan, waarvan 3 eraan komen: ze tellen toch mee/)).toBeTruthy();
+    // It stays open on every other page; its Resource leads back to its EDA, where, opened there, it stays open.
+    await fireEvent.click(within(screen.getByRole('navigation', { name: 'Hoofdnavigatie' })).getByRole('link', { name: 'Query' }));
+    const away = within(await box());
+    await fireEvent.click(away.getByRole('button', { name: 'Weekly lead volume' }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/eda/r2'));
+    expect(await box()).toBeTruthy();
+    // Minimized there, it stays so elsewhere, as the User left it.
+    await fireEvent.click(within(await box()).getByRole('button', { name: 'Minimaliseren' }));
+    await fireEvent.click(within(screen.getByRole('navigation', { name: 'Hoofdnavigatie' })).getByRole('link', { name: 'Query' }));
+    expect(await screen.findByRole('complementary', { name: /^Zijn EDA opzetten · Weekly lead volume · 0 van 10/ })).toBeTruthy();
+  });
+
+  it('leads to the detail of the EDA-Probe, says there that it is open on the page, and follows its run', async () => {
+    const calls = serveEda();
+    open('/eda/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    // Closed, Guide me beside the title brings it back, open.
+    await fireEvent.click(await main.findByRole('button', { name: 'Begeleid me' }));
+    const guide = within(await box());
+    expect(main.queryByRole('button', { name: 'Begeleid me' })).toBeNull();
+    // The step to do now is The grain holds, while it is open (DEC-ED-37).
+    await fireEvent.click(guide.getByRole('button', { name: /Open de EDA-Probe/ }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/eda/r2/probes/grainHolds'));
+    // On the detail it is open as the User left it, its step open on the page, without a way there.
+    const here = within(await box());
+    const grain = here.getByRole('button', { name: /^De grain klopt/ });
+    expect(grain.getAttribute('aria-expanded')).toBe('true');
+    expect(here.getByText('Open op de pagina')).toBeTruthy();
+    expect(within(document.getElementById('flow-step-grainHolds') as HTMLElement).queryByRole('button', { name: /Open de EDA-Probe/ })).toBeNull();
+    // A run changes the EDA: the step ticks with Data Hub's reading, and the next step unfolds: Nulls per Key Field,
+    // which misses all four Key Fields, first of those that miss as much (DEC-ED-16).
+    await fireEvent.click(await main.findByRole('button', { name: /^Uitvoeren$/ }));
+    await vi.waitFor(() => expect(calls).toContainEqual(expect.objectContaining({ method: 'POST', path: 'eda /resources/r2/eda/probes/grainHolds/runs' })));
+    await vi.waitFor(() => expect(here.getByText('1 van 10 nodige EDA-Probes af')).toBeTruthy());
+    expect(here.getByRole('button', { name: /^De grain klopt/ }).textContent).toContain('Zoals verwacht');
+    expect(here.getByRole('button', { name: /^Lege waarden per sleutelveld/ }).getAttribute('aria-expanded')).toBe('true');
+    // Close takes it away; Guide me brings it back.
+    await fireEvent.click(here.getByRole('button', { name: 'Sluiten' }));
+    expect(screen.queryByRole('complementary', { name: /Zijn EDA opzetten/ })).toBeNull();
+    await fireEvent.click(main.getByRole('link', { name: /Alle EDA-Steps/ }));
+    expect(await main.findByRole('button', { name: 'Begeleid me' })).toBeTruthy();
+  });
+
+  it('opens the detail of an EDA-Probe from the list to add one, which then closes (FR-ED-13)', async () => {
+    serveEda();
+    open('/eda/r2');
+    render(App, { config: CONFIG });
+    const gaps = within(await screen.findByRole('region', { name: 'Hiaten' }));
+    await fireEvent.click(gaps.getByRole('button', { name: /Probe toevoegen/ }));
+    const sheet = within(await screen.findByRole('dialog', { name: 'Een EDA-Probe toevoegen' }));
+    await fireEvent.click(sheet.getByRole('link', { name: /Lege waarden per sleutelveld/ }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/eda/r2/probes/nullsPerKeyField'));
+    expect(screen.queryByRole('dialog', { name: 'Een EDA-Probe toevoegen' })).toBeNull();
+    expect(await within(screen.getByRole('main')).findByRole('heading', { level: 2, name: 'Lege waarden per sleutelveld' })).toBeTruthy();
+  });
+
+  it('is there only while the EDA is in progress', async () => {
+    serve({ as: 'admin', edaService: (method, path) => (path === '/resources/r2/eda' ? answer({ ...edaWith(), status: 'explored', exploredAt: '2026-11-21T12:00:00Z' }) : undefined) });
+    flowBox.show('r2', 'eda');
+    open('/eda/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' })).toBeTruthy();
+    await vi.waitFor(() => expect(flowBox.open).toBeNull());
+    expect(main.queryByRole('button', { name: 'Begeleid me' })).toBeNull();
+    expect(screen.queryByRole('complementary', { name: /Zijn EDA opzetten/ })).toBeNull();
+  });
+
+  it('is one Flow Box at a time: the guide of an EDA takes the place of the publication, and back', async () => {
+    serveEda();
+    flowBox.show('r2');
+    open('/eda/r2');
+    render(App, { config: CONFIG });
+    expect(await screen.findByRole('complementary', { name: 'Beschrijven en publiceren · Weekly lead volume' })).toBeTruthy();
+    await fireEvent.click(await within(screen.getByRole('main')).findByRole('button', { name: 'Begeleid me' }));
+    expect(await box()).toBeTruthy();
+    expect(screen.queryByRole('complementary', { name: /Beschrijven en publiceren/ })).toBeNull();
+    flowBox.show('r2');
+    expect(await screen.findByRole('complementary', { name: 'Beschrijven en publiceren · Weekly lead volume' })).toBeTruthy();
+    expect(screen.queryByRole('complementary', { name: /Zijn EDA opzetten/ })).toBeNull();
+  });
+});
+
 describe('the flags the services send per object (FR-PL-14, DEC-PL-03)', () => {
   const ONLY_GAPS = { description: false, behaviour: false, pitfalls: false, availableSince: false, gaps: true, keyFields: false, entityMapping: false };
 
@@ -2242,7 +2607,7 @@ describe('Permission groups, in Admin', () => {
     expect(list.getByRole('button', { name: /^Lens user/ }).textContent).toContain('Standaard voor nieuwe Users');
     await fireEvent.click(list.getByRole('button', { name: /^Lens user/ }));
     expect(opened().getByRole('heading', { level: 2, name: 'Lens user' })).toBeTruthy();
-    expect(opened().getAllByRole('region').map((part) => part.getAttribute('aria-label'))).toEqual(['Collections en Resources', 'Groups', 'Query', 'Lenses', 'Berichten', 'Claude, via de MCP', 'Excel', 'Admin']);
+    expect(opened().getAllByRole('region').map((part) => part.getAttribute('aria-label'))).toEqual(['Collections en Resources', 'Groups', 'Query', 'Lenses', 'EDA', 'Berichten', 'Claude, via de MCP', 'Excel', 'Admin']);
     expect(screen.queryByText(/nog niet bewaard/)).toBeNull();
 
     // Yes shows its values; the change is marked and counted.
@@ -2402,7 +2767,7 @@ describe('the web app, with Collections', () => {
     expect(main.getByRole('heading', { level: 2, name: 'Wat zijn Collections?' })).toBeTruthy();
   });
 
-  it('opens the page of a Collection from the panel: what it is, what needs attention, its Resources and its history (FR-CO-25 to FR-CO-27)', async () => {
+  it('opens the page of a Collection from the panel: what it is, what needs attention and one table of what sits at its top (FR-CO-25 to FR-CO-27, DEC-UX-311)', async () => {
     serve({ groups: ['g1'] });
     open('/collections');
     render(App, { config: CONFIG });
@@ -2415,19 +2780,34 @@ describe('the web app, with Collections', () => {
     // The head shows who owns it and who sees it, not how many Resources it holds nor when it was made (DEC-UX-145).
     expect(main.queryByText(/^Aangemaakt op/)).toBeNull();
     expect(main.queryByText(/^\d+ Resources?$/)).toBeNull();
-    expect(main.getByRole('region', { name: 'Vraagt aandacht' }).textContent).toContain(
-      '1 Resource is nog niet gepubliceerd: Weekly lead volume. Tot de Owner hem publiceert, zien enkel Data en het Data Team hem.',
-    );
-    const row = within(main.getByRole('table', { name: 'Resources' })).getByRole('link', { name: /Weekly lead volume/ }).closest('tr')!;
+    // Each Resource not published yet on a line of its own, with a link to it (DEC-UX-314).
+    const attention = within(main.getByRole('region', { name: 'Vraagt aandacht' }));
+    expect(attention.getByText('Weekly lead volume').closest('div')?.textContent).toContain('Weekly lead volume is nog niet gepubliceerd: enkel Data en het Data Team zien hem.');
+    expect(attention.getByRole('link', { name: 'Openen' }).getAttribute('href')).toBe('/resources/r2');
+    // One table, with its columns Name, Level, Status and Last change; no headings over it (DEC-UX-311, OP-UX-115).
+    const table = main.getByRole('table', { name: 'In Credit leads' });
+    expect([...table.querySelectorAll('th')].slice(0, 4).map((th) => th.textContent)).toEqual(['Naam', 'Level', 'Status', 'Laatste wijziging']);
+    const row = within(table).getByRole('link', { name: /Weekly lead volume/ }).closest('tr')!;
     expect(row.textContent).toContain('2 · Described');
+    expect(row.textContent).toContain('Niet gepubliceerd');
     expect(row.textContent).toContain('Toegevoegd aan de Collection Credit leads door Dirk Vos');
-    expect(main.getByText('Collection aangemaakt door An Claes')).toBeTruthy();
+    expect(main.queryByRole('heading', { level: 2 })).toBeNull();
+    // Its history is no part of the page: the quick window opens it in a sheet (DEC-UX-312).
+    expect(main.queryByText('Collection aangemaakt door An Claes')).toBeNull();
+    await quickDo('geschiedenis tonen');
+    const history = within(await screen.findByRole('dialog', { name: 'Geschiedenis' }));
+    expect(history.getByText('Collection aangemaakt door An Claes')).toBeTruthy();
+    expect(history.getByText('1 vermelding')).toBeTruthy();
+    await fireEvent.click(history.getByRole('button', { name: 'Sluiten' }));
     expect(document.title).toBe('local · Data Hub — Credit leads');
     // It unfolds in the panel, with an outline.
     expect(panel.getByRole('button', { name: 'Toon wat Credit leads bevat' }).getAttribute('aria-expanded')).toBe('true');
     expect(panel.getByRole('link', { name: /Credit leads/ }).getAttribute('aria-current')).toBe('page');
-    // Only the Data Team adds Resources.
-    expect(main.queryByRole('button', { name: /Resources toevoegen/ })).toBeNull();
+    // One New, with what its Owner Unit makes here; only the Data Team adds Resources, and a Message is written under
+    // Messages (DEC-UX-310, DEC-UX-313).
+    await fireEvent.click(main.getByRole('button', { name: 'Nieuw' }));
+    expect(main.getAllByRole('menuitem').map((item) => item.querySelector('.choice')?.textContent)).toEqual(['Map', 'Lens']);
+    expect(main.queryByRole('button', { name: /Alles bewerken|Resources toevoegen/ })).toBeNull();
   });
 
   it('shows a colleague no actions and no Resource that is not published (DEC-CO-12, DEC-CO-15)', async () => {
@@ -2468,12 +2848,13 @@ describe('the web app, with Collections', () => {
     });
   });
 
-  it('edits a Collection in place, and sends only what changed (FR-CO-30)', async () => {
+  it('edits a Collection from its title, with Edit more for every field, and sends only what changed (FR-CO-30, DEC-UX-309)', async () => {
     const calls = serve({ groups: ['g1'] });
     open('/collections/c1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    await fireEvent.click(await main.findByRole('button', { name: /Alles bewerken/ }));
+    await fireEvent.click(within(await main.findByRole('heading', { level: 1, name: 'Credit leads' })).getByRole('button'));
+    await fireEvent.click(main.getByRole('button', { name: 'Meer bewerken' }));
     // Only Groups the User is in, by name, with the way to Groups where they are kept (DEC-UX-200).
     const groupsLink = main.getByRole('link', { name: 'Groups' });
     expect(groupsLink.getAttribute('href')).toBe('/groups');
@@ -2484,6 +2865,20 @@ describe('the web app, with Collections', () => {
     await fireEvent.input(main.getByRole('textbox', { name: /Beschrijving/ }), { target: { value: 'Every credit lead.' } });
     await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/collections/c1', body: { description: 'Every credit lead.' } }));
+  });
+
+  it('starts Edit more from what was typed in place (DEC-UX-309)', async () => {
+    const calls = serve({ groups: ['g1'] });
+    open('/collections/c1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(within(await main.findByRole('heading', { level: 1, name: 'Credit leads' })).getByRole('button'));
+    await fireEvent.input(main.getByRole('textbox', { name: 'Naam' }), { target: { value: 'Credit leads in' } });
+    await fireEvent.click(main.getByRole('button', { name: 'Meer bewerken' }));
+    expect((main.getByRole('textbox', { name: 'Naam' }) as HTMLInputElement).value).toBe('Credit leads in');
+    expect(main.getByRole('combobox', { name: /Owner Unit/ })).toBeTruthy();
+    await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/collections/c1', body: { name: 'Credit leads in' } }));
   });
 
   it('changes the name or description of a Collection with a click on it, as a query does, and only for who may (DEC-UX-162)', async () => {
@@ -2612,7 +3007,7 @@ describe('the page of a Resource', () => {
     expect(main.getByRole('toolbar', { name: /Valkuilen/ })).toBeTruthy();
     await fireEvent.input(main.getByRole('textbox', { name: 'Beoogd gebruik' }), { target: { value: 'Weekly **trends**.' } });
     await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
-    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/resources/r2', body: { intendedUse: 'Weekly **trends**.', pitfalls: '', reliableSince: null } }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/resources/r2', body: { intendedUse: 'Weekly **trends**.', pitfalls: '' } }));
     expect((await main.findByText('trends')).tagName).toBe('STRONG');
 
     await fireEvent.click(main.getByRole('tab', { name: 'Kolommen' }));
@@ -2728,6 +3123,28 @@ describe('the page of a Resource', () => {
     expect(await main.findByText('Geen Known Gaps vastgelegd.')).toBeTruthy();
   });
 
+  it('opens a Known Gap proposed by Dig into in the form of a new gap, filled in, for the User to save or not (FR-ED-20)', async () => {
+    const calls = serve({ groups: ['g1'] });
+    const scope = { period: { from: null, to: '2025-01-05' }, fields: ['lead_channel'], rows: { field: 'lead_source', is: 'oneOf' as const, values: ['app'] } };
+    proposeGap('r2', { text: 'lead_channel is niet ingevuld waar lead_source app is vóór 6 jan 2025.', scope });
+    open('/resources/r2/gaps');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const form = within(await main.findByRole('form', { name: 'Een nieuwe Known Gap' }));
+    expect((form.getByRole('textbox', { name: WHY }) as HTMLTextAreaElement).value).toBe('lead_channel is niet ingevuld waar lead_source app is vóór 6 jan 2025.');
+    expect((form.getByLabelText('Tot') as HTMLInputElement).value).toBe('2025-01-05');
+    expect(form.getByRole('button', { name: 'Verwijder lead_channel' })).toBeTruthy();
+    expect(form.getByRole('button', { name: 'Verwijder app' })).toBeTruthy();
+    // Nothing is saved until the User adds it there.
+    expect(calls.some((call) => call.method === 'POST' && call.path === '/resources/r2/gaps')).toBe(false);
+    await fireEvent.click(form.getByRole('button', { name: 'Voeg toe' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/resources/r2/gaps', body: { text: 'lead_channel is niet ingevuld waar lead_source app is vóór 6 jan 2025.', scope } }));
+    // A gap added later starts empty.
+    await vi.waitFor(() => expect(main.queryByRole('form', { name: 'Een nieuwe Known Gap' })).toBeNull());
+    await fireEvent.click(main.getByRole('button', { name: /^Voeg een Known Gap toe/ }));
+    expect((within(main.getByRole('form', { name: 'Een nieuwe Known Gap' })).getByRole('textbox', { name: WHY }) as HTMLTextAreaElement).value).toBe('');
+  });
+
   it('narrows a Known Gap down to a period, fields and rows, shown as chips, in the Summary and on its fields (FR-RC-24, FR-RC-25, FR-RC-26)', async () => {
     const calls = serve({ groups: ['g1'] });
     open('/resources/r2');
@@ -2790,6 +3207,61 @@ describe('the page of a Resource', () => {
     expect(main.getByRole('tab', { name: /^Known Gaps/ }).getAttribute('aria-selected')).toBe('true');
   });
 
+  it('asks for Reliable since on top of the Known Gaps, nothing chosen, and keeps a later day with why on its Date Field (FR-RC-31, FR-RC-32, DEC-UX-297)', async () => {
+    const calls = serve({ groups: ['g1'] });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('tab', { name: /^Known Gaps/ }));
+    // Not set is empty, never one of the two: both choices unchosen, Save off until one is.
+    const form = within(main.getByRole('form', { name: 'Reliable since' }));
+    expect(form.getByText('Vanaf welke dag is zijn data betrouwbaar? Kies er een.')).toBeTruthy();
+    expect(form.getAllByRole('radio').every((radio) => !(radio as HTMLInputElement).checked)).toBe(true);
+    expect((form.getByRole('button', { name: 'Bewaren' }) as HTMLButtonElement).disabled).toBe(true);
+    // A later day: its day, a date field, as no table type gives one (DEC-RC-32), and why not earlier, required.
+    await fireEvent.click(form.getByRole('radio', { name: /Vanaf een latere dag/ }));
+    await fireEvent.input(form.getByLabelText('Dag'), { target: { value: '2025-01-01' } });
+    await fireEvent.change(form.getByRole('combobox', { name: 'Op het datumveld' }), { target: { value: 'week_start' } });
+    expect((form.getByRole('button', { name: 'Bewaren' }) as HTMLButtonElement).disabled).toBe(true);
+    await fireEvent.input(form.getByRole('textbox', { name: 'Waarom niet eerder · verplicht' }), { target: { value: '2024 was loaded once from the old CRM export.' } });
+    await fireEvent.click(form.getByRole('button', { name: 'Bewaren' }));
+    await vi.waitFor(() =>
+      expect(calls).toContainEqual({
+        method: 'PATCH',
+        path: '/resources/r2',
+        body: { reliableSince: { from: 'day', day: '2025-01-01', why: '2024 was loaded once from the old CRM export.' }, dateField: 'week_start' },
+      }),
+    );
+    // The tile, with why not earlier and the line from its first row to today, before that day shaded.
+    expect(await main.findByText('2024 was loaded once from the old CRM export.')).toBeTruthy();
+    expect(main.getByText('Waarom niet eerder')).toBeTruthy();
+    expect(main.getByText('Zijn eerste rij')).toBeTruthy();
+    expect(main.getByText('Voor Reliable since: rijen die er zijn, maar niet betrouwbaar te lezen')).toBeTruthy();
+    expect(main.getByRole('button', { name: /Wijzigen/ })).toBeTruthy();
+  });
+
+  it('takes the period of a Known Gap as one day, the date right behind the choice, and an optional date field of its own (FR-RC-33, FR-RC-34)', async () => {
+    const calls = serve({ groups: ['g1'] });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('tab', { name: /^Known Gaps/ }));
+    await fireEvent.click(main.getByRole('button', { name: /^Voeg een Known Gap toe/ }));
+    const form = within(main.getByRole('form', { name: 'Een nieuwe Known Gap' }));
+    await fireEvent.input(form.getByRole('textbox', { name: WHY }), { target: { value: 'Fair leads entered a week late.' } });
+    await fireEvent.click(form.getByRole('button', { name: 'Periode' }));
+    await fireEvent.click(form.getByRole('radio', { name: 'Eén dag' }));
+    expect(form.getByRole('status').textContent).toBe('Kies de dag.');
+    await fireEvent.input(form.getByLabelText('De dag'), { target: { value: '2026-10-21' } });
+    await fireEvent.change(form.getByRole('combobox', { name: 'Op het datumveld · optioneel' }), { target: { value: 'week_start' } });
+    await fireEvent.click(form.getByRole('button', { name: 'Voeg toe' }));
+    await vi.waitFor(() =>
+      expect(calls).toContainEqual({ method: 'POST', path: '/resources/r2/gaps', body: { text: 'Fair leads entered a week late.', scope: { period: { from: '2026-10-21', to: '2026-10-21', dateField: 'week_start' } } } }),
+    );
+    // One day reads as one day, and the date field it names.
+    expect(await main.findByText(/op 21 okt 2026/)).toBeTruthy();
+  });
+
   it('marks the Key Fields in its Columns, first among what a field serves as (DEC-UX-266)', async () => {
     serve({ groups: ['g1'], weekly: { card: { ...WEEKLY_DETAIL.card, keyFields: ['week_start'] } } });
     open('/resources/r2');
@@ -2803,7 +3275,7 @@ describe('the page of a Resource', () => {
   });
 
   it('lets its Owner publish it, its first Confirmation, once the declaration is ticked (FR-SR-49, DEC-UX-63)', async () => {
-    const calls = serve({ groups: ['g1'], journey: READY, weekly: { card: { ...WEEKLY_DETAIL.card, keyFields: ['week_start'], intendedUse: 'Weekly trends.', pitfalls: 'The current week is incomplete.', reliableSince: '2025-01-01' } } });
+    const calls = serve({ groups: ['g1'], journey: READY, weekly: { card: { ...WEEKLY_DETAIL.card, keyFields: ['week_start'], intendedUse: 'Weekly trends.', pitfalls: 'The current week is incomplete.', reliableSince: { from: 'day', day: '2025-01-01', why: 'Earlier weeks are incomplete.', setBy: 'An Claes', setAt: '2026-11-15T10:00:00Z' } } } });
     open('/resources/r2');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
@@ -2813,13 +3285,15 @@ describe('the page of a Resource', () => {
     expect(sheet.getByText(/het hele bedrijf, want de Collection is publiek/)).toBeTruthy();
     expect(sheet.getByText(/jij mag hem publiceren/)).toBeTruthy();
     // Every step required to publish done; what is advised or for the EDA holds nothing up (DEC-MR-15).
-    expect(sheet.getByText(/Nodig om te publiceren, alles gedaan:/).closest('p')?.textContent).toContain('Business Description; Sleutelvelden; Velden; Beoogd gebruik; Valkuilen; Known Gaps en betrouwbaar sinds.');
+    expect(sheet.getByText(/Nodig om te publiceren, alles gedaan:/).closest('p')?.textContent).toContain('Business Description; Sleutelvelden; Velden; Beoogd gebruik; Valkuilen; Reliable since; Known Gaps.');
     expect(sheet.getByText(/Aangeraden:/).closest('p')?.textContent).toContain('1 ander veld zonder Business Description');
     expect(sheet.getByText(/Voor de EDA, later:/).closest('p')?.textContent).toContain('geen modeltype vastgelegd; geen grain vastgelegd.');
     // The card, read back: what the declaration accepts (DEC-MR-17).
     expect(sheet.getByText('Wat je bevestigt · de kaart, voorgelezen')).toBeTruthy();
-    expect(sheet.getByText('Known Gaps · betrouwbaar sinds 1 jan 2025')).toBeTruthy();
-    expect(sheet.getByText('week_start · geen')).toBeTruthy();
+    // Reliable since on a line of its own, with why not earlier, before the Known Gaps (FR-RC-31).
+    expect(sheet.getByText(/^Reliable since · 1 jan 2025/)).toBeTruthy();
+    expect(sheet.getByText('Earlier weeks are incomplete.')).toBeTruthy();
+    expect(sheet.getByText('week_start')).toBeTruthy();
     const button = sheet.getByRole('button', { name: /Publiceren en bevestigen/ }) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
     await fireEvent.click(sheet.getByRole('checkbox', { name: /Voor Data heb ik deze kaart gelezen en bevestig ik/ }));
@@ -2856,7 +3330,7 @@ describe('the page of a Resource', () => {
     expect(main.queryByText('Gepubliceerd', { selector: '.chip' })).toBeNull();
   });
 
-  it('leads its Owner through the steps still open before it can be published, and Nothing to add records who said so (DEC-MR-16, DEC-CL-17)', async () => {
+  it('warns before it can be published while a step is open, and leads to each; Nothing to add records who said so (DEC-MR-16, DEC-MR-20, FR-MR-21)', async () => {
     const calls = serve({ groups: ['g1'], journey: { ...READY, pitfalls: '', knownGaps: 0 } });
     open('/resources/r2');
     render(App, { config: CONFIG });
@@ -2864,28 +3338,66 @@ describe('the page of a Resource', () => {
     await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
     // Maturity names the steps required to publish, the open ones with the way to them.
     await fireEvent.click(main.getByRole('tab', { name: 'Maturiteit' }));
-    expect(main.getByText('Daarvoor zijn de stappen gedaan die nodig zijn om te publiceren: nu 4 van 6.')).toBeTruthy();
+    expect(main.getByText('Daarvoor zijn de stappen gedaan die nodig zijn om te publiceren: nu 5 van 7.')).toBeTruthy();
     expect(main.getByText(/Of laat Claude je er stap voor stap door leiden/)).toBeTruthy();
-    // The publication shows what is open, leads to it, and holds the declaration back.
+    // Publish warns first: what is open, the way to each, and "Guide me"; the publication does not open.
     await fireEvent.click(main.getAllByRole('button', { name: /Publiceren/ })[0]!);
-    const sheet = within(await screen.findByRole('dialog', { name: 'Weekly lead volume' }));
-    expect(sheet.getByText(/^Gedaan:/).closest('p')?.textContent).toContain('Business Description; Sleutelvelden; Velden; Beoogd gebruik.');
-    expect(sheet.getByText('Valkuilen:').closest('p')?.textContent).toContain('geen geschreven, en niemand zei dat er geen zijn.');
-    expect(sheet.getByText('Known Gaps en betrouwbaar sinds:').closest('p')?.textContent).toContain('geen Known Gap geschreven, en niemand zei dat er geen zijn.');
-    expect(sheet.getByText(/om je te helpen Weekly lead volume te publiceren/)).toBeTruthy();
-    expect(sheet.queryByText('Wat je bevestigt · de kaart, voorgelezen')).toBeNull();
-    expect((sheet.getByRole('checkbox') as HTMLInputElement).disabled).toBe(true);
-    expect((sheet.getByRole('button', { name: /Publiceren en bevestigen/ }) as HTMLButtonElement).disabled).toBe(true);
-    const goTo = sheet.getAllByRole('button', { name: 'Ga erheen' });
-    expect(goTo).toHaveLength(2);
-    await fireEvent.click(goTo[0]!);
-    await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    const warning = within(await main.findByRole('dialog', { name: 'Nog niet klaar om te publiceren' }));
+    expect(warning.getByText('2 van de 7 stappen die nodig zijn om te publiceren zijn nog open:')).toBeTruthy();
+    expect(warning.getByRole('button', { name: /^Valkuilen/ }).textContent).toContain('geen geschreven, en niemand zei dat er geen zijn');
+    expect(warning.getByRole('button', { name: /^Known Gaps/ })).toBeTruthy();
+    expect(warning.getByRole('button', { name: 'Begeleid me' })).toBeTruthy();
+    expect(screen.queryByRole('dialog', { name: 'Weekly lead volume' })).toBeNull();
+    // "I'll do it myself" closes it.
+    await fireEvent.click(warning.getByRole('button', { name: 'Ik doe het zelf' }));
+    expect(main.queryByRole('dialog', { name: 'Nog niet klaar om te publiceren' })).toBeNull();
+    // A step leads to its place, opened for editing, its field in focus (DEC-UX-303).
+    await fireEvent.click(main.getAllByRole('button', { name: /Publiceren/ })[0]!);
+    await fireEvent.click(within(await main.findByRole('dialog', { name: 'Nog niet klaar om te publiceren' })).getByRole('button', { name: /^Valkuilen/ }));
+    await vi.waitFor(() => expect(document.activeElement?.id).toBe('pitfalls'));
+    expect(main.queryByRole('dialog', { name: 'Nog niet klaar om te publiceren' })).toBeNull();
     // Its pitfalls: write them, or say there are none.
+    await fireEvent.click(main.getByRole('button', { name: 'Annuleren' }));
     const nothing = await main.findByRole('button', { name: 'Niets toe te voegen' });
     await fireEvent.click(nothing);
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/resources/r2/journey/pitfalls', body: { answer: 'nothing' } }));
     expect(await main.findByText('Geen, volgens Max Verstraete, op 15 nov 2026.')).toBeTruthy();
     expect(calls.some((call) => call.path === '/resources/r2/publication')).toBe(false);
+  });
+
+  it('guides through the steps in the Flow Box, beside every page, until it is closed (FR-MR-20, DEC-UX-299 to DEC-UX-308)', async () => {
+    serve({ groups: ['g1'], journey: { ...READY, pitfalls: '', knownGaps: 0 } });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
+    await fireEvent.click(main.getAllByRole('button', { name: /Publiceren/ })[0]!);
+    await fireEvent.click(await main.findByRole('button', { name: 'Begeleid me' }));
+    const box = within(await screen.findByRole('complementary', { name: 'Beschrijven en publiceren · Weekly lead volume' }));
+    expect(box.getByText('5 van de 7 stappen die nodig zijn om te publiceren klaar')).toBeTruthy();
+    // It starts at the first step still open, with what, why and how; a done step carries its tick and is folded.
+    expect(box.getByRole('button', { name: /^Valkuilen/ }).getAttribute('aria-expanded')).toBe('true');
+    expect(box.getByText(/Jij kent de valkuilen/)).toBeTruthy();
+    expect(box.getByRole('button', { name: /^Business Description/ }).getAttribute('aria-expanded')).toBe('false');
+    expect(box.getByRole('button', { name: /^Business Description/ }).textContent).toContain('klaar');
+    expect(box.getByRole('button', { name: /^Teruglezen en publiceren/ }).textContent).toContain('Na de stappen hierboven');
+    // A step opens by a click, and its button leads to its place, opened for editing (DEC-UX-303).
+    await fireEvent.click(box.getByRole('button', { name: /^Beoogd gebruik/ }));
+    expect(box.getByRole('button', { name: /^Beoogd gebruik/ }).getAttribute('aria-expanded')).toBe('true');
+    await fireEvent.click(box.getByRole('button', { name: /^Valkuilen/ }));
+    await fireEvent.click(box.getByRole('button', { name: /Schrijf de valkuilen/ }));
+    await vi.waitFor(() => expect(document.activeElement?.id).toBe('pitfalls'));
+    // Minimize folds it to a strip with its progress; Maximize opens it again (DEC-UX-301).
+    await fireEvent.click(box.getByRole('button', { name: 'Minimaliseren' }));
+    const strip = within(await screen.findByRole('complementary', { name: /Beschrijven en publiceren · Weekly lead volume · 5 van de 7/ }));
+    expect(strip.getByText('5')).toBeTruthy();
+    await fireEvent.click(strip.getByRole('button', { name: 'Maximaliseren' }));
+    // It stays open on every page of Data Hub (DEC-UX-300).
+    await fireEvent.click(within(screen.getByRole('navigation', { name: 'Hoofdnavigatie' })).getByRole('link', { name: 'Query' }));
+    const again = within(await screen.findByRole('complementary', { name: 'Beschrijven en publiceren · Weekly lead volume' }));
+    // Close takes it away; nothing of it is kept (DEC-UX-302, DEC-UX-306).
+    await fireEvent.click(again.getByRole('button', { name: 'Sluiten' }));
+    expect(screen.queryByRole('complementary', { name: /Beschrijven en publiceren/ })).toBeNull();
   });
 
   it('warns everyone of a change since its last Confirmation, until its Owner Unit marks it seen (FR-MR-12, DEC-UX-64)', async () => {
@@ -3245,7 +3757,8 @@ describe('the web app, for the Data Team, with Collections', () => {
     open('/collections/c1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    await fireEvent.click(await main.findByRole('button', { name: /Alles bewerken/ }));
+    await fireEvent.click(within(await main.findByRole('heading', { level: 1, name: 'Credit leads' })).getByRole('button'));
+    await fireEvent.click(main.getByRole('button', { name: 'Meer bewerken' }));
     const owner = main.getByRole('combobox', { name: /Owner Unit/ }) as HTMLSelectElement;
     await vi.waitFor(() => expect([...owner.options].map((option) => option.value)).toEqual(['g1', 'g2']));
     expect(main.getByText(/Elke Group van Data Hub/)).toBeTruthy();
@@ -3257,7 +3770,8 @@ describe('the web app, for the Data Team, with Collections', () => {
     open('/collections/c1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    await fireEvent.click((await main.findAllByRole('button', { name: /Resources toevoegen/ }))[0]!);
+    await fireEvent.click(await main.findByRole('button', { name: 'Nieuw' }));
+    await fireEvent.click(main.getByRole('menuitem', { name: /Resources/ }));
     const sheet = within(screen.getByRole('dialog', { name: 'Een Resource toevoegen aan Credit leads' }));
     await fireEvent.click(sheet.getByRole('radio', { name: /Saved searches/ }));
     await fireEvent.click(sheet.getByRole('button', { name: /Volgende: modeltype/ }));
@@ -3279,7 +3793,8 @@ describe('the web app, for the Data Team, with Collections', () => {
     open('/collections/c1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    await fireEvent.click((await main.findAllByRole('button', { name: /Resources toevoegen/ }))[0]!);
+    await fireEvent.click(await main.findByRole('button', { name: 'Nieuw' }));
+    await fireEvent.click(main.getByRole('menuitem', { name: /Resources/ }));
     const sheet = within(screen.getByRole('dialog', { name: 'Een Resource toevoegen aan Credit leads' }));
     expect(sheet.getByText(/^Kwam binnen op 21 okt\.? via de exposure datahub_savedSearches$/)).toBeTruthy();
     expect(sheet.queryByRole('checkbox')).toBeNull();
@@ -3566,6 +4081,11 @@ describe('the model type of a Resource and the fields it asks for (FR-CO-44, FR-
 });
 
 /** Opens the quick window, types words and does the first row that may be done, as Enter does. */
+/** Opens a period of the panel of Query, which starts folded, today too (DEC-UX-139). */
+async function openPeriod(panel: ReturnType<typeof within>, name = 'Vandaag'): Promise<void> {
+  const period = await panel.findByRole('button', { name: new RegExp(`^${name}`) }, { timeout: 3000 });
+  if (period.getAttribute('aria-expanded') !== 'true') await fireEvent.click(period);
+}
 async function quickDo(words: string): Promise<void> {
   await fireEvent.keyDown(document.body, { key: 'k', code: 'KeyK', ctrlKey: true });
   const quick = within(await screen.findByRole('dialog', { name: 'Snelvenster' }));
@@ -3581,6 +4101,13 @@ async function quickRow(title: string): Promise<HTMLElement> {
   if (!row) throw new Error(`No row ${title}`);
   return row;
 }
+/** The titles of the rows of the quick window once these words are typed. */
+async function quickTitles(words: string): Promise<string[]> {
+  await fireEvent.keyDown(document.body, { key: 'k', code: 'KeyK', ctrlKey: true });
+  const quick = within(await screen.findByRole('dialog', { name: 'Snelvenster' }));
+  await fireEvent.input(quick.getByRole('combobox'), { target: { value: words } });
+  return quick.getAllByRole('option').map((option) => option.querySelector('.title')?.textContent ?? '');
+}
 const closeQuick = async () => {
   await fireEvent.keyDown(screen.getByRole('combobox', { name: 'Snelvenster' }), { key: 'Escape' });
   await vi.waitFor(() => expect(screen.queryByRole('dialog', { name: 'Snelvenster' })).toBeNull());
@@ -3592,21 +4119,22 @@ describe('Query', () => {
     open('/query/q1');
     render(App, { config: CONFIG });
     const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
+    await openPeriod(panel);
     const item = (await panel.findByRole('link', { name: /Leads per source name/ }, { timeout: 3000 })).closest('.item')!;
     expect(within(item as HTMLElement).getByText('Claude').getAttribute('title')).toBe('Gemaakt via Claude');
   });
 
-  it('shows no row of flagged queries while none is flagged, and flags the first from the quick window (DEC-UX-253)', async () => {
-    const calls = serve({ queries: [{ ...QUERY }] });
+  it('shows no row while no Project is active, and offers Add to project on a query in none (DEC-UX-317, DEC-UX-318)', async () => {
+    serve({ queries: [{ ...QUERY }] });
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
     await main.findByRole('heading', { level: 1, name: 'Leads per source name' }, { timeout: 3000 });
-    expect(main.queryByRole('navigation', { name: 'Gemarkeerde queries' })).toBeNull();
-    await quickDo('markeer deze query');
-    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/query.flagged', body: { value: ['q1'] } }));
-    const flags = within(await main.findByRole('navigation', { name: 'Gemarkeerde queries' }));
-    expect(await flags.findByRole('link', { name: /Leads per source name/ })).toBeTruthy();
+    expect(main.queryByRole('navigation', { name: /^De queries van/ })).toBeNull();
+    await fireEvent.click(await main.findByRole('button', { name: /^Project/ }));
+    const menu = within(main.getByRole('menu', { name: 'Project' }));
+    expect(menu.getAllByRole('menuitem')).toHaveLength(1);
+    expect(menu.getByRole('menuitem', { name: /Aan project toevoegen/ }).textContent).toContain('kies er een, of een nieuw');
   });
 
   it('keeps the head of a query light: its name on one line, no New query, no line where it started from (DEC-UX-250, DEC-UX-251, DEC-UX-252)', async () => {
@@ -3627,27 +4155,21 @@ describe('Query', () => {
     expect(add.getAttribute('title')).toBe('Een Resource toevoegen');
   });
 
-  it('keeps flagged queries on top of Query, flags with Flag and jumps with Ctrl+1 to Ctrl+0 (DEC-UX-236, OP-UX-84, OP-UX-86)', async () => {
+  it('keeps the queries of the active Project on top: its details first, then its queries with Ctrl+1 to Ctrl+0 (DEC-UX-317, DEC-UX-319, OP-UX-85, OP-UX-86)', async () => {
     const partners = { ...QUERY, id: 'q2', name: 'Partner share per week', lastRunAt: new Date().toISOString() };
-    const calls = serve({ queries: [{ ...QUERY, lastRunAt: new Date().toISOString() }, partners], settings: { 'query.flagged': ['q2'] } });
+    const credit = { id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }, { id: '7', name: 'Karel Leys' }], queries: ['q2', 'q1'] };
+    serve({ queries: [{ ...QUERY, lastRunAt: new Date().toISOString() }, partners], projects: [credit] });
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    const flags = within(await main.findByRole('navigation', { name: 'Gemarkeerde queries' }));
-    expect((await flags.findByRole('link', { name: /Partner share per week/ })).getAttribute('href')).toBe('/query/q2');
-    expect(flags.getByText('1')).toBeTruthy();
-    // This query is not flagged yet: "Flag this query" in the row keeps it on top, as the second, with its key (DEC-UX-241).
-    const add = await flags.findByRole('button', { name: /^Markeer deze query/ }, { timeout: 3000 });
-    expect(add.textContent).toContain('Ctrl+2');
-    // The head of a query has no Flag.
-    expect(main.queryByRole('button', { name: 'Markeren' })).toBeNull();
-    await fireEvent.click(add);
-    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/query.flagged', body: { value: ['q2', 'q1'] } }));
-    await vi.waitFor(() => expect(flags.queryByRole('button', { name: /^Markeer deze query/ })).toBeNull());
-    expect((await flags.findByRole('link', { name: /Leads per source name/ })).getAttribute('aria-current')).toBe('page');
-    // The panel shows the flag at the end of a flagged query.
-    const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
-    expect(await panel.findAllByRole('img', { name: 'Gemarkeerd' })).toHaveLength(2);
+    // A query of a Project open makes that Project active: its row is on top.
+    const row = within(await main.findByRole('navigation', { name: 'De queries van Credit leads Q4' }, { timeout: 3000 }));
+    // Its details first, without a key; then its queries, the open one current.
+    const details = row.getByRole('link', { name: /^Credit leads Q4/ });
+    expect(details.getAttribute('href')).toBe('/query/projects/p1');
+    expect(details.getAttribute('aria-current')).toBeNull();
+    expect((await row.findByRole('link', { name: /Partner share per week/ })).getAttribute('href')).toBe('/query/q2');
+    expect(row.getByRole('link', { name: /Leads per source name/ }).getAttribute('aria-current')).toBe('page');
     // Ctrl+1 opens the first; the one left stays as the User left it, what was typed in its SQL too (OP-UX-85).
     const editor = await main.findByRole('textbox', { name: /Leads per source name/ });
     await typeInEditor(editor, ' -- mine');
@@ -3660,44 +4182,43 @@ describe('Query', () => {
     const back = await main.findByRole('textbox', { name: /Leads per source name/ });
     expect(back).toBe(editor);
     expect(back.textContent).toContain('-- mine');
-    // The × on a tab unflags it.
-    await fireEvent.click(flags.getByRole('button', { name: 'Partner share per week niet meer markeren' }));
-    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/query.flagged', body: { value: ['q1'] } }));
   });
 
-  it('keeps the open query on screen, as the User left it, when it is unflagged (DEC-UX-236)', async () => {
+  it('takes the open query out of its Project with the Project button: no Project is active then, and the query stays as the User left it (DEC-UX-317, DEC-UX-318)', async () => {
     const partners = { ...QUERY, id: 'q2', name: 'Partner share per week' };
-    const calls = serve({ queries: [{ ...QUERY }, partners], settings: { 'query.flagged': ['q1', 'q2'] } });
+    const credit = { id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: ['q1', 'q2'] };
+    const calls = serve({ queries: [{ ...QUERY }, partners], projects: [credit] });
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    const flags = within(await main.findByRole('navigation', { name: 'Gemarkeerde queries' }));
+    await main.findByRole('navigation', { name: 'De queries van Credit leads Q4' }, { timeout: 3000 });
     const editor = await main.findByRole('textbox', { name: /Leads per source name/ }, { timeout: 3000 });
     await typeInEditor(editor, ' -- mine');
-    // Unflagged from the quick window: it leaves the row on top, and stays open as it was.
-    await quickDo('niet meer markeren');
-    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/query.flagged', body: { value: ['q2'] } }));
-    await vi.waitFor(() => expect(flags.queryByRole('link', { name: /Leads per source name/ })).toBeNull());
-    expect(main.getByRole('heading', { level: 1, name: 'Leads per source name' })).toBeTruthy();
+    // In a Project: Change project and Remove from project.
+    await fireEvent.click(await main.findByRole('button', { name: /^Project/ }));
+    const menu = within(main.getByRole('menu', { name: 'Project' }));
+    expect(menu.getByRole('menuitem', { name: /Ander project/ }).textContent).toContain('nu in Credit leads Q4');
+    await fireEvent.click(menu.getByRole('menuitem', { name: /Uit project halen/ }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/projects/p1/queries/q1' }));
+    // No Project is active now: the row is gone, and the query stays open as it was.
+    await vi.waitFor(() => expect(main.queryByRole('navigation', { name: 'De queries van Credit leads Q4' })).toBeNull());
     const still = main.getByRole('textbox', { name: /Leads per source name/ });
     expect(still).toBe(editor);
     expect(still.textContent).toContain('-- mine');
-    // Flagged again from the row, and unflagged with the × on its tab: it stays open all the same.
-    await fireEvent.click(await flags.findByRole('button', { name: /^Markeer deze query/ }));
-    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/query.flagged', body: { value: ['q2', 'q1'] } }));
-    await fireEvent.click(await flags.findByRole('button', { name: 'Leads per source name niet meer markeren' }));
-    await vi.waitFor(() => expect(flags.queryByRole('link', { name: /Leads per source name/ })).toBeNull());
-    expect(main.getByRole('textbox', { name: /Leads per source name/ })).toBe(editor);
     expect(location.pathname).toBe('/query/q1');
+    // In none now: Add to project.
+    await fireEvent.click(main.getByRole('button', { name: /^Project/ }));
+    expect(within(main.getByRole('menu', { name: 'Project' })).getByRole('menuitem', { name: /Aan project toevoegen/ })).toBeTruthy();
   });
 
   it('lists what was done first, and Ctrl+1 to Ctrl+9 highlight a row without doing it (DEC-UX-242)', async () => {
     const named = (id: string, name: string) => ({ ...QUERY, id, name });
-    const calls = serve({ queries: [named('q1', 'Leads per source name'), named('q2', 'Partner share per week'), named('q3', 'Listings per postal code')], settings: { 'query.flagged': ['q1', 'q2', 'q3'] } });
+    const calls = serve({ queries: [named('q1', 'Leads per source name'), named('q2', 'Partner share per week'), named('q3', 'Listings per postal code')], projects: [{ id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: ['q1', 'q2', 'q3'] }] });
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
     await main.findByRole('heading', { level: 1, name: 'Leads per source name' }, { timeout: 3000 });
+    await main.findByRole('navigation', { name: 'De queries van Credit leads Q4' }, { timeout: 3000 });
     await quickDo('verberg');
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/queries/q1/hidden' }));
     await fireEvent.keyDown(document.body, { key: 'k', code: 'KeyK', ctrlKey: true });
@@ -3708,9 +4229,9 @@ describe('Query', () => {
     // Hidden, the same button is now Show this query again: Recently used keeps it.
     expect(options[0]?.textContent).toContain('Deze query weer tonen');
     expect(options[0]?.textContent).toContain('Ctrl+1');
-    // The flagged queries show their own key in their line.
+    // The queries of the active Project show their own key in their line.
     expect(options.find((option) => option.querySelector('.title')?.textContent === 'Partner share per week')?.querySelector('.meta')?.textContent).toBe('Ctrl+2');
-    // Ctrl+3 highlights the third, and does not open the third flagged query.
+    // Ctrl+3 highlights the third, and does not open the third query of the row.
     const third = options.find((option) => option.textContent?.includes('Ctrl+3'));
     await fireEvent.keyDown(quick.getByRole('combobox'), { key: '3', code: 'Digit3', ctrlKey: true });
     expect(third?.getAttribute('aria-selected')).toBe('true');
@@ -3722,57 +4243,42 @@ describe('Query', () => {
     await vi.waitFor(() => expect(location.pathname).toBe('/query/q1/lens'));
   });
 
-  it('goes to the next and the previous flagged query from the quick window, round the row (DEC-UX-241)', async () => {
+  it('goes to the next and the previous query of the row from the quick window, round the row (DEC-UX-241)', async () => {
     const named = (id: string, name: string) => ({ ...QUERY, id, name });
-    serve({ queries: [named('q1', 'Leads per source name'), named('q2', 'Partner share per week'), named('q3', 'Listings per postal code')], settings: { 'query.flagged': ['q1', 'q2', 'q3'] } });
+    serve({ queries: [named('q1', 'Leads per source name'), named('q2', 'Partner share per week'), named('q3', 'Listings per postal code')], projects: [{ id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: ['q1', 'q2', 'q3'] }] });
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    const flags = within(await main.findByRole('navigation', { name: 'Gemarkeerde queries' }));
-    await flags.findByRole('link', { name: /Listings per postal code/ }, { timeout: 3000 });
-    const next = await quickRow('Volgende gemarkeerde query');
+    const row = within(await main.findByRole('navigation', { name: 'De queries van Credit leads Q4' }, { timeout: 3000 }));
+    await row.findByRole('link', { name: /Listings per postal code/ }, { timeout: 3000 });
+    const next = await quickRow('Volgende query in de rij');
     expect(next.textContent).toContain('Partner share per week · Ctrl+2');
     await closeQuick();
-    await quickDo('volgende gemarkeerde');
+    await quickDo('volgende query in de rij');
     await vi.waitFor(() => expect(location.pathname).toBe('/query/q2'));
     // From the first, the previous one is the last, round the row.
-    await quickDo('vorige gemarkeerde');
+    await quickDo('vorige query in de rij');
     await vi.waitFor(() => expect(location.pathname).toBe('/query/q1'));
-    await quickDo('vorige gemarkeerde');
+    await quickDo('vorige query in de rij');
     await vi.waitFor(() => expect(location.pathname).toBe('/query/q3'));
   });
 
-  it('moves a flagged query by dragging its tab, and its key with it (DEC-UX-236)', async () => {
+  it('moves a query of the row by dragging its tab, and its key with it, for everyone in the Project (OP-UX-95)', async () => {
     const named = (id: string, name: string) => ({ ...QUERY, id, name });
-    const calls = serve({ queries: [named('q1', 'Leads per source name'), named('q2', 'Partner share per week'), named('q3', 'Listings per postal code')], settings: { 'query.flagged': ['q1', 'q2', 'q3'] } });
+    const calls = serve({ queries: [named('q1', 'Leads per source name'), named('q2', 'Partner share per week'), named('q3', 'Listings per postal code')], projects: [{ id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: ['q1', 'q2', 'q3'] }] });
     open('/query/q1');
     render(App, { config: CONFIG });
-    const flags = within(await screen.findByRole('navigation', { name: 'Gemarkeerde queries' }));
-    const tab = async (name: string) => (await flags.findByRole('link', { name: new RegExp(name) })).closest('[role="listitem"]') as HTMLElement;
+    const row = within(await screen.findByRole('navigation', { name: 'De queries van Credit leads Q4' }, { timeout: 3000 }));
+    const tab = async (name: string) => (await row.findByRole('link', { name: new RegExp(name) })).closest('[role="listitem"]') as HTMLElement;
     const third = await tab('Listings per postal code');
     const first = await tab('Leads per source name');
     // The third onto the first: it becomes the first, and Ctrl+1 opens it.
     await fireEvent.dragStart(third);
     await fireEvent.dragOver(first);
     await fireEvent.drop(first);
-    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/query.flagged', body: { value: ['q3', 'q1', 'q2'] } }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/projects/p1/order', body: { queries: ['q3', 'q1', 'q2'] } }));
     await fireEvent.keyDown(document.body, { key: '1', code: 'Digit1', ctrlKey: true });
     await vi.waitFor(() => expect(location.pathname).toBe('/query/q3'));
-  });
-
-  it('has no Flag in the row at ten flagged queries, and greys it in the quick window with why (OP-UX-84, DEC-UX-241)', async () => {
-    const ten = Array.from({ length: 10 }, (_, at) => ({ ...QUERY, id: `f${at}`, name: `Flagged ${at}` }));
-    serve({ queries: [QUERY, ...ten], settings: { 'query.flagged': ten.map((query) => query.id) } });
-    open('/query/q1');
-    render(App, { config: CONFIG });
-    const main = within(await screen.findByRole('main'));
-    const flags = within(await main.findByRole('navigation', { name: 'Gemarkeerde queries' }));
-    await main.findByRole('heading', { level: 1, name: 'Leads per source name' }, { timeout: 3000 });
-    await flags.findByRole('link', { name: /Flagged 9/ });
-    expect(flags.queryByRole('button', { name: /^Markeer deze query/ })).toBeNull();
-    const row = await quickRow('Markeer deze query');
-    expect(row.getAttribute('aria-disabled')).toBe('true');
-    expect(row.nextElementSibling?.textContent).toBe('Tien queries zijn gemarkeerd. Haal er eerst één weg.');
   });
 
   it('opens the quick window with Ctrl+K and Ctrl+Shift+P, with the commands of the query first, and does one (DEC-UX-237, OP-UX-87)', async () => {
@@ -3791,7 +4297,7 @@ describe('Query', () => {
     expect(titles().slice(0, 13)).toEqual([
       'Uitvoeren',
       'Maak er een Lens van',
-      'Markeer deze query',
+      'Aan project toevoegen',
       'Deze query hernoemen',
       'Alles dichtvouwen',
       'De SQL opmaken',
@@ -3844,7 +4350,7 @@ describe('Query', () => {
   });
 
   it('runs from the quick window as Ctrl+Enter does, and above 100 MB leaves the approval to the red button (DEC-UX-239, DEC-UX-142)', async () => {
-    const calls = serve({ queries: [{ ...QUERY }, { ...QUERY, id: 'q2', name: 'All weeks', sql: `${QUERY.sql}\n-- all weeks` }, { ...QUERY, id: 'q3', name: 'Every year', sql: `${QUERY.sql}\n-- every year` }], settings: { 'query.flagged': ['q1', 'q2', 'q3'] } });
+    const calls = serve({ queries: [{ ...QUERY }, { ...QUERY, id: 'q2', name: 'All weeks', sql: `${QUERY.sql}\n-- all weeks` }, { ...QUERY, id: 'q3', name: 'Every year', sql: `${QUERY.sql}\n-- every year` }], projects: [{ id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: ['q1', 'q2', 'q3'] }] });
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
@@ -3931,6 +4437,42 @@ describe('Query', () => {
     await vi.waitFor(() => expect(main.getByRole('radio', { name: /Resultaat/ }).getAttribute('aria-checked')).toBe('true'));
   });
 
+  it('copies the first 100 rows of the result as JSON or CSV from the menu in its upper right corner, also from another page (DEC-UX-292, DEC-UX-294)', async () => {
+    const writeText = vi.fn(async (_text: string) => undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    const calls = serve({ queries: [{ ...QUERY, lastRun: RUN, runs: 1, lastRunAt: RUN.startedAt }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const copy = await main.findByRole('button', { name: 'Kopieer het resultaat' }, { timeout: 3000 });
+    expect(copy.getAttribute('aria-haspopup')).toBe('menu');
+    await fireEvent.click(copy);
+    const menu = within(await main.findByRole('menu', { name: 'Kopieer het resultaat' }));
+    expect(menu.getByText('De eerste 100 van 210 rijen, met de namen van de velden')).toBeTruthy();
+    await fireEvent.click(menu.getByRole('menuitem', { name: /Kopieer als JSON/ }));
+    expect(main.queryByRole('menu')).toBeNull();
+    const [first, second] = RUN.columns.map((column) => column.name);
+    await vi.waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
+    expect(JSON.parse(writeText.mock.calls[0]![0])).toEqual([
+      { [first!]: PAGE.rows[0]![0], [second!]: Number(PAGE.rows[0]![1]) },
+      { [first!]: PAGE.rows[1]![0], [second!]: null },
+    ]);
+    expect(await screen.findByText('De eerste 2 van 210 rijen gekopieerd als JSON')).toBeTruthy();
+    // On another page, the first 100 rows all the same, read again from the same run.
+    await fireEvent.click(main.getByRole('button', { name: /Volgende pagina/ }));
+    await main.findByText('2026-08-03', {}, { timeout: 3000 });
+    const pages = calls.filter((call) => call.path === `/runs/${RUN.ref}/rows?page=1`).length;
+    await fireEvent.click(main.getByRole('button', { name: 'Kopieer het resultaat' }));
+    await fireEvent.click(within(await main.findByRole('menu')).getByRole('menuitem', { name: /Kopieer als CSV/ }));
+    await vi.waitFor(() => expect(writeText).toHaveBeenCalledTimes(2));
+    expect(writeText.mock.calls[1]![0]).toBe(`${first},${second}\r\n${PAGE.rows[0]!.join(',')}\r\n${PAGE.rows[1]![0]},`);
+    expect(calls.filter((call) => call.path === `/runs/${RUN.ref}/rows?page=1`).length).toBe(pages + 1);
+    // And from the quick window, as its buttons do.
+    const row = await quickRow('Kopieer het resultaat als CSV');
+    expect(row.textContent).toContain('de eerste 100 van 210 rijen, van uitvoering 1');
+    await closeQuick();
+  });
+
   it('greys Make it a Lens in the quick window on a Resource not published yet, with why (DEC-UX-239, DEC-UX-218)', async () => {
     serve({ queries: [{ ...QUERY, resources: [{ ...QUERY.resources[0]!, published: false }] }] });
     open('/query/q1');
@@ -4005,8 +4547,10 @@ describe('Query', () => {
     expect(await main.findByRole('heading', { level: 1, name: 'Leads per source name' }, { timeout: 3000 })).toBeTruthy();
     expect(location.pathname).toBe('/query/q1');
     const panel = within(screen.getByRole('complementary', { name: 'Query' }));
-    expect(panel.getByText('Vandaag')).toBeTruthy();
-    expect(panel.getByRole('link', { name: /Leads per source name/ }).getAttribute('aria-current')).toBe('page');
+    // Every period starts folded, today too (DEC-UX-139).
+    expect(panel.getByRole('button', { name: /^Vandaag/ }).getAttribute('aria-expanded')).toBe('false');
+    await openPeriod(panel);
+    expect((await panel.findByRole('link', { name: /Leads per source name/ })).getAttribute('aria-current')).toBe('page');
     expect(panel.getByText(/Weekly lead volume · 1 keer/)).toBeTruthy();
     // It reads only its Resources; another set is a new query, and the Lenses on them come later (DEC-UX-73, DEC-UX-114).
     expect(main.getByText('Leest enkel')).toBeTruthy();
@@ -4134,6 +4678,7 @@ describe('Query', () => {
     await vi.waitFor(() => expect(main.getByRole('button', { name: /Uitvoeren/ }).getAttribute('title')).toBe('Hij draait nu niet: wat hij leest, bestaat niet meer'), { timeout: 3000 });
     expect((main.getByRole('button', { name: /Uitvoeren/ }) as HTMLButtonElement).disabled).toBe(true);
     const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
+    await openPeriod(panel);
     expect(await panel.findByRole('img', { name: 'Resource · Broken: de kolom lead_source bestaat niet meer' })).toBeTruthy();
   });
 
@@ -4146,6 +4691,7 @@ describe('Query', () => {
     expect(await main.findByText('Deze query kan niet draaien.', {}, { timeout: 3000 })).toBeTruthy();
     expect(main.getByText(/Hij leest de tabel weekly_lead_volume, die sinds 31 okt\.? 2026 niet meer bestaat/)).toBeTruthy();
     const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
+    await openPeriod(panel);
     expect(await panel.findByRole('img', { name: /Resource · Broken/ })).toBeTruthy();
   });
 
@@ -4170,6 +4716,7 @@ describe('Query', () => {
     render(App, { config: CONFIG });
     await screen.findByRole('main');
     const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
+    await openPeriod(panel);
     expect(await panel.findByRole('link', { name: /Partner share per week/ })).toBeTruthy();
     // An older period shows with how many it holds, folded, and is read once opened.
     const period = panel.getAllByRole('button', { expanded: false }).find((button) => button.textContent?.trim().endsWith('1')) as HTMLElement;
@@ -4395,6 +4942,7 @@ describe('Query', () => {
     const main = within(await screen.findByRole('main'));
     // A preview of a Resource is a query of the User, marked so in the panel once Previews is ticked (DEC-UX-137, DEC-UX-150).
     const panel = within(screen.getByRole('complementary', { name: 'Query' }));
+    await openPeriod(panel);
     expect(await panel.findByRole('link', { name: /Leads per source name/ })).toBeTruthy();
     expect(panel.queryByRole('link', { name: /Preview · Weekly lead volume/ })).toBeNull();
     await fireEvent.click(panel.getByRole('button', { name: /^Filter: toon ook/ }));
@@ -4462,6 +5010,7 @@ describe('Query', () => {
     const main = within(await screen.findByRole('main'));
     // The query that is open unfolds in the panel to its last runs, with its arrow (DEC-UX-140).
     const panel = within(screen.getByRole('complementary', { name: 'Query' }));
+    await openPeriod(panel);
     const unfold = await panel.findByRole('button', { name: 'De laatste uitvoeringen' });
     expect(unfold.getAttribute('aria-expanded')).toBe('false');
     expect(panel.queryByRole('link', { name: /Uitvoering 1/ })).toBeNull();
@@ -4492,7 +5041,9 @@ describe('Query', () => {
     await fireEvent.click(main.getByRole('button', { name: /Versturen/ }));
     expect(await main.findByText(/Wacht op het Data Team sinds \d\d:\d\d/)).toBeTruthy();
     expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/requests', body: { sql: formatBigQuery(`${QUERY.sql}-- every year\n`), parameters: [], text: 'For the five-year review.' } });
-    expect(await within(screen.getByRole('complementary', { name: 'Query' })).findByText('Naar het Data Team')).toBeTruthy();
+    const panel = within(screen.getByRole('complementary', { name: 'Query' }));
+    await openPeriod(panel);
+    expect(await panel.findByText('Naar het Data Team')).toBeTruthy();
   });
 
   it('adds several Resources at once to a new query, each as a CTE at the start of its SQL (FR-SR-59, DEC-UX-225)', async () => {
@@ -4514,7 +5065,9 @@ describe('Query', () => {
     expect(dialog.getAttribute('aria-label') ?? within(dialog).getByRole('heading', { level: 2 }).textContent).toMatch(/Met 2 Resources meer/);
     // The CTEs that come at the start of the SQL, before the new query starts.
     expect(await sheet.findByText(/listings as \(/, {}, { timeout: 3000 })).toBeTruthy();
-    await fireEvent.click(sheet.getByRole('button', { name: /De nieuwe query starten/ }));
+    // Two buttons side by side: Just add changes this query, New query starts another (DEC-UX-289).
+    expect(sheet.getByRole('button', { name: 'Gewoon toevoegen' })).toBeTruthy();
+    await fireEvent.click(sheet.getByRole('button', { name: 'Nieuwe query' }));
     await vi.waitFor(() => expect(location.pathname).toBe('/query/q-made'));
     expect(calls).toContainEqual({ method: 'POST', path: '/queries/ctes', body: { sql: QUERY.sql, resources: ['r5', 'r6'], tables: [] } });
     const made = calls.find((call) => call.method === 'POST' && call.path === '/queries')?.body as { resources: string[]; sql: string };
@@ -4560,16 +5113,199 @@ describe('Query', () => {
     const main = within(await screen.findByRole('main'));
     await fireEvent.click(await main.findByRole('button', { name: 'Lead sources weghalen' }));
     const sheet = within(await screen.findByRole('dialog', { name: 'Zonder Lead sources' }));
-    const name = sheet.getByRole('textbox', { name: /Naam/ }) as HTMLInputElement;
-    expect(name.value).toMatch(/^Weekly lead volume, \d+ /);
+    // No name to fill in: a new query is named after its Resources and the date, and renamed in place (DEC-UX-289).
+    expect(sheet.queryByRole('textbox', { name: /Naam/ })).toBeNull();
     expect(await sheet.findByText('Nog geen Lens gebruikt deze Resources.', {}, { timeout: 3000 })).toBeTruthy();
-    await fireEvent.click(sheet.getByRole('button', { name: /De nieuwe query starten/ }));
+    await fireEvent.click(sheet.getByRole('button', { name: 'Nieuwe query' }));
     await vi.waitFor(() => expect(location.pathname).toBe('/query/q-made'));
+    const made = calls.find((call) => call.method === 'POST' && call.path === '/queries')?.body as { name: string };
+    expect(made.name).toMatch(/^Weekly lead volume, \d+ /);
     expect(calls).toContainEqual({
       method: 'POST',
       path: '/queries',
-      body: { name: name.value, question: QUERY.question, resources: ['r2'], sql: QUERY.sql, parameters: [dateFrom], startedFrom: 'q1' },
+      body: { name: made.name, question: QUERY.question, resources: ['r2'], sql: QUERY.sql, parameters: [dateFrom], startedFrom: 'q1' },
     });
+  });
+
+  it('makes the Project of the open query active, its queries the row on top; a query in none, or a new one, leaves none active (DEC-UX-317, DEC-UX-291)', async () => {
+    const other = { ...QUERY, id: 'q2', name: 'Partner share per week' };
+    const credit = { id: 'p1', name: 'Credit leads Q4', description: 'The quarterly review.', members: [{ id: ME_ID, name: ME.name }, { id: '7', name: 'Karel Leys' }], queries: ['q1', 'q2'] };
+    const calls = serve({ queries: [{ ...QUERY }, other], projects: [credit] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const row = within(await main.findByRole('navigation', { name: 'De queries van Credit leads Q4' }, { timeout: 3000 }));
+    // Its details tab names the Project, and how many are in it.
+    expect(row.getByRole('link', { name: /^Credit leads Q4/ }).textContent).toContain('2');
+    expect((await row.findByRole('link', { name: /Partner share per week/ })).getAttribute('href')).toBe('/query/q2');
+    // The breadcrumb of the query names its Project.
+    expect((await main.findByRole('link', { name: 'Credit leads Q4' })).getAttribute('href')).toBe('/query/projects/p1');
+    // The panel lists the Project above the history, the active one standing out.
+    const panel = within(screen.getByRole('complementary', { name: 'Query' }));
+    const item = await panel.findByRole('link', { name: /Credit leads Q4/ });
+    expect(item.textContent).toContain('met Karel Leys');
+    expect(item.classList.contains('current')).toBe(true);
+    // The × takes it out of the Project, without asking (OP-UX-106); the open query is still in it, so the row stays.
+    await fireEvent.click(row.getByRole('button', { name: 'Partner share per week uit Credit leads Q4 halen' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/projects/p1/queries/q2' }));
+    expect(row.queryByRole('link', { name: /Partner share per week/ })).toBeNull();
+    // A query in no Project open: no Project is active, no row.
+    history.pushState(null, '', '/query/q2');
+    dispatchEvent(new PopStateEvent('popstate'));
+    await main.findByRole('heading', { level: 1, name: 'Partner share per week' }, { timeout: 3000 });
+    await vi.waitFor(() => expect(main.queryByRole('navigation', { name: 'De queries van Credit leads Q4' })).toBeNull());
+    expect(panel.getByRole('link', { name: /Credit leads Q4/ }).classList.contains('current')).toBe(false);
+    // Back on a query of the Project, it is active again; a new query leaves none active.
+    history.pushState(null, '', '/query/q1');
+    dispatchEvent(new PopStateEvent('popstate'));
+    expect(await main.findByRole('navigation', { name: 'De queries van Credit leads Q4' }, { timeout: 3000 })).toBeTruthy();
+    history.pushState(null, '', '/query/new');
+    dispatchEvent(new PopStateEvent('popstate'));
+    await vi.waitFor(() => expect(main.queryByRole('navigation', { name: 'De queries van Credit leads Q4' })).toBeNull());
+  });
+
+  it('adds the open query to a new Project with the Project button, which is then active (FR-SR-72, DEC-UX-318)', async () => {
+    const calls = serve({ queries: [{ ...QUERY }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('heading', { level: 1, name: 'Leads per source name' }, { timeout: 3000 });
+    await fireEvent.click(await main.findByRole('button', { name: /^Project/ }));
+    await fireEvent.click(within(main.getByRole('menu', { name: 'Project' })).getByRole('menuitem', { name: /Aan project toevoegen/ }));
+    // No Project yet: New project is chosen, with its name.
+    const sheet = within(await screen.findByRole('dialog', { name: 'Leads per source name aan een project toevoegen' }));
+    expect((sheet.getByRole('radio', { name: /Nieuw project/ }) as HTMLInputElement).checked).toBe(true);
+    await fireEvent.input(sheet.getByRole('textbox', { name: 'Naam' }), { target: { value: 'Credit leads Q4' } });
+    await fireEvent.click(sheet.getByRole('button', { name: 'Maken' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/projects', body: { name: 'Credit leads Q4', description: '', queries: ['q1'] } }));
+    expect(await main.findByRole('navigation', { name: 'De queries van Credit leads Q4' }, { timeout: 3000 })).toBeTruthy();
+    expect(screen.queryByRole('dialog', { name: /aan een project toevoegen/ })).toBeNull();
+  });
+
+  it('moves the open query to another Project with Change project, which is then active (FR-SR-72, DEC-UX-318, OP-UX-93)', async () => {
+    const credit = { id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: ['q1'] };
+    const partner = { id: 'p2', name: 'Partner review', description: '', members: [{ id: ME_ID, name: ME.name }, { id: '7', name: 'Karel Leys' }], queries: [] };
+    const calls = serve({ queries: [{ ...QUERY }], projects: [credit, partner] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('navigation', { name: 'De queries van Credit leads Q4' }, { timeout: 3000 });
+    await fireEvent.click(await main.findByRole('button', { name: /^Project/ }));
+    await fireEvent.click(within(main.getByRole('menu', { name: 'Project' })).getByRole('menuitem', { name: /Ander project/ }));
+    const sheet = within(await screen.findByRole('dialog', { name: 'Leads per source name naar een ander project verplaatsen' }));
+    // The Project it is in is left out; the first other one is chosen.
+    expect(sheet.queryByRole('radio', { name: /Credit leads Q4/ })).toBeNull();
+    expect((sheet.getByRole('radio', { name: /Partner review/ }) as HTMLInputElement).checked).toBe(true);
+    expect(sheet.getByText(/Hij verlaat Credit leads Q4/)).toBeTruthy();
+    await fireEvent.click(sheet.getByRole('button', { name: 'Verplaatsen' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/projects/p2/queries/q1', body: undefined }));
+    expect(await main.findByRole('navigation', { name: 'De queries van Partner review' }, { timeout: 3000 })).toBeTruthy();
+  });
+
+  it('opens the details of a Project, which is then active, and whose New query makes an empty query in it and opens it (FR-SR-68, DEC-UX-290, DEC-UX-317)', async () => {
+    const credit = { id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: ['q1'] };
+    const calls = serve({ queries: [{ ...QUERY }], projects: [credit] });
+    open('/query/projects/p1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByRole('heading', { level: 1, name: /Credit leads Q4/ }, { timeout: 3000 })).toBeTruthy();
+    // Its row on top, its details tab current; no Work in it.
+    const row = within(await main.findByRole('navigation', { name: 'De queries van Credit leads Q4' }, { timeout: 3000 }));
+    expect(row.getByRole('link', { name: /^Credit leads Q4/ }).getAttribute('aria-current')).toBe('page');
+    expect(main.queryByRole('button', { name: /Werk erin/ })).toBeNull();
+    await fireEvent.click(main.getByRole('button', { name: /^Nieuwe query$/ }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/query/q-made'));
+    const made = calls.find((call) => call.method === 'POST' && call.path === '/queries')?.body as { name: string; resources: string[]; project: string };
+    expect(made).toMatchObject({ resources: [], project: 'p1' });
+    expect(made.name).toMatch(/^Nieuwe query, /);
+    // Made in it, it opens with the Project still active.
+    expect(await main.findByRole('navigation', { name: 'De queries van Credit leads Q4' })).toBeTruthy();
+  });
+
+  it('starts an empty query in each Project from the quick window, which is then active (DEC-UX-293, DEC-UX-317)', async () => {
+    const credit = { id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: ['q1'] };
+    const partner = { id: 'p2', name: 'Partner review', description: '', members: [{ id: ME_ID, name: ME.name }], queries: [] };
+    const calls = serve({ queries: [{ ...QUERY }], projects: [credit, partner] });
+    open('/collections');
+    render(App, { config: CONFIG });
+    await screen.findByRole('complementary', { name: 'Collections' });
+    // On every screen: New query, and New query in each Project; no blank query for a business analyst.
+    await vi.waitFor(() => expect(calls.some((call) => call.path === '/projects')).toBe(true));
+    const shown = await quickTitles('nieuwe');
+    expect(shown).toContain('Nieuwe query');
+    expect(shown.filter((title) => title.startsWith('Nieuwe query in ')).toSorted()).toEqual(['Nieuwe query in Credit leads Q4', 'Nieuwe query in Partner review']);
+    expect(shown).not.toContain('Nieuwe lege query');
+    await closeQuick();
+    await quickDo('nieuwe query in credit');
+    await vi.waitFor(() => expect(location.pathname).toBe('/query/q-made'));
+    const made = calls.find((call) => call.method === 'POST' && call.path === '/queries')?.body as { name: string; resources: string[]; project: string };
+    expect(made).toMatchObject({ resources: [], project: 'p1', sql: '' });
+    expect(made.name).toMatch(/^Nieuwe query, /);
+    expect(await screen.findByRole('navigation', { name: 'De queries van Credit leads Q4' }, { timeout: 3000 })).toBeTruthy();
+  });
+
+  it('offers a power user a blank query in no Project from the quick window (DEC-UX-293, DEC-SR-46)', async () => {
+    const calls = serve({ as: 'admin', queries: [{ ...QUERY }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    await screen.findByRole('main');
+    expect(await quickTitles('nieuwe lege')).toContain('Nieuwe lege query');
+    await closeQuick();
+    await quickDo('nieuwe lege query');
+    await vi.waitFor(() => expect(location.pathname).toBe('/query/q-made'));
+    const made = calls.find((call) => call.method === 'POST' && call.path === '/queries')?.body as Record<string, unknown>;
+    expect(made).toMatchObject({ resources: [], sql: '' });
+    expect(made).not.toHaveProperty('project');
+  });
+
+  it('adds a query to a Project of 50 already, from the quick window: a Project has no limit (DEC-SR-49, DEC-UX-318)', async () => {
+    const many = Array.from({ length: 50 }, (_, at) => ({ ...QUERY, id: `f${String(at).padStart(2, '0')}`, name: `Query ${at}` }));
+    const credit = { id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: many.map((query) => query.id) };
+    const calls = serve({ queries: [{ ...QUERY }, ...many], projects: [credit] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('heading', { level: 1, name: 'Leads per source name' }, { timeout: 3000 });
+    await vi.waitFor(() => expect(calls.some((call) => call.path === '/projects')).toBe(true));
+    await quickDo('aan project toevoegen');
+    const sheet = within(await screen.findByRole('dialog', { name: 'Leads per source name aan een project toevoegen' }));
+    expect((sheet.getByRole('radio', { name: /Credit leads Q4/ }) as HTMLInputElement).checked).toBe(true);
+    await fireEvent.click(sheet.getByRole('button', { name: 'Toevoegen' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/projects/p1/queries/q1', body: undefined }));
+  });
+
+  it('puts the active Project first in the panel, standing out, with no Close project (DEC-UX-317)', async () => {
+    const partner = { id: 'p2', name: 'Partner review', description: '', members: [{ id: ME_ID, name: ME.name }], queries: [] };
+    const credit = { id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: ['q1'] };
+    serve({ queries: [{ ...QUERY }], projects: [partner, credit] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('navigation', { name: 'De queries van Credit leads Q4' }, { timeout: 3000 });
+    const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
+    // First among the Projects, though Partner review came first.
+    await vi.waitFor(() => {
+      const names = panel.getAllByRole('link').map((link) => link.textContent ?? '').filter((text) => /Credit leads Q4|Partner review/.test(text));
+      expect(names[0]).toContain('Credit leads Q4');
+    });
+    expect(panel.getByRole('link', { name: /Credit leads Q4/ }).classList.contains('current')).toBe(true);
+    expect(panel.queryByRole('button', { name: /Project sluiten/ })).toBeNull();
+    expect(panel.queryByText('Je werkt erin')).toBeNull();
+  });
+
+  it('takes a Resource out of the query itself with Just take it out, which stays open (FR-SR-67, DEC-SR-48)', async () => {
+    const sources = { ...QUERY.resources[0], id: 'r9', key: 'immoscoop-dataplatform-398214.dbt_prod_leads.lead_sources', displayName: 'Lead sources', partition: null };
+    const calls = serve({ queries: [{ ...QUERY, resources: [QUERY.resources[0], sources], parameters: [dateFrom] }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('button', { name: 'Lead sources weghalen' }));
+    const sheet = within(await screen.findByRole('dialog', { name: 'Zonder Lead sources' }));
+    await fireEvent.click(sheet.getByRole('button', { name: 'Gewoon weglaten' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/queries/q1', body: { resources: ['r2'] } }));
+    await vi.waitFor(() => expect(screen.queryByRole('dialog', { name: 'Zonder Lead sources' })).toBeNull());
+    expect(location.pathname).toBe('/query/q1');
+    expect(calls.some((call) => call.method === 'POST' && call.path === '/queries')).toBe(false);
   });
 });
 
@@ -4593,11 +5329,12 @@ describe('Folders', () => {
     open('/collections/c1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    const folders = within(await main.findByRole('table', { name: 'Mappen' }));
+    // Its folders in the one table, each with what it holds; no line explains what sits elsewhere (DEC-UX-311).
+    const folders = within(await main.findByRole('table', { name: 'In Credit leads' }));
     expect(folders.getByText('Leads in').closest('tr')?.textContent).toContain('1 map · 1 Resource');
     expect(folders.getByText('Response').closest('tr')?.textContent).toContain('Leeg');
-    expect(main.getByText(/Geen Resource staat bovenaan in Credit leads: de Resource zit in een map/)).toBeTruthy();
-    expect(main.getByText(/Geen Lens staat bovenaan in Credit leads/)).toBeTruthy();
+    expect(folders.queryByText('Weekly lead volume')).toBeNull();
+    expect(main.queryByText(/staat bovenaan in Credit leads/)).toBeNull();
 
     const panel = within(screen.getByRole('complementary', { name: 'Collections' }));
     expect(panel.getByRole('link', { name: 'Leads in' }).getAttribute('href')).toBe('/collections/c1/folders/f1');
@@ -4620,7 +5357,7 @@ describe('Folders', () => {
     // The panel unfolds to the folder whose page is open.
     const panel = within(screen.getByRole('complementary', { name: 'Collections' }));
     expect(panel.getByRole('link', { name: 'By source' }).getAttribute('aria-current')).toBe('page');
-    await fireEvent.click(within(main.getByRole('table', { name: 'In deze map' })).getByText('Max Verstraete', { exact: false }));
+    await fireEvent.click(within(main.getByRole('table', { name: 'In By source' })).getByText('Max Verstraete', { exact: false }));
     expect(location.pathname).toBe('/lenses/l1');
   });
 
@@ -4628,7 +5365,7 @@ describe('Folders', () => {
     const calls = serve({ as: 'admin', groups: ['g1'], lenses: [{ ...LENS }], creditWith: FOLDERED });
     open('/collections/c1/folders/f1');
     render(App, { config: CONFIG });
-    const table = within(await screen.findByRole('table', { name: 'In deze map' }));
+    const table = within(await screen.findByRole('table', { name: 'In Leads in' }));
     await fireEvent.click(await table.findByRole('button', { name: 'Weekly lead volume uit de Collection halen' }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/resources/r2/collection' }));
     await vi.waitFor(() => expect(table.queryByText('Weekly lead volume')).toBeNull());
@@ -4640,7 +5377,7 @@ describe('Folders', () => {
     serve({ as: 'lensUser', groups: ['g1'], lenses: [{ ...LENS }], creditWith: FOLDERED });
     open('/collections/c1/folders/f1');
     render(App, { config: CONFIG });
-    const table = within(await screen.findByRole('table', { name: 'In deze map' }));
+    const table = within(await screen.findByRole('table', { name: 'In Leads in' }));
     expect(await table.findByText('Weekly lead volume')).toBeTruthy();
     expect(table.queryByRole('button', { name: /uit de Collection halen/ })).toBeNull();
   });
@@ -4649,7 +5386,7 @@ describe('Folders', () => {
     const calls = serve({ groups: ['g1'], lenses: [{ ...LENS }], creditWith: FOLDERED });
     open('/collections/c1/folders/f1');
     render(App, { config: CONFIG });
-    const table = within(await screen.findByRole('table', { name: 'In deze map' }));
+    const table = within(await screen.findByRole('table', { name: 'In Leads in' }));
     await fireEvent.click(await table.findByRole('button', { name: 'Weekly lead volume uit de Collection halen' }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/resources/r2/collection' }));
   });
@@ -4672,7 +5409,13 @@ describe('Folders', () => {
     open('/collections/c1/folders/f1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    await fireEvent.click(await main.findByRole('button', { name: /Nieuwe map/ }));
+    // The same New as on the page of its Collection: a folder in this one, or a Lens (DEC-UX-315); no heading and no
+    // lines of explanation over the table.
+    expect(main.queryByText('In deze map')).toBeNull();
+    expect(main.queryByText(/Eerst de mappen|Sleep een rij/)).toBeNull();
+    await fireEvent.click(await main.findByRole('button', { name: 'Nieuw' }));
+    expect(main.getAllByRole('menuitem').map((item) => item.querySelector('.choice')?.textContent)).toEqual(['Map', 'Lens']);
+    await fireEvent.click(main.getByRole('menuitem', { name: /Map/ }));
     const name = main.getByRole('textbox', { name: 'Naam van de nieuwe map' });
     await fireEvent.input(name, { target: { value: 'Paid' } });
     await fireEvent.keyDown(name, { key: 'Enter' });
@@ -4714,7 +5457,7 @@ describe('Folders', () => {
     open('/collections/c1/folders/f1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    const table = within(await main.findByRole('table', { name: 'In deze map' }));
+    const table = within(await main.findByRole('table', { name: 'In Leads in' }));
     const row = table.getByText('Weekly lead volume').closest('tr')!;
     const folder = table.getByText('By source').closest('tr')!;
     expect(row.getAttribute('draggable')).toBe('true');
@@ -4749,9 +5492,9 @@ describe('Folders', () => {
     open('/collections/c1/folders/f1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    const table = within(await main.findByRole('table', { name: 'In deze map' }));
+    const table = within(await main.findByRole('table', { name: 'In Leads in' }));
     expect(table.getByText('Weekly lead volume').closest('tr')?.hasAttribute('draggable')).toBe(false);
-    expect(main.queryByRole('button', { name: /Nieuwe map/ })).toBeNull();
+    expect(main.queryByRole('button', { name: 'Nieuw' })).toBeNull();
     expect(main.queryByRole('button', { name: 'Verwijder de map, zodra ze leeg is' })).toBeNull();
   });
 
@@ -4767,7 +5510,9 @@ describe('Folders', () => {
     expect(about.getByRole('link', { name: 'Leads in' }).getAttribute('href')).toBe('/collections/c1/folders/f1');
     expect(about.getByText('<b>not bold</b>')).toBeTruthy();
 
-    await fireEvent.click(about.getByRole('button', { name: /Bewerk de intro/ }));
+    // No link of its own on the page: Edit more, or the quick window (OP-UX-116).
+    expect(about.queryByRole('button')).toBeNull();
+    await quickDo('bewerk de intro');
     const field = (await main.findByRole('textbox', { name: 'Intro' })) as HTMLTextAreaElement;
     expect(field.value).toBe(intro);
     field.setSelectionRange(field.value.length, field.value.length);
@@ -4906,12 +5651,15 @@ describe('Lenses', () => {
     open('/collections/c1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    const table = within(await main.findByRole('table', { name: 'Lenses' }));
-    expect(table.getByText('Max Verstraete')).toBeTruthy();
+    // In the one table, with the Resources it is built on (DEC-UX-311).
+    const table = within(await main.findByRole('table', { name: 'In Credit leads' }));
+    const row = (await table.findByText('Leads per source, week by week')).closest('tr')!;
+    expect(row.textContent).toContain('Lens op Weekly lead volume');
+    expect(table.getByText('Max Verstraete', { exact: false })).toBeTruthy();
     const panel = within(screen.getByRole('complementary', { name: 'Collections' }));
     expect(panel.getByRole('link', { name: /Leads per source, week by week/ }).getAttribute('href')).toBe('/lenses/l1');
     // The row is no link: a click anywhere on it opens the Lens, so that a drag anywhere on it moves it (DEC-UX-157).
-    await fireEvent.click(table.getByText('Max Verstraete'));
+    await fireEvent.click(table.getByText('Max Verstraete', { exact: false }));
     expect(location.pathname).toBe('/lenses/l1');
   });
 
@@ -5095,12 +5843,10 @@ describe('Lenses', () => {
     open('/collections/c1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    // Next to the heading Lenses, how a Lens is made; the head has no "New Lens" of its own.
-    const links = [await main.findByRole('link', { name: 'Lens toevoegen: start een query' })];
-    expect(links.map((link) => link.getAttribute('href'))).toEqual(['/query/new/for/c1']);
-    expect(main.queryByRole('link', { name: 'Nieuwe Lens' })).toBeNull();
-
-    await fireEvent.click(links[0] as HTMLElement);
+    // Lens under New, which starts with a query (DEC-UX-310).
+    await fireEvent.click(await main.findByRole('button', { name: 'Nieuw' }));
+    await fireEvent.click(main.getByRole('menuitem', { name: /Lens/ }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/query/new/for/c1'));
     const start = within(await screen.findByRole('main'));
     await fireEvent.click(await start.findByRole('button', { name: 'Een Resource toevoegen' }));
     await fireEvent.click(await start.findByRole('button', { name: /Weekly lead volume/ }));
@@ -5679,8 +6425,10 @@ describe('the quick window on every screen (DEC-UX-240)', () => {
     await main.findByRole('heading', { level: 1, name: 'Credit leads' }, { timeout: 3000 });
     const shown = await screenTitles();
     expect(shown.group).toBe('Deze Collection');
-    expect(shown.titles).toEqual(expect.arrayContaining(['Deze Collection bewerken', 'Nieuwe map', 'Een Lens toevoegen', 'Bewerk de intro']));
-    await quickDo('lens toevoegen');
+    expect(shown.titles).toEqual(
+      expect.arrayContaining(['De naam en beschrijving wijzigen', 'Meer bewerken', 'Nieuwe map', 'Nieuwe Lens', 'Bewerk de intro', 'De geschiedenis tonen']),
+    );
+    await quickDo('nieuwe lens');
     await vi.waitFor(() => expect(location.pathname).toBe('/query/new/for/c1'));
   });
 
@@ -5702,3 +6450,29 @@ describe('the quick window on every screen (DEC-UX-240)', () => {
     await vi.waitFor(() => expect(location.pathname).toBe('/me/keys'));
   });
 });
+
+/** A Project as the fake query service keeps it: who is in it, and its queries by their IDs in their order. */
+interface FakeProject {
+  id: string;
+  name: string;
+  description: string;
+  members: { id: string; name: string }[];
+  queries: string[];
+}
+
+/** The page of a Project, as query answers it (TR-SR-33). */
+function projectView(project: FakeProject, queries: Record<string, unknown>[]) {
+  return {
+    id: project.id,
+    name: project.name,
+    description: project.description,
+    madeBy: project.members[0],
+    createdAt: '2026-11-19T09:00:00Z',
+    updatedAt: '2026-11-19T09:00:00Z',
+    members: project.members.map((member) => ({ ...member, addedBy: null, addedAt: '2026-11-19T09:00:00Z', queriesMade: 0 })),
+    queries: project.queries.flatMap((id, position) => {
+      const query = queries.find((candidate) => candidate.id === id);
+      return query ? [{ id, name: query.name, owner: { id: ME_ID, name: query.ownerName }, lastRun: null, position, locked: false, question: query.question, resources: [] }] : [];
+    }),
+  };
+}

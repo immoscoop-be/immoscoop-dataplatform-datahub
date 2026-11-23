@@ -32,6 +32,9 @@
       "path": "services/query"
     },
     {
+      "path": "services/eda"
+    },
+    {
       "path": "apps/mcp"
     },
     {

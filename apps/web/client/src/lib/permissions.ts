@@ -45,6 +45,7 @@ export const PARTS: readonly { id: PermissionPart; icon: IconName; title: string
   { id: 'groups', icon: 'users-three-fill', title: 'permission.part.groups' },
   { id: 'query', icon: 'terminal-window-fill', title: 'permission.part.query' },
   { id: 'lenses', icon: 'aperture-fill', title: 'permission.part.lenses' },
+  { id: 'eda', icon: 'binoculars-fill', title: 'permission.part.eda' },
   { id: 'messages', icon: 'chat-circle-text-fill', title: 'permission.part.messages' },
   { id: 'claude', icon: 'plugs-connected-fill', title: 'permission.part.claude' },
   { id: 'excel', icon: 'key-fill', title: 'permission.part.excel' },
@@ -159,6 +160,7 @@ export const PERMISSION_TEXTS: { readonly [K in PermissionKey]: { name: string; 
       reach: { label: 'permission.lenses.manage.reach', options: { theirs: 'permission.lenses.manage.reach.theirs', every: 'permission.lenses.manage.reach.every' } },
     },
   },
+  'eda.use': { name: 'permission.eda.use', about: 'permission.eda.use.about', values: {} },
   'messages.write': {
     name: 'permission.messages.write',
     about: 'permission.messages.write.about',

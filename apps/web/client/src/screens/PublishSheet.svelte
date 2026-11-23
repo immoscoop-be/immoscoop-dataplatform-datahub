@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { dateFieldOf } from '@datahub/contracts/reliable';
   import DescriptionPair from '@datahub/ui/components/DescriptionPair.svelte';
   import ConfirmBar from '@datahub/ui/containers/ConfirmBar.svelte';
   import Sheet from '@datahub/ui/containers/Sheet.svelte';
@@ -112,10 +113,16 @@
           <!-- The rest of the card, read back as a colleague will see it (DEC-MR-17). -->
           {#if card.intendedUse}<div class="label">{t('resource.intendedUse')}</div><p class="read">{card.intendedUse}</p>{/if}
           {#if card.pitfalls}<div class="label">{t('resource.pitfalls')}</div><p class="read">{card.pitfalls}</p>{/if}
-          <div class="label">{t('resource.gaps')}{card.reliableSince ? ` · ${t('publish.since', { day: day(card.reliableSince) })}` : ''}</div>
+          <!-- Reliable since on a line of its own, with its Date Field and why not earlier (FR-RC-31). -->
+          {#if card.reliableSince}
+            {@const on = dateFieldOf(card.dateField, resource.details.modelType, resource.details.typeFields ?? [], resource.fields).field}
+            <div class="label">{t('publish.reliable')} · {card.reliableSince.from === 'firstRow' ? t('reliable.firstRow').toLowerCase() : day(card.reliableSince.day ?? '')}{on ? `, ${t('reliable.on', { field: on })}` : ''}</div>
+            {#if card.reliableSince.from === 'day'}<p class="read">{card.reliableSince.why || t('reliable.whyMissing')}</p>{/if}
+          {/if}
+          <div class="label">{t('resource.gaps')}</div>
           <p class="read">{card.knownGaps.length > 0 ? card.knownGaps.map((gap) => gap.text).join(' ') : t('publish.gapsNone')}</p>
-          <div class="label">{t('resource.keyFields')} · {t('resource.parameters')}</div>
-          <p class="read">{card.keyFields.join(', ') || t('publish.none')} · {card.parameters.join(', ') || t('publish.none')}</p>
+          <div class="label">{t('resource.keyFields')}</div>
+          <p class="read">{card.keyFields.join(', ') || t('publish.none')}</p>
           <button type="button" class="text-link" onclick={onfields}>{t('publish.fields', { count: resource.fields.length, described: dbtFields })}<Icon name="arrow-right" /></button>
         </div>
         <p class="meta text">{t('publish.notData')} {t('publish.changeLater')}</p>

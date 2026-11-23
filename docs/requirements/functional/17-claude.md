@@ -38,6 +38,7 @@ In library terms: Claude is an assistant in the reading room who carries the lib
 - <a id="dec-cl-20"></a>**DEC-CL-20** · Claude writes the Known Gaps of a Resource one by one, with their scope, as the web app does: a period, fields and rows where the gap holds ([FR-RC-24](05-resource-card.md#fr-rc-24)). Changing the text of a gap keeps its scope and who added it. The card tool no longer takes the Known Gaps as a list of texts. *Decided on 2026-11-17, by Max, who saw that "whenever gaps are being created through the MCP … it isn't filling in any of the" scopes; the tool for one gap at a time was Claude's proposal, which Max agreed to.*
 - <a id="dec-cl-21"></a>**DEC-CL-21** · Claude runs a Lens, and its result shows in an MCP App with its Parameters as on the page of the Lens: Claude chooses their values from the question, and the User can change them in the MCP App and run it again, as in the Preview ([FR-CL-09](#fr-cl-09)). A query keeps the MCP App without an editor ([FR-CL-21](#fr-cl-21), [OP-CL-09](#op-cl-09)). *Decided on 2026-11-18, by Max: "the mcp server does not have the run lens function. Can you implement it pls? Also including the card"; on its Parameters: "Editable, like Preview".*
 - <a id="dec-cl-22"></a>**DEC-CL-22** · Claude may suggest the Key Fields of a Resource and a Business Description for its fields, and shows them in one MCP App where the User ticks, edits and saves ([FR-CL-38](#fr-cl-38), [DEC-UX-281](../../design/principles.md#dec-ux-281)): one card for both, Key Fields and descriptions; a suggestion only for a field that has no Business Description, as a text on the card is kept; and to suggest, Claude reads the fields, their types, their descriptions from dbt, the Business Description and grain of the Resource and, where it may, a small Preview of its rows: only when the Permission group of the User lets Claude read rows, and a Preview runs without an approval, up to 100 MB. Otherwise it suggests from the names and descriptions alone, and says so. Only the click of the User on "Save to Data Hub" writes, never Claude ([DEC-CL-07](#dec-cl-07)). *Decided on 2026-11-18, by Max: "when describing a resource trough the mcp, is it possible to 'ask claude' to do a suggestion on which fields to declare as important and create a description for each field BUT to visualize all this in a card and enable the user to check/uncheck fields as important and to 'edit' the description claude has suggested? I think this is much user friendly instead of typing it"; then, of the choices put to him: one card for both, Key Fields and descriptions; a suggestion only for a field without a description, as a text on the card is kept; and Claude may also read a small Preview of rows.*
+- <a id="dec-cl-23"></a>**DEC-CL-23** · Claude sets up and manages a Project for the User: it makes one, makes queries in it, adds a query of the User to it or moves one there from another Project, takes one out, renames and describes it and orders its queries ([FR-CL-39](#fr-cl-39)). Sharing a Project with colleagues, taking someone out of it, leaving it and deleting it stay with the User in Data Hub: each tells or changes it for others ([FR-SR-65](04-stacks-and-resources.md#fr-sr-65), [FR-SR-66](04-stacks-and-resources.md#fr-sr-66)). *Decided on 2026-11-19, by Max: "add on the mcp the ability to add queries to a project (i want claude to do so)", and "when I analyze a project … there are a lot of queries that we need to run, and what I want is that, within this analysis, Claude is able to set up and manage an entire project"; of the tools put to him, all four: add or move a query, make a query in a Project, take a query out, make a new Project. Leaving sharing and deleting to the User is proposed.*
 
 ## Terms
 
@@ -164,6 +165,25 @@ Free SQL over the Resources a User sees ([FR-SR-26](04-stacks-and-resources.md#f
 | query `GET /queries/days` | How many queries each day holds | The periods and chips of the panel of Query |
 | query and catalogue `/internal/…` | Calls between services and from Cloud Scheduler | No User calls them |
 
+### Projects
+
+A Project keeps the queries of one piece of work together ([FR-SR-63](04-stacks-and-resources.md#fr-sr-63)); Claude sets one up and keeps the queries of an analysis in it ([FR-CL-39](#fr-cl-39), [DEC-CL-23](#dec-cl-23)).
+
+| The User asks | Tool | Endpoint | Who | Answer |
+| --- | --- | --- | --- | --- |
+| "Which projects am I in?" | `list_projects` | query `GET /projects` | Who may make queries | Text |
+| "What is in Credit leads Q4?" | `get_project` | query `GET /projects/:id` | Who is in it | Text |
+| "Set up a project for this analysis" | `create_project` | query `POST /projects` | Who may make queries | Text |
+| "Make a query for it in the project" | `create_query` with `project` | query `POST /queries` | Who is in it | Text |
+| "Put that query in the project" | `add_query_to_project` | query `GET /queries/:id`, `PUT /projects/:id/queries/:queryId` | Who is in it, for a query they write | Text |
+| "Take it out of the project" | `remove_query_from_project` | query `DELETE /projects/:id/queries/:queryId` | Who is in it | Text |
+| "Rename it", "put the funnel queries first" | `update_project` | query `PATCH /projects/:id`, `PUT /projects/:id/order` | Who is in it | Text |
+
+| Endpoint | What it does | Why not through the MCP |
+| --- | --- | --- |
+| query `PUT` and `DELETE /projects/:id/members/:userId` | Sharing a Project with a colleague, taking someone out of it, and leaving it | It tells colleagues, and changes who works on it: the User does it on its page ([DEC-CL-23](#dec-cl-23)) |
+| query `DELETE /projects/:id` | Deleting a Project for everyone in it | It is gone for all of them: the User does it on its page |
+
 ## Lenses through the MCP
 
 A Lens answers a question that comes back ([DEC-CL-10](#dec-cl-10)): Claude offers it before it writes a query, reads what it asks, and runs it for the User with the values of their question. A run of a Lens is a run of the query of the User of that Lens, in their Query Log ([FR-LE-12](09-lenses.md#fr-le-12)), marked Claude ([FR-CL-22](#fr-cl-22)), within the same ranges as on the page of the Lens.
@@ -256,6 +276,9 @@ Each tool that returns an object returns the address of its page in Data Hub, at
 
 *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 
+*Note of 2026-11-20: the Resource Card has no Parameters any more ([DEC-RC-34](05-resource-card.md#dec-rc-34)).*
+
+
 <a id="fr-cl-08"></a>
 ### FR-CL-08 · Lineage, related Resources, Log and queries
 
@@ -284,6 +307,9 @@ For its Owner Unit and the Data Team, Claude can write what Data Hub keeps about
 *Note of 2026-11-01, on building it: "through Claude" in the Log ([DEC-CL-08](#dec-cl-08)) is not built yet: the Access Token does not say through which client a User came, so catalogue cannot tell ([OP-CL-10](#op-cl-10)). The same holds for [FR-CL-11](#fr-cl-11), [FR-CL-12](#fr-cl-12) and [FR-CL-13](#fr-cl-13).*
 
 *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
+
+*Note of 2026-11-20: Claude writes Key Fields, no Parameters ([DEC-RC-34](05-resource-card.md#dec-rc-34)).*
+
 
 <a id="fr-cl-11"></a>
 ### FR-CL-11 · Marking changes seen, deprecating and taking it back
@@ -467,7 +493,11 @@ A tool of the MCP server that answers about something in a situation that pushes
 
 The tool `guide_owner_journey` returns the Owner Journey of a Resource: its thirteen steps in their fixed order, from Start through Know the data, the Business Description, the Key Fields before the other fields, the intended use, the pitfalls, the Known Gaps and the day it is reliable since, the Parameters, the table type, grain and mappings, and the open Questions and Signals, to reading the card back, publishing and what comes after. Each step says whether it is required to publish, needed for the EDA or advised ([DEC-MR-16](06-maturity-and-release.md#dec-mr-16)), whether it is done or open and what it misses, and names its Learning Cards; a card not written yet goes by its number only. The step that is next says what Claude tells the Owner, what it shows and what it asks, and which tool writes it. The journey is read from the Resource itself, never from the conversation: it resumes in any conversation, for any member of the Owner Unit. It also says whether the User may publish and describe the Resource. Each call shows the step in an MCP App: the progress over the steps, the step and its mark, what the Resource holds for it now, its Learning Cards as a strip with their core idea and gain, and the tool that writes it; "Read the card" asks Claude to show the whole card ([DEC-UX-261](../../design/principles.md#dec-ux-261), [FR-LR-26](16-learning.md#fr-lr-26)). The prompt `publish_a_resource` starts it. The server instructions tell Claude to take a User who wants to publish, describe or take on a Resource through the journey, one step at a time, to say where each proposal comes from, and to write a text only once the Owner agrees ([DEC-MR-17](06-maturity-and-release.md#dec-mr-17)).
 
+*Note of 2026-11-20: Reliable Since becomes a step of its own, before the Known Gaps, which makes fourteen steps with Start ([DEC-MR-18](06-maturity-and-release.md#dec-mr-18), [OP-MR-09](06-maturity-and-release.md#op-mr-09)); Claude reads it on the Date Field of the Resource and proposes that field and the day from the data ([FR-RC-32](05-resource-card.md#fr-rc-32)).*
+
 *Note of 2026-11-17: the window of each step is calmer: its overview folded, its Learning Cards folded under "How can we help with this step?" ([FR-CL-33](#fr-cl-33)), and the Known Gaps written one by one with their scope ([FR-CL-34](#fr-cl-34)).*
+
+*Note of 2026-11-20: the journey has twelve steps after Start, numbered up to 12: its advised step 9, Parameters, is gone and the steps after it moved up one ([DEC-RC-34](05-resource-card.md#dec-rc-34)).*
 
 **Makes easy:** an Owner who has never published a Resource getting from 2 · Described to a card a colleague can trust, in one conversation or several. **Makes hard:** skipping a step, taking them in another order, and a journey that only lives in one conversation.
 
@@ -477,6 +507,8 @@ The tool `guide_owner_journey` returns the Owner Journey of a Resource: its thir
 **Status:** Implemented · **Source:** Max, 2026-11-15 ([DEC-MR-16](06-maturity-and-release.md#dec-mr-16))
 
 The tool `record_journey_step` records, for a User who may describe the Resource, that the Owner went through a step that writes nothing of its own (Know the data, the fields, the table type, grain and mappings, the open Questions and Signals), or that there is nothing to add to the pitfalls, the Known Gaps or the Parameters. Data Hub keeps who and when, and writes it into the Log of the Resource ([FR-MR-18](06-maturity-and-release.md#fr-mr-18)). Claude records it only after the Owner said so.
+
+*Note of 2026-11-20: "nothing to add" is no longer said of Parameters, which left the card ([DEC-RC-34](05-resource-card.md#dec-rc-34)).*
 
 **Makes easy:** a journey that remembers what the Owner already went through. **Makes hard:** Claude marking a step done that the Owner never saw.
 
@@ -542,6 +574,15 @@ At the steps Pitfalls and Known Gaps of the Owner Journey, the ⓘ after the tit
 When the User describes the fields of a Resource they may describe, Claude suggests which fields are Key Fields and a Business Description for every field that has none, and shows them with `suggest_fields` in one MCP App: a row per field with its box "Key Field", its name, type and description from dbt, and its Business Description to edit, marked as suggested, on the card or edited ([DEC-UX-281](../../design/principles.md#dec-ux-281)). Nothing is written until the User clicks "Save to Data Hub" in the card, which writes the Key Fields and the descriptions as theirs, in the history with their name, with what the card showed as before: a field a colleague described meanwhile is not overwritten, and the card asks which text it keeps. Claude is told what was saved, and goes on, as at the steps Key Fields and Fields of the Owner Journey, where `guide_owner_journey` has Claude offer the card ([FR-CL-32](#fr-cl-32)). To suggest, Claude may read a small Preview of the Resource only where [DEC-CL-22](#dec-cl-22) lets it, and the card says what the suggestions are based on.
 
 **Makes easy:** describing every field of a table in one go, by reading, ticking and correcting instead of typing. **Makes hard:** a suggestion saved unread over a text on the card, and a write the User did not click.
+
+<a id="fr-cl-39"></a>
+### FR-CL-39 · Claude sets up and manages a Project of the User
+
+**Status:** Implemented · **Source:** Max, 2026-11-19 ([DEC-CL-23](#dec-cl-23))
+
+For a User who may make queries, Claude lists the Projects they are in, reads one with its queries in their order and who is in it, and, where the User asks, sets one up for an analysis: it makes a Project with a name and a sentence on what it is for, makes its queries in it with `create_query`, an empty one too, at the end of its row, adds a query the User writes, renames and describes it, puts its queries in order and takes one out, which stays with whoever made it. A query is in one Project at most: adding it to another moves it, and Claude says so to the User before it does, naming the Project it leaves. A query locked to the User in a Project, as it reads a Resource they may not see, shows only what the page of the Project shows of it ([FR-SR-65](04-stacks-and-resources.md#fr-sr-65)). Every answer links to the page of the Project in Data Hub, where the User shares it with colleagues, leaves it or deletes it: Claude does none of these ([DEC-CL-23](#dec-cl-23)). A Project holds any number of queries ([DEC-SR-49](04-stacks-and-resources.md#dec-sr-49)).
+
+**Makes easy:** keeping the many queries of one analysis together while Claude makes them, and finding them again in Data Hub under the name of that analysis. **Makes hard:** a query moved out of another Project without the User knowing, and colleagues added to or told about a Project by Claude rather than by the User.
 
 ## Edge cases
 

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { renderLog } from '@datahub/contracts/log';
   import { hasScope } from '@datahub/contracts/gaps';
+  import { dateFieldOf } from '@datahub/contracts/reliable';
   import { curate, SUMMARY, type SummaryPart, type SummarySource, type Weight, WEIGHTS } from '@datahub/contracts/summary';
   import MarkdownText from '@datahub/ui/components/MarkdownText.svelte';
   import { levelName } from '@datahub/ui/foundations/levels.js';
@@ -53,6 +54,14 @@
   const language = $derived(currentLanguage());
   const LOCALES = { nl: 'nl-BE', en: 'en-GB' } as const;
   const day = (value: string) => new Intl.DateTimeFormat(LOCALES[language], { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(value));
+  /** Reliable since in one line, on its Date Field, with why not earlier (FR-RC-31). */
+  const reliableLine = $derived.by(() => {
+    const reliable = card.reliableSince;
+    if (!reliable) return '';
+    const field = dateFieldOf(card.dateField, details.modelType, details.typeFields ?? [], resource.fields).field;
+    const on = field ? `, ${t('reliable.on', { field })}` : '';
+    return reliable.from === 'firstRow' ? t('summary.reliable.firstRow', { on }) : t('summary.reliable.day', { date: day(reliable.day ?? ''), on, why: reliable.why ? `: ${reliable.why}` : '.' });
+  });
   const list = (names: readonly string[]) => new Intl.ListFormat(LOCALES[language], { type: 'conjunction' }).format(names);
   const WEIGHT_KEYS: Record<Weight, { name: string; means: string }> = {
     readFirst: { name: 'summary.weight.readFirst', means: 'summary.legend.readFirst' },
@@ -88,11 +97,11 @@
     whatItIs: () => Boolean(card.businessDescription || resource.description),
     oneRow: () => details.grain.length > 0 || details.modelType !== null,
     useFor: () => Boolean(card.intendedUse),
-    queryCheaply: () => Boolean(details.partition || details.clusterBy.length > 0 || size || card.keyFields.length > 0 || card.parameters.length > 0),
+    queryCheaply: () => Boolean(details.partition || details.clusterBy.length > 0 || size || card.keyFields.length > 0),
     joins: () => joins.length > 0,
     fields: () => resource.fields.length > 0,
-    watchOut: () => Boolean(card.pitfalls || card.reliableSince),
-    knownGaps: () => card.knownGaps.length > 0,
+    watchOut: () => Boolean(card.pitfalls),
+    knownGaps: () => card.knownGaps.length > 0 || card.reliableSince !== null,
     qa: () => curated.qa.length > 0,
     standing: () => true,
     colleagues: () => curated.colleagues.length > 0,
@@ -177,11 +186,8 @@
             </p>
           {/if}
           {#if size}<p class="line">{t('resource.size')}: {size}</p>{/if}
-          {#if card.keyFields.length > 0 || card.parameters.length > 0}
-            <p class="line">
-              {#if card.keyFields.length > 0}{t('resource.keyFields')}{#each card.keyFields as field (field)}{' '}<span class="code">{field}</span>{/each}{/if}
-              {#if card.parameters.length > 0}{card.keyFields.length > 0 ? ' · ' : ''}{t('resource.parameters')}{#each card.parameters as field (field)}{' '}<span class="code">{field}</span>{/each}{/if}
-            </p>
+          {#if card.keyFields.length > 0}
+            <p class="line">{t('resource.keyFields')}{#each card.keyFields as field (field)}{' '}<span class="code">{field}</span>{/each}</p>
           {/if}
         {:else if part === 'joins'}
           {#each joins as mapping (mapping.field)}
@@ -191,11 +197,14 @@
           <p class="line">{t('summary.fields', { count: resource.fields.length, described })}</p>
         {:else if part === 'watchOut'}
           {#if card.pitfalls}<div class="md"><MarkdownText source={card.pitfalls} /></div>{/if}
-          {#if card.reliableSince}<p class="line">{t('summary.reliable', { date: day(card.reliableSince) })}</p>{/if}
         {:else if part === 'knownGaps'}
-          <ul class="gaps">
-            {#each card.knownGaps as gap (gap.id)}<li>{gap.text}{#if hasScope(gap.scope)}<GapScopeView scope={gap.scope} known={fieldNames} line />{/if}</li>{/each}
-          </ul>
+          <!-- Reliable since first, with its Date Field and why not earlier (DEC-UX-296). -->
+          {#if reliableLine}<p class="line">{reliableLine}</p>{/if}
+          {#if card.knownGaps.length > 0}
+            <ul class="gaps">
+              {#each card.knownGaps as gap (gap.id)}<li>{gap.text}{#if hasScope(gap.scope)}<GapScopeView scope={gap.scope} known={fieldNames} line />{/if}</li>{/each}
+            </ul>
+          {/if}
         {:else if part === 'qa'}
           <ul class="threads">{#each curated.qa as thread (thread.id)}{@render said(thread)}{/each}</ul>
         {:else if part === 'standing'}

@@ -4,9 +4,9 @@
 </script>
 
 <script lang="ts">
-  import { tick } from 'svelte';
-  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
+  import { tick, untrack } from 'svelte';
   import type { GapScope } from '@datahub/contracts/gaps';
+  import { dateFieldOf } from '@datahub/contracts/reliable';
   import type { SummarySource } from '@datahub/contracts/summary';
   import FactsList from '@datahub/ui/components/FactsList.svelte';
   import LogList from '@datahub/ui/components/LogList.svelte';
@@ -22,20 +22,22 @@
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import OriginTag from '@datahub/ui/marks/OriginTag.svelte';
   import Button from '@datahub/ui/primitives/Button.svelte';
-  import Field from '@datahub/ui/primitives/Field.svelte';
   import Loading from '@datahub/ui/primitives/Loading.svelte';
+  import { flowBox, markPlace } from '../lib/flowBox.svelte.js';
+  import { takeProposal } from '../lib/gaps.js';
   import type { CardChanges, DescribeAttribute, KnownGap, LogEntry, Related, ResourceDetail } from '../lib/catalogue.js';
   import { carriersOf, nounOf } from '../lib/grain.js';
   import type { MarkerPlace } from '../lib/learning.js';
   import type { Conversation } from '../lib/messages.js';
-  import type { Storage } from '../lib/query.js';
+  import type { FirstRow, Storage } from '../lib/query.js';
   import { sizeText } from '../lib/size.js';
   import { command, useScreenCommands, view } from '../lib/commands.svelte.js';
   import type { QuickRow } from '../lib/quick.js';
   import LearningRef from './LearningRef.svelte';
   import OverviewDanger from './OverviewDanger.svelte';
   import OverviewGaps from './OverviewGaps.svelte';
-  import OverviewMaturity from './OverviewMaturity.svelte';
+  import OverviewMaturity, { type LadderEda } from './OverviewMaturity.svelte';
+  import OverviewReliable from './OverviewReliable.svelte';
   import OverviewRow from './OverviewRow.svelte';
   import OverviewSummary from './OverviewSummary.svelte';
 
@@ -43,7 +45,7 @@
    * The Overview of a Resource, in parts, each a page of its own, with a navigation on the left under the tabs
    * (DEC-UX-168): the Summary first, which it opens on (FR-RC-19); then its Description, with the Business Description
    * in Markdown (FR-RC-20); its Known behaviour; its Known Gaps, one by one (FR-RC-21); how to query it, with its size
-   * and partitions from BigQuery (FR-SR-39), key fields and Parameters; the Entities it relates to; its maturity and
+   * and partitions from BigQuery (FR-SR-39), and its Key Fields; the Entities it relates to; its maturity and
    * Publication; and its recent history. Who may describe it edits each part in place, on its own page, attribute by
    * attribute as their Permission group allows (FR-RC-15, DEC-PL-03); what comes from dbt, and what the Data Team gave when adding it, stands next to it, read-only.
    * The Messages are no part of their own: "Messages" in the header opens them, and the Summary takes them (FR-RC-22).
@@ -71,6 +73,8 @@
     removeLater = null,
     onremove,
     onchangetype,
+    firstRowOf,
+    eda,
     part = $bindable('summary'),
   }: {
     resource: ResourceDetail;
@@ -111,6 +115,10 @@
     onremove?: () => Promise<boolean>;
     /** Opens the steps of its relations from the model type on, for a Data Admin (FR-RC-28); undefined for anyone else. */
     onchangetype?: () => void;
+    /** Reads its first row on a date field, for the line under Reliable since (DEC-RC-33). */
+    firstRowOf?: (field: string) => Promise<FirstRow | null>;
+    /** Its EDA on the maturity ladder, for a User who may explore Resources (FR-ED-02). */
+    eda?: LadderEda;
     /** The part on screen, which the page can open, such as the Danger zone from a deprecation. */
     part?: Part;
   } = $props();
@@ -133,8 +141,8 @@
   /** The Danger zone shows for whoever may deprecate it, or take it out of its Collection (DEC-UX-176, DEC-UX-212). */
   const dangers = $derived(canDeprecate || (removeFrom !== null && onremove !== undefined) || removeLater !== null);
   const shown = $derived(PARTS.filter((one) => one.id !== 'danger' || dangers));
-  /** Which attributes each part edits: Known Behaviour holds the intended use, the pitfalls and since when it is reliable. */
-  const EDITS: Record<Editable, readonly DescribeAttribute[]> = { description: ['description'], behaviour: ['behaviour', 'pitfalls', 'availableSince'], querying: ['keyFields'] };
+  /** Which attributes each part edits: Known Behaviour holds the intended use and the pitfalls; Reliable since is on Known Gaps (DEC-UX-296). */
+  const EDITS: Record<Editable, readonly DescribeAttribute[]> = { description: ['description'], behaviour: ['behaviour', 'pitfalls'], querying: ['keyFields'] };
   const mayEdit = (which: Editable) => EDITS[which].some((attribute) => describes(attribute));
   /** Who said there is nothing to add to a step, and when, from the journey of the Resource (DEC-MR-16). */
   const saidNothing = (step: 'pitfalls' | 'gaps') => resource.journey?.steps.find((one) => one.id === step)?.records.find((record) => record.answer === 'nothing');
@@ -162,8 +170,47 @@
     await tick();
     document.querySelector<HTMLElement>(field)?.focus();
   }
+  /**
+   * A Known Gap proposed elsewhere, such as by Dig into (FR-ED-20): Known Gaps open on it, filled in, in the form of a new
+   * gap, for who may add one; the User saves it there, or not.
+   */
+  // svelte-ignore state_referenced_locally
+  const offered = takeProposal(resource.id);
+  // svelte-ignore state_referenced_locally
+  const allowed = offered && describes('gaps') ? offered : null;
+  let proposal = $state(allowed);
+  if (allowed) part = 'gaps';
   /** Known Gaps opened on a new gap, the cursor in its text (DEC-UX-258). */
-  let addingGap = $state(false);
+  let addingGap = $state(allowed !== null);
+
+  // The Flow Box led here (DEC-UX-303): the part of the step opens for editing, its field in focus and marked.
+  $effect(() => {
+    if (flowBox.aim?.resource !== resource.id) return;
+    untrack(() => {
+      const step = flowBox.take(resource.id, ['businessDescription', 'keyFields', 'intendedUse', 'pitfalls', 'since', 'gaps']);
+      if (step) void aimAt(step);
+    });
+  });
+  async function aimAt(step: 'businessDescription' | 'keyFields' | 'intendedUse' | 'pitfalls' | 'since' | 'gaps'): Promise<void> {
+    const fields = { businessDescription: ['description', '#business-description'], keyFields: ['querying', 'select[data-pick="keyFields"]'], intendedUse: ['behaviour', '#intended-use'], pitfalls: ['behaviour', '#pitfalls'] } as const;
+    if (step === 'since' || step === 'gaps') {
+      open('gaps');
+      if (step === 'gaps' && describes('gaps')) addingGap = true;
+      await tick();
+      const place = step === 'since' ? document.getElementById('reliable-since') : document.querySelector('.adding textarea');
+      if (step === 'since') place?.querySelector<HTMLElement>('input, select, textarea, button')?.focus();
+      markPlace(place);
+      return;
+    }
+    const [which, field] = fields[step];
+    const may = which === 'description' ? describes('description') && described : which === 'behaviour' ? describes(step === 'pitfalls' ? 'pitfalls' : 'behaviour') : describes('keyFields');
+    if (!may) {
+      open(which);
+      return;
+    }
+    await editAt(which, field);
+    markPlace(document.querySelector(field));
+  }
 
   function go(target: Exclude<SummarySource, 'messages'>) {
     if (target === 'columns') oncolumns();
@@ -191,16 +238,14 @@
   // Editing in place, one part at a time.
   let saving = $state(false);
   let failed = $state(false);
-  let draft = $state({ businessDescription: '', intendedUse: '', pitfalls: '', reliableSince: '' as string, keyFields: [] as string[], parameters: [] as string[] });
+  let draft = $state({ businessDescription: '', intendedUse: '', pitfalls: '', keyFields: [] as string[] });
 
   function start(which: Editable) {
     draft = {
       businessDescription: card.businessDescription,
       intendedUse: card.intendedUse,
       pitfalls: card.pitfalls,
-      reliableSince: card.reliableSince ?? '',
       keyFields: [...card.keyFields],
-      parameters: [...card.parameters],
     };
     failed = false;
     editing = which;
@@ -215,9 +260,8 @@
           ? {
               ...(describes('behaviour') ? { intendedUse: draft.intendedUse } : {}),
               ...(describes('pitfalls') ? { pitfalls: draft.pitfalls } : {}),
-              ...(describes('availableSince') ? { reliableSince: draft.reliableSince || null } : {}),
             }
-          : { keyFields: draft.keyFields, parameters: draft.parameters };
+          : { keyFields: draft.keyFields };
     saving = true;
     const ok = await onsave(changes);
     saving = false;
@@ -266,7 +310,6 @@
     if (describes('pitfalls')) rows.push(command('overview:pitfalls', 'warning-fill', t('quick.overview.pitfalls'), () => void editAt('behaviour', '#pitfalls'), { words: t('quick.overview.pitfalls.words') }));
     if (describes('keyFields')) {
       rows.push(command('overview:keyField', 'key', t('quick.overview.keyField'), () => void editAt('querying', 'select[data-pick="keyFields"]'), { words: t('quick.overview.keyField.words') }));
-      rows.push(command('overview:parameter', 'sliders-horizontal', t('quick.overview.parameter'), () => void editAt('querying', 'select[data-pick="parameters"]'), { words: t('quick.overview.parameter.words') }));
     }
     if (describes('gaps')) {
       rows.push(
@@ -305,7 +348,7 @@
   {#each names as name (name)}<span class="code">{name}</span>{:else}<p class="empty">{t('resource.noneChosen')}</p>{/each}
 {/snippet}
 
-{#snippet chosen(key: 'keyFields' | 'parameters')}
+{#snippet chosen(key: 'keyFields')}
   <div class="chosen">
     {#each draft[key] as name (name)}
       <span class="code">{name}<button type="button" aria-label={t('resource.removeField', { name })} onclick={() => (draft[key] = draft[key].filter((other) => other !== name))}>×</button></span>
@@ -313,7 +356,7 @@
     <select
       class="add"
       data-pick={key}
-      aria-label={key === 'keyFields' ? t('resource.keyFields') : t('resource.parameters')}
+      aria-label={t('resource.keyFields')}
       value=""
       onchange={(event) => {
         const name = (event.currentTarget as HTMLSelectElement).value;
@@ -399,7 +442,6 @@
             {#if describes('behaviour')}<div><div class="label">{t('resource.intendedUse')}</div><MarkdownEditor id="intended-use" bind:value={draft.intendedUse} label={t('resource.intendedUse')} maxlength={2000} /></div>{/if}
             {#if describes('pitfalls')}<div><div class="label">{@render term('pitfall', t('resource.pitfalls'))}</div><MarkdownEditor id="pitfalls" bind:value={draft.pitfalls} label={t('resource.pitfalls')} maxlength={2000} /></div>{/if}
           </div>
-          {#if describes('availableSince')}<div class="reliable"><Field label={t('resource.reliableSince')}><input {...NO_PASSWORD_MANAGER} type="date" bind:value={draft.reliableSince} /></Field></div>{/if}
         </form>
       {:else}
         <Grid min="var(--tile-min)" tight>
@@ -423,18 +465,27 @@
               {/if}
             {/if}
           </SubTile>
-          <SubTile>
-            <div class="said"><Icon name="calendar-blank-fill" />{t('resource.reliableSince')}</div>
-            <p class="text">{card.reliableSince ? day(card.reliableSince) : t('resource.nothingYet')}</p>
-          </SubTile>
         </Grid>
       {/if}
     {:else if part === 'gaps'}
       {@render head(t('resource.gaps'), t('overview.gaps.lead'), undefined, 'knownGap')}
+      <!-- Reliable since, a tile of its own on top of the Known Gaps (DEC-UX-296). -->
+      <OverviewReliable
+        reliable={card.reliableSince}
+        chosen={card.dateField}
+        type={details.modelType}
+        typeFields={(details.typeFields ?? []).map(({ field, role }) => ({ field, role }))}
+        fields={resource.fields}
+        canEdit={describes('availableSince')}
+        {onsave}
+        {firstRowOf}
+      />
       <OverviewGaps
         bind:adding={addingGap}
+        bind:proposal
         gaps={card.knownGaps}
         fields={resource.fields}
+        dateField={dateFieldOf(card.dateField, details.modelType, details.typeFields ?? [], resource.fields).field}
         canEdit={describes('gaps')}
         onadd={gaps.add}
         onchange={gaps.change}
@@ -450,8 +501,6 @@
           <SubTile>
             <div class="label">{@render term('keyField', t('resource.keyFields'))}</div>
             {@render chosen('keyFields')}
-            <div class="label second">{t('resource.parameters')}</div>
-            {@render chosen('parameters')}
           </SubTile>
         </form>
       {:else}
@@ -490,8 +539,6 @@
           <SubTile>
             <div class="label">{@render term('keyField', t('resource.keyFields'))}</div>
             <div class="chosen">{@render chips(card.keyFields)}</div>
-            <div class="label second">{t('resource.parameters')}</div>
-            <div class="chosen">{@render chips(card.parameters)}</div>
           </SubTile>
         </Grid>
       {/if}
@@ -538,7 +585,7 @@
       </SubTile>
     {:else if part === 'maturity'}
       {@render head(t('resource.maturity'), t('overview.maturity.lead'))}
-      <OverviewMaturity {resource} {onpublish} onpart={(place) => (place === 'columns' ? oncolumns() : open(place))} />
+      <OverviewMaturity {resource} {onpublish} {eda} onpart={(place) => (place === 'columns' ? oncolumns() : open(place))} />
     {:else if part === 'changes'}
       {@render head(t('overview.changes'), t('overview.changes.lead'))}
       <SubTile>
@@ -581,13 +628,11 @@
   .side-by-side { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(240px, 1fr); gap: 16px; align-items: start; }
   .pair .label { margin-bottom: 6px; }
   .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
-  .reliable { max-width: 240px; margin-top: 14px; }
   .row { margin-top: 12px; }
   .code { display: inline-flex; align-items: center; gap: 4px; font: var(--text-meta) var(--font-mono); color: var(--text-secondary); background: var(--surface-solid); padding: 3px 8px; border-radius: var(--radius-chip); }
   .code button { all: unset; cursor: pointer; color: var(--text-muted); }
   .code button:focus-visible { outline: 2px solid var(--text-secondary); }
   .chosen { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-  .second { margin-top: 12px; margin-bottom: 8px; }
   .add { font: var(--text-meta) var(--font-family); color: var(--text-secondary); background: transparent; border: 1px dashed var(--tint-active); border-radius: var(--radius-chip); padding: 3px 6px; }
   .said { display: flex; align-items: center; gap: 6px; font-size: var(--text-small); font-weight: var(--weight-medium); margin-bottom: 6px; }
   .said :global(.icon) { color: var(--text-secondary); }
@@ -609,8 +654,6 @@
   .identity-name { fill: var(--text-secondary); font-size: 8.5px; }
   .other { fill: var(--surface-solid); }
   .other-name { fill: var(--text-primary); font-size: 10px; }
-  input { width: 100%; box-sizing: border-box; font: var(--text-small) var(--font-family); line-height: 1.5; color: var(--text-primary); background: var(--surface-solid); border: 1px solid var(--tint-active); border-radius: var(--radius-field); padding: 8px 10px; resize: vertical; }
-  input:focus { outline: 2px solid var(--text-secondary); outline-offset: 1px; }
   .hint { margin: 8px 0 0; font-size: var(--text-meta); color: var(--text-muted); line-height: 1.5; }
   .failed { margin: 8px 0; font-size: var(--text-small); color: var(--signal-urgent); }
   form { display: block; }

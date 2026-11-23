@@ -240,6 +240,30 @@ importers:
         specifier: 8.0.2
         version: 8.0.2
 
+  services/eda:
+    dependencies:
+      '@datahub/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
+      '@datahub/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@datahub/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@datahub/google':
+        specifier: workspace:*
+        version: link:../../packages/google
+      '@datahub/server':
+        specifier: workspace:*
+        version: link:../../packages/server
+      fastify:
+        specifier: ^5.12.7
+        version: 5.12.7
+      kysely:
+        specifier: ^0.29.6
+        version: 0.29.6
+
   services/identity:
     dependencies:
       '@datahub/auth':

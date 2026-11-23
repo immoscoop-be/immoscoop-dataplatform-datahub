@@ -26,6 +26,8 @@ export interface AppOptions {
   catalogueUrl: string;
   /** query's address (DATAHUB_QUERY_URL), which the page calls to write and run queries. */
   queryUrl: string;
+  /** eda's address (DATAHUB_EDA_URL), which the page calls for the EDA of a Resource (TR-ED-07). */
+  edaUrl: string;
   /** semgraph's address (DATAHUB_SEMGRAPH_URL): the page shows its charts. */
   semgraphUrl: string;
   /** uat or prod (DATAHUB_ENVIRONMENT): a Learning Card still in draft shows in uat only (DEC-LR-25). */
@@ -77,12 +79,12 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
   // semgraph; the grain over a flowing background is a small picture in its stylesheet. The editor of
   // Query adds its own styles, and so do the drawings of semgraph placed in Charts (DEC-UX-184), allowed by a
   // nonce new for every page. It talks only to its own server,
-  // identity, catalogue, registry, query and semgraph.
+  // identity, catalogue, registry, query, eda and semgraph.
   const policy = (nonce: string) => [
     "default-src 'self'",
     `style-src 'self' 'nonce-${nonce}'`,
     `img-src 'self' data: ${options.semgraphUrl}`,
-    `connect-src 'self' ${options.identityUrl} ${options.catalogueUrl} ${options.registryUrl} ${options.queryUrl} ${options.semgraphUrl}`,
+    `connect-src 'self' ${options.identityUrl} ${options.catalogueUrl} ${options.registryUrl} ${options.queryUrl} ${options.edaUrl} ${options.semgraphUrl}`,
     "object-src 'none'",
     "base-uri 'none'",
     "form-action 'self'",

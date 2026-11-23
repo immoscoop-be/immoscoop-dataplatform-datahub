@@ -1,11 +1,17 @@
 // The icons of the interface, from Phosphor (Icons): filled for everything of the interface, the
 // regular line where the prototypes draw one. Each is imported by name, so the page holds only the
 // icons it shows. A new icon of the interface is added here.
+import signpostFill from '@phosphor-icons/core/assets/fill/signpost-fill.svg?raw';
+import binocularsFill from '@phosphor-icons/core/assets/fill/binoculars-fill.svg?raw';
+import arrowsInSimple from '@phosphor-icons/core/assets/regular/arrows-in-simple.svg?raw';
+import arrowUpRight from '@phosphor-icons/core/assets/regular/arrow-up-right.svg?raw';
+import mapPinFill from '@phosphor-icons/core/assets/fill/map-pin-fill.svg?raw';
 import archiveFill from '@phosphor-icons/core/assets/fill/archive-fill.svg?raw';
 import archive from '@phosphor-icons/core/assets/regular/archive.svg?raw';
 import arrowBendUpLeftFill from '@phosphor-icons/core/assets/fill/arrow-bend-up-left-fill.svg?raw';
 import bellSimpleFill from '@phosphor-icons/core/assets/fill/bell-simple-fill.svg?raw';
 import calendarBlankFill from '@phosphor-icons/core/assets/fill/calendar-blank-fill.svg?raw';
+import calendarCheckFill from '@phosphor-icons/core/assets/fill/calendar-check-fill.svg?raw';
 import caretDoubleLeftFill from '@phosphor-icons/core/assets/fill/caret-double-left-fill.svg?raw';
 import chartBarFill from '@phosphor-icons/core/assets/fill/chart-bar-fill.svg?raw';
 import chatCircleDotsFill from '@phosphor-icons/core/assets/fill/chat-circle-dots-fill.svg?raw';
@@ -21,6 +27,7 @@ import folderFill from '@phosphor-icons/core/assets/fill/folder-fill.svg?raw';
 import folderOpenFill from '@phosphor-icons/core/assets/fill/folder-open-fill.svg?raw';
 import folderPlusFill from '@phosphor-icons/core/assets/fill/folder-plus-fill.svg?raw';
 import folderSimplePlusFill from '@phosphor-icons/core/assets/fill/folder-simple-plus-fill.svg?raw';
+import foldersFill from '@phosphor-icons/core/assets/fill/folders-fill.svg?raw';
 import gaugeFill from '@phosphor-icons/core/assets/fill/gauge-fill.svg?raw';
 import globeSimpleFill from '@phosphor-icons/core/assets/fill/globe-simple-fill.svg?raw';
 import graduationCapFill from '@phosphor-icons/core/assets/fill/graduation-cap-fill.svg?raw';
@@ -101,6 +108,7 @@ import rows from '@phosphor-icons/core/assets/regular/rows.svg?raw';
 import cube from '@phosphor-icons/core/assets/regular/cube.svg?raw';
 import database from '@phosphor-icons/core/assets/regular/database.svg?raw';
 import dotsSixVertical from '@phosphor-icons/core/assets/regular/dots-six-vertical.svg?raw';
+import folderSimplePlus from '@phosphor-icons/core/assets/regular/folder-simple-plus.svg?raw';
 import dotsThree from '@phosphor-icons/core/assets/regular/dots-three.svg?raw';
 import eye from '@phosphor-icons/core/assets/regular/eye.svg?raw';
 import fileText from '@phosphor-icons/core/assets/regular/file-text.svg?raw';
@@ -159,23 +167,47 @@ import plugsConnectedFill from '@phosphor-icons/core/assets/fill/plugs-connected
 import shieldCheckFill from '@phosphor-icons/core/assets/fill/shield-check-fill.svg?raw';
 import browser from '@phosphor-icons/core/assets/regular/browser.svg?raw';
 import copy from '@phosphor-icons/core/assets/regular/copy.svg?raw';
+// Copy as JSON and Copy as CSV on a result, and New blank query (DEC-UX-292, DEC-UX-293).
+import bracketsCurly from '@phosphor-icons/core/assets/regular/brackets-curly.svg?raw';
+import fileCsv from '@phosphor-icons/core/assets/regular/file-csv.svg?raw';
+import filePlus from '@phosphor-icons/core/assets/regular/file-plus.svg?raw';
+// Close project in the panel of Query (DEC-UX-295).
+import signOut from '@phosphor-icons/core/assets/regular/sign-out.svg?raw';
 import pencilSimple from '@phosphor-icons/core/assets/regular/pencil-simple.svg?raw';
 import plugsConnected from '@phosphor-icons/core/assets/regular/plugs-connected.svg?raw';
 import shieldCheck from '@phosphor-icons/core/assets/regular/shield-check.svg?raw';
 import userPlus from '@phosphor-icons/core/assets/regular/user-plus.svg?raw';
 import users from '@phosphor-icons/core/assets/regular/users.svg?raw';
-// Flagged queries and the quick window (DEC-UX-236, DEC-UX-237).
-import flagFill from '@phosphor-icons/core/assets/fill/flag-fill.svg?raw';
+// The row on top of Query and the quick window (DEC-UX-317, DEC-UX-237).
 import arrowsInLineVertical from '@phosphor-icons/core/assets/regular/arrows-in-line-vertical.svg?raw';
 import circleNotch from '@phosphor-icons/core/assets/regular/circle-notch.svg?raw';
 import linkBreak from '@phosphor-icons/core/assets/regular/link-break.svg?raw';
+import signOutFill from '@phosphor-icons/core/assets/fill/sign-out-fill.svg?raw';
+import shareNetwork from '@phosphor-icons/core/assets/regular/share-network.svg?raw';
+// The EDA: the kinds of a field on its drawings, the readings and the state of its EDA-Steps (DEC-UX-268, DEC-UX-322).
+import binoculars from '@phosphor-icons/core/assets/regular/binoculars.svg?raw';
+import bookmarkSimple from '@phosphor-icons/core/assets/regular/bookmark-simple.svg?raw';
+import checkSquareFill from '@phosphor-icons/core/assets/fill/check-square-fill.svg?raw';
+import circleHalf from '@phosphor-icons/core/assets/regular/circle-half.svg?raw';
+import fingerprint from '@phosphor-icons/core/assets/regular/fingerprint.svg?raw';
+import layout from '@phosphor-icons/core/assets/regular/layout.svg?raw';
+import playCircle from '@phosphor-icons/core/assets/regular/play-circle.svg?raw';
+import plusCircle from '@phosphor-icons/core/assets/regular/plus-circle.svg?raw';
+import questionFill from '@phosphor-icons/core/assets/fill/question-fill.svg?raw';
+import signpost from '@phosphor-icons/core/assets/regular/signpost.svg?raw';
+import tag from '@phosphor-icons/core/assets/regular/tag.svg?raw';
 
 export const ICONS = {
+  'signpost-fill': signpostFill,
+  'arrows-in-simple': arrowsInSimple,
+  'arrow-up-right': arrowUpRight,
+  'map-pin-fill': mapPinFill,
   'archive-fill': archiveFill,
   archive,
   'arrow-bend-up-left-fill': arrowBendUpLeftFill,
   'bell-simple-fill': bellSimpleFill,
   'calendar-blank-fill': calendarBlankFill,
+  'calendar-check-fill': calendarCheckFill,
   'caret-double-left-fill': caretDoubleLeftFill,
   'chart-bar-fill': chartBarFill,
   'chat-circle-dots-fill': chatCircleDotsFill,
@@ -191,6 +223,8 @@ export const ICONS = {
   'folder-open-fill': folderOpenFill,
   'folder-plus-fill': folderPlusFill,
   'folder-simple-plus-fill': folderSimplePlusFill,
+  'folders-fill': foldersFill,
+  'folder-simple-plus': folderSimplePlus,
   'gauge-fill': gaugeFill,
   'globe-simple-fill': globeSimpleFill,
   'graduation-cap-fill': graduationCapFill,
@@ -210,6 +244,7 @@ export const ICONS = {
   'prohibit-fill': prohibitFill,
   'seal-check-fill': sealCheckFill,
   'stack-fill': stackFill,
+  'binoculars-fill': binocularsFill,
   'sun-fill': sunFill,
   'terminal-window-fill': terminalWindowFill,
   'toolbox-fill': toolboxFill,
@@ -328,15 +363,31 @@ export const ICONS = {
   'shield-check-fill': shieldCheckFill,
   browser: browser,
   copy: copy,
+  'brackets-curly': bracketsCurly,
+  'file-csv': fileCsv,
+  'file-plus': filePlus,
+  'sign-out': signOut,
   'pencil-simple': pencilSimple,
   'plugs-connected': plugsConnected,
   'shield-check': shieldCheck,
   'user-plus': userPlus,
   users: users,
-  'flag-fill': flagFill,
   'arrows-in-line-vertical': arrowsInLineVertical,
   'circle-notch': circleNotch,
   'link-break': linkBreak,
+  'sign-out-fill': signOutFill,
+  'share-network': shareNetwork,
+  binoculars,
+  'bookmark-simple': bookmarkSimple,
+  'check-square-fill': checkSquareFill,
+  'circle-half': circleHalf,
+  fingerprint,
+  layout,
+  'play-circle': playCircle,
+  'plus-circle': plusCircle,
+  'question-fill': questionFill,
+  signpost,
+  tag,
 } as const;
 
 export type IconName = keyof typeof ICONS;

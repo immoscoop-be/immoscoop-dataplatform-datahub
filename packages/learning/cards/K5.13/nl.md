@@ -3,9 +3,9 @@ number: K5.13
 status: reviewed
 minutes: 4
 added: 2026-11-15
-changed: 2026-11-15
+changed: 2026-11-20
 gain: Je weet wat je verklaart als je een Resource publiceert en wie ze zal zien, voor je een stap zet die niet ongedaan wordt gemaakt.
-translatedFrom: dd5171410180
+translatedFrom: e50770594164
 ---
 
 # Why now
@@ -23,7 +23,7 @@ Een Resource publiceren is haar eerste **Confirmation**: je verklaart voor je Ow
 
 ## Bij Immoscoop
 
-Een collega van SEO opent de publicatie van Search Console impressions, whole site. Ze zegt wie de Resource zal zien: iedereen die Attraction ziet, en dat is het hele bedrijf, want de Collection is publiek, terwijl nu alleen SEO en het Data Team haar zien. Ze leest de kaart voor: de Business Description naast de beschrijving uit dbt, het beoogd gebruik, de valkuilen, de Known Gap met de dag vanaf wanneer ze betrouwbaar is, de Key Fields en de Parameters. De valkuil over de gemiddelde positie schreef iemand anders voor de Owner Journey, en de verklaring dekt ook die. De collega leest elke tekst, vinkt de verklaring aan en drukt zelf op Publiceren en bevestigen, in het venster dat Claude toont of in Data Hub zelf; Claude drukt er nooit op. Het Level stijgt van 2 · Described naar 3 · Confirmed, en Data Hub bewaart de verklaring, in de woorden die aangevinkt werden, bij de Confirmation. De Confirmation staat in voor wat de Resource is; haar cijfers zijn voor de EDA om te verkennen. Wil SEO later dat niemand er nog op bouwt, dan markeert SEO haar als deprecated: de publicatie blijft.
+Een collega van SEO opent de publicatie van Search Console impressions, whole site. Ze zegt wie de Resource zal zien: iedereen die Attraction ziet, en dat is het hele bedrijf, want de Collection is publiek, terwijl nu alleen SEO en het Data Team haar zien. Ze leest de kaart voor: de Business Description naast de beschrijving uit dbt, het beoogd gebruik, de valkuilen, de Known Gap met de dag vanaf wanneer ze betrouwbaar is, de Key Fields. De valkuil over de gemiddelde positie schreef iemand anders voor de Owner Journey, en de verklaring dekt ook die. De collega leest elke tekst, vinkt de verklaring aan en drukt zelf op Publiceren en bevestigen, in het venster dat Claude toont of in Data Hub zelf; Claude drukt er nooit op. Het Level stijgt van 2 · Described naar 3 · Confirmed, en Data Hub bewaart de verklaring, in de woorden die aangevinkt werden, bij de Confirmation. De Confirmation staat in voor wat de Resource is; haar cijfers zijn voor de EDA om te verkennen. Wil SEO later dat niemand er nog op bouwt, dan markeert SEO haar als deprecated: de publicatie blijft.
 
 # Check your understanding
 

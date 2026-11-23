@@ -24,8 +24,8 @@ export interface QueryResource {
   /** Who requires a filter on its partition column in every query: nobody, Data Hub or BigQuery (DEC-SR-35). */
   partitionFilter: 'none' | 'dataHub' | 'bigQuery';
   fields: ResourceField[];
-  /** The fields its Owner marked as its Parameters, which its Preview offers to choose by (FR-SR-38). */
-  parameters: string[];
+  /** The fields its Owner marked as its Key Fields; its Preview offers those that sort its rows to choose by (FR-SR-38). */
+  keyFields: string[];
 }
 
 import type { IdTokenSource } from '@datahub/google';
@@ -87,7 +87,19 @@ export interface Catalogue {
    * its folder, withdraws a Request on it that waits, and tells the Users who ran it lately (MSG-LEN-06).
    */
   lensDeleted(lensId: string, fields: { name: string; actor: { id: string; name: string }; reason: string; users: string[] }): Promise<void>;
+  /**
+   * Tells a colleague, as query itself, that they were added to a Project, taken out of it, or lost it as it was deleted
+   * (MSG-QRY-03 to MSG-QRY-05). Optional: a catalogue that leaves it out tells nobody, which the Projects never wait on.
+   */
+  projectNotice?(notice: ProjectNotice): Promise<void>;
 }
+
+/** What query tells catalogue about a Project, for one colleague (MSG-QRY-03 to MSG-QRY-05, OP-UX-101). */
+export type ProjectNotice = { recipient: { id: string; name: string }; projectId: string; project: string; actor: string } & (
+  | { type: 'MSG-QRY-03'; queries: number; canRun: boolean }
+  | { type: 'MSG-QRY-04' }
+  | { type: 'MSG-QRY-05'; mine: number; reason?: string }
+);
 
 /** What a Message on a Broken query or Lens names: the day it was found and what no longer exists (FR-SR-52). */
 export interface BrokenMessage {
@@ -100,11 +112,11 @@ export interface BrokenMessage {
 export class CatalogueUnavailable extends Error {}
 
 interface ResourceBody {
-  resource: Omit<QueryResource, 'fullName' | 'partition' | 'clusterBy' | 'partitionFilter' | 'parameters'> & {
+  resource: Omit<QueryResource, 'fullName' | 'partition' | 'clusterBy' | 'partitionFilter' | 'keyFields'> & {
     /** Missing from a catalogue that does not keep it yet: then the Key. */
     fullName?: string;
     details?: { partition?: QueryResource['partition']; clusterBy?: string[]; partitionFilter?: QueryResource['partitionFilter'] };
-    card?: { parameters?: string[] };
+    card?: { keyFields?: string[] };
   };
 }
 
@@ -198,6 +210,10 @@ export function createCatalogue(baseUrl: string, request: typeof fetch = fetch, 
       await asQuery('POST', `/internal/lenses/${lensId}/deleted`, fields);
     },
 
+    async projectNotice(notice) {
+      await asQuery('POST', '/internal/projects/notices', notice);
+    },
+
     async requests(subjectId, authorization, subjectKind = 'query') {
       const query = new URLSearchParams({ subjectKind, ...(subjectId ? { subjectId } : {}) });
       const { requests } = (await (await call(`/requests?${query}`, authorization)).json()) as { requests: QueryRequest[] };
@@ -250,7 +266,7 @@ export function createCatalogue(baseUrl: string, request: typeof fetch = fetch, 
         clusterBy: resource.details?.clusterBy ?? [],
         partitionFilter: resource.details?.partition ? (resource.details.partitionFilter ?? 'none') : 'none',
         fields: resource.fields.map(({ name, dataType, description, businessDescription }) => ({ name, dataType, description, businessDescription })),
-        parameters: resource.card?.parameters ?? [],
+        keyFields: resource.card?.keyFields ?? [],
       };
     },
 

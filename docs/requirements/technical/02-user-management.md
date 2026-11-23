@@ -35,7 +35,7 @@ identity serves the Groups behind the Access Token:
 - `GET /groups/:id`: one Group for any signed-in User, with its members (address, name, whether they signed in and can still sign in, who added them and when), the Groups it manages, its history, and whether the User may change it.
 - `POST /groups`, with `groups.manage`: name, sentence and `managedBy`, a Group the User is in or `itself`; with `groups.all.manage`, any Group. The maker is its first member.
 - `PATCH /groups/:id`: name, sentence and `managedBy`. `PUT /groups/:id/members` adds an address of an own Workspace domain; `DELETE /groups/:id/members/:email` takes one out. `DELETE /groups/:id` deletes it.
-- `GET /people?q=`: the Users whose name or address holds the text, to suggest while adding a member.
+- `GET /people?q=`: the Users whose name or address holds the text, to suggest while adding a member; `?ids=` gives them by their IDs. Each comes with whether their Permission group lets them make queries, for sharing a Project ([TR-SR-33](04-stacks-and-resources.md#tr-sr-33)).
 
 Whoever changes a Group is in the Group that manages it, or has `groups.all.manage`; otherwise 403. A Group cannot be deleted while it manages another Group, or while catalogue says it is the Owner Unit of a Collection ([TR-UM-05](#tr-um-05)): 409 with what it still owns and manages.
 

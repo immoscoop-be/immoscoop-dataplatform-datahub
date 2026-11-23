@@ -49,8 +49,8 @@ export const LOG_CATALOGUE = {
     about: 'resource',
     parameters: ['field', 'actor'],
     text: {
-      en: '{field, select, businessDescription {Business Description} intendedUse {Intended use} pitfalls {Pitfalls} knownGaps {Known Gaps} reliableSince {Reliable since} keyFields {Key fields} parameters {Parameters} other {{field}}} updated by {actor}',
-      nl: '{field, select, businessDescription {Business Description} intendedUse {Beoogd gebruik} pitfalls {Valkuilen} knownGaps {Known Gaps} reliableSince {Betrouwbaar sinds} keyFields {Sleutelvelden} parameters {Parameters} other {{field}}} bijgewerkt door {actor}',
+      en: '{field, select, businessDescription {Business Description} intendedUse {Intended use} pitfalls {Pitfalls} knownGaps {Known Gaps} reliableSince {Reliable since} dateField {Date Field} keyFields {Key fields} parameters {Parameters} other {{field}}} updated by {actor}',
+      nl: '{field, select, businessDescription {Business Description} intendedUse {Beoogd gebruik} pitfalls {Valkuilen} knownGaps {Known Gaps} reliableSince {Betrouwbaar sinds} dateField {Datumveld} keyFields {Sleutelvelden} parameters {Parameters} other {{field}}} bijgewerkt door {actor}',
     },
   },
   'RES-006': {

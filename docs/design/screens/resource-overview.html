@@ -11,7 +11,12 @@
     rendered, the description from dbt under it, and what one row is: the model type, the grain and each field its model
     type asks for by its role, with "Change model type" for a Data Admin (FR-RC-28, DEC-UX-263). Edit opens the Markdown editor of the app
     (MarkdownEditor, DEC-UX-158), as for the intro of a Collection, with the description from dbt beside it, read-only.
-  - Known behaviour: intended use and pitfalls, in Markdown, and since when it is reliable (DEC-RC-19).
+  - Known behaviour: intended use and pitfalls, in Markdown (DEC-RC-19).
+  - Known Gaps: on top, Reliable since in a tile of its own (DEC-UX-296): from which day the whole table can be relied on,
+    on the one date field of the Resource, which its table type gives (DEC-RC-29), and why not earlier; or From its first
+    row. Under it the time of its data as a line, before that day shaded; the line draws no Known Gaps. Then the gaps. ?rs=start, ?rs=empty, ?rs=edit and ?rs=odd show its other states; ?ov=gaps opens it.
+    A new gap: its period is one day or a period (OP-UX-110); ?ov=gaps&gapform=open&gapwhen=day shows one day. Its period
+    may name its own date field, by default the Date Field (DEC-RC-31); &gapfield=other shows another chosen.
   - Known Gaps: a list, one gap per line, each with who added it and when; the Owner and the Data Team add one at the
     bottom, and change or remove one on its line. Every gap keeps its why in plain text and may
     be narrowed down with a scope, each optional and combined as they apply: a period (from and to, a side left open
@@ -21,7 +26,7 @@
     "[period: until 2025-02-28; rows: lead_source = partner]". Columns marks a field that a gap names under
     Fields (resource-detail.html?tabs=columns). A warning on a query that reads a gap comes later (DEC-RC-20,
     DEC-UX-177). ?gapform=open opens the form of a new gap.
-  - Querying: partitions and clustering, size, key fields and Parameters, with "Query".
+  - Querying: partitions and clustering, size and Key Fields, with "Query". A Resource has no Parameters of its own (DEC-RC-34).
   - Entities: the Entities and the Resources they join, also as a picture.
   The Messages are no part of their own: "Messages" in the header opens them, as before. The Summary takes the Q&A of the
   Owner and the Data Team, every thread they started or answered in, which stays for good as a curated Q&A, with the
@@ -44,11 +49,14 @@
   in the Summary; ?descedit=on edits the Business Description, ?descview=preview previews it. ?rolegone=on shows the
   warning that a field of its model type is gone (FR-RC-29, DEC-UX-264); ?complete=missing shows the Data Team that its
   model type is incomplete (FR-CO-45, DEC-UX-265); ?role=datateam shows what a Data Admin sees.
+  Maturity, with ?ov=maturity: ?lvl=three shows a Resource at 3 · Confirmed, where a Data Admin (eda.use, ?role=datateam) starts the EDA, which creates it and
+  opens it in the section EDA (eda.html, DEC-UX-320); ?lvl=eda shows its EDA in progress, with how many needed EDA-Probes are
+  complete and "Open its EDA".
   A term of the dictionary carries the marker ⓘ where it heads a part or labels a text: Business Description, Known
   behaviour, Pitfalls, Known Gaps and Key fields. Its pop-out gives the definition of the term first, then the Learning
   Cards that explain it (DEC-UX-279, FR-LR-44); the definitions of Pitfall and Known Gap hold the test that tells them
   apart. It replaces the quiet line that said what a text is for (DEC-RC-26, DEC-RC-27).
-  Requirements: FR-RC-19, FR-RC-20, FR-RC-21, FR-RC-22, FR-RC-23, FR-RC-24, FR-RC-25, FR-RC-28, FR-RC-29, FR-SR-50, FR-MR-16, FR-CM-28, FR-CO-43, FR-CO-45, FR-MR-17, FR-MR-18, FR-LR-44
+  Requirements: FR-ED-02, FR-ED-12, FR-MR-22, FR-RC-19, FR-RC-20, FR-RC-21, FR-RC-22, FR-RC-23, FR-RC-24, FR-RC-25, FR-RC-28, FR-RC-29, FR-SR-50, FR-MR-16, FR-CM-28, FR-CO-43, FR-CO-45, FR-MR-17, FR-MR-18, FR-LR-44, FR-RC-31, FR-RC-32, FR-RC-33, FR-RC-34
   Decisions: DEC-RC-16, DEC-RC-17, DEC-RC-18, DEC-RC-19, DEC-RC-20, DEC-UX-101, DEC-UX-168, DEC-UX-169, DEC-UX-170, DEC-UX-171, DEC-UX-175, DEC-UX-176, DEC-UX-177, DEC-UX-178, DEC-UX-216, DEC-UX-263, DEC-UX-264, DEC-UX-265, DEC-RC-22, DEC-RC-23, DEC-RC-24, DEC-RC-26, DEC-RC-27, DEC-UX-279.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -281,15 +289,84 @@ The lead source is set by the form the visitor used: website, app, partner or ma
        <div data-pane-group="cardfill" data-pane="empty" hidden><p class="prose none">Nothing written yet.</p><p class="meta nothing-why" data-for="owner datateam">Required to publish: write them, or say there are none.</p><button class="btn-quiet outline sm" type="button" data-for="owner datateam" data-go="cardfill:nothing"><i class="ph ph-check" aria-hidden="true"></i>Nothing to add</button></div>
        <div data-pane-group="cardfill" data-pane="nothing" hidden><p class="prose">None, according to An Claes, on 15 Nov 2026.</p></div>
       </div>
-      <div class="sub-tile"><div class="said"><i class="ph-fill ph-calendar-check"></i>Reliable since</div><p class="prose"><b style="font-weight:500;color:var(--text-primary)">1 Jan 2025</b>. Earlier weeks are incomplete.</p></div>
      </div>
     </section>
 
     <!-- ───────────── Known Gaps: a list, one gap per line, that the Owner and the Data Team add to ───────────── -->
     <section class="ov-pane" data-pane-group="ov" data-pane="gaps" hidden aria-label="Known Gaps">
      <div class="ov-head">
-      <div style="flex:1;min-width:0"><h2 class="ov-title"><span class="lc-ref" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-term-knownGap">Known Gaps<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (what it means)</span></span></h2><p class="ov-lead">What the data never holds, or holds only in part: one gap per line. Read them before you trust a result.</p></div>
+      <div style="flex:1;min-width:0"><h2 class="ov-title"><span class="lc-ref" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-term-knownGap">Known Gaps<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (what it means)</span></span></h2><p class="ov-lead">From which day the table can be relied on, and what its data never holds, or holds only in part, one gap per line. Read them before you trust a result.</p></div>
      </div>
+     <!-- Reliable since, its own tile at the top of Known Gaps (DEC-UX-296): from which day the whole table can be relied
+          on, on the one date field of the Resource, why not earlier, and the time of its data as a line, before that day
+          shaded. It is about the reference date alone: it draws no Known Gaps. ?rs=start, ?rs=empty, ?rs=edit and ?rs=odd show its other states. -->
+     <div class="sub-tile rs-tile" id="reliable-since">
+      <div class="rs-head">
+       <div class="said"><i class="ph-fill ph-calendar-check" aria-hidden="true"></i><span class="lc-ref" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-term-reliableSince">Reliable since<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (what it means)</span></span></div>
+       <span class="oj-mark rs-req" data-pane-group="rs" data-pane="empty" hidden title="Required to publish">Required to publish</span>
+       <button class="btn-quiet outline sm" type="button" data-for="owner datateam" data-pane-group="rs" data-pane="later start" data-go="rs:edit"><i class="ph ph-pencil-simple-line" aria-hidden="true"></i>Change</button>
+      </div>
+
+      <!-- A later day than its first row -->
+      <div data-pane-group="rs" data-pane="later">
+       <p class="rs-value"><b>1 Jan 2025</b><span class="meta">on <span class="mono">week_start</span>, its period</span></p>
+       <p class="prose rs-why"><span class="rs-why-k">Why not earlier</span>2024 was loaded once from the old CRM export: its weeks are incomplete, and the sources are not split.</p>
+       <span class="meta">Set by An Claes · 15 Nov 2026</span>
+      </div>
+      <!-- From its first row: the whole table, as far back as it goes -->
+      <div data-pane-group="rs" data-pane="start" hidden>
+       <p class="rs-value"><b>From its first row</b><span class="meta">6 Jan 2024, on <span class="mono">week_start</span>, its period</span></p>
+       <p class="prose">The whole table can be relied on, as far back as it goes.</p>
+       <span class="meta">Said by An Claes · 15 Nov 2026</span>
+      </div>
+      <!-- Not set yet: empty, which is never one of the two answers (FR-RC-31). The question asks for one explicitly:
+           both choices unchosen, Save off until one is chosen; the rest of the form opens with the choice. -->
+      <div data-pane-group="rs" data-pane="empty" hidden>
+       <p class="prose none">Not set yet.</p>
+       <p class="meta nothing-why" data-for="colleague">Its Owner has not said yet from which day its data can be relied on.</p>
+       <form class="rs-form rs-ask" data-for="owner datateam" onsubmit="return false" aria-label="Set Reliable since">
+        <p class="rs-q">From which day can its data be relied on? Choose one.</p>
+        <label class="rs-choice"><input type="radio" name="rs-new" value="first"><span><b>From its first row</b><span class="meta">6 Jan 2024: the whole table can be relied on, as far back as it goes</span></span></label>
+        <label class="rs-choice"><input type="radio" name="rs-new" value="later"><span><b>From a later day</b><span class="meta">rows before it stay, but are not to be read as reliable</span></span></label>
+        <div class="scope-row rs-later" data-rs-show="first later" hidden>
+         <label class="field" data-rs-show="later" hidden><span>Day</span><input type="date"></label>
+         <label class="field"><span>On the date field</span><select><option selected>week_start · its period, as an aggregate</option><option>created_at</option><option>loaded_at</option></select></label>
+        </div>
+        <label class="field" data-rs-show="later" hidden><span>Why not earlier · required</span><textarea rows="2" placeholder="Why can the rows before that day not be relied on?"></textarea></label>
+        <div class="gap-form-foot"><span class="meta rs-none-yet">Nothing is chosen yet: choose one to save.</span><span class="meta" data-rs-show="first later" hidden>Goes into the history, with your name.</span><button class="btn-primary sm rs-save" type="submit" disabled>Save</button></div>
+       </form>
+      </div>
+
+      <!-- The time of its data, as a line: before the day shaded; no Known Gaps -->
+      <div class="rs-line" data-pane-group="rs" data-pane="later start edit odd">
+       <div class="rs-track" role="img" aria-label="Its rows from 6 Jan 2024 to today; reliable since 1 Jan 2025">
+        <span class="rs-before" data-pane-group="rs" data-pane="later edit odd" style="width:34.4%" title="Before 1 Jan 2025: not to be read as reliable"></span>
+       </div>
+       <div class="rs-ticks">
+        <span class="rs-tick" data-pane-group="rs" data-pane="later edit odd" style="left:0">Its first row<b>6 Jan 2024</b></span>
+        <span class="rs-tick rs-tick-mark" data-pane-group="rs" data-pane="later edit odd" style="left:34.4%">Reliable since<b>1 Jan 2025</b></span>
+        <span class="rs-tick rs-tick-mark" data-pane-group="rs" data-pane="start" hidden style="left:0">Reliable since its first row<b>6 Jan 2024</b></span>
+        <span class="rs-tick" style="right:0;text-align:right">Today<b>20 Nov 2026</b></span>
+       </div>
+       <!-- The key of the line: what the shading is. The line is about Reliable since alone; it draws no Known Gaps. -->
+       <p class="rs-key" data-pane-group="rs" data-pane="later edit odd"><span class="rs-key-before" aria-hidden="true"></span><span>Before Reliable since: rows that are there, but not to be read as reliable</span></p>
+      </div>
+
+      <!-- Edit: from its first row, or a later day with why; on the date field of the Resource -->
+      <form class="rs-form" data-for="owner datateam" data-pane-group="rs" data-pane="edit odd" hidden onsubmit="return false" aria-label="Reliable since">
+       <label class="rs-choice"><input type="radio" name="rs-from"><span><b>From its first row</b><span class="meta">6 Jan 2024: the whole table can be relied on, as far back as it goes</span></span></label>
+       <label class="rs-choice"><input type="radio" name="rs-from" checked><span><b>From a later day</b><span class="meta">rows before it stay, but are not to be read as reliable</span></span></label>
+       <div class="scope-row rs-later">
+        <label class="field"><span>Day</span><input type="date" value="2025-01-01"></label>
+        <label class="field"><span>On the date field</span><select data-pane-group="rs" data-pane="edit"><option selected>week_start · its period, as an aggregate</option><option>created_at</option><option>loaded_at</option></select><select data-pane-group="rs" data-pane="odd" hidden><option>week_start · its period, as an aggregate</option><option selected>created_at</option><option>loaded_at</option></select></label>
+       </div>
+       <p class="meta rs-field-note">The date the rows are read on from that day: by default the one its table type gives.</p>
+       <div class="key-warn rs-odd" data-pane-group="rs" data-pane="odd" hidden role="status"><i class="ph-fill ph-warning" aria-hidden="true"></i><p><b>Unusual for an aggregate.</b> Its time runs on its period, <span class="mono">week_start</span>. On <span class="mono">created_at</span>, Reliable since says when a row was made, not which week it counts. Keep it only when that is meant.</p></div>
+       <label class="field"><span>Why not earlier · required</span><textarea rows="2">2024 was loaded once from the old CRM export: its weeks are incomplete, and the sources are not split.</textarea></label>
+       <div class="gap-form-foot"><span class="meta">Goes into the history, with your name.</span><button class="btn-quiet" type="button" data-go="rs:later">Cancel</button><button class="btn-primary sm" type="submit" data-go="rs:later">Save</button></div>
+      </form>
+     </div>
+     <p class="label gaps-label">The gaps, one per line</p>
      <div class="gaps-none" data-pane-group="cardfill" data-pane="empty nothing" hidden>
       <p class="prose" data-pane-group="cardfill" data-pane="empty">No Known Gap written yet.</p>
       <p class="meta nothing-why" data-pane-group="cardfill" data-pane="empty" data-for="owner datateam">Required to publish: add the gaps you know of, or say there are none.</p>
@@ -300,7 +377,7 @@ The lead source is set by the form the visitor used: website, app, partner or ma
       <li class="gap"><i class="ph-fill ph-circle-dashed" aria-hidden="true"></i><div class="gap-body"><p>No leads from the source <span class="mono">partner</span> before March 2025: the partner feed started then.</p><div class="gap-scope"><span class="scope"><i class="ph ph-calendar-blank" aria-hidden="true"></i><span class="scope-k">Period</span>until 28 Feb 2025</span><span class="scope"><i class="ph ph-rows" aria-hidden="true"></i><span class="scope-k">Rows</span><span class="mono">lead_source</span> is <span class="mono">partner</span></span></div><span class="meta">Added by Dirk Vos, Data Team · 14 Oct 2026</span></div><span class="gap-actions" data-for="owner datateam"><button class="icon-btn" type="button" aria-label="Change this gap" title="Change"><i class="ph ph-pencil-simple-line"></i></button><button class="icon-btn" type="button" aria-label="Remove this gap" title="Remove"><i class="ph ph-trash"></i></button></span></li>
       <li class="gap"><i class="ph-fill ph-circle-dashed" aria-hidden="true"></i><div class="gap-body"><p><span class="mono">visitorId</span> is missing for credit leads that come from MySQL rather than from website events, about 99% of them.</p><div class="gap-scope"><span class="scope"><i class="ph ph-columns" aria-hidden="true"></i><span class="scope-k">Fields</span><span class="mono">visitorId</span></span><span class="scope"><i class="ph ph-rows" aria-hidden="true"></i><span class="scope-k">Rows</span><span class="mono">lead_origin</span> is <span class="mono">mysql</span></span></div><span class="meta">Added by An Claes · 2 Sep 2026</span></div><span class="gap-actions" data-for="owner datateam"><button class="icon-btn" type="button" aria-label="Change this gap" title="Change"><i class="ph ph-pencil-simple-line"></i></button><button class="icon-btn" type="button" aria-label="Remove this gap" title="Remove"><i class="ph ph-trash"></i></button></span></li>
       <li class="gap"><i class="ph-fill ph-circle-dashed" aria-hidden="true"></i><div class="gap-body"><p>App leads of iOS miss their channel for one week, after a broken release.</p><div class="gap-scope"><span class="scope"><i class="ph ph-calendar-blank" aria-hidden="true"></i><span class="scope-k">Period</span>2 Sep 2025 – 8 Sep 2025</span><span class="scope"><i class="ph ph-columns" aria-hidden="true"></i><span class="scope-k">Fields</span><span class="mono">lead_channel</span></span><span class="scope"><i class="ph ph-rows" aria-hidden="true"></i><span class="scope-k">Rows</span><span class="mono">lead_source</span> is <span class="mono">app</span></span></div><span class="meta">Added by Maxime Passenier · 20 Oct 2026</span></div><span class="gap-actions" data-for="owner datateam"><button class="icon-btn" type="button" aria-label="Change this gap" title="Change"><i class="ph ph-pencil-simple-line"></i></button><button class="icon-btn" type="button" aria-label="Remove this gap" title="Remove"><i class="ph ph-trash"></i></button></span></li>
-      <li class="gap"><i class="ph-fill ph-circle-dashed" aria-hidden="true"></i><div class="gap-body"><p>Leads from the fair in Kortrijk were entered by hand, a week late; they count in the week they were entered.</p><span class="meta">Added by An Claes · 3 Nov 2026 · free text</span></div><span class="gap-actions" data-for="owner datateam"><button class="icon-btn" type="button" aria-label="Change this gap" title="Change"><i class="ph ph-pencil-simple-line"></i></button><button class="icon-btn" type="button" aria-label="Remove this gap" title="Remove"><i class="ph ph-trash"></i></button></span></li>
+      <li class="gap"><i class="ph-fill ph-circle-dashed" aria-hidden="true"></i><div class="gap-body"><p>Leads from the fair in Kortrijk were entered by hand, a week late; they count in the week they were entered.</p><div class="gap-scope"><span class="scope"><i class="ph ph-calendar-blank" aria-hidden="true"></i><span class="scope-k">Period</span>on 21 Oct 2026<span class="scope-on">on <span class="mono">loaded_at</span></span></span></div><span class="meta">Added by An Claes · 3 Nov 2026</span></div><span class="gap-actions" data-for="owner datateam"><button class="icon-btn" type="button" aria-label="Change this gap" title="Change"><i class="ph ph-pencil-simple-line"></i></button><button class="icon-btn" type="button" aria-label="Remove this gap" title="Remove"><i class="ph ph-trash"></i></button></span></li>
      </ul>
      <form class="gap-add" data-for="owner datateam" data-pane-group="gapform" data-pane="closed" onsubmit="return false">
       <i class="ph ph-plus" aria-hidden="true"></i>
@@ -311,10 +388,18 @@ The lead source is set by the form the visitor used: website, app, partner or ma
       <label class="field"><span>What is missing, or holds only in part, and why · plain text</span><textarea rows="2">No leads from the source partner before March 2025: the partner feed started then.</textarea></label>
       <div class="scope-add"><span class="meta">Narrow it down · optional, combine what applies</span><button class="btn-quiet outline sm" type="button" disabled><i class="ph ph-calendar-blank"></i>Period</button><button class="btn-quiet outline sm" type="button"><i class="ph ph-columns"></i>Fields</button><button class="btn-quiet outline sm" type="button" disabled><i class="ph ph-rows"></i>Rows</button></div>
       <div class="scope-edit">
-       <div class="scope-edit-head"><i class="ph ph-calendar-blank" aria-hidden="true"></i><b>Period</b><span class="meta">The time it holds for; leave a side empty for from the start, or until now</span><button class="icon-btn" type="button" aria-label="Remove the period"><i class="ph ph-x"></i></button></div>
-       <div class="scope-row">
-        <label class="field"><span>From</span><input type="date" placeholder="From the start"></label>
-        <label class="field"><span>To</span><input type="date" value="2025-02-28"></label>
+       <div class="scope-edit-head"><i class="ph ph-calendar-blank" aria-hidden="true"></i><b>Period</b><span class="meta">The time it holds for</span><button class="icon-btn" type="button" aria-label="Remove the period"><i class="ph ph-x"></i></button></div>
+       <!-- One day or a period (OP-UX-110), its dates right behind the choice: one date for one day, from and until for a
+            period, a side left empty for from the start or until now. ?gapwhen=day shows one day. -->
+       <div class="gap-when-row">
+        <span class="gap-when" data-group="gapwhen" role="tablist" aria-label="One day or a period"><button type="button" class="seg" data-target="day" role="tab" aria-selected="false">One day</button><button type="button" class="seg on" data-target="period" role="tab" aria-selected="true">A period</button></span>
+        <span class="gap-when-in" data-pane-group="gapwhen" data-pane="day" hidden><input type="date" value="2025-09-14" aria-label="The day"></span>
+        <span class="gap-when-in" data-pane-group="gapwhen" data-pane="period"><input type="date" aria-label="From; empty for from the start" title="Empty: from the start"><span class="meta">until</span><input type="date" value="2025-02-28" aria-label="Until; empty for until now" title="Empty: until now"></span>
+       </div>
+       <!-- The date field of the period (DEC-RC-31): optional; without one it follows the Date Field of the Resource.
+            ?gapfield=other shows another field chosen. -->
+       <div class="scope-row gap-field">
+        <label class="field"><span>On the date field · optional</span><select data-pane-group="gapfield" data-pane="date"><option selected>The Date Field of the Resource · week_start</option><option>created_at</option><option>loaded_at</option></select><select data-pane-group="gapfield" data-pane="other" hidden><option>The Date Field of the Resource · week_start</option><option>created_at</option><option selected>loaded_at</option></select></label>
        </div>
       </div>
       <div class="scope-edit">
@@ -330,7 +415,7 @@ The lead source is set by the form the visitor used: website, app, partner or ma
      <p class="meta ov-help">One gap at a time, its why in plain text. Narrow it down with a period, fields or rows where they apply; without them it stays free text. Every gap added, changed or removed goes into the history, with your name.</p>
     </section>
 
-    <!-- ───────────── Querying: partitions, clustering, size, key fields and Parameters ───────────── -->
+    <!-- ───────────── Querying: partitions, clustering, size and Key Fields ───────────── -->
     <section class="ov-pane" data-pane-group="ov" data-pane="querying" hidden aria-label="Querying">
      <div class="ov-head">
       <div style="flex:1;min-width:0"><h2 class="ov-title">Querying</h2><p class="ov-lead">How to read it cheaply, and the fields that matter most.</p></div>
@@ -345,7 +430,6 @@ The lead source is set by the form the visitor used: website, app, partner or ma
       <div class="sub-tile">
        <div class="tile-head"><div class="label"><span class="lc-ref" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-term-keyField">Key fields<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (what it means)</span></span></div><a class="edit-link" data-for="owner datateam" href="resource-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
        <span class="code-chip">week_start</span><span class="code-chip">lead_source</span><span class="code-chip">lead_count</span><span class="code-chip">lead_channel</span>
-       <div class="label" style="margin-top:12px">Parameters</div><span class="code-chip">lead_source</span><span class="code-chip">week_start</span>
       </div>
      </div>
     </section>
@@ -389,7 +473,27 @@ The lead source is set by the form the visitor used: website, app, partner or ma
        <li class="lvl done"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><div><div class="lvl-name"><b>1 · Available</b><span class="lvl-tag">Passed</span></div><p>Registered on 2 Sep 2026, through the exposure <span class="mono">datahub_weeklyLeads</span> of dbt-prod.</p></div></li>
        <li class="lvl done"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><div><div class="lvl-name"><b>2 · Described</b><span class="lvl-tag">Passed</span></div><p>The table and 14 of its 16 fields have a description in dbt.</p></div></li>
        <li class="lvl done"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><div><div class="lvl-name"><b>3 · Confirmed</b><span class="lvl-tag">Passed</span></div><p>Published on 2 Sep 2026 by An Claes, its first Confirmation; confirmed again on 14 Oct 2026 by An Claes.</p><p class="lvl-warn"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i>Changed since: <span class="mono">lead_channel</span> added yesterday. The Level stays.</p></div></li>
-       <li class="lvl now"><i class="ph-fill ph-seal-check" aria-hidden="true"></i><div><div class="lvl-name"><b>4 · Explored</b><span class="lvl-tag">Its Level</span></div><p>An EDA document is linked: <a href="#">EDA · weekly lead volume</a>.</p></div></li>
+       <li class="lvl now"><i class="ph-fill ph-seal-check" aria-hidden="true"></i><div><div class="lvl-name"><b>4 · Explored</b><span class="lvl-tag">Its Level</span></div><p>Its EDA-Setup is complete: every EDA-Probe its kind of table needs is added. <a href="#">Open its EDA</a>.</p></div></li>
+       <li class="lvl later"><i class="ph ph-circle-dashed" aria-hidden="true"></i><div><div class="lvl-name"><b>5 · Monitored</b><span class="lvl-tag">Later</span></div><p>Takes at least one active check on it. Checks come in a later version, with the monitors.</p></div></li>
+      </ol>
+     </div>
+     <div class="lvl-layout" data-pane-group="lvl" data-pane="three" hidden>
+      <div class="sub-tile lvl-ladder"><div class="label">Level</div><svg viewBox="0 0 240 120" width="100%" role="img" aria-label="Maturity ladder: level 3 of 5"><g font-family="Poppins" font-size="9" fill="var(--text-muted)"><rect x="4" y="96" width="34" height="14" rx="5" fill="var(--text-primary)"/><rect x="44" y="80" width="34" height="30" rx="5" fill="var(--text-primary)"/><rect x="84" y="64" width="34" height="46" rx="5" fill="var(--text-primary)"/><rect x="124" y="48" width="34" height="62" rx="5" fill="var(--text-primary)"/><rect x="164" y="32" width="34" height="78" rx="5" fill="var(--tint-active)"/><rect x="204" y="16" width="34" height="94" rx="5" fill="var(--tint-active)"/><text x="21" y="90" text-anchor="middle">0</text><text x="61" y="74" text-anchor="middle">1</text><text x="101" y="58" text-anchor="middle">2</text><text x="141" y="42" text-anchor="middle" fill="var(--text-primary)" font-weight="600">3</text><text x="181" y="26" text-anchor="middle">4</text><text x="221" y="10" text-anchor="middle">5</text></g></svg></div>
+      <ol class="lvl-list">
+       <li class="lvl done"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><div><div class="lvl-name"><b>1 · Available</b><span class="lvl-tag">Passed</span></div><p>Registered on 2 Sep 2026, through the exposure <span class="mono">datahub_weeklyLeads</span> of dbt-prod.</p></div></li>
+       <li class="lvl done"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><div><div class="lvl-name"><b>2 · Described</b><span class="lvl-tag">Passed</span></div><p>The table and 14 of its 16 fields have a description in dbt.</p></div></li>
+       <li class="lvl now"><i class="ph-fill ph-seal-check" aria-hidden="true"></i><div><div class="lvl-name"><b>3 · Confirmed</b><span class="lvl-tag">Its Level</span></div><p>Published on 2 Sep 2026 by An Claes, its first Confirmation; confirmed again on 14 Oct 2026 by An Claes.</p></div></li>
+       <li class="lvl next"><i class="ph ph-circle-dashed" aria-hidden="true"></i><div><div class="lvl-name"><b>4 · Explored</b><span class="lvl-tag">Next</span></div><p>Takes an EDA: Data Hub takes the Resource through its EDA-Steps, and once every EDA-Probe its kind of table needs is complete, it is Explored.</p><div class="lvl-act" data-for="datateam"><a class="btn-primary" href="eda.html?state=new" style="text-decoration:none;display:inline-flex;gap:6px;align-items:center;color:var(--surface-solid)"><i class="ph ph-binoculars"></i>Start the EDA</a></div><p data-for="owner colleague" style="color:var(--text-muted)">A Data Admin takes it through its EDA, for now.</p></div></li>
+       <li class="lvl later"><i class="ph ph-circle-dashed" aria-hidden="true"></i><div><div class="lvl-name"><b>5 · Monitored</b><span class="lvl-tag">Later</span></div><p>Takes at least one active check on it. Checks come in a later version, with the monitors.</p></div></li>
+      </ol>
+     </div>
+     <div class="lvl-layout" data-pane-group="lvl" data-pane="eda" hidden>
+      <div class="sub-tile lvl-ladder"><div class="label">Level</div><svg viewBox="0 0 240 120" width="100%" role="img" aria-label="Maturity ladder: level 3 of 5"><g font-family="Poppins" font-size="9" fill="var(--text-muted)"><rect x="4" y="96" width="34" height="14" rx="5" fill="var(--text-primary)"/><rect x="44" y="80" width="34" height="30" rx="5" fill="var(--text-primary)"/><rect x="84" y="64" width="34" height="46" rx="5" fill="var(--text-primary)"/><rect x="124" y="48" width="34" height="62" rx="5" fill="var(--text-primary)"/><rect x="164" y="32" width="34" height="78" rx="5" fill="var(--tint-active)"/><rect x="204" y="16" width="34" height="94" rx="5" fill="var(--tint-active)"/><text x="21" y="90" text-anchor="middle">0</text><text x="61" y="74" text-anchor="middle">1</text><text x="101" y="58" text-anchor="middle">2</text><text x="141" y="42" text-anchor="middle" fill="var(--text-primary)" font-weight="600">3</text><text x="181" y="26" text-anchor="middle">4</text><text x="221" y="10" text-anchor="middle">5</text></g></svg></div>
+      <ol class="lvl-list">
+       <li class="lvl done"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><div><div class="lvl-name"><b>1 · Available</b><span class="lvl-tag">Passed</span></div><p>Registered on 2 Sep 2026, through the exposure <span class="mono">datahub_weeklyLeads</span> of dbt-prod.</p></div></li>
+       <li class="lvl done"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><div><div class="lvl-name"><b>2 · Described</b><span class="lvl-tag">Passed</span></div><p>The table and 14 of its 16 fields have a description in dbt.</p></div></li>
+       <li class="lvl now"><i class="ph-fill ph-seal-check" aria-hidden="true"></i><div><div class="lvl-name"><b>3 · Confirmed</b><span class="lvl-tag">Its Level</span></div><p>Published on 2 Sep 2026 by An Claes, its first Confirmation; confirmed again on 14 Oct 2026 by An Claes.</p></div></li>
+       <li class="lvl next"><i class="ph ph-circle-half" aria-hidden="true" style="color:var(--signal-warn)"></i><div><div class="lvl-name"><b>4 · Explored</b><span class="lvl-tag" style="color:var(--signal-warn)">In progress</span></div><p>Its EDA, started on 21 Nov 2026 by An Claes: 4 of 10 needed EDA-Probes complete.</p><div class="lvl-prog" role="img" aria-label="4 of 10 needed EDA-Probes complete"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span><span></span><span></span><span></span><span></span><span></span></div><p><a class="text-link" href="eda.html?state=progress"><i class="ph ph-arrow-right"></i><span>Open its EDA</span></a></p></div></li>
        <li class="lvl later"><i class="ph ph-circle-dashed" aria-hidden="true"></i><div><div class="lvl-name"><b>5 · Monitored</b><span class="lvl-tag">Later</span></div><p>Takes at least one active check on it. Checks come in a later version, with the monitors.</p></div></li>
       </ol>
      </div>
@@ -398,8 +502,8 @@ The lead source is set by the form the visitor used: website, app, partner or ma
       <ol class="lvl-list">
        <li class="lvl done"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><div><div class="lvl-name"><b>1 · Available</b><span class="lvl-tag">Passed</span></div><p>Registered on 2 Sep 2026, through the exposure <span class="mono">datahub_weeklyLeads</span> of dbt-prod.</p></div></li>
        <li class="lvl now"><i class="ph-fill ph-seal-check" aria-hidden="true"></i><div><div class="lvl-name"><b>2 · Described</b><span class="lvl-tag">Its Level</span></div><p>The table and 9 of its 16 fields have a description in dbt.</p></div></li>
-       <li class="lvl next"><i class="ph ph-circle-dashed" aria-hidden="true"></i><div><div class="lvl-name"><b>3 · Confirmed</b><span class="lvl-tag">Next</span></div><p>Takes its Owner publishing it: publishing is its first Confirmation, and everyone who sees its Collection sees it then. Before that, the steps required to publish are done: 4 of 6 now.</p><ul class="lvl-steps"><li class="done"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Business Description</li><li class="done"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>2 Key Fields, each described</li><li class="done"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Intended use</li><li class="open"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i>Pitfalls<a class="text-link" data-go="ov:behaviour"><span>Write them, or say there are none</span></a></li><li class="open"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i>Known Gaps and reliable since<a class="text-link" data-go="ov:gaps"><span>Go to Known Gaps</span></a></li><li class="done"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Read back, in the publication</li></ul><p class="meta">Or let Claude take you through them, one step at a time: ask Claude, with the Data Hub connector, to help you publish it.</p><a class="btn-quiet outline sm lvl-act" data-for="owner" href="resource-publish.html?ready=steps"><i class="ph-fill ph-globe-simple"></i>Publish</a></div></li>
-       <li class="lvl later"><i class="ph ph-circle-dashed" aria-hidden="true"></i><div><div class="lvl-name"><b>4 · Explored</b><span class="lvl-tag">Later</span></div><p>Takes an EDA document linked to it. Data Hub links none yet.</p></div></li>
+       <li class="lvl next"><i class="ph ph-circle-dashed" aria-hidden="true"></i><div><div class="lvl-name"><b>3 · Confirmed</b><span class="lvl-tag">Next</span></div><p>Takes its Owner publishing it: publishing is its first Confirmation, and everyone who sees its Collection sees it then. Before that, the steps required to publish are done: 4 of 7 now.</p><ul class="lvl-steps"><li class="done"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Business Description</li><li class="done"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>2 Key Fields, each described</li><li class="done"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Intended use</li><li class="open"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i>Pitfalls<a class="text-link" data-go="ov:behaviour"><span>Write them, or say there are none</span></a></li><li class="done"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Reliable since<span class="meta lvl-step-val">1 Jan 2025, on <span class="mono">week_start</span></span></li><li class="open"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i>Known Gaps<a class="text-link" data-go="ov:gaps"><span>Add them, or say there are none</span></a></li><li class="done"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Read back, in the publication</li></ul><p class="meta">Or let Claude take you through them, one step at a time: ask Claude, with the Data Hub connector, to help you publish it.</p><a class="btn-quiet outline sm lvl-act" data-for="owner" href="resource-publish.html?ready=steps"><i class="ph-fill ph-globe-simple"></i>Publish</a></div></li>
+       <li class="lvl later"><i class="ph ph-circle-dashed" aria-hidden="true"></i><div><div class="lvl-name"><b>4 · Explored</b><span class="lvl-tag">Later</span></div><p>Takes an EDA, by a Data Admin for now: every EDA-Probe its kind of table needs, complete.</p></div></li>
        <li class="lvl later"><i class="ph ph-circle-dashed" aria-hidden="true"></i><div><div class="lvl-name"><b>5 · Monitored</b><span class="lvl-tag">Later</span></div><p>Takes at least one active check on it. Checks come in a later version, with the monitors.</p></div></li>
       </ol>
      </div>
@@ -542,7 +646,7 @@ The lead source is set by the form the visitor used: website, app, partner or ma
        <div class="sum-main">
         <div class="sum-title"><h3>How to query it cheaply</h3><a class="text-link" data-go="ov:querying"><span>Querying</span><i class="ph ph-arrow-right"></i></a></div>
         <p class="sum-text-line">Filter on <span class="mono">week_start</span> first, a partition per week: without it a query reads all 6.2 GB, with it about 20 MB a week. Then on <span class="mono">lead_source</span>, the first cluster column.</p>
-        <p class="sum-text-line">Key fields <span class="code-chip">week_start</span><span class="code-chip">lead_source</span><span class="code-chip">lead_count</span><span class="code-chip">lead_channel</span> · Parameters <span class="code-chip">lead_source</span><span class="code-chip">week_start</span></p>
+        <p class="sum-text-line">Key fields <span class="code-chip">week_start</span><span class="code-chip">lead_source</span><span class="code-chip">lead_count</span><span class="code-chip">lead_channel</span></p>
        </div>
       </li>
       <li class="sum-part">
@@ -563,14 +667,15 @@ The lead source is set by the form the visitor used: website, app, partner or ma
        <div class="sum-side"><span class="sum-n">7</span><span class="weight w3">When interpreting results</span></div>
        <div class="sum-main">
         <div class="sum-title"><h3>Watch out</h3><a class="text-link" data-go="ov:behaviour"><span>Known behaviour</span><i class="ph ph-arrow-right"></i></a></div>
-        <p class="sum-text-line">The current week is incomplete. Don’t sum across sources for unique people. Reliable since <b>1 Jan 2025</b>: don’t read earlier weeks.</p>
+        <p class="sum-text-line">The current week is incomplete. Don’t sum across sources for unique people.</p>
        </div>
       </li>
       <li class="sum-part">
        <div class="sum-side"><span class="sum-n">8</span><span class="weight w3">When interpreting results</span></div>
        <div class="sum-main">
-        <div class="sum-title"><h3>Known Gaps</h3><a class="text-link" data-go="ov:gaps"><span>Known Gaps</span><i class="ph ph-arrow-right"></i></a></div>
-        <ul class="sum-gaps"><li>No leads from the source <span class="mono">partner</span> before March 2025: the partner feed started then. <span class="sum-scope">until 28 Feb 2025 · <span class="mono">lead_source</span> is <span class="mono">partner</span></span></li><li><span class="mono">visitorId</span> is missing for about 99% of the credit leads: those from MySQL rather than from website events. <span class="sum-scope">fields <span class="mono">visitorId</span> · <span class="mono">lead_origin</span> is <span class="mono">mysql</span></span></li><li>App leads of iOS miss their channel for one week, after a broken release. <span class="sum-scope">2 Sep 2025 – 8 Sep 2025 · fields <span class="mono">lead_channel</span> · <span class="mono">lead_source</span> is <span class="mono">app</span></span></li><li>Leads from the fair in Kortrijk were entered by hand, a week late; they count in the week they were entered.</li></ul>
+        <div class="sum-title"><h3>Reliable since, Known Gaps</h3><a class="text-link" data-go="ov:gaps"><span>Known Gaps</span><i class="ph ph-arrow-right"></i></a></div>
+        <p class="sum-text-line">Reliable since <b>1 Jan 2025</b>, on <span class="mono">week_start</span>: 2024 was loaded once from the old CRM export, don’t read its weeks.</p>
+        <ul class="sum-gaps"><li>No leads from the source <span class="mono">partner</span> before March 2025: the partner feed started then. <span class="sum-scope">until 28 Feb 2025 · <span class="mono">lead_source</span> is <span class="mono">partner</span></span></li><li><span class="mono">visitorId</span> is missing for about 99% of the credit leads: those from MySQL rather than from website events. <span class="sum-scope">fields <span class="mono">visitorId</span> · <span class="mono">lead_origin</span> is <span class="mono">mysql</span></span></li><li>App leads of iOS miss their channel for one week, after a broken release. <span class="sum-scope">2 Sep 2025 – 8 Sep 2025 · fields <span class="mono">lead_channel</span> · <span class="mono">lead_source</span> is <span class="mono">app</span></span></li><li>Leads from the fair in Kortrijk were entered by hand, a week late; they count in the week they were entered. <span class="sum-scope">on 21 Oct 2026, on <span class="mono">loaded_at</span></span></li></ul>
        </div>
       </li>
       <li class="sum-part">
@@ -617,8 +722,8 @@ The lead source is set by the form the visitor used: website, app, partner or ma
   <div data-pane-group="tabs" data-pane="columns" hidden>
    <div class="tile-head" style="margin:0 6px 4px"><p class="meta" style="flex:1;margin:0">Every field with its Business Description, from the Owner, next to its description from dbt.</p><a class="edit-link" href="collection-add-relations.html" data-for="datateam" title="Grain and relations, for a Data Admin" style="margin-right:12px"><i class="ph-fill ph-graph"></i>Edit relations</a><a class="edit-link" href="resource-columns-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
    <table><thead><tr><th>Column</th><th>Type</th><th>Business Description <span class="origin">From the Owner</span></th><th>Description <span class="origin">From dbt</span></th><th>Entity</th><th></th></tr></thead><tbody>
-    <tr><td class="mono">week_start</td><td style="color:var(--text-muted)">DATE</td><td class="none" aria-label="No Business Description">–</td><td style="color:var(--text-secondary)">Monday of the week the lead was submitted</td><td></td><td><span class="pill pill-strong">Partition</span> <span class="pill">Parameter</span></td></tr>
-    <tr><td class="mono">lead_source</td><td style="color:var(--text-muted)">STRING</td><td>Where the lead came in: the website, the app, a partner or a mailing.</td><td style="color:var(--text-secondary)">Where the lead came from</td><td><span class="code-chip" style="margin:0">leadSource.leadSourceId</span></td><td><span class="pill pill-strong">Cluster 1</span> <span class="pill">Parameter</span></td></tr>
+    <tr><td class="mono">week_start</td><td style="color:var(--text-muted)">DATE</td><td class="none" aria-label="No Business Description">–</td><td style="color:var(--text-secondary)">Monday of the week the lead was submitted</td><td></td><td><span class="pill pill-strong">Partition</span></td></tr>
+    <tr><td class="mono">lead_source</td><td style="color:var(--text-muted)">STRING</td><td>Where the lead came in: the website, the app, a partner or a mailing.</td><td style="color:var(--text-secondary)">Where the lead came from</td><td><span class="code-chip" style="margin:0">leadSource.leadSourceId</span></td><td><span class="pill pill-strong">Cluster 1</span></td></tr>
     <tr><td class="mono">lead_count</td><td style="color:var(--text-muted)">INT64</td><td>How many credit leads went to KBC that week from this source. Someone who applies twice counts twice.</td><td style="color:var(--text-secondary)">Number of credit leads sent to KBC, without test and duplicate requests</td><td></td><td></td></tr>
     <tr><td class="mono">lead_channel</td><td style="color:var(--text-muted)">STRING</td><td class="none" aria-label="No Business Description">–</td><td style="color:var(--text-secondary)">Channel of the first visit</td><td></td><td><span class="pill pill-strong">Cluster 2</span> <span class="pill" style="color:var(--signal-warn)">New</span></td></tr>
    </tbody></table>
@@ -628,8 +733,9 @@ The lead source is set by the form the visitor used: website, app, partner or ma
 </main>
 </div>
 <div class="lc-pop" id="pop-term-businessDescription" role="dialog" aria-label="Business Description: what it means" hidden><div class="lc-pop-head"><span class="lc-mark" aria-hidden="true">ⓘ</span>What it means</div><p class="lc-pop-def"><b>Business Description</b>The description of a Resource or of one of its fields in the words of the business: what it represents and what it is used for, written by its Owner or the Data Team. It stands next to the description from dbt, which says how the data is made, and never replaces it.</p><div class="lc-pop-head">Explained in 1 Learning Card</div><div class="lc-pop-items"><div class="lc-pop-item"><button class="lc-pop-open" data-float-open data-num="K5.14" data-title="The Business Description"><span class="lc-pop-title"><i class="ph ph-compass" aria-hidden="true"></i><span><span class="lc-num">K5.14</span>The Business Description</span></span><span class="lc-pop-gain">You describe your table and each of its fields in the words of the business, so that colleagues outside your team understand them without asking you.</span><span class="lc-pop-seen">Not seen yet</span></button></div></div><div class="lc-pop-foot"><a class="text-link" href="learning-start.html"><span>Open the Learning Centre</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div>
-<div class="lc-pop" id="pop-term-keyField" role="dialog" aria-label="Key Field: what it means" hidden><div class="lc-pop-head"><span class="lc-mark" aria-hidden="true">ⓘ</span>What it means</div><p class="lc-pop-def"><b>Key Field</b>A field of a Resource that matters most, marked on its Resource Card by its Owner or the Data Team: most questions about the Resource go through it. Its Business Description is required before the Resource is published.</p><div class="lc-pop-head">Explained in 1 Learning Card</div><div class="lc-pop-items"><div class="lc-pop-item"><button class="lc-pop-open" data-float-open data-num="K5.15" data-title="Key Fields and Parameters"><span class="lc-pop-title"><i class="ph ph-compass" aria-hidden="true"></i><span><span class="lc-num">K5.15</span>Key Fields and Parameters</span></span><span class="lc-pop-gain">You show colleagues where to start in a table of many fields and what to filter its Preview on, and the EDA what to explore first.</span><span class="lc-pop-seen">Not seen yet</span></button></div></div><div class="lc-pop-foot"><a class="text-link" href="learning-start.html"><span>Open the Learning Centre</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div>
+<div class="lc-pop" id="pop-term-keyField" role="dialog" aria-label="Key Field: what it means" hidden><div class="lc-pop-head"><span class="lc-mark" aria-hidden="true">ⓘ</span>What it means</div><p class="lc-pop-def"><b>Key Field</b>A field of a Resource that matters most, marked on its Resource Card by its Owner or the Data Team: most questions about the Resource go through it. Its Business Description is required before the Resource is published.</p><div class="lc-pop-head">Explained in 1 Learning Card</div><div class="lc-pop-items"><div class="lc-pop-item"><button class="lc-pop-open" data-float-open data-num="K5.15" data-title="Key Fields"><span class="lc-pop-title"><i class="ph ph-compass" aria-hidden="true"></i><span><span class="lc-num">K5.15</span>Key Fields</span></span><span class="lc-pop-gain">You show colleagues where to start in a table of many fields and what to filter its Preview on, and the EDA what to explore first.</span><span class="lc-pop-seen">Not seen yet</span></button></div></div><div class="lc-pop-foot"><a class="text-link" href="learning-start.html"><span>Open the Learning Centre</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div>
 <div class="lc-pop" id="pop-term-knownGap" role="dialog" aria-label="Known Gap: what it means" hidden><div class="lc-pop-head"><span class="lc-mark" aria-hidden="true">ⓘ</span>What it means</div><p class="lc-pop-def"><b>Known Gap</b>A gap in the data itself: a period, a field or rows that are missing or only partly there. It would go away if the data were repaired. What stays true even when every row is right is a Pitfall.</p><div class="lc-pop-head">Explained in 1 Learning Card</div><div class="lc-pop-items"><div class="lc-pop-item"><button class="lc-pop-open" data-float-open data-num="K5.3" data-title="The Known Gaps of a Resource"><span class="lc-pop-title"><i class="ph ph-compass" aria-hidden="true"></i><span><span class="lc-num">K5.3</span>The Known Gaps of a Resource</span></span><span class="lc-pop-gain">You know where data is missing from a Resource before you draw a conclusion from it, and you save your colleagues from making the same mistake.</span><span class="lc-pop-seen">Not seen yet</span></button></div></div><div class="lc-pop-foot"><a class="text-link" href="learning-start.html"><span>Open the Learning Centre</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div>
+<div class="lc-pop" id="pop-term-reliableSince" role="dialog" aria-label="Reliable since: what it means" hidden><div class="lc-pop-head"><span class="lc-mark" aria-hidden="true">ⓘ</span>What it means</div><p class="lc-pop-def"><b>Reliable Since</b>The day from which the whole table of a Resource can be relied on, read on its Date Field, with why not earlier; or from its first row. Rows before it stay, but are not to be read as reliable: a trend or a comparison starts there. A hole after that day, or in part of the rows, is a Known Gap.</p><p class="lc-pop-def"><b>Date Field</b>The one date field of a Resource that Reliable Since is read on. Its table type gives it: the event date of an event, the date of a fact, the period of an aggregate.</p><div class="lc-pop-head">Explained in 1 Learning Card</div><div class="lc-pop-items"><div class="lc-pop-item"><button class="lc-pop-open" data-float-open data-num="K5.17" data-title="Reliable since"><span class="lc-pop-title"><i class="ph ph-compass" aria-hidden="true"></i><span><span class="lc-num">K5.17</span>Reliable since</span></span><span class="lc-pop-gain">You never compare this year with a start-up period that was never complete.</span><span class="lc-pop-seen">Not seen yet</span></button></div></div><div class="lc-pop-foot"><a class="text-link" href="learning-start.html"><span>Open the Learning Centre</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div>
 <div class="lc-pop" id="pop-term-pitfall" role="dialog" aria-label="Pitfall: what it means" hidden><div class="lc-pop-head"><span class="lc-mark" aria-hidden="true">ⓘ</span>What it means</div><p class="lc-pop-def"><b>Pitfall</b>A way to read a Resource wrongly that looks right: what a field means, what a figure counts or when it is final. It is about how the data is read, not the data itself: it stays true even when every row is right. A gap in the data is a Known Gap.</p><div class="lc-pop-head">Explained in 1 Learning Card</div><div class="lc-pop-items"><div class="lc-pop-item"><button class="lc-pop-open" data-float-open data-num="K5.16" data-title="Pitfalls"><span class="lc-pop-title"><i class="ph ph-compass" aria-hidden="true"></i><span><span class="lc-num">K5.16</span>Pitfalls</span></span><span class="lc-pop-gain">You avoid the mistakes others already made with a table, and spare your colleagues the traps you found yourself.</span><span class="lc-pop-seen">Not seen yet</span></button></div></div><div class="lc-pop-foot"><a class="text-link" href="learning-start.html"><span>Open the Learning Centre</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div>
 <div class="lc-pop" id="pop-term-knownBehaviour" role="dialog" aria-label="Known Behaviour: what it means" hidden><div class="lc-pop-head"><span class="lc-mark" aria-hidden="true">ⓘ</span>What it means</div><p class="lc-pop-def"><b>Known Behaviour</b>The part of the Resource Card that says how the data behaves in use: what it is meant for, its pitfalls, its Known Gaps and from when it can be trusted.</p><div class="lc-pop-head">Explained in 1 Learning Card</div><div class="lc-pop-items"><div class="lc-pop-item"><button class="lc-pop-open" data-float-open data-num="3.3.3" data-title="Reliable for which purpose"><span class="lc-pop-title"><i class="ph ph-compass" aria-hidden="true"></i><span><span class="lc-num">3.3.3</span>Reliable for which purpose</span></span><span class="lc-pop-gain">You judge whether data is good enough for your decision, without waiting for perfect data.</span><span class="lc-pop-seen">Not seen yet</span></button></div></div><div class="lc-pop-foot"><a class="text-link" href="learning-start.html"><span>Open the Learning Centre</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div>
 <div class="lc-pop" id="pop-level" role="dialog" aria-label="Explained in 2 Learning Cards" hidden><div class="lc-pop-head"><span class="lc-mark" aria-hidden="true">ⓘ</span>Explained in 2 Learning Cards</div><div class="lc-pop-items"><div class="lc-pop-item"><button class="lc-pop-open" data-float-open data-num="K5.2" data-title="The Level of a Resource"><span class="lc-pop-title"><i class="ph ph-compass" aria-hidden="true"></i><span><span class="lc-num">K5.2</span>The Level of a Resource</span></span><span class="lc-pop-gain">You know what a Level promises, so you trust a figure exactly as far as it goes.</span><span class="lc-pop-seen">Not seen yet</span></button><a class="text-link lc-pop-see" href="learning-see.html"><span>See it</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a></div><div class="lc-pop-item"><button class="lc-pop-open" data-float-open data-num="3.3.3" data-title="Reliable for which purpose"><span class="lc-pop-title"><i class="ph ph-book-open-text" aria-hidden="true"></i><span><span class="lc-num">3.3.3</span>Reliable for which purpose</span></span><span class="lc-pop-gain">You judge whether data is good enough for your decision, without waiting for perfect data.</span><span class="lc-pop-seen">Not seen yet</span></button><a class="text-link lc-pop-see" href="learning-see.html"><span>See it</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div><div class="lc-pop-foot"><a class="text-link" href="learning-start.html"><span>Open the Learning Centre</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div>
@@ -713,8 +819,18 @@ The lead source is set by the form the visitor used: website, app, partner or ma
  <button class="seg on" data-target="closed" role="tab" aria-selected="true">Closed</button>
  <button class="seg" data-target="open" role="tab" aria-selected="false">Open</button>
 </div>
+<div class="proto-switch" data-group="gapwhenproto" role="tablist" aria-label="Prototype: the period of a new gap" style="bottom:504px">Gap period
+ <button class="seg" data-target="day" data-go="ov:gaps gapform:open gapwhen:day" role="tab" aria-selected="false">One day</button>
+ <button class="seg on" data-target="period" data-go="ov:gaps gapform:open gapwhen:period" role="tab" aria-selected="true">A period</button>
+</div>
+<div class="proto-switch" data-group="gapfield" role="tablist" aria-label="Prototype: the date field of the period of a new gap" style="bottom:552px">Gap date field
+ <button class="seg on" data-target="date" data-go="ov:gaps gapform:open" role="tab" aria-selected="true">The Date Field</button>
+ <button class="seg" data-target="other" data-go="ov:gaps gapform:open" role="tab" aria-selected="false">Another</button>
+</div>
 <div class="proto-switch" data-group="lvl" role="tablist" aria-label="Prototype: the Level on Maturity" style="bottom:168px">Level
  <button class="seg on" data-target="four" role="tab" aria-selected="true">4 · Explored</button>
+ <button class="seg" data-target="three" data-go="ov:maturity" role="tab" aria-selected="false">3 · Start the EDA</button>
+ <button class="seg" data-target="eda" data-go="ov:maturity" role="tab" aria-selected="false">EDA in progress</button>
  <button class="seg" data-target="two" role="tab" aria-selected="false">2 · Described</button>
 </div>
 <div class="proto-switch" data-group="mon" role="tablist" aria-label="Prototype: what its monitor found" style="bottom:264px">Monitor
@@ -729,10 +845,31 @@ The lead source is set by the form the visitor used: website, app, partner or ma
  <button class="seg on" data-target="off" role="tab" aria-selected="true">Held</button>
  <button class="seg" data-target="on" role="tab" aria-selected="false">Gone</button>
 </div>
+<div class="proto-switch" data-group="rs" role="tablist" aria-label="Prototype: Reliable since" style="bottom:456px">Reliable since
+ <button class="seg on" data-target="later" data-go="ov:gaps" role="tab" aria-selected="true">A later day</button>
+ <button class="seg" data-target="start" data-go="ov:gaps" role="tab" aria-selected="false">First row</button>
+ <button class="seg" data-target="empty" data-go="ov:gaps" role="tab" aria-selected="false">Not set</button>
+ <button class="seg" data-target="edit" data-go="ov:gaps" role="tab" aria-selected="false">Editing</button>
+ <button class="seg" data-target="odd" data-go="ov:gaps" role="tab" aria-selected="false">Other field</button>
+</div>
 <div class="proto-switch" data-group="complete" role="tablist" aria-label="Prototype: its model type complete or not" style="bottom:408px">Complete
  <button class="seg on" data-target="yes" role="tab" aria-selected="true">Yes</button>
  <button class="seg" data-target="missing" role="tab" aria-selected="false">Missing</button>
 </div>
 <script src="app.js"></script>
+<script>
+// Reliable since not set (FR-RC-31): nothing is chosen until the Owner chooses; the choice opens the rest of the form
+// and switches Save on.
+document.querySelectorAll('.rs-ask').forEach((form) => {
+  const sync = () => {
+    const chosen = form.querySelector('input[name="rs-new"]:checked')?.value;
+    form.querySelectorAll('[data-rs-show]').forEach((el) => { el.hidden = !chosen || !el.dataset.rsShow.split(' ').includes(chosen); });
+    form.querySelector('.rs-none-yet').hidden = Boolean(chosen);
+    form.querySelector('.rs-save').disabled = !chosen;
+  };
+  form.addEventListener('change', sync);
+  sync();
+});
+</script>
 </body>
 </html>

@@ -284,6 +284,8 @@ html[data-role="lensuser"] [data-for]:not([data-for~="lensuser"]) { display: non
 .muted { color: var(--text-muted); }
 .warn { color: var(--signal-warn); }
 .lens-icon { font-size: 15px; color: var(--text-muted); flex: none; }
+/* A Resource not published yet, in a table of a Collection, in a lighter grey */
+.files tr.quiet td, .files tr.quiet .name-cell span { color: var(--text-muted); }
 
 /* A sheet slides in from the right over the whole window, for a task that belongs to the page, such as adding Resources:
    everything behind it deeply dimmed, half the window wide (DEC-UX-174) */
@@ -530,6 +532,7 @@ button.ln-fold i { transition: transform 200ms ease; }
 .q-period:hover { color: var(--text-primary); }
 .q-period i { transition: transform 200ms ease; }
 .q-group:not(.open) .q-period i { transform: rotate(-90deg); }
+.q-group:not(.open) > .q-entry { display: none; }
 .q-hide { position: absolute; top: 9px; right: 6px; width: 26px; height: 26px; font-size: 14px; opacity: 0; }
 .q-entry:hover .q-hide, .q-hide:focus-visible { opacity: 1; }
 .q-runs { display: flex; flex-direction: column; gap: 1px; margin: 4px 0 2px 30px; }
@@ -594,6 +597,25 @@ button.ln-fold i { transition: transform 200ms ease; }
    (Proposal) */
 .result-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
 .result-head h2 { font-size: var(--text-body); font-weight: var(--weight-medium); margin: 0; }
+/* Copy as JSON and Copy as CSV, in the upper right corner of the result (DEC-UX-292) */
+.result-copy { margin-left: auto; display: inline-flex; gap: 4px; flex-shrink: 0; }
+.result-head:has(.result-copy:not([hidden])) { flex-wrap: nowrap; }
+.result-head:has(.result-copy:not([hidden])) > .meta { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.result-copy[hidden] { display: none; }
+/* Menu button (DEC-UX-294): an icon button with a small caret that opens a menu under it, right-aligned to it */
+.menu-btn { width: auto; padding: 0 6px 0 8px; gap: 2px; }
+.menu-btn .menu-caret { font-size: 10px; color: var(--text-muted); }
+.menu-btn[aria-expanded="true"] { background: var(--tint-active); }
+.result-copy { position: relative; }
+.rg-menu.btn-menu { position: absolute; top: calc(100% + 6px); right: 0; width: max-content; min-width: 260px; }
+.btn-menu .menu-label { margin: 0; white-space: nowrap; }
+.btn-menu .menu-item { width: 100%; border: 0; background: none; font: inherit; color: inherit; text-align: left; }
+.btn-menu .menu-item:focus-visible { background: var(--tint-hover); outline: 2px solid var(--text-secondary); outline-offset: -2px; }
+.btn-menu .menu-item .meta { padding-left: 14px; }
+/* The Project the User works in, in the panel: You work in it · Close project (DEC-UX-295) */
+.proj-working { display: flex; align-items: center; gap: 6px; margin: 4px 0 2px; padding: 4px 4px 4px 12px; font-size: var(--text-meta); color: var(--text-secondary); }
+.proj-working > .ph-flag { font-size: 12px; color: var(--text-muted); }
+.proj-working .proj-close { margin-left: auto; padding: 4px 10px; font-size: var(--text-meta); }
 .rgrid-scroll { overflow: auto; max-height: min(620px, calc(100vh - 220px)); border-radius: var(--radius-md); outline: 1px solid var(--tint-active); background: var(--surface-solid); }
 .rgrid-scroll:focus-visible { outline: 2px solid var(--text-secondary); }
 .rgrid { table-layout: fixed; border-collapse: separate; border-spacing: 0; width: auto; font-size: var(--text-small); font-variant-numeric: tabular-nums; }
@@ -1771,6 +1793,10 @@ button.lin-node:hover { box-shadow: 0 0 0 1.5px var(--tint-active); }
 .lvl-name { display: flex; align-items: baseline; gap: 8px; }
 .lvl-name b { font-size: var(--text-small); font-weight: var(--weight-medium); }
 /* What publishing still takes, on the Maturity of a Resource not published yet: the steps required to publish (DEC-MR-16) */
+.lvl-prog { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 3px; max-width: 260px; margin-top: 8px; }
+.lvl-prog span { height: 6px; border-radius: 3px; background: var(--tint-active); }
+.lvl-prog span.on { background: var(--col-teal); }
+.lvl-act { margin-top: 10px; }
 .lvl-steps { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 4px; font-size: var(--text-small); }
 .lvl-steps li { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .lvl-steps li > i { font-size: 15px; color: var(--text-secondary); }
@@ -1836,6 +1862,53 @@ button.lin-node:hover { box-shadow: 0 0 0 1.5px var(--tint-active); }
 .sum-scope { display: block; margin-top: 2px; font-size: var(--text-meta); color: var(--text-muted); }
 .gap-pill { display: inline-flex; align-items: center; gap: 4px; text-decoration: none; color: var(--text-secondary); }
 .gap-pill > .ph-fill { font-size: 12px; color: var(--text-muted); }
+
+/* Reliable since, its own tile on top of Known Gaps (DEC-UX-296): what it means, its day on the date field of the Resource
+   and why not earlier; under it the time of its data as a line, before that day shaded, with no Known Gaps */
+.rs-tile { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+.rs-head { display: flex; align-items: center; gap: 10px; }
+.rs-head .said { flex: 1; margin: 0; }
+.rs-head .btn-quiet { display: inline-flex; align-items: center; gap: 6px; }
+.rs-value { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 0; }
+.rs-value b { font-size: var(--text-section); font-weight: var(--weight-medium); color: var(--text-primary); }
+.rs-why { display: flex; flex-direction: column; gap: 2px; margin: 8px 0 4px; max-width: 720px; }
+.rs-why-k { font-size: var(--text-meta); color: var(--text-muted); }
+.rs-q { margin: 0; font-size: var(--text-small); font-weight: var(--weight-medium); }
+.rs-save:disabled { opacity: .45; cursor: default; }
+.rs-line { margin-top: 4px; }
+.rs-track { position: relative; height: 16px; border-radius: var(--radius-pill); background: var(--text-secondary); overflow: hidden; }
+.rs-before { position: absolute; inset: 0 auto 0 0; background: repeating-linear-gradient(135deg, var(--tint-active) 0 4px, var(--surface-solid) 4px 8px); }
+.rs-ticks { position: relative; height: 36px; margin-top: 6px; }
+.rs-tick { position: absolute; top: 0; display: flex; flex-direction: column; font-size: var(--text-meta); color: var(--text-muted); white-space: nowrap; }
+.rs-tick b { font-weight: var(--weight-medium); color: var(--text-secondary); }
+.rs-tick-mark { padding-left: 8px; border-left: 1.5px solid var(--text-primary); margin-top: -18px; padding-top: 18px; }
+.rs-tick-mark b { color: var(--text-primary); }
+.rs-key { display: flex; align-items: flex-start; gap: 8px; margin: 4px 0 0; font-size: var(--text-meta); line-height: 1.45; color: var(--text-secondary); }
+.rs-key-before { flex: none; width: 18px; height: 12px; margin-top: 2px; border-radius: 3px; background: repeating-linear-gradient(135deg, var(--tint-active) 0 4px, var(--surface-solid) 4px 8px); }
+.rs-form { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; border-radius: var(--radius-md); background: var(--surface-solid);
+  outline: 1.5px solid var(--text-secondary); outline-offset: -1.5px; }
+.rs-form .field { margin: 0; }
+.rs-choice { display: flex; align-items: flex-start; gap: 10px; font-size: var(--text-small); cursor: pointer; }
+.rs-choice input { margin: 3px 0 0; accent-color: var(--text-primary); }
+.rs-choice > span { display: flex; flex-direction: column; gap: 1px; }
+.rs-choice b { font-weight: var(--weight-medium); }
+.rs-later { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); padding-left: 26px; }
+.rs-field-note { display: block; margin: -6px 0 0 26px; }
+.rs-odd { margin: 0 0 0 26px; }
+.rs-odd p { margin: 0; color: var(--text-secondary); }
+.rs-odd b { font-weight: var(--weight-medium); color: var(--text-primary); }
+.rs-req { margin-right: 4px; }
+.gaps-label { margin: 0 0 8px; }
+.lvl-step-val { margin-left: 4px; }
+/* The period of a gap: one day or a period (OP-UX-110) */
+.gap-when-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.gap-when { display: inline-flex; gap: 2px; }
+.gap-when-in { display: inline-flex; align-items: center; gap: 8px; }
+.gap-when-in input { font: var(--text-small)/1.5 var(--font-family); color: var(--text-primary); background: var(--surface-solid);
+  border: 1px solid var(--tint-active); border-radius: var(--radius-sm); padding: 6px 10px; }
+.gap-when-in input:focus { outline: 2px solid var(--text-secondary); outline-offset: 1px; }
+.gap-field { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); margin-top: 12px; }
+.scope-on { padding-left: 6px; margin-left: 2px; border-left: 1px solid var(--tint-active); color: var(--text-muted); }
 
 /* Charts, the gallery of semgraph (a proposal): the charts in the panel by the question they answer, one opened on the
    right with its examples and what it is for */
@@ -2293,6 +2366,123 @@ svg.mp, svg.mp-g { display: block; width: 100%; height: auto; overflow: visible;
 /* A flagged query in the panel has the flag at its end */
 .q-item .flag-mark { margin-left: auto; font-size: 13px; color: var(--text-muted); flex: none; }
 
+/* Projects (DEC-UX-282): the row on top holds what the User works in, a Project or their own flagged queries, named
+   by the switch at its start. More than ten fit (DEC-UX-283): the first ten keep ⌘1 to ⌘0, the rest have no key, and
+   the tabs scroll sideways behind "All 14". No quick-window button in the row (DEC-UX-284). */
+.q-flags { position: relative; }
+.q-proj, .q-flags-all { text-decoration: none; }
+.q-proj { display: inline-flex; align-items: center; gap: 7px; flex: none; max-width: 240px; border: 0; background: var(--card); color: var(--text-primary);
+  font: var(--weight-medium) var(--text-small) var(--font-family); padding: 6px 8px 6px 9px; border-radius: 9px; cursor: pointer; }
+.q-proj:hover { background: var(--surface-float-hover); }
+.q-proj > i:first-child { font-size: 15px; flex: none; }
+.q-proj .clip { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.q-proj .q-proj-people { display: inline-flex; align-items: center; gap: 3px; color: var(--text-muted); font-weight: var(--weight-regular); font-size: var(--text-meta); flex: none; }
+.q-proj .caret { font-size: 11px; color: var(--text-muted); flex: none; }
+.q-proj.mine { background: none; color: var(--text-secondary); }
+.q-proj.mine:hover { background: var(--tint-hover); color: var(--text-primary); }
+.q-flags-tabs { display: flex; align-items: center; gap: 4px; flex: 1 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: none; scroll-behavior: smooth; }
+.q-flags-tabs::-webkit-scrollbar { display: none; }
+.q-flags-tabs .q-flag { flex: 0 1 190px; min-width: 124px; }
+/* Past what fits, the tabs scroll sideways, their edges fading */
+.q-flags-tabs.many { mask-image: linear-gradient(to right, transparent, #000 14px, #000 calc(100% - 14px), transparent); padding: 0 6px; }
+.q-flag .nokey { width: 8px; flex: none; }
+.q-flags-end { display: flex; align-items: center; gap: 2px; flex: none; margin-left: auto; }
+.q-flags-all { display: inline-flex; align-items: center; gap: 5px; border: 0; background: none; color: var(--text-secondary); font: var(--text-meta) var(--font-family); padding: 6px 8px; border-radius: 9px; cursor: pointer; white-space: nowrap; }
+.q-flags-all:hover, .q-flags-all[aria-expanded="true"] { background: var(--tint-hover); color: var(--text-primary); }
+.q-flags-sep { width: 1px; align-self: stretch; margin: 6px 2px; background: var(--tint-active); flex: none; }
+/* The pop-outs of the row: what to work in, the whole list, and Add to a project */
+.q-pop { position: absolute; top: calc(100% + 6px); left: 4px; z-index: 40; width: 360px; max-height: min(520px, 70vh); overflow: auto; padding: 8px;
+  border-radius: var(--radius-md); background: var(--surface-solid); box-shadow: var(--sheet-shadow); font-size: var(--text-small); }
+.q-pop.end { left: auto; right: 4px; }
+.q-pop-h { font-size: var(--text-meta); color: var(--text-muted); margin: 6px 8px 4px; display: flex; align-items: center; gap: 6px; }
+.q-pop-h:first-child { margin-top: 2px; }
+.q-pop-opt { display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 8px; border: 0; border-radius: 9px; background: none; color: var(--text-primary);
+  font: inherit; text-align: left; cursor: pointer; text-decoration: none; }
+.q-pop-opt:hover, .q-pop-opt.on { background: var(--tint-hover); }
+.q-pop-opt > i { font-size: 16px; color: var(--text-secondary); flex: none; }
+.q-pop-opt input { accent-color: var(--text-primary); margin: 0; flex: none; }
+.q-pop-opt .grow { flex: 1; min-width: 0; }
+.q-pop-opt .grow > span { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.q-pop-opt .meta { display: block; }
+.q-pop-opt .kbd { background: var(--tint-hover); }
+.q-pop-opt[aria-current="true"] .item-title { font-weight: var(--weight-medium); }
+.q-pop-opt .q-pop-check { margin-left: auto; font-size: 14px; color: var(--text-primary); }
+.q-pop-sep { height: 1px; background: var(--tint-hover); margin: 6px 4px; }
+.q-pop-new { display: flex; gap: 6px; align-items: center; padding: 4px 8px 2px 34px; }
+.q-pop-new input { flex: 1; min-width: 0; font: inherit; padding: 6px 9px; border-radius: var(--radius-field); border: 1px solid var(--tint-active); background: var(--surface-sub); color: var(--text-primary); }
+.q-pop-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; padding: 8px 4px 2px; border-top: 1px solid var(--tint-hover); }
+.q-pop-foot .meta { flex: 1 1 100%; line-height: 1.45; }
+.q-pop-foot .btn-quiet { margin-left: auto; }
+.q-pop-opt .kbd.none { visibility: hidden; }
+/* A query of a Project, opened while the User works in another: its breadcrumb names its Project */
+.crumb-proj { display: inline-flex; align-items: center; gap: 4px; }
+.crumb-proj i { font-size: 13px; }
+
+/* The panel of Query: the Projects above the history (DEC-UX-285) */
+.panel-label.with-add { display: flex; align-items: center; gap: 4px; }
+.panel-label.with-add span { flex: 1; }
+.panel-label.with-add .icon-btn { width: 24px; height: 24px; font-size: 14px; }
+.proj-entry { position: relative; margin-bottom: 7px; }
+.proj-entry > .proj-item { position: relative; margin-bottom: 0; padding-right: 40px; }
+.proj-item .kind-icon { font-size: 18px; color: var(--text-secondary); }
+.proj-item .flag-mark { position: absolute; right: 42px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--text-muted); }
+.proj-entry > .q-unfold { position: absolute; right: 8px; top: 9px; }
+.proj-entry:not(.open) .q-unfold i { transform: rotate(-90deg); }
+.proj-entry:not(.open) .proj-queries { display: none; }
+.proj-queries { margin: 4px 0 0 22px; padding-left: 10px; border-left: 1px solid var(--tint-active); }
+.proj-queries a { display: flex; align-items: center; gap: 8px; padding: 5px 6px; border-radius: 8px; color: var(--text-secondary); text-decoration: none; font-size: var(--text-small); }
+.proj-queries a:hover { background: var(--tint-hover); color: var(--text-primary); }
+.proj-queries a .kbd { background: none; padding: 0; min-width: 10px; }
+.proj-queries a .clip { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.proj-queries a.locked { color: var(--text-muted); }
+.proj-more { display: block; margin: 0 4px 8px; }
+
+/* The page of a Project (DEC-UX-285): its head, who is in it, its queries and its Danger zone */
+.proj-people { display: flex; align-items: center; }
+.proj-people .mini-avatar { width: 26px; height: 26px; font-size: 9px; outline: 2px solid var(--surface-solid); margin-left: -6px; display: inline-flex; align-items: center; justify-content: center; }
+.proj-people .mini-avatar:first-child { margin-left: 0; }
+.proj-people .mini-avatar { position: relative; }
+.proj-people .mini-avatar:nth-child(1) { z-index: 4; }
+.proj-people .mini-avatar:nth-child(2) { z-index: 3; }
+.proj-people .mini-avatar:nth-child(3) { z-index: 2; }
+.proj-people .mini-avatar:nth-child(4) { z-index: 1; }
+.proj-table td { padding-top: 9px; padding-bottom: 9px; }
+.proj-table .proj-key { width: 1%; white-space: nowrap; }
+.proj-table .proj-key .kbd { background: var(--tint-hover); }
+.proj-table .proj-drag { width: 1%; color: var(--text-muted); cursor: grab; font-size: 15px; }
+.proj-table .q-cell { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.proj-table .q-cell .kind-icon { font-size: 16px; color: var(--text-secondary); flex: none; }
+.proj-table .q-cell a { color: var(--text-primary); text-decoration: none; font-weight: var(--weight-medium); }
+.proj-table .q-cell a:hover { text-decoration: underline; }
+.proj-table .q-cell .meta { display: block; font-weight: var(--weight-regular); }
+.proj-table tr.locked td { color: var(--text-muted); }
+.proj-table tr.locked .q-cell .kind-icon { color: var(--text-muted); }
+/* "Remove from project" on every query, always in view (DEC-UX-291); quiet, its text on one line */
+.proj-table .proj-remove { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; font-size: var(--text-meta); color: var(--text-secondary); padding: 5px 9px; }
+.proj-table .proj-remove i { font-size: 14px; }
+.proj-table .proj-remove:hover { color: var(--text-primary); }
+.proj-undo { position: sticky; bottom: 12px; z-index: 5; box-shadow: var(--sheet-shadow); }
+.proj-table td:nth-child(5), .proj-table td:nth-child(6) { white-space: nowrap; }
+.proj-table .marks { display: inline-flex; align-items: center; gap: 6px; }
+.pill.warn { color: var(--signal-warn); background: color-mix(in srgb, var(--signal-warn) 14%, transparent); }
+.pill.warn i { font-size: 11px; }
+.proj-member-note { display: block; margin-top: 2px; line-height: 1.45; }
+.proj-member-note.warn { color: var(--signal-warn); }
+.proj-here { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-small); color: var(--text-secondary); background: var(--card); padding: 7px 12px; border-radius: var(--radius-pill); }
+.proj-here i { font-size: 14px; }
+.proj-empty { padding: 26px 16px; text-align: center; color: var(--text-secondary); font-size: var(--text-small); line-height: 1.6; }
+.proj-empty .ph { font-size: 26px; color: var(--text-muted); display: block; margin: 0 auto 6px; }
+.share-sheet .sheet-list { padding-top: 4px; }
+.share-who { position: relative; margin: 8px 0 6px; }
+.share-sugg { margin-top: 6px; padding: 6px; border-radius: var(--radius-md); background: var(--surface-sub); }
+@media (max-width: 720px) {
+  .q-flags-tabs .q-flag { width: 128px; }
+  .q-pop { width: calc(100vw - 32px); left: 0; }
+  .q-pop.end { right: 0; }
+  .proj-table .hide-narrow { display: none; }
+  .proj-table .proj-remove span { display: none; }
+}
+
 /* The quick window (DEC-UX-237): Cmd+Shift+P (Ctrl+Shift+P) anywhere in Data Hub. A search over the commands of the
    screen, then Go to: every section, and every Resource, Collection, Lens, query and Learning Card the User may see.
    It floats over the top of the window, the page lightly dimmed; Escape, the shortcut again, or a click beside it closes it. */
@@ -2377,7 +2567,7 @@ body.oj-plain .oj-tag { visibility: hidden; }
 .mcp-msg a { color: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
 .mcp-msg code, .oj-win code { font-family: var(--font-mono, ui-monospace, monospace); font-size: .92em; }
 /* The window of the journey, drawn by Data Hub */
-.oj-progress { display: grid; grid-template-columns: repeat(13, minmax(0, 1fr)); gap: 3px; }
+.oj-progress { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 3px; }
 .oj-progress span { height: 6px; border-radius: 3px; background: var(--tint-active); }
 .oj-progress .done { background: var(--col-teal-ink); }
 .oj-progress .required { background: color-mix(in srgb, var(--text-primary) 30%, var(--tint-active)); }
@@ -2520,6 +2710,100 @@ body.oj-plain .oj-tag { visibility: hidden; }
   .mf-foot .btn-primary { width: 100%; justify-content: center; min-height: 44px; }
 
 }
+
+/* The page of a Project: the foot of its Danger zone */
+.proj-danger .danger-foot { display: flex; align-items: center; gap: 10px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--tint-hover); }
+.proj-danger .danger-foot .meta { flex: 1; }
+.proj-danger + .proj-danger { margin-top: 14px; }
+
+/* The Flow Box (DEC-UX-299): a frame of its own, docked on the right of the main area, that takes a User through the
+   steps of one flow. The page narrows to make room; nothing is covered. Focus follows the mouse into it, as into the
+   panel (DEC-UX-146) */
+.flowbox, .flowstrip { flex-shrink: 0; background: var(--surface-glass); border-radius: var(--radius-xl); }
+html[data-bg] :is(.flowbox, .flowstrip) { -webkit-backdrop-filter: var(--blur-frame); backdrop-filter: var(--blur-frame); }
+.flowbox { width: var(--flow-box-width); display: flex; overflow: hidden; --card: var(--surface-soft); }
+.flowbox:hover { --card: var(--surface-solid); }
+.app:has(.flowbox:hover) .main { --card: var(--surface-soft); }
+.app:has(.flowbox:hover) .main > * { opacity: var(--opacity-out-of-focus); }
+.fb-inner { flex: 1; min-width: 0; display: flex; flex-direction: column; transition: opacity var(--motion-focus) var(--delay-focus); }
+.flowbox:not(:hover) .fb-inner { opacity: var(--opacity-out-of-focus); }
+.fb-head { display: flex; align-items: center; gap: 8px; padding: 16px 10px 12px 16px; }
+.fb-icon { width: 30px; height: 30px; flex: none; border-radius: 50%; background: var(--card); display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--text-primary); }
+.fb-titles { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.fb-title { font-size: var(--text-section); font-weight: var(--weight-medium); }
+.fb-object { display: inline-flex; align-items: center; gap: 4px; min-width: 0; font-size: var(--text-meta); color: var(--text-secondary); text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fb-object:hover { text-decoration: underline; text-underline-offset: 3px; }
+/* The progress: one segment per step, done in the colour of the text */
+.fb-progress { display: grid; gap: 6px; padding: 0 16px 12px; }
+.fb-bar { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 3px; }
+.fb-bar span { height: 5px; border-radius: 3px; background: var(--tint-active); }
+.fb-bar span.done { background: var(--text-primary); }
+.fb-bar span.now { background: var(--text-muted); }
+.fb-body-scroll { flex: 1; min-height: 0; overflow: auto; padding: 0 10px 6px; }
+.fb-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.fb-step { border-radius: var(--radius-md); background: var(--card); transition: background-color var(--motion-focus) var(--delay-focus); }
+.fb-step.now { outline: 1.5px solid var(--text-primary); outline-offset: -1.5px; }
+.fb-row { all: unset; box-sizing: border-box; width: 100%; display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: var(--radius-md); cursor: pointer; }
+.fb-row:focus-visible { outline: 2px solid var(--text-secondary); }
+.fb-tick { flex: none; margin-top: 1px; font-size: 18px; color: var(--text-secondary); }
+.fb-num { flex: none; width: 18px; height: 18px; margin-top: 1px; border-radius: 50%; outline: 1.5px solid var(--text-muted); outline-offset: -1.5px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: var(--weight-medium); color: var(--text-secondary); }
+.fb-step.now .fb-num { background: var(--text-primary); outline-color: var(--text-primary); color: var(--surface-solid); }
+.fb-name { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.fb-name b { font-size: var(--text-small); font-weight: var(--weight-medium); }
+.fb-step.done .fb-name b { color: var(--text-secondary); }
+.fb-said { display: flex; align-items: baseline; gap: 5px; font-size: var(--text-meta); line-height: 1.45; color: var(--text-muted); }
+.fb-said i { position: relative; top: 1px; font-size: 12px; color: var(--signal-warn); }
+.fb-row .chev { margin-top: 3px; color: var(--text-muted); transition: transform var(--motion-fade); }
+.fb-step.open .chev { transform: rotate(180deg); }
+/* The step open: What, Why and How, its Learning Card, and the way to where it is done (DEC-UX-303) */
+.fb-detail { display: grid; gap: 12px; padding: 4px 18px 18px 40px; }
+.fb-here { display: inline-flex; align-items: center; gap: 5px; font-size: var(--text-meta); color: var(--text-secondary); }
+.fb-wwh { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 10px 16px; margin: 0; font-size: var(--text-small); line-height: 1.5; }
+.fb-wwh dt { padding-top: 2px; font-size: var(--text-meta); color: var(--text-muted); }
+.fb-wwh dd { margin: 0; color: var(--text-primary); }
+.fb-card { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--surface-sub); color: inherit; font-size: var(--text-small); text-decoration: none; }
+.fb-card:hover { outline: 1px solid var(--tint-active); }
+.fb-card .num { font-size: var(--text-meta); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.fb-card .tt { flex: 1; min-width: 0; }
+.fb-go { justify-self: start; text-decoration: none; }
+.fb-foot { display: grid; gap: 8px; padding: 10px 16px 16px; }
+.fb-foot .meta { display: block; line-height: 1.5; }
+.fb-publish { justify-self: start; text-decoration: none; }
+.fb-done { display: grid; justify-items: center; gap: 8px; padding: 24px 16px; text-align: center; }
+.fb-done > i { font-size: 40px; color: var(--text-primary); }
+.fb-done-title { margin: 0; font-size: var(--text-section); font-weight: var(--weight-medium); }
+.fb-done p { margin: 0; font-size: var(--text-small); line-height: 1.55; }
+/* Minimized: a strip on the right edge, its progress as dots; the strip opens it again (DEC-UX-301) */
+.flowstrip { width: var(--flow-strip-width); display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 12px 0; }
+.fs-count { font-size: var(--text-meta); color: var(--text-muted); }
+.fs-count b { font-size: var(--text-small); font-weight: var(--weight-medium); color: var(--text-primary); }
+.fs-dots { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.fs-dots li { width: 8px; height: 8px; border-radius: 50%; outline: 1.5px solid var(--text-muted); outline-offset: -1.5px; }
+.fs-dots li.done { background: var(--text-primary); outline-color: var(--text-primary); }
+.fs-dots li.now { outline: 2px solid var(--text-primary); outline-offset: 1px; }
+.fs-label { all: unset; flex: 1; margin-top: 4px; writing-mode: vertical-rl; white-space: nowrap; font-size: var(--text-meta); color: var(--text-secondary); cursor: pointer; }
+.fs-label:hover { color: var(--text-primary); }
+/* Arrived from the Flow Box: the place opens for editing, its field in focus and marked for a moment (DEC-UX-303) */
+.fb-target { box-shadow: 0 0 0 2px var(--text-secondary); animation: fb-mark var(--motion-flow-mark) var(--delay-flow-mark) forwards; }
+@keyframes fb-mark { to { box-shadow: 0 0 0 2px transparent; } }
+@media (prefers-reduced-motion: reduce) { .fb-target { animation: none; } }
+.fb-from { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; font-size: var(--text-meta); font-weight: var(--weight-regular); color: var(--text-muted); }
+.fb-field { box-sizing: border-box; width: 100%; padding: 10px 12px; border: 1px solid var(--tint-active); border-radius: var(--radius-sm); background: var(--surface-solid); color: var(--text-primary); font: var(--text-small)/1.55 var(--font-family); resize: vertical; }
+.fb-field:focus { outline: 2px solid var(--text-secondary); outline-offset: 1px; }
+.fb-field-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+/* Publish while a step is open: a pop-out under the button that says what is open, with "Guide me" (DEC-MR-20) */
+.fb-anchor { position: relative; }
+.pub-warn { position: absolute; top: calc(100% + 8px); right: 0; z-index: 12; width: 340px; display: grid; gap: 10px; padding: 16px; border-radius: var(--radius-lg); background: var(--surface-solid); border: 1px solid var(--tint-active); box-shadow: 0 12px 36px rgba(0,0,0,.14); }
+.pw-title { display: flex; align-items: center; gap: 8px; margin: 0; font-size: var(--text-section); font-weight: var(--weight-medium); }
+.pw-title i { color: var(--signal-warn); font-size: 18px; }
+.pw-lead { margin: 0; font-size: var(--text-small); color: var(--text-secondary); }
+.pw-list { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.pw-list a { display: grid; gap: 1px; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--surface-sub); color: inherit; text-decoration: none; font-size: var(--text-small); }
+.pw-list a:hover { outline: 1px solid var(--tint-active); }
+.pw-list b { font-weight: var(--weight-medium); }
+.pw-list span { font-size: var(--text-meta); color: var(--text-muted); }
+.pw-acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.pw-claude { display: block; margin: 0; line-height: 1.5; }
 
 /* The example of a Lens (DEC-UX-345): rows of the result its query showed, confirmed by its author when making it; shown on
    Welcome and, faded, on its page before its first run */

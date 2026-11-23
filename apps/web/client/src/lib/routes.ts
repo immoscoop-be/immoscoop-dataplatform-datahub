@@ -1,4 +1,6 @@
+import { PROBE_KEYS, type ProbeKey, type Selection } from '@datahub/contracts/eda';
 import { FIRST_CHART } from './charts.js';
+import { selectionFrom } from './dig.js';
 import { ADMIN_TOOLS, type AdminTool, SECTIONS, type Section } from './sections.js';
 
 /** The tabs of My page that part 1 builds; Excel keys come with part 9 (DEC-UX-85, DEC-UX-108). */
@@ -17,6 +19,19 @@ export type Talk = { readonly messages?: true; readonly message?: string };
  */
 export const RESOURCE_SPOTS = ['columns', 'lineage', 'history', 'preview', 'summary', 'description', 'behaviour', 'gaps', 'querying', 'entities', 'maturity', 'changes', 'danger'] as const;
 export type ResourceSpot = (typeof RESOURCE_SPOTS)[number];
+
+/** The tabs of the page of an EDA (DEC-UX-321): Steps is where it opens, at the address of the EDA itself. */
+export const EDA_TABS = ['overview', 'steps', 'profile'] as const;
+export type EdaTab = (typeof EDA_TABS)[number];
+
+/**
+ * Dig into what a result found (FR-ED-20), on a page of its own in the tab Steps: the selection of rows, kept in the
+ * query of its address as JSON, and the EDA-Probe whose result it started from, which it leads back to.
+ */
+export interface DigAt {
+  readonly selection: Selection;
+  readonly from: ProbeKey | null;
+}
 
 export type Route =
   | { readonly kind: 'start'; readonly section: Section }
@@ -40,6 +55,8 @@ export type Route =
   | { readonly kind: 'newQuery'; readonly resource: string | null; readonly forCollection?: string; readonly section: Section }
   /** A query, in the section Query (FR-SR-41); with `run`, its history, at one run or at all (DEC-UX-74). */
   | ({ readonly kind: 'query'; readonly id: string; readonly run: number | 'all' | null; readonly section: Section } & Talk)
+  /** The page of a Project, in the section Query (DEC-UX-285). */
+  | { readonly kind: 'project'; readonly id: string; readonly section: Section }
   /** Make it a lens, from a query, in the section Query (DEC-UX-25). */
   | { readonly kind: 'newLens'; readonly query: string; readonly section: Section }
   /** The page of a Lens, in the section Collections (DEC-UX-66). */
@@ -54,6 +71,11 @@ export type Route =
   | { readonly kind: 'admin'; readonly tool: AdminTool; readonly section: Section; readonly user?: string }
   /** A chart of semgraph, in Charts, its gallery (FR-CH-06). */
   | { readonly kind: 'chart'; readonly id: string; readonly section: Section }
+  /**
+   * The EDA of a Resource, in the section EDA, by the ID of its Resource, on one of its tabs; on Steps, the detail of one
+   * of its EDA-Probes in place of its rows (DEC-UX-321, DEC-UX-324), or Dig into a selection of its rows (FR-ED-20).
+   */
+  | { readonly kind: 'eda'; readonly id: string; readonly tab: EdaTab; readonly probe: ProbeKey | null; readonly dig?: DigAt; readonly section: Section }
   | { readonly kind: 'redirect'; readonly to: string }
   | { readonly kind: 'notFound' };
 
@@ -86,6 +108,13 @@ export const learningPath = (number: string): string => `/learning/${encodeURICo
 /** See it of a Learning Card, on its own (FR-LR-29). */
 export const seePath = (number: string): string => `${learningPath(number)}/see`;
 export const MESSAGES = '/messages';
+/** The EDA of a Resource, on a tab; Steps at the address of the EDA itself (DEC-UX-321). */
+export const edaPath = (id: string, tab: EdaTab = 'steps'): string => `/eda/${encodeURIComponent(id)}${tab === 'steps' ? '' : `/${tab}`}`;
+/** The detail of an EDA-Probe of the EDA of a Resource, in its tab Steps (DEC-UX-324). */
+export const probePath = (id: string, probe: ProbeKey): string => `/eda/${encodeURIComponent(id)}/probes/${probe}`;
+/** Dig into a selection of the rows of a Resource, from the result of an EDA-Probe, in the tab Steps of its EDA (FR-ED-20). */
+export const digPath = (id: string, selection: Selection, from?: ProbeKey | null): string =>
+  `/eda/${encodeURIComponent(id)}/dig?${new URLSearchParams({ ...(from ? { from } : {}), selection: JSON.stringify(selection) })}`;
 /** A chart in Charts, by the id semgraph gives it (FR-CH-06). */
 export const chartPath = (id: string): string => `/charts/${encodeURIComponent(id)}`;
 /** A Message opened in the Message Centre. */
@@ -97,8 +126,11 @@ export const usersPath = (googleId?: string): string => (googleId ? `/admin/user
  * leads that User to My page, and the Data Team to that User on Users when Admin was given back (MSG-USR-02) or
  * when they are new (MSG-USR-03).
  */
-export function objectPath(subject: { kind: string; id: string }, type?: string): string {
+export function objectPath(subject: { kind: string; id: string }, type?: string, params?: Readonly<Record<string, string>>): string {
   if (subject.kind === 'user') {
+    // A Project shared with the User, or deleted, opens its page; taken out of one, Query (MSG-QRY-03 to MSG-QRY-05).
+    if ((type === 'MSG-QRY-03' || type === 'MSG-QRY-05') && params?.projectId) return `/query/projects/${encodeURIComponent(params.projectId)}`;
+    if (type === 'MSG-QRY-04') return '/query';
     return type === 'MSG-USR-02' || type === 'MSG-USR-03' ? usersPath(subject.id) : myPagePath('profile');
   }
   return subject.kind === 'resource'
@@ -124,7 +156,11 @@ export { contextPath } from '@datahub/contracts/messages';
  * not exist or may not be seen, which does not say which of the two it is (DEC-UX-32, FR-CO-32). Admin opens on
  * the first of the tools the User may open, every tool when they are not given.
  */
-export function route(path: string, adminTools: readonly AdminTool[] = ADMIN_TOOLS.map((tool) => tool.id)): Route {
+export function route(address: string, adminTools: readonly AdminTool[] = ADMIN_TOOLS.map((tool) => tool.id)): Route {
+  // Which page it is follows from the path; only Dig into reads the query (FR-ED-20).
+  const mark = address.indexOf('?');
+  const path = mark < 0 ? address : address.slice(0, mark);
+  const asked = new URLSearchParams(mark < 0 ? '' : address.slice(mark + 1));
   const clean = path.length > 1 ? path.replace(/\/+$/, '') : path;
   if (clean === '/') {
     return { kind: 'redirect', to: HOME };
@@ -158,6 +194,32 @@ export function route(path: string, adminTools: readonly AdminTool[] = ADMIN_TOO
     } catch {
       return { kind: 'notFound' };
     }
+  }
+  // The EDA of a Resource: a tab of it, or on Steps the detail of one of its EDA-Probes (DEC-UX-321, DEC-UX-324).
+  const eda = SECTIONS.find((candidate) => candidate.id === 'eda');
+  const [, edaOf, edaAt] = /^\/eda\/([^/]+)(?:\/(.+))?$/.exec(clean) ?? [];
+  if (eda && edaOf) {
+    let id: string;
+    try {
+      id = decodeURIComponent(edaOf);
+    } catch {
+      return { kind: 'notFound' };
+    }
+    if (edaAt === undefined) {
+      return { kind: 'eda', id, tab: 'steps', probe: null, section: eda };
+    }
+    const tab = EDA_TABS.find((one) => one === edaAt && one !== 'steps');
+    if (tab) {
+      return { kind: 'eda', id, tab, probe: null, section: eda };
+    }
+    // Dig into: a selection that is no selection eda could dig into is no page (TR-ED-11).
+    if (edaAt === 'dig') {
+      const selection = selectionFrom(asked.get('selection'));
+      const from = PROBE_KEYS.find((key) => key === asked.get('from')) ?? null;
+      return selection ? { kind: 'eda', id, tab: 'steps', probe: null, dig: { selection, from }, section: eda } : { kind: 'notFound' };
+    }
+    const probe = PROBE_KEYS.find((key) => edaAt === `probes/${key}`);
+    return probe ? { kind: 'eda', id, tab: 'steps', probe, section: eda } : { kind: 'notFound' };
   }
   const section = SECTIONS.find((candidate) => candidate.path === clean);
   if (section) {
@@ -222,7 +284,11 @@ export function route(path: string, adminTools: readonly AdminTool[] = ADMIN_TOO
   const [, newOn] = /^\/query\/new\/([^/]+)$/.exec(clean) ?? [];
   const [, newFor] = /^\/query\/new\/for\/([^/]+)$/.exec(clean) ?? [];
   const [, lensFrom] = /^\/query\/([^/]+)\/lens$/.exec(clean) ?? [];
+  const [, projectId] = /^\/query\/projects\/([^/]+)$/.exec(clean) ?? [];
   try {
+    if (query && projectId) {
+      return { kind: 'project', id: decodeURIComponent(projectId), section: query };
+    }
     if (query && clean === NEW_QUERY) {
       return { kind: 'newQuery', resource: null, section: query };
     }

@@ -263,7 +263,7 @@ function page(): string {
     '',
     `Every type of Message in Data Hub, between the four actors: a User, the Owner of an object, the Data Team, and Data Hub itself (${link('DEC-CV-07')}, ${link('FR-CV-10')}). For each, the catalogue says who sends it to whom and when; its texts, plain and laid out, in Dutch and English (${link('FR-CV-11')}, ${link('FR-CV-12')}); the Learning Card that explains it (${link('FR-CV-14')}); and what it asks of whoever receives it, with the buttons that link the Message to that action (${link('FR-CV-13')}).`,
     '',
-    `The catalogue itself is code, in [\`${SOURCE}\`](../../../${SOURCE}): the web app takes its texts from there, and so will Slack and the MCP server (${link('FR-CV-15')}). A test checks it: the same parameters in both languages and both layouts, a value for every placeholder, and every example filled in. A Message ID, such as \`MSG-RES-02\`, is fixed: never renumbered or reused. It is neither a requirement ID nor a Log ID of the [Log catalogue](log-catalogue.md).`,
+    `The catalogue itself is code, in [\`${SOURCE}\`](../../../${SOURCE}): the web app takes its texts from there, and so will Slack and the MCP server (${link('FR-CV-15')}). A test checks it: the same parameters in both languages and both layouts, a value for every placeholder, every example filled in, and a prefix of its ID that names what it is about: its object, or, for a personal notice to its User, the part of Data Hub it comes from, such as a Project in Query, which has no Messages of its own. A Message ID, such as \`MSG-RES-02\`, is fixed: never renumbered or reused. It is neither a requirement ID nor a Log ID of the [Log catalogue](log-catalogue.md).`,
     '',
     '## How to read it',
     '',

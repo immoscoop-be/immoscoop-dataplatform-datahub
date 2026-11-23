@@ -1,9 +1,11 @@
 import { fieldsOf, type GapScope, hasScope } from '@datahub/contracts/gaps';
 import { type Journey, type JourneyAnswer, journeyOf, type JourneyStepId, journeyStep } from '@datahub/contracts/journey';
+import type { ReliableSince } from '@datahub/contracts/reliable';
 import {
   type FieldOfType,
   goneOfType,
   invalidTypeFields,
+  kindOf,
   type MissingOfType,
   missingOfType,
   type ModelType,
@@ -12,7 +14,7 @@ import {
 import { type Kysely, type Selectable, sql, type Transaction } from 'kysely';
 import type { Viewer } from './collections.js';
 import type { CatalogueDatabase, MappingKind, MappingOrigin, Origin, Origins, PartitionFilter, PartitionUnit, SchemaChange } from './database.js';
-import { type Column, fingerprint, type LeftOut, levelAtRegistration, retyped, splitColumns } from './fields.js';
+import { type Column, CONFIRMED, EXPLORED, fingerprint, type LeftOut, levelAtRegistration, retyped, splitColumns, withEda } from './fields.js';
 import { logText, type ResourceLogId } from './log.js';
 import { seesAll, seesPublic, theirs } from './viewer.js';
 
@@ -156,14 +158,18 @@ export interface Card {
   pitfalls: string;
   /** One item each, in the order they were added (FR-RC-21). */
   knownGaps: KnownGap[];
-  /** Since when its data is reliable (FR-RC-13): a day, `YYYY-MM-DD`, or null. */
-  reliableSince: string | null;
+  /**
+   * Since when its data is reliable (FR-RC-31): from its first row, or from a later day with why not earlier, with who
+   * set it and when; null while not set, which is never either. A day set before has no why, nor who.
+   */
+  reliableSince: (ReliableSince & { setBy: string | null; setAt: Date | null }) | null;
+  /** The Date Field its Owner Unit or the Data Team chose; null takes the one its table type gives (FR-RC-32). */
+  dateField: string | null;
   /** Fields of the Resource, by name, in the order chosen. */
   keyFields: string[];
-  parameters: string[];
 }
 
-export const CARD_KEYS = ['businessDescription', 'intendedUse', 'pitfalls', 'knownGaps', 'reliableSince', 'keyFields', 'parameters'] as const;
+export const CARD_KEYS = ['businessDescription', 'intendedUse', 'pitfalls', 'knownGaps', 'reliableSince', 'dateField', 'keyFields'] as const;
 export type CardKey = (typeof CARD_KEYS)[number];
 
 /** A Known Gap of a Resource, with who added it and when; neither for a gap of before (FR-RC-21). */
@@ -180,7 +186,7 @@ export interface KnownGap {
  * What changes about a Resource at once (FR-RC-15): its Known Gaps as their texts, the whole list, which Data Hub
  * turns into the gaps added and removed; one gap at a time goes through addGap, changeGap and removeGap.
  */
-export type CardChanges = Partial<Omit<Card, 'knownGaps'> & { knownGaps: string[] }>;
+export type CardChanges = Partial<Omit<Card, 'knownGaps' | 'reliableSince'> & { knownGaps: string[]; reliableSince: ReliableSince | null }>;
 
 /** At most this many Known Gaps per Resource. */
 export const MAX_GAPS = 50;
@@ -192,6 +198,8 @@ export interface Field extends Column {
 
 /** A Resource with its fields, and the columns of its table left out of it (FR-SR-06, DEC-SR-33). */
 export interface ResourceDetail extends Resource {
+  /** The EDA-Setup of its EDA is complete, as eda said (TR-ED-05): from 3 · Confirmed it is 4 · Explored (DEC-MR-21). */
+  explored: boolean;
   fields: Field[];
   leftOut: LeftOut[];
   /** Empty until it is added to a Collection with them. */
@@ -216,6 +224,9 @@ export type PublishOutcome = 'published' | 'not_found' | 'no_collection' | 'not_
 
 /** What recording an answer in a step of the Owner Journey came to (DEC-MR-16). */
 export type JourneyRecordOutcome = { outcome: 'recorded'; journey: Journey } | { outcome: 'not_found' } | { outcome: 'invalid'; message: string };
+
+/** What eda saying whether a Resource is explored came to (TR-ED-05): whether it is now, and its Level now. */
+export type ExploreOutcome = { outcome: 'done'; explored: boolean; level: number } | { outcome: 'not_found' };
 
 /** What deprecating a Resource, or taking it away, came to (FR-SR-50). */
 export type DeprecateOutcome = 'done' | 'not_found' | 'not_published' | 'not_deprecated' | 'invalid';
@@ -374,6 +385,12 @@ export interface Resources {
   deprecate(id: string, reason: string, insteadOf: string | null, viewer: Viewer): Promise<DeprecateOutcome>;
   /** Takes the mark away again. */
   undeprecate(id: string, viewer: Viewer): Promise<DeprecateOutcome>;
+  /**
+   * Keeps whether a Resource is explored, as eda says (TR-ED-05): explored, 3 · Confirmed becomes 4 · Explored with
+   * `RES-002` in its Log (FR-ED-12); no longer explored, its EDA gone, 4 · Explored drops to 3 · Confirmed with `MAT-021`
+   * and the Message of a Level that drops (FR-MR-07, MSG-RES-05). Said again, it changes nothing (FR-MR-22).
+   */
+  explore(id: string, explored: boolean): Promise<ExploreOutcome>;
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -403,16 +420,22 @@ function present(row: Row): Resource {
   };
 }
 
+/** Reliable Since from the row of a Resource, its day read as text; null while not set (FR-RC-31). */
+function reliableOf(row: Row, day: string | null): ReliableSince | null {
+  return row.reliableSinceFrom === null ? null : { from: row.reliableSinceFrom, day: row.reliableSinceFrom === 'day' ? day : null, why: row.reliableSinceWhy };
+}
+
 /** What Data Hub keeps about a Resource, from its row and its Known Gaps, with its reliable day read as text. */
-function cardOf(row: Row, reliableSince: string | null, knownGaps: KnownGap[]): Card {
+function cardOf(row: Row, reliableDay: string | null, knownGaps: KnownGap[]): Card {
+  const reliable = reliableOf(row, reliableDay);
   return {
     businessDescription: row.businessDescription,
     intendedUse: row.intendedUse,
     pitfalls: row.pitfalls,
     knownGaps,
-    reliableSince,
+    reliableSince: reliable && { ...reliable, setBy: row.reliableSinceByName, setAt: row.reliableSinceAt },
+    dateField: row.dateField,
     keyFields: row.keyFields,
-    parameters: row.parameters,
   };
 }
 
@@ -465,8 +488,7 @@ async function journeyFrom(from: Database, row: Row): Promise<Journey> {
     intendedUse: row.intendedUse,
     pitfalls: row.pitfalls,
     knownGaps: Number(gaps.count),
-    reliableSince: day.day,
-    parameters: row.parameters,
+    reliableSince: reliableOf(row, day.day),
     modelType: row.modelType,
     grain: row.grain,
     mappings: Number(mappings.count),
@@ -481,10 +503,15 @@ async function journeyFrom(from: Database, row: Row): Promise<Journey> {
  * period names no field (DEC-UX-178). Returns the problem as a sentence when there is one.
  */
 async function scopeProblem(from: Database, resourceId: string, scope: GapScope, before: GapScope | null): Promise<string | null> {
-  const fields = new Set((await from.selectFrom('resourceFields').select('name').where('resourceId', '=', resourceId).execute()).map((field) => field.name));
+  const typed = await from.selectFrom('resourceFields').select(['name', 'dataType']).where('resourceId', '=', resourceId).execute();
+  const fields = new Set(typed.map((field) => field.name));
   const kept = new Set(fieldsOf(before));
   const unknown = fieldsOf(scope).find((name) => !fields.has(name) && !kept.has(name));
-  return unknown === undefined ? null : `${unknown} is no field of this Resource.`;
+  if (unknown !== undefined) return `${unknown} is no field of this Resource.`;
+  // The date field of a period holds a date (FR-RC-34); one kept from before may have left the Resource.
+  const on = scope.period?.dateField;
+  const field = on === undefined ? undefined : typed.find((one) => one.name === on);
+  return field && kindOf(field.dataType) !== 'date' ? `${on} holds no date: a period is read on a field of type DATE, DATETIME or TIMESTAMP.` : null;
 }
 
 /** The words of a Known Gap as its Log Entry keeps them: the first 200 characters. */
@@ -492,8 +519,6 @@ const gapWords = (text: string) => (text.length > 200 ? `${text.slice(0, 199)}�
 
 /** A Business Description is written from 2 · Described on (DEC-MR-10). */
 const DESCRIBED = 2;
-/** Publishing confirms it: 3 · Confirmed (FR-SR-17). */
-const CONFIRMED = 3;
 
 export function createResources(db: Kysely<CatalogueDatabase>): Resources {
   async function write(trx: Database, resourceId: string, logId: ResourceLogId, params: Record<string, string>, actorId: string | null = null) {
@@ -549,10 +574,11 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
       }
     }
 
-    // Its Level follows dbt: Described with the table and a field described, Confirmed again once it was (DEC-MR-08).
+    // Its Level follows dbt: Described with the table and a field described, Confirmed again once it was (DEC-MR-08),
+    // and Explored again while its EDA-Setup is complete: a new Current Version lowers nothing else (DEC-MR-21, FR-MR-22).
     const confirmation = await trx.selectFrom('resourceConfirmations').select('confirmedAt').where('resourceId', '=', row.id).orderBy('id', 'desc').limit(1).executeTakeFirst();
     const { level: described, reason } = levelAtRegistration(table.description, [...fields]);
-    const level = described === 2 && confirmation ? 3 : described;
+    const level = withEda(described === 2 && confirmation ? CONFIRMED : described, row.explored);
 
     if (confirmation && changes.length > 0) {
       await trx.insertInto('resourceChanges').values(changes.map((change) => ({ resourceId: row.id, ...change, runId: run }))).execute();
@@ -1047,6 +1073,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         .execute();
       return {
         ...present(row),
+        explored: row.explored,
         fields,
         leftOut,
         details,
@@ -1216,7 +1243,8 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
           return { outcome: 'not_found' };
         }
         const gaps = await gapsOf(trx, id);
-        const current = { ...cardOf(row, row.reliableDay, gaps), knownGaps: gaps.map((gap) => gap.text) };
+        // As it is compared: the gaps by their texts, Reliable Since without who set it and when.
+        const current = { ...cardOf(row, row.reliableDay, gaps), knownGaps: gaps.map((gap) => gap.text), reliableSince: reliableOf(row, row.reliableDay) };
         const changed = CARD_KEYS.filter((key) => changes[key] !== undefined && JSON.stringify(changes[key]) !== JSON.stringify(current[key]));
         const refused = changed.find((key) => !allowed(key));
         if (refused !== undefined) {
@@ -1225,10 +1253,15 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         if (changed.includes('businessDescription') && changes.businessDescription && row.level < DESCRIBED) {
           return { outcome: 'not_described' };
         }
-        const fields = new Set(await fieldNames(trx, id));
-        const stranger = [...(changes.keyFields ?? []), ...(changes.parameters ?? [])].find((name) => !fields.has(name));
+        const typed = await typedFields(trx, id);
+        const fields = new Set(typed.map((field) => field.name));
+        const stranger = [...(changes.keyFields ?? []), ...(changes.dateField ? [changes.dateField] : [])].find((name) => !fields.has(name));
         if (stranger !== undefined) {
           return { outcome: 'invalid', message: `${row.displayName} has no field ${stranger}.` };
+        }
+        // The Date Field is one of its date fields (FR-RC-32).
+        if (changed.includes('dateField') && changes.dateField && kindOf(typed.find((field) => field.name === changes.dateField)?.dataType ?? null) !== 'date') {
+          return { outcome: 'invalid', message: `${changes.dateField} holds no date: the Date Field is of type DATE, DATETIME or TIMESTAMP.` };
         }
         if (changed.length === 0) {
           return { outcome: 'edited', changed };
@@ -1237,9 +1270,24 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
           return { outcome: 'invalid', message: `A Resource has at most ${MAX_GAPS} Known Gaps.` };
         }
         const onRow = changed.filter((key) => key !== 'knownGaps');
+        const plain = onRow.filter((key) => key !== 'reliableSince');
+        // Reliable Since with who set it and when; cleared, none of it (FR-RC-31).
+        const reliable = changed.includes('reliableSince') ? (changes.reliableSince ?? null) : undefined;
         await trx
           .updateTable('resources')
-          .set({ ...Object.fromEntries(onRow.map((key) => [key, changes[key]])), updatedAt: new Date() })
+          .set({
+            ...Object.fromEntries(plain.map((key) => [key, changes[key]])),
+            ...(reliable === undefined
+              ? {}
+              : {
+                  reliableSince: reliable?.from === 'day' ? reliable.day : null,
+                  reliableSinceFrom: reliable?.from ?? null,
+                  reliableSinceWhy: reliable?.from === 'day' ? reliable.why : '',
+                  reliableSinceByName: reliable ? viewer.name : null,
+                  reliableSinceAt: reliable ? new Date() : null,
+                }),
+            updatedAt: new Date(),
+          })
           .where('id', '=', id)
           .execute();
         for (const key of onRow) {
@@ -1544,9 +1592,12 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
           .insertInto('resourceConfirmations')
           .values({ resourceId: id, ownerId: viewer.id, ownerName: viewer.name, ...print, fields: JSON.stringify(fields.map(({ name, dataType }) => ({ name, dataType }))), declaration })
           .execute();
-        await trx.updateTable('resources').set({ publishedAt: new Date(), publishedBy: viewer.name, level: CONFIRMED, updatedAt: new Date() }).where('id', '=', id).execute();
+        // Explored already, it is 4 · Explored at once; a Resource is explored from 3 · Confirmed on, so hardly ever (DEC-MR-21).
+        const level = withEda(CONFIRMED, row.explored);
+        await trx.updateTable('resources').set({ publishedAt: new Date(), publishedBy: viewer.name, level, updatedAt: new Date() }).where('id', '=', id).execute();
         await write(trx, id, 'PUB-040', { owner: viewer.name, level: String(CONFIRMED) }, viewer.id);
         await write(trx, id, 'MAT-020', { owner: viewer.name, fingerprint: print.structure.slice(0, 12) }, viewer.id);
+        if (level !== CONFIRMED) await write(trx, id, 'RES-002', { level: String(level), reason: 'eda' });
         return 'published';
       });
     },
@@ -1609,6 +1660,35 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         await trx.updateTable('resources').set({ deprecatedAt: null, deprecatedBy: null, deprecationReason: null, insteadOf: null, updatedAt: new Date() }).where('id', '=', id).execute();
         await write(trx, id, 'RES-008', { actor: viewer.name }, viewer.id);
         return 'done';
+      });
+    },
+
+    async explore(id, explored) {
+      if (!UUID.test(id)) {
+        return { outcome: 'not_found' };
+      }
+      return db.transaction().execute(async (trx): Promise<ExploreOutcome> => {
+        const row = await trx.selectFrom('resources').select(['level', 'explored', 'collectionId', 'publishedAt']).where('id', '=', id).forUpdate().executeTakeFirst();
+        if (!row) {
+          return { outcome: 'not_found' };
+        }
+        // Explored, 3 · Confirmed is 4 · Explored; below it, it waits there until it is Confirmed again (DEC-MR-21). Its
+        // EDA gone, 4 · Explored is 3 · Confirmed again (FR-MR-07). An EDA-Rerun says explored again and changes nothing.
+        const level = explored ? withEda(row.level, true) : row.level === EXPLORED ? CONFIRMED : row.level;
+        if (row.explored === explored && level === row.level) {
+          return { outcome: 'done', explored, level };
+        }
+        await trx.updateTable('resources').set({ explored, level, updatedAt: new Date() }).where('id', '=', id).execute();
+        if (level > row.level) {
+          await write(trx, id, 'RES-002', { level: String(level), reason: 'eda' });
+        } else if (level < row.level) {
+          // A drop gives the Owner an alert (FR-MR-09), with the EDA as its cause; it stays published (FR-SR-19).
+          await write(trx, id, 'MAT-021', { level: String(level), reason: 'eda' });
+          if (row.collectionId) {
+            await tell(trx, id, 'MSG-RES-05', { from: String(row.level), to: String(level), cause: 'eda', published: row.publishedAt ? 'yes' : 'no' });
+          }
+        }
+        return { outcome: 'done', explored, level };
       });
     },
   };
