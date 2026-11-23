@@ -67,7 +67,7 @@ describe('the Flow Box of a Resource (FR-MR-20)', () => {
       ['since', true],
       ['publish', false],
     ]);
-    // The Known Gaps are advised, so not a step of it (DEC-MR-21).
+    // The Known Gaps are advised, so not a step of it (DEC-MR-22).
     expect(flow.now).toBe('pitfalls');
     expect(flow.progress).toBe('5 of 6 steps required to publish done');
     expect(flow.foot).toMatch(/^1 step to go/);

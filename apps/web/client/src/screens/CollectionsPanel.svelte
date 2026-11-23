@@ -182,7 +182,7 @@
 
 {#if waiting && waitingShown.length > 0}
   <TreeGroup icon="tray" name={t('collections.unassigned')} urgent bind:open={() => waitingOpen || Boolean(words), (open) => (waitingOpen = open)}>
-    <!-- How many wait, before its name; only Data Admins see it (DEC-UX-322). -->
+    <!-- How many wait, before its name; only Data Admins see it (DEC-UX-335). -->
     {#snippet count()}<Chip variant="urgent">{waiting.length}</Chip>{/snippet}
     {#snippet meta()}{t('collections.unassigned.meta')}{/snippet}
     {#each waitingShown as resource (resource.id)}

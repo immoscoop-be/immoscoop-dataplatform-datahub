@@ -63,7 +63,7 @@ export const JOURNEY_STEPS: readonly JourneyStep[] = [
   // Reliable Since before the Known Gaps: a Known Gap is a hole after that day (DEC-MR-18, DEC-MR-19).
   { id: 'since', number: 7, mark: 'required', cards: ['K5.17'], parts: ['gaps'], writes: 'update_resource_card', answers: [], name: 'Reliable since' },
   // Advised, not required: a Resource without a Known Gap has none known; the Owner adds the ones they know, and Claude
-  // records that they went through it (DEC-MR-21).
+  // records that they went through it (DEC-MR-22).
   { id: 'gaps', number: 8, mark: 'advised', cards: ['K5.3'], parts: ['gaps'], writes: 'add_known_gap', answers: ['goneThrough'], name: 'Known Gaps' },
   { id: 'admin', number: 9, mark: 'eda', cards: ['2.3.6', 'K5.18'], parts: ['entities'], writes: 'write_message', answers: ['goneThrough'], name: 'Table type, grain and mappings' },
   { id: 'messages', number: 10, mark: 'advised', cards: ['4.7.1'], parts: ['messages'], writes: 'reply_to_message', answers: ['goneThrough'], name: 'Open Questions and Signals' },
@@ -75,7 +75,7 @@ export const JOURNEY_STEP_IDS: readonly JourneyStepId[] = JOURNEY_STEPS.map((ste
 
 /**
  * The steps that must be done before a Resource may be published (DEC-MR-16); reading back happens in the publication.
- * The Known Gaps are advised, not required (DEC-MR-21).
+ * The Known Gaps are advised, not required (DEC-MR-22).
  */
 export const REQUIRED_TO_PUBLISH: readonly JourneyStepId[] = ['businessDescription', 'keyFields', 'fields', 'intendedUse', 'pitfalls', 'since'];
 
@@ -182,7 +182,7 @@ export function journeyOf(facts: JourneyFacts): Journey {
       case 'since':
         return facts.reliableSince ? [] : ['reliableSince'];
       case 'gaps':
-        // "Nothing to add", said before the Known Gaps were advised, still counts (DEC-MR-21).
+        // "Nothing to add", said before the Known Gaps were advised, still counts (DEC-MR-22).
         return facts.knownGaps > 0 || said('gaps', 'nothing') ? [] : ['knownGaps'];
       case 'admin':
         return [...(facts.modelType ? [] : ['modelType' as const]), ...(facts.grain.length > 0 ? [] : ['grain' as const]), ...(facts.mappings > 0 ? [] : ['mappings' as const])];

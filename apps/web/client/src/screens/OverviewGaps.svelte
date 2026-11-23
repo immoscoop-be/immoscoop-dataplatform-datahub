@@ -13,8 +13,8 @@
    * who added it and when, and where it holds as chips: a period, fields and rows (FR-RC-24, DEC-UX-177). Its Owner
    * Unit and the Data Team add a gap from the line at the bottom, which opens a form, and change or remove one on its
    * own line, without editing the others; every change goes into its Log. The why is plain text. The Known Gaps are
-   * advised, not required to publish: without one, a Resource has none known, and there is no "Nothing to add" (DEC-MR-21,
-   * DEC-UX-320).
+   * advised, not required to publish: without one, a Resource has none known, and there is no "Nothing to add" (DEC-MR-22,
+   * DEC-UX-333).
    */
   let {
     gaps,

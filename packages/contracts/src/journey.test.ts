@@ -38,7 +38,7 @@ describe('the Owner Journey (OP-CL-12)', () => {
     ]);
     expect(JOURNEY_STEPS.filter((step) => step.mark === 'required').map((step) => step.id)).toEqual([...REQUIRED_TO_PUBLISH, 'publish']);
     expect(JOURNEY_STEPS.find((step) => step.id === 'admin')?.mark).toBe('eda');
-    // The Known Gaps are advised, not required (DEC-MR-21).
+    // The Known Gaps are advised, not required (DEC-MR-22).
     expect(JOURNEY_STEPS.find((step) => step.id === 'gaps')).toMatchObject({ mark: 'advised', answers: ['goneThrough'] });
     expect(JOURNEY_STEPS.every((step) => step.cards.length > 0)).toBe(true);
   });
@@ -78,7 +78,7 @@ describe('the Owner Journey (OP-CL-12)', () => {
     expect(journeyOf({ ...said, reliableSince: null }).open).toEqual(['since']);
   });
 
-  it('publishes a Resource without a Known Gap: the gaps are advised, and Claude records that the Owner went through them (DEC-MR-21)', () => {
+  it('publishes a Resource without a Known Gap: the gaps are advised, and Claude records that the Owner went through them (DEC-MR-22)', () => {
     const none: JourneyFacts = { ...FILLED, knownGaps: 0 };
     const journey = journeyOf(none);
     expect(journey.ready).toBe(true);

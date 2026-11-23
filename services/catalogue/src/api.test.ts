@@ -305,7 +305,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
   async function makeReady(as: Awaited<ReturnType<typeof user>>, id: string | undefined, keyField: string) {
     expect((await as('PATCH', `/resources/${id}`, { businessDescription: 'What it is.', keyFields: [keyField], intendedUse: 'What it is for.', pitfalls: 'Where it trips people up.', reliableSince: { from: 'firstRow' } })).statusCode).toBe(200);
     expect((await as('PUT', `/resources/${id}/fields`, { fields: [{ name: keyField, businessDescription: 'What the field is.' }] })).statusCode).toBe(200);
-    // No Known Gap needed: they are advised, and "nothing" is no answer to them any more (DEC-MR-21).
+    // No Known Gap needed: they are advised, and "nothing" is no answer to them any more (DEC-MR-22).
     expect((await as('POST', `/resources/${id}/journey/gaps`, { answer: 'nothing' })).statusCode).toBe(400);
   }
 

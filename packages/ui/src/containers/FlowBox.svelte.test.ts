@@ -25,7 +25,7 @@ function box(props: Partial<Parameters<typeof render<typeof FlowBox>>[1] & objec
 }
 
 describe('a Flow Box (DEC-UX-299)', () => {
-  it('names its flow and its object, with its progress, and opens on the step to do now with Why, What and How, in that order (DEC-UX-321)', () => {
+  it('names its flow and its object, with its progress, and opens on the step to do now with Why, What and How, in that order (DEC-UX-334)', () => {
     box();
     const aside = within(screen.getByRole('complementary', { name: 'Describe and publish · Weekly lead volume' }));
     expect(aside.getByText('1 of 3 done')).toBeTruthy();

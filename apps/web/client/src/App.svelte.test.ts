@@ -3017,7 +3017,7 @@ describe('the page of a Resource', () => {
     const warning = within(await main.findByRole('dialog', { name: 'Nog niet klaar om te publiceren' }));
     expect(warning.getByText('1 van de 6 stappen die nodig zijn om te publiceren is nog open:')).toBeTruthy();
     expect(warning.getByRole('button', { name: /^Valkuilen/ }).textContent).toContain('geen geschreven, en niemand zei dat er geen zijn');
-    // The Known Gaps are advised: they hold nothing up (DEC-MR-21).
+    // The Known Gaps are advised: they hold nothing up (DEC-MR-22).
     expect(warning.queryByRole('button', { name: /^Known Gaps/ })).toBeNull();
     expect(warning.getByRole('button', { name: 'Begeleid me' })).toBeTruthy();
     expect(screen.queryByRole('dialog', { name: 'Weekly lead volume' })).toBeNull();
@@ -3728,7 +3728,7 @@ describe('the model type of a Resource and the fields it asks for (FR-CO-44, FR-
     render(App, { config: CONFIG });
     const panel = within(await screen.findByRole('complementary', { name: 'Collections' }));
     expect(await panel.findByText('Te vervolledigen')).toBeTruthy();
-    // How many, before its name; only Data Admins see it (DEC-UX-322).
+    // How many, before its name; only Data Admins see it (DEC-UX-335).
     expect(panel.getByText('modeltypes te vervolledigen · enkel Data Admins')).toBeTruthy();
     expect(panel.getByText('Te vervolledigen').previousElementSibling?.textContent).toBe('3');
     const weekly = panel.getByRole('link', { name: /Weekly lead volume/ });

@@ -393,7 +393,7 @@ describe('Resources through Claude', () => {
     const shown = guided.structuredContent as { window: { overview: { steps: { number: number; state: string; mark: string; says: string }[]; done: number; open: number }; terms: { name: string; definition: string }[]; link: { url: string; label: string } } };
     expect(shown.window.overview.open).toBe(5);
     expect(shown.window.overview.steps.find((step) => step.number === 1)).toMatchObject({ state: 'done', says: 'Done' });
-    // The Known Gaps are optional now (DEC-MR-21).
+    // The Known Gaps are optional now (DEC-MR-22).
     expect(shown.window.overview.steps.find((step) => step.number === 8)).toMatchObject({ mark: 'Optional' });
     expect(shown.window.overview.steps.find((step) => step.number === 2)).toMatchObject({ state: 'now', mark: 'Required' });
     expect(shown.window.overview.steps.find((step) => step.number === 10)).toMatchObject({ state: 'optional', mark: 'Optional' });

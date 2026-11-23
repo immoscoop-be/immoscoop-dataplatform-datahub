@@ -641,7 +641,7 @@
     </div>
   {/snippet}
 
-  <!-- The room the page has, which the two columns follow rather than the window (DEC-UX-323). -->
+  <!-- The room the page has, which the two columns follow rather than the window (DEC-UX-336). -->
   <div class="room">
   <div class="halves">
     <!-- One step at a time, when making it and when editing it (DEC-UX-229, DEC-UX-231). -->
@@ -778,7 +778,7 @@
   .head h1 { flex: 1; }
   .from { margin: 6px 0 0; font-size: var(--text-small); color: var(--text-secondary); }
   /* The step about 70% of the main area, its steps and size check about 30%, in proportion rather than in pixels, so
-     that a Flow Box or the panel beside it never pushes the side off the page (DEC-UX-323). */
+     that a Flow Box or the panel beside it never pushes the side off the page (DEC-UX-336). */
   .halves { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 3fr); gap: 14px; margin-top: 18px; align-items: start; }
   .card { border-radius: var(--radius-xl); padding: 18px 20px 20px; }
   h2 { font-size: var(--text-section); font-weight: var(--weight-medium); margin: 0 0 12px; }

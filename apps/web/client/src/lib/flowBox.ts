@@ -8,7 +8,7 @@ import type { ResourceSpot } from './routes.js';
 
 /**
  * The steps of the Flow Box of a Resource (DEC-UX-304): the steps required to publish, the same list as its Maturity,
- * then reading it back and publishing it, which ends the flow. The Known Gaps are advised, so not in it (DEC-MR-21).
+ * then reading it back and publishing it, which ends the flow. The Known Gaps are advised, so not in it (DEC-MR-22).
  */
 export type FlowStepId = 'businessDescription' | 'keyFields' | 'fields' | 'intendedUse' | 'pitfalls' | 'since' | 'publish';
 export const FLOW_STEPS: readonly FlowStepId[] = [...(REQUIRED_TO_PUBLISH as readonly Exclude<FlowStepId, 'publish'>[]), 'publish'];

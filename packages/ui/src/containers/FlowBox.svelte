@@ -13,7 +13,7 @@
     icon?: IconName;
     /** While open, what it misses asks for action: the warning colour. */
     warn?: boolean;
-    /** Why it matters, shown first, then what it asks and how (DEC-UX-321). */
+    /** Why it matters, shown first, then what it asks and how (DEC-UX-334). */
     why: string;
     what: string;
     how: string;
@@ -135,7 +135,7 @@
                 <div class="detail" id={`flow-step-${step.id}`} hidden={!open}>
                   {#if step.here}<span class="here"><Icon name="map-pin-fill" />{t('flowbox.here')}</span>{/if}
                   <dl class="wwh">
-                    <!-- Why it matters first, then what it asks and how (DEC-UX-321). -->
+                    <!-- Why it matters first, then what it asks and how (DEC-UX-334). -->
                     <dt>{t('flowbox.why')}</dt><dd>{step.why}</dd>
                     <dt>{t('flowbox.what')}</dt><dd>{step.what}</dd>
                     <dt>{t('flowbox.how')}</dt><dd>{step.how}</dd>

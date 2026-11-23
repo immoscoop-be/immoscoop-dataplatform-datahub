@@ -11,7 +11,7 @@
    * of its own, and its arrow unfolds what it holds (Tree, DEC-UX-10). The group whose page is open
    * has an outline. Its icon is one of the interface, or its own mark, such as the icon of a
    * Collection. "Without a Collection" is in the urgent red: it is no Collection, and it waits for the
-   * Data Team (DEC-UX-16); how many wait stands before its name (DEC-UX-322). Something dragged onto its head goes to
+   * Data Team (DEC-UX-16); how many wait stands before its name (DEC-UX-335). Something dragged onto its head goes to
    * the top of the Collection (DEC-UX-157):
    * `drop` marks it, and what is left of the props goes on the head.
    */
@@ -36,7 +36,7 @@
     urgent?: boolean;
     current?: boolean;
     open?: boolean;
-    /** How many it holds, before its name, such as what waits (DEC-UX-322). */
+    /** How many it holds, before its name, such as what waits (DEC-UX-335). */
     count?: Snippet;
     meta: Snippet;
     children: Snippet;
