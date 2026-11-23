@@ -2521,7 +2521,7 @@ body.oj-plain .oj-tag { visibility: hidden; }
 
 }
 
-/* The example of a Lens (DEC-UX-294): rows of the result its query showed, confirmed by its author when making it; shown on
+/* The example of a Lens (DEC-UX-345): rows of the result its query showed, confirmed by its author when making it; shown on
    Welcome and, faded, on its page before its first run */
 .ex-field { margin-top: 18px; }
 .ex-check { display: flex; align-items: flex-start; gap: 10px; font-size: var(--text-small); cursor: pointer; }
@@ -2538,15 +2538,15 @@ body.oj-plain .oj-tag { visibility: hidden; }
 .ex-rows.faded { opacity: .55; }
 .result-bar .meta > i { font-size: 13px; }
 
-/* Welcome, where Data Hub opens (DEC-UX-282): no panel, a search for Lenses that takes the screen, and at its foot, small,
+/* Welcome, where Data Hub opens (DEC-UX-333): no panel, a search for Lenses that takes the screen, and at its foot, small,
    the Lenses the User used last and the newest. A search opens the screen up into the Lenses that answer, as cards
-   (DEC-UX-295): the thin icon of their Collection in the upper right corner, the question with the words it shares with
-   the search in bold, the Lens with its Level, the searches of colleagues quoted (DEC-UX-296), and its Collection and use
+   (DEC-UX-346): the thin icon of their Collection in the upper right corner, the question with the words it shares with
+   the search in bold, the Lens with its Level, the searches of colleagues quoted (DEC-UX-347), and its Collection and use
    as chips. No colour per Collection (DEC-CO-23) */
 .main.welcome { display: flex; flex-direction: column; }
 .wl-start { flex: 1; display: flex; flex-direction: column; min-height: 100%; }
 .wl-hero { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 48px 0 32px; }
-/* With Recently used on, the search moves up and the Lenses the User ran fill the screen under it (DEC-UX-297) */
+/* With Recently used on, the search moves up and the Lenses the User ran fill the screen under it (DEC-UX-348) */
 .wl-start.recent-on .wl-hero { flex: none; padding: 28px 0 8px; }
 .wl-start:not(.recent-on) .wl-recent { display: none; }
 .wl-filters { display: flex; justify-content: center; gap: 8px; margin-top: 16px; }
@@ -2621,7 +2621,7 @@ body.oj-plain .oj-tag { visibility: hidden; }
 }
 @media (max-width: 700px) { .wl-cards { grid-template-columns: minmax(0, 1fr); } }
 
-/* What a Lens shows of how it is found (OP-UX-96): for everyone, how many colleagues used it this month, its Questions it
+/* What a Lens shows of how it is found (OP-UX-124): for everyone, how many colleagues used it this month, its Questions it
    answers and the Lenses colleagues who found it also used; for its Owner Unit and the Data Team, the searches that led
    to a run of it with who and when, and the Lenses that answer the same searches; in Edit more, its Questions it answers */
 .fo-head-use { margin-top: 10px; }

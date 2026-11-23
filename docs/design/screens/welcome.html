@@ -1,28 +1,28 @@
 <!DOCTYPE html>
 <!--
-  Screen: Welcome, where Data Hub opens (DEC-UX-282)
+  Screen: Welcome, where Data Hub opens (DEC-UX-333)
   Its one job is to bring people to Lenses through a search. No panel. Under the search one line says that searches are
-  stored, to make Lenses easier to find (DEC-UX-288), and the filter Recently used: on when Welcome opens, it shows every
+  stored, to make Lenses easier to find (DEC-UX-339), and the filter Recently used: on when Welcome opens, it shows every
   Lens the User ran, the last one first, as the cards of a search; off, the search stands alone in the middle; with a
-  search, on, only the Lenses the User ran are found (DEC-UX-297, OP-UX-98). At the foot, one quiet line with the newest
+  search, on, only the Lenses the User ran are found (DEC-UX-348, OP-UX-126). At the foot, one quiet line with the newest
   Lenses and "More".
   The rail starts with Welcome, a button that leads here; Admin follows Charts, a little apart, for the Data Team;
   Messages and the Learning Centre stand at its foot, then My page, and under it the switch of light and dark
-  (DEC-UX-283, DEC-UX-292).
+  (DEC-UX-334, DEC-UX-343).
   A question, sent with Enter, opens the screen up into the Lenses that answer it, the best first: first those colleagues
-  found with a similar question, then by the words of their author, pushed up by how often they are used (DEC-UX-284,
-  DEC-UX-285). Each is a card (DEC-UX-295): the icon of its Collection, thin, in the upper right corner; the question it
+  found with a similar question, then by the words of their author, pushed up by how often they are used (DEC-UX-335,
+  DEC-UX-336). Each is a card (DEC-UX-346): the icon of its Collection, thin, in the upper right corner; the question it
   answers in quotes, thin and italic, the words it shares with the search in bold; the name of the Lens with its Level;
-  the searches colleagues found and used it with, quoted, without who (DEC-UX-296); and its Collection and how many
-  colleagues used it this month as chips (DEC-UX-290). A click opens the Lens. Whoever may query also gets, under the
+  the searches colleagues found and used it with, quoted, without who (DEC-UX-347); and its Collection and how many
+  colleagues used it this month as chips (DEC-UX-341). A click opens the Lens. Whoever may query also gets, under the
   cards, what on the shelves matches, and "New query with this question"; a Lens user gets only Lenses (DEC-PL-07).
   The switches at the bottom show the screen before a search, with results (?search=results), when nothing is found
   (?search=none), and the list of new Lenses (?search=new), seen as a Business analyst or a Lens user (?role=lensuser).
   Recently used switches on a click, on the screen before a search and on the results; ?recent=off opens with it off. Typing a question and Enter shows the results; one that starts with "how do agencies" finds none.
   Requirements: none yet; storing searches, popularity and the links between Lenses are written once this design is approved.
   Builds on: FR-LE-06, FR-LE-11, FR-LE-19, FR-SR-48, FR-CO-37, FR-PL-14.
-  Decisions: DEC-UX-282, DEC-UX-283, DEC-UX-284, DEC-UX-285, DEC-UX-288, DEC-UX-290, DEC-UX-292, DEC-UX-295, DEC-UX-296, DEC-UX-297, DEC-UX-126, DEC-PL-07, DEC-CO-23.
-  Open: OP-UX-93, OP-UX-96, OP-UX-98.
+  Decisions: DEC-UX-333, DEC-UX-334, DEC-UX-335, DEC-UX-336, DEC-UX-339, DEC-UX-341, DEC-UX-343, DEC-UX-346, DEC-UX-347, DEC-UX-348, DEC-UX-126, DEC-PL-07, DEC-CO-23.
+  Open: OP-UX-121, OP-UX-124, OP-UX-126.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="colleague">
@@ -56,7 +56,7 @@
 
 <!-- Before a search: the question on top; under it the filter Recently used, on when Welcome opens, which shows every Lens
      the User ran, the last one first, as the cards of a search; switched off, the search stands alone in the middle. At the
-     foot, one quiet line with the newest Lenses (DEC-UX-297, OP-UX-98) -->
+     foot, one quiet line with the newest Lenses (DEC-UX-348, OP-UX-126) -->
 <div class="wl-start recent-on" data-pane-group="search" data-pane="start">
  <div class="wl-hero">
   <h1>What do you want to know?</h1>
@@ -124,11 +124,11 @@
  </div>
 </div>
 
-<!-- A search: the Lenses that answer, the best first, as cards (DEC-UX-295): the icon of their Collection, thin, in the
+<!-- A search: the Lenses that answer, the best first, as cards (DEC-UX-346): the icon of their Collection, thin, in the
      upper right corner; the question in quotes, thin and italic, the words it shares with the search in bold; the name of
      the Lens, heavier, with its Level; how colleagues searched when they found and used it, quoted, without who
-     (DEC-UX-296); and at the foot its Collection and how many colleagues used it this month as chips. No colour per
-     Collection (DEC-CO-23). Whoever may query also gets what on the shelves matches (DEC-UX-284) -->
+     (DEC-UX-347); and at the foot its Collection and how many colleagues used it this month as chips. No colour per
+     Collection (DEC-CO-23). Whoever may query also gets what on the shelves matches (DEC-UX-335) -->
 <div class="wl-results search-results" data-pane-group="search" data-pane="results" hidden>
  <form class="wl-find top" role="search">
   <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
@@ -178,7 +178,7 @@
    <span class="wl-card-foot"><span class="wl-qchip" title="The Collection it is in"><i class="ph ph-coins" aria-hidden="true"></i>Credit leads</span><span class="wl-qused" title="Colleagues who ran it in the last 30 days"><i class="ph-fill ph-users-three" aria-hidden="true"></i>2 this month</span></span>
   </a>
  </div>
- <!-- Only for whoever may query (DEC-UX-284): the data itself, and a query of their own from the same question -->
+ <!-- Only for whoever may query (DEC-UX-335): the data itself, and a query of their own from the same question -->
  <section class="wl-shelves" data-for="colleague owner datateam" aria-label="Also on the shelves">
   <div class="section-head"><h2>Also on the shelves</h2><span class="meta">The data itself, because you may query it</span></div>
   <a class="wl-shelf" href="resource-detail.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="wl-shelf-text">Weekly <mark>lead</mark> volume<span class="meta">How many <mark>leads</mark> came in per week, per source and channel · Credit leads</span></span><span class="maturity" data-level="4"></span></a>
@@ -188,7 +188,7 @@
  </section>
 </div>
 
-<!-- Nothing found: one sentence for now; what more it does is open (OP-UX-93) -->
+<!-- Nothing found: one sentence for now; what more it does is open (OP-UX-121) -->
 <div class="wl-results search-results" data-pane-group="search" data-pane="none" hidden>
  <form class="wl-find top" role="search">
   <i class="ph ph-magnifying-glass" aria-hidden="true"></i>

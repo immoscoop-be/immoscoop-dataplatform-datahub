@@ -150,14 +150,14 @@ document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', 
   e.preventDefault();
   if (b.getAttribute('aria-disabled') !== 'true') go(b.dataset.go);
 }));
-// Welcome (DEC-UX-282): a question sent with Enter opens the screen up into the Lenses that answer it; in the prototype
+// Welcome (DEC-UX-333): a question sent with Enter opens the screen up into the Lenses that answer it; in the prototype
 // every question gives the same results, and one that starts with "how do agencies" finds none
 document.querySelectorAll('form.wl-find').forEach(f => f.addEventListener('submit', e => {
   e.preventDefault();
   const q = f.querySelector('input')?.value.trim().toLowerCase() || '';
   go(q.startsWith('how do agencies') ? 'search:none' : 'search:results');
 }));
-// Welcome (DEC-UX-297): the filter Recently used. Before a search it shows every Lens the User ran, or, off, leaves the
+// Welcome (DEC-UX-348): the filter Recently used. Before a search it shows every Lens the User ran, or, off, leaves the
 // search alone in the middle; on the results it keeps only the Lenses the User ran. ?recent=off opens with it off
 document.querySelectorAll('[data-wl-recent]').forEach(btn => btn.addEventListener('click', () => {
   const on = btn.getAttribute('aria-pressed') !== 'true';

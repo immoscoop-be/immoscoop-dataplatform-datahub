@@ -17,10 +17,10 @@
   more is worked out from the SQL. For a field no Resource names, its author takes the description of any field of its
   Resources, searched by name and words, or writes one; Change does the same for any field. Without one it still
   publishes. Users see each description on the head of its column and under About (?lf=pick opens the search).
-  Its example (DEC-UX-294): under its fields, the first rows of the result its query showed, which its author confirms as
+  Its example (DEC-UX-345): under its fields, the first rows of the result its query showed, which its author confirms as
   its example, shown on its page before a run, or leaves off.
   Requirements: FR-LE-19, FR-CO-12, FR-CO-15, FR-SR-40, FR-LE-04, FR-LE-05, FR-LE-06, FR-LE-07, FR-LE-08, FR-LE-09, FR-LE-10, FR-LE-13, FR-CV-08
-  Decisions: DEC-UX-294, DEC-UX-229, DEC-UX-227, DEC-UX-25, DEC-UX-75, DEC-UX-121, DEC-LE-16, DEC-UX-111, DEC-LE-01, DEC-LE-02, DEC-CO-20, DEC-CO-24, DEC-SR-29, DEC-DH-10, DEC-DH-11. The Parameters come from the query; no "+ Parameter", no lock. Its author writes what it does, step by step (DEC-UX-121, DEC-LE-16).
+  Decisions: DEC-UX-345, DEC-UX-229, DEC-UX-227, DEC-UX-25, DEC-UX-75, DEC-UX-121, DEC-LE-16, DEC-UX-111, DEC-LE-01, DEC-LE-02, DEC-CO-20, DEC-CO-24, DEC-SR-29, DEC-DH-10, DEC-DH-11. The Parameters come from the query; no "+ Parameter", no lock. Its author writes what it does, step by step (DEC-UX-121, DEC-LE-16).
   Not in v1: the label "Claude" on a query in the panel (FR-SR-26, DEC-CH-02); leave it out.
   Related screens: query.html (the button "Make it a lens").
   Rules: ../principles.md  ·  Placeholder content only.
@@ -180,7 +180,7 @@ Adds up the leads per source and puts the largest first.</textarea></label>
     </div>
    </div>
   </div>
-  <!-- Its example (DEC-UX-294): the first rows of the result its query showed, which its author confirms or leaves off -->
+  <!-- Its example (DEC-UX-345): the first rows of the result its query showed, which its author confirms or leaves off -->
   <div class="ex-field">
    <label class="ex-check"><input type="checkbox" checked><span><b>Use these rows as its example</b><span class="meta">Colleagues see them on its page before they run it: a picture of what it gives, not today's figures. They are the first rows your query showed, on 18 Nov. Leave it off when they should not be shown.</span></span></label>
    <div class="ex-rows"><table><thead><tr><th>lead_source<small>STRING</small></th><th>source_name<small>STRING</small></th><th class="num">leads<small>INT64</small></th><th class="num">share_of_week<small>FLOAT64</small></th></tr></thead><tbody><tr><td>website</td><td>Website</td><td class="num">1,712</td><td class="num">71.9</td></tr><tr><td>app</td><td>App</td><td class="num">402</td><td class="num">16.9</td></tr><tr><td>partner</td><td>Partner network</td><td class="num">168</td><td class="num">7.1</td></tr><tr><td>mailing</td><td>Mailing</td><td class="num">99</td><td class="num">4.2</td></tr></tbody></table></div>
