@@ -103,6 +103,8 @@ export interface CatalogueDatabase {
     collectionId: string | null;
     /** From 0 · Beta to 5 · Monitored (FR-SR-07). */
     level: number;
+    /** The EDA-Setup of its EDA is complete, as eda says: 3 · Confirmed is then 4 · Explored (TR-ED-05, DEC-MR-21). */
+    explored: ColumnType<boolean, boolean | undefined, boolean>;
     registeredAt: Timestamp;
     updatedAt: Timestamp;
     withdrawnAt: Date | null;

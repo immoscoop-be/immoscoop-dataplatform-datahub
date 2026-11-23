@@ -22,7 +22,7 @@ describe('the Permissions in the web app (FR-PL-05, FR-PL-14)', () => {
   });
 
   it('put every Permission in a part, in the order of the rail, with Groups after Collections (DEC-UX-201)', () => {
-    expect(PARTS.map((part) => part.id)).toEqual(['collections', 'groups', 'query', 'lenses', 'messages', 'claude', 'excel', 'admin']);
+    expect(PARTS.map((part) => part.id)).toEqual(['collections', 'groups', 'query', 'lenses', 'eda', 'messages', 'claude', 'excel', 'admin']);
     expect(keysOf('groups')).toEqual(['groups.manage', 'groups.all.manage']);
     expect(PARTS.flatMap((part) => keysOf(part.id))).toHaveLength(PERMISSION_KEYS.length);
   });
@@ -36,6 +36,10 @@ describe('the Permissions in the web app (FR-PL-05, FR-PL-14)', () => {
     expect([mayQuery(lensUser), mayQuery(analyst)]).toEqual([false, true]);
     expect([sectionFor(query, lensUser), sectionFor(query, analyst)]).toEqual([false, true]);
     expect([sectionFor(adminSection, analyst), sectionFor(adminSection, admin)]).toEqual([false, true]);
+    // EDA, for who may explore Resources: only Admin, to start (FR-ED-01, DEC-ED-25).
+    const eda = SECTIONS.find((section) => section.id === 'eda')!;
+    expect([sectionFor(eda, lensUser), sectionFor(eda, analyst), sectionFor(eda, admin)]).toEqual([false, false, true]);
+    expect(SECTIONS.map((section) => section.id).indexOf('eda')).toBe(SECTIONS.map((section) => section.id).indexOf('charts') + 1);
     expect(toolsFor(admin)).toEqual(['webhooks', 'keys', 'users', 'permissionGroups', 'withdrawn']);
     analyst['admin.open'] = { on: true, values: { tools: ['permissionGroups', 'excelKeys'] } };
     expect(toolsFor(analyst)).toEqual(['keys', 'permissionGroups']);

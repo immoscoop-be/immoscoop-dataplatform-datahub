@@ -233,12 +233,21 @@ describe.skipIf(!url)('catalogue migrations', () => {
     const id = (await sql<{ id: string }>`select id from resources where key = 'p.d.journey'`.execute(admin.db)).rows[0]!.id;
     await sql`update resources set parameters = '{lead_source}' where id = ${id}`.execute(admin.db);
     await sql`insert into journey_records (resource_id, step, answer, user_id, user_name) values (${id}, 'parameters', 'nothing', 'u-an', 'An')`.execute(admin.db);
-    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    const results = await migrate({ db: admin.db, schema, migrations: before('0029'), serviceUser: 'postgres' });
     expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0028-parameters-into-key-fields', 'Success']]);
     const columns = await sql<{ name: string }>`select column_name as name from information_schema.columns where table_schema = ${schema} and table_name = 'resources' and column_name = 'parameters'`.execute(admin.db);
     expect(columns.rows).toEqual([]);
     const steps = await sql<{ step: string }>`select step from journey_records where resource_id = ${id}`.execute(admin.db);
     expect(steps.rows.map((row) => row.step)).not.toContain('parameters');
     await expect(sql`insert into journey_records (resource_id, step, answer, user_id, user_name) values (${id}, 'parameters', 'nothing', 'u-an', 'An')`.execute(admin.db)).rejects.toThrow(/journey_records_step_check/);
+  });
+
+  it('keeps whether a Resource is explored, none to start with (TR-ED-05)', async () => {
+    const id = (await sql<{ id: string }>`select id from resources where key = 'p.d.journey'`.execute(admin.db)).rows[0]!.id;
+    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0029-explored', 'Success']]);
+    const explored = await sql<{ explored: boolean }>`select explored from resources where id = ${id}`.execute(admin.db);
+    expect(explored.rows).toEqual([{ explored: false }]);
+    await expect(sql`update resources set explored = null where id = ${id}`.execute(admin.db)).rejects.toThrow(/null/);
   });
 });

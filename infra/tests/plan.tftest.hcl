@@ -27,8 +27,8 @@ run "every_service_runs_the_shared_image_of_this_code" {
   command = plan
 
   assert {
-    condition     = length(google_cloud_run_v2_service.service) == 7
-    error_message = "Expected identity, catalogue, registry, query, semgraph, mcp and web."
+    condition     = length(google_cloud_run_v2_service.service) == 8
+    error_message = "Expected identity, catalogue, registry, query, eda, semgraph, mcp and web."
   }
 
   assert {
@@ -96,8 +96,8 @@ run "only_services_with_data_get_a_database_login" {
   command = plan
 
   assert {
-    condition     = toset(keys(google_sql_user.service)) == toset(["identity", "catalogue", "registry", "query"])
-    error_message = "identity, catalogue, registry and query keep data, and only they get a database login."
+    condition     = toset(keys(google_sql_user.service)) == toset(["identity", "catalogue", "registry", "query", "eda"])
+    error_message = "identity, catalogue, registry, query and eda keep data, and only they get a database login."
   }
 
   assert {
@@ -231,7 +231,7 @@ run "migrations_run_as_their_own_identity_with_the_image_of_the_service" {
   }
 
   assert {
-    condition     = toset(keys(google_cloud_run_v2_job.migrate)) == toset(["identity", "catalogue", "registry", "query"])
+    condition     = toset(keys(google_cloud_run_v2_job.migrate)) == toset(["identity", "catalogue", "registry", "query", "eda"])
     error_message = "Every service that keeps data, and only those, has a migration job."
   }
 
@@ -409,10 +409,11 @@ run "the_web_app_signs_in_at_its_own_address_and_may_call_the_services" {
       for name, url in {
         DATAHUB_CATALOGUE_URL = "https://datahub-catalogue-123456789.europe-west1.run.app"
         DATAHUB_QUERY_URL     = "https://datahub-query-123456789.europe-west1.run.app"
+        DATAHUB_EDA_URL       = "https://datahub-eda-123456789.europe-west1.run.app"
         DATAHUB_WEB_URL       = "https://datahub-web-123456789.europe-west1.run.app"
       } : contains([for env in google_cloud_run_v2_service.service["mcp"].template[0].containers[0].env : env.value if env.name == name], url)
     ])
-    error_message = "The tools of mcp ask catalogue and query as the User, and link to the pages of the web app, at their fixed addresses."
+    error_message = "The tools of mcp ask catalogue, query and eda as the User, and link to the pages of the web app, at their fixed addresses (TR-ED-10)."
   }
 
   assert {
@@ -670,6 +671,76 @@ run "query_runs_jobs_reads_the_tables_and_asks_catalogue" {
       "https://datahub-registry-123456789.europe-west1.run.app"
     )
     error_message = "query asks registry which tables outside Data Hub a power user may read (FR-SR-56)."
+  }
+}
+
+run "eda_keeps_the_edas_and_holds_no_role_on_bigquery" {
+  command = plan
+
+  override_resource {
+    target          = google_service_account.service["eda"]
+    override_during = plan
+    values = {
+      email  = "datahub-eda@test-project.iam.gserviceaccount.com"
+      member = "serviceAccount:datahub-eda@test-project.iam.gserviceaccount.com"
+    }
+  }
+
+  override_resource {
+    target          = google_service_account.service["query"]
+    override_during = plan
+    values = {
+      member = "serviceAccount:datahub-query@test-project.iam.gserviceaccount.com"
+    }
+  }
+
+  override_resource {
+    target          = google_service_account.service["registry"]
+    override_during = plan
+    values = {
+      member = "serviceAccount:datahub-registry@test-project.iam.gserviceaccount.com"
+    }
+  }
+
+  # Every role on BigQuery Terraform gives: a new one goes in this list too (TR-ED-08).
+  assert {
+    condition = alltrue([
+      for binding in [google_project_iam_member.query_jobs, google_project_iam_member.query_reads, google_project_iam_member.registry_reads_schemas] :
+      binding.member != "serviceAccount:datahub-eda@test-project.iam.gserviceaccount.com"
+    ])
+    error_message = "eda reads no data: it holds no role on BigQuery, and query runs its EDA-Probes as the User (DEC-ED-26, TR-ED-08)."
+  }
+
+  assert {
+    condition = (
+      google_project_iam_member.database_client["eda"].role == "roles/cloudsql.client" &&
+      google_project_iam_member.database_client["eda"].member == "serviceAccount:datahub-eda@test-project.iam.gserviceaccount.com" &&
+      google_project_iam_member.database_login["eda"].role == "roles/cloudsql.instanceUser"
+    )
+    error_message = "eda keeps its EDAs in its own schema, as a Cloud SQL client that logs in as itself (TR-ED-01, TR-PF-22)."
+  }
+
+  assert {
+    condition = alltrue([
+      for pair in [["DATAHUB_QUERY_URL", "https://datahub-query-123456789.europe-west1.run.app"], ["DATAHUB_CATALOGUE_URL", "https://datahub-catalogue-123456789.europe-west1.run.app"], ["DATAHUB_TOKEN_ISSUER", "https://datahub-identity-123456789.europe-west1.run.app"]] :
+      contains([for env in google_cloud_run_v2_service.service["eda"].template[0].containers[0].env : env.value if env.name == pair[0]], pair[1])
+    ])
+    error_message = "eda has query run its EDA-Probes, asks catalogue about a Resource and checks the Access Tokens of identity, at their fixed addresses (TR-ED-08)."
+  }
+
+  assert {
+    condition     = contains([for env in google_cloud_run_v2_service.service["catalogue"].template[0].containers[0].env : "${env.name}=${env.value}"], "DATAHUB_EDA_SERVICE_ACCOUNT=datahub-eda@test-project.iam.gserviceaccount.com")
+    error_message = "catalogue hears whether a Resource is explored from eda alone, by its service account (TR-ED-05)."
+  }
+
+  assert {
+    condition     = contains([for env in google_cloud_run_v2_service.service["web"].template[0].containers[0].env : "${env.name}=${env.value}"], "DATAHUB_EDA_URL=https://datahub-eda-123456789.europe-west1.run.app")
+    error_message = "The web app shows the EDAs of eda, at its fixed address (TR-ED-07)."
+  }
+
+  assert {
+    condition     = google_cloud_run_v2_job.migrate["eda"].template[0].template[0].containers[0].image == "europe-west1-docker.pkg.dev/immoscoop-dataplatform-398214/datahub/eda:tree-abc123"
+    error_message = "The migrations of eda run with its own image, as for every service that keeps data (TR-PF-09)."
   }
 }
 

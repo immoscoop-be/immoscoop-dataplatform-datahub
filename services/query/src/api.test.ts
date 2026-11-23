@@ -208,6 +208,19 @@ function fakeBigQuery() {
         refuseNext = null;
         throw new BigQueryRefused(message);
       }
+      // An EDA-Probe: aggregates only, a list and a list of records among them, as rowsOf keeps them (TR-ED-03).
+      if (text.includes('approx_quantiles')) {
+        return {
+          jobId: `job_${runs.length}`,
+          location: 'europe-west1',
+          columns: [{ name: 'rows', type: 'INT64' }, { name: 'quantiles', type: 'ARRAY<INT64>' }, { name: 'top', type: 'ARRAY<STRUCT>' }, { name: 'empty', type: 'INT64' }],
+          totalRows: 1,
+          rows: [['1560', '["0","3","7","12","88"]', '[{"value":"app","rows":"4"}]', null]],
+          processedBytes: 4_000_000,
+          billedBytes: 10_000_000,
+          partitions: 312,
+        };
+      }
       return {
         jobId: `job_${runs.length}`,
         location: 'europe-west1',
@@ -1470,6 +1483,131 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     // Its author without lenses.make sends no Request on a Lens again.
     const miaNoLenses = await userOf('104', 'Mia Peeters', 'businessAnalyst', (permissions) => (permissions['lenses.make'].on = false), [CREDIT_UNIT]);
     expect((await call(miaNoLenses, 'POST', `/lenses/${waiting.id}/requests`, {})).json()).toMatchObject({ error: 'forbidden', permission: 'lenses.make' });
+  });
+
+  describe('the EDA-Probes, run as the User who explores (TR-ED-04, FR-ED-06)', () => {
+    const grain = `select count(*) as rows, approx_quantiles(leads, 4) as quantiles from \`${WEEKLY.key}\``;
+    const probe = (sql: string, approve?: boolean) => ({ probe: 'grainHolds', sql, ...(approve === undefined ? {} : { approve }) });
+    /** A Data Admin, free up to 10 MB and approving up to 1 GB, who sees Weekly lead volume only. */
+    const explorer = () =>
+      userOf('110', 'Els Janssens', 'admin', (permissions) => {
+        permissions['runs.ranges'].values = { freeMb: 10, approveGb: 1, above: 'request' };
+      });
+    const runs = (authorization: string, id: string, payload: unknown) => call(authorization, 'POST', `/resources/${id}/eda/runs`, payload);
+
+    it('are run only by who holds eda.use, on a Resource they see, with an EDA-Probe and its SQL (DEC-ED-25)', async () => {
+      // A Business analyst does not explore, even a Resource they see.
+      const refused = await runs(an, WEEKLY.id, probe(grain));
+      expect(refused.statusCode).toBe(403);
+      expect(refused.json()).toMatchObject({ error: 'forbidden', permission: 'eda.use' });
+      const els = await explorer();
+      expect((await runs(els, SOURCES.id, probe(`select count(*) from \`${SOURCES.key}\``))).statusCode).toBe(404);
+      expect((await runs(els, 'weekly', probe(grain))).statusCode).toBe(404);
+      for (const wrong of [{ probe: 'everything', sql: grain }, { probe: 'grainHolds' }, { probe: 'grainHolds', sql: ' ' }, { probe: 'grainHolds', sql: grain, approve: 'yes' }]) {
+        expect((await runs(els, WEEKLY.id, wrong)).statusCode).toBe(400);
+      }
+      expect(fake.runs.some((run) => run.options.labels['datahub-purpose'] === 'eda')).toBe(false);
+    });
+
+    it('read only the table of their Resource: another Resource or a table outside Data Hub is refused, also for a power user', async () => {
+      const els = await explorer();
+      const before = fake.runs.length;
+      const joined = await runs(els, WEEKLY.id, probe(`select count(*) as rows from \`${WEEKLY.key}\` join \`${SOURCES.key}\` using (lead_source)`));
+      expect(joined.statusCode).toBe(200);
+      expect(joined.json()).toEqual({ state: 'refused', bytes: null, reason: expect.stringContaining(SOURCES.key) });
+      // A Data Admin may query tables outside Data Hub, but an EDA-Probe reads none, and registry is not asked.
+      const asked = knownAsked.length;
+      const outside = (await runs(els, WEEKLY.id, probe(`select count(*) as rows from \`${STG.key}\``))).json();
+      expect(outside).toMatchObject({ state: 'refused', bytes: null });
+      expect(knownAsked).toHaveLength(asked);
+      expect(fake.runs).toHaveLength(before);
+    });
+
+    it('run within the ranges of the User: freely, once approved, and above them not at all (runs.ranges)', async () => {
+      const els = await explorer();
+      const ran = await runs(els, WEEKLY.id, probe(`${grain} -- reads 5000000`));
+      expect(ran.statusCode).toBe(201);
+      expect(ran.json()).toMatchObject({ state: 'ran', bytes: 4_000_000, runId: expect.stringMatching(/^q-\d{8}-[0-9a-f]{6}$/) });
+      // As a job billed at most the second range of the User, labelled with the User, the run and the EDA-Probe.
+      expect(fake.runs.at(-1)?.options).toMatchObject({
+        maximumBytesBilled: 1_000_000_000,
+        labels: { 'datahub-user': '110', 'datahub-query': ran.json().runId, 'datahub-purpose': 'eda', 'datahub-eda-probe': 'grainholds' },
+      });
+
+      const medium = probe(`${grain} -- reads 50000000`);
+      expect((await runs(els, WEEKLY.id, medium)).json()).toEqual({ state: 'approve', bytes: 50_000_000 });
+      const approved = await runs(els, WEEKLY.id, { ...medium, approve: true });
+      expect(approved.statusCode).toBe(201);
+      expect((await database.db.selectFrom('runs').select('approved').where('queryRef', '=', approved.json().runId).executeTakeFirstOrThrow()).approved).toBe(true);
+
+      // Above them it does not run, approved or not: a Request for an EDA-Probe comes later (OP-ED-05).
+      const before = fake.runs.length;
+      for (const approve of [false, true]) {
+        const huge = await runs(els, WEEKLY.id, probe(`${grain} -- reads 4800000000`, approve));
+        expect(huge.statusCode).toBe(200);
+        expect(huge.json()).toEqual({ state: 'refused', bytes: 4_800_000_000, reason: expect.stringContaining('4.8 GB') });
+      }
+      expect(fake.runs).toHaveLength(before);
+    });
+
+    it('answer their rows with lists and records as JSON values, and keep each run in the Query Log, apart from the panel (DEC-ED-26)', async () => {
+      const els = await explorer();
+      const small = `${grain} -- reads 5000000`;
+      const ran = (await runs(els, WEEKLY.id, probe(small))).json();
+      expect(ran.rows).toEqual([{ rows: '1560', quantiles: ['0', '3', '7', '12', '88'], top: [{ value: 'app', rows: '4' }], empty: null }]);
+
+      // One query of the kind eda per User and Resource holds the runs, each with its own Query ID.
+      const kept = await database.db.selectFrom('queries').selectAll().where('kind', '=', 'eda').where('ownerId', '=', '110').execute();
+      expect(kept).toMatchObject([{ name: 'EDA · Weekly lead volume', edaOf: WEEKLY.id, ownerName: 'Els Janssens' }]);
+      const logged = await database.db.selectFrom('runs').select(['queryRef', 'state', 'userId', 'sql']).where('queryId', '=', kept[0]!.id).orderBy('number').execute();
+      expect(logged.length).toBe(3);
+      expect(logged.at(-1)).toEqual({ queryRef: ran.runId, state: 'done', userId: '110', sql: small });
+
+      // Not in the panel of Query, nor counted per day, nor among the queries on the Resource; it runs only from its EDA.
+      expect((await call(els, 'GET', '/queries')).json().queries).toEqual([]);
+      expect((await call(els, 'GET', '/queries?all=true')).json().queries.map((query: { kind: string }) => query.kind)).not.toContain('eda');
+      expect((await call(els, 'GET', '/queries/days?tz=UTC')).json().days).toEqual([]);
+      expect((await call(els, 'GET', `/resources/${WEEKLY.id}/queries`)).json().queries.map((query: { id: string }) => query.id)).not.toContain(kept[0]!.id);
+      expect((await call(els, 'POST', `/queries/${kept[0]!.id}/runs`, { sql: small })).statusCode).toBe(403);
+      // Its User reads its rows again from the same job, as for every run.
+      expect((await call(els, 'GET', `/runs/${ran.runId}/rows`)).statusCode).toBe(200);
+    });
+
+    it('run a dig into a selection as one of them: checked alike, labelled as a dig, in the same query of the kind eda (TR-ED-12)', async () => {
+      const els = await explorer();
+      const dig = (sql: string, approve?: boolean) => ({ probe: 'digInto', sql, ...(approve === undefined ? {} : { approve }) });
+      const ran = await runs(els, WEEKLY.id, dig(`${grain} -- reads 5000000`));
+      expect(ran.statusCode).toBe(201);
+      expect(ran.json()).toMatchObject({ state: 'ran', bytes: 4_000_000, runId: expect.stringMatching(/^q-\d{8}-[0-9a-f]{6}$/) });
+      expect(fake.runs.at(-1)?.options).toMatchObject({
+        maximumBytesBilled: 1_000_000_000,
+        labels: { 'datahub-user': '110', 'datahub-query': ran.json().runId, 'datahub-purpose': 'eda', 'datahub-eda-probe': 'diginto' },
+      });
+      // Kept with the runs of the EDA-Probes of this User and Resource, in the one query of the kind eda.
+      const kept = await database.db.selectFrom('queries').select('id').where('kind', '=', 'eda').where('ownerId', '=', '110').execute();
+      expect(kept).toHaveLength(1);
+      const logged = await database.db.selectFrom('runs').select('queryId').where('queryRef', '=', ran.json().runId).executeTakeFirstOrThrow();
+      expect(logged.queryId).toBe(kept[0]!.id);
+
+      // The same Pre-flight: approved within the ranges, refused above them or on another table.
+      expect((await runs(els, WEEKLY.id, dig(`${grain} -- reads 50000000`))).json()).toEqual({ state: 'approve', bytes: 50_000_000 });
+      expect((await runs(els, WEEKLY.id, dig(`${grain} -- reads 50000000`, true))).statusCode).toBe(201);
+      expect((await runs(els, WEEKLY.id, dig(`${grain} -- reads 4800000000`, true))).json()).toMatchObject({ state: 'refused', bytes: 4_800_000_000 });
+      expect((await runs(els, WEEKLY.id, dig(`select count(*) as rows from \`${SOURCES.key}\``))).json()).toMatchObject({ state: 'refused', bytes: null });
+      // Only who explores, and only these kinds.
+      expect((await runs(an, WEEKLY.id, dig(grain))).statusCode).toBe(403);
+      expect((await runs(els, WEEKLY.id, { probe: 'dig', sql: grain })).statusCode).toBe(400);
+    });
+
+    it('keep a run BigQuery refused in the Query Log as failed, and say why', async () => {
+      const els = await explorer();
+      fake.refuse('Query exceeded limit for bytes billed: 1000000000.');
+      const refused = await runs(els, WEEKLY.id, probe(`select count(*) as rows from \`${WEEKLY.key}\``, true));
+      expect(refused.statusCode).toBe(200);
+      expect(refused.json()).toEqual({ state: 'refused', bytes: 80_000_000, reason: 'BigQuery refused it: Query exceeded limit for bytes billed: 1000000000.' });
+      const last = await database.db.selectFrom('runs').select(['state', 'error']).where('userId', '=', '110').orderBy('id', 'desc').limit(1).executeTakeFirstOrThrow();
+      expect(last).toEqual({ state: 'failed', error: 'Query exceeded limit for bytes billed: 1000000000.' });
+    });
   });
 
   describe('a power user, with tables outside Data Hub (FR-SR-56, DEC-SR-46)', () => {

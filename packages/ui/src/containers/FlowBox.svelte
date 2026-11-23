@@ -13,10 +13,17 @@
     icon?: IconName;
     /** While open, what it misses asks for action: the warning colour. */
     warn?: boolean;
-    /** Why it matters, shown first, then what it asks and how (DEC-UX-334). */
-    why: string;
+    /** It cannot be done yet, and still counts: its number dashed, and said quieter (DEC-UX-327). */
+    coming?: boolean;
+    /** The name of the group it stands under, said once above the first step of the group (DEC-UX-327). */
+    group?: string;
+    /** A word that judges what it holds, in a tone, said before it, such as Data Hub's reading of a result. */
+    tag?: { text: string; tone: 'healthy' | 'attention' | 'informative' };
+    /** Why it matters, shown first, then what it asks and how (DEC-UX-334). Why and how are left out where there is
+     * nothing to say, such as for a step that cannot be done yet. */
+    why?: string;
     what: string;
-    how: string;
+    how?: string;
     /** Its Learning Card. */
     card?: { number: string; title: string };
     /** The way to where it is done; without it, the step only explains. */
@@ -40,6 +47,7 @@
    */
   let {
     title,
+    icon = 'signpost-fill',
     object,
     steps,
     now,
@@ -54,6 +62,8 @@
     onclose,
   }: {
     title: string;
+    /** The mark of the flow, such as the binoculars of the EDA (DEC-UX-327); a signpost by default. */
+    icon?: IconName;
     /** What the flow is about, a link back to it. */
     object: { label: string; icon?: IconName };
     steps: readonly FlowStep[];
@@ -79,15 +89,27 @@
 
   const counted = $derived(steps.filter((step) => step.number !== undefined));
   const done = $derived(counted.filter((step) => step.done).length);
+
+  // The step to do now stays in view as the box opens and as it moves on, in the middle of its steps.
+  let scroller: HTMLElement | undefined = $state();
+  $effect(() => {
+    const id = now;
+    const box = scroller;
+    if (!box || id === undefined) return;
+    const step = [...box.querySelectorAll<HTMLElement>('[data-step]')].find((one) => one.dataset.step === id);
+    if (step && (step.offsetTop < box.scrollTop || step.offsetTop + step.offsetHeight > box.scrollTop + box.clientHeight)) {
+      box.scrollTop = Math.max(0, step.offsetTop - (box.clientHeight - step.offsetHeight) / 2);
+    }
+  });
 </script>
 
 {#if minimized}
   <aside class="strip" aria-label={`${title} · ${object.label} · ${progress}`}>
     <button type="button" class="button" aria-label={t('flowbox.maximize')} title={t('flowbox.maximize')} onclick={() => onminimize(false)}><Icon name="arrows-out-simple" /></button>
-    <span class="mark" aria-hidden="true"><Icon name="signpost-fill" /></span>
+    <span class="mark" aria-hidden="true"><Icon name={icon} /></span>
     <span class="count" aria-hidden="true"><b>{done}</b>/{counted.length}</span>
     <ol class="dots" aria-hidden="true">
-      {#each counted as step (step.id)}<li class:done={step.done} class:now={step.id === now}></li>{/each}
+      {#each counted as step (step.id)}<li class:done={step.done} class:now={step.id === now} class:coming={step.coming && !step.done}></li>{/each}
     </ol>
     <button type="button" class="vertical" onclick={() => onminimize(false)}>{title} · {object.label}</button>
   </aside>
@@ -95,7 +117,7 @@
   <aside class="box" aria-label={`${title} · ${object.label}`}>
     <div class="inner">
       <div class="head">
-        <span class="mark" aria-hidden="true"><Icon name="signpost-fill" /></span>
+        <span class="mark" aria-hidden="true"><Icon name={icon} /></span>
         <div class="titles">
           <b class="title">{title}</b>
           <button type="button" class="object" onclick={onobject}>{#if object.icon}<Icon name={object.icon} />{/if}<span>{object.label}</span></button>
@@ -105,40 +127,42 @@
       </div>
       <div class="progress">
         <div class="bar" aria-hidden="true">
-          {#each counted as step (step.id)}<span class:done={step.done} class:now={step.id === now}></span>{/each}
+          {#each counted as step (step.id)}<span class:done={step.done} class:now={step.id === now} class:coming={step.coming && !step.done}></span>{/each}
         </div>
         <span class="meta">{progress}</span>
       </div>
-      <div class="scroll">
+      <div class="scroll" bind:this={scroller}>
         {#if ended}
           <div class="ended">{@render ended()}</div>
         {:else}
           <ol class="steps">
-            {#each steps as step (step.id)}
+            {#each steps as step, index (step.id)}
               {@const open = unfolded === step.id}
-              <li class="step" class:done={step.done} class:now={step.id === now} class:open>
+              {@const coming = step.coming && !step.done}
+              {#if step.group && step.group !== steps[index - 1]?.group}<li class="group" aria-hidden="true">{step.group}</li>{/if}
+              <li class="step" class:done={step.done} class:now={step.id === now} class:open class:coming data-step={step.id}>
                 <button type="button" class="row" aria-expanded={open} aria-controls={`flow-step-${step.id}`} onclick={() => toggle(step.id)}>
                   {#if step.done}
                     <span class="tick"><Icon name="check-circle-fill" /></span>
                   {:else if step.number !== undefined}
-                    <span class="num" aria-hidden="true">{step.number}</span>
+                    <span class="num" class:coming aria-hidden="true">{step.number}</span>
                   {:else}
                     <span class="num end" aria-hidden="true"><Icon name={step.icon ?? 'check'} /></span>
                   {/if}
                   <span class="name">
                     <b>{step.name}</b>
-                    <span class="said">{#if !step.done && step.warn}<Icon name="warning-circle-fill" />{/if}<span>{step.said}</span></span>
+                    <span class="said">{#if coming}<span class="soon"><Icon name="hourglass-medium" /></span>{:else if !step.done && step.warn}<Icon name="warning-circle-fill" />{/if}{#if step.tag}<span class="tag {step.tag.tone}">{step.tag.text}</span>{/if}<span>{step.said}</span></span>
                   </span>
-                  <span class="sr-only">, {t(step.done ? 'flowbox.done' : 'flowbox.open')}</span>
+                  <span class="sr-only">, {t(step.done ? 'flowbox.done' : coming ? 'flowbox.coming' : 'flowbox.open')}</span>
                   <span class="chev" aria-hidden="true"><Icon name="caret-down" /></span>
                 </button>
                 <div class="detail" id={`flow-step-${step.id}`} hidden={!open}>
                   {#if step.here}<span class="here"><Icon name="map-pin-fill" />{t('flowbox.here')}</span>{/if}
                   <dl class="wwh">
                     <!-- Why it matters first, then what it asks and how (DEC-UX-334). -->
-                    <dt>{t('flowbox.why')}</dt><dd>{step.why}</dd>
+                    {#if step.why}<dt>{t('flowbox.why')}</dt><dd>{step.why}</dd>{/if}
                     <dt>{t('flowbox.what')}</dt><dd>{step.what}</dd>
-                    <dt>{t('flowbox.how')}</dt><dd>{step.how}</dd>
+                    {#if step.how}<dt>{t('flowbox.how')}</dt><dd>{step.how}</dd>{/if}
                   </dl>
                   {#if step.card}
                     {@const card = step.card}
@@ -180,9 +204,12 @@
   .bar span { height: 5px; border-radius: var(--radius-mark); background: var(--tint-active); }
   .bar span.done { background: var(--text-primary); }
   .bar span.now:not(.done) { background: var(--text-muted); }
+  .bar span.coming { background: repeating-linear-gradient(135deg, var(--tint-active) 0 3px, transparent 3px 5px); }
   .meta { font-size: var(--text-meta); color: var(--text-muted); }
   .scroll { flex: 1; min-height: 0; overflow: auto; padding: 0 10px 6px; }
   .steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .group { margin: 6px 4px -2px; font-size: var(--text-meta); font-weight: var(--weight-medium); color: var(--text-muted); }
+  .group:first-child { margin-top: 0; }
   .step { border-radius: var(--radius-md); background: var(--card); transition: background-color var(--motion-focus) var(--delay-focus); }
   .step.now { outline: 1.5px solid var(--text-primary); outline-offset: -1.5px; }
   .row { all: unset; box-sizing: border-box; width: 100%; display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: var(--radius-md); cursor: pointer; }
@@ -190,12 +217,21 @@
   .tick { flex: none; margin-top: 1px; font-size: 18px; color: var(--text-secondary); display: inline-flex; }
   .num { flex: none; width: 18px; height: 18px; margin-top: 1px; border-radius: var(--radius-pill); outline: 1.5px solid var(--text-muted); outline-offset: -1.5px; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: var(--weight-medium); color: var(--text-secondary); }
   .num.end { font-size: 11px; }
+  .num.coming { outline-style: dashed; color: var(--text-muted); }
   .step.now .num { background: var(--text-primary); outline-color: var(--text-primary); color: var(--surface-solid); }
   .name { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
   .name b { font-size: var(--text-small); font-weight: var(--weight-medium); }
   .step.done .name b { color: var(--text-secondary); }
+  .step.coming .name b { color: var(--text-secondary); font-weight: var(--weight-regular); }
   .said { display: flex; align-items: baseline; gap: 5px; font-size: var(--text-meta); line-height: 1.45; color: var(--text-muted); }
   .said :global(.icon) { flex: none; position: relative; top: 1px; font-size: 12px; color: var(--signal-warn); }
+  .said .soon { display: inline-flex; }
+  .said .soon :global(.icon) { color: var(--text-muted); }
+  .tag { --tone-informative: var(--col-slate); flex: none; font-size: 10.5px; font-weight: var(--weight-medium); }
+  :global([data-theme='dark']) .tag { --tone-informative: color-mix(in srgb, var(--col-slate) 45%, var(--text-primary)); }
+  .tag.healthy { color: var(--col-teal-ink); }
+  .tag.attention { color: var(--signal-warn); }
+  .tag.informative { color: var(--tone-informative); }
   .chev { margin-top: 3px; color: var(--text-muted); display: inline-flex; transition: transform var(--motion-fade); }
   .step.open .chev { transform: rotate(180deg); }
   .detail { display: grid; gap: 12px; padding: 4px 18px 18px 40px; }
@@ -222,6 +258,7 @@
   .dots li { width: 8px; height: 8px; border-radius: var(--radius-pill); outline: 1.5px solid var(--text-muted); outline-offset: -1.5px; }
   .dots li.done { background: var(--text-primary); outline-color: var(--text-primary); }
   .dots li.now:not(.done) { outline: 2px solid var(--text-primary); outline-offset: 1px; }
+  .dots li.coming { outline-style: dashed; }
   .vertical { all: unset; flex: 1; margin-top: 4px; writing-mode: vertical-rl; white-space: nowrap; font-size: var(--text-meta); color: var(--text-secondary); cursor: pointer; }
   .vertical:hover { color: var(--text-primary); }
   .vertical:focus-visible { outline: 2px solid var(--text-secondary); }

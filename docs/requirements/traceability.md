@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 322 | 118 (22 open, 96 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 335 | 119 (22 open, 97 done) |
 | [Backlog](../overview/backlog.md) | – | – | – | 7 (5 open, 2 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
@@ -18,16 +18,16 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Collections](functional/03-collections.md) | 45 (1 proposed, 40 implemented, 4 withdrawn) | 2 (2 specified) | 27 | 18 (1 open, 17 done) |
 | [Resources](functional/04-stacks-and-resources.md) | 73 (5 specified, 60 implemented, 8 withdrawn) | 5 (1 specified, 1 implemented, 3 withdrawn) | 49 | 25 (4 open, 21 done) |
 | [Resource card](functional/05-resource-card.md) | 34 (4 proposed, 2 specified, 26 implemented, 2 withdrawn) | 1 (1 implemented) | 34 | 31 (3 open, 28 done) |
-| [Maturity and release](functional/06-maturity-and-release.md) | 21 (4 specified, 12 implemented, 5 withdrawn) | – | 21 | 9 (2 open, 7 done) |
+| [Maturity and release](functional/06-maturity-and-release.md) | 22 (3 specified, 13 implemented, 6 withdrawn) | – | 22 | 9 (2 open, 7 done) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 7 (3 proposed, 4 implemented) | 1 (1 implemented) | 8 | 8 (8 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | 39 (39 specified) | 4 (4 proposed) | 30 | 15 (15 open) |
 | [Lenses](functional/09-lenses.md) | 19 (16 implemented, 3 withdrawn) | – | 22 | 10 (10 done) |
 | [Reports](functional/10-reports.md) | – | – | – | – |
 | [Beta and promotion](functional/11-beta-and-promotion.md) | – | – | – | 1 (1 done) |
-| [Permissions and Excel keys](functional/12-permissions-and-library-cards.md) | 16 (1 proposed, 15 implemented) | 4 (4 implemented) | 9 | 2 (1 open, 1 done) |
+| [Permissions and Excel keys](functional/12-permissions-and-library-cards.md) | 16 (1 proposed, 15 implemented) | 4 (4 implemented) | 10 | 2 (1 open, 1 done) |
 | [Channels](functional/13-channels.md) | 6 (5 proposed, 1 implemented) | – | 6 | 4 (2 open, 2 done) |
 | [Conversations](functional/14-conversations.md) | 16 (16 implemented) | 2 (2 implemented) | 13 | 9 (9 done) |
-| [EDA](functional/15-eda.md) | – | – | 16 | 8 (5 open, 3 done) |
+| [EDA](functional/15-eda.md) | 20 (20 implemented) | – | 37 | 13 (7 open, 6 done) |
 | [Learning](functional/16-learning.md) | 44 (13 proposed, 15 implemented, 16 withdrawn) | – | 39 | 40 (9 open, 31 done) |
 | [Claude](functional/17-claude.md) | 39 (1 proposed, 38 implemented) | 5 (5 implemented) | 23 | 12 (7 open, 5 done) |
 | [Localisation](non-functional/localisation.md) | 12 (8 specified, 3 implemented, 1 withdrawn) | – | – | – |
@@ -41,6 +41,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Lenses: technical requirements](technical/09-lenses.md) | 10 (10 implemented) | – | – | – |
 | [Permissions and Excel keys: technical requirements](technical/12-permissions-and-library-cards.md) | 9 (9 implemented) | – | – | – |
 | [Conversations: technical requirements](technical/14-conversations.md) | 3 (3 implemented) | – | – | – |
+| [EDA: technical requirements](technical/15-eda.md) | 12 (12 implemented) | – | – | – |
 | [Learning: technical requirements](technical/16-learning.md) | 10 (10 implemented) | – | – | – |
 
 ## Functional requirements
@@ -269,11 +270,11 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | --- | --- | --- | --- | --- | --- | --- |
 | [FR-MR-01](functional/06-maturity-and-release.md#fr-mr-01) | Described: the view and every column have a description | Withdrawn | MO-01 | – | – | [cdbe477](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/cdbe4777a0070e042cb7f08b231c52e9e3b71694) refs, 2026-10-26 |
 | [FR-MR-02](functional/06-maturity-and-release.md#fr-mr-02) | Confirmed: the Owner confirms, from Described | Implemented | MO-02 | [resource-publish](../design/screens/resource-publish.html) | [TR-SR-12](technical/04-stacks-and-resources.md#tr-sr-12) | [c1e99e6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c1e99e6e756f1185032566a11ad8bf1e127e70fd) implements, 2026-10-28<br>[66d0345](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/66d03455af6f15c9fabbcd3e3ded1d0bd4b77dea) refs, 2026-10-28<br>[cdbe477](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/cdbe4777a0070e042cb7f08b231c52e9e3b71694) refs, 2026-10-26 |
-| [FR-MR-03](functional/06-maturity-and-release.md#fr-mr-03) | Explored: a linked EDA document | Specified | MO-03 | [resource-detail](../design/screens/resource-detail.html) | – | – |
+| [FR-MR-03](functional/06-maturity-and-release.md#fr-mr-03) | Explored: a linked EDA document | Withdrawn | MO-03 | – | – | – |
 | [FR-MR-04](functional/06-maturity-and-release.md#fr-mr-04) | Monitored: at least one active check | Specified | MO-04 | – | – | – |
 | [FR-MR-05](functional/06-maturity-and-release.md#fr-mr-05) | A structural Change resets the Level to Described | Withdrawn | MO-05 | – | – | [d144467](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/d14446729716ea31118169feff3daeed5ddb2186) refs, 2026-10-26 |
 | [FR-MR-06](functional/06-maturity-and-release.md#fr-mr-06) | A failing check does not lower the Level | Specified | MO-06 | – | – | – |
-| [FR-MR-07](functional/06-maturity-and-release.md#fr-mr-07) | Drop when the last check or the EDA document goes | Specified | MO-07 | – | – | – |
+| [FR-MR-07](functional/06-maturity-and-release.md#fr-mr-07) | Drop when the last check or the EDA goes | Specified | MO-07 | – | – | – |
 | [FR-MR-08](functional/06-maturity-and-release.md#fr-mr-08) | A Confirmation does not expire | Implemented | MO-08 | [resource-publish](../design/screens/resource-publish.html) | [TR-SR-12](technical/04-stacks-and-resources.md#tr-sr-12) | [c1e99e6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c1e99e6e756f1185032566a11ad8bf1e127e70fd) implements, 2026-10-28<br>[66d0345](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/66d03455af6f15c9fabbcd3e3ded1d0bd4b77dea) refs, 2026-10-28<br>[d144467](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/d14446729716ea31118169feff3daeed5ddb2186) refs, 2026-10-26 |
 | [FR-MR-09](functional/06-maturity-and-release.md#fr-mr-09) | Log every rise and drop, and alert the Owner on a drop | Implemented | MO-09 | – | [TR-SR-13](technical/04-stacks-and-resources.md#tr-sr-13) | [c1e99e6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c1e99e6e756f1185032566a11ad8bf1e127e70fd) implements, 2026-10-28<br>[66d0345](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/66d03455af6f15c9fabbcd3e3ded1d0bd4b77dea) refs, 2026-10-28 |
 | [FR-MR-10](functional/06-maturity-and-release.md#fr-mr-10) | The Level restricts nothing and is shown everywhere | Implemented | MO-10 | [collection-add-resources](../design/screens/collection-add-resources.html), [collection-overview](../design/screens/collection-overview.html), [resource-detail](../design/screens/resource-detail.html), [resource-lineage](../design/screens/resource-lineage.html), [resource-unassigned](../design/screens/resource-unassigned.html) | – | [6c15dc9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/6c15dc9a86c0bc1f81eee09927c6836bd9658b5e) implements, 2026-10-31<br>[fcd4b3f](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/fcd4b3f1b3bbe9aa13d013307402a930a93faeb1) refs, 2026-10-28 |
@@ -288,6 +289,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-MR-19](functional/06-maturity-and-release.md#fr-mr-19) | The declaration is kept as the Owner ticked it | Implemented | – | – | [TR-SR-32](technical/04-stacks-and-resources.md#tr-sr-32) | [67c2e14](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/67c2e14c21c77636ce4e4b7fc046f4d5f0f0374c) implements, 2026-11-15 |
 | [FR-MR-20](functional/06-maturity-and-release.md#fr-mr-20) | The Flow Box takes the Owner Unit through the steps required to publish | Implemented | – | [flow-box](../design/screens/flow-box.html) | [TR-SR-36](technical/04-stacks-and-resources.md#tr-sr-36) | [00d5681](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/00d56818d8f1c308c5aac6c016d61978433e7499) implements, 2026-11-20<br>[ad97eb1](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/ad97eb129127e0d6ebe9316666b029b2b39bbcdb) refs, 2026-11-20<br>[86c27ed](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/86c27edcae36ce737275acd44478aece8ad8ffcf) refs, 2026-11-20 |
 | [FR-MR-21](functional/06-maturity-and-release.md#fr-mr-21) | Publish warns while a step is open, and offers to guide | Implemented | – | [flow-box](../design/screens/flow-box.html), [resource-publish](../design/screens/resource-publish.html) | [TR-SR-36](technical/04-stacks-and-resources.md#tr-sr-36) | [00d5681](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/00d56818d8f1c308c5aac6c016d61978433e7499) implements, 2026-11-20<br>[86c27ed](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/86c27edcae36ce737275acd44478aece8ad8ffcf) refs, 2026-11-20 |
+| [FR-MR-22](functional/06-maturity-and-release.md#fr-mr-22) | Explored: a complete EDA-Setup | Implemented | – | [resource-detail](../design/screens/resource-detail.html), [resource-overview](../design/screens/resource-overview.html), [eda](../design/screens/eda.html) | [TR-ED-05](technical/15-eda.md#tr-ed-05) | – |
 
 ### [Log and notifications](functional/07-log-and-notifications.md)
 
@@ -421,6 +423,31 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-CV-14](functional/14-conversations.md#fr-cv-14) | Every type of Message from Data Hub has its Learning Card | Implemented | – | – | – | [402201b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/402201b1b5d266b2dc2b0d8472c2bc0b71ffb547) implements, 2026-10-28 |
 | [FR-CV-15](functional/14-conversations.md#fr-cv-15) | A Message reaches every channel from the same texts | Implemented | – | [messages](../design/screens/messages.html), [notifications](../design/screens/notifications.html) | [TR-LN-03](technical/07-log-and-notifications.md#tr-ln-03), [TR-LN-04](technical/07-log-and-notifications.md#tr-ln-04) | [7ac425d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7ac425df72259094edf4e3a4ffb0d8cd629ca936) implements, 2026-10-29<br>[45f391e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/45f391e5b6e2788846ee66b5e197ecaab046337f) refs, 2026-10-29<br>[c92b276](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c92b2768f0cf5debc75c2ef904884298fd11b42c) refs, 2026-10-29<br>[402201b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/402201b1b5d266b2dc2b0d8472c2bc0b71ffb547) refs, 2026-10-28 |
 | [FR-CV-16](functional/14-conversations.md#fr-cv-16) | Closing and reopening a Question or a Signal | Implemented | – | [messages](../design/screens/messages.html) | – | [3ce424e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/3ce424e4caabec26ac9434aab937189b95f2a710) implements, 2026-11-04<br>[dfe92a9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/dfe92a9994b3d9bde2c9bdff63b32589d991a921) refs, 2026-11-04 |
+
+### [EDA](functional/15-eda.md)
+
+| ID | Title | Status | Confluence | Screens | Realised by | Commits |
+| --- | --- | --- | --- | --- | --- | --- |
+| [FR-ED-01](functional/15-eda.md#fr-ed-01) | Only who may explore Resources works on an EDA | Implemented | – | [eda](../design/screens/eda.html) | [TR-ED-06](technical/15-eda.md#tr-ed-06) | – |
+| [FR-ED-02](functional/15-eda.md#fr-ed-02) | Start the EDA of a Resource from its maturity ladder | Implemented | – | [resource-overview](../design/screens/resource-overview.html), [eda](../design/screens/eda.html) | [TR-ED-01](technical/15-eda.md#tr-ed-01), [TR-ED-07](technical/15-eda.md#tr-ed-07) | – |
+| [FR-ED-03](functional/15-eda.md#fr-ed-03) | The section EDA lists the EDAs and the Resources ready for one | Implemented | – | [eda](../design/screens/eda.html) | [TR-ED-07](technical/15-eda.md#tr-ed-07) | – |
+| [FR-ED-04](functional/15-eda.md#fr-ed-04) | The tab Steps shows the EDA-Setup per EDA-Step and its state | Implemented | – | [eda](../design/screens/eda.html) | [TR-ED-07](technical/15-eda.md#tr-ed-07), [TR-ED-09](technical/15-eda.md#tr-ed-09) | – |
+| [FR-ED-05](functional/15-eda.md#fr-ed-05) | Data Hub knows which EDA-Probes each model type needs | Implemented | – | [eda](../design/screens/eda.html) | [TR-ED-02](technical/15-eda.md#tr-ed-02) | – |
+| [FR-ED-06](functional/15-eda.md#fr-ed-06) | The detail of an EDA-Probe adds it and runs it | Implemented | – | [eda-probe](../design/screens/eda-probe.html), [eda-probe-nulls](../design/screens/eda-probe-nulls.html), [eda-probe-volume](../design/screens/eda-probe-volume.html), [eda-probe-distribution](../design/screens/eda-probe-distribution.html) | [TR-ED-01](technical/15-eda.md#tr-ed-01), [TR-ED-04](technical/15-eda.md#tr-ed-04), [TR-ED-07](technical/15-eda.md#tr-ed-07) | – |
+| [FR-ED-07](functional/15-eda.md#fr-ed-07) | The grain holds | Implemented | – | [eda-probe](../design/screens/eda-probe.html) | [TR-ED-03](technical/15-eda.md#tr-ed-03), [TR-ED-07](technical/15-eda.md#tr-ed-07) | – |
+| [FR-ED-08](functional/15-eda.md#fr-ed-08) | Nulls per Key Field | Implemented | – | [eda-probe-nulls](../design/screens/eda-probe-nulls.html) | [TR-ED-03](technical/15-eda.md#tr-ed-03), [TR-ED-07](technical/15-eda.md#tr-ed-07) | – |
+| [FR-ED-09](functional/15-eda.md#fr-ed-09) | Volume over time, with empty periods | Implemented | – | [eda-probe-volume](../design/screens/eda-probe-volume.html) | [TR-ED-03](technical/15-eda.md#tr-ed-03), [TR-ED-07](technical/15-eda.md#tr-ed-07) | – |
+| [FR-ED-10](functional/15-eda.md#fr-ed-10) | Distribution of numbers | Implemented | – | [eda-probe-distribution](../design/screens/eda-probe-distribution.html) | [TR-ED-03](technical/15-eda.md#tr-ed-03), [TR-ED-07](technical/15-eda.md#tr-ed-07) | – |
+| [FR-ED-11](functional/15-eda.md#fr-ed-11) | Each result is read, by Data Hub and by who works on the EDA | Implemented | – | [eda-probe](../design/screens/eda-probe.html), [eda-probe-nulls](../design/screens/eda-probe-nulls.html), [eda-probe-volume](../design/screens/eda-probe-volume.html), [eda-probe-distribution](../design/screens/eda-probe-distribution.html) | [TR-ED-01](technical/15-eda.md#tr-ed-01), [TR-ED-07](technical/15-eda.md#tr-ed-07) | – |
+| [FR-ED-12](functional/15-eda.md#fr-ed-12) | The EDA-Setup complete makes the Resource 4 · Explored | Implemented | – | [eda](../design/screens/eda.html), [resource-overview](../design/screens/resource-overview.html) | [TR-ED-05](technical/15-eda.md#tr-ed-05) | – |
+| [FR-ED-13](functional/15-eda.md#fr-ed-13) | The list to add an EDA-Probe | Implemented | – | [eda](../design/screens/eda.html) | [TR-ED-09](technical/15-eda.md#tr-ed-09) | – |
+| [FR-ED-14](functional/15-eda.md#fr-ed-14) | The guide of an EDA, in the Flow Box | Implemented | – | [eda](../design/screens/eda.html), [eda-probe](../design/screens/eda-probe.html) | [TR-ED-09](technical/15-eda.md#tr-ed-09) | – |
+| [FR-ED-15](functional/15-eda.md#fr-ed-15) | Claude shows the EDA of a Resource | Implemented | – | [mcp-eda](../design/screens/mcp-eda.html) | [TR-ED-10](technical/15-eda.md#tr-ed-10) | – |
+| [FR-ED-16](functional/15-eda.md#fr-ed-16) | Claude runs an EDA-Probe as the User | Implemented | – | [mcp-eda](../design/screens/mcp-eda.html) | [TR-ED-10](technical/15-eda.md#tr-ed-10) | – |
+| [FR-ED-17](functional/15-eda.md#fr-ed-17) | Distribution of categories | Implemented | – | [eda-probe-categories](../design/screens/eda-probe-categories.html) | – | – |
+| [FR-ED-18](functional/15-eda.md#fr-ed-18) | Date range | Implemented | – | [eda-probe-daterange](../design/screens/eda-probe-daterange.html) | – | – |
+| [FR-ED-19](functional/15-eda.md#fr-ed-19) | Disguised nulls | Implemented | – | [eda-probe-disguised](../design/screens/eda-probe-disguised.html) | – | – |
+| [FR-ED-20](functional/15-eda.md#fr-ed-20) | Dig into what a result found | Implemented | – | [eda-dig](../design/screens/eda-dig.html) | [TR-ED-12](technical/15-eda.md#tr-ed-12) | – |
 
 ### [Learning](functional/16-learning.md)
 
@@ -778,6 +805,23 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [TR-CV-01](technical/14-conversations.md#tr-cv-01) | catalogue keeps every conversation, by its Subject | Implemented | [FR-CV-01](functional/14-conversations.md#fr-cv-01), [FR-CV-02](functional/14-conversations.md#fr-cv-02), [FR-CV-04](functional/14-conversations.md#fr-cv-04), [FR-CV-05](functional/14-conversations.md#fr-cv-05), [FR-CV-06](functional/14-conversations.md#fr-cv-06), [FR-CV-07](functional/14-conversations.md#fr-cv-07), [EC-CV-01](functional/14-conversations.md#ec-cv-01), [EC-CV-02](functional/14-conversations.md#ec-cv-02), [DEC-CV-04](functional/14-conversations.md#dec-cv-04), [DEC-CV-09](functional/14-conversations.md#dec-cv-09) | [c92b276](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c92b2768f0cf5debc75c2ef904884298fd11b42c) implements, 2026-10-29 |
 | [TR-CV-02](technical/14-conversations.md#tr-cv-02) | query tells catalogue about its Lenses, and the decisions on them | Implemented | [FR-CV-05](functional/14-conversations.md#fr-cv-05), [FR-CV-08](functional/14-conversations.md#fr-cv-08), [FR-LE-09](functional/09-lenses.md#fr-le-09), [FR-LE-10](functional/09-lenses.md#fr-le-10), [DEC-CV-06](functional/14-conversations.md#dec-cv-06), [DEC-PF-30](technical/00-platform.md#dec-pf-30), [DEC-UX-128](../design/principles.md#dec-ux-128) | [7ac425d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7ac425df72259094edf4e3a4ffb0d8cd629ca936) refs, 2026-10-29<br>[c92b276](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c92b2768f0cf5debc75c2ef904884298fd11b42c) implements, 2026-10-29 |
 | [TR-CV-03](technical/14-conversations.md#tr-cv-03) | The web app shows the Message Centre, the Messages on an object and a Message in context | Implemented | [FR-CV-02](functional/14-conversations.md#fr-cv-02), [FR-CV-06](functional/14-conversations.md#fr-cv-06), [FR-CV-07](functional/14-conversations.md#fr-cv-07), [FR-CV-09](functional/14-conversations.md#fr-cv-09), [DEC-UX-29](../design/principles.md#dec-ux-29), [DEC-UX-30](../design/principles.md#dec-ux-30) | [c92b276](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c92b2768f0cf5debc75c2ef904884298fd11b42c) implements, 2026-10-29 |
+
+### [EDA: technical requirements](technical/15-eda.md)
+
+| ID | Title | Status | Realises | Commits |
+| --- | --- | --- | --- | --- |
+| [TR-ED-01](technical/15-eda.md#tr-ed-01) | A service eda keeps the EDAs in its own schema | Implemented | [DEC-ED-26](functional/15-eda.md#dec-ed-26), [FR-ED-02](functional/15-eda.md#fr-ed-02), [FR-ED-06](functional/15-eda.md#fr-ed-06), [FR-ED-11](functional/15-eda.md#fr-ed-11) | – |
+| [TR-ED-02](technical/15-eda.md#tr-ed-02) | One catalogue of EDA-Probes, shared | Implemented | [FR-ED-05](functional/15-eda.md#fr-ed-05), [DEC-ED-11](functional/15-eda.md#dec-ed-11), [DEC-ED-12](functional/15-eda.md#dec-ed-12), [DEC-ED-17](functional/15-eda.md#dec-ed-17) | – |
+| [TR-ED-03](technical/15-eda.md#tr-ed-03) | eda writes the SQL of an EDA-Probe, which returns aggregates only | Implemented | [FR-ED-07](functional/15-eda.md#fr-ed-07), [FR-ED-08](functional/15-eda.md#fr-ed-08), [FR-ED-09](functional/15-eda.md#fr-ed-09), [FR-ED-10](functional/15-eda.md#fr-ed-10) | – |
+| [TR-ED-04](technical/15-eda.md#tr-ed-04) | query runs an EDA-Probe as the User | Implemented | [FR-ED-06](functional/15-eda.md#fr-ed-06), [DEC-ED-26](functional/15-eda.md#dec-ed-26), [DEC-SR-32](functional/04-stacks-and-resources.md#dec-sr-32) | – |
+| [TR-ED-05](technical/15-eda.md#tr-ed-05) | catalogue makes a Resource Explored when eda says so | Implemented | [FR-ED-12](functional/15-eda.md#fr-ed-12), [FR-MR-22](functional/06-maturity-and-release.md#fr-mr-22), [DEC-MR-21](functional/06-maturity-and-release.md#dec-mr-21) | – |
+| [TR-ED-06](technical/15-eda.md#tr-ed-06) | The Permission eda.use, on for Admin only | Implemented | [FR-ED-01](functional/15-eda.md#fr-ed-01), [DEC-PL-10](functional/12-permissions-and-library-cards.md#dec-pl-10), [DEC-ED-25](functional/15-eda.md#dec-ed-25) | – |
+| [TR-ED-07](technical/15-eda.md#tr-ed-07) | The web app has the section EDA | Implemented | [FR-ED-02](functional/15-eda.md#fr-ed-02), [FR-ED-03](functional/15-eda.md#fr-ed-03), [FR-ED-04](functional/15-eda.md#fr-ed-04), [FR-ED-06](functional/15-eda.md#fr-ed-06), [FR-ED-07](functional/15-eda.md#fr-ed-07), [FR-ED-08](functional/15-eda.md#fr-ed-08), [FR-ED-09](functional/15-eda.md#fr-ed-09), [FR-ED-10](functional/15-eda.md#fr-ed-10), [FR-ED-11](functional/15-eda.md#fr-ed-11), [DEC-UX-325](../design/principles.md#dec-ux-325) | – |
+| [TR-ED-08](technical/15-eda.md#tr-ed-08) | eda runs on Cloud Run, without access to data | Implemented | [DEC-ED-26](functional/15-eda.md#dec-ed-26), [DEC-ED-03](functional/15-eda.md#dec-ed-03) | – |
+| [TR-ED-09](technical/15-eda.md#tr-ed-09) | The web app has the list to add an EDA-Probe and the guide of an EDA | Implemented | [FR-ED-04](functional/15-eda.md#fr-ed-04), [FR-ED-13](functional/15-eda.md#fr-ed-13), [FR-ED-14](functional/15-eda.md#fr-ed-14), [DEC-UX-327](../design/principles.md#dec-ux-327), [DEC-UX-328](../design/principles.md#dec-ux-328) | – |
+| [TR-ED-10](technical/15-eda.md#tr-ed-10) | The MCP server reads and runs the EDA | Implemented | [FR-ED-15](functional/15-eda.md#fr-ed-15), [FR-ED-16](functional/15-eda.md#fr-ed-16), [DEC-ED-29](functional/15-eda.md#dec-ed-29), [DEC-UX-329](../design/principles.md#dec-ux-329) | – |
+| [TR-ED-11](technical/15-eda.md#tr-ed-11) | Every EDA-Probe runs on a selection of rows | Implemented | [TR-ED-03](technical/15-eda.md#tr-ed-03) | – |
+| [TR-ED-12](technical/15-eda.md#tr-ed-12) | eda digs into a selection against the rest | Implemented | [FR-ED-20](functional/15-eda.md#fr-ed-20), [DEC-ED-36](functional/15-eda.md#dec-ed-36) | – |
 
 ### [Learning: technical requirements](technical/16-learning.md)
 

@@ -559,6 +559,74 @@ describe.skipIf(!url)('Resources in Postgres', () => {
     expect((await resources.toComplete()).map((resource) => resource.id)).not.toContain(id);
   });
 
+  it('makes a Confirmed Resource Explored while its EDA-Setup is complete, keeps it so, and drops it to Confirmed when its EDA goes (TR-ED-05, DEC-MR-21, FR-MR-22, FR-MR-07)', async () => {
+    const run = (runId: string, extra: Partial<ExposedTable> = {}): ResourcesUpdate => ({
+      projectId: '7272',
+      projectName: 'explored',
+      runId,
+      generatedAt: '2026-11-21T06:00:00Z',
+      tables: [table('explored_leads', extra)],
+    });
+    await resources.apply(run('1'));
+    const collection = await collections.create({ name: 'Explored', description: 'Explored.', icon: 'globe', ownerUnit: DIGIKOM, visibility: 'private' }, dirk);
+    const { id } = (await resources.withoutCollection()).find((resource) => resource.name === 'explored_leads')!;
+    expect(await resources.add([{ id }], collection, dirk)).toEqual({ outcome: 'added', added: 1 });
+    const level = async () => (await resources.detail(id))!;
+    const dropped = () => database.db.selectFrom('messages').select('params').where('subjectId', '=', id).where('type', '=', 'MSG-RES-05').orderBy('createdAt').execute();
+    const levels = async () => (await resources.log(id, 50)).filter((entry) => ['RES-002', 'MAT-021'].includes(entry.logId)).map((entry) => [entry.logId, entry.params]);
+
+    // Below 3 · Confirmed it is kept, and nothing rises yet; never explored, it is never 4 (DEC-MR-21).
+    expect(await resources.explore(id, true)).toEqual({ outcome: 'done', explored: true, level: 2 });
+    expect(await resources.explore(id, false)).toEqual({ outcome: 'done', explored: false, level: 2 });
+    expect(await levels()).toEqual([['RES-002', { level: '2', reason: 'described' }]]);
+
+    // Confirmed, as its Publication leaves it; a new Current Version keeps it at 3 · Confirmed, not explored.
+    await database.db
+      .insertInto('resourceConfirmations')
+      .values({ resourceId: id, ownerId: 'u-an', ownerName: 'An', structure: 's', types: 't', descriptions: 'd', code: null, fields: '[]', declaration: null })
+      .execute();
+    await database.db.updateTable('resources').set({ level: 3, publishedAt: new Date(), publishedBy: 'An' }).where('id', '=', id).execute();
+    await resources.apply(run('2'));
+    expect(await level()).toMatchObject({ level: 3, explored: false });
+
+    // The EDA-Setup complete: 4 · Explored, in its Log (FR-ED-12). Said again, as after an EDA-Rerun, nothing changes.
+    expect(await resources.explore(id, true)).toEqual({ outcome: 'done', explored: true, level: 4 });
+    expect(await level()).toMatchObject({ level: 4, explored: true });
+    expect((await resources.log(id, 1))[0]).toMatchObject({ logId: 'RES-002', text: 'Maturity assessed at Level 4', params: { level: '4', reason: 'eda' } });
+    const logged = (await resources.log(id, 50)).length;
+    expect(await resources.explore(id, true)).toEqual({ outcome: 'done', explored: true, level: 4 });
+    expect(await resources.log(id, 50)).toHaveLength(logged);
+
+    // Whenever the Level is worked out again it stays 4: a new Current Version, a field added (FR-MR-22).
+    await resources.apply(run('3'));
+    await resources.apply(run('4', { columns: [...table('explored_leads').columns, { name: 'channel', position: 3, dataType: 'STRING', description: '' }] }));
+    expect((await level()).level).toBe(4);
+    // Without a description in dbt it drops to Available, as any Resource does; with it back, it is Explored again.
+    await resources.apply(run('5', { description: '' }));
+    expect(await level()).toMatchObject({ level: 1, explored: true });
+    expect(await dropped()).toEqual([{ params: { from: '4', to: '1', cause: 'description', published: 'yes' } }]);
+    await resources.apply(run('6'));
+    expect((await level()).level).toBe(4);
+
+    // Its EDA gone: back to 3 · Confirmed, with MAT-021 and the Message of a Level that drops, cause eda (MSG-RES-05).
+    expect(await resources.explore(id, false)).toEqual({ outcome: 'done', explored: false, level: 3 });
+    expect((await resources.log(id, 1))[0]).toMatchObject({ logId: 'MAT-021', params: { level: '3', reason: 'eda' } });
+    expect((await dropped()).at(-1)).toEqual({ params: { from: '4', to: '3', cause: 'eda', published: 'yes' } });
+    // Not explored, a new Current Version never makes it 4.
+    await resources.apply(run('7'));
+    expect(await level()).toMatchObject({ level: 3, explored: false });
+    expect(await levels()).toEqual([
+      ['MAT-021', { level: '3', reason: 'eda' }],
+      ['RES-002', { level: '4', reason: 'described' }],
+      ['MAT-021', { level: '1', reason: 'table-undescribed' }],
+      ['RES-002', { level: '4', reason: 'eda' }],
+      ['RES-002', { level: '2', reason: 'described' }],
+    ]);
+
+    expect(await resources.explore('00000000-0000-4000-8000-000000000000', true)).toEqual({ outcome: 'not_found' });
+    expect(await resources.explore('explored_leads', true)).toEqual({ outcome: 'not_found' });
+  });
+
   it('never lets a Log Entry of a Resource be changed or removed (FR-SR-11)', async () => {
     await expect(sql`update resource_log set log_id = 'RES-004'`.execute(database.db)).rejects.toThrow(/append-only/);
     await expect(sql`delete from resource_log`.execute(database.db)).rejects.toThrow(/append-only/);

@@ -12,7 +12,7 @@ export interface AppOptions {
   resource: string;
   /** Where MCP clients sign in: identity (TR-PF-06). */
   authorizationServer: string;
-  /** catalogue, query and the web app, which the tools ask and link to as the User. */
+  /** catalogue, query, eda and the web app, which the tools ask and link to as the User. */
   services: DataHubOptions;
   logger?: ServerOptions['logger'];
   /** uat or prod (DATAHUB_ENVIRONMENT): a Learning Card still in draft is offered in uat only (DEC-LR-25). */

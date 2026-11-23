@@ -72,7 +72,7 @@ Why: op 2 · Described zijn de keuzes die van het Data Team; je mag ze gebruiken
 - [ ] Iemand vond een fout in haar cijfers
 - [ ] Ze verhuisde naar een andere Collection
 
-Why: een Resource zakt als wegvalt waarop haar Level steunde: een beschrijving, haar EDA-document of haar laatste actieve check. Het Level zegt niets over of een cijfer fout is.
+Why: een Resource zakt als wegvalt waarop haar Level steunde: een beschrijving, haar EDA of haar laatste actieve check. Het Level zegt niets over of een cijfer fout is.
 
 ## Open een Collection en bekijk de Levels van haar Resources. Welk Level zegt je dat iemand van de business voor een Resource instaat?
 

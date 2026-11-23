@@ -279,6 +279,15 @@ describe.skipIf(!url)('the routes of Collections', () => {
             return 'datahub-identity@project.iam.gserviceaccount.com';
           },
         },
+        // eda says whether the EDA-Setup of a Resource is complete (TR-ED-05).
+        edaCallers: {
+          async verify(token) {
+            if (token !== 'eda-token') {
+              throw new TokenError('Service token rejected: ERR_JWS_INVALID');
+            }
+            return 'datahub-eda@project.iam.gserviceaccount.com';
+          },
+        },
       },
     });
   });
@@ -1080,6 +1089,36 @@ describe.skipIf(!url)('the routes of Collections', () => {
         'Deprecation taken away by An',
         'Marked deprecated by Dirk',
       ]);
+    });
+
+    it('hears from eda alone whether a Resource is explored: 3 · Confirmed becomes 4 · Explored, and back when its EDA goes (TR-ED-05, FR-ED-12)', async () => {
+      const dirk = await user('Dirk', [], 'admin');
+      const fromEda = (id: string, payload: unknown, token = 'eda-token') =>
+        app.inject({ method: 'POST', url: `/internal/resources/${id}/eda`, headers: { authorization: `Bearer ${token}` }, payload: payload as object });
+      await fromRegistry({ ...update('1', ['explored_visits']), projectId: '8181', tables: [{ ...update('1', ['explored_visits']).tables[0]!, description: 'Visits.' }] });
+      const { id } = (await dirk('GET', '/resources?collection=none')).json().resources.find((resource: { name: string }) => resource.name === 'explored_visits');
+      // As its Publication leaves it: Confirmed.
+      await database.db.updateTable('resources').set({ level: 3, publishedAt: new Date(), publishedBy: 'An' }).where('id', '=', id).execute();
+
+      // Only eda, with its Google ID token: not a User, not another service. Refused before the body is read.
+      expect((await fromEda(id, { explored: true }, 'registry-id-token')).statusCode).toBe(401);
+      expect((await dirk('POST', `/internal/resources/${id}/eda`, { explored: true })).statusCode).toBe(401);
+      expect((await fromEda(id, { explored: 'yes' })).statusCode).toBe(400);
+      expect((await fromEda(id, [])).statusCode).toBe(400);
+      expect((await fromEda('00000000-0000-4000-8000-000000000000', { explored: true })).statusCode).toBe(404);
+
+      const explored = await fromEda(id, { explored: true });
+      expect(explored.statusCode).toBe(200);
+      expect(explored.json()).toEqual({ explored: true, level: 4 });
+      expect((await dirk('GET', `/resources/${id}`)).json().resource).toMatchObject({ level: 4, explored: true });
+      expect((await dirk('GET', `/resources/${id}/log`)).json().entries[0]).toMatchObject({ logId: 'RES-002', text: 'Maturity assessed at Level 4', params: { level: '4', reason: 'eda' } });
+      // Said again, as after an EDA-Rerun, it lowers nothing (FR-MR-22).
+      expect((await fromEda(id, { explored: true })).json()).toEqual({ explored: true, level: 4 });
+
+      // Its EDA gone: back to 3 · Confirmed (FR-MR-07).
+      expect((await fromEda(id, { explored: false })).json()).toEqual({ explored: false, level: 3 });
+      expect((await dirk('GET', `/resources/${id}`)).json().resource).toMatchObject({ level: 3, explored: false });
+      expect((await dirk('GET', `/resources/${id}/log`)).json().entries[0]).toMatchObject({ logId: 'MAT-021', params: { level: '3', reason: 'eda' } });
     });
 
     it('finds the Collections and Resources the User sees by the words of a question (FR-CO-37, DEC-UX-127)', async () => {

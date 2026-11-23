@@ -30,6 +30,7 @@ Pointers to material this domain will build on, collected during the migration. 
 - <a id="dec-pl-06"></a>**DEC-PL-06** · Publishing stays the act of the Owner: a User publishes only a Resource of their Owner Units, in their own name, also in the Permission group Admin. *Decided on 2026-11-06, by Max: "owner only".*
 - <a id="dec-pl-08"></a>**DEC-PL-08** · Taking a Resource out of its Collection is a Permission of its own, `resources.remove`, apart from `resources.assign`: for their Owner Units it holds only while the Resource is not published; with every Resource as its reach, published or not. Admin has it for every Resource, Business analyst for their Owner Units, Lens user not. Existing Permission groups get it as `resources.assign` and `resources.publish` say: every with the first, their Owner Units with only the second, else not. *Decided on 2026-11-12, by Max: a Permission of its own rather than following who may publish ([FR-CO-43](03-collections.md#fr-co-43)); its values and defaults proposed the same day, and approved by Max: "the designs are okay, you may start building them".*
 - <a id="dec-pl-09"></a>**DEC-PL-09** · Querying tables outside Data Hub is a Permission of its own, `queries.outside`, for power users ([DEC-SR-46](04-stacks-and-resources.md#dec-sr-46)): only Admin has it to start; Business analyst and Lens user do not. A group of power users is a Permission group made in Admin, with this Permission on. *Decided on 2026-11-13, by Max.*
+- <a id="dec-pl-10"></a>**DEC-PL-10** · Exploring Resources is a Permission of its own, `eda.use`, for the EDA ([DEC-ED-25](15-eda.md#dec-ed-25)): only Admin has it to start; Business analyst and Lens user do not, until the EDA is opened up to business. *Decided on 2026-11-21, by Max.*
 - <a id="dec-pl-07"></a>**DEC-PL-07** · Three Permission groups to start with. **Admin:** the Data Admins of today, every Permission at its widest, locked. **Business analyst:** what every other User can do today. **Lens user:** only Lenses: they find and run them, write Questions and Signals but no Remarks, reply to no Messages of others, take a result to Excel, and see a result of Claude in a card only. Lens user is the default for new Users; at the start, the members of `datahub-datateam@` get Admin and every other User Business analyst, so that nothing changes for anyone. *Decided on 2026-11-06, by Max: "admin (data-admin today), business-analist (what is currently available …) and a new user role with only lens usage"; on the default, "ok"; on the Lens user, "correct".*
 
 ## Requirements
@@ -207,6 +208,14 @@ Who sees a Lens runs it, with its Parameters, on its page, in Claude and in Exce
 | --- | --- | --- | --- | --- | --- | --- |
 | `lenses.make` | Make a query a Lens, in a Collection of their Owner Units ([DEC-CO-20](03-collections.md#dec-co-20)), and send a large one to the Data Team | – | Who made the query | yes | yes | no |
 | `lenses.manage` | Change, update and delete a Lens | Which (choice): those in the Collections of their Owner Units, or every Lens | The Owner Unit of its Collection and the Data Team ([DEC-LE-21](09-lenses.md#dec-le-21)) | every | their Owner Units | no |
+
+### EDA
+
+*Added on 2026-11-21, with the first build of the [EDA](15-eda.md) ([DEC-PL-10](#dec-pl-10)).*
+
+| Key | Permission: what it allows | Values | Today | Admin | Business analyst | Lens user |
+| --- | --- | --- | --- | --- | --- | --- |
+| `eda.use` | Explore Resources: see the section EDA, start the EDA of a Resource they see at 3 · Confirmed or above, and add, run and read its EDA-Probes ([FR-ED-01](15-eda.md#fr-ed-01)) | – | Nobody | yes | no | no |
 
 ### Monitoring
 
