@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<!--
+  Screen: Applications, a tool of Admin, the section of the Data Team (a proposal of 2026-11-23, OP-UX-130)
+  Every Application of this environment of Data Hub, in one table, so that the Data Team sees at a glance what reads
+  data from outside and can stop it: its name and owner at IT, its Dock, whether it is internal or external and who
+  reads (its user pool, no users, or colleagues signed in at IT), its state, its last question, its errors of the last
+  day per cause, and its key; the last question newest on top. Late and Held are no errors: the last good delivery is served (DEC-AP-10). Admin gets a
+  third tool, Applications, after Excel keys; its panel counts the Applications.
+  The Data Team revokes a key at once, for example after a key seen where it should not be, as it revokes an Excel key
+  (admin-keys): it asks to confirm in the place of the row, and the Owner Unit of its Dock and its owner at IT get a
+  Message that it did. A revoked key stays, struck through, with when and by whom. An Application without a key yet,
+  waiting for consent, has nothing to revoke. The search finds an Application, a Dock or an owner at IT; the filter
+  shows all, those waiting for consent, those with errors in the last day, or those whose key is revoked.
+  The example is prod, where the Applications read: Admin names the environment in its head, as every tool of Admin.
+  The switch at the bottom shows the list, revoking and revoked: ?aapps=list, ?aapps=revoking, ?aapps=revoked; the
+  filter opens with ?aafilter=all, ?aafilter=waiting, ?aafilter=errors, ?aafilter=revoked.
+  Requirements: FR-AP-22, FR-AP-23, FR-AP-30, FR-AP-39
+  Decisions: DEC-DH-85, DEC-AP-01, DEC-AP-04, DEC-AP-06, DEC-AP-08, DEC-AP-10, DEC-UX-130, DEC-DH-79.
+  Open points: OP-UX-130, OP-UX-120, OP-AP-04, OP-AP-11.
+  Related screens: admin-keys.html (the same pattern, for Excel keys), application.html (a row opens it, with its key and errors per cause), dock.html, docks-start.html.
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="datateam">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Admin · Applications</title>
+<style>
+  /* The table keeps its columns and scrolls in its own box when the window is narrow. */
+  .aa-scroll { overflow-x: auto; }
+  .aa-table { min-width: 860px; }
+  .aa-table td .meta { display: block; line-height: 1.45; margin-top: 1px; }
+  .aa-table td:first-child { min-width: 170px; }
+  .aa-table th { white-space: nowrap; }
+  .aa-table .name-cell > span { white-space: nowrap; }
+  .aa-err { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+  .aa-err i { font-size: 14px; }
+  /* Below 760 pixels the panel folds away, as if collapsed, so that the main area keeps its width (DEC-UX-91 leaves
+     small windows out; the prototype still reads there). */
+  @media (max-width: 760px) {
+    .aa-app { padding: 10px 10px 10px 2px; gap: 6px; }
+    .aa-app .panel { width: 0; padding-left: 0; padding-right: 0; opacity: 0; }
+    .aa-app .nav-btn.active { border-radius: var(--radius-nav-icon); }
+    .aa-app .nav-btn.active::after, .aa-app .flare { display: none; }
+    .aa-app .main { padding: 18px 14px; }
+    .aa-table .key-confirm-row { position: sticky; left: 0; max-width: calc(100vw - 140px); }
+    .aa-switch { left: 8px; right: 8px; bottom: 10px; flex-wrap: wrap; border-radius: var(--radius-md); }
+  }
+</style>
+</head>
+<body>
+<div class="app panel-open aa-app">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <a class="nav-btn" href="collections-start.html" data-label="Collections" aria-label="Collections"><i class="ph-fill ph-stack"></i></a>
+  <a class="nav-btn" href="query.html" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></a>
+  <a class="nav-btn" href="docks-start.html" data-label="Docks" aria-label="Docks, where Applications read data"><i class="ph-fill ph-plugs-connected"></i></a>
+  <a class="nav-btn" href="#" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <a class="nav-btn nav-admin active" href="admin-applications.html" data-label="Admin" aria-label="Admin, for the Data Team" aria-current="page" data-for="datateam"><i class="ph-fill ph-toolbox"></i><span class="flare top"></span><span class="flare bottom"></span></a>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">MP</a>
+</nav>
+<aside class="panel" aria-label="Admin">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:4px">
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Admin</h1>
+   <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
+  </div>
+  <p class="meta" style="display:block;line-height:1.5;margin:10px 4px 14px">For the Data Team: what feeds Data Hub prod, and who reaches it from outside.</p>
+  <a class="mc-filter" href="admin-webhooks.html"><i class="ph ph-webhooks-logo"></i><span>Webhooks</span><span class="count" title="Deliveries to look at: refused, or failed">2</span></a>
+  <a class="mc-filter" href="admin-keys.html"><i class="ph ph-key"></i><span>Excel keys</span><span class="count" title="Active keys">14</span></a>
+  <a class="mc-filter on" href="admin-applications.html" aria-current="page"><i class="ph ph-app-window"></i><span>Applications</span><span class="count" title="Applications">4</span></a>
+  <a class="mc-filter" href="admin-users.html"><i class="ph ph-users"></i><span>Users</span><span class="count" title="Users">47</span></a>
+  <a class="mc-filter" href="admin-permission-groups.html"><i class="ph ph-shield-check"></i><span>Permission groups</span><span class="count" title="Permission groups">4</span></a>
+  <a class="mc-filter" href="admin-withdrawn.html"><i class="ph ph-archive"></i><span>Withdrawn</span><span class="count" title="Resources dbt withdrew">6</span></a>
+ </div>
+</aside>
+<main class="main">
+<div class="breadcrumb">Admin</div>
+<div style="display:flex;align-items:flex-end;gap:12px;margin-top:8px;flex-wrap:wrap">
+ <div style="flex:1;min-width:260px"><h1 class="page-title">Applications</h1>
+ <p class="meta" style="display:block;margin-top:4px;line-height:1.5;max-width:720px">Every Application of Data Hub prod: what reads data through a Feed, and with which key. Revoke a key at once when it should stop, such as a key seen where it should not be: its Application gets "Not allowed" from then on, and the Owner Unit of its Dock gets a Message that you did.</p></div>
+ <span class="status"><i class="ph-fill ph-cloud"></i>Data Hub prod</span>
+</div>
+<div style="display:flex;align-items:center;gap:10px;margin:18px 0 12px;flex-wrap:wrap">
+ <label class="search card" style="flex:1;min-width:220px;max-width:420px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input placeholder="Search an Application, a Dock or an owner at IT"></label>
+ <div data-group="aafilter" role="tablist" aria-label="Which Applications" style="display:inline-flex;gap:2px;flex-wrap:wrap">
+  <button class="seg on" data-target="all" role="tab" aria-selected="true">All <span class="count">4</span></button>
+  <button class="seg" data-target="waiting" role="tab" aria-selected="false">Waiting for consent <span class="count">1</span></button>
+  <button class="seg" data-target="errors" role="tab" aria-selected="false">With errors <span class="count">1</span></button>
+  <button class="seg" data-target="revoked" role="tab" aria-selected="false">Revoked <span class="count" data-pane-group="aapps" data-pane="list revoking">0</span><span class="count" data-pane-group="aapps" data-pane="revoked" hidden>1</span></button>
+ </div>
+</div>
+<div class="table-card">
+ <div class="aa-scroll">
+ <table class="aa-table">
+ <thead><tr><th>Application</th><th>Dock</th><th>Who reads</th><th>State</th><th>Last question</th><th>Errors, last day</th><th>Key</th><th></th></tr></thead>
+ <tbody data-pane-group="aafilter" data-pane="all errors">
+  <tr><td><a class="name-cell" href="application.html"><i class="ph ph-app-window kind-icon" aria-hidden="true"></i><span>Agents' portal<span class="meta" style="font-weight:400">Jonas Peeters, IT</span></span></a></td>
+   <td class="nowrap">Agents' portal</td>
+   <td>External<span class="meta">user pool Agencies</span></td>
+   <td><span class="app-state held">Held</span><span class="meta">1 of its 2 Feeds, since 22 Nov</span></td>
+   <td class="nowrap">today, 21:31</td>
+   <td><span class="aa-err warn"><i class="ph ph-prohibit" aria-hidden="true"></i>7 Not allowed</span><span class="meta">a token of the pool Website users · of 5,930 questions</span></td>
+   <td class="nowrap"><span class="name-cell" style="font-weight:400"><i class="ph ph-key kind-icon" aria-hidden="true"></i><span>made 4 Nov 2026</span></span></td>
+   <td style="text-align:right"><button class="btn-quiet outline">Revoke</button></td></tr>
+ </tbody>
+ <tbody data-pane-group="aafilter" data-pane="all">
+  <tr data-pane-group="aapps" data-pane="list"><td><a class="name-cell" href="application.html"><i class="ph ph-app-window kind-icon" aria-hidden="true"></i><span>CS cockpit<span class="meta" style="font-weight:400">Jonas Peeters, IT</span></span></a></td>
+   <td>Customer success tools</td>
+   <td>Internal<span class="meta">colleagues, signed in at IT</span></td>
+   <td><span class="app-state ok">Up to date</span><span class="meta">live</span></td>
+   <td class="nowrap">today, 17:12</td>
+   <td><span class="muted">None</span><span class="meta">of 214 questions</span></td>
+   <td class="nowrap"><span class="name-cell" style="font-weight:400"><i class="ph ph-key kind-icon" aria-hidden="true"></i><span>made 13 Nov 2026</span></span></td>
+   <td style="text-align:right"><button class="btn-quiet outline" data-go="aapps:revoking">Revoke</button></td></tr>
+  <tr data-pane-group="aapps" data-pane="revoking" hidden class="key-confirm"><td colspan="8"><span class="key-confirm-row" style="flex-wrap:wrap"><i class="ph-fill ph-warning"></i><span style="flex:1;min-width:240px"><b>Revoke the key of CS cockpit?</b> Every question with it gets "Not allowed" at once, and Customer success, the Owner Unit of its Dock, and Jonas Peeters, its owner at IT, get a Message that you did. This cannot be undone: CS cockpit reads again only with a new key, made on its page.</span><button class="btn-quiet outline" data-go="aapps:list">Cancel</button><button class="btn-primary danger" data-go="aapps:revoked">Revoke</button></span></td></tr>
+ </tbody>
+ <tbody data-pane-group="aafilter" data-pane="all revoked">
+  <tr data-pane-group="aapps" data-pane="revoked" hidden class="key-revoked"><td><span class="name-cell"><i class="ph ph-app-window kind-icon" aria-hidden="true"></i><span>CS cockpit</span></span><span class="meta">Jonas Peeters, IT</span></td>
+   <td>Customer success tools</td>
+   <td>Internal<span class="meta">colleagues, signed in at IT</span></td>
+   <td><span class="app-state ok">Up to date</span><span class="meta">live</span></td>
+   <td class="nowrap">today, 17:12</td>
+   <td>None<span class="meta">of 214 questions</span></td>
+   <td class="muted">revoked today by you</td>
+   <td></td></tr>
+ </tbody>
+ <tbody data-pane-group="aafilter" data-pane="all">
+  <tr><td><a class="name-cell" href="application.html"><i class="ph ph-app-window kind-icon" aria-hidden="true"></i><span>SEO pages<span class="meta" style="font-weight:400">Jonas Peeters, IT</span></span></a></td>
+   <td class="nowrap">Website</td>
+   <td>External<span class="meta">no users</span></td>
+   <td><span class="app-state ok">Up to date</span></td>
+   <td class="nowrap">today, 06:58</td>
+   <td><span class="muted">None</span><span class="meta">of 38,412 questions</span></td>
+   <td class="nowrap"><span class="name-cell" style="font-weight:400"><i class="ph ph-key kind-icon" aria-hidden="true"></i><span>made 10 Nov 2026</span></span></td>
+   <td style="text-align:right"><button class="btn-quiet outline">Revoke</button></td></tr>
+ </tbody>
+ <tbody data-pane-group="aafilter" data-pane="all waiting">
+  <tr><td><a class="name-cell" href="application.html"><i class="ph ph-app-window kind-icon" aria-hidden="true"></i><span>Search result pages<span class="meta" style="font-weight:400">Jonas Peeters, IT</span></span></a></td>
+   <td class="nowrap">Website</td>
+   <td>External<span class="meta">no users</span></td>
+   <td><span class="app-state waiting">Waiting for consent</span><span class="meta">the Listings team, asked 20 Nov</span></td>
+   <td class="muted nowrap">never</td>
+   <td class="muted">–</td>
+   <td><span class="muted">none yet</span><span class="meta">made once every Owner said yes</span></td>
+   <td></td></tr>
+ </tbody>
+ <tbody data-pane-group="aafilter" data-pane="revoked" hidden>
+  <tr data-pane-group="aapps" data-pane="list revoking"><td colspan="8" class="muted" style="padding:18px 10px">No key of an Application is revoked.</td></tr>
+ </tbody>
+ </table>
+ </div>
+ <p class="meta" style="display:block;padding:8px 10px 2px;line-height:1.5">An Application gets its key once one of its Feeds has the yes of every Owner under it; the key is shown once, on its page. Late and Held are no errors: the last good delivery is served, with its date in the answer. Errors are cut off by an Owner, not allowed (a revoked key, a token of another user pool, a Feed not consented), and Data Hub unavailable.</p>
+</div>
+<div style="height:60px"></div>
+</main>
+</div>
+<div class="proto-switch aa-switch" data-group="aapps" role="tablist" aria-label="Prototype: revoking a key">Keys of Applications
+ <button class="seg on" data-target="list" role="tab" aria-selected="true">The list</button>
+ <button class="seg" data-target="revoking" role="tab" aria-selected="false">Revoking</button>
+ <button class="seg" data-target="revoked" role="tab" aria-selected="false">Revoked</button>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

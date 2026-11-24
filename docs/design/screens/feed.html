@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<!--
+  Screen: the page of a Feed (OP-UX-124)
+  Opens from a Feed in the panel of Docks, or from the table of its Dock; its Dock unfolds in the panel and the Feed is
+  marked as open. A Feed is what an Application may read: made from a Query by its Owner Unit, in a Dock (DEC-AP-02),
+  read on the rights of that Owner Unit, never of a person (DEC-AP-07). Built as the page of a Lens and of a Resource:
+  - Head: the icon of a Feed, its name, which its Owner Unit changes with a click on it, and what it is for; then a
+    status row with its Level, the lowest of its Resources (as a Lens has its own, DEC-DH-72), its Dock, its Owner Unit,
+    how it is delivered, and the Edition shown, with a switch between its Editions (DEC-AP-14). "New Edition", for its
+    Owner Unit only, opens feed-edition-new.html: an Edition never changes, so a change is a new one (OP-AP-03).
+  - A line under the head when it is not Up to date: Late (the last run did not succeed; the last good delivery is
+    served, with its date), Held (a Rule of an Owner fired, OP-AP-12) or Cut off (an Owner or Quarantine stopped it; the
+    Applications get an error), each in its colour (DEC-AP-10, DEC-AP-13). Late and Held are no errors.
+  - Overview: its state now and its last delivery, with how many values the Minimum Volume left empty (DEC-AP-12,
+    OP-AP-02); the deliveries of the last two weeks as a strip of days; the Applications that read it, on which Edition;
+    and, per Owner of each Resource under it, their answer for each Application (DEC-AP-04), with the way to withdraw
+    on their Resource (DEC-AP-05).
+  - Fields: frozen per Edition, each with its type and description, the search keys marked (at most three), the field
+    that counts the observations behind each aggregated field, and the Minimum Volume, never below 5.
+  - Query: its SQL, read only, as Query shows SQL (DEC-UX-70): what it reads and on whose rights. Everyone who sees the
+    Feed sees it: what leaves Immoscoop is never hidden.
+  - Log: every delivery, hold, consent, key and Edition, newest first.
+  The switches at the bottom: the Feed "Price statistics per area" Up to date, ?state=late or ?state=cutoff; ?feed=held,
+  the Feed "Agency performance per month" of the Agents' portal, held by a Rule of Sales on Leads per agency;
+  ?role=owner (its Owner Unit) or ?role=colleague. In the page: ?tab=fields, ?tab=query, ?tab=log; ?edition=1 shows
+  the Fields and Query of Edition 1, which ended on 9 Nov 2026.
+  Requirements: FR-AP-09, FR-AP-10, FR-AP-11, FR-AP-13, FR-AP-14, FR-AP-15, FR-AP-16, FR-AP-17, FR-AP-27, FR-AP-28, FR-AP-29, FR-AP-31, FR-AP-32, FR-AP-37, EC-AP-01, EC-AP-06
+  Decisions: DEC-AP-02, DEC-AP-04, DEC-AP-05, DEC-AP-07, DEC-AP-08, DEC-AP-09, DEC-AP-10, DEC-AP-12, DEC-AP-13, DEC-AP-14, DEC-AP-17, DEC-AP-18, DEC-DH-72, DEC-UX-26, DEC-UX-70, DEC-UX-162.
+  Open points: OP-UX-120, OP-UX-124, OP-AP-02, OP-AP-03, OP-AP-07, OP-AP-11, OP-AP-12.
+  Related screens: dock.html (its Dock), feed-edition-new.html (New Edition), application.html (an Application that reads it), resource-applications.html (where a Resource goes, withdrawing), lens.html and resource-overview.html (the patterns).
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="owner">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Price statistics per area</title>
+<style>
+/* The state of a Feed in the panel of Docks, when it is not Up to date (the shared shell of Applications) */
+.panel .state-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; margin-right: 6px; }
+.panel .state-dot.late, .panel .state-dot.held { background: var(--signal-warn); }
+.panel .state-dot.cutoff { background: var(--signal-urgent); }
+
+/* Head */
+.fe-top { display: flex; align-items: flex-start; gap: 12px; margin-top: 8px; }
+.fe-lead { margin: 6px 0 0; color: var(--text-secondary); font-size: var(--text-small); line-height: 1.5; max-width: 680px; }
+.breadcrumb a { color: inherit; text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; text-underline-offset: 3px; }
+a.status { text-decoration: none; }
+a.status:hover { color: var(--text-primary); }
+.fe-editions { display: inline-flex; align-items: center; gap: 2px; padding: 2px 3px 2px 10px; border-radius: var(--radius-pill); background: var(--card); font-size: var(--text-meta); color: var(--text-secondary); }
+.fe-editions .seg { font-size: var(--text-meta); padding: 3px 9px; }
+.fe-editions .seg.on { background: var(--tint-active); }
+.alert.fe-quiet { background: var(--card); }
+.alert.fe-quiet > i { color: var(--text-secondary); }
+.alert b { font-weight: var(--weight-medium); }
+
+/* Overview */
+.fe-ov .about-tile > p { margin: 8px 0 0; }
+.fe-ov .about-tile b { font-weight: var(--weight-medium); }
+.fe-now { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.fe-now .app-state { font-size: var(--text-small); padding: 4px 11px; }
+.fe-strip { margin-top: 4px; }
+.fe-days { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 3px; margin-top: 5px; font-size: 10px; color: var(--text-muted); text-align: center; }
+.fe-days .today { color: var(--text-primary); font-weight: var(--weight-medium); }
+.fe-sw-late { background: color-mix(in srgb, var(--signal-warn) 55%, transparent); }
+.fe-sw-cut { background: color-mix(in srgb, var(--signal-urgent) 60%, transparent); }
+.fe-sw-none { border: 1px dashed var(--tint-active); box-sizing: border-box; }
+.fe-scroll { overflow-x: auto; }
+.fe-scroll table { min-width: 560px; }
+.fe-ov table td, .fe-ov table th { background: transparent; }
+.fe-sub { display: block; font-size: var(--text-meta); color: var(--text-muted); margin-top: 2px; font-weight: var(--weight-regular); }
+.fe-ans { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.fe-ans i { font-size: 15px; }
+.fe-ans.yes i { color: var(--text-secondary); }
+.fe-ans.wait { color: var(--text-secondary); }
+.fe-ans.wait i { color: var(--text-muted); }
+.fe-ov .binding-rule { margin-top: 8px; background: var(--card); }
+.fe-ov .binding-rule p { margin: 0; }
+
+/* Fields */
+.fe-fields-top { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 12px; align-items: start; margin-bottom: 14px; }
+.fe-mv-n { font-size: 24px; font-weight: var(--weight-medium); letter-spacing: -.3px; }
+.fe-mv-n span { font-size: var(--text-small); font-weight: var(--weight-regular); color: var(--text-muted); letter-spacing: 0; }
+.fe-frozen { display: flex; gap: 10px; align-items: flex-start; font-size: var(--text-small); line-height: 1.55; color: var(--text-secondary); padding: 6px 4px; }
+.fe-frozen > i { font-size: 18px; margin-top: 1px; }
+.fe-frozen p { margin: 0 0 6px; }
+.fe-role { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; }
+.fe-role .pill { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.fe-fields td:first-child { white-space: nowrap; }
+.fe-fields .fe-from { font-size: var(--text-meta); color: var(--text-muted); }
+
+/* Query */
+.fe-q-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 2px 2px 12px; }
+.fe-q-top .label { margin: 0; }
+.fe-q-top .scope-chip { padding-right: 10px; cursor: default; }
+.fe-q-note { display: flex; gap: 8px; align-items: center; font-size: var(--text-small); color: var(--text-secondary); margin: 0 2px 12px; flex-wrap: wrap; }
+.fe-q-note i { font-size: 16px; }
+.fe-sql .sql-editor { overflow-x: auto; }
+
+/* Log */
+.fe-log-row { display: grid; grid-template-columns: 108px 104px minmax(0, 1fr); gap: 12px; align-items: start; padding: 9px 4px; border-top: 1px solid var(--tint-active); font-size: var(--text-small); line-height: 1.5; }
+.fe-log-row:first-child { border-top: 0; }
+.fe-log-row p { margin: 0; max-width: 780px; }
+.fe-log-when { color: var(--text-muted); white-space: nowrap; }
+.fe-log-kind { display: inline-flex; align-items: center; gap: 6px; color: var(--text-secondary); white-space: nowrap; }
+.fe-log-kind i { font-size: 15px; }
+.fe-log-kind.warn, .fe-log-kind.warn i { color: var(--signal-warn); }
+.fe-log-kind.urgent, .fe-log-kind.urgent i { color: var(--signal-urgent); }
+
+/* The prototype switches, stacked in one corner */
+.fe-switches { position: fixed; right: 34px; bottom: 26px; z-index: 20; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.fe-switches > .proto-switch, .fe-switches > .role-switch { position: static; }
+
+@media (max-width: 900px) {
+  .fe-app .about-grid, .fe-fields-top { grid-template-columns: minmax(0, 1fr); }
+  .fe-app .about-tile[style*="grid-column"] { grid-column: auto !important; }
+}
+@media (max-width: 760px) {
+  .fe-app { padding: 10px; gap: 8px; }
+  .fe-app .main { padding: 20px 16px; }
+  .fe-top { flex-wrap: wrap; }
+  .fe-top > div:first-child { flex-basis: 100%; }
+  .fe-app .tabs { padding: 0 8px; }
+  .fe-app .tab { padding: 9px 12px 10px; }
+  .fe-app .tab-content { padding: 10px; }
+  .fe-log-row { grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; }
+  .fe-log-row p { grid-column: 1 / -1; }
+  .fe-log-when { grid-row: 1; grid-column: 2; }
+  .fe-app .alert { flex-wrap: wrap; }
+  .fe-app .alert p { flex-basis: calc(100% - 40px); }
+  .fe-switches { left: 10px; right: 10px; bottom: 10px; align-items: stretch; }
+  .fe-switches > * { flex-wrap: wrap; border-radius: 16px; }
+}
+</style>
+</head>
+<body>
+<div class="app panel-open fe-app">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <a class="nav-btn" href="collections-start.html" data-label="Collections" aria-label="Collections"><i class="ph-fill ph-stack"></i></a>
+  <a class="nav-btn" href="query.html" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></a>
+  <a class="nav-btn active" href="docks-start.html" data-label="Docks" aria-label="Docks, where Applications read data" aria-current="page"><i class="ph-fill ph-plugs-connected"></i><span class="flare top"></span><span class="flare bottom"></span></a>
+  <a class="nav-btn" href="#" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <a class="nav-btn nav-admin" href="admin-webhooks.html" data-label="Admin" aria-label="Admin, for the Data Team" data-for="datateam"><i class="ph-fill ph-toolbox"></i></a>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">MP</a>
+</nav>
+<!-- The panel of Docks: the Dock of the Feed unfolds, and the Feed is marked as open (the script below follows the switch). -->
+<aside class="panel" aria-label="Docks">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:4px">
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Docks</h1>
+   <button class="icon-btn" aria-label="New Dock"><i class="ph-fill ph-plus-circle"></i></button>
+   <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
+  </div>
+  <label class="search card" style="margin:16px 0 4px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search Feeds and Applications"></label>
+  <div class="tree-group card open" data-dock-tree="prices">
+   <div class="tree-head"><a class="tree-link" href="dock.html"><span class="item-icon"><i class="ph ph-globe-hemisphere-west"></i></span><span class="tree-name"><span class="item-title">Website</span><span class="meta">2 Feeds · 2 Applications</span></span></a><button class="tree-toggle" aria-expanded="true" aria-label="Show what Website holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res current" aria-current="page" href="feed.html" data-feed-item="prices"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span class="tree-res-name"><span class="clip" title="Price statistics per area">Price statistics per area</span></span><span class="maturity" data-level="4" data-pane-group="state" data-pane="ok"></span><span class="state-dot late" role="img" aria-label="Late" title="Late since today, 06:40" data-pane-group="state" data-pane="late" hidden></span><span class="state-dot cutoff" role="img" aria-label="Cut off" title="Cut off since today, 06:41" data-pane-group="state" data-pane="cutoff" hidden></span></a>
+     <a class="tree-res" href="feed.html"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span class="tree-res-name"><span class="clip" title="Listing counts per municipality">Listing counts per municipality</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="application.html"><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span class="tree-res-name"><span class="clip" title="SEO pages">SEO pages</span></span></a>
+     <a class="tree-res" href="application.html"><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span class="tree-res-name"><span class="clip" title="Search result pages · waiting for consent">Search result pages</span></span></a>
+   </div>
+  </div>
+  <div class="tree-group card" data-dock-tree="held">
+   <div class="tree-head"><a class="tree-link" href="dock.html?dock=portal"><span class="item-icon"><i class="ph ph-handshake"></i></span><span class="tree-name"><span class="item-title">Agents' portal</span><span class="meta">2 Feeds · 1 Application</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Agents' portal holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="feed.html?feed=held" data-feed-item="held"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span class="tree-res-name"><span class="clip" title="Agency performance per month · Held since 22 Nov">Agency performance per month</span></span><span class="state-dot held" role="img" aria-label="Held" title="Held since 22 Nov, 07:10"></span></a>
+     <a class="tree-res" href="feed.html"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span class="tree-res-name"><span class="clip" title="Leads per agency per week">Leads per agency per week</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="application.html"><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span class="tree-res-name"><span class="clip" title="Agents' portal">Agents' portal</span></span></a>
+   </div>
+  </div>
+  <div class="tree-group card">
+   <div class="tree-head"><a class="tree-link" href="dock.html"><span class="item-icon"><i class="ph ph-lifebuoy"></i></span><span class="tree-name"><span class="item-title">Customer success tools</span><span class="meta">1 Feed · 1 Application</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Customer success tools holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="feed.html"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span class="tree-res-name"><span class="clip" title="Agency health score, live">Agency health score</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="application.html"><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span class="tree-res-name"><span class="clip" title="CS cockpit">CS cockpit</span></span></a>
+   </div>
+  </div>
+  <p id="no-results" class="meta" style="padding:8px 4px" hidden>Nothing matches your search.</p>
+ </div>
+</aside>
+<main class="main">
+
+<!-- ───────────── Head: Price statistics per area, of Website team ───────────── -->
+<div data-pane-group="feed" data-pane="prices">
+ <div class="breadcrumb"><a href="docks-start.html">Docks</a> / <a href="dock.html">Website</a></div>
+ <div class="fe-top">
+  <div style="flex:1;min-width:0">
+   <h1 class="page-title" style="display:flex;align-items:center;gap:10px"><i class="ph ph-rss-simple" style="font-size:24px;color:var(--text-secondary)" aria-hidden="true"></i><span class="in-place" data-for="owner" title="Click to change its name">Price statistics per area</span><span data-for="colleague datateam">Price statistics per area</span></h1>
+   <p class="fe-lead">The prices of sales per street and per municipality, per month and type of property: the structured data of the SEO pages, the same figures on every kind of page.</p>
+  </div>
+  <a class="btn-primary" data-for="owner" href="feed-edition-new.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" title="An Edition never changes: a change of the query, its fields, search keys or Minimum Volume is a new Edition"><i class="ph ph-plus"></i>New Edition</a>
+ </div>
+ <div class="status-row">
+  <span class="status" title="The lowest Level of its Resources: Sales prices 4 · Explored, Streets and municipalities 5 · Monitored"><span class="maturity" data-level="4" data-no-tooltip></span>4 · Explored</span>
+  <a class="status" href="dock.html"><i class="ph-fill ph-plugs-connected"></i>Dock: Website</a>
+  <span class="status"><i class="ph-fill ph-users-three"></i>Owner: Website team</span>
+  <span class="status"><i class="ph-fill ph-arrows-clockwise"></i>Prepared · daily, after dbt-prod</span>
+  <span class="fe-editions" data-group="edition" role="tablist" aria-label="The Edition shown">Edition<button class="seg on" data-target="2" role="tab" aria-selected="true">2 · live</button><button class="seg" data-target="1" role="tab" aria-selected="false">1 · ended</button></span>
+ </div>
+ <div class="alert fe-quiet" data-pane-group="edition" data-pane="1" hidden role="status"><i class="ph-fill ph-clock-counter-clockwise"></i><p><b>You see Edition 1.</b> It ended on 9 Nov 2026, when Edition 2 went live and no Application read it any more. It is kept as it was, and no longer delivered.</p><button class="alert-btn" type="button" data-go="edition:2">Show Edition 2</button></div>
+ <div class="alert" data-pane-group="state" data-pane="late" hidden role="status"><i class="ph-fill ph-clock-countdown"></i><p><b>Late since today at 06:40.</b> The run of dbt-prod failed, so nothing new was delivered. SEO pages gets the delivery of 22 Nov, with its date in every answer: late is no error. The next run that succeeds delivers again; the Data Team sees the failed run.</p></div>
+ <div class="alert urgent" data-pane-group="state" data-pane="cutoff" hidden role="status"><i class="ph-fill ph-prohibit" style="color:var(--signal-urgent)"></i><p><b>Cut off since today at 06:41.</b> A Rule of Listings team on Sales prices fired after the run of dbt-prod and put Sales prices in Quarantine. Every Application of this Feed gets an error, "Cut off by an Owner", and nothing is served until Listings team lifts it.</p><a class="alert-btn" href="resource-messages.html">Messages on Sales prices</a></div>
+</div>
+
+<!-- ───────────── Head: Agency performance per month, of Agency success (?feed=held) ───────────── -->
+<div data-pane-group="feed" data-pane="held" hidden>
+ <div class="breadcrumb"><a href="docks-start.html">Docks</a> / <a href="dock.html?dock=portal">Agents' portal</a></div>
+ <div class="fe-top">
+  <div style="flex:1;min-width:0">
+   <h1 class="page-title" style="display:flex;align-items:center;gap:10px"><i class="ph ph-rss-simple" style="font-size:24px;color:var(--text-secondary)" aria-hidden="true"></i><span class="in-place" data-for="owner" title="Click to change its name">Agency performance per month</span><span data-for="colleague datateam">Agency performance per month</span></h1>
+   <p class="fe-lead">Per agency and month: its leads, the views of its listings and how fast it answers, for the agents' portal. Every agent sees only the rows of their own agency.</p>
+  </div>
+  <a class="btn-primary" data-for="owner" href="feed-edition-new.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph ph-plus"></i>New Edition</a>
+ </div>
+ <div class="status-row">
+  <span class="status" title="The lowest Level of its Resources: Leads per agency, Listing views per day and Agencies, each 4 · Explored"><span class="maturity" data-level="4" data-no-tooltip></span>4 · Explored</span>
+  <a class="status" href="dock.html?dock=portal"><i class="ph-fill ph-plugs-connected"></i>Dock: Agents' portal</a>
+  <span class="status"><i class="ph-fill ph-users-three"></i>Owner: Agency success</span>
+  <span class="status"><i class="ph-fill ph-arrows-clockwise"></i>Prepared · daily, after dbt-prod</span>
+  <span class="fe-editions">Edition<span class="seg on" style="cursor:default">1 · live</span></span>
+ </div>
+ <div class="alert" role="status"><i class="ph-fill ph-pause-circle"></i><p><b>Held since 22 Nov at 07:10.</b> A Rule of Sales on Leads per agency fired after the run of dbt-prod: "Leads per day below half of the 4-week average", with the Action Hold the deliveries. The Agents' portal gets the delivery of 21 Nov, with its date in every answer: held is no error. Only Sales releases it, once they know why.</p><a class="alert-btn" href="resource-messages.html">Messages on Leads per agency</a></div>
+</div>
+
+<div class="tabs" data-group="tab" role="tablist">
+ <button class="tab on" data-target="overview" role="tab" aria-selected="true">Overview</button>
+ <button class="tab" data-target="fields" role="tab" aria-selected="false">Fields</button>
+ <button class="tab" data-target="query" role="tab" aria-selected="false">Query</button>
+ <button class="tab" data-target="log" role="tab" aria-selected="false">Log</button>
+</div>
+<div class="tab-content card">
+
+ <!-- ═════════════ Overview ═════════════ -->
+ <div data-pane-group="tab" data-pane="overview">
+
+  <!-- Price statistics per area -->
+  <div class="about-grid fe-ov" data-pane-group="feed" data-pane="prices">
+   <section class="about-tile">
+    <div class="label">Now</div>
+    <div data-pane-group="state" data-pane="ok">
+     <div class="fe-now"><span class="app-state ok">Up to date</span><span class="meta">Edition 2</span></div>
+     <p>Delivered today at 06:52, after the run of dbt-prod of 06:31, to every Application that reads Edition 2.</p>
+     <p>Prices left empty in <b>1,184</b> of the 38,950 street rows: fewer than 5 sales stood behind them. In none of the municipality rows.</p>
+     <p class="meta" style="display:block">Next: after tomorrow's run of dbt-prod, as a rule before 07:00.</p>
+    </div>
+    <div data-pane-group="state" data-pane="late" hidden>
+     <div class="fe-now"><span class="app-state late">Late</span><span class="meta">since today, 06:40</span></div>
+     <p>Today's run of dbt-prod failed, so Data Hub delivered nothing new. SEO pages gets the delivery of 22 Nov, with its date in every answer, as the contract with every Application says the data may come late.</p>
+     <p class="meta" style="display:block">Next: after the next run of dbt-prod that succeeds.</p>
+    </div>
+    <div data-pane-group="state" data-pane="cutoff" hidden>
+     <div class="fe-now"><span class="app-state cutoff">Cut off</span><span class="meta">since today, 06:41</span></div>
+     <p>Sales prices is in Quarantine: a Rule of Listings team fired on today's run, "Sales per day above twice the 4-week average". Every Application gets an error, "Cut off by an Owner", at every question: nothing is served, not even the delivery of 22 Nov.</p>
+     <p class="meta" style="display:block">Next: the first run after Listings team lifts the Quarantine.</p>
+    </div>
+   </section>
+   <section class="about-tile">
+    <div class="tile-head"><div class="label">Deliveries of the last two weeks</div><span class="meta">a square a day</span></div>
+    <div class="delivery-strip fe-strip" data-pane-group="state" data-pane="ok" aria-label="Delivered on 13 of the last 14 days; late on 18 Nov">
+     <span title="10 Nov: delivered at 06:51"></span><span title="11 Nov: delivered at 06:50"></span><span title="12 Nov: delivered at 06:53"></span><span title="13 Nov: delivered at 06:49"></span><span title="14 Nov: delivered at 06:55"></span><span title="15 Nov: delivered at 06:52"></span><span title="16 Nov: delivered at 06:50"></span><span title="17 Nov: delivered at 06:51"></span><span class="late" title="18 Nov: late, the run of dbt-prod failed; the delivery of 17 Nov was served"></span><span title="19 Nov: delivered at 06:47"></span><span title="20 Nov: delivered at 06:52"></span><span title="21 Nov: delivered at 06:50"></span><span title="22 Nov: delivered at 06:49"></span><span title="23 Nov: delivered at 06:52"></span>
+    </div>
+    <div class="delivery-strip fe-strip" data-pane-group="state" data-pane="late" hidden aria-label="Delivered on 12 of the last 14 days; late on 18 Nov and today">
+     <span title="10 Nov: delivered at 06:51"></span><span title="11 Nov: delivered at 06:50"></span><span title="12 Nov: delivered at 06:53"></span><span title="13 Nov: delivered at 06:49"></span><span title="14 Nov: delivered at 06:55"></span><span title="15 Nov: delivered at 06:52"></span><span title="16 Nov: delivered at 06:50"></span><span title="17 Nov: delivered at 06:51"></span><span class="late" title="18 Nov: late, the run of dbt-prod failed; the delivery of 17 Nov was served"></span><span title="19 Nov: delivered at 06:47"></span><span title="20 Nov: delivered at 06:52"></span><span title="21 Nov: delivered at 06:50"></span><span title="22 Nov: delivered at 06:49"></span><span class="late" title="Today: late, the run of dbt-prod failed; the delivery of 22 Nov is served"></span>
+    </div>
+    <div class="delivery-strip fe-strip" data-pane-group="state" data-pane="cutoff" hidden aria-label="Delivered on 12 of the last 14 days; late on 18 Nov; cut off today">
+     <span title="10 Nov: delivered at 06:51"></span><span title="11 Nov: delivered at 06:50"></span><span title="12 Nov: delivered at 06:53"></span><span title="13 Nov: delivered at 06:49"></span><span title="14 Nov: delivered at 06:55"></span><span title="15 Nov: delivered at 06:52"></span><span title="16 Nov: delivered at 06:50"></span><span title="17 Nov: delivered at 06:51"></span><span class="late" title="18 Nov: late, the run of dbt-prod failed; the delivery of 17 Nov was served"></span><span title="19 Nov: delivered at 06:47"></span><span title="20 Nov: delivered at 06:52"></span><span title="21 Nov: delivered at 06:50"></span><span title="22 Nov: delivered at 06:49"></span><span class="cutoff" title="Today: cut off, Sales prices is in Quarantine"></span>
+    </div>
+    <div class="fe-days" aria-hidden="true"><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span><span>17</span><span>18</span><span>19</span><span>20</span><span>21</span><span>22</span><span class="today">23</span></div>
+    <div class="chart-legend"><span><i class="sw" style="background:var(--tint-active)"></i>Delivered</span><span><i class="sw fe-sw-late"></i>Late or held</span><span><i class="sw fe-sw-cut"></i>Cut off</span><span><i class="sw fe-sw-none"></i>Nothing to deliver</span></div>
+    <p class="meta" style="display:block;line-height:1.5">18 Nov: the run of dbt-prod failed. The delivery of 17 Nov was served, with its date, until 19 Nov at 06:47.</p>
+   </section>
+   <section class="about-tile" style="grid-column:1 / -1">
+    <div class="label">Applications that read it</div>
+    <div class="fe-scroll"><table class="fe-apps">
+     <thead><tr><th>Application</th><th>Edition</th><th>Users</th><th>Reads</th><th>State</th></tr></thead>
+     <tbody>
+      <tr><td><a class="name-cell" href="application.html"><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span>SEO pages</span></a><span class="fe-sub">External, the backend of the website</span></td><td>Edition 2</td><td class="muted">No users</td><td class="muted">since 10 Nov</td><td><span data-pane-group="state" data-pane="ok"><span class="app-state ok">Up to date</span></span><span data-pane-group="state" data-pane="late" hidden><span class="app-state late">Late</span><span class="fe-sub">gets the delivery of 22 Nov</span></span><span data-pane-group="state" data-pane="cutoff" hidden><span class="app-state cutoff">Cut off</span><span class="fe-sub">gets an error</span></span></td></tr>
+      <tr><td><a class="name-cell" href="application.html"><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span>Search result pages</span></a><span class="fe-sub">External, the backend of the website</span></td><td>asks Edition 2</td><td class="muted">No users</td><td class="muted">not yet: no key</td><td><span class="app-state waiting">Waiting for consent</span></td></tr>
+     </tbody>
+    </table></div>
+   </section>
+   <section class="about-tile" style="grid-column:1 / -1">
+    <div class="label">Who said yes</div>
+    <div class="fe-scroll"><table class="fe-who">
+     <thead><tr><th>Owner, for its Resource</th><th>SEO pages</th><th>Search result pages</th></tr></thead>
+     <tbody>
+      <tr><td><b>Listings team</b><span class="fe-sub">Sales prices · Listings · 4 · Explored</span></td><td><span class="fe-ans yes"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Yes</span><span class="fe-sub">9 Nov · Lotte Janssens</span></td><td><span class="fe-ans wait"><i class="ph ph-hourglass-medium" aria-hidden="true"></i>Waiting</span><span class="fe-sub">asked 20 Nov</span></td></tr>
+      <tr><td><b>Data Team</b><span class="fe-sub">Streets and municipalities · Geography · 5 · Monitored</span></td><td><span class="fe-ans yes"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Yes</span><span class="fe-sub">9 Nov · Sam De Wit</span></td><td><span class="fe-ans yes"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Yes</span><span class="fe-sub">20 Nov · Sam De Wit</span></td></tr>
+     </tbody>
+    </table></div>
+    <p class="meta" style="display:block;line-height:1.5;margin-top:8px">Every Owner of every Resource under the Feed says yes, for each Application, before it reads. Each may withdraw at any time, on the tab Applications of their Resource, such as <a class="text-link" href="resource-applications.html" style="display:inline;font-size:inherit"><span>Sales prices</span></a>.</p>
+   </section>
+  </div>
+
+  <!-- Agency performance per month (?feed=held) -->
+  <div class="about-grid fe-ov" data-pane-group="feed" data-pane="held" hidden>
+   <section class="about-tile">
+    <div class="label">Now</div>
+    <div class="fe-now"><span class="app-state held">Held</span><span class="meta">since 22 Nov, 07:10</span></div>
+    <p>A Rule of Sales on Leads per agency fired after the run of dbt-prod of 22 Nov: "Leads per day below half of the 4-week average", Tone problem, with the Action Hold the deliveries. Today's run was held too.</p>
+    <p>The Agents' portal gets the delivery of 21 Nov, with its date in every answer. Only Sales releases it; the next run after that delivers again.</p>
+    <p class="meta" style="display:block">Hold the deliveries is a proposed Action of a Rule, next to Quarantine, which would cut the Feed off instead.</p>
+   </section>
+   <section class="about-tile">
+    <div class="tile-head"><div class="label">Deliveries of the last two weeks</div><span class="meta">a square a day</span></div>
+    <div class="delivery-strip fe-strip" aria-label="Delivered on 12 of the last 14 days; held on 22 Nov and today">
+     <span title="10 Nov: delivered at 06:56"></span><span title="11 Nov: delivered at 06:54"></span><span title="12 Nov: delivered at 06:57"></span><span title="13 Nov: delivered at 06:53"></span><span title="14 Nov: delivered at 06:58"></span><span title="15 Nov: delivered at 06:55"></span><span title="16 Nov: delivered at 06:54"></span><span title="17 Nov: delivered at 06:56"></span><span title="18 Nov: delivered at 06:59"></span><span title="19 Nov: delivered at 06:51"></span><span title="20 Nov: delivered at 06:56"></span><span title="21 Nov: delivered at 06:55"></span><span class="held" title="22 Nov: held by a Rule of Sales; the delivery of 21 Nov is served"></span><span class="held" title="Today: held by a Rule of Sales; the delivery of 21 Nov is served"></span>
+    </div>
+    <div class="fe-days" aria-hidden="true"><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span><span>17</span><span>18</span><span>19</span><span>20</span><span>21</span><span>22</span><span class="today">23</span></div>
+    <div class="chart-legend"><span><i class="sw" style="background:var(--tint-active)"></i>Delivered</span><span><i class="sw fe-sw-late"></i>Late or held</span><span><i class="sw fe-sw-cut"></i>Cut off</span><span><i class="sw fe-sw-none"></i>Nothing to deliver</span></div>
+    <p class="meta" style="display:block;line-height:1.5">The run of dbt-prod itself succeeded on 22 Nov and today: the data is there, Sales holds it back.</p>
+   </section>
+   <section class="about-tile" style="grid-column:1 / -1">
+    <div class="label">Applications that read it</div>
+    <div class="fe-scroll"><table class="fe-apps">
+     <thead><tr><th>Application</th><th>Edition</th><th>Users</th><th>Reads</th><th>State</th></tr></thead>
+     <tbody>
+      <tr><td><a class="name-cell" href="application.html"><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span>Agents' portal</span></a><span class="fe-sub">External, the portal of the agencies</span></td><td>Edition 1</td><td>Agencies<span class="fe-sub">user pool, sliced per agency</span></td><td class="muted">since 4 Nov</td><td><span class="app-state held">Held</span><span class="fe-sub">gets the delivery of 21 Nov</span></td></tr>
+     </tbody>
+    </table></div>
+    <div class="binding-rule"><p>The Binding Rule of the Agents' portal: an agent sees only the rows of their own agency, where company_id of the Feed equals the company_id of their agency in the user pool Agencies.</p><code>leads.company_id = agencies.company_id</code><p class="meta" style="display:block">For one user: an agent of agency 1042 sees only the rows where company_id is 1042.</p></div>
+   </section>
+   <section class="about-tile" style="grid-column:1 / -1">
+    <div class="label">Who said yes</div>
+    <div class="fe-scroll"><table class="fe-who">
+     <thead><tr><th>Owner, for its Resource</th><th>Agents' portal</th></tr></thead>
+     <tbody>
+      <tr><td><b>Sales</b><span class="fe-sub">Leads per agency · Listing leads · 4 · Explored</span></td><td><span class="fe-ans yes"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Yes</span><span class="fe-sub">2 Nov · Elif Kaya</span></td></tr>
+      <tr><td><b>Listings team</b><span class="fe-sub">Listing views per day · Listings · 4 · Explored</span></td><td><span class="fe-ans yes"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Yes</span><span class="fe-sub">3 Nov · Lotte Janssens</span></td></tr>
+      <tr><td><b>Agency success</b><span class="fe-sub">Agencies · Agencies · 4 · Explored</span></td><td><span class="fe-ans yes"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Yes</span><span class="fe-sub">2 Nov · Nora Willems</span></td></tr>
+     </tbody>
+    </table></div>
+    <p class="meta" style="display:block;line-height:1.5;margin-top:8px">Every Owner of every Resource under the Feed says yes, for each Application, before it reads. Each may withdraw at any time, on the tab Applications of their Resource.</p>
+   </section>
+  </div>
+ </div>
+
+ <!-- ═════════════ Fields: frozen per Edition ═════════════ -->
+ <div data-pane-group="tab" data-pane="fields" hidden>
+  <div data-pane-group="feed" data-pane="prices">
+   <!-- Edition 2 -->
+   <div data-pane-group="edition" data-pane="2">
+    <div class="fe-fields-top">
+     <div class="sub-tile">
+      <div class="label">Minimum Volume</div>
+      <div class="fe-mv-n">5 <span>sales behind every price</span></div>
+      <p class="meta" style="display:block;line-height:1.5;margin-top:6px">The floor of Data Hub is 5. Below it a price is left empty, with why: too few observations. Last run: in 1,184 of 38,950 street rows, and no municipality row.</p>
+     </div>
+     <div class="fe-frozen"><i class="ph ph-snowflake" aria-hidden="true"></i><div><p><b style="font-weight:500;color:var(--text-primary)">Frozen.</b> Edition 2 never changes, since SEO pages reads it: its fields, search keys and Minimum Volume stay as they are. A change is a new Edition, next to this one.</p><p>An Application searches only on the search keys, and finds the street or municipality it needs with <span class="mono">area_level</span>: a street with too few sales falls back on its municipality.</p></div></div>
+    </div>
+    <div class="fe-scroll"><table class="data-table fe-fields">
+     <thead><tr><th>Field</th><th>Type</th><th>Description</th><th>Role</th><th>From</th></tr></thead>
+     <tbody>
+      <tr><td class="mono">area_level</td><td class="muted">STRING</td><td>Whether the row is about a street or a municipality: <span class="mono">street</span> or <span class="mono">municipality</span>.</td><td></td><td class="fe-from">Written by Website team</td></tr>
+      <tr><td class="mono">area_id</td><td class="muted">STRING</td><td>The id of the street or the municipality, as the website knows it.</td><td><span class="fe-role"><span class="pill pill-strong"><i class="ph ph-key"></i>Search key</span></span></td><td class="fe-from">Streets and municipalities · <span class="mono">street_id</span>, <span class="mono">municipality_id</span></td></tr>
+      <tr><td class="mono">area_name</td><td class="muted">STRING</td><td>The name of the street or the municipality.</td><td></td><td class="fe-from">Streets and municipalities · <span class="mono">street_name</span>, <span class="mono">municipality_name</span></td></tr>
+      <tr><td class="mono">property_type</td><td class="muted">STRING</td><td>The type of property sold: house, apartment or building plot.</td><td><span class="fe-role"><span class="pill pill-strong"><i class="ph ph-key"></i>Search key</span></span></td><td class="fe-from">Sales prices · <span class="mono">property_type</span></td></tr>
+      <tr><td class="mono">period_month</td><td class="muted">DATE</td><td>The first day of the month the sales were made in.</td><td><span class="fe-role"><span class="pill pill-strong"><i class="ph ph-key"></i>Search key</span></span></td><td class="fe-from">Sales prices · <span class="mono">sale_date</span></td></tr>
+      <tr><td class="mono">n_sales</td><td class="muted">INT64</td><td>How many sales stand behind the prices of the row.</td><td><span class="fe-role"><span class="pill"><i class="ph ph-hash"></i>Count field</span><span class="meta">of the 4 prices</span></span></td><td class="fe-from">Sales prices, counted</td></tr>
+      <tr><td class="mono">price_mean</td><td class="muted">NUMERIC</td><td>The average sale price, in euro.</td><td><span class="meta">counted by <span class="mono">n_sales</span></span></td><td class="fe-from">Sales prices · <span class="mono">price</span></td></tr>
+      <tr><td class="mono">price_median</td><td class="muted">NUMERIC</td><td>The median sale price, in euro: half sold for less.</td><td><span class="meta">counted by <span class="mono">n_sales</span></span></td><td class="fe-from">Sales prices · <span class="mono">price</span></td></tr>
+      <tr><td class="mono">price_p25</td><td class="muted">NUMERIC</td><td>The sale price a quarter of the sales stayed under, in euro.</td><td><span class="meta">counted by <span class="mono">n_sales</span></span></td><td class="fe-from">Sales prices · <span class="mono">price</span></td></tr>
+      <tr><td class="mono">price_p75</td><td class="muted">NUMERIC</td><td>The sale price three quarters of the sales stayed under, in euro.</td><td><span class="meta">counted by <span class="mono">n_sales</span></span></td><td class="fe-from">Sales prices · <span class="mono">price</span></td></tr>
+     </tbody>
+    </table></div>
+   </div>
+   <!-- Edition 1 (?edition=1) -->
+   <div data-pane-group="edition" data-pane="1" hidden>
+    <div class="fe-fields-top">
+     <div class="sub-tile">
+      <div class="label">Minimum Volume</div>
+      <div class="fe-mv-n">5 <span>sales behind every price</span></div>
+      <p class="meta" style="display:block;line-height:1.5;margin-top:6px">As Edition 2: the floor of Data Hub.</p>
+     </div>
+     <div class="fe-frozen"><i class="ph ph-snowflake" aria-hidden="true"></i><div><p><b style="font-weight:500;color:var(--text-primary)">Edition 1, ended on 9 Nov 2026.</b> Per municipality only. Edition 2 added the streets, with <span class="mono">area_level</span>, and the quartiles, and renamed the fields of the municipality.</p></div></div>
+    </div>
+    <div class="fe-scroll"><table class="data-table fe-fields">
+     <thead><tr><th>Field</th><th>Type</th><th>Description</th><th>Role</th><th>From</th></tr></thead>
+     <tbody>
+      <tr><td class="mono">municipality_id</td><td class="muted">STRING</td><td>The id of the municipality, as the website knows it.</td><td><span class="fe-role"><span class="pill pill-strong"><i class="ph ph-key"></i>Search key</span></span></td><td class="fe-from">Streets and municipalities · <span class="mono">municipality_id</span></td></tr>
+      <tr><td class="mono">municipality_name</td><td class="muted">STRING</td><td>The name of the municipality.</td><td></td><td class="fe-from">Streets and municipalities · <span class="mono">municipality_name</span></td></tr>
+      <tr><td class="mono">property_type</td><td class="muted">STRING</td><td>The type of property sold: house, apartment or building plot.</td><td><span class="fe-role"><span class="pill pill-strong"><i class="ph ph-key"></i>Search key</span></span></td><td class="fe-from">Sales prices · <span class="mono">property_type</span></td></tr>
+      <tr><td class="mono">period_month</td><td class="muted">DATE</td><td>The first day of the month the sales were made in.</td><td><span class="fe-role"><span class="pill pill-strong"><i class="ph ph-key"></i>Search key</span></span></td><td class="fe-from">Sales prices · <span class="mono">sale_date</span></td></tr>
+      <tr><td class="mono">n_sales</td><td class="muted">INT64</td><td>How many sales stand behind the prices of the row.</td><td><span class="fe-role"><span class="pill"><i class="ph ph-hash"></i>Count field</span><span class="meta">of the 2 prices</span></span></td><td class="fe-from">Sales prices, counted</td></tr>
+      <tr><td class="mono">price_mean</td><td class="muted">NUMERIC</td><td>The average sale price, in euro.</td><td><span class="meta">counted by <span class="mono">n_sales</span></span></td><td class="fe-from">Sales prices · <span class="mono">price</span></td></tr>
+      <tr><td class="mono">price_median</td><td class="muted">NUMERIC</td><td>The median sale price, in euro: half sold for less.</td><td><span class="meta">counted by <span class="mono">n_sales</span></span></td><td class="fe-from">Sales prices · <span class="mono">price</span></td></tr>
+     </tbody>
+    </table></div>
+   </div>
+  </div>
+  <!-- Agency performance per month -->
+  <div data-pane-group="feed" data-pane="held" hidden>
+   <div class="fe-fields-top">
+    <div class="sub-tile">
+     <div class="label">Minimum Volume</div>
+     <div class="fe-mv-n">5 <span>answered leads behind every median</span></div>
+     <p class="meta" style="display:block;line-height:1.5;margin-top:6px">The floor of Data Hub is 5. Last delivery: the median response time left empty in 2,306 of 21,840 rows.</p>
+    </div>
+    <div class="fe-frozen"><i class="ph ph-snowflake" aria-hidden="true"></i><div><p><b style="font-weight:500;color:var(--text-primary)">Frozen.</b> Edition 1 never changes, since the Agents' portal reads it. A change is a new Edition.</p><p><span class="mono">company_id</span> is also the field of the Binding Rule: the copy of the Feed is cut per agency on it, so an agent can only search within their own agency.</p></div></div>
+   </div>
+   <div class="fe-scroll"><table class="data-table fe-fields">
+    <thead><tr><th>Field</th><th>Type</th><th>Description</th><th>Role</th><th>From</th></tr></thead>
+    <tbody>
+     <tr><td class="mono">company_id</td><td class="muted">INT64</td><td>The agency, by the id the user pool Agencies knows it by.</td><td><span class="fe-role"><span class="pill pill-strong"><i class="ph ph-key"></i>Search key</span></span></td><td class="fe-from">Agencies · <span class="mono">company_id</span></td></tr>
+     <tr><td class="mono">month</td><td class="muted">DATE</td><td>The first day of the month.</td><td><span class="fe-role"><span class="pill pill-strong"><i class="ph ph-key"></i>Search key</span></span></td><td class="fe-from">Listing views per day · <span class="mono">view_date</span></td></tr>
+     <tr><td class="mono">leads</td><td class="muted">INT64</td><td>The leads the agency got that month.</td><td></td><td class="fe-from">Leads per agency · <span class="mono">leads</span></td></tr>
+     <tr><td class="mono">views</td><td class="muted">INT64</td><td>The views of the listings of the agency that month.</td><td></td><td class="fe-from">Listing views per day · <span class="mono">views</span></td></tr>
+     <tr><td class="mono">contact_rate</td><td class="muted">FLOAT64</td><td>Leads per 100 views, that month.</td><td></td><td class="fe-from">Written by Agency success</td></tr>
+     <tr><td class="mono">response_time_median_h</td><td class="muted">FLOAT64</td><td>The median time the agency took to answer a lead, in hours.</td><td><span class="meta">counted by <span class="mono">n_leads</span></span></td><td class="fe-from">Leads per agency · <span class="mono">response_time_h</span></td></tr>
+     <tr><td class="mono">n_leads</td><td class="muted">INT64</td><td>How many answered leads stand behind the median response time.</td><td><span class="fe-role"><span class="pill"><i class="ph ph-hash"></i>Count field</span><span class="meta">of the response time</span></span></td><td class="fe-from">Leads per agency, counted</td></tr>
+    </tbody>
+   </table></div>
+  </div>
+ </div>
+
+ <!-- ═════════════ Query: its SQL, read only ═════════════ -->
+ <div data-pane-group="tab" data-pane="query" hidden>
+  <div data-pane-group="feed" data-pane="prices">
+   <div class="fe-q-top">
+    <span class="label">Reads only</span>
+    <span class="scope-chip"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Sales prices<span class="muted">· Listings</span><span class="maturity" data-level="4"></span></span>
+    <span class="scope-chip"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Streets and municipalities<span class="muted">· Geography</span><span class="maturity" data-level="5"></span></span>
+   </div>
+   <p class="fe-q-note"><i class="ph ph-lock-simple" aria-hidden="true"></i><span>Read only, on the rights of Website team, never of a person: Edition <span data-pane-group="edition" data-pane="2">2</span><span data-pane-group="edition" data-pane="1" hidden>1</span> never changes. <span data-for="owner">New Edition starts from a copy of this query.</span></span></p>
+   <div class="q-box fe-sql" data-pane-group="edition" data-pane="2">
+    <div class="q-box-head"><span class="label" style="margin:0">BigQuery SQL · Edition 2</span><span class="meta">64 lines · 3 CTEs</span></div>
+    <div class="sql-editor" aria-label="SQL of Edition 2, read only">
+    <div class="ln"><span class="ln-no">1</span><span class="ln-fold"></span><span class="ln-code"><span class="sql-comment">-- Prices of sales per street and per municipality, per month and type of property</span></span></div>
+    <div class="ln"><span class="ln-no">2</span><span class="ln-fold"></span><span class="ln-code">with</span></div>
+    <div class="ln"><span class="ln-no">3</span><span class="ln-fold"></span><span class="ln-code"></span></div>
+    <div class="ln" data-fold-start="sales"><span class="ln-no">4</span><button class="ln-fold" type="button" aria-expanded="true" aria-label="Fold sales"><i class="ph ph-caret-down"></i></button><span class="ln-code"><span class="sql-ref">sales</span> as (<button class="fold-ph" type="button" aria-label="Unfold sales" hidden>⋯ 13 lines</button><span class="fold-close" hidden>),</span></span></div>
+    <div class="ln" data-fold-in="sales"><span class="ln-no">5</span><span class="ln-fold"></span><span class="ln-code">    select</span></div>
+    <div class="ln" data-fold-in="sales"><span class="ln-no">6</span><span class="ln-fold"></span><span class="ln-code">        s.street_id,</span></div>
+    <div class="ln" data-fold-in="sales"><span class="ln-no">7</span><span class="ln-fold"></span><span class="ln-code">        a.street_name,</span></div>
+    <div class="ln" data-fold-in="sales"><span class="ln-no">8</span><span class="ln-fold"></span><span class="ln-code">        a.municipality_id,</span></div>
+    <div class="ln" data-fold-in="sales"><span class="ln-no">9</span><span class="ln-fold"></span><span class="ln-code">        a.municipality_name,</span></div>
+    <div class="ln" data-fold-in="sales"><span class="ln-no">10</span><span class="ln-fold"></span><span class="ln-code">        s.property_type,</span></div>
+    <div class="ln" data-fold-in="sales"><span class="ln-no">11</span><span class="ln-fold"></span><span class="ln-code">        date_trunc(s.sale_date, month) as period_month,</span></div>
+    <div class="ln" data-fold-in="sales"><span class="ln-no">12</span><span class="ln-fold"></span><span class="ln-code">        s.price</span></div>
+    <div class="ln" data-fold-in="sales"><span class="ln-no">13</span><span class="ln-fold"></span><span class="ln-code">    from <span class="sql-key" data-table="sales_prices">`immoscoop-dataplatform-398214.dbt_prod_listings.sales_prices`</span> as s</span></div>
+    <div class="ln" data-fold-in="sales"><span class="ln-no">14</span><span class="ln-fold"></span><span class="ln-code">    inner join <span class="sql-key" data-table="streets_and_municipalities">`immoscoop-dataplatform-398214.dbt_prod_geography.streets_and_municipalities`</span> as a</span></div>
+    <div class="ln" data-fold-in="sales"><span class="ln-no">15</span><span class="ln-fold"></span><span class="ln-code">        using (street_id)</span></div>
+    <div class="ln" data-fold-in="sales"><span class="ln-no">16</span><span class="ln-fold"></span><span class="ln-code">    where</span></div>
+    <div class="ln" data-fold-in="sales"><span class="ln-no">17</span><span class="ln-fold"></span><span class="ln-code">        s.sale_date &gt;= date_sub(date_trunc(current_date(), month), interval 24 month)</span></div>
+    <div class="ln" data-fold-in="sales"><span class="ln-no">18</span><span class="ln-fold"></span><span class="ln-code">),</span></div>
+    <div class="ln"><span class="ln-no">19</span><span class="ln-fold"></span><span class="ln-code"></span></div>
+    <div class="ln" data-fold-start="per_street"><span class="ln-no">20</span><button class="ln-fold" type="button" aria-expanded="true" aria-label="Fold per_street"><i class="ph ph-caret-down"></i></button><span class="ln-code"><span class="sql-ref">per_street</span> as (<button class="fold-ph" type="button" aria-label="Unfold per_street" hidden>⋯ 17 lines</button><span class="fold-close" hidden>),</span></span></div>
+    <div class="ln" data-fold-in="per_street"><span class="ln-no">21</span><span class="ln-fold"></span><span class="ln-code">    select</span></div>
+    <div class="ln" data-fold-in="per_street"><span class="ln-no">22</span><span class="ln-fold"></span><span class="ln-code">        'street' as area_level,</span></div>
+    <div class="ln" data-fold-in="per_street"><span class="ln-no">23</span><span class="ln-fold"></span><span class="ln-code">        street_id as area_id,</span></div>
+    <div class="ln" data-fold-in="per_street"><span class="ln-no">24</span><span class="ln-fold"></span><span class="ln-code">        street_name as area_name,</span></div>
+    <div class="ln" data-fold-in="per_street"><span class="ln-no">25</span><span class="ln-fold"></span><span class="ln-code">        property_type,</span></div>
+    <div class="ln" data-fold-in="per_street"><span class="ln-no">26</span><span class="ln-fold"></span><span class="ln-code">        period_month,</span></div>
+    <div class="ln" data-fold-in="per_street"><span class="ln-no">27</span><span class="ln-fold"></span><span class="ln-code">        count(*) as n_sales,</span></div>
+    <div class="ln" data-fold-in="per_street"><span class="ln-no">28</span><span class="ln-fold"></span><span class="ln-code">        avg(price) as price_mean,</span></div>
+    <div class="ln" data-fold-in="per_street"><span class="ln-no">29</span><span class="ln-fold"></span><span class="ln-code">        approx_quantiles(price, 4)[offset(2)] as price_median,</span></div>
+    <div class="ln" data-fold-in="per_street"><span class="ln-no">30</span><span class="ln-fold"></span><span class="ln-code">        approx_quantiles(price, 4)[offset(1)] as price_p25,</span></div>
+    <div class="ln" data-fold-in="per_street"><span class="ln-no">31</span><span class="ln-fold"></span><span class="ln-code">        approx_quantiles(price, 4)[offset(3)] as price_p75</span></div>
+    <div class="ln" data-fold-in="per_street"><span class="ln-no">32</span><span class="ln-fold"></span><span class="ln-code">    from <span class="sql-ref">sales</span></span></div>
+    <div class="ln" data-fold-in="per_street"><span class="ln-no">33</span><span class="ln-fold"></span><span class="ln-code">    group by</span></div>
+    <div class="ln" data-fold-in="per_street"><span class="ln-no">34</span><span class="ln-fold"></span><span class="ln-code">        street_id,</span></div>
+    <div class="ln" data-fold-in="per_street"><span class="ln-no">35</span><span class="ln-fold"></span><span class="ln-code">        street_name,</span></div>
+    <div class="ln" data-fold-in="per_street"><span class="ln-no">36</span><span class="ln-fold"></span><span class="ln-code">        property_type,</span></div>
+    <div class="ln" data-fold-in="per_street"><span class="ln-no">37</span><span class="ln-fold"></span><span class="ln-code">        period_month</span></div>
+    <div class="ln" data-fold-in="per_street"><span class="ln-no">38</span><span class="ln-fold"></span><span class="ln-code">),</span></div>
+    <div class="ln"><span class="ln-no">39</span><span class="ln-fold"></span><span class="ln-code"></span></div>
+    <div class="ln folded" data-fold-start="per_municipality"><span class="ln-no">40</span><button class="ln-fold" type="button" aria-expanded="false" aria-label="Unfold per_municipality"><i class="ph ph-caret-down"></i></button><span class="ln-code"><span class="sql-ref">per_municipality</span> as (<button class="fold-ph" type="button" aria-label="Unfold per_municipality">⋯ 17 lines</button><span class="fold-close">)</span></span></div>
+    <div class="ln" data-fold-in="per_municipality" hidden><span class="ln-no">41</span><span class="ln-fold"></span><span class="ln-code">    select</span></div>
+    <div class="ln" data-fold-in="per_municipality" hidden><span class="ln-no">42</span><span class="ln-fold"></span><span class="ln-code">        'municipality' as area_level,</span></div>
+    <div class="ln" data-fold-in="per_municipality" hidden><span class="ln-no">43</span><span class="ln-fold"></span><span class="ln-code">        municipality_id as area_id,</span></div>
+    <div class="ln" data-fold-in="per_municipality" hidden><span class="ln-no">44</span><span class="ln-fold"></span><span class="ln-code">        municipality_name as area_name,</span></div>
+    <div class="ln" data-fold-in="per_municipality" hidden><span class="ln-no">45</span><span class="ln-fold"></span><span class="ln-code">        property_type,</span></div>
+    <div class="ln" data-fold-in="per_municipality" hidden><span class="ln-no">46</span><span class="ln-fold"></span><span class="ln-code">        period_month,</span></div>
+    <div class="ln" data-fold-in="per_municipality" hidden><span class="ln-no">47</span><span class="ln-fold"></span><span class="ln-code">        count(*) as n_sales,</span></div>
+    <div class="ln" data-fold-in="per_municipality" hidden><span class="ln-no">48</span><span class="ln-fold"></span><span class="ln-code">        avg(price) as price_mean,</span></div>
+    <div class="ln" data-fold-in="per_municipality" hidden><span class="ln-no">49</span><span class="ln-fold"></span><span class="ln-code">        approx_quantiles(price, 4)[offset(2)] as price_median,</span></div>
+    <div class="ln" data-fold-in="per_municipality" hidden><span class="ln-no">50</span><span class="ln-fold"></span><span class="ln-code">        approx_quantiles(price, 4)[offset(1)] as price_p25,</span></div>
+    <div class="ln" data-fold-in="per_municipality" hidden><span class="ln-no">51</span><span class="ln-fold"></span><span class="ln-code">        approx_quantiles(price, 4)[offset(3)] as price_p75</span></div>
+    <div class="ln" data-fold-in="per_municipality" hidden><span class="ln-no">52</span><span class="ln-fold"></span><span class="ln-code">    from <span class="sql-ref">sales</span></span></div>
+    <div class="ln" data-fold-in="per_municipality" hidden><span class="ln-no">53</span><span class="ln-fold"></span><span class="ln-code">    group by</span></div>
+    <div class="ln" data-fold-in="per_municipality" hidden><span class="ln-no">54</span><span class="ln-fold"></span><span class="ln-code">        municipality_id,</span></div>
+    <div class="ln" data-fold-in="per_municipality" hidden><span class="ln-no">55</span><span class="ln-fold"></span><span class="ln-code">        municipality_name,</span></div>
+    <div class="ln" data-fold-in="per_municipality" hidden><span class="ln-no">56</span><span class="ln-fold"></span><span class="ln-code">        property_type,</span></div>
+    <div class="ln" data-fold-in="per_municipality" hidden><span class="ln-no">57</span><span class="ln-fold"></span><span class="ln-code">        period_month</span></div>
+    <div class="ln" data-fold-in="per_municipality" hidden><span class="ln-no">58</span><span class="ln-fold"></span><span class="ln-code">)</span></div>
+    <div class="ln"><span class="ln-no">59</span><span class="ln-fold"></span><span class="ln-code"></span></div>
+    <div class="ln"><span class="ln-no">60</span><span class="ln-fold"></span><span class="ln-code">select *</span></div>
+    <div class="ln"><span class="ln-no">61</span><span class="ln-fold"></span><span class="ln-code">from <span class="sql-ref">per_street</span></span></div>
+    <div class="ln"><span class="ln-no">62</span><span class="ln-fold"></span><span class="ln-code">union all</span></div>
+    <div class="ln"><span class="ln-no">63</span><span class="ln-fold"></span><span class="ln-code">select *</span></div>
+    <div class="ln"><span class="ln-no">64</span><span class="ln-fold"></span><span class="ln-code">from <span class="sql-ref">per_municipality</span></span></div>
+    </div>
+   </div>
+   <div class="q-box fe-sql" data-pane-group="edition" data-pane="1" hidden>
+    <div class="q-box-head"><span class="label" style="margin:0">BigQuery SQL · Edition 1</span><span class="meta">31 lines · 1 CTE</span></div>
+    <div class="sql-editor" aria-label="SQL of Edition 1, read only" data-colour>
+    <div class="ln"><span class="ln-no">1</span><span class="ln-fold"></span><span class="ln-code"><span class="sql-comment">-- Prices of sales per municipality, per month and type of property</span></span></div>
+    <div class="ln"><span class="ln-no">2</span><span class="ln-fold"></span><span class="ln-code">with</span></div>
+    <div class="ln"><span class="ln-no">3</span><span class="ln-fold"></span><span class="ln-code"></span></div>
+    <div class="ln"><span class="ln-no">4</span><span class="ln-fold"></span><span class="ln-code"><span class="sql-ref">sales</span> as (</span></div>
+    <div class="ln"><span class="ln-no">5</span><span class="ln-fold"></span><span class="ln-code">    select</span></div>
+    <div class="ln"><span class="ln-no">6</span><span class="ln-fold"></span><span class="ln-code">        a.municipality_id,</span></div>
+    <div class="ln"><span class="ln-no">7</span><span class="ln-fold"></span><span class="ln-code">        a.municipality_name,</span></div>
+    <div class="ln"><span class="ln-no">8</span><span class="ln-fold"></span><span class="ln-code">        s.property_type,</span></div>
+    <div class="ln"><span class="ln-no">9</span><span class="ln-fold"></span><span class="ln-code">        date_trunc(s.sale_date, month) as period_month,</span></div>
+    <div class="ln"><span class="ln-no">10</span><span class="ln-fold"></span><span class="ln-code">        s.price</span></div>
+    <div class="ln"><span class="ln-no">11</span><span class="ln-fold"></span><span class="ln-code">    from <span class="sql-key" data-table="sales_prices">`immoscoop-dataplatform-398214.dbt_prod_listings.sales_prices`</span> as s</span></div>
+    <div class="ln"><span class="ln-no">12</span><span class="ln-fold"></span><span class="ln-code">    inner join <span class="sql-key" data-table="streets_and_municipalities">`immoscoop-dataplatform-398214.dbt_prod_geography.streets_and_municipalities`</span> as a</span></div>
+    <div class="ln"><span class="ln-no">13</span><span class="ln-fold"></span><span class="ln-code">        using (street_id)</span></div>
+    <div class="ln"><span class="ln-no">14</span><span class="ln-fold"></span><span class="ln-code">    where</span></div>
+    <div class="ln"><span class="ln-no">15</span><span class="ln-fold"></span><span class="ln-code">        s.sale_date &gt;= date_sub(date_trunc(current_date(), month), interval 24 month)</span></div>
+    <div class="ln"><span class="ln-no">16</span><span class="ln-fold"></span><span class="ln-code">)</span></div>
+    <div class="ln"><span class="ln-no">17</span><span class="ln-fold"></span><span class="ln-code"></span></div>
+    <div class="ln"><span class="ln-no">18</span><span class="ln-fold"></span><span class="ln-code">select</span></div>
+    <div class="ln"><span class="ln-no">19</span><span class="ln-fold"></span><span class="ln-code">    municipality_id,</span></div>
+    <div class="ln"><span class="ln-no">20</span><span class="ln-fold"></span><span class="ln-code">    municipality_name,</span></div>
+    <div class="ln"><span class="ln-no">21</span><span class="ln-fold"></span><span class="ln-code">    property_type,</span></div>
+    <div class="ln"><span class="ln-no">22</span><span class="ln-fold"></span><span class="ln-code">    period_month,</span></div>
+    <div class="ln"><span class="ln-no">23</span><span class="ln-fold"></span><span class="ln-code">    count(*) as n_sales,</span></div>
+    <div class="ln"><span class="ln-no">24</span><span class="ln-fold"></span><span class="ln-code">    avg(price) as price_mean,</span></div>
+    <div class="ln"><span class="ln-no">25</span><span class="ln-fold"></span><span class="ln-code">    approx_quantiles(price, 2)[offset(1)] as price_median</span></div>
+    <div class="ln"><span class="ln-no">26</span><span class="ln-fold"></span><span class="ln-code">from <span class="sql-ref">sales</span></span></div>
+    <div class="ln"><span class="ln-no">27</span><span class="ln-fold"></span><span class="ln-code">group by</span></div>
+    <div class="ln"><span class="ln-no">28</span><span class="ln-fold"></span><span class="ln-code">    municipality_id,</span></div>
+    <div class="ln"><span class="ln-no">29</span><span class="ln-fold"></span><span class="ln-code">    municipality_name,</span></div>
+    <div class="ln"><span class="ln-no">30</span><span class="ln-fold"></span><span class="ln-code">    property_type,</span></div>
+    <div class="ln"><span class="ln-no">31</span><span class="ln-fold"></span><span class="ln-code">    period_month</span></div>
+    </div>
+   </div>
+  </div>
+  <div data-pane-group="feed" data-pane="held" hidden>
+   <div class="fe-q-top">
+    <span class="label">Reads only</span>
+    <span class="scope-chip"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Leads per agency<span class="muted">· Listing leads</span><span class="maturity" data-level="4"></span></span>
+    <span class="scope-chip"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Listing views per day<span class="muted">· Listings</span><span class="maturity" data-level="4"></span></span>
+    <span class="scope-chip"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Agencies<span class="muted">· Agencies</span><span class="maturity" data-level="4"></span></span>
+   </div>
+   <p class="fe-q-note"><i class="ph ph-lock-simple" aria-hidden="true"></i><span>Read only, on the rights of Agency success, never of a person: Edition 1 never changes. <span data-for="owner">New Edition starts from a copy of this query.</span></span></p>
+   <div class="q-box fe-sql">
+    <div class="q-box-head"><span class="label" style="margin:0">BigQuery SQL · Edition 1</span><span class="meta">52 lines · 3 CTEs</span></div>
+    <div class="sql-editor" aria-label="SQL of Edition 1, read only" data-colour>
+    <div class="ln"><span class="ln-no">1</span><span class="ln-fold"></span><span class="ln-code"><span class="sql-comment">-- Per agency and month: its leads, the views of its listings and how fast it answers</span></span></div>
+    <div class="ln"><span class="ln-no">2</span><span class="ln-fold"></span><span class="ln-code">with</span></div>
+    <div class="ln"><span class="ln-no">3</span><span class="ln-fold"></span><span class="ln-code"></span></div>
+    <div class="ln"><span class="ln-no">4</span><span class="ln-fold"></span><span class="ln-code"><span class="sql-ref">leads</span> as (</span></div>
+    <div class="ln"><span class="ln-no">5</span><span class="ln-fold"></span><span class="ln-code">    select</span></div>
+    <div class="ln"><span class="ln-no">6</span><span class="ln-fold"></span><span class="ln-code">        company_id,</span></div>
+    <div class="ln"><span class="ln-no">7</span><span class="ln-fold"></span><span class="ln-code">        date_trunc(lead_date, month) as month,</span></div>
+    <div class="ln"><span class="ln-no">8</span><span class="ln-fold"></span><span class="ln-code">        sum(leads) as leads,</span></div>
+    <div class="ln"><span class="ln-no">9</span><span class="ln-fold"></span><span class="ln-code">        approx_quantiles(response_time_h, 2)[offset(1)] as response_time_median_h,</span></div>
+    <div class="ln"><span class="ln-no">10</span><span class="ln-fold"></span><span class="ln-code">        countif(response_time_h is not null) as n_leads</span></div>
+    <div class="ln"><span class="ln-no">11</span><span class="ln-fold"></span><span class="ln-code">    from <span class="sql-key" data-table="leads_per_agency">`immoscoop-dataplatform-398214.dbt_prod_leads.leads_per_agency`</span></span></div>
+    <div class="ln"><span class="ln-no">12</span><span class="ln-fold"></span><span class="ln-code">    where</span></div>
+    <div class="ln"><span class="ln-no">13</span><span class="ln-fold"></span><span class="ln-code">        lead_date &gt;= date_sub(date_trunc(current_date(), month), interval 12 month)</span></div>
+    <div class="ln"><span class="ln-no">14</span><span class="ln-fold"></span><span class="ln-code">    group by</span></div>
+    <div class="ln"><span class="ln-no">15</span><span class="ln-fold"></span><span class="ln-code">        company_id,</span></div>
+    <div class="ln"><span class="ln-no">16</span><span class="ln-fold"></span><span class="ln-code">        month</span></div>
+    <div class="ln"><span class="ln-no">17</span><span class="ln-fold"></span><span class="ln-code">),</span></div>
+    <div class="ln"><span class="ln-no">18</span><span class="ln-fold"></span><span class="ln-code"></span></div>
+    <div class="ln"><span class="ln-no">19</span><span class="ln-fold"></span><span class="ln-code"><span class="sql-ref">views</span> as (</span></div>
+    <div class="ln"><span class="ln-no">20</span><span class="ln-fold"></span><span class="ln-code">    select</span></div>
+    <div class="ln"><span class="ln-no">21</span><span class="ln-fold"></span><span class="ln-code">        company_id,</span></div>
+    <div class="ln"><span class="ln-no">22</span><span class="ln-fold"></span><span class="ln-code">        date_trunc(view_date, month) as month,</span></div>
+    <div class="ln"><span class="ln-no">23</span><span class="ln-fold"></span><span class="ln-code">        sum(views) as views</span></div>
+    <div class="ln"><span class="ln-no">24</span><span class="ln-fold"></span><span class="ln-code">    from <span class="sql-key" data-table="listing_views_per_day">`immoscoop-dataplatform-398214.dbt_prod_listings.listing_views_per_day`</span></span></div>
+    <div class="ln"><span class="ln-no">25</span><span class="ln-fold"></span><span class="ln-code">    where</span></div>
+    <div class="ln"><span class="ln-no">26</span><span class="ln-fold"></span><span class="ln-code">        view_date &gt;= date_sub(date_trunc(current_date(), month), interval 12 month)</span></div>
+    <div class="ln"><span class="ln-no">27</span><span class="ln-fold"></span><span class="ln-code">    group by</span></div>
+    <div class="ln"><span class="ln-no">28</span><span class="ln-fold"></span><span class="ln-code">        company_id,</span></div>
+    <div class="ln"><span class="ln-no">29</span><span class="ln-fold"></span><span class="ln-code">        month</span></div>
+    <div class="ln"><span class="ln-no">30</span><span class="ln-fold"></span><span class="ln-code">),</span></div>
+    <div class="ln"><span class="ln-no">31</span><span class="ln-fold"></span><span class="ln-code"></span></div>
+    <div class="ln"><span class="ln-no">32</span><span class="ln-fold"></span><span class="ln-code"><span class="sql-ref">agencies</span> as (</span></div>
+    <div class="ln"><span class="ln-no">33</span><span class="ln-fold"></span><span class="ln-code">    select</span></div>
+    <div class="ln"><span class="ln-no">34</span><span class="ln-fold"></span><span class="ln-code">        company_id</span></div>
+    <div class="ln"><span class="ln-no">35</span><span class="ln-fold"></span><span class="ln-code">    from <span class="sql-key" data-table="agencies">`immoscoop-dataplatform-398214.dbt_prod_agencies.agencies`</span></span></div>
+    <div class="ln"><span class="ln-no">36</span><span class="ln-fold"></span><span class="ln-code">    where</span></div>
+    <div class="ln"><span class="ln-no">37</span><span class="ln-fold"></span><span class="ln-code">        is_active</span></div>
+    <div class="ln"><span class="ln-no">38</span><span class="ln-fold"></span><span class="ln-code">)</span></div>
+    <div class="ln"><span class="ln-no">39</span><span class="ln-fold"></span><span class="ln-code"></span></div>
+    <div class="ln"><span class="ln-no">40</span><span class="ln-fold"></span><span class="ln-code">select</span></div>
+    <div class="ln"><span class="ln-no">41</span><span class="ln-fold"></span><span class="ln-code">    a.company_id,</span></div>
+    <div class="ln"><span class="ln-no">42</span><span class="ln-fold"></span><span class="ln-code">    v.month,</span></div>
+    <div class="ln"><span class="ln-no">43</span><span class="ln-fold"></span><span class="ln-code">    coalesce(l.leads, 0) as leads,</span></div>
+    <div class="ln"><span class="ln-no">44</span><span class="ln-fold"></span><span class="ln-code">    v.views,</span></div>
+    <div class="ln"><span class="ln-no">45</span><span class="ln-fold"></span><span class="ln-code">    round(100 * safe_divide(coalesce(l.leads, 0), v.views), 2) as contact_rate,</span></div>
+    <div class="ln"><span class="ln-no">46</span><span class="ln-fold"></span><span class="ln-code">    l.response_time_median_h,</span></div>
+    <div class="ln"><span class="ln-no">47</span><span class="ln-fold"></span><span class="ln-code">    coalesce(l.n_leads, 0) as n_leads</span></div>
+    <div class="ln"><span class="ln-no">48</span><span class="ln-fold"></span><span class="ln-code">from <span class="sql-ref">agencies</span> as a</span></div>
+    <div class="ln"><span class="ln-no">49</span><span class="ln-fold"></span><span class="ln-code">inner join <span class="sql-ref">views</span> as v</span></div>
+    <div class="ln"><span class="ln-no">50</span><span class="ln-fold"></span><span class="ln-code">    using (company_id)</span></div>
+    <div class="ln"><span class="ln-no">51</span><span class="ln-fold"></span><span class="ln-code">left join <span class="sql-ref">leads</span> as l</span></div>
+    <div class="ln"><span class="ln-no">52</span><span class="ln-fold"></span><span class="ln-code">    using (company_id, month)</span></div>
+    </div>
+   </div>
+  </div>
+ </div>
+
+ <!-- ═════════════ Log ═════════════ -->
+ <div data-pane-group="tab" data-pane="log" hidden>
+  <div data-pane-group="feed" data-pane="prices">
+   <div class="fe-log-row" data-pane-group="state" data-pane="late" hidden><span class="fe-log-when">today, 06:40</span><span class="fe-log-kind warn"><i class="ph-fill ph-clock-countdown" aria-hidden="true"></i>Late</span><p>The run of dbt-prod failed: nothing new was delivered. The delivery of 22 Nov stays served, with its date.</p></div>
+   <div class="fe-log-row" data-pane-group="state" data-pane="cutoff" hidden><span class="fe-log-when">today, 06:41</span><span class="fe-log-kind urgent"><i class="ph-fill ph-prohibit" aria-hidden="true"></i>Cut off</span><p>A Rule of Listings team put Sales prices in Quarantine: "Sales per day above twice the 4-week average". Every Application gets an error, "Cut off by an Owner".</p></div>
+   <div class="fe-log-row" data-pane-group="state" data-pane="ok"><span class="fe-log-when">today, 06:52</span><span class="fe-log-kind"><i class="ph ph-rss-simple" aria-hidden="true"></i>Delivered</span><p>Edition 2, after the run of dbt-prod of 06:31: 38,950 street rows, prices left empty in 1,184 of them for too few sales.</p></div>
+   <div class="fe-log-row"><span class="fe-log-when">22 Nov, 06:49</span><span class="fe-log-kind"><i class="ph ph-rss-simple" aria-hidden="true"></i>Delivered</span><p>Edition 2, after the run of dbt-prod of 06:30.</p></div>
+   <div class="fe-log-row"><span class="fe-log-when">20 Nov, 14:12</span><span class="fe-log-kind"><i class="ph ph-check-circle" aria-hidden="true"></i>Said yes</span><p>Data Team to Search result pages, for Streets and municipalities: Sam De Wit.</p></div>
+   <div class="fe-log-row"><span class="fe-log-when">20 Nov, 10:30</span><span class="fe-log-kind"><i class="ph ph-seal-question" aria-hidden="true"></i>Asked</span><p>Search result pages asks to read Edition 2, registered by Tom Maes. Listings team and Data Team asked.</p></div>
+   <div class="fe-log-row"><span class="fe-log-when">19 Nov, 06:47</span><span class="fe-log-kind"><i class="ph ph-rss-simple" aria-hidden="true"></i>Delivered</span><p>Edition 2, after a run of dbt-prod that succeeded again.</p></div>
+   <div class="fe-log-row"><span class="fe-log-when">18 Nov, 06:40</span><span class="fe-log-kind warn"><i class="ph-fill ph-clock-countdown" aria-hidden="true"></i>Late</span><p>The run of dbt-prod failed: nothing new was delivered. The delivery of 17 Nov stayed served, with its date.</p></div>
+   <div class="fe-log-row"><span class="fe-log-when">10 Nov, 09:14</span><span class="fe-log-kind"><i class="ph ph-key" aria-hidden="true"></i>Key</span><p>SEO pages got its key, and reads Edition 2.</p></div>
+   <div class="fe-log-row"><span class="fe-log-when">9 Nov, 16:05</span><span class="fe-log-kind"><i class="ph ph-check-circle" aria-hidden="true"></i>Said yes</span><p>Listings team to SEO pages, for Sales prices: Lotte Janssens. Every Owner had said yes.</p></div>
+   <div class="fe-log-row"><span class="fe-log-when">9 Nov, 11:20</span><span class="fe-log-kind"><i class="ph ph-check-circle" aria-hidden="true"></i>Said yes</span><p>Data Team to SEO pages, for Streets and municipalities: Sam De Wit.</p></div>
+   <div class="fe-log-row"><span class="fe-log-when">9 Nov, 06:50</span><span class="fe-log-kind"><i class="ph ph-stack-simple" aria-hidden="true"></i>Edition</span><p>Edition 2 is live: it adds the streets and the quartiles. Edition 1 ended, as no Application read it any more.</p></div>
+   <div class="fe-log-row"><span class="fe-log-when">27 Oct</span><span class="fe-log-kind"><i class="ph ph-stack-simple" aria-hidden="true"></i>Edition</span><p>Edition 1 made by Tom Maes, from his query Price statistics per area, in the Dock Website.</p></div>
+  </div>
+  <div data-pane-group="feed" data-pane="held" hidden>
+   <div class="fe-log-row"><span class="fe-log-when">today, 07:02</span><span class="fe-log-kind warn"><i class="ph-fill ph-pause-circle" aria-hidden="true"></i>Held</span><p>Not delivered: the Hold of Sales on Leads per agency still stands. The delivery of 21 Nov stays served.</p></div>
+   <div class="fe-log-row"><span class="fe-log-when">22 Nov, 07:10</span><span class="fe-log-kind warn"><i class="ph-fill ph-pause-circle" aria-hidden="true"></i>Held</span><p>A Rule of Sales on Leads per agency fired after the run of dbt-prod: "Leads per day below half of the 4-week average", with the Action Hold the deliveries. The delivery of 21 Nov stays served.</p></div>
+   <div class="fe-log-row"><span class="fe-log-when">21 Nov, 06:55</span><span class="fe-log-kind"><i class="ph ph-rss-simple" aria-hidden="true"></i>Delivered</span><p>Edition 1: 21,840 rows; the median response time left empty in 2,306 of them for too few answered leads.</p></div>
+   <div class="fe-log-row"><span class="fe-log-when">4 Nov, 10:02</span><span class="fe-log-kind"><i class="ph ph-key" aria-hidden="true"></i>Key</span><p>The Agents' portal got its key, and reads Edition 1 for the users of the pool Agencies.</p></div>
+   <div class="fe-log-row"><span class="fe-log-when">3 Nov, 15:40</span><span class="fe-log-kind"><i class="ph ph-check-circle" aria-hidden="true"></i>Said yes</span><p>Listings team to the Agents' portal, for Listing views per day: Lotte Janssens. Every Owner had said yes.</p></div>
+   <div class="fe-log-row"><span class="fe-log-when">2 Nov</span><span class="fe-log-kind"><i class="ph ph-check-circle" aria-hidden="true"></i>Said yes</span><p>Sales, for Leads per agency: Elif Kaya; and Agency success, for Agencies: Nora Willems.</p></div>
+   <div class="fe-log-row"><span class="fe-log-when">30 Oct</span><span class="fe-log-kind"><i class="ph ph-seal-question" aria-hidden="true"></i>Asked</span><p>The Agents' portal asks to read Edition 1, with the Binding Rule <span class="mono">leads.company_id = agencies.company_id</span>. Sales, Listings team and Agency success asked.</p></div>
+   <div class="fe-log-row"><span class="fe-log-when">29 Oct</span><span class="fe-log-kind"><i class="ph ph-stack-simple" aria-hidden="true"></i>Edition</span><p>Edition 1 made by Nora Willems, from her query Agency performance per month, in the Dock Agents' portal.</p></div>
+  </div>
+ </div>
+</div>
+<div style="height:150px"></div>
+</main>
+</div>
+<div class="fe-switches">
+ <div class="proto-switch" data-group="state" data-pane-group="feed" data-pane="prices" role="tablist" aria-label="Prototype: the state of the Feed">State
+  <button class="seg on" data-target="ok" role="tab" aria-selected="true">Up to date</button>
+  <button class="seg" data-target="late" role="tab" aria-selected="false">Late</button>
+  <button class="seg" data-target="cutoff" role="tab" aria-selected="false">Cut off</button>
+ </div>
+ <div class="proto-switch" data-group="feed" role="tablist" aria-label="Prototype: which Feed">Feed
+  <button class="seg on" data-target="prices" role="tab" aria-selected="true">Price statistics per area</button>
+  <button class="seg" data-target="held" role="tab" aria-selected="false">Agency performance per month, held</button>
+ </div>
+ <div class="role-switch" data-group="role" role="tablist" aria-label="Prototype: seen as">Seen as
+  <button class="seg on" data-target="owner" role="tab" aria-selected="true">Its Owner Unit</button>
+  <button class="seg" data-target="colleague" role="tab" aria-selected="false">A colleague</button>
+ </div>
+</div>
+<script src="app.js"></script>
+<script>
+  // A phone has no room for the panel next to the page: it starts closed there, as after a click on the rail.
+  if (matchMedia('(max-width: 760px)').matches) document.querySelector('.app').classList.remove('panel-open');
+  // The SQL of the other Editions is coloured as Query colours it (app.js colours the first editor of a page).
+  document.querySelectorAll('.sql-editor[data-colour]').forEach((editor) => colourSql(editor));
+  // The Dock of the Feed shown unfolds in the panel, and the Feed is marked as open; the title of the tab follows.
+  const NAMES = { prices: 'Price statistics per area', held: 'Agency performance per month' };
+  const feedNow = () => document.querySelector('[data-group="feed"] .seg.on')?.dataset.target || 'prices';
+  const showFeed = () => {
+    const now = feedNow();
+    document.querySelectorAll('[data-dock-tree]').forEach((tree) => {
+      const on = tree.dataset.dockTree === now;
+      tree.classList.toggle('open', on);
+      tree.querySelector('.tree-toggle').setAttribute('aria-expanded', String(on));
+    });
+    document.querySelectorAll('[data-feed-item]').forEach((item) => {
+      const on = item.dataset.feedItem === now;
+      item.classList.toggle('current', on);
+      if (on) item.setAttribute('aria-current', 'page'); else item.removeAttribute('aria-current');
+    });
+    document.title = 'Data Hub — ' + NAMES[now];
+  };
+  document.querySelectorAll('[data-group="feed"] .seg').forEach((b) => b.addEventListener('click', showFeed));
+  showFeed();
+  // The commands of the page in the quick window (DEC-UX-240).
+  const tab = (name) => () => document.querySelector(`[data-group="tab"] [data-target="${name}"]`).click();
+  window.QUICK = {
+    group: 'This Feed',
+    where: 'Feed',
+    commands: [
+      { icon: 'ph ph-plus', title: 'New Edition', meta: 'on a copy of the query of this Edition', href: 'feed-edition-new.html', for: 'owner', words: 'edition new change version' },
+      { icon: 'ph ph-squares-four', title: 'Overview', meta: 'its state, deliveries and who said yes', run: tab('overview'), words: 'overview state consent' },
+      { icon: 'ph ph-columns', title: 'Fields', meta: 'frozen per Edition', run: tab('fields'), words: 'fields search keys minimum volume' },
+      { icon: 'ph ph-terminal-window', title: 'Query', meta: 'its SQL, read only', run: tab('query'), words: 'sql query' },
+      { icon: 'ph ph-list-bullets', title: 'Log', meta: 'every delivery, consent and Edition', run: tab('log'), words: 'log history deliveries' },
+    ],
+  };
+</script>
+</body>
+</html>

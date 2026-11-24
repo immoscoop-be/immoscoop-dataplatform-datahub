@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<!--
+  Screen: the page of a Dock (OP-UX-122)
+  Opens when a User clicks a Dock in the panel of Docks (OP-UX-120); the Dock unfolds there too. Laid out as the page of
+  a Collection (DEC-UX-309 to DEC-UX-314): what the Dock is, its intro, what needs attention, and what it holds. A Dock is
+  the container of an Owner Unit that says "this data can be asked for, and these Applications may ask for it"
+  (DEC-AP-02), so it holds two kinds of thing, each in a table of its own rather than one table as a Collection:
+  - Feeds: each with its live Edition (DEC-AP-14), how it is delivered, prepared or live, and how often (DEC-AP-08), its
+    last delivery, its Level, the lowest of its Resources, and its state in a word and a colour: Up to date, Late, Held
+    or Cut off (DEC-AP-10).
+  - Applications: internal or external, the user pool or "No users" (DEC-AP-06), the Feeds it reads on which Edition,
+    and its consent: complete, or which Owners still have to answer (DEC-AP-04); and its state.
+  Head: the icon, name and description; for its Owner Unit a click on the name or the description edits both in place,
+  as on a Collection (DEC-UX-162), and one "New" with Feed, which starts in Query, and Application, which opens the
+  registration. A colleague sees no New and no Needs attention, but sees every Feed and Application: what leaves
+  Immoscoop, and for whom, is never hidden.
+  Needs attention, for the Owner Unit only and only when there is something, a line each: a Feed late, held or cut off,
+  an Application waiting for consent, an Edition ending. The history of the Dock is in the quick window (DEC-UX-312).
+  The switches at the bottom: the Dock "Website" of Website team, or ?dock=portal, the Dock "Agents' portal" of Agency
+  success with its Feed held by a Rule of Sales (DEC-AP-13, OP-AP-12); ?role=owner (its Owner Unit) or ?role=colleague.
+  Cmd+K opens the quick window.
+  Requirements: FR-AP-07, FR-AP-27, FR-AP-32
+  Decisions: DEC-AP-02, DEC-AP-04, DEC-AP-06, DEC-AP-08, DEC-AP-10, DEC-AP-13, DEC-AP-14, DEC-AP-15, DEC-AP-18, DEC-UX-162, DEC-UX-309, DEC-UX-310, DEC-UX-312, DEC-UX-314.
+  Open points: OP-UX-120, OP-UX-122, OP-AP-03, OP-AP-07, OP-AP-12.
+  Related screens: docks-start.html (the start screen), feed.html (a Feed, ?feed=held), application.html (an Application), application-register.html (New › Application), collection-overview.html (the pattern).
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="owner">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Website</title>
+<style>
+/* The state of a Feed in the panel of Docks, when it is not Up to date (the shared shell of Applications) */
+.panel .state-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; margin-right: 6px; }
+.panel .state-dot.late, .panel .state-dot.held { background: var(--signal-warn); }
+.panel .state-dot.cutoff { background: var(--signal-urgent); }
+
+/* The two tables of a Dock, each under a heading of its own */
+.dk-head { margin: 22px 2px 8px; }
+.dk-head h2 { font-size: var(--text-section); }
+.dk-scroll { overflow-x: auto; }
+.dk-scroll table { min-width: 760px; }
+.dk-cell-sub { display: block; font-size: var(--text-meta); color: var(--text-muted); margin-top: 2px; font-weight: var(--weight-regular); }
+.dk-reads { display: flex; flex-direction: column; gap: 2px; }
+.dk-reads span { white-space: nowrap; }
+.dk-reads .meta { display: inline; }
+.dk-consent { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.dk-consent i { font-size: 14px; color: var(--text-secondary); }
+.dk-consent.open i { color: var(--text-muted); }
+.dk-state-cell { white-space: nowrap; }
+.attention-line .app-state { flex: none; }
+.attention-line b { font-weight: var(--weight-medium); }
+
+/* The prototype switches, stacked in one corner */
+.dk-switches { position: fixed; right: 34px; bottom: 26px; z-index: 20; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.dk-switches > .proto-switch, .dk-switches > .role-switch { position: static; }
+
+@media (max-width: 760px) {
+  .dk-app { padding: 10px; gap: 8px; }
+  .dk-app .main { padding: 20px 16px; }
+  .dk-app .coll-head { flex-wrap: wrap; }
+  .dk-app .coll-head > div:nth-child(2) { flex-basis: calc(100% - 50px) !important; }
+  .dk-app .coll-actions { margin-left: 48px; }
+  .dk-app .section-head { flex-wrap: wrap; }
+  .dk-app .section-head h2 { flex-basis: 100%; }
+  .dk-scroll .name-cell span { white-space: nowrap; }
+  .dk-app .attention-line { flex-wrap: wrap; }
+  .dk-app .attention-line p { flex-basis: calc(100% - 30px); }
+  .dk-switches { left: 10px; right: 10px; bottom: 10px; align-items: stretch; }
+  .dk-switches > * { flex-wrap: wrap; border-radius: 16px; }
+}
+</style>
+</head>
+<body>
+<div class="app panel-open dk-app">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <a class="nav-btn" href="collections-start.html" data-label="Collections" aria-label="Collections"><i class="ph-fill ph-stack"></i></a>
+  <a class="nav-btn" href="query.html" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></a>
+  <a class="nav-btn active" href="docks-start.html" data-label="Docks" aria-label="Docks, where Applications read data" aria-current="page"><i class="ph-fill ph-plugs-connected"></i><span class="flare top"></span><span class="flare bottom"></span></a>
+  <a class="nav-btn" href="#" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <a class="nav-btn nav-admin" href="admin-webhooks.html" data-label="Admin" aria-label="Admin, for the Data Team" data-for="datateam"><i class="ph-fill ph-toolbox"></i></a>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">MP</a>
+</nav>
+<!-- The panel of Docks: the Dock whose page is open unfolds and has its outline (the script below follows the switch). -->
+<aside class="panel" aria-label="Docks">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:4px">
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Docks</h1>
+   <button class="icon-btn" aria-label="New Dock"><i class="ph-fill ph-plus-circle"></i></button>
+   <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
+  </div>
+  <label class="search card" style="margin:16px 0 4px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search Feeds and Applications"></label>
+  <div class="tree-group card open current" data-dock-tree="website">
+   <div class="tree-head"><a class="tree-link" href="dock.html" aria-current="page"><span class="item-icon"><i class="ph ph-globe-hemisphere-west"></i></span><span class="tree-name"><span class="item-title">Website</span><span class="meta">2 Feeds · 2 Applications</span></span></a><button class="tree-toggle" aria-expanded="true" aria-label="Show what Website holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="feed.html"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span class="tree-res-name"><span class="clip" title="Price statistics per area">Price statistics per area</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="feed.html"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span class="tree-res-name"><span class="clip" title="Listing counts per municipality">Listing counts per municipality</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="application.html"><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span class="tree-res-name"><span class="clip" title="SEO pages">SEO pages</span></span></a>
+     <a class="tree-res" href="application.html"><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span class="tree-res-name"><span class="clip" title="Search result pages · waiting for consent">Search result pages</span></span></a>
+   </div>
+  </div>
+  <div class="tree-group card" data-dock-tree="portal">
+   <div class="tree-head"><a class="tree-link" href="dock.html?dock=portal"><span class="item-icon"><i class="ph ph-handshake"></i></span><span class="tree-name"><span class="item-title">Agents' portal</span><span class="meta">2 Feeds · 1 Application</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Agents' portal holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="feed.html?feed=held"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span class="tree-res-name"><span class="clip" title="Agency performance per month · Held since 22 Nov">Agency performance per month</span></span><span class="state-dot held" role="img" aria-label="Held" title="Held since 22 Nov, 07:10"></span></a>
+     <a class="tree-res" href="feed.html"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span class="tree-res-name"><span class="clip" title="Leads per agency per week">Leads per agency per week</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="application.html"><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span class="tree-res-name"><span class="clip" title="Agents' portal">Agents' portal</span></span></a>
+   </div>
+  </div>
+  <div class="tree-group card">
+   <div class="tree-head"><a class="tree-link" href="dock.html"><span class="item-icon"><i class="ph ph-lifebuoy"></i></span><span class="tree-name"><span class="item-title">Customer success tools</span><span class="meta">1 Feed · 1 Application</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Customer success tools holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="feed.html"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span class="tree-res-name"><span class="clip" title="Agency health score, live">Agency health score</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="application.html"><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span class="tree-res-name"><span class="clip" title="CS cockpit">CS cockpit</span></span></a>
+   </div>
+  </div>
+  <p id="no-results" class="meta" style="padding:8px 4px" hidden>Nothing matches your search.</p>
+ </div>
+</aside>
+<main class="main">
+<div class="breadcrumb">Docks</div>
+
+<!-- ───────────── The Dock "Website", of Website team ───────────── -->
+<div data-pane-group="dock" data-pane="website">
+<div class="coll-head" data-dock-head>
+ <span class="item-icon large"><i class="ph ph-globe-hemisphere-west"></i></span>
+ <div style="flex:1;min-width:0">
+  <!-- Editing starts at the title, as on a Collection: a click on the name or the description of its Owner Unit opens both as fields (DEC-UX-162, DEC-UX-309). -->
+  <div data-head-view>
+   <h1 class="page-title"><span class="in-place" data-for="owner" data-edit title="Click to change">Website</span><span data-for="colleague datateam">Website</span></h1>
+   <p class="prose"><span class="in-place" data-for="owner" data-edit title="Click to change">The data the website of Immoscoop reads from Data Hub: the structured data of its SEO pages, and soon its search result pages.</span><span data-for="colleague datateam">The data the website of Immoscoop reads from Data Hub: the structured data of its SEO pages, and soon its search result pages.</span></p>
+  </div>
+  <form class="in-place-form" data-head-edit hidden>
+   <label class="field"><span>Name</span><input value="Website" maxlength="80"></label>
+   <label class="field"><span>Description</span><textarea rows="2" maxlength="500">The data the website of Immoscoop reads from Data Hub: the structured data of its SEO pages, and soon its search result pages.</textarea></label>
+   <span class="in-place-actions"><button class="btn-primary" type="button" data-edit-done>Save</button><button class="btn-quiet" type="button" data-edit-done>Cancel</button></span>
+  </form>
+ </div>
+ <div class="coll-actions">
+  <!-- One "New", for its Owner Unit: a Feed starts with a query in Query; an Application opens the registration. -->
+  <span class="new-menu" style="position:relative" data-for="owner">
+   <button class="btn-primary" type="button" data-new-btn aria-haspopup="menu" aria-expanded="false" style="display:inline-flex;align-items:center;gap:6px"><i class="ph ph-plus"></i>New<i class="ph ph-caret-down" style="font-size:11px" aria-hidden="true"></i></button>
+   <div class="rg-menu btn-menu" data-new-menu role="menu" aria-label="New" hidden>
+    <a class="menu-item" role="menuitem" href="query.html" style="text-decoration:none;color:inherit"><i class="ph ph-rss-simple"></i><span>Feed</span><span class="meta">start with a query, then Make it a Feed</span></a>
+    <a class="menu-item" role="menuitem" href="application-register.html" style="text-decoration:none;color:inherit"><i class="ph ph-app-window"></i><span>Application</span><span class="meta">register it, to read Feeds of Website</span></a>
+   </div>
+  </span>
+ </div>
+</div>
+<div class="status-row">
+ <span class="status"><i class="ph-fill ph-users-three"></i>Owner: Website team</span>
+ <span class="status"><i class="ph-fill ph-rss-simple"></i>2 Feeds</span>
+ <span class="status"><i class="ph-fill ph-app-window"></i>2 Applications</span>
+</div>
+<section class="intro card" aria-label="About Website">
+ <div class="intro-head"><p class="label">About this Dock</p></div>
+ <div class="md">
+  <p>What the website asks of Data Hub, so that every kind of page shows the same figures. <a href="feed.html">Price statistics per area</a> is the first case: the structured data of the SEO pages, per street and municipality.</p>
+  <p>Questions? Ask Tom Maes of the Website team in <code>#website-data</code>.</p>
+ </div>
+</section>
+<section class="attention card" data-for="owner" aria-label="Needs attention">
+ <div class="label">Needs attention</div>
+ <div class="attention-line"><span class="app-state waiting">Waiting for consent</span><p><b>Search result pages</b> waits for the yes of Listings team, asked on 20 Nov; the Data Team said yes that day. It gets its key once every Owner said yes.</p><a class="text-link" href="application.html"><span>Open</span></a></div>
+</section>
+
+<div class="section-head dk-head"><h2>Feeds <span class="count">2</span></h2><span class="meta">What the Applications of Website may read</span></div>
+<div class="table-card card files dk-scroll"><table aria-label="Feeds in Website">
+ <thead><tr><th>Name</th><th>Edition</th><th>Delivered</th><th>Last delivery</th><th>Level</th><th>State</th></tr></thead>
+ <tbody>
+  <tr class="row" tabindex="0" role="link"><td><span class="name-cell" data-href="feed.html"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span>Price statistics per area</span></span></td><td>Edition 2<span class="dk-cell-sub">live since 9 Nov</span></td><td>Prepared<span class="dk-cell-sub">daily, after dbt-prod</span></td><td class="muted nowrap">today, 06:52</td><td><span class="level-cell"><span class="maturity" data-level="4"></span>4 · Explored</span></td><td class="dk-state-cell"><span class="app-state ok">Up to date</span></td></tr>
+  <tr class="row" tabindex="0" role="link"><td><span class="name-cell" data-href="feed.html"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span>Listing counts per municipality</span></span></td><td>Edition 1<span class="dk-cell-sub">live since 6 Nov</span></td><td>Prepared<span class="dk-cell-sub">daily, after dbt-prod</span></td><td class="muted nowrap">today, 06:49</td><td><span class="level-cell"><span class="maturity" data-level="3"></span>3 · Confirmed</span></td><td class="dk-state-cell"><span class="app-state ok">Up to date</span></td></tr>
+ </tbody></table></div>
+
+<div class="section-head dk-head"><h2>Applications <span class="count">2</span></h2><span class="meta">Who may read those Feeds, once every Owner said yes</span></div>
+<div class="table-card card files dk-scroll"><table aria-label="Applications in Website">
+ <thead><tr><th>Name</th><th>Kind</th><th>Users</th><th>Reads</th><th>Consent</th><th>State</th></tr></thead>
+ <tbody>
+  <tr class="row" tabindex="0" role="link"><td><span class="name-cell" data-href="application.html"><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span>SEO pages</span></span></td><td>External</td><td class="muted">No users</td><td><span class="dk-reads"><span>Price statistics per area <span class="meta">· Edition 2</span></span><span>Listing counts per municipality <span class="meta">· Edition 1</span></span></span></td><td><span class="dk-consent"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Complete</span><span class="dk-cell-sub">2 Owners, since 9 Nov</span></td><td class="dk-state-cell"><span class="app-state ok">Up to date</span></td></tr>
+  <tr class="row" tabindex="0" role="link"><td><span class="name-cell" data-href="application.html"><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span>Search result pages</span></span></td><td>External</td><td class="muted">No users</td><td><span class="dk-reads"><span>Price statistics per area <span class="meta">· asks Edition 2</span></span></span></td><td><span class="dk-consent open"><i class="ph ph-hourglass-medium" aria-hidden="true"></i>1 of 2 to answer</span><span class="dk-cell-sub">Listings team, asked 20 Nov</span></td><td class="dk-state-cell"><span class="app-state waiting">Waiting for consent</span></td></tr>
+ </tbody></table></div>
+</div>
+
+<!-- ───────────── The Dock "Agents' portal", of Agency success (?dock=portal) ───────────── -->
+<div data-pane-group="dock" data-pane="portal" hidden>
+<div class="coll-head" data-dock-head>
+ <span class="item-icon large"><i class="ph ph-handshake"></i></span>
+ <div style="flex:1;min-width:0">
+  <div data-head-view>
+   <h1 class="page-title"><span class="in-place" data-for="owner" data-edit title="Click to change">Agents' portal</span><span data-for="colleague datateam">Agents' portal</span></h1>
+   <p class="prose"><span class="in-place" data-for="owner" data-edit title="Click to change">What the agents' portal shows each agency about its own results on Immoscoop: its leads, its views and how fast it answers.</span><span data-for="colleague datateam">What the agents' portal shows each agency about its own results on Immoscoop: its leads, its views and how fast it answers.</span></p>
+  </div>
+  <form class="in-place-form" data-head-edit hidden>
+   <label class="field"><span>Name</span><input value="Agents' portal" maxlength="80"></label>
+   <label class="field"><span>Description</span><textarea rows="2" maxlength="500">What the agents' portal shows each agency about its own results on Immoscoop: its leads, its views and how fast it answers.</textarea></label>
+   <span class="in-place-actions"><button class="btn-primary" type="button" data-edit-done>Save</button><button class="btn-quiet" type="button" data-edit-done>Cancel</button></span>
+  </form>
+ </div>
+ <div class="coll-actions">
+  <span class="new-menu" style="position:relative" data-for="owner">
+   <button class="btn-primary" type="button" data-new-btn aria-haspopup="menu" aria-expanded="false" style="display:inline-flex;align-items:center;gap:6px"><i class="ph ph-plus"></i>New<i class="ph ph-caret-down" style="font-size:11px" aria-hidden="true"></i></button>
+   <div class="rg-menu btn-menu" data-new-menu role="menu" aria-label="New" hidden>
+    <a class="menu-item" role="menuitem" href="query.html" style="text-decoration:none;color:inherit"><i class="ph ph-rss-simple"></i><span>Feed</span><span class="meta">start with a query, then Make it a Feed</span></a>
+    <a class="menu-item" role="menuitem" href="application-register.html" style="text-decoration:none;color:inherit"><i class="ph ph-app-window"></i><span>Application</span><span class="meta">register it, to read Feeds of Agents' portal</span></a>
+   </div>
+  </span>
+ </div>
+</div>
+<div class="status-row">
+ <span class="status"><i class="ph-fill ph-users-three"></i>Owner: Agency success</span>
+ <span class="status"><i class="ph-fill ph-rss-simple"></i>2 Feeds</span>
+ <span class="status"><i class="ph-fill ph-app-window"></i>1 Application</span>
+</div>
+<!-- No intro written for this Dock: nothing shows (as on a Collection, DEC-UX-158). -->
+<section class="attention card" data-for="owner" aria-label="Needs attention">
+ <div class="label">Needs attention</div>
+ <div class="attention-line"><span class="app-state held">Held</span><p><b>Agency performance per month</b> since 22 Nov at 07:10: a Rule of Sales on Leads per agency fired. The Agents' portal gets the delivery of 21 Nov, with its date, until Sales releases it.</p><a class="text-link" href="feed.html?feed=held"><span>Open</span></a></div>
+</section>
+
+<div class="section-head dk-head"><h2>Feeds <span class="count">2</span></h2><span class="meta">What the Applications of Agents' portal may read</span></div>
+<div class="table-card card files dk-scroll"><table aria-label="Feeds in Agents' portal">
+ <thead><tr><th>Name</th><th>Edition</th><th>Delivered</th><th>Last delivery</th><th>Level</th><th>State</th></tr></thead>
+ <tbody>
+  <tr class="row" tabindex="0" role="link"><td><span class="name-cell" data-href="feed.html?feed=held"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span>Agency performance per month</span></span></td><td>Edition 1<span class="dk-cell-sub">live since 4 Nov</span></td><td>Prepared<span class="dk-cell-sub">daily, after dbt-prod</span></td><td class="muted nowrap">21 Nov, 06:55</td><td><span class="level-cell"><span class="maturity" data-level="4"></span>4 · Explored</span></td><td class="dk-state-cell"><span class="app-state held">Held</span><span class="dk-cell-sub">since 22 Nov, 07:10</span></td></tr>
+  <tr class="row" tabindex="0" role="link"><td><span class="name-cell" data-href="feed.html"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span>Leads per agency per week</span></span></td><td>Edition 1<span class="dk-cell-sub">live since 4 Nov</span></td><td>Prepared<span class="dk-cell-sub">daily, after dbt-prod</span></td><td class="muted nowrap">today, 06:58</td><td><span class="level-cell"><span class="maturity" data-level="4"></span>4 · Explored</span></td><td class="dk-state-cell"><span class="app-state ok">Up to date</span></td></tr>
+ </tbody></table></div>
+
+<div class="section-head dk-head"><h2>Applications <span class="count">1</span></h2><span class="meta">Who may read those Feeds, once every Owner said yes</span></div>
+<div class="table-card card files dk-scroll"><table aria-label="Applications in Agents' portal">
+ <thead><tr><th>Name</th><th>Kind</th><th>Users</th><th>Reads</th><th>Consent</th><th>State</th></tr></thead>
+ <tbody>
+  <tr class="row" tabindex="0" role="link"><td><span class="name-cell" data-href="application.html"><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span>Agents' portal</span></span></td><td>External</td><td>Agencies<span class="dk-cell-sub">user pool, sliced per agency</span></td><td><span class="dk-reads"><span>Agency performance per month <span class="meta">· Edition 1</span></span><span>Leads per agency per week <span class="meta">· Edition 1</span></span></span></td><td><span class="dk-consent"><i class="ph-fill ph-check-circle" aria-hidden="true"></i>Complete</span><span class="dk-cell-sub">3 Owners, since 3 Nov</span></td><td class="dk-state-cell"><span class="app-state held">Held</span><span class="dk-cell-sub">1 of its 2 Feeds</span></td></tr>
+ </tbody></table></div>
+</div>
+
+<!-- The history of the Dock is no part of the page: the quick window opens it, in a sheet (as DEC-UX-312 for a Collection). -->
+<div class="sheet-wrap" id="history" hidden>
+<div class="sheet-backdrop" data-sheet-close></div>
+<section class="sheet" role="dialog" aria-modal="true" aria-labelledby="history-title">
+ <div style="display:flex;align-items:flex-start;gap:10px">
+  <i class="ph ph-clock-counter-clockwise" style="font-size:22px;color:var(--text-secondary);margin-top:2px" aria-hidden="true"></i>
+  <div style="flex:1;min-width:0"><div class="meta">History</div><h2 id="history-title"><span data-pane-group="dock" data-pane="website">Website</span><span data-pane-group="dock" data-pane="portal" hidden>Agents' portal</span></h2></div>
+  <button class="icon-btn" data-sheet-close aria-label="Close"><i class="ph ph-x"></i></button>
+ </div>
+ <div class="sheet-list" style="padding:0 6px" data-pane-group="dock" data-pane="website">
+  <div class="log-line"><span style="flex:1">Search result pages registered by Tom Maes; Listings team and Data Team asked</span><span style="color:var(--text-muted)">20 Nov</span></div>
+  <div class="log-line"><span style="flex:1">SEO pages got its key</span><span style="color:var(--text-muted)">10 Nov</span></div>
+  <div class="log-line"><span style="flex:1">Price statistics per area: Edition 2 live, Edition 1 ended</span><span style="color:var(--text-muted)">9 Nov</span></div>
+  <div class="log-line"><span style="flex:1">Listing counts per municipality made by Tom Maes, Edition 1</span><span style="color:var(--text-muted)">6 Nov</span></div>
+  <div class="log-line"><span style="flex:1">Price statistics per area made by Tom Maes, Edition 1</span><span style="color:var(--text-muted)">27 Oct</span></div>
+  <div class="log-line"><span style="flex:1">Dock made by Tom Maes, for Website team</span><span style="color:var(--text-muted)">27 Oct</span></div>
+ </div>
+ <div class="sheet-list" style="padding:0 6px" data-pane-group="dock" data-pane="portal" hidden>
+  <div class="log-line"><span style="flex:1">Agency performance per month held by a Rule of Sales on Leads per agency</span><span style="color:var(--text-muted)">22 Nov</span></div>
+  <div class="log-line"><span style="flex:1">Agents' portal got its key</span><span style="color:var(--text-muted)">4 Nov</span></div>
+  <div class="log-line"><span style="flex:1">Every Owner said yes to the Agents' portal: Sales, Listings team, Agency success</span><span style="color:var(--text-muted)">3 Nov</span></div>
+  <div class="log-line"><span style="flex:1">Agents' portal registered by Nora Willems</span><span style="color:var(--text-muted)">30 Oct</span></div>
+  <div class="log-line"><span style="flex:1">Dock made by Nora Willems, for Agency success</span><span style="color:var(--text-muted)">28 Oct</span></div>
+ </div>
+</section>
+</div>
+<div style="height:120px"></div>
+</main>
+</div>
+<div class="dk-switches">
+ <div class="proto-switch" data-group="dock" role="tablist" aria-label="Prototype: which Dock">Dock
+  <button class="seg on" data-target="website" role="tab" aria-selected="true">Website</button>
+  <button class="seg" data-target="portal" role="tab" aria-selected="false">Agents' portal, a Feed held</button>
+ </div>
+ <div class="role-switch" data-group="role" role="tablist" aria-label="Prototype: seen as">Seen as
+  <button class="seg on" data-target="owner" role="tab" aria-selected="true">Its Owner Unit</button>
+  <button class="seg" data-target="colleague" role="tab" aria-selected="false">A colleague</button>
+ </div>
+</div>
+<script src="app.js"></script>
+<script>
+  // A phone has no room for the panel next to the page: it starts closed there, as after a click on the rail.
+  if (matchMedia('(max-width: 760px)').matches) document.querySelector('.app').classList.remove('panel-open');
+  // The Dock whose page is open unfolds in the panel and has its outline; the title of the tab follows.
+  const dockNow = () => document.querySelector('[data-group="dock"] .seg.on')?.dataset.target || 'website';
+  const showDock = () => {
+    const now = dockNow();
+    document.querySelectorAll('[data-dock-tree]').forEach((tree) => {
+      const on = tree.dataset.dockTree === now;
+      tree.classList.toggle('open', on); tree.classList.toggle('current', on);
+      tree.querySelector('.tree-toggle').setAttribute('aria-expanded', String(on));
+      const link = tree.querySelector('.tree-link');
+      if (on) link.setAttribute('aria-current', 'page'); else link.removeAttribute('aria-current');
+    });
+    document.title = 'Data Hub — ' + (now === 'portal' ? "Agents' portal" : 'Website');
+  };
+  document.querySelectorAll('[data-group="dock"] .seg').forEach((b) => b.addEventListener('click', showDock));
+  showDock();
+  // A row opens what it is, as a link would.
+  document.querySelectorAll('tr.row').forEach((row) => row.addEventListener('click', () => { const to = row.querySelector('[data-href]')?.dataset.href; if (to && to !== '#') location.href = to; }));
+  // The title opens the name and the description as fields (DEC-UX-162).
+  document.querySelectorAll('[data-dock-head]').forEach((head) => {
+    const view = head.querySelector('[data-head-view]'), form = head.querySelector('[data-head-edit]');
+    const editing = (on) => { view.hidden = on; form.hidden = !on; if (on) form.querySelector('input').focus(); };
+    head.querySelectorAll('[data-edit]').forEach((text) => text.addEventListener('click', () => editing(true)));
+    head.querySelectorAll('[data-edit-done]').forEach((button) => button.addEventListener('click', () => editing(false)));
+    // New, with its menu: Escape or a click beside it closes it.
+    const btn = head.querySelector('[data-new-btn]'), menu = head.querySelector('[data-new-menu]');
+    const open = (on) => { menu.hidden = !on; btn.setAttribute('aria-expanded', String(on)); };
+    btn.addEventListener('click', (event) => { event.stopPropagation(); open(menu.hidden); });
+    document.addEventListener('click', (event) => { if (!event.target.closest('.new-menu')) open(false); });
+    document.addEventListener('keydown', (event) => { if (event.key === 'Escape') open(false); });
+  });
+  const here = () => document.querySelector(`[data-pane-group="dock"][data-pane="${dockNow()}"]`);
+  // The commands of the page in the quick window, the history among them (DEC-UX-240).
+  window.QUICK = {
+    group: 'This Dock',
+    where: 'Dock',
+    commands: [
+      { icon: 'ph ph-pencil-simple', title: 'Change the name and description', meta: 'in place', run: () => here().querySelector('[data-edit]').click(), for: 'owner', words: 'edit rename name description' },
+      { icon: 'ph ph-rss-simple', title: 'New Feed', meta: 'start with a query, then Make it a Feed', href: 'query.html', for: 'owner', words: 'feed new query' },
+      { icon: 'ph ph-app-window', title: 'Register an Application', meta: 'to read Feeds of this Dock', href: 'application-register.html', for: 'owner', words: 'application register new' },
+      { icon: 'ph ph-clock-counter-clockwise', title: 'Show the history', meta: 'every change to this Dock', run: () => { document.getElementById('history').hidden = false; }, words: 'history log changes' },
+    ],
+  };
+</script>
+</body>
+</html>

@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<!--
+  Screen: Resource detail, the tab Applications: where a Resource goes (a proposal of 2026-11-23, OP-UX-129)
+  On the Resource itself, after Monitor, shown when a Feed reads it: every Owner sees where their data goes, and so
+  does every colleague who sees the Resource (DEC-DH-85). Per Feed that reads it, its Dock and Owner Unit, its Edition,
+  how it is delivered and its state, and the fields of this Resource it reads with what they leave as; per Application on
+  that Feed, the answer of this Resource's Owner Unit, when and by whom, and the state of what it gets. An Edition being
+  made that reads nothing new of the Resource says that the yes carries over (OP-AP-03).
+  For the Owner Unit, per Application that it said yes to: Withdraw (DEC-AP-05), which asks in the place of the row, as
+  revoking a key does (admin-keys): Phase out by a date, 14 days ahead by default (7 Dec 2026), the Application told at
+  once and every day of the last week; or Cut off now, with why, required, which stops at once every Feed reading this
+  Resource to that Application, its questions answered "Cut off by an Owner" (DEC-AP-10). Phase out is the calmer way
+  and comes first; Cut off is the red button and asks for a reason. A withdrawal stays listed, struck through, with when
+  and by whom. An Application still waiting for the Owner Unit has "Answer", which opens the Request for consent.
+  The example: Sales prices of the Listings team, read by the Feed Price statistics per area of the Dock Website, for
+  SEO pages (yes) and Search result pages (waiting for your answer).
+  The switches at the bottom: ?seen=owner (the default) and ?seen=colleague, who sees where it goes without Withdraw;
+  ?withdraw=list (the default), ?withdraw=open (asked in place, nothing chosen yet), ?withdraw=phaseout (Phase out
+  chosen), ?withdraw=cutoff (Cut off now chosen, with its reason), ?withdraw=done (phased out by 7 Dec, struck through),
+  ?withdraw=cutdone (cut off, struck through).
+  Requirements: FR-AP-33, FR-AP-34, FR-AP-35
+  Decisions: DEC-DH-85, DEC-AP-04, DEC-AP-05, DEC-AP-07, DEC-AP-10, DEC-AP-12, DEC-AP-14, DEC-UX-205.
+  Open points: OP-UX-129, OP-UX-120, OP-AP-02, OP-AP-03, OP-AP-11.
+  Related screens: resource-overview.html and resource-monitor.html (the head and tabs), application-consent.html (Answer), feed.html, application.html, dock.html, admin-keys.html (asking in place).
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="owner">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Sales prices · Applications</title>
+<style>
+  /* A Feed that reads the Resource: a tile in the tab, its Applications in a table under it. */
+  .ra-feed { margin-top: 16px; padding: 16px 18px; border-radius: var(--radius-md); background: var(--surface-sub); }
+  .ra-feed-head { display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+  .ra-feed-head > i { font-size: 18px; color: var(--text-secondary); margin-top: 2px; }
+  .ra-feed-name { font-size: 14px; font-weight: var(--weight-medium); color: var(--text-primary); text-decoration: none; }
+  .ra-feed-name:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .ra-feed-head .meta { display: block; line-height: 1.5; margin-top: 2px; }
+  /* What the Feed reads of this Resource, and what it leaves as. */
+  .ra-reads { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 8px 16px; margin: 14px 0 0 28px; font-size: var(--text-small); }
+  .ra-reads dt { color: var(--text-muted); font-size: var(--text-meta); padding-top: 4px; }
+  .ra-reads dd { margin: 0; line-height: 1.5; color: var(--text-secondary); }
+  .ra-reads .code-chip { background: var(--surface-solid); }
+  .ra-note { display: flex; gap: 8px; align-items: flex-start; margin: 12px 0 0 28px; font-size: var(--text-small); line-height: 1.5; color: var(--text-secondary); }
+  .ra-note > i { margin-top: 3px; color: var(--text-muted); }
+  .ra-scroll { overflow-x: auto; margin: 10px 0 0 28px; }
+  .ra-table { min-width: 640px; }
+  .ra-table td .meta { display: block; line-height: 1.45; margin-top: 1px; }
+  .ra-table .name-cell > span { white-space: nowrap; }
+  .ra-answer { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+  .ra-answer i { font-size: 14px; color: var(--text-secondary); }
+  /* A withdrawal stays listed, struck through */
+  .ra-table tr.ra-gone td { color: var(--text-muted); }
+  .ra-table tr.ra-gone .name-cell > span { text-decoration: line-through; }
+  /* Withdraw asks in the place of the row: two ways, the calm one first */
+  .ra-ask { display: grid; gap: 12px; padding: 10px 2px 8px; }
+  .ra-ask-q { display: flex; gap: 10px; align-items: flex-start; margin: 0; font-size: var(--text-small); line-height: 1.5; }
+  .ra-ask-q > i { color: var(--signal-warn); font-size: 18px; flex: none; }
+  .ra-ask-q b { font-weight: var(--weight-medium); }
+  .ra-ways { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .ra-way { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface-solid); outline: 1px solid var(--tint-hover); font-size: var(--text-small); line-height: 1.5; }
+  .ra-way label[for] { cursor: pointer; display: block; }
+  .ra-way > div { flex: 1; min-width: 0; }
+  .ra-way:hover { outline-color: var(--tint-active); }
+  .ra-way.on { outline: 1.5px solid var(--text-muted); }
+  .ra-way input[type="radio"] { margin: 3px 0 0; accent-color: var(--text-primary); flex: none; }
+  .ra-way b { display: block; font-weight: var(--weight-medium); }
+  .ra-way-p { display: block; margin-top: 2px; color: var(--text-secondary); }
+  .ra-way .field { margin: 10px 0 0; }
+  .ra-way .field input { max-width: 180px; }
+  .ra-way textarea { min-height: 70px; }
+  .ra-ask-foot { display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+  .ra-ask-foot p { flex: 1; min-width: 200px; margin: 0; }
+  @media (max-width: 900px) {
+    .ra-reads { grid-template-columns: minmax(0, 1fr); gap: 2px; margin-left: 0; }
+    .ra-reads dd { margin-bottom: 8px; }
+    .ra-note, .ra-scroll { margin-left: 0; }
+    .ra-ways { grid-template-columns: minmax(0, 1fr); }
+  }
+  /* Below 760 pixels the panel folds away, as if collapsed, so that the main area keeps its width (DEC-UX-91 leaves
+     small windows out; the prototype still reads there). The in-place ask keeps to the width of the window. */
+  @media (max-width: 760px) {
+    .ra-app { padding: 10px 10px 10px 2px; gap: 6px; }
+    .ra-app .panel { width: 0; padding-left: 0; padding-right: 0; opacity: 0; }
+    .ra-app .nav-btn.active { border-radius: var(--radius-nav-icon); }
+    .ra-app .nav-btn.active::after, .ra-app .flare { display: none; }
+    .ra-app .main { padding: 18px 14px; }
+    .ra-app .tabs { padding: 0 6px; }
+    .ra-head { flex-wrap: wrap; }
+    .ra-head > div:first-child { flex: 1 1 100% !important; }
+    /* On a phone each Application is a block of its own, so that withdrawing keeps to the width of the window */
+    .ra-table { min-width: 0; }
+    .ra-table thead { display: none; }
+    .ra-table tbody, .ra-table tr, .ra-table td { display: block; }
+    .ra-table tr[hidden] { display: none; }
+    .ra-table tr { padding: 10px 0; border-top: 1px solid var(--tint-active); }
+    .ra-table td { border: 0; padding: 3px 0; text-align: left !important; }
+    .ra-switch { left: 8px; right: 8px; flex-wrap: wrap; border-radius: var(--radius-md); }
+    .ra-switch.role-switch { bottom: 10px; }
+    .ra-switch.proto-switch { bottom: 64px; }
+  }
+</style>
+</head>
+<body>
+<div class="app panel-open ra-app">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <a class="nav-btn active" href="collections-start.html" data-label="Collections" aria-label="Collections" aria-current="page"><i class="ph-fill ph-stack"></i><span class="flare top"></span><span class="flare bottom"></span></a>
+  <a class="nav-btn" href="query.html" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></a>
+  <a class="nav-btn" href="docks-start.html" data-label="Docks" aria-label="Docks, where Applications read data"><i class="ph-fill ph-plugs-connected"></i></a>
+  <a class="nav-btn" href="#" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <a class="nav-btn nav-admin" href="admin-webhooks.html" data-label="Admin" aria-label="Admin, for the Data Team" data-for="datateam"><i class="ph-fill ph-toolbox"></i></a>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">MP</a>
+</nav>
+<aside class="panel" aria-label="Collections">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:4px">
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Collections</h1>
+   <button class="icon-btn" aria-label="New Collection"><i class="ph-fill ph-plus-circle"></i></button>
+   <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
+  </div>
+  <label class="search card" style="margin:16px 0 4px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search Resources and Lenses"></label>
+  <div class="tree-group card">
+   <div class="tree-head"><a class="tree-link" href="collection-overview.html"><span class="item-icon"><i class="ph ph-coins"></i></span><span class="tree-name"><span class="item-title">Credit leads</span><span class="meta">4 Resources · <i class="ph-fill ph-globe-simple"></i>Public</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Credit leads holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="resource-overview.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Weekly lead volume">Weekly lead volume</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Credit lead funnel">Credit lead funnel</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead sources">Lead sources</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead response time">Lead response time</span></span><span class="maturity" data-level="3"></span></a>
+   </div>
+  </div>
+  <div class="tree-group card">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-handshake"></i></span><span class="tree-name"><span class="item-title">Agencies</span><span class="meta">9 Resources</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Agencies holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Agencies">Agencies</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Agency packs">Agency packs</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Agency regions">Agency regions</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-more" href="#">Show all 9</a>
+   </div>
+  </div>
+  <div class="tree-group card">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-map-trifold"></i></span><span class="tree-name"><span class="item-title">Geography</span><span class="meta">5 Resources</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Geography holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Streets and municipalities">Streets and municipalities</span></span><span class="maturity" data-level="5"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Provinces">Provinces</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-more" href="#">Show all 5</a>
+   </div>
+  </div>
+  <div class="tree-group card">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-house-line"></i></span><span class="tree-name"><span class="item-title">Listing leads</span><span class="meta">15 Resources</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Listing leads holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Leads per agency">Leads per agency</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Contact requests per listing and per broker">Contact requests per listing and per broker</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Visit requests">Visit requests</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-more" href="#">Show all 15</a>
+   </div>
+  </div>
+  <div class="tree-group card open">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-buildings"></i></span><span class="tree-name"><span class="item-title">Listings</span><span class="meta"><span data-for="owner">23</span><span data-for="colleague datateam">22</span> Resources · <i class="ph-fill ph-globe-simple"></i>Public</span></span></a><button class="tree-toggle" aria-expanded="true" aria-label="Show what Listings holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Active listings per day">Active listings per day</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Listing views per day">Listing views per day</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res current" aria-current="page" href="resource-applications.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Sales prices">Sales prices</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Price changes">Price changes</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Listings by region">Listings by region</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Time on market">Time on market</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="New listings per week">New listings per week</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res unpublished" data-for="owner" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Withdrawn listings · not published">Withdrawn listings<span class="hidden-label">, not published</span></span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-more" href="#">Show all <span data-for="owner">23</span><span data-for="colleague datateam">22</span></a>
+   </div>
+  </div>
+  <div class="tree-group card">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-briefcase"></i></span><span class="tree-name"><span class="item-title">Brokers</span><span class="meta">11 Resources · <i class="ph-fill ph-lock-simple"></i>Private</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Brokers holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Active brokers">Active brokers</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Broker churn">Broker churn</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-more" href="#">Show all 11</a>
+   </div>
+  </div>
+  <p id="no-results" class="meta" style="padding:8px 4px" hidden>Nothing matches your search.</p>
+ </div>
+</aside>
+<main class="main">
+ <div class="breadcrumb">Collections / Listings</div>
+ <div class="ra-head" style="display:flex;align-items:flex-start;gap:14px;margin-top:8px">
+  <div style="flex:1;min-width:0"><h1 class="page-title">Sales prices</h1><div class="meta mono" style="margin-top:4px;flex-wrap:wrap;word-break:break-all">immoscoop-dataplatform-398214.dbt_prod_stacks.sales_prices <button class="icon-btn" aria-label="Copy key" style="width:22px;height:22px;font-size:13px"><i class="ph-fill ph-copy"></i></button></div></div>
+  <a class="btn-quiet outline" href="query-new.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-terminal-window"></i>Query</a>
+  <a class="btn-quiet outline" href="resource-messages.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" title="Messages on this, and start one"><i class="ph-fill ph-chat-circle-text"></i>Messages<span class="count">2</span></a>
+  <a class="btn-primary" href="resource-messages.html" style="text-decoration:none"><i class="ph-fill ph-chat-circle-dots" style="font-size:15px"></i>Ask a question</a>
+ </div>
+ <div class="status-row">
+  <span class="status"><span class="maturity" data-level="4" data-no-tooltip></span>4 · Explored</span>
+  <span class="status"><i class="ph-fill ph-globe-simple"></i>Published</span>
+  <span class="status"><i class="ph-fill ph-users-three"></i>Owner: Listings team</span>
+ </div>
+ <div class="tabs" role="tablist">
+  <a class="tab" href="resource-overview.html" role="tab" aria-selected="false" style="text-decoration:none">Overview</a>
+  <a class="tab" href="resource-detail.html?tabs=columns" role="tab" aria-selected="false" style="text-decoration:none">Columns</a>
+  <a class="tab" href="resource-lineage.html" role="tab" aria-selected="false" style="text-decoration:none">Lineage</a>
+  <a class="tab" data-for="owner datateam" href="resource-history.html" role="tab" aria-selected="false" style="text-decoration:none">History <span class="count">31</span></a>
+  <a class="tab" href="resource-preview.html" role="tab" aria-selected="false" style="text-decoration:none">Preview</a>
+  <a class="tab" href="resource-monitor.html" role="tab" aria-selected="false" style="text-decoration:none">Monitor</a>
+  <button class="tab on" role="tab" aria-selected="true">Applications <span class="count">2</span></button>
+ </div>
+ <div class="tab-content card">
+  <div style="flex:1;min-width:0">
+   <h2 style="font-size:var(--text-section);font-weight:var(--weight-medium);margin:0">Where Sales prices goes</h2>
+   <p class="meta" style="display:block;line-height:1.5;margin-top:4px;max-width:760px" data-for="owner">Sales prices leaves Data Hub through one Feed, to two Applications, each only once you, the Listings team, said yes. When it should stop, withdraw it: phase it out by a date, so that the Application can do without it, or cut it off at once.</p>
+   <p class="meta" style="display:block;line-height:1.5;margin-top:4px;max-width:760px" data-for="colleague datateam">Sales prices leaves Data Hub through one Feed, to two Applications, each only once its Owner, the Listings team, said yes. Only the Listings team can withdraw it; ask them in Messages.</p>
+  </div>
+
+  <section class="ra-feed" aria-label="The Feed Price statistics per area">
+   <div class="ra-feed-head">
+    <i class="ph ph-rss-simple" role="img" aria-label="Feed"></i>
+    <div style="flex:1;min-width:220px">
+     <a class="ra-feed-name" href="feed.html">Price statistics per area</a>
+     <span class="meta">Dock Website · of the Website team · Edition 2, live since 9 Nov 2026 · prepared, daily after the run of dbt-prod · delivered today 06:52</span>
+    </div>
+    <span class="app-state ok">Up to date</span>
+   </div>
+   <dl class="ra-reads">
+    <dt>Reads of Sales prices</dt>
+    <dd><span class="code-chip">sale_price</span><span class="code-chip">property_type</span><span class="code-chip">sale_date</span><span class="code-chip">street_id</span><span class="code-chip">municipality_id</span></dd>
+    <dt>Leaves as</dt>
+    <dd><span class="code-chip">price_mean</span><span class="code-chip">price_median</span><span class="code-chip">price_p25</span><span class="code-chip">price_p75</span><span class="code-chip">n_sales</span><span class="code-chip">property_type</span><span class="code-chip">period_month</span><span class="code-chip">area_id</span><br>Never one sale: a price of fewer than 5 sales is left empty, its Minimum Volume. The last run withheld 1,184 of 38,950 street rows, and no municipality.</dd>
+   </dl>
+   <p class="ra-note"><i class="ph ph-info" aria-hidden="true"></i><span>Edition 3 is being made by the Website team: it adds <span class="mono">price_sd</span>, the spread of <span class="mono">sale_price</span>. It reads nothing new of Sales prices, so the yes of the Listings team carries over. The Listings team is told when it goes live, and Edition 2 ends 90 days later.</span></p>
+   <div class="ra-scroll">
+   <table class="ra-table">
+    <thead><tr><th>Application</th><th>Who reads</th><th>Answer of the Listings team</th><th>State</th><th></th></tr></thead>
+    <tbody>
+     <tr data-pane-group="withdraw" data-pane="list">
+      <td><a class="name-cell" href="application.html"><i class="ph ph-app-window kind-icon" aria-hidden="true"></i><span>SEO pages</span></a><span class="meta">external · Dock Website</span></td>
+      <td>No users<span class="meta">the backend of the website</span></td>
+      <td><span class="ra-answer"><i class="ph ph-check-circle" aria-hidden="true"></i>Yes</span><span class="meta">9 Nov 2026 · Lotte Janssens</span></td>
+      <td><span class="app-state ok">Up to date</span></td>
+      <td style="text-align:right"><button class="btn-quiet outline" data-for="owner" data-go="withdraw:open">Withdraw</button></td>
+     </tr>
+     <tr data-pane-group="withdraw" data-pane="open" hidden class="key-confirm"><td colspan="5">
+      <div class="ra-ask">
+       <p class="ra-ask-q"><i class="ph-fill ph-warning"></i><span><b>Withdraw Sales prices from SEO pages?</b> Choose how. Either way the Website team and Jonas Peeters, its owner at IT, are told at once, and it goes into the Log of the Feed.</span></p>
+       <div class="ra-ways" role="radiogroup" aria-label="How to withdraw">
+        <div class="ra-way"><input id="wd-1" type="radio" name="wd-open" data-go="withdraw:phaseout"><div><label for="wd-1"><b>Phase out by a date</b><span class="ra-way-p">SEO pages keeps reading until that day. It is told at once, and every day of the last week, so that its pages can do without.</span></label></div></div>
+        <div class="ra-way"><input id="wd-2" type="radio" name="wd-open" data-go="withdraw:cutoff"><div><label for="wd-2"><b>Cut off now</b><span class="ra-way-p">It stops at once: SEO pages gets "Cut off by an Owner" for every question on a Feed that reads Sales prices. For data that must not go out any more.</span></label></div></div>
+       </div>
+       <div class="ra-ask-foot"><p class="meta">Choose one of the two first.</p><button class="btn-quiet outline" data-go="withdraw:list">Cancel</button><button class="btn-primary" aria-disabled="true" style="opacity:.45;cursor:default">Withdraw</button></div>
+      </div>
+     </td></tr>
+     <tr data-pane-group="withdraw" data-pane="phaseout" hidden class="key-confirm"><td colspan="5">
+      <div class="ra-ask">
+       <p class="ra-ask-q"><i class="ph-fill ph-warning"></i><span><b>Withdraw Sales prices from SEO pages?</b> Choose how. Either way the Website team and Jonas Peeters, its owner at IT, are told at once, and it goes into the Log of the Feed.</span></p>
+       <div class="ra-ways" role="radiogroup" aria-label="How to withdraw">
+        <div class="ra-way on"><input id="wd-3" type="radio" name="wd-phase" checked data-go="withdraw:phaseout"><div><label for="wd-3"><b>Phase out by a date</b><span class="ra-way-p">SEO pages keeps reading until that day. It is told at once, and every day of the last week, so that its pages can do without.</span></label>
+         <label class="field"><span>It stops on</span><input type="text" value="7 Dec 2026" aria-label="It stops on" data-1p-ignore data-lpignore="true" data-bwignore data-form-type="other"></label>
+         <span class="meta" style="display:block">14 days ahead by default: enough for IT to change the pages. Later is fine.</span></div></div>
+        <div class="ra-way"><input id="wd-4" type="radio" name="wd-phase" data-go="withdraw:cutoff"><div><label for="wd-4"><b>Cut off now</b><span class="ra-way-p">It stops at once: SEO pages gets "Cut off by an Owner" for every question on a Feed that reads Sales prices. For data that must not go out any more.</span></label></div></div>
+       </div>
+       <div class="ra-ask-foot"><p class="meta">Until 7 Dec nothing changes for its visitors. Listing counts per municipality, which does not read Sales prices, goes on.</p><button class="btn-quiet outline" data-go="withdraw:list">Cancel</button><button class="btn-primary" data-go="withdraw:done">Phase out by 7 Dec 2026</button></div>
+      </div>
+     </td></tr>
+     <tr data-pane-group="withdraw" data-pane="cutoff" hidden class="key-confirm"><td colspan="5">
+      <div class="ra-ask">
+       <p class="ra-ask-q"><i class="ph-fill ph-warning"></i><span><b>Withdraw Sales prices from SEO pages?</b> Choose how. Either way the Website team and Jonas Peeters, its owner at IT, are told at once, and it goes into the Log of the Feed.</span></p>
+       <div class="ra-ways" role="radiogroup" aria-label="How to withdraw">
+        <div class="ra-way"><input id="wd-5" type="radio" name="wd-cut" data-go="withdraw:phaseout"><div><label for="wd-5"><b>Phase out by a date</b><span class="ra-way-p">SEO pages keeps reading until that day. It is told at once, and every day of the last week, so that its pages can do without.</span></label></div></div>
+        <div class="ra-way on"><input id="wd-6" type="radio" name="wd-cut" checked data-go="withdraw:cutoff"><div><label for="wd-6"><b>Cut off now</b><span class="ra-way-p">It stops at once: SEO pages gets "Cut off by an Owner" for every question on a Feed that reads Sales prices. For data that must not go out any more.</span></label>
+         <label class="field"><span>Why, required: the Website team and IT read it</span><textarea aria-label="Why you cut it off" data-1p-ignore data-lpignore="true" data-bwignore data-form-type="other">Sales prices of October hold 212 sales of a test agency. They must not reach the website; we cut it off until the fix of the Data Team is live.</textarea></label></div></div>
+       </div>
+       <div class="ra-ask-foot"><p class="meta">Price statistics per area stops for SEO pages at once; its pages fall back on what they show without it. The Data Team is told too, with your reason. Listing counts per municipality, which does not read Sales prices, goes on. Only a new yes undoes it.</p><button class="btn-quiet outline" data-go="withdraw:list">Cancel</button><button class="btn-primary danger" data-go="withdraw:cutdone">Cut off now</button></div>
+      </div>
+     </td></tr>
+     <tr data-pane-group="withdraw" data-pane="done" hidden class="ra-gone">
+      <td><span class="name-cell"><i class="ph ph-app-window kind-icon" aria-hidden="true"></i><span>SEO pages</span></span><span class="meta">external · Dock Website</span></td>
+      <td>No users<span class="meta">the backend of the website</span></td>
+      <td><span class="ra-answer"><i class="ph ph-arrow-u-up-left" aria-hidden="true"></i>Withdrawn</span><span class="meta">today 21:40 · by you · phase out by 7 Dec 2026</span><span class="meta">yes before: 9 Nov 2026 · Lotte Janssens</span></td>
+      <td><span class="app-state phasing">Phasing out</span><span class="meta">until 7 Dec 2026</span></td>
+      <td></td>
+     </tr>
+     <tr data-pane-group="withdraw" data-pane="cutdone" hidden class="ra-gone">
+      <td><span class="name-cell"><i class="ph ph-app-window kind-icon" aria-hidden="true"></i><span>SEO pages</span></span><span class="meta">external · Dock Website</span></td>
+      <td>No users<span class="meta">the backend of the website</span></td>
+      <td><span class="ra-answer"><i class="ph ph-prohibit" aria-hidden="true"></i>Cut off</span><span class="meta">today 21:40 · by you: Sales prices of October hold 212 sales of a test agency…</span><span class="meta">only a new yes of the Listings team undoes it</span><span class="meta">yes before: 9 Nov 2026 · Lotte Janssens</span></td>
+      <td><span class="app-state cutoff">Cut off</span><span class="meta">since today 21:40</span></td>
+      <td></td>
+     </tr>
+     <tr>
+      <td><a class="name-cell" href="application.html"><i class="ph ph-app-window kind-icon" aria-hidden="true"></i><span>Search result pages</span></a><span class="meta">external · Dock Website</span></td>
+      <td>No users<span class="meta">the backend of the website</span></td>
+      <td><span class="ra-answer"><i class="ph ph-hourglass-medium" aria-hidden="true"></i><span data-for="owner">Waiting for your answer</span><span data-for="colleague datateam">Waiting for the Listings team</span></span><span class="meta">asked 20 Nov 2026 · Tom Maes</span></td>
+      <td><span class="app-state waiting">Waiting for consent</span></td>
+      <td style="text-align:right"><a class="btn-quiet outline" data-for="owner" href="application-consent.html?req=seo" style="text-decoration:none">Answer</a></td>
+     </tr>
+    </tbody>
+   </table>
+   </div>
+  </section>
+
+  <p class="meta" style="display:block;margin-top:14px;line-height:1.5"><i class="ph ph-info"></i> An Application reads Sales prices only through a Feed, and only once the Listings team said yes; a new Edition that reads more of it asks again. A Feed reads it on the rights of the Owner Unit of its Dock, never on those of a person. Late and Held are no errors: the last good delivery is served.</p>
+ </div>
+</main>
+</div>
+
+<div class="proto-switch ra-switch" data-group="withdraw" role="tablist" aria-label="Prototype: withdrawing" style="bottom:72px">Withdraw
+ <button class="seg on" data-target="list" role="tab" aria-selected="true">The list</button>
+ <button class="seg" data-target="open" role="tab" aria-selected="false">Asked</button>
+ <button class="seg" data-target="phaseout" role="tab" aria-selected="false">Phase out</button>
+ <button class="seg" data-target="cutoff" role="tab" aria-selected="false">Cut off</button>
+ <button class="seg" data-target="done" role="tab" aria-selected="false">Phased out</button>
+ <button class="seg" data-target="cutdone" role="tab" aria-selected="false">Cut off, done</button>
+</div>
+<div class="role-switch ra-switch" data-group="seen" role="tablist" aria-label="Prototype: seen as">Seen as
+ <button class="seg on" data-target="owner" role="tab" aria-selected="true">Listings team, its Owner</button>
+ <button class="seg" data-target="colleague" role="tab" aria-selected="false">A colleague</button>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

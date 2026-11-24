@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<!--
+  Screen: a new Edition of a Feed (OP-UX-125)
+  Opens from "New Edition" on the page of a Feed, for its Owner Unit only. An Edition never changes once an Application
+  reads it (DEC-AP-14): a Feed changes by a new Edition, made from the query of the current one, editable here. The
+  example: Edition 3 of "Price statistics per area", which adds price_sd, the standard deviation the SEO pages lacked.
+  Built as making a Lens (lens-new.html): the left the query and its fields, the right what the change means.
+  - Left: the SQL of Edition 2, changed: the added lines marked; then its fields against Edition 2, each Same, Added,
+    Removed or Changed in type; the search keys and the Minimum Volume, unchanged here.
+  - Right, what changes against Edition 2: fields, search keys, Minimum Volume, the Resources it reads.
+  - Who must say yes again: only the Owner Unit of a Resource the new Edition newly reads (OP-AP-03); the others carry
+    over. They are asked when an Application moves to the new Edition, not before; until then it stays on Edition 2.
+  - The Applications on Edition 2: told when Edition 3 is live; Edition 2 ends when none reads it, at the latest 90
+    days later, 21 Feb 2027 if Edition 3 is live today, which the Owner Unit may extend. At most two Editions live.
+  The switch at the bottom: ?ed=same (adds price_sd, reads no new Resource, nobody is asked again) and
+  ?ed=newresource (also adds active_agencies, from Agencies of Agency success, which must then say yes).
+  Requirements: FR-AP-16, FR-AP-17, EC-AP-03
+  Decisions: DEC-AP-02, DEC-AP-04, DEC-AP-07, DEC-AP-12, DEC-AP-14, DEC-AP-17, DEC-AP-18.
+  Open points: OP-UX-120, OP-UX-125, OP-AP-02, OP-AP-03.
+  Related screens: feed.html (the Feed, New Edition), lens-new.html (the pattern), application.html (an Application that moves to it).
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="owner">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — New Edition · Price statistics per area</title>
+<style>
+/* The state of a Feed in the panel of Docks, when it is not Up to date (the shared shell of Applications) */
+.panel .state-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; margin-right: 6px; }
+.panel .state-dot.late, .panel .state-dot.held { background: var(--signal-warn); }
+.panel .state-dot.cutoff { background: var(--signal-urgent); }
+
+/* Head */
+.fe-top { display: flex; align-items: flex-start; gap: 12px; margin-top: 8px; }
+.fe-lead { margin: 6px 0 0; color: var(--text-secondary); font-size: var(--text-small); line-height: 1.5; max-width: 680px; }
+.breadcrumb a { color: inherit; text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; text-underline-offset: 3px; }
+a.status { text-decoration: none; }
+a.status:hover { color: var(--text-primary); }
+.fe-editions { display: inline-flex; align-items: center; gap: 2px; padding: 2px 3px 2px 10px; border-radius: var(--radius-pill); background: var(--card); font-size: var(--text-meta); color: var(--text-secondary); }
+.fe-editions .seg { font-size: var(--text-meta); padding: 3px 9px; }
+.fe-editions .seg.on { background: var(--tint-active); }
+.alert.fe-quiet { background: var(--card); }
+.alert.fe-quiet > i { color: var(--text-secondary); }
+.alert b { font-weight: var(--weight-medium); }
+
+/* Overview */
+.fe-ov .about-tile > p { margin: 8px 0 0; }
+.fe-ov .about-tile b { font-weight: var(--weight-medium); }
+.fe-now { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.fe-now .app-state { font-size: var(--text-small); padding: 4px 11px; }
+.fe-strip { margin-top: 4px; }
+.fe-days { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 3px; margin-top: 5px; font-size: 10px; color: var(--text-muted); text-align: center; }
+.fe-days .today { color: var(--text-primary); font-weight: var(--weight-medium); }
+.fe-sw-late { background: color-mix(in srgb, var(--signal-warn) 55%, transparent); }
+.fe-sw-cut { background: color-mix(in srgb, var(--signal-urgent) 60%, transparent); }
+.fe-sw-none { border: 1px dashed var(--tint-active); box-sizing: border-box; }
+.fe-scroll { overflow-x: auto; }
+.fe-scroll table { min-width: 560px; }
+.fe-ov table td, .fe-ov table th { background: transparent; }
+.fe-sub { display: block; font-size: var(--text-meta); color: var(--text-muted); margin-top: 2px; font-weight: var(--weight-regular); }
+.fe-ans { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.fe-ans i { font-size: 15px; }
+.fe-ans.yes i { color: var(--text-secondary); }
+.fe-ans.wait { color: var(--text-secondary); }
+.fe-ans.wait i { color: var(--text-muted); }
+.fe-ov .binding-rule { margin-top: 8px; background: var(--card); }
+.fe-ov .binding-rule p { margin: 0; }
+
+/* Fields */
+.fe-fields-top { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 12px; align-items: start; margin-bottom: 14px; }
+.fe-mv-n { font-size: 24px; font-weight: var(--weight-medium); letter-spacing: -.3px; }
+.fe-mv-n span { font-size: var(--text-small); font-weight: var(--weight-regular); color: var(--text-muted); letter-spacing: 0; }
+.fe-frozen { display: flex; gap: 10px; align-items: flex-start; font-size: var(--text-small); line-height: 1.55; color: var(--text-secondary); padding: 6px 4px; }
+.fe-frozen > i { font-size: 18px; margin-top: 1px; }
+.fe-frozen p { margin: 0 0 6px; }
+.fe-role { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: center; }
+.fe-role .pill { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.fe-fields td:first-child { white-space: nowrap; }
+.fe-fields .fe-from { font-size: var(--text-meta); color: var(--text-muted); }
+
+/* Query */
+.fe-q-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 2px 2px 12px; }
+.fe-q-top .label { margin: 0; }
+.fe-q-top .scope-chip { padding-right: 10px; cursor: default; }
+.fe-q-note { display: flex; gap: 8px; align-items: center; font-size: var(--text-small); color: var(--text-secondary); margin: 0 2px 12px; flex-wrap: wrap; }
+.fe-q-note i { font-size: 16px; }
+.fe-sql .sql-editor { overflow-x: auto; }
+
+/* Log */
+.fe-log-row { display: grid; grid-template-columns: 108px 104px minmax(0, 1fr); gap: 12px; align-items: start; padding: 9px 4px; border-top: 1px solid var(--tint-active); font-size: var(--text-small); line-height: 1.5; }
+.fe-log-row:first-child { border-top: 0; }
+.fe-log-row p { margin: 0; max-width: 780px; }
+.fe-log-when { color: var(--text-muted); white-space: nowrap; }
+.fe-log-kind { display: inline-flex; align-items: center; gap: 6px; color: var(--text-secondary); white-space: nowrap; }
+.fe-log-kind i { font-size: 15px; }
+.fe-log-kind.warn, .fe-log-kind.warn i { color: var(--signal-warn); }
+.fe-log-kind.urgent, .fe-log-kind.urgent i { color: var(--signal-urgent); }
+
+/* The prototype switches, stacked in one corner */
+.fe-switches { position: fixed; right: 34px; bottom: 26px; z-index: 20; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.fe-switches > .proto-switch, .fe-switches > .role-switch { position: static; }
+
+@media (max-width: 900px) {
+  .fe-app .about-grid, .fe-fields-top { grid-template-columns: minmax(0, 1fr); }
+  .fe-app .about-tile[style*="grid-column"] { grid-column: auto !important; }
+}
+@media (max-width: 760px) {
+  .fe-app { padding: 10px; gap: 8px; }
+  .fe-app .main { padding: 20px 16px; }
+  .fe-top { flex-wrap: wrap; }
+  .fe-top > div:first-child { flex-basis: 100%; }
+  .fe-app .tabs { padding: 0 8px; }
+  .fe-app .tab { padding: 9px 12px 10px; }
+  .fe-app .tab-content { padding: 10px; }
+  .fe-log-row { grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; }
+  .fe-log-row p { grid-column: 1 / -1; }
+  .fe-log-when { grid-row: 1; grid-column: 2; }
+  .fe-app .alert { flex-wrap: wrap; }
+  .fe-app .alert p { flex-basis: calc(100% - 40px); }
+  .fe-switches { left: 10px; right: 10px; bottom: 10px; align-items: stretch; }
+  .fe-switches > * { flex-wrap: wrap; border-radius: 16px; }
+}
+</style>
+<style>
+/* A new Edition (OP-UX-125) */
+.fen-p { display: block; line-height: 1.5; margin: 6px 0 0; }
+.fen-sql .ln.add { background: color-mix(in srgb, var(--text-secondary) 10%, transparent); }
+.fen-sql .ln.add .ln-fold::before { content: "+"; color: var(--text-secondary); font-weight: 500; }
+.fen-added { color: var(--text-primary); background: var(--tint-active); }
+.fen-row-add td { background: color-mix(in srgb, var(--text-secondary) 6%, transparent); }
+.fen-diff { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-direction: column; gap: 8px; font-size: var(--text-small); line-height: 1.5; }
+.fen-diff li { display: flex; gap: 8px; align-items: flex-start; }
+.fen-diff i { font-size: 16px; color: var(--text-secondary); margin-top: 1px; flex: none; }
+.fen-owner { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--tint-hover); font-size: var(--text-small); }
+.fen-owner b { font-weight: 500; }
+.fen-owner .kind-icon { font-size: 18px; color: var(--text-secondary); }
+.fen-go { width: 100%; justify-content: center; margin-top: 14px; }
+.fen-save { width: 100%; justify-content: center; margin-top: 8px; text-decoration: none; display: flex; box-sizing: border-box; }
+.ml-side > div > .card + .card { margin-top: 14px; }
+.fen-table { overflow-x: auto; margin-top: 8px; }
+@media (max-width: 900px) { .make-lens { grid-template-columns: minmax(0, 1fr); } }
+</style>
+</head>
+<body>
+<div class="app panel-open fe-app">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <a class="nav-btn" href="collections-start.html" data-label="Collections" aria-label="Collections"><i class="ph-fill ph-stack"></i></a>
+  <a class="nav-btn" href="query.html" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></a>
+  <a class="nav-btn active" href="docks-start.html" data-label="Docks" aria-label="Docks, where Applications read data" aria-current="page"><i class="ph-fill ph-plugs-connected"></i><span class="flare top"></span><span class="flare bottom"></span></a>
+  <a class="nav-btn" href="#" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <a class="nav-btn nav-admin" href="admin-webhooks.html" data-label="Admin" aria-label="Admin, for the Data Team" data-for="datateam"><i class="ph-fill ph-toolbox"></i></a>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">MP</a>
+</nav>
+<!-- The panel of Docks: the Dock of the Feed unfolds, and the Feed is marked as open (the script below follows the switch). -->
+<aside class="panel" aria-label="Docks">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:4px">
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Docks</h1>
+   <button class="icon-btn" aria-label="New Dock"><i class="ph-fill ph-plus-circle"></i></button>
+   <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
+  </div>
+  <label class="search card" style="margin:16px 0 4px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search Feeds and Applications"></label>
+  <div class="tree-group card open" data-dock-tree="prices">
+   <div class="tree-head"><a class="tree-link" href="dock.html"><span class="item-icon"><i class="ph ph-globe-hemisphere-west"></i></span><span class="tree-name"><span class="item-title">Website</span><span class="meta">2 Feeds · 2 Applications</span></span></a><button class="tree-toggle" aria-expanded="true" aria-label="Show what Website holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res current" aria-current="page" href="feed.html" data-feed-item="prices"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span class="tree-res-name"><span class="clip" title="Price statistics per area">Price statistics per area</span></span><span class="maturity" data-level="4" data-pane-group="state" data-pane="ok"></span><span class="state-dot late" role="img" aria-label="Late" title="Late since today, 06:40" data-pane-group="state" data-pane="late" hidden></span><span class="state-dot cutoff" role="img" aria-label="Cut off" title="Cut off since today, 06:41" data-pane-group="state" data-pane="cutoff" hidden></span></a>
+     <a class="tree-res" href="feed.html"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span class="tree-res-name"><span class="clip" title="Listing counts per municipality">Listing counts per municipality</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="application.html"><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span class="tree-res-name"><span class="clip" title="SEO pages">SEO pages</span></span></a>
+     <a class="tree-res" href="application.html"><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span class="tree-res-name"><span class="clip" title="Search result pages · waiting for consent">Search result pages</span></span></a>
+   </div>
+  </div>
+  <div class="tree-group card" data-dock-tree="held">
+   <div class="tree-head"><a class="tree-link" href="dock.html?dock=portal"><span class="item-icon"><i class="ph ph-handshake"></i></span><span class="tree-name"><span class="item-title">Agents' portal</span><span class="meta">2 Feeds · 1 Application</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Agents' portal holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="feed.html?feed=held" data-feed-item="held"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span class="tree-res-name"><span class="clip" title="Agency performance per month · Held since 22 Nov">Agency performance per month</span></span><span class="state-dot held" role="img" aria-label="Held" title="Held since 22 Nov, 07:10"></span></a>
+     <a class="tree-res" href="feed.html"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span class="tree-res-name"><span class="clip" title="Leads per agency per week">Leads per agency per week</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="application.html"><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span class="tree-res-name"><span class="clip" title="Agents' portal">Agents' portal</span></span></a>
+   </div>
+  </div>
+  <div class="tree-group card">
+   <div class="tree-head"><a class="tree-link" href="dock.html"><span class="item-icon"><i class="ph ph-lifebuoy"></i></span><span class="tree-name"><span class="item-title">Customer success tools</span><span class="meta">1 Feed · 1 Application</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Customer success tools holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="feed.html"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span class="tree-res-name"><span class="clip" title="Agency health score, live">Agency health score</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="application.html"><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span class="tree-res-name"><span class="clip" title="CS cockpit">CS cockpit</span></span></a>
+   </div>
+  </div>
+  <p id="no-results" class="meta" style="padding:8px 4px" hidden>Nothing matches your search.</p>
+ </div>
+</aside>
+<main class="main">
+<div class="breadcrumb"><a href="docks-start.html">Docks</a> / <a href="dock.html">Website</a> / <a href="feed.html">Price statistics per area</a></div>
+<div style="display:flex;align-items:center;gap:12px;margin-top:8px;flex-wrap:wrap">
+ <h1 class="page-title" style="flex:1;min-width:240px">New Edition</h1>
+ <a class="btn-quiet outline" href="feed.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph ph-x"></i>Cancel</a>
+</div>
+<p class="meta" style="display:block;margin-top:6px;line-height:1.5;max-width:760px">Edition 3 of <b style="font-weight:500;color:var(--text-primary)">Price statistics per area</b>, from the query of Edition 2. An Edition that an Application reads never changes: this one is a <span class="app-state draft">Draft</span> until it is live, and Edition 2 stays as it is for the Applications on it.</p>
+<div class="make-lens">
+ <section class="card nq-left" aria-labelledby="fen-q">
+  <h2 id="fen-q" class="nq-title">Its query</h2>
+  <div class="fe-q-top" style="margin-top:8px">
+   <span class="label">Reads</span>
+   <span class="scope-chip"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Sales prices<span class="muted">· Listings</span><span class="maturity" data-level="4"></span></span>
+   <span class="scope-chip"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Streets and municipalities<span class="muted">· Geography</span><span class="maturity" data-level="5"></span></span>
+   <span class="scope-chip fen-newres" data-pane-group="ed" data-pane="newresource" hidden><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Agencies<span class="muted">· Agencies</span><span class="maturity" data-level="4"></span><span class="pill fen-added">New</span></span>
+  </div>
+  <p class="meta fen-p">On the rights of Website team, as every Edition of this Feed. The lines marked + are new against Edition 2.</p>
+  <div class="q-box fe-sql" data-pane-group="ed" data-pane="same">
+   <div class="q-box-head"><span class="label" style="margin:0">BigQuery SQL · Edition 3, a Draft</span><span class="meta">1 line added</span></div>
+   <div class="sql-editor fen-sql" aria-label="SQL of Edition 3">
+    <div class="ln"><span class="ln-no">1</span><span class="ln-fold"></span><span class="ln-code"><span class="sql-comment">-- Prices of sales per street and per municipality, per month and type of property</span></span></div>
+    <div class="ln"><span class="ln-no">2</span><span class="ln-fold"></span><span class="ln-code">with</span></div>
+    <div class="ln"><span class="ln-no">3</span><span class="ln-fold"></span><span class="ln-code">sales as (select street_id, street_name, municipality_id, municipality_name, property_type,</span></div>
+    <div class="ln"><span class="ln-no">4</span><span class="ln-fold"></span><span class="ln-code">    date_trunc(sale_date, month) as period_month, price</span></div>
+    <div class="ln"><span class="ln-no">5</span><span class="ln-fold"></span><span class="ln-code">  from <span class="sql-key">`dbt_prod_listings.sales_prices`</span> inner join <span class="sql-key">`dbt_prod_geo.streets_and_municipalities`</span> using (street_id)),</span></div>
+    <div class="ln"><span class="ln-no">6</span><span class="ln-fold"></span><span class="ln-code">per_area as (select 'street' as area_level, cast(street_id as string) as area_id, street_name as area_name,</span></div>
+    <div class="ln"><span class="ln-no">7</span><span class="ln-fold"></span><span class="ln-code">    property_type, period_month, count(*) as n_sales, avg(price) as price_mean,</span></div>
+    <div class="ln"><span class="ln-no">8</span><span class="ln-fold"></span><span class="ln-code">    approx_quantiles(price, 4)[offset(2)] as price_median, approx_quantiles(price, 4)[offset(1)] as price_p25,</span></div>
+    <div class="ln"><span class="ln-no">9</span><span class="ln-fold"></span><span class="ln-code">    approx_quantiles(price, 4)[offset(3)] as price_p75,</span></div>
+    <div class="ln add"><span class="ln-no">10</span><span class="ln-fold"></span><span class="ln-code">    stddev_samp(price) as price_sd</span></div>
+    <div class="ln"><span class="ln-no">11</span><span class="ln-fold"></span><span class="ln-code">  from sales group by 1, 2, 3, 4, 5</span></div>
+    <div class="ln"><span class="ln-no">12</span><span class="ln-fold"></span><span class="ln-code">  <span class="sql-comment">-- … the same per municipality, union all</span></span></div>
+    <div class="ln"><span class="ln-no">13</span><span class="ln-fold"></span><span class="ln-code">)</span></div>
+    <div class="ln"><span class="ln-no">14</span><span class="ln-fold"></span><span class="ln-code">select per_area.* from per_area</span></div>
+   </div>
+  </div>
+  <div class="q-box fe-sql" data-pane-group="ed" data-pane="newresource" hidden>
+   <div class="q-box-head"><span class="label" style="margin:0">BigQuery SQL · Edition 3, a Draft</span><span class="meta">6 lines added</span></div>
+   <div class="sql-editor fen-sql" aria-label="SQL of Edition 3">
+    <div class="ln"><span class="ln-no">1</span><span class="ln-fold"></span><span class="ln-code"><span class="sql-comment">-- Prices of sales per street and per municipality, per month and type of property</span></span></div>
+    <div class="ln"><span class="ln-no">2</span><span class="ln-fold"></span><span class="ln-code">with</span></div>
+    <div class="ln"><span class="ln-no">3</span><span class="ln-fold"></span><span class="ln-code">sales as (select street_id, street_name, municipality_id, municipality_name, property_type,</span></div>
+    <div class="ln"><span class="ln-no">4</span><span class="ln-fold"></span><span class="ln-code">    date_trunc(sale_date, month) as period_month, price</span></div>
+    <div class="ln"><span class="ln-no">5</span><span class="ln-fold"></span><span class="ln-code">  from <span class="sql-key">`dbt_prod_listings.sales_prices`</span> inner join <span class="sql-key">`dbt_prod_geo.streets_and_municipalities`</span> using (street_id)),</span></div>
+    <div class="ln add"><span class="ln-no">6</span><span class="ln-fold"></span><span class="ln-code">agencies as (select municipality_id, count(distinct company_id) as active_agencies</span></div>
+    <div class="ln add"><span class="ln-no">7</span><span class="ln-fold"></span><span class="ln-code">  from <span class="sql-key">`dbt_prod_agencies.agencies`</span> where is_active group by municipality_id),</span></div>
+    <div class="ln"><span class="ln-no">8</span><span class="ln-fold"></span><span class="ln-code">per_area as (select 'street' as area_level, cast(street_id as string) as area_id, street_name as area_name,</span></div>
+    <div class="ln"><span class="ln-no">9</span><span class="ln-fold"></span><span class="ln-code">    property_type, period_month, count(*) as n_sales, avg(price) as price_mean,</span></div>
+    <div class="ln"><span class="ln-no">10</span><span class="ln-fold"></span><span class="ln-code">    approx_quantiles(price, 4)[offset(2)] as price_median, approx_quantiles(price, 4)[offset(1)] as price_p25,</span></div>
+    <div class="ln"><span class="ln-no">11</span><span class="ln-fold"></span><span class="ln-code">    approx_quantiles(price, 4)[offset(3)] as price_p75,</span></div>
+    <div class="ln add"><span class="ln-no">12</span><span class="ln-fold"></span><span class="ln-code">    stddev_samp(price) as price_sd</span></div>
+    <div class="ln"><span class="ln-no">13</span><span class="ln-fold"></span><span class="ln-code">  from sales group by 1, 2, 3, 4, 5</span></div>
+    <div class="ln"><span class="ln-no">14</span><span class="ln-fold"></span><span class="ln-code">  <span class="sql-comment">-- … the same per municipality, union all</span></span></div>
+    <div class="ln"><span class="ln-no">15</span><span class="ln-fold"></span><span class="ln-code">)</span></div>
+    <div class="ln add"><span class="ln-no">16</span><span class="ln-fold"></span><span class="ln-code">select per_area.*, agencies.active_agencies from per_area</span></div>
+    <div class="ln add"><span class="ln-no">17</span><span class="ln-fold"></span><span class="ln-code">left join agencies on per_area.area_id = cast(agencies.municipality_id as string)</span></div>
+   </div>
+  </div>
+  <h2 class="nq-title" style="margin-top:22px">Its fields, against Edition 2</h2>
+  <div class="table-card fen-table" data-pane-group="ed" data-pane="same">
+   <table><thead><tr><th>Field</th><th>Type</th><th>What it is</th><th>Change</th><th></th></tr></thead><tbody>
+    <tr><td><span class="mono">area_level</span></td><td class="muted mono">STRING</td><td>street or municipality</td><td class="nowrap"><span class="pill">Same</span></td><td class="muted"></td></tr>
+    <tr><td><span class="mono">area_id</span></td><td class="muted mono">STRING</td><td>The street or the municipality</td><td class="nowrap"><span class="pill">Same</span></td><td class="muted">Search key</td></tr>
+    <tr><td><span class="mono">area_name</span></td><td class="muted mono">STRING</td><td>Its name</td><td class="nowrap"><span class="pill">Same</span></td><td class="muted"></td></tr>
+    <tr><td><span class="mono">property_type</span></td><td class="muted mono">STRING</td><td>House, apartment, …</td><td class="nowrap"><span class="pill">Same</span></td><td class="muted">Search key</td></tr>
+    <tr><td><span class="mono">period_month</span></td><td class="muted mono">DATE</td><td>The month of the sales</td><td class="nowrap"><span class="pill">Same</span></td><td class="muted">Search key</td></tr>
+    <tr><td><span class="mono">n_sales</span></td><td class="muted mono">INT64</td><td>How many sales stand behind the prices</td><td class="nowrap"><span class="pill">Same</span></td><td class="muted">Counts the observations</td></tr>
+    <tr><td><span class="mono">price_mean</span></td><td class="muted mono">FLOAT64</td><td>The average price</td><td class="nowrap"><span class="pill">Same</span></td><td class="muted">Counted by n_sales</td></tr>
+    <tr><td><span class="mono">price_median</span></td><td class="muted mono">FLOAT64</td><td>The median price</td><td class="nowrap"><span class="pill">Same</span></td><td class="muted">Counted by n_sales</td></tr>
+    <tr><td><span class="mono">price_p25</span></td><td class="muted mono">FLOAT64</td><td>The price under which a quarter of the sales fall</td><td class="nowrap"><span class="pill">Same</span></td><td class="muted">Counted by n_sales</td></tr>
+    <tr><td><span class="mono">price_p75</span></td><td class="muted mono">FLOAT64</td><td>The price under which three quarters fall</td><td class="nowrap"><span class="pill">Same</span></td><td class="muted">Counted by n_sales</td></tr>
+    <tr class="fen-row-add"><td><span class="mono">price_sd</span></td><td class="muted mono">FLOAT64</td><td>The standard deviation of the prices: how far they spread</td><td class="nowrap"><span class="pill fen-added">Added</span></td><td class="muted">Counted by n_sales</td></tr>
+   </tbody></table>
+  </div>
+  <div class="table-card fen-table" data-pane-group="ed" data-pane="newresource" hidden>
+   <table><thead><tr><th>Field</th><th>Type</th><th>What it is</th><th>Change</th><th></th></tr></thead><tbody>
+    <tr><td><span class="mono">area_level</span></td><td class="muted mono">STRING</td><td>street or municipality</td><td class="nowrap"><span class="pill">Same</span></td><td class="muted"></td></tr>
+    <tr><td><span class="mono">area_id</span></td><td class="muted mono">STRING</td><td>The street or the municipality</td><td class="nowrap"><span class="pill">Same</span></td><td class="muted">Search key</td></tr>
+    <tr><td><span class="mono">area_name</span></td><td class="muted mono">STRING</td><td>Its name</td><td class="nowrap"><span class="pill">Same</span></td><td class="muted"></td></tr>
+    <tr><td><span class="mono">property_type</span></td><td class="muted mono">STRING</td><td>House, apartment, …</td><td class="nowrap"><span class="pill">Same</span></td><td class="muted">Search key</td></tr>
+    <tr><td><span class="mono">period_month</span></td><td class="muted mono">DATE</td><td>The month of the sales</td><td class="nowrap"><span class="pill">Same</span></td><td class="muted">Search key</td></tr>
+    <tr><td><span class="mono">n_sales</span></td><td class="muted mono">INT64</td><td>How many sales stand behind the prices</td><td class="nowrap"><span class="pill">Same</span></td><td class="muted">Counts the observations</td></tr>
+    <tr><td><span class="mono">price_mean</span></td><td class="muted mono">FLOAT64</td><td>The average price</td><td class="nowrap"><span class="pill">Same</span></td><td class="muted">Counted by n_sales</td></tr>
+    <tr><td><span class="mono">price_median</span></td><td class="muted mono">FLOAT64</td><td>The median price</td><td class="nowrap"><span class="pill">Same</span></td><td class="muted">Counted by n_sales</td></tr>
+    <tr><td><span class="mono">price_p25</span></td><td class="muted mono">FLOAT64</td><td>The price under which a quarter of the sales fall</td><td class="nowrap"><span class="pill">Same</span></td><td class="muted">Counted by n_sales</td></tr>
+    <tr><td><span class="mono">price_p75</span></td><td class="muted mono">FLOAT64</td><td>The price under which three quarters fall</td><td class="nowrap"><span class="pill">Same</span></td><td class="muted">Counted by n_sales</td></tr>
+    <tr class="fen-row-add"><td><span class="mono">price_sd</span></td><td class="muted mono">FLOAT64</td><td>The standard deviation of the prices: how far they spread</td><td class="nowrap"><span class="pill fen-added">Added</span></td><td class="muted">Counted by n_sales</td></tr>
+    <tr class="fen-row-add"><td><span class="mono">active_agencies</span></td><td class="muted mono">INT64</td><td>How many agencies are active in the municipality; empty for a street</td><td class="nowrap"><span class="pill fen-added">Added</span></td><td class="muted">From Agencies · Agency success</td></tr>
+   </tbody></table>
+  </div>
+  <p class="meta fen-p">Search keys, the fields that count observations and the Minimum Volume are set as in making a Feed; here they stay as they were.</p>
+ </section>
+ <div class="ml-side">
+  <div data-pane-group="ed" data-pane="same">
+  <section class="card nq-right" aria-label="What changes against Edition 2">
+   <h2 class="nq-title">What changes</h2>
+   <p class="meta fen-p">Against Edition 2, live since 9 Nov 2026.</p>
+   <ul class="fen-diff"><li><i class="ph ph-plus-circle"></i><span><span class="mono">price_sd</span> added, counted by <span class="mono">n_sales</span>, so the Minimum Volume of 5 holds for it too.</span></li><li><i class="ph ph-equals"></i><span>Search keys the same: <span class="mono">area_id</span>, <span class="mono">property_type</span>, <span class="mono">period_month</span>.</span></li><li><i class="ph ph-equals"></i><span>Minimum Volume the same: 5. Delivered daily, prepared, as before.</span></li><li><i class="ph ph-equals"></i><span>No field removed or changed in type: an Application can move without changing what it reads.</span></li></ul>
+  </section>
+  <section class="card nq-right" aria-label="Who must say yes again">
+   <h2 class="nq-title">Who must say yes again</h2>
+   <div class="size-state fine" style="margin-top:8px"><i class="ph-fill ph-check-circle"></i><p><b>Nobody.</b> Edition 3 reads the same two Resources as Edition 2, so the yes of their Owners carries over.</p></div><div class="fen-owner"><span class="avatar small" aria-hidden="true">LT</span><span style="flex:1"><b>Listings team</b><span class="meta" style="display:block">Sales prices · said yes on 9 Nov 2026</span></span><span class="app-state ok">Carries over</span></div><div class="fen-owner"><span class="avatar small" aria-hidden="true">DT</span><span style="flex:1"><b>Data Team</b><span class="meta" style="display:block">Streets and municipalities · said yes on 9 Nov 2026</span></span><span class="app-state ok">Carries over</span></div>
+  </section>
+  <section class="card nq-right" aria-label="The Applications on Edition 2">
+   <h2 class="nq-title">The Applications on Edition 2</h2>
+   <div class="fen-owner"><i class="ph ph-app-window kind-icon" aria-hidden="true"></i><span style="flex:1"><b>SEO pages</b><span class="meta" style="display:block">reads Edition 2 · Jonas Peeters, IT</span></span><span class="app-state ok">Up to date</span></div>
+   <div class="fen-owner"><i class="ph ph-app-window kind-icon" aria-hidden="true"></i><span style="flex:1"><b>Search result pages</b><span class="meta" style="display:block">asks Edition 2 · Listings team still to answer</span></span><span class="app-state waiting">Waiting for consent</span></div>
+   <p class="meta fen-p">They are told when Edition 3 is live, and move when their builders are ready. Edition 2 keeps being delivered until none reads it.</p>
+   <label class="field" style="margin-top:10px"><span>Edition 2 ends at the latest</span><select><option selected>21 Feb 2027 · 90 days after Edition 3 is live</option><option>23 Mar 2027 · 120 days</option><option>22 May 2027 · 180 days</option></select></label>
+   <p class="meta fen-p">At most two Editions are live at once: Edition 3 and Edition 2, until then.</p>
+   <button class="btn-primary fen-go" type="button"><i class="ph ph-rocket-launch" style="font-size:15px"></i>Make Edition 3 live</button><p class="meta fen-p" style="text-align:center">The Applications on Edition 2 are told at once, with what changed.</p>
+   <a class="btn-quiet outline fen-save" href="feed.html">Save as a Draft</a>
+  </section>
+  </div>
+  <div data-pane-group="ed" data-pane="newresource" hidden>
+  <section class="card nq-right" aria-label="What changes against Edition 2">
+   <h2 class="nq-title">What changes</h2>
+   <p class="meta fen-p">Against Edition 2, live since 9 Nov 2026.</p>
+   <ul class="fen-diff"><li><i class="ph ph-plus-circle"></i><span><span class="mono">price_sd</span> added, counted by <span class="mono">n_sales</span>, so the Minimum Volume of 5 holds for it too.</span></li><li><i class="ph ph-plus-circle"></i><span><span class="mono">active_agencies</span> added, from a Resource Edition 2 does not read: <b>Agencies</b>.</span></li><li><i class="ph ph-equals"></i><span>Search keys the same: <span class="mono">area_id</span>, <span class="mono">property_type</span>, <span class="mono">period_month</span>.</span></li><li><i class="ph ph-equals"></i><span>Minimum Volume the same: 5. Delivered daily, prepared, as before.</span></li><li><i class="ph ph-equals"></i><span>No field removed or changed in type: an Application can move without changing what it reads.</span></li></ul>
+  </section>
+  <section class="card nq-right" aria-label="Who must say yes again">
+   <h2 class="nq-title">Who must say yes again</h2>
+   <div class="fen-owner"><span class="avatar small" aria-hidden="true">AS</span><span style="flex:1"><b>Agency success</b><span class="meta" style="display:block">Agencies · the field <span class="mono">company_id</span> and <span class="mono">is_active</span>, counted per municipality</span></span><span class="app-state waiting">To ask</span></div><p class="meta fen-p">Asked when an Application moves to Edition 3, not before. Until Agency success says yes, every Application stays on Edition 2.</p><div class="fen-owner"><span class="avatar small" aria-hidden="true">LT</span><span style="flex:1"><b>Listings team</b><span class="meta" style="display:block">Sales prices · said yes for Edition 2</span></span><span class="app-state ok">Carries over</span></div><div class="fen-owner"><span class="avatar small" aria-hidden="true">DT</span><span style="flex:1"><b>Data Team</b><span class="meta" style="display:block">Streets and municipalities · said yes for Edition 2</span></span><span class="app-state ok">Carries over</span></div>
+  </section>
+  <section class="card nq-right" aria-label="The Applications on Edition 2">
+   <h2 class="nq-title">The Applications on Edition 2</h2>
+   <div class="fen-owner"><i class="ph ph-app-window kind-icon" aria-hidden="true"></i><span style="flex:1"><b>SEO pages</b><span class="meta" style="display:block">reads Edition 2 · Jonas Peeters, IT</span></span><span class="app-state ok">Up to date</span></div>
+   <div class="fen-owner"><i class="ph ph-app-window kind-icon" aria-hidden="true"></i><span style="flex:1"><b>Search result pages</b><span class="meta" style="display:block">asks Edition 2 · Listings team still to answer</span></span><span class="app-state waiting">Waiting for consent</span></div>
+   <p class="meta fen-p">They are told when Edition 3 is live, and move when their builders are ready. Edition 2 keeps being delivered until none reads it.</p>
+   <label class="field" style="margin-top:10px"><span>Edition 2 ends at the latest</span><select><option selected>21 Feb 2027 · 90 days after Edition 3 is live</option><option>23 Mar 2027 · 120 days</option><option>22 May 2027 · 180 days</option></select></label>
+   <p class="meta fen-p">At most two Editions are live at once: Edition 3 and Edition 2, until then.</p>
+   <button class="btn-primary fen-go" type="button"><i class="ph ph-rocket-launch" style="font-size:15px"></i>Make Edition 3 live</button><p class="meta fen-p" style="text-align:center">Live for any Application once Agency success said yes; the Applications on Edition 2 are told now.</p>
+   <a class="btn-quiet outline fen-save" href="feed.html">Save as a Draft</a>
+  </section>
+  </div>
+ </div>
+</div>
+<div style="height:60px"></div>
+</main>
+</div>
+<div class="proto-switch" data-group="ed" role="tablist" aria-label="Prototype: what the new Edition reads">New Edition
+ <button class="seg on" data-target="same" role="tab" aria-selected="true">Same Resources</button>
+ <button class="seg" data-target="newresource" role="tab" aria-selected="false">A new Resource</button>
+</div>
+<script src="app.js"></script>
+<script>
+  // A phone has no room for the panel next to the page: it starts closed there, as after a click on the rail.
+  if (matchMedia('(max-width: 760px)').matches) document.querySelector('.app').classList.remove('panel-open');
+  // Both editors coloured as Query colours SQL (app.js colours the first editor of a page).
+  if (typeof colourSql === 'function') document.querySelectorAll('.sql-editor').forEach((editor) => colourSql(editor));
+</script>
+</body>
+</html>

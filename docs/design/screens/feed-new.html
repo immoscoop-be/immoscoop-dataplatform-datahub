@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<!--
+  Screen: Query, make it a Feed (a proposal of 2026-11-23, OP-UX-123)
+  "Make it a Feed" stands beside "Make it a Lens" on a query in Query, and opens this screen, still in the section Query,
+  as making a Lens does: a Lens is for people, a Feed for applications (DEC-AP-02). The SQL and the Resources of the query
+  come along; Cancel goes back to it. The example is the query behind the Feed "Price statistics per area", which the SEO
+  pages read (DEC-AP-17), made by a member of the Website team.
+  The layout of making a Lens: the left one step at a time, with Back and Next; the right the five steps by title, each
+  with how far it is, and under them the size check, with Save. A click on a step opens it, in any order.
+  1, What it is: its name, what it is for, and its Dock, one of the Docks of the User's Owner Units, which owns the Feed;
+  it reads on the rights of that Owner Unit, not on those of its maker (DEC-AP-07). Its Resources and its Level, the
+  lowest of theirs.
+  2, Fields: each field of its result, with its type and its description, taken as for a Lens; a box "Search key" for
+  the fields an Application may search on, at most three, as the copy is searchable only on those (DEC-AP-09); and for
+  each aggregated field, the field that counts its observations.
+  3, Minimum Volume: the minimum, never below the floor of Data Hub, 5, with per aggregated field how many values the
+  last run of the query would withhold now, and what an Application gets for a withheld value (DEC-AP-12, OP-AP-02).
+  4, Delivery: prepared, from a copy that never depends on BigQuery, or live, for internal Applications only (DEC-AP-08);
+  how often: after every run of its Resources at most hourly, or daily (OP-AP-07). Live is refused, with why, when one
+  question reads more than 100 MB (OP-AP-06); the size check then says so and offers prepared.
+  5, Who must say yes: every Owner Unit of a Resource the query reads, with the Resource and its fields that leave; each
+  is asked once an Application wants the Feed, not now (DEC-AP-04).
+  The size check measures what one delivery reads (prepared) or one question (live), with the two thresholds of every
+  query. Save makes Edition 1, a draft until an Application reads it, frozen from then on (DEC-AP-14, OP-AP-03).
+  States: ?step=1 to ?step=5 opens a step; ?delivery=refused shows live chosen and refused for a query that reads
+  640 MB a question (with ?step=4 to see the step itself); ?delivery=prepared is the default.
+  Requirements: FR-AP-08, FR-AP-09, FR-AP-10, FR-AP-11, FR-AP-12, FR-AP-13, FR-AP-15
+  Decisions: DEC-AP-02, DEC-AP-04, DEC-AP-07, DEC-AP-08, DEC-AP-09, DEC-AP-12, DEC-AP-14, DEC-AP-17, DEC-AP-18, DEC-UX-229, DEC-UX-227, DEC-UX-25, DEC-SR-29.
+  Open points: OP-UX-123, OP-UX-120, OP-AP-02, OP-AP-03, OP-AP-06, OP-AP-07.
+  Related screens: lens-new.html (the same layout, for a Lens), query.html (where "Make it a Feed" would stand, beside "Make it a Lens"), feed.html (the Feed once saved), dock.html, application-register.html.
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="owner">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Make it a Feed</title>
+<style>
+/* Making a Feed (OP-UX-123): the fields with the box Search key and the field that counts the observations of an aggregate */
+.fn-fields { display: grid; gap: 6px; }
+.fn-frow { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 4px 14px; align-items: start; padding: 10px 12px; border-radius: var(--radius-md); background: var(--surface-sub); font-size: var(--text-small); }
+.fn-name .mf-key { align-self: flex-start; margin: 6px 0 0 -6px; }
+.fn-frow .mf-key:has(input:disabled) { opacity: .45; cursor: not-allowed; }
+.fn-count { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; min-width: 0; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--tint-active); }
+.fn-count select { width: auto; min-width: 120px; font: var(--text-small)/1.4 var(--font-family); color: var(--text-primary); background: var(--surface-solid); border: 0; border-radius: 8px; padding: 4px 6px; }
+.fn-count .meta { line-height: 1.45; }
+.fn-keys { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 10px; font-size: var(--text-small); color: var(--text-secondary); }
+.fn-keys b { font-weight: var(--weight-medium); color: var(--text-primary); }
+/* Minimum Volume: the number, then what the last run would withhold per field */
+.fn-min { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.fn-min input { width: 84px; font: var(--weight-medium) var(--text-body)/1.5 var(--font-family); color: var(--text-primary); background: var(--surface-solid); border: 1px solid var(--tint-active); border-radius: 8px; padding: 6px 10px; }
+.fn-table { overflow-x: auto; margin-top: 12px; border-radius: var(--radius-md); background: var(--surface-sub); padding: 4px 10px; }
+.fn-table table { min-width: 460px; }
+.fn-table td { border-top-color: var(--tint-active); }
+.fn-table tr:first-child td { border-top: 0; }
+.fn-code { margin: 8px 0 0; padding: 10px 12px; border-radius: var(--radius-md); background: var(--surface-sub); font: 12px/1.6 var(--font-mono); color: var(--text-primary); white-space: pre-wrap; overflow-wrap: anywhere; }
+.fn-code .fn-null { color: var(--text-muted); }
+/* Delivery: prepared or live, as two choices side by side; how often, under them */
+.fn-choice { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.fn-choice .pick { border: 1px solid var(--tint-active); }
+.fn-choice .pick:has(input:checked) { background: var(--surface-sub); outline: 1.5px solid var(--text-muted); border-color: transparent; }
+.fn-choice .type-def { color: var(--text-secondary); }
+.fn-often { display: grid; gap: 2px; margin-top: 6px; }
+/* Who must say yes: a tile per Owner Unit */
+.fn-owner { display: grid; gap: 8px; }
+.fn-owner-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.fn-owner-head b { font-weight: var(--weight-medium); font-size: var(--text-body); }
+.fn-owner ul { margin: 0; padding-left: 18px; font-size: var(--text-small); line-height: 1.6; }
+.fn-owner .status { background: var(--surface-solid); }
+/* A narrow window: one column, the panel over the page when opened (the prototype only; DEC-UX-91 asks for a message below 900 px) */
+@media (max-width: 1100px) { .make-lens { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 900px) {
+  .fn-frow { grid-template-columns: minmax(0, 1fr); }
+  .fn-choice { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  .app { padding: 10px; gap: 8px; }
+  .app .main { padding: 18px 14px 24px; }
+  .app.panel-open .panel { position: fixed; z-index: 25; top: 10px; bottom: 10px; left: 70px; width: min(300px, calc(100vw - 80px)); }
+  .proto-switch { position: static; margin: 10px; flex-wrap: wrap; border-radius: 16px; }
+  .fn-head { flex-wrap: wrap; }
+}
+</style>
+</head>
+<body>
+<div class="app panel-open">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <a class="nav-btn" href="collections-start.html" data-label="Collections" aria-label="Collections"><i class="ph-fill ph-stack"></i></a>
+  <a class="nav-btn active" href="query.html" data-label="Query" aria-label="Query" aria-current="page"><i class="ph-fill ph-terminal-window"></i><span class="flare top"></span><span class="flare bottom"></span></a>
+  <a class="nav-btn" href="docks-start.html" data-label="Docks" aria-label="Docks, where Applications read data"><i class="ph-fill ph-plugs-connected"></i></a>
+  <a class="nav-btn" href="#" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <a class="nav-btn nav-admin" href="admin-webhooks.html" data-label="Admin" aria-label="Admin, for the Data Team" data-for="datateam"><i class="ph-fill ph-toolbox"></i></a>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">MP</a>
+</nav>
+<aside class="panel" aria-label="Queries that ran">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:4px">
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Query</h1>
+   <a class="icon-btn" href="query-new.html" aria-label="New query"><i class="ph-fill ph-plus-circle"></i></a>
+   <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
+  </div>
+  <label class="search card" style="margin:16px 0 10px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search queries"></label>
+  <div class="meta" style="margin:0 4px">Your queries</div>
+  <div class="panel-label">Today</div>
+  <a class="list-item card q-item current" aria-current="page" href="query.html" data-name="price statistics per area sales prices streets and municipalities"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><span class="item-title">Price statistics per area</span><span class="meta">Sales prices +1 · 08:40 · 640 MB</span></span></a>
+  <a class="list-item card q-item" href="query.html" data-name="preview sales prices"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><span class="item-title">Preview · Sales prices</span><span class="meta">Sales prices · 08:05 · 27 MB</span></span><span class="pill">Preview</span></a>
+  <div class="panel-label">Yesterday</div>
+  <a class="list-item card q-item" href="query.html" data-name="streets without a municipality streets and municipalities"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><span class="item-title">Streets without a municipality</span><span class="meta">Streets and municipalities · 16:12 · 38 MB</span></span></a>
+  <a class="list-item card q-item" href="query.html" data-name="listing counts per municipality active listings per day"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><span class="item-title">Listing counts per municipality</span><span class="meta">Active listings per day · 14:30 · 54 MB</span></span></a>
+  <div class="panel-label">This week</div>
+  <a class="list-item card q-item" href="query.html" data-name="median price per street 2025 sales prices"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><span class="item-title">Median price per street, 2025</span><span class="meta">Sales prices · Thu · 310 MB</span></span><span class="pill">Claude</span></a>
+  <p id="no-results" class="meta" style="padding:8px 4px" hidden>No queries match your search.</p>
+ </div>
+</aside>
+<main class="main">
+<div class="breadcrumb"><a href="query.html" style="color:inherit;text-decoration:none">Query</a> · Price statistics per area</div>
+<div class="fn-head" style="display:flex;align-items:center;gap:12px;margin-top:8px">
+ <h1 class="page-title" style="flex:1">Make it a Feed</h1>
+ <a class="btn-quiet outline" href="query.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph ph-x"></i>Cancel</a>
+</div>
+<p class="meta" style="display:block;margin-top:6px;line-height:1.5;max-width:760px">From your query <b style="font-weight:500;color:var(--text-primary)">Price statistics per area</b>: its SQL and Resources come along. A Lens is for people; a Feed is for applications, which read it only once every Owner of its Resources said yes.</p>
+<div class="make-lens">
+ <section class="card nq-left" aria-labelledby="fn-feed">
+  <!-- 1 · What it is -->
+  <div data-pane-group="step" data-pane="1">
+  <div class="meta">Step 1 of 5</div>
+  <h2 id="fn-feed" class="nq-title">What it is</h2>
+  <label class="field" style="margin-top:12px"><span>Name</span><input value="Price statistics per area" required></label>
+  <label class="field"><span>What it is for</span><textarea rows="3">Price statistics per street and per municipality, per type of property and per month, for the structured data of the SEO pages: the same figures on every kind of page.</textarea></label>
+  <p class="meta" style="display:block;line-height:1.5;margin:-6px 0 12px">Every Owner who is asked to say yes reads this first, and so does whoever registers an Application on it.</p>
+  <label class="field" style="margin-top:16px"><span>Goes into a Dock of yours</span>
+   <select><option selected>Website · Website team</option><option>Agents' portal · Agency success</option></select>
+   <span class="meta" style="display:block;line-height:1.5;margin-top:6px">The Owner Unit of the Dock owns the Feed, and the Feed reads its Resources on the rights of that Owner Unit, not on yours: it does not stop when someone leaves. <a class="text-link" style="display:inline"><span>New Dock</span></a></span>
+  </label>
+  <div class="status-row" style="margin-top:4px"><span class="meta" style="margin-right:2px">Reads</span><span class="status"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Sales prices<span class="muted">· Listings</span><span class="maturity" data-level="4"></span></span><span class="status"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Streets and municipalities<span class="muted">· Geography</span><span class="maturity" data-level="5"></span></span></div>
+  <p class="meta" style="display:block;line-height:1.5;margin-top:10px">Level 4 · Explored, the lowest of its Resources. It shows wherever the Feed is listed, and to every Owner who is asked.</p>
+  <div class="ml-nav"><span style="flex:1"></span><button class="btn-quiet outline" type="button" data-step-go="2">Next: Fields<i class="ph ph-arrow-right"></i></button></div>
+  </div>
+
+  <!-- 2 · Fields: type, description, search key (at most three), and the count of each aggregate -->
+  <div data-pane-group="step" data-pane="2" hidden>
+  <div class="meta">Step 2 of 5</div>
+  <h2 class="nq-title">Fields</h2>
+  <p class="meta" style="display:block;line-height:1.5;margin:6px 0 10px">Each field of its result, as an Application gets it. A field named as a field of its Resources takes that description; write one for the others. An Application asks only by its search keys: the copy is kept searchable on those, so they are chosen now, and changed only by a new Edition.</p>
+  <p class="fn-keys"><i class="ph-fill ph-magnifying-glass"></i><span><b>3 of at most 3 search keys:</b> <span class="mono">area_id</span>, <span class="mono">property_type</span>, <span class="mono">period_month</span>. Untick one to choose another.</span></p>
+  <div class="fn-fields">
+   <div class="fn-frow">
+    <div class="lf-head fn-name"><span class="mono">area_level</span><span class="meta">STRING</span><label class="mf-key" title="At most three search keys: untick one first"><input type="checkbox" disabled><i class="ph-fill ph-magnifying-glass"></i>Search key</label></div>
+    <div class="lf-desc"><span class="lf-from"><i class="ph ph-pencil-simple"></i>Written by you</span><p>Whether the row is about a street or a municipality: <span class="mono">street</span> or <span class="mono">municipality</span>.</p></div>
+   </div>
+   <div class="fn-frow">
+    <div class="lf-head fn-name"><span class="mono">area_id</span><span class="meta">STRING</span><label class="mf-key"><input type="checkbox" checked><i class="ph-fill ph-magnifying-glass"></i>Search key</label></div>
+    <div class="lf-desc"><span class="lf-from"><i class="ph ph-pencil-simple"></i>Written by you</span><p>The id of the street, or the NIS code of the municipality.</p></div>
+   </div>
+   <div class="fn-frow">
+    <div class="lf-head fn-name"><span class="mono">area_name</span><span class="meta">STRING</span><label class="mf-key" title="At most three search keys: untick one first"><input type="checkbox" disabled><i class="ph-fill ph-magnifying-glass"></i>Search key</label></div>
+    <div class="lf-desc"><span class="lf-from"><i class="ph ph-pencil-simple"></i>Written by you</span><p>The name of the street with its municipality, or the name of the municipality.</p></div>
+   </div>
+   <div class="fn-frow">
+    <div class="lf-head fn-name"><span class="mono">property_type</span><span class="meta">STRING</span><label class="mf-key"><input type="checkbox" checked><i class="ph-fill ph-magnifying-glass"></i>Search key</label></div>
+    <div class="lf-desc"><span class="lf-from"><i class="ph ph-arrow-bend-down-right"></i>From Sales prices · <span class="mono">property_type</span></span><p>House, apartment, building plot or other, as the deed registers it.</p></div>
+   </div>
+   <div class="fn-frow">
+    <div class="lf-head fn-name"><span class="mono">period_month</span><span class="meta">DATE</span><label class="mf-key"><input type="checkbox" checked><i class="ph-fill ph-magnifying-glass"></i>Search key</label></div>
+    <div class="lf-desc"><span class="lf-from"><i class="ph ph-pencil-simple"></i>Written by you</span><p>The first day of the month in which the deeds were signed.</p></div>
+   </div>
+   <div class="fn-frow">
+    <div class="lf-head fn-name"><span class="mono">n_sales</span><span class="meta">INT64</span><label class="mf-key" title="At most three search keys: untick one first"><input type="checkbox" disabled><i class="ph-fill ph-magnifying-glass"></i>Search key</label></div>
+    <div class="lf-desc"><span class="lf-from"><i class="ph ph-pencil-simple"></i>Written by you</span><p>How many sales the row is about: the observations behind its prices.</p><div class="fn-count"><span class="pill pill-strong">Counts the observations</span><span class="meta">of the four price fields</span></div></div>
+   </div>
+   <div class="fn-frow">
+    <div class="lf-head fn-name"><span class="mono">price_mean</span><span class="meta">NUMERIC</span><label class="mf-key" title="At most three search keys: untick one first"><input type="checkbox" disabled><i class="ph-fill ph-magnifying-glass"></i>Search key</label></div>
+    <div class="lf-desc"><span class="lf-from"><i class="ph ph-pencil-simple"></i>Written by you</span><p>The mean price of those sales, in euro, without costs.</p><label class="fn-count"><span class="meta">Observations counted by</span><select aria-label="Observations of price_mean counted by"><option selected>n_sales</option><option>Not an aggregate</option></select></label></div>
+   </div>
+   <div class="fn-frow">
+    <div class="lf-head fn-name"><span class="mono">price_median</span><span class="meta">NUMERIC</span><label class="mf-key" title="At most three search keys: untick one first"><input type="checkbox" disabled><i class="ph-fill ph-magnifying-glass"></i>Search key</label></div>
+    <div class="lf-desc"><span class="lf-from"><i class="ph ph-pencil-simple"></i>Written by you</span><p>The median price of those sales, in euro: half sold for less.</p><label class="fn-count"><span class="meta">Observations counted by</span><select aria-label="Observations of price_median counted by"><option selected>n_sales</option><option>Not an aggregate</option></select></label></div>
+   </div>
+   <div class="fn-frow">
+    <div class="lf-head fn-name"><span class="mono">price_p25</span><span class="meta">NUMERIC</span><label class="mf-key" title="At most three search keys: untick one first"><input type="checkbox" disabled><i class="ph-fill ph-magnifying-glass"></i>Search key</label></div>
+    <div class="lf-desc"><span class="lf-from"><i class="ph ph-pencil-simple"></i>Written by you</span><p>The price a quarter of those sales stayed below, in euro.</p><label class="fn-count"><span class="meta">Observations counted by</span><select aria-label="Observations of price_p25 counted by"><option selected>n_sales</option><option>Not an aggregate</option></select></label></div>
+   </div>
+   <div class="fn-frow">
+    <div class="lf-head fn-name"><span class="mono">price_p75</span><span class="meta">NUMERIC</span><label class="mf-key" title="At most three search keys: untick one first"><input type="checkbox" disabled><i class="ph-fill ph-magnifying-glass"></i>Search key</label></div>
+    <div class="lf-desc"><span class="lf-from"><i class="ph ph-pencil-simple"></i>Written by you</span><p>The price three quarters of those sales stayed below, in euro.</p><label class="fn-count"><span class="meta">Observations counted by</span><select aria-label="Observations of price_p75 counted by"><option selected>n_sales</option><option>Not an aggregate</option></select></label></div>
+   </div>
+  </div>
+  <p class="meta" style="display:block;line-height:1.5;margin:10px 0 0">An aggregated value is delivered only when the field that counts it reaches the Minimum Volume, the next step. A field that is no aggregate, such as a name, has no count.</p>
+  <div class="ml-nav"><button class="btn-quiet outline" type="button" data-step-go="1"><i class="ph ph-arrow-left"></i>Back</button><span style="flex:1"></span><button class="btn-quiet outline" type="button" data-step-go="3">Next: Minimum Volume<i class="ph ph-arrow-right"></i></button></div>
+  </div>
+
+  <!-- 3 · Minimum Volume: never below the floor of 5; what the last run would withhold now, per field -->
+  <div data-pane-group="step" data-pane="3" hidden>
+  <div class="meta">Step 3 of 5</div>
+  <h2 class="nq-title">Minimum Volume</h2>
+  <p class="meta" style="display:block;line-height:1.5;margin:6px 0 12px">The fewest observations behind one aggregated value before it is delivered, so that an average of two sales does not give away one house.</p>
+  <div class="field"><span>Minimum Volume</span>
+   <div class="fn-min"><input type="number" min="5" step="1" value="5" aria-label="Minimum Volume, in observations"><span style="font-size:var(--text-small);color:var(--text-secondary)">sales behind every price</span></div>
+   <span class="meta" style="display:block;line-height:1.5;margin-top:6px">Never below 5, the floor of Data Hub. Every Owner who is asked sees it, and may ask for more before they say yes.</span>
+  </div>
+  <div class="label" style="margin-top:16px">Withheld at the last run of your query, today 08:40</div>
+  <div class="fn-table"><table aria-label="Values withheld per field">
+   <thead><tr><th>Field</th><th>Counted by</th><th>Streets</th><th>Municipalities</th></tr></thead>
+   <tbody>
+    <tr><td class="mono">price_mean</td><td class="mono muted">n_sales</td><td class="nowrap">1,184 of 38,950 rows</td><td class="muted nowrap">0 rows</td></tr>
+    <tr><td class="mono">price_median</td><td class="mono muted">n_sales</td><td class="nowrap">1,184 of 38,950 rows</td><td class="muted nowrap">0 rows</td></tr>
+    <tr><td class="mono">price_p25</td><td class="mono muted">n_sales</td><td class="nowrap">1,184 of 38,950 rows</td><td class="muted nowrap">0 rows</td></tr>
+    <tr><td class="mono">price_p75</td><td class="mono muted">n_sales</td><td class="nowrap">1,184 of 38,950 rows</td><td class="muted nowrap">0 rows</td></tr>
+   </tbody></table></div>
+  <div class="label" style="margin-top:16px">What an Application gets for a withheld value</div>
+  <pre class="fn-code">{ "area_level": "street", "area_name": "Kerkstraat, Zele",
+  "property_type": "house", "period_month": "2026-10-01", "n_sales": 3,
+  "price_median": <span class="fn-null">null</span>, "withheld": "too few observations" }</pre>
+  <p class="meta" style="display:block;line-height:1.5;margin:8px 0 0">The value is left empty, with why, and the row stays: the Application falls back on a level above, the municipality of the street.</p>
+  <div class="ml-nav"><button class="btn-quiet outline" type="button" data-step-go="2"><i class="ph ph-arrow-left"></i>Back</button><span style="flex:1"></span><button class="btn-quiet outline" type="button" data-step-go="4">Next: Delivery<i class="ph ph-arrow-right"></i></button></div>
+  </div>
+
+  <!-- 4 · Delivery: prepared or live; how often. Live only for internal Applications, refused above 100 MB a question -->
+  <div data-pane-group="step" data-pane="4" hidden>
+  <div class="meta">Step 4 of 5</div>
+  <h2 class="nq-title">Delivery</h2>
+  <div data-pane-group="delivery" data-pane="prepared">
+   <div class="fn-choice" role="radiogroup" aria-label="How it is delivered" style="margin-top:12px">
+    <label class="pick type-pick"><input type="radio" name="fn-mode" checked><span style="flex:1;min-width:0"><span class="type-head"><b style="font-weight:500">Prepared</b><span class="pill">for every Application</span></span><span class="type-def">After a run of its Resources that succeeded, Data Hub runs the query, keeps the result in a copy of its own, and Applications read that copy. It never depends on BigQuery.</span></span></label>
+    <label class="pick type-pick" data-go="delivery:refused"><input type="radio" name="fn-mode"><span style="flex:1;min-width:0"><span class="type-head"><b style="font-weight:500">Live</b><span class="pill">internal Applications only</span></span><span class="type-def">Every question of an Application runs the query in BigQuery, at that moment. Only when one question reads at most 100 MB.</span></span></label>
+   </div>
+   <div style="margin-top:16px"><div class="label" style="margin-bottom:0">How often</div>
+    <div class="fn-often" role="radiogroup" aria-label="How often">
+     <label class="pick" style="padding:8px 10px"><input type="radio" name="fn-often" checked><span><span style="font-size:var(--text-small)">Daily, after the first run of its Resources that succeeded</span><span class="meta" style="display:block;margin-top:2px">After the run of dbt-prod, around 06:50.</span></span></label>
+     <label class="pick" style="padding:8px 10px"><input type="radio" name="fn-often"><span><span style="font-size:var(--text-small)">After every run of its Resources, at most once an hour</span><span class="meta" style="display:block;margin-top:2px">Sales prices is built once a day: hourly brings nothing more now.</span></span></label>
+    </div>
+   </div>
+   <p class="meta" style="display:block;line-height:1.5;margin:4px 0 0">When a run fails, nothing new is delivered: Applications keep the last good delivery, with its date, until the next run succeeds.</p>
+  </div>
+  <div data-pane-group="delivery" data-pane="refused" hidden>
+   <div class="fn-choice" role="radiogroup" aria-label="How it is delivered" style="margin-top:12px">
+    <label class="pick type-pick" data-go="delivery:prepared"><input type="radio" name="fn-mode-r"><span style="flex:1;min-width:0"><span class="type-head"><b style="font-weight:500">Prepared</b><span class="pill">for every Application</span></span><span class="type-def">After a run of its Resources that succeeded, Data Hub runs the query, keeps the result in a copy of its own, and Applications read that copy. It never depends on BigQuery.</span></span></label>
+    <label class="pick type-pick"><input type="radio" name="fn-mode-r" checked><span style="flex:1;min-width:0"><span class="type-head"><b style="font-weight:500">Live</b><span class="pill">internal Applications only</span></span><span class="type-def">Every question of an Application runs the query in BigQuery, at that moment. Only when one question reads at most 100 MB.</span></span></label>
+   </div>
+   <div class="size-state caution" style="margin-top:12px"><i class="ph-fill ph-prohibit"></i><p><b>Live is refused for this query.</b> One question reads up to 640 MB, above the 100 MB a live question may read, and it would run at every question of an Application. Its search keys do not narrow the partitions of Sales prices: a question for one street reads all 24 months.</p></div>
+   <p class="meta" style="display:block;line-height:1.5;margin:10px 0 0">Prepared, the same query runs once a day and every question reads the copy. Or make the query read less, such as fewer months, and come back.</p>
+   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn-primary" type="button" data-go="delivery:prepared">Keep it prepared</button><a class="btn-quiet outline" href="query.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph ph-terminal-window"></i>Back to the query</a></div>
+  </div>
+  <div class="ml-nav"><button class="btn-quiet outline" type="button" data-step-go="3"><i class="ph ph-arrow-left"></i>Back</button><span style="flex:1"></span><button class="btn-quiet outline" type="button" data-step-go="5">Next: Who must say yes<i class="ph ph-arrow-right"></i></button></div>
+  </div>
+
+  <!-- 5 · Who must say yes: every Owner Unit of a Resource the query reads, with the fields that leave -->
+  <div data-pane-group="step" data-pane="5" hidden>
+  <div class="meta">Step 5 of 5</div>
+  <h2 class="nq-title">Who must say yes</h2>
+  <p class="meta" style="display:block;line-height:1.5;margin:6px 0 12px">Read from its Resources: every Owner Unit of a Resource this query reads. Nobody is asked now. Once an Application asks to read this Feed, each gets a Request in Messages with what leaves, and the Feed delivers nothing to it until all of them said yes.</p>
+  <div style="display:grid;gap:8px">
+   <section class="sub-tile fn-owner" aria-label="Listings team">
+    <div class="fn-owner-head"><i class="ph-fill ph-users-three" style="color:var(--text-secondary)"></i><b>Listings team</b><span class="status"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Sales prices<span class="muted">· Listings</span><span class="maturity" data-level="4"></span></span></div>
+    <div class="label" style="margin:0">The fields of Sales prices that leave</div>
+    <ul>
+     <li><span class="mono">price</span>, only as the mean, median, 25th and 75th percentile of at least 5 sales</li>
+     <li><span class="mono">property_type</span>, as it is</li>
+     <li><span class="mono">deed_date</span>, as its month</li>
+     <li>the number of sales behind each row</li>
+    </ul>
+    <p class="meta" style="display:block;line-height:1.5;margin:0">No single sale leaves: no address, no price of one house.</p>
+   </section>
+   <section class="sub-tile fn-owner" aria-label="Data Team">
+    <div class="fn-owner-head"><i class="ph-fill ph-users-three" style="color:var(--text-secondary)"></i><b>Data Team</b><span class="status"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Streets and municipalities<span class="muted">· Geography</span><span class="maturity" data-level="5"></span></span></div>
+    <div class="label" style="margin:0">The fields of Streets and municipalities that leave</div>
+    <ul>
+     <li><span class="mono">street_id</span> and <span class="mono">municipality_nis</span>, as <span class="mono">area_id</span></li>
+     <li><span class="mono">street_name</span> and <span class="mono">municipality_name</span>, as <span class="mono">area_name</span></li>
+    </ul>
+   </section>
+  </div>
+  <p class="meta" style="display:block;line-height:1.5;margin:12px 0 0">The Website team owns the Feed and reads these Resources on its rights; it owns none of them, so it is not asked. A Resource added in a later Edition asks its Owner again; the others carry over.</p>
+  <div class="ml-nav"><button class="btn-quiet outline" type="button" data-step-go="4"><i class="ph ph-arrow-left"></i>Back</button><span style="flex:1"></span><span class="meta">Save from the size check, on the right.</span></div>
+  </div>
+ </section>
+ <div class="ml-side">
+ <!-- The steps of making a Feed, each with how far it is; a click opens one, in any order (as DEC-UX-229 for a Lens) -->
+ <nav class="card ml-steps" aria-label="Steps of the Feed" data-group="step">
+  <button class="ml-stepbtn on" type="button" data-target="1" aria-selected="true"><span class="ml-n">1</span><span class="ml-t"><b>What it is</b><span class="meta">Price statistics per area · Website</span></span></button>
+  <button class="ml-stepbtn" type="button" data-target="2" aria-selected="false"><span class="ml-n">2</span><span class="ml-t"><b>Fields</b><span class="meta">10 fields · 3 search keys · 4 counted</span></span></button>
+  <button class="ml-stepbtn" type="button" data-target="3" aria-selected="false"><span class="ml-n">3</span><span class="ml-t"><b>Minimum Volume</b><span class="meta">5 · withholds 1,184 street rows</span></span></button>
+  <button class="ml-stepbtn" type="button" data-target="4" aria-selected="false"><span class="ml-n">4</span><span class="ml-t"><b>Delivery</b><span class="meta"><span data-pane-group="delivery" data-pane="prepared">Prepared · daily</span><span class="ml-warn" data-pane-group="delivery" data-pane="refused" hidden>Live refused · 640 MB a question</span></span></span></button>
+  <button class="ml-stepbtn" type="button" data-target="5" aria-selected="false"><span class="ml-n">5</span><span class="ml-t"><b>Who must say yes</b><span class="meta">Listings team, Data Team</span></span></button>
+ </nav>
+ <aside class="card nq-right" aria-labelledby="fn-size">
+  <h2 id="fn-size" class="nq-title">Size check</h2>
+  <div data-pane-group="delivery" data-pane="prepared">
+   <p class="meta" style="display:block;line-height:1.5;margin:4px 0 0">What one delivery reads, measured now.</p>
+   <div style="font-size:24px;font-weight:500;letter-spacing:-.3px;margin-top:6px">640 MB <span style="font-size:var(--text-small);font-weight:400;color:var(--text-muted)">a delivery</span></div>
+   <div class="gauge" aria-hidden="true"><span class="gauge-fill" style="width:62%;background:var(--text-secondary)"></span><span class="gauge-mark" style="left:25%"></span><span class="gauge-mark" style="left:75%"></span></div><div class="gauge-legend mid"><span>0</span><span style="left:25%">100 MB · large</span><span style="left:75%">1 GB · very large</span></div>
+   <div class="pf-src"><span>Sales prices</span><span class="meta">24 of 96 partitions, through <span class="mono">deed_date</span></span></div>
+   <div class="pf-src"><span>Streets and municipalities</span><span class="meta">not partitioned · 38 MB</span></div>
+   <div class="size-state fine"><i class="ph-fill ph-check-circle"></i><p><b>Prepared, once a day.</b> One delivery reads 640 MB, after the run of dbt-prod. A question of an Application reads the copy, nothing in BigQuery.</p></div>
+   <a class="btn-primary" href="feed.html" style="width:100%;justify-content:center;margin-top:12px;text-decoration:none;box-sizing:border-box">Save as Edition 1</a>
+   <p class="meta" style="display:block;line-height:1.5;margin:8px 0 0">Edition 1 is a draft: you can change it here until an Application reads it. From then on it is frozen, and a change is a new Edition.</p>
+  </div>
+  <div data-pane-group="delivery" data-pane="refused" hidden>
+   <p class="meta" style="display:block;line-height:1.5;margin:4px 0 0">What one question reads, measured now, as live runs the query at every question.</p>
+   <div style="font-size:24px;font-weight:500;letter-spacing:-.3px;margin-top:6px">640 MB <span style="font-size:var(--text-small);font-weight:400;color:var(--text-muted)">a question</span></div>
+   <div class="gauge" aria-hidden="true"><span class="gauge-fill" style="width:62%;"></span><span class="gauge-mark" style="left:25%"></span><span class="gauge-mark" style="left:75%"></span></div><div class="gauge-legend mid"><span>0</span><span style="left:25%">100 MB · live</span><span style="left:75%">1 GB · very large</span></div>
+   <div class="pf-src"><span>Sales prices</span><span class="meta" style="display:block;line-height:1.5">24 of 96 partitions, through <span class="mono">deed_date</span>: its search keys do not narrow them</span></div>
+   <div class="pf-src"><span>Streets and municipalities</span><span class="meta">not partitioned · 38 MB</span></div>
+   <div class="size-state caution"><i class="ph-fill ph-prohibit"></i><p><b>Live is refused.</b> One question would read 640 MB, above the 100 MB a live question may read. Prepared, it reads that once a day.</p></div>
+   <button class="btn-primary" type="button" data-go="delivery:prepared" style="width:100%;justify-content:center;margin-top:12px">Keep it prepared</button><a class="btn-quiet outline" href="query.html" style="width:100%;justify-content:center;margin-top:8px;text-decoration:none;display:flex;align-items:center;gap:6px;box-sizing:border-box"><i class="ph ph-terminal-window"></i>Back to the query</a>
+  </div>
+  <p class="meta" style="display:block;line-height:1.5;margin:14px 0 0;padding-top:12px;border-top:1px solid var(--tint-hover)">Every delivery is measured again. A Feed that later reads more than its range is checked again, as a Lens is.</p>
+ </aside>
+ </div>
+</div>
+<div style="height:60px"></div>
+</main>
+</div>
+<div class="proto-switch" data-group="delivery" role="tablist" aria-label="Prototype: how the Feed is delivered">Delivery
+ <button class="seg on" data-target="prepared" role="tab" aria-selected="true">Prepared</button>
+ <button class="seg" data-target="refused" role="tab" aria-selected="false">Live, refused</button>
+</div>
+<script>
+// A narrow window opens with the panel closed; the rail opens it over the page (prototype only)
+if (matchMedia('(max-width: 760px)').matches) document.querySelector('.app').classList.remove('panel-open');
+</script>
+<script src="app.js"></script>
+</body>
+</html>

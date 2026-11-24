@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<!--
+  Screen: Docks, the start screen (OP-UX-121)
+  Opens when a User clicks Docks, the main item after Query that the screens of Applications propose (OP-UX-120). The
+  panel is the index of the Docks the User sees, every Dock folded; the start screen shows what the panel cannot, as
+  every start screen does (DEC-UX-03):
+  - The intro, "What are Docks?": in two sentences, an application gets data only through a Feed in a Dock, and only once
+    every Owner of the Resources under it said yes (DEC-AP-02, DEC-AP-04). "Register an Application" is the obvious step,
+    "Make a Feed from a query" the other, and a link to the Learning Card that is still to make (OP-UX-131). It can be
+    dismissed per User and per section, and has a version, as every intro; dismissed, a calm title bar keeps
+    "Show intro" and "Register an Application".
+  - Waiting for your answer, for an Owner only: the Requests for consent on the Resources of their Owner Units
+    (OP-UX-128), each with what it asks in one look, who answered already and "Answer", which opens it in the Message
+    Centre. Here the Request of "Search result pages" to Listings team, the last Owner it waits for.
+  - Yours: the Docks of the User's Owner Units, each with only what needs attention (a Feed late or held, an Application
+    waiting for consent, an Edition ending), the rest in one calm line. Here the Dock "Agents' portal" of Agency success,
+    whose Feed "Agency performance per month" is held by a Rule of Sales (DEC-AP-13, OP-AP-12).
+  - Recently: what was delivered, held, late, asked, answered and withdrawn in the Docks the User sees, newest first.
+  No search: the panel finds Feeds and Applications by name, and there are far fewer of them than Resources.
+  Seen as an Owner, MP is in two groups: Listings team, which owns Sales prices, and Agency success, which owns the Dock
+  "Agents' portal". Seen as a colleague, nothing waits for them and none of their groups has a Dock.
+  The switches at the bottom: the intro ?intro=shown or ?intro=hidden; ?role=owner or ?role=colleague.
+  Requirements: FR-AP-01, FR-AP-07, FR-AP-32, FR-AP-38, FR-AP-40
+  Decisions: DEC-AP-02, DEC-AP-04, DEC-AP-10, DEC-AP-13, DEC-AP-14, DEC-AP-18, DEC-UX-03, DEC-UX-93.
+  Open points: OP-UX-120, OP-UX-121, OP-UX-128, OP-UX-131, OP-AP-03, OP-AP-12.
+  Related screens: dock.html (a Dock), feed.html (a Feed, ?feed=held), application-register.html (Register an Application), application-consent.html (Answer), collections-start.html (the pattern).
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="owner">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Docks</title>
+<style>
+/* The state of a Feed in the panel of Docks, when it is not Up to date (the shared shell of Applications) */
+.panel .state-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; margin-right: 6px; }
+.panel .state-dot.late, .panel .state-dot.held { background: var(--signal-warn); }
+.panel .state-dot.cutoff { background: var(--signal-urgent); }
+
+/* Waiting for your answer: a Request for consent in one look */
+.ds-request { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: start; border-radius: var(--radius-lg); padding: 16px 18px; }
+.ds-request + .ds-request { margin-top: 10px; }
+.ds-req-icon { font-size: 22px; color: var(--text-secondary); margin-top: 2px; }
+.ds-req-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ds-request h3 { font-size: 14px; font-weight: var(--weight-regular); margin: 8px 0 0; line-height: 1.45; }
+.ds-request h3 b { font-weight: var(--weight-medium); }
+.ds-request p { margin: 6px 0 0; font-size: var(--text-small); line-height: 1.55; color: var(--text-secondary); max-width: 760px; }
+.ds-req-facts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.ds-req-facts .status { background: var(--surface-sub); }
+.ds-req-who { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 10px; font-size: var(--text-meta); color: var(--text-muted); }
+.ds-req-who b { font-weight: var(--weight-medium); color: var(--text-primary); }
+.ds-req-who i { font-size: 13px; vertical-align: -2px; }
+.ds-request .btn-primary { text-decoration: none; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+
+/* Yours: a card per Dock, with only what needs attention */
+.ds-docks { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: var(--space-tile-gap); }
+.ds-dock { border-radius: var(--radius-lg); padding: 14px 18px 12px; }
+.ds-dock-head { display: flex; align-items: center; gap: 10px; color: inherit; text-decoration: none; }
+.ds-dock-head:hover .item-title { text-decoration: underline; text-underline-offset: 3px; }
+.ds-dock-head > span:last-child { min-width: 0; }
+.ds-dock-head .item-title { font-size: 14px; font-weight: var(--weight-medium); display: block; }
+.ds-dock .attention-line { align-items: flex-start; }
+.ds-dock .attention-line:first-of-type { border-top: 1px solid var(--tint-hover); margin-top: 10px; }
+.ds-dock .attention-line .app-state { flex: none; margin-top: 1px; }
+.ds-dock .attention-line p { line-height: 1.5; }
+.ds-dock .attention-line b { font-weight: var(--weight-medium); }
+.ds-calm { display: flex; align-items: center; gap: 6px; padding: 8px 0 2px; border-top: 1px solid var(--tint-hover); }
+
+/* Recently: one line per event, newest first */
+.ds-recent { border-radius: var(--radius-lg); padding: 6px 18px; }
+.ds-rec { display: grid; grid-template-columns: 112px minmax(0, 1fr) 130px 96px; gap: 12px; align-items: start; padding: 9px 0; border-top: 1px solid var(--tint-hover); font-size: var(--text-small); line-height: 1.5; }
+.ds-rec:first-child { border-top: 0; }
+.ds-rec-kind { display: inline-flex; align-items: center; gap: 6px; color: var(--text-secondary); white-space: nowrap; }
+.ds-rec-kind i { font-size: 15px; }
+.ds-rec-kind.warn, .ds-rec-kind.warn i { color: var(--signal-warn); }
+.ds-rec p { margin: 0; }
+.ds-rec b { font-weight: var(--weight-medium); }
+.ds-rec .ds-rec-dock, .ds-rec .ds-rec-when { color: var(--text-muted); font-size: var(--text-meta); }
+.ds-rec .ds-rec-when { text-align: right; white-space: nowrap; }
+
+/* The prototype switches, stacked in one corner */
+.ds-switches { position: fixed; right: 34px; bottom: 26px; z-index: 20; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.ds-switches > .proto-switch, .ds-switches > .role-switch { position: static; }
+
+@media (max-width: 760px) {
+  .ds-app { padding: 10px; gap: 8px; }
+  .ds-app .main { padding: 20px 16px; }
+  .ds-app .section-head { flex-wrap: wrap; }
+  .ds-app .section-head h2 { flex-basis: 100%; }
+  .ds-dock .attention-line { flex-wrap: wrap; }
+  .ds-dock .attention-line p { flex-basis: 100%; order: 2; }
+  .ds-dock .attention-line .text-link { margin-left: auto; }
+  .ds-request { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .ds-req-icon { display: none; }
+  .ds-request .btn-primary { justify-self: start; }
+  .ds-rec { grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; }
+  .ds-rec p { grid-column: 1 / -1; }
+  .ds-rec .ds-rec-dock { grid-row: 1; grid-column: 2; text-align: right; }
+  .ds-rec .ds-rec-when { grid-row: 3; grid-column: 1 / -1; text-align: left; }
+  #intro-bar { flex-wrap: wrap; gap: 10px; }
+  .ds-switches { left: 10px; right: 10px; bottom: 10px; align-items: stretch; }
+  .ds-switches > * { flex-wrap: wrap; border-radius: 16px; }
+}
+</style>
+</head>
+<body>
+<div class="app panel-open ds-app">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <a class="nav-btn" href="collections-start.html" data-label="Collections" aria-label="Collections"><i class="ph-fill ph-stack"></i></a>
+  <a class="nav-btn" href="query.html" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></a>
+  <a class="nav-btn active" href="docks-start.html" data-label="Docks" aria-label="Docks, where Applications read data" aria-current="page"><i class="ph-fill ph-plugs-connected"></i><span class="flare top"></span><span class="flare bottom"></span></a>
+  <a class="nav-btn" href="#" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <a class="nav-btn nav-admin" href="admin-webhooks.html" data-label="Admin" aria-label="Admin, for the Data Team" data-for="datateam"><i class="ph-fill ph-toolbox"></i></a>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">MP</a>
+</nav>
+<!-- The panel of Docks: the index of the Docks the User sees, every Dock folded on the start screen. -->
+<aside class="panel" aria-label="Docks">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:4px">
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Docks</h1>
+   <button class="icon-btn" aria-label="New Dock"><i class="ph-fill ph-plus-circle"></i></button>
+   <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
+  </div>
+  <label class="search card" style="margin:16px 0 4px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search Feeds and Applications"></label>
+  <div class="tree-group card">
+   <div class="tree-head"><a class="tree-link" href="dock.html"><span class="item-icon"><i class="ph ph-globe-hemisphere-west"></i></span><span class="tree-name"><span class="item-title">Website</span><span class="meta">2 Feeds · 2 Applications</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Website holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="feed.html"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span class="tree-res-name"><span class="clip" title="Price statistics per area">Price statistics per area</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="feed.html"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span class="tree-res-name"><span class="clip" title="Listing counts per municipality">Listing counts per municipality</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="application.html"><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span class="tree-res-name"><span class="clip" title="SEO pages">SEO pages</span></span></a>
+     <a class="tree-res" href="application.html"><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span class="tree-res-name"><span class="clip" title="Search result pages · waiting for consent">Search result pages</span></span></a>
+   </div>
+  </div>
+  <div class="tree-group card">
+   <div class="tree-head"><a class="tree-link" href="dock.html?dock=portal"><span class="item-icon"><i class="ph ph-handshake"></i></span><span class="tree-name"><span class="item-title">Agents' portal</span><span class="meta">2 Feeds · 1 Application</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Agents' portal holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="feed.html?feed=held"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span class="tree-res-name"><span class="clip" title="Agency performance per month · Held since 22 Nov">Agency performance per month</span></span><span class="state-dot held" role="img" aria-label="Held" title="Held since 22 Nov, 07:10"></span></a>
+     <a class="tree-res" href="feed.html"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span class="tree-res-name"><span class="clip" title="Leads per agency per week">Leads per agency per week</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="application.html"><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span class="tree-res-name"><span class="clip" title="Agents' portal">Agents' portal</span></span></a>
+   </div>
+  </div>
+  <div class="tree-group card">
+   <div class="tree-head"><a class="tree-link" href="dock.html"><span class="item-icon"><i class="ph ph-lifebuoy"></i></span><span class="tree-name"><span class="item-title">Customer success tools</span><span class="meta">1 Feed · 1 Application</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Customer success tools holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="feed.html"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span class="tree-res-name"><span class="clip" title="Agency health score, live">Agency health score</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="application.html"><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span class="tree-res-name"><span class="clip" title="CS cockpit">CS cockpit</span></span></a>
+   </div>
+  </div>
+  <p id="no-results" class="meta" style="padding:8px 4px" hidden>Nothing matches your search.</p>
+ </div>
+</aside>
+<main class="main">
+ <!-- Dismissed: a calm title bar with "Show intro" and the fixed button (as on the start screen of Collections). -->
+ <div id="intro-bar" data-pane-group="intro" data-pane="hidden" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px" hidden>
+  <h2 class="page-title" style="font-size:24px">Docks</h2>
+  <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap"><button class="text-link" id="intro-show" data-go="intro:shown" style="border:0;background:none;font-family:inherit"><i class="ph-fill ph-info"></i><span>Show intro</span></button><a class="btn-primary" href="application-register.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-plus-circle" style="font-size:15px"></i>Register an Application</a></div>
+ </div>
+ <section id="intro" class="card" data-pane-group="intro" data-pane="shown" data-section="docks" data-version="1" style="position:relative;border-radius:20px;padding:26px 28px 24px;text-align:center">
+  <button class="icon-btn" id="intro-hide" data-go="intro:hidden" aria-label="Hide intro" style="position:absolute;right:12px;top:12px"><i class="ph-fill ph-x-circle"></i></button>
+  <svg width="200" height="96" viewBox="0 0 200 96" aria-hidden="true"><rect x="18" y="18" width="64" height="60" rx="12" fill="var(--col-teal)" fill-opacity=".16" stroke="var(--text-primary)" stroke-width="1.5"/><path d="M32 36h36M32 48h36M32 60h24" stroke="var(--text-secondary)" stroke-width="1.5" stroke-linecap="round"/><path d="M82 48C100 48 104 40 124 40" fill="none" stroke="var(--text-primary)" stroke-width="1.5" stroke-dasharray="3 4"/><rect x="124" y="20" width="58" height="56" rx="10" fill="var(--col-magenta)" fill-opacity=".14" stroke="var(--text-primary)" stroke-width="1.5"/><path d="M124 32h58" stroke="var(--text-primary)" stroke-width="1.5"/><circle cx="131" cy="26" r="1.6" fill="var(--text-primary)"/><circle cx="137" cy="26" r="1.6" fill="var(--text-primary)"/><path d="M134 46h38M134 56h26" stroke="var(--text-secondary)" stroke-width="1.5" stroke-linecap="round"/><circle cx="103" cy="44" r="9" fill="var(--surface-solid)" stroke="var(--col-teal-ink)" stroke-width="1.5"/><path d="M99 44.5l3 3 5.5-6" fill="none" stroke="var(--col-teal-ink)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <h2 style="font-size:21px;font-weight:500;margin:10px 0 0">What are Docks?</h2>
+  <p style="font-size:13px;color:var(--text-secondary);line-height:1.6;max-width:520px;margin:6px auto 0">An application gets data of Immoscoop only through a Feed: a query that an Owner Unit keeps in its Dock, delivered after every run. It reads a Feed once every Owner of the Resources under it has said yes, and only the slice its user may see.</p>
+  <div style="display:flex;justify-content:center;align-items:center;gap:16px;margin-top:18px;flex-wrap:wrap"><a class="btn-primary" href="application-register.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-plus-circle" style="font-size:15px"></i>Register an Application</a><a class="btn-quiet outline" href="query.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-terminal-window"></i>Make a Feed from a query</a><a class="text-link" href="learning-card.html"><span>What a Feed is</span><i class="ph-fill ph-arrow-right"></i></a></div>
+ </section>
+
+ <!-- Waiting for your answer: for an Owner only, the Requests for consent on the Resources of their Owner Units (OP-UX-128). -->
+ <div data-for="owner">
+  <div class="section-head"><h2>Waiting for your answer <span class="count">1</span></h2><span class="meta">Requests for consent on the Resources of Listings team</span></div>
+  <article class="card ds-request">
+   <i class="ph ph-seal-question ds-req-icon" aria-hidden="true"></i>
+   <div style="min-width:0">
+    <div class="ds-req-top"><span class="kind request">Request</span><span class="mc-status"><i class="ph ph-hourglass-medium"></i>Waiting 3 days</span><span class="meta">to Listings team</span></div>
+    <h3><b>Search result pages</b> asks to read <b>Sales prices</b></h3>
+    <p>Through the Feed <a class="text-link" href="feed.html" style="display:inline"><span>Price statistics per area</span></a>, Edition 2, in the Dock Website: the backend of the search result pages of the website, an external Application without users. Prices leave per street and municipality as averages, medians and quartiles, each only with 5 sales or more behind it.</p>
+    <div class="ds-req-facts"><span class="status">External</span><span class="status">No users</span><span class="status">Prepared · daily</span><span class="status">Minimum Volume 5</span></div>
+    <div class="ds-req-who"><span>Asked by <b>Tom Maes</b>, Website team, on 20 Nov</span><span><i class="ph-fill ph-check-circle" aria-hidden="true"></i> Data Team said yes on 20 Nov</span><span>Yours is the last answer it waits for</span></div>
+   </div>
+   <a class="btn-primary" href="application-consent.html">Answer<i class="ph ph-arrow-right"></i></a>
+  </article>
+ </div>
+
+ <!-- Yours: the Docks of the User's Owner Units, each with only what needs attention. -->
+ <div class="section-head"><h2>Yours</h2><span class="meta" data-for="owner">The Docks of Agency success, with what needs attention</span><span class="meta" data-for="colleague">The Docks of your groups</span></div>
+ <div class="ds-docks" data-for="owner">
+  <article class="card ds-dock">
+   <a class="ds-dock-head" href="dock.html?dock=portal"><span class="item-icon"><i class="ph ph-handshake"></i></span><span><span class="item-title">Agents' portal</span><span class="meta">Agency success · 2 Feeds · 1 Application</span></span></a>
+   <div class="attention-line"><span class="app-state held">Held</span><p><b>Agency performance per month</b>, since 22 Nov at 07:10: a Rule of Sales on Leads per agency fired. The Agents' portal gets the delivery of 21 Nov, with its date, until Sales releases it.</p><a class="text-link" href="feed.html?feed=held"><span>Open</span></a></div>
+   <p class="meta ds-calm"><i class="ph ph-check" aria-hidden="true"></i>Leads per agency per week and the Agents' portal need nothing.</p>
+  </article>
+ </div>
+ <div class="result-empty" data-for="colleague" style="margin-top:0"><i class="ph ph-plugs"></i><p style="max-width:72ch"><b>None of your groups has a Dock.</b> A Dock is where an Owner Unit keeps the Feeds it gives applications, with the Applications that may read them. Make one for a group of yours with + in the panel, or register an Application straight away: it asks for the Dock it goes into.</p></div>
+
+ <!-- Recently: what was delivered, held, asked, answered and withdrawn, in the Docks the User sees. -->
+ <div class="section-head"><h2>Recently</h2><span class="meta">In the Docks you see: deliveries, answers and withdrawals</span></div>
+ <div class="card ds-recent">
+  <div class="ds-rec"><span class="ds-rec-kind"><i class="ph ph-rss-simple" aria-hidden="true"></i>Delivered</span><p><b>Price statistics per area</b> and <b>Listing counts per municipality</b>, after the run of dbt-prod.</p><span class="ds-rec-dock">Website</span><span class="ds-rec-when">today, 06:52</span></div>
+  <div class="ds-rec"><span class="ds-rec-kind warn"><i class="ph-fill ph-pause-circle" aria-hidden="true"></i>Held</span><p><b>Agency performance per month</b>: a Rule of Sales on Leads per agency fired. The delivery of 21 Nov is served.</p><span class="ds-rec-dock">Agents' portal</span><span class="ds-rec-when">22 Nov, 07:10</span></div>
+  <div class="ds-rec"><span class="ds-rec-kind"><i class="ph ph-check-circle" aria-hidden="true"></i>Said yes</span><p><b>Data Team</b> to Search result pages, for Streets and municipalities: Sam De Wit.</p><span class="ds-rec-dock">Website</span><span class="ds-rec-when">20 Nov, 14:12</span></div>
+  <div class="ds-rec"><span class="ds-rec-kind"><i class="ph ph-seal-question" aria-hidden="true"></i>Asked</span><p><b>Search result pages</b> asks to read Price statistics per area, Edition 2: Listings team and Data Team were asked.</p><span class="ds-rec-dock">Website</span><span class="ds-rec-when">20 Nov, 10:30</span></div>
+  <div class="ds-rec"><span class="ds-rec-kind warn"><i class="ph-fill ph-clock-countdown" aria-hidden="true"></i>Late</span><p><b>Price statistics per area</b>: the run of dbt-prod failed. The delivery of 17 Nov was served until the next one, on 19 Nov.</p><span class="ds-rec-dock">Website</span><span class="ds-rec-when">18 Nov, 06:40</span></div>
+  <div class="ds-rec"><span class="ds-rec-kind"><i class="ph ph-key" aria-hidden="true"></i>Key</span><p><b>SEO pages</b> got its key, and reads Price statistics per area and Listing counts per municipality.</p><span class="ds-rec-dock">Website</span><span class="ds-rec-when">10 Nov</span></div>
+  <div class="ds-rec"><span class="ds-rec-kind"><i class="ph ph-stack-simple" aria-hidden="true"></i>Edition</span><p><b>Price statistics per area</b>: Edition 2 is live, and Edition 1 ended, as no Application read it any more.</p><span class="ds-rec-dock">Website</span><span class="ds-rec-when">9 Nov</span></div>
+  <div class="ds-rec"><span class="ds-rec-kind"><i class="ph ph-check-circle" aria-hidden="true"></i>Said yes</span><p><b>Listings team</b> and <b>Data Team</b> to SEO pages: Lotte Janssens and Sam De Wit. Every Owner had said yes.</p><span class="ds-rec-dock">Website</span><span class="ds-rec-when">9 Nov</span></div>
+  <div class="ds-rec"><span class="ds-rec-kind"><i class="ph ph-check-circle" aria-hidden="true"></i>Said yes</span><p><b>Listings team</b> to the Agents' portal, for Listing views per day: Lotte Janssens. Every Owner had said yes.</p><span class="ds-rec-dock">Agents' portal</span><span class="ds-rec-when">3 Nov</span></div>
+ </div>
+ <div style="height:110px"></div>
+</main>
+</div>
+<div class="ds-switches">
+ <div class="proto-switch" data-group="intro" role="tablist" aria-label="Prototype: the intro">Intro
+  <button class="seg on" data-target="shown" role="tab" aria-selected="true">Shown</button>
+  <button class="seg" data-target="hidden" role="tab" aria-selected="false">Dismissed</button>
+ </div>
+ <div class="role-switch" data-group="role" role="tablist" aria-label="Prototype: seen as">Seen as
+  <button class="seg on" data-target="owner" role="tab" aria-selected="true">An Owner, with a Request waiting</button>
+  <button class="seg" data-target="colleague" role="tab" aria-selected="false">A colleague, nothing waiting</button>
+ </div>
+</div>
+<script src="app.js"></script>
+<script>
+  // A phone has no room for the panel next to the page: it starts closed there, as after a click on the rail.
+  if (matchMedia('(max-width: 760px)').matches) document.querySelector('.app').classList.remove('panel-open');
+  // The switch of the intro follows what the intro shows, when the address does not choose: a dismissed intro stays
+  // dismissed for this User (kept in the browser for the prototype, DEC-UX-93).
+  if (!new URLSearchParams(location.search).has('intro') && document.getElementById('intro').hidden) {
+    document.querySelector('[data-group="intro"] [data-target="hidden"]').click();
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<!--
+  Screen: Docks, register an Application (a proposal of 2026-11-23, OP-UX-126)
+  An app that needs data of Immoscoop permanently gets it only as a registered Application, with its Footprint (DEC-AP-01,
+  DEC-AP-03). Opened from a Dock, with New › Application, or from the start screen of Docks; here from the Dock
+  "Agents' portal" of Agency success, registering the agents' portal, whose users are in the user pool Agencies.
+  On top, "Fill it from the platform": the JSON of the Footprint that the platform of IT gives for every app built on it,
+  pasted or dropped, fills every step it holds, and each field it filled is marked "From the platform" (OP-AP-08). A JSON
+  that names a user pool Data Hub does not know is refused as a whole, with why: Data Hub checks the token of every user
+  against the pool the Footprint names (DEC-AP-06, OP-AP-04), and fills nothing.
+  Then five steps, one at a time with Back and Next, the steps with how far each is on the right, as making a Lens
+  (DEC-UX-229): 1, What it is: name, what it does and how it uses the data, its owner at IT, internal or external, its
+  Dock. 2, Users: no users, or a user pool Data Hub knows: Website users, Agencies, Private sellers. 3, Feeds: the Feeds
+  it reads from the Docks the User sees, each on an Edition, and per Feed the Binding Rule, a field of the Feed equal to a
+  claim of the pool, written out as a sentence, as code and for one user; only with users (DEC-AP-07). A live Feed is
+  for internal Applications only, so an external one cannot choose it (DEC-AP-08). 4, Delivery: prepared or live, as its
+  Feeds allow, and how often (OP-AP-07). 5, What it knows: one box, required, that the data is analytical, may come late
+  or not at all, and that the transactional system stays the master (DEC-AP-11, DEC-AP-10).
+  On the right, under the steps, "Ask for consent": who will be asked, every Owner Unit of every Resource under its Feeds,
+  with the Resource and the Feeds (DEC-AP-04); it sends each a Request in Messages and opens the page of the Application,
+  waiting for its Owners (drawn in application.html?app=waiting). The key comes only once all of them said yes.
+  States: ?from=json, the default, pasted and filled; ?from=empty, nothing pasted, typed in by hand; ?from=unknown, a JSON
+  that names the pool partner-agents, refused with why. ?step=1 to ?step=5 opens a step, with any of them.
+  Requirements: FR-AP-01, FR-AP-02, FR-AP-03, FR-AP-04, FR-AP-05, FR-AP-06
+  Decisions: DEC-AP-01, DEC-AP-03, DEC-AP-04, DEC-AP-06, DEC-AP-07, DEC-AP-08, DEC-AP-10, DEC-AP-11, DEC-AP-16, DEC-AP-17, DEC-AP-18, DEC-UX-229.
+  Open points: OP-UX-126, OP-UX-120, OP-AP-04, OP-AP-07, OP-AP-08, OP-AP-09.
+  Related screens: dock.html (New › Application), docks-start.html, application.html (the page it opens), application-consent.html (the Request each Owner gets), feed.html, lens-new.html (the same layout of steps).
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="owner">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Register an Application</title>
+<style>
+/* Registering an Application (OP-UX-126) */
+/* Fill it from the platform: a box to paste or drop the JSON of the Footprint; filled, a line that says so */
+.ar-fill { margin-top: 14px; border-radius: var(--radius-xl); padding: 16px 20px; }
+.ar-fill-head { display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.ar-fill-head > i { font-size: 22px; color: var(--text-secondary); margin-top: 1px; }
+.ar-fill-head p { margin: 2px 0 0; font-size: var(--text-small); line-height: 1.5; color: var(--text-secondary); }
+.ar-fill-head b { font-weight: var(--weight-medium); color: var(--text-primary); }
+.ar-drop { display: grid; gap: 8px; margin-top: 12px; padding: 14px; border-radius: var(--radius-md); border: 1.5px dashed var(--tint-active); background: var(--surface-sub); }
+.ar-drop textarea { width: 100%; box-sizing: border-box; min-height: 74px; resize: vertical; font: 12px/1.6 var(--font-mono); color: var(--text-primary); background: var(--surface-solid); border: 0; border-radius: 8px; padding: 8px 10px; }
+.ar-json { margin: 10px 0 0; padding: 10px 12px; border-radius: var(--radius-md); background: var(--surface-sub); font: 12px/1.6 var(--font-mono); color: var(--text-primary); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 260px; overflow: auto; }
+.ar-json .ar-bad { background: color-mix(in srgb, var(--signal-warn) 22%, transparent); border-radius: 4px; }
+.ar-acts { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-left: auto; }
+/* A field filled from the platform */
+.ar-plat { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; font-size: 10px; color: var(--text-secondary); background: var(--tint-hover); padding: 1px 7px; border-radius: var(--radius-pill); white-space: nowrap; vertical-align: 1px; }
+.ar-plat i { font-size: 11px; }
+/* Choices as cards, two side by side; a list of pools; the Feeds per Dock */
+.ar-choice { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ar-choice.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.ar-choice .pick { border: 1px solid var(--tint-active); }
+.ar-choice .pick:has(input:checked) { background: var(--surface-sub); outline: 1.5px solid var(--text-muted); border-color: transparent; }
+.ar-choice .pick:has(input:disabled) { opacity: .55; cursor: not-allowed; }
+.ar-choice .type-def { color: var(--text-secondary); }
+.ar-claims { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.ar-claims .code-chip { margin: 0; background: var(--tint-hover); }
+.ar-dock { margin-top: 12px; }
+.ar-dock-name { display: flex; align-items: center; gap: 8px; font-size: var(--text-meta); color: var(--text-muted); margin: 0 0 4px 2px; }
+.ar-feed { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 2px 10px; align-items: center; padding: 8px 10px; border-radius: var(--radius-md); font-size: var(--text-small); cursor: pointer; }
+.ar-feed:hover { background: var(--tint-hover); }
+.ar-feed input { margin: 0; accent-color: var(--text-primary); }
+.ar-feed:has(input:checked) { background: var(--surface-sub); }
+.ar-feed:has(input:disabled) { cursor: not-allowed; color: var(--text-muted); }
+.ar-feed:has(input:disabled):hover { background: none; }
+.ar-feed .meta { grid-column: 2 / -1; }
+/* A chosen Feed with its Edition and its Binding Rule */
+.ar-bind { display: grid; gap: 10px; }
+.ar-bind-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ar-bind-head b { font-weight: var(--weight-medium); font-size: var(--text-body); }
+.ar-bind-head select { font: var(--text-small)/1.4 var(--font-family); color: var(--text-primary); background: var(--surface-solid); border: 0; border-radius: 8px; padding: 4px 8px; margin-left: auto; }
+.ar-eq { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: var(--text-small); color: var(--text-secondary); }
+.ar-eq select { font: 12px/1.4 var(--font-mono); color: var(--text-primary); background: var(--surface-solid); border: 1px solid var(--tint-active); border-radius: 8px; padding: 5px 8px; }
+.ar-bind .binding-rule { background: var(--surface-solid); }
+.binding-rule p { margin: 0; font-size: var(--text-small); line-height: 1.5; }
+.binding-rule .meta { display: block; line-height: 1.5; }
+/* What it knows: the one box, required */
+.ar-knows { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: var(--radius-md); background: var(--surface-sub); font-size: var(--text-small); line-height: 1.6; cursor: pointer; }
+.ar-knows input { margin: 4px 0 0; accent-color: var(--text-primary); flex: none; }
+.ar-knows:has(input:not(:checked)) { outline: 1.5px solid color-mix(in srgb, var(--signal-warn) 45%, transparent); }
+/* Ask for consent: who will be asked */
+.ar-who { display: grid; gap: 2px; margin-top: 10px; }
+.ar-who-row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1px 10px; padding: 8px 0; border-top: 1px solid var(--tint-active); font-size: var(--text-small); }
+.ar-who-row:first-child { border-top: 0; }
+.ar-who-row > i { color: var(--text-secondary); font-size: 16px; margin-top: 1px; grid-row: span 2; }
+.ar-who-row b { font-weight: var(--weight-medium); }
+.ar-who-row .meta { display: block; line-height: 1.5; }
+/* A narrow window: one column, the panel over the page when opened (the prototype only; DEC-UX-91 asks for a message below 900 px) */
+@media (max-width: 1100px) { .make-lens { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 900px) { .ar-choice, .ar-choice.three { grid-template-columns: minmax(0, 1fr); } .ar-acts { margin-left: 0; } }
+@media (max-width: 760px) {
+  .app { padding: 10px; gap: 8px; }
+  .app .main { padding: 18px 14px 24px; }
+  .app.panel-open .panel { position: fixed; z-index: 25; top: 10px; bottom: 10px; left: 70px; width: min(300px, calc(100vw - 80px)); }
+  .proto-switch { position: static; margin: 10px; flex-wrap: wrap; border-radius: 16px; }
+  .ar-head { flex-wrap: wrap; }
+}
+</style>
+</head>
+<body>
+<div class="app panel-open">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <a class="nav-btn" href="collections-start.html" data-label="Collections" aria-label="Collections"><i class="ph-fill ph-stack"></i></a>
+  <a class="nav-btn" href="query.html" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></a>
+  <a class="nav-btn active" href="docks-start.html" data-label="Docks" aria-label="Docks, where Applications read data" aria-current="page"><i class="ph-fill ph-plugs-connected"></i><span class="flare top"></span><span class="flare bottom"></span></a>
+  <a class="nav-btn" href="#" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <a class="nav-btn nav-admin" href="admin-webhooks.html" data-label="Admin" aria-label="Admin, for the Data Team" data-for="datateam"><i class="ph-fill ph-toolbox"></i></a>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">MP</a>
+</nav>
+<aside class="panel" aria-label="Docks">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:4px">
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Docks</h1>
+   <button class="icon-btn" aria-label="New Dock"><i class="ph-fill ph-plus-circle"></i></button>
+   <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
+  </div>
+  <label class="search card" style="margin:16px 0 4px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search Feeds and Applications"></label>
+  <div class="tree-group card">
+   <div class="tree-head"><a class="tree-link" href="dock.html"><span class="item-icon"><i class="ph ph-globe-hemisphere-west"></i></span><span class="tree-name"><span class="item-title">Website</span><span class="meta">2 Feeds · 2 Applications</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Website holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="feed.html"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span class="tree-res-name"><span class="clip" title="Price statistics per area">Price statistics per area</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="feed.html"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span class="tree-res-name"><span class="clip" title="Listing counts per municipality">Listing counts per municipality</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="application.html"><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span class="tree-res-name"><span class="clip" title="SEO pages">SEO pages</span></span></a>
+     <a class="tree-res" href="application.html?app=waiting"><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span class="tree-res-name"><span class="clip" title="Search result pages · waiting for consent">Search result pages</span></span></a>
+   </div>
+  </div>
+  <div class="tree-group card open">
+   <div class="tree-head"><a class="tree-link" href="dock.html"><span class="item-icon"><i class="ph ph-handshake"></i></span><span class="tree-name"><span class="item-title">Agents' portal</span><span class="meta">2 Feeds · 1 Application</span></span></a><button class="tree-toggle" aria-expanded="true" aria-label="Show what Agents' portal holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="feed.html"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span class="tree-res-name"><span class="clip" title="Agency performance per month">Agency performance per month</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="feed.html"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span class="tree-res-name"><span class="clip" title="Leads per agency per week">Leads per agency per week</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="application.html?app=portal"><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span class="tree-res-name"><span class="clip" title="Agents' portal">Agents' portal</span></span></a>
+   </div>
+  </div>
+  <div class="tree-group card">
+   <div class="tree-head"><a class="tree-link" href="dock.html"><span class="item-icon"><i class="ph ph-lifebuoy"></i></span><span class="tree-name"><span class="item-title">Customer success tools</span><span class="meta">1 Feed · 1 Application</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Customer success tools holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="feed.html"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span class="tree-res-name"><span class="clip" title="Agency health score, live">Agency health score</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="application.html"><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span class="tree-res-name"><span class="clip" title="CS cockpit">CS cockpit</span></span></a>
+   </div>
+  </div>
+ </div>
+</aside>
+<main class="main">
+<div class="breadcrumb"><a href="docks-start.html" style="color:inherit;text-decoration:none">Docks</a> / <a href="dock.html" style="color:inherit;text-decoration:none">Agents' portal</a></div>
+<div class="ar-head" style="display:flex;align-items:center;gap:12px;margin-top:8px">
+ <h1 class="page-title" style="flex:1">Register an Application</h1>
+ <a class="btn-quiet outline" href="dock.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph ph-x"></i>Cancel</a>
+</div>
+<p class="meta" style="display:block;margin-top:6px;line-height:1.5;max-width:780px">An app gets data of Immoscoop only as an Application: it says what it is and how it uses the data, and every Owner of the Resources under its Feeds says yes before it gets its key.</p>
+
+<!-- Fill it from the platform: the JSON of the Footprint, pasted or dropped (OP-AP-08) -->
+<section class="card ar-fill" aria-labelledby="ar-fill-title">
+ <div data-pane-group="from" data-pane="json">
+  <div class="ar-fill-head"><i class="ph-fill ph-cloud-check"></i>
+   <div style="flex:1;min-width:240px"><h2 id="ar-fill-title" class="nq-title">Filled from the platform</h2>
+    <p>The Footprint of <span class="mono">agents-portal</span>, version 1 of the schema of IT, pasted just now. It filled 12 fields in all five steps, each marked <span class="ar-plat"><i class="ph ph-cloud-arrow-down"></i>From the platform</span>. Change any of them here; what you change is yours from then on.</p></div>
+   <div class="ar-acts"><button class="btn-quiet outline" type="button" data-go="from:empty">Paste another</button><button class="btn-quiet" type="button" data-go="from:empty">Clear what it filled</button></div>
+  </div>
+  <details style="margin-top:10px"><summary class="text-link" style="cursor:pointer"><span>Show the JSON</span></summary>
+<pre class="ar-json">{
+  "schema": "footprint/1",
+  "app": "agents-portal",
+  "name": "Agents' portal",
+  "description": "The portal where agents follow how their agency does on Immoscoop …",
+  "owner": "jonas.peeters@immoscoop.be",
+  "audience": "external",
+  "users": { "pool": "agencies" },
+  "feeds": [
+    { "dock": "agents-portal", "feed": "agency-performance-per-month", "edition": 1,
+      "binding": "leads.company_id = agencies.company_id" },
+    { "dock": "agents-portal", "feed": "leads-per-agency-per-week", "edition": 1,
+      "binding": "leads.company_id = agencies.company_id" }
+  ],
+  "delivery": { "mode": "prepared", "every": "day" },
+  "knowsAnalytical": { "signedBy": "jonas.peeters@immoscoop.be", "on": "2026-11-21" }
+}</pre></details>
+ </div>
+ <div data-pane-group="from" data-pane="empty" hidden>
+  <div class="ar-fill-head"><i class="ph ph-cloud-arrow-down"></i>
+   <div style="flex:1;min-width:240px"><h2 class="nq-title">Fill it from the platform</h2>
+    <p>Built on the platform of IT? It gives the Footprint of every app as JSON, on the page of the app there, or ask its owner at IT. Paste it, or drop the file, and it fills every step it holds.</p></div>
+  </div>
+  <div class="ar-drop">
+   <textarea aria-label="The JSON of the Footprint" placeholder='{ "schema": "footprint/1", "app": … }' autocomplete="off" spellcheck="false" data-1p-ignore data-lpignore="true" data-bwignore data-form-type="other"></textarea>
+   <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><button class="btn-primary" type="button" data-go="from:json"><i class="ph ph-magic-wand" style="font-size:15px"></i>Fill it</button><span class="meta">or drop a .json file here · or type it in, step by step, below</span></div>
+  </div>
+ </div>
+ <div data-pane-group="from" data-pane="unknown" hidden>
+  <div class="ar-fill-head"><i class="ph-fill ph-warning" style="color:var(--signal-warn)"></i>
+   <div style="flex:1;min-width:240px"><h2 class="nq-title">Not filled: Data Hub does not know the user pool <span class="mono">partner-agents</span></h2>
+    <p>Data Hub knows three user pools, kept by IT in AWS Cognito: Website users, Agencies and Private sellers. It checks the token of every user against the pool the Footprint names, so it cannot serve a pool it does not know, and it filled nothing. Ask Jonas Peeters at IT whether the portal should use Agencies, or have <span class="mono">partner-agents</span> made known to Data Hub first.</p></div>
+   <div class="ar-acts"><button class="btn-quiet outline" type="button" data-go="from:empty">Paste another</button></div>
+  </div>
+<pre class="ar-json">  "audience": "external",
+<span class="ar-bad">  "users": { "pool": "partner-agents" },</span>      ← line 8: not a pool Data Hub knows
+  "feeds": [</pre>
+ </div>
+</section>
+
+<div class="make-lens">
+ <section class="card nq-left" aria-labelledby="ar-step-title">
+
+  <!-- 1 · What it is -->
+  <div data-pane-group="step" data-pane="1">
+  <div class="meta">Step 1 of 5</div>
+  <h2 id="ar-step-title" class="nq-title">What it is</h2>
+  <div data-pane-group="from" data-pane="json">
+   <label class="field" style="margin-top:12px"><span>Name<span class="ar-plat"><i class="ph ph-cloud-arrow-down"></i>From the platform</span></span><input value="Agents' portal" required></label>
+   <label class="field"><span>What it does, and how it uses the data<span class="ar-plat"><i class="ph ph-cloud-arrow-down"></i>From the platform</span></span><textarea rows="3">The portal where agents follow how their agency does on Immoscoop: leads, views, contact rate and response time, per month and per week. It shows each agent the figures of their own agency; it keeps no copy and passes nothing on.</textarea></label>
+   <label class="field"><span>Its owner at IT<span class="ar-plat"><i class="ph ph-cloud-arrow-down"></i>From the platform</span></span><input value="Jonas Peeters · jonas.peeters@immoscoop.be"></label>
+   <div style="margin-bottom:12px"><div class="label" style="margin-bottom:5px">Who uses it<span class="ar-plat"><i class="ph ph-cloud-arrow-down"></i>From the platform</span></div>
+    <div class="ar-choice" role="radiogroup" aria-label="Internal or external">
+     <label class="pick type-pick"><input type="radio" name="ar-aud"><span style="flex:1;min-width:0"><b style="font-weight:500">Internal</b><span class="type-def">Colleagues of Immoscoop. It may read a live Feed.</span></span></label>
+     <label class="pick type-pick"><input type="radio" name="ar-aud" checked><span style="flex:1;min-width:0"><b style="font-weight:500">External</b><span class="type-def">People outside Immoscoop, such as agents. It reads only prepared Feeds, never BigQuery.</span></span></label>
+    </div>
+    <span class="meta" style="display:block;line-height:1.5;margin-top:6px">Data Hub goes by this, not by where the app calls from.</span>
+   </div>
+  </div>
+  <div data-pane-group="from" data-pane="empty unknown" hidden>
+   <label class="field" style="margin-top:12px"><span>Name</span><input value="" placeholder="Such as Agents' portal" required></label>
+   <label class="field"><span>What it does, and how it uses the data</span><textarea rows="3" placeholder="Who sees what, and what it does with the data"></textarea></label>
+   <label class="field"><span>Its owner at IT</span><input value="" placeholder="Search a colleague"></label>
+   <div style="margin-bottom:12px"><div class="label" style="margin-bottom:5px">Who uses it</div>
+    <div class="ar-choice" role="radiogroup" aria-label="Internal or external">
+     <label class="pick type-pick"><input type="radio" name="ar-aud-e"><span style="flex:1;min-width:0"><b style="font-weight:500">Internal</b><span class="type-def">Colleagues of Immoscoop. It may read a live Feed.</span></span></label>
+     <label class="pick type-pick"><input type="radio" name="ar-aud-e"><span style="flex:1;min-width:0"><b style="font-weight:500">External</b><span class="type-def">People outside Immoscoop, such as agents. It reads only prepared Feeds, never BigQuery.</span></span></label>
+    </div>
+    <span class="meta" style="display:block;line-height:1.5;margin-top:6px">Data Hub goes by this, not by where the app calls from.</span>
+   </div>
+  </div>
+  <label class="field" style="margin-top:16px"><span>Its Dock</span>
+   <select><option selected>Agents' portal · Agency success</option><option>Website · Website team</option></select>
+   <span class="meta" style="display:block;line-height:1.5;margin-top:6px">A Dock of one of your Owner Units, where it is listed with the Feeds of that Dock. Its Owner Unit looks after it, and makes and renews its key.</span>
+  </label>
+  <div class="ml-nav"><span style="flex:1"></span><button class="btn-quiet outline" type="button" data-step-go="2">Next: Users<i class="ph ph-arrow-right"></i></button></div>
+  </div>
+
+  <!-- 2 · Users: no users, or a user pool Data Hub knows -->
+  <div data-pane-group="step" data-pane="2" hidden>
+  <div class="meta">Step 2 of 5</div>
+  <h2 class="nq-title">Users</h2>
+  <p class="meta" style="display:block;line-height:1.5;margin:6px 0 12px">Two come to the door: the Application, with its key, and, when it has users, the user it carries, with a token of AWS Cognito. The user pools are kept by IT.</p>
+  <div data-pane-group="from" data-pane="json">
+   <div class="ar-choice" role="radiogroup" aria-label="Users">
+    <label class="pick type-pick"><input type="radio" name="ar-users"><span style="flex:1;min-width:0"><b style="font-weight:500">No users</b><span class="type-def">It reads for itself, such as the backend of a website, and gets the whole Feed.</span></span></label>
+    <label class="pick type-pick"><input type="radio" name="ar-users" checked><span style="flex:1;min-width:0"><b style="font-weight:500">Users of a user pool</b><span class="type-def">Data Hub checks the token of each user and gives them only their slice, by the Binding Rule of each Feed.</span></span></label>
+   </div>
+   <div class="label" style="margin:16px 0 6px">Which user pool<span class="ar-plat"><i class="ph ph-cloud-arrow-down"></i>From the platform</span></div>
+   <div class="ar-choice three" role="radiogroup" aria-label="User pool">
+    <label class="pick type-pick"><input type="radio" name="ar-pool"><span style="flex:1;min-width:0"><b style="font-weight:500">Website users</b><span class="type-def">Visitors of the website who signed in.</span><span class="ar-claims"><span class="code-chip">sub</span><span class="code-chip">email</span></span></span></label>
+    <label class="pick type-pick"><input type="radio" name="ar-pool" checked><span style="flex:1;min-width:0"><b style="font-weight:500">Agencies</b><span class="type-def">The agents of the agencies that advertise on Immoscoop.</span><span class="ar-claims"><span class="code-chip">sub</span><span class="code-chip">email</span><span class="code-chip">company_id</span></span></span></label>
+    <label class="pick type-pick"><input type="radio" name="ar-pool"><span style="flex:1;min-width:0"><b style="font-weight:500">Private sellers</b><span class="type-def">People who place their own listing.</span><span class="ar-claims"><span class="code-chip">sub</span><span class="code-chip">email</span><span class="code-chip">seller_id</span></span></span></label>
+   </div>
+   <p class="meta" style="display:block;line-height:1.5;margin:8px 0 0">Under each pool, the claims a token of it carries; a Binding Rule matches one of them to a field of a Feed. A token of another pool is not allowed.</p>
+  </div>
+  <div data-pane-group="from" data-pane="empty unknown" hidden>
+   <div class="ar-choice" role="radiogroup" aria-label="Users">
+    <label class="pick type-pick"><input type="radio" name="ar-users-e"><span style="flex:1;min-width:0"><b style="font-weight:500">No users</b><span class="type-def">It reads for itself, such as the backend of a website, and gets the whole Feed.</span></span></label>
+    <label class="pick type-pick"><input type="radio" name="ar-users-e"><span style="flex:1;min-width:0"><b style="font-weight:500">Users of a user pool</b><span class="type-def">Data Hub checks the token of each user and gives them only their slice, by the Binding Rule of each Feed.</span></span></label>
+   </div>
+   <p class="meta" style="display:block;line-height:1.5;margin:10px 0 0">With users, you choose the pool next: Website users, Agencies or Private sellers.</p>
+  </div>
+  <div class="ml-nav"><button class="btn-quiet outline" type="button" data-step-go="1"><i class="ph ph-arrow-left"></i>Back</button><span style="flex:1"></span><button class="btn-quiet outline" type="button" data-step-go="3">Next: Feeds<i class="ph ph-arrow-right"></i></button></div>
+  </div>
+
+  <!-- 3 · Feeds: each on an Edition, with its Binding Rule (only with users) -->
+  <div data-pane-group="step" data-pane="3" hidden>
+  <div class="meta">Step 3 of 5</div>
+  <h2 class="nq-title">Feeds</h2>
+  <p class="meta" style="display:block;line-height:1.5;margin:6px 0 4px">The Feeds it reads, from the Docks you see, each on the Edition it is built for: an Edition never changes under it.</p>
+  <div data-pane-group="from" data-pane="json">
+   <div class="ar-dock">
+    <div class="ar-dock-name"><i class="ph ph-handshake"></i>Agents' portal</div>
+    <label class="ar-feed"><input type="checkbox" checked><span><i class="ph ph-rss-simple kind-icon" aria-hidden="true"></i> Agency performance per month<span class="ar-plat"><i class="ph ph-cloud-arrow-down"></i>From the platform</span></span><span class="app-state held" title="Held since 22 Nov 07:10 by a Rule of Sales; the delivery of 21 Nov is served">Held</span><span class="meta">Edition 1 · prepared, daily · Level 4</span></label>
+    <label class="ar-feed"><input type="checkbox" checked><span><i class="ph ph-rss-simple kind-icon" aria-hidden="true"></i> Leads per agency per week<span class="ar-plat"><i class="ph ph-cloud-arrow-down"></i>From the platform</span></span><span class="app-state ok">Up to date</span><span class="meta">Edition 1 · prepared, daily · Level 4</span></label>
+   </div>
+   <div class="ar-dock">
+    <div class="ar-dock-name"><i class="ph ph-globe-hemisphere-west"></i>Website</div>
+    <label class="ar-feed"><input type="checkbox"><span><i class="ph ph-rss-simple kind-icon" aria-hidden="true"></i> Price statistics per area</span><span class="app-state ok">Up to date</span><span class="meta">Edition 2 · prepared, daily · Level 4</span></label>
+    <label class="ar-feed"><input type="checkbox"><span><i class="ph ph-rss-simple kind-icon" aria-hidden="true"></i> Listing counts per municipality</span><span class="app-state ok">Up to date</span><span class="meta">Edition 1 · prepared, daily · Level 3</span></label>
+   </div>
+   <div class="ar-dock">
+    <div class="ar-dock-name"><i class="ph ph-lifebuoy"></i>Customer success tools</div>
+    <label class="ar-feed" title="A live Feed is for internal Applications only"><input type="checkbox" disabled><span><i class="ph ph-rss-simple kind-icon" aria-hidden="true"></i> Agency health score</span><span class="pill">live</span><span class="meta">Not for this Application: a live Feed is for internal Applications only.</span></label>
+   </div>
+   <div class="label" style="margin:18px 0 8px">The Binding Rule of each Feed: which rows a user of Agencies gets</div>
+   <div style="display:grid;gap:8px">
+    <section class="sub-tile ar-bind" aria-label="Agency performance per month">
+     <div class="ar-bind-head"><i class="ph ph-rss-simple" style="color:var(--text-secondary)"></i><b>Agency performance per month</b><select aria-label="Edition"><option selected>Edition 1</option></select></div>
+     <div class="ar-eq"><span>A field of the Feed</span><select aria-label="Field of the Feed"><option selected>company_id</option><option>month</option></select><span>equals the claim of Agencies</span><select aria-label="Claim of the user pool"><option selected>company_id</option><option>email</option><option>sub</option></select><span class="ar-plat"><i class="ph ph-cloud-arrow-down"></i>From the platform</span></div>
+     <div class="binding-rule">
+      <p>An agent sees only the rows of their own agency: <span class="mono">company_id</span> of the Feed equals the <span class="mono">company_id</span> of their agency in the user pool Agencies.</p>
+      <code>leads.company_id = agencies.company_id</code>
+      <span class="meta">For one user: an agent of agency 1042 sees only the rows where <span class="mono">company_id</span> is 1042.</span>
+     </div>
+    </section>
+    <section class="sub-tile ar-bind" aria-label="Leads per agency per week">
+     <div class="ar-bind-head"><i class="ph ph-rss-simple" style="color:var(--text-secondary)"></i><b>Leads per agency per week</b><select aria-label="Edition"><option selected>Edition 1</option></select></div>
+     <div class="ar-eq"><span>A field of the Feed</span><select aria-label="Field of the Feed"><option selected>company_id</option><option>week_start</option></select><span>equals the claim of Agencies</span><select aria-label="Claim of the user pool"><option selected>company_id</option><option>email</option><option>sub</option></select><span class="ar-plat"><i class="ph ph-cloud-arrow-down"></i>From the platform</span></div>
+     <div class="binding-rule">
+      <p>An agent sees only the rows of their own agency: <span class="mono">company_id</span> of the Feed equals the <span class="mono">company_id</span> of their agency in the user pool Agencies.</p>
+      <code>leads.company_id = agencies.company_id</code>
+      <span class="meta">For one user: an agent of agency 1042 sees only the rows where <span class="mono">company_id</span> is 1042.</span>
+     </div>
+    </section>
+   </div>
+   <p class="meta" style="display:block;line-height:1.5;margin:10px 0 0">Every Owner who is asked reads the rule written out, in words and as code, before they say yes. The copy of a Feed is split by it, so a user can only search within their own slice.</p>
+  </div>
+  <div data-pane-group="from" data-pane="empty unknown" hidden>
+   <div class="ar-dock">
+    <div class="ar-dock-name"><i class="ph ph-handshake"></i>Agents' portal</div>
+    <label class="ar-feed"><input type="checkbox"><span><i class="ph ph-rss-simple kind-icon" aria-hidden="true"></i> Agency performance per month</span><span class="app-state held" title="Held since 22 Nov 07:10 by a Rule of Sales; the delivery of 21 Nov is served">Held</span><span class="meta">Edition 1 · prepared, daily · Level 4</span></label>
+    <label class="ar-feed"><input type="checkbox"><span><i class="ph ph-rss-simple kind-icon" aria-hidden="true"></i> Leads per agency per week</span><span class="app-state ok">Up to date</span><span class="meta">Edition 1 · prepared, daily · Level 4</span></label>
+   </div>
+   <div class="ar-dock">
+    <div class="ar-dock-name"><i class="ph ph-globe-hemisphere-west"></i>Website</div>
+    <label class="ar-feed"><input type="checkbox"><span><i class="ph ph-rss-simple kind-icon" aria-hidden="true"></i> Price statistics per area</span><span class="app-state ok">Up to date</span><span class="meta">Edition 2 · prepared, daily · Level 4</span></label>
+    <label class="ar-feed"><input type="checkbox"><span><i class="ph ph-rss-simple kind-icon" aria-hidden="true"></i> Listing counts per municipality</span><span class="app-state ok">Up to date</span><span class="meta">Edition 1 · prepared, daily · Level 3</span></label>
+   </div>
+   <div class="ar-dock">
+    <div class="ar-dock-name"><i class="ph ph-lifebuoy"></i>Customer success tools</div>
+    <label class="ar-feed"><input type="checkbox"><span><i class="ph ph-rss-simple kind-icon" aria-hidden="true"></i> Agency health score</span><span class="pill">live</span><span class="meta">Edition 1 · live, internal Applications only · Level 3</span></label>
+   </div>
+   <p class="meta" style="display:block;line-height:1.5;margin:12px 0 0">Choose a Feed to set its Edition, and, with users, its Binding Rule.</p>
+  </div>
+  <div class="ml-nav"><button class="btn-quiet outline" type="button" data-step-go="2"><i class="ph ph-arrow-left"></i>Back</button><span style="flex:1"></span><button class="btn-quiet outline" type="button" data-step-go="4">Next: Delivery<i class="ph ph-arrow-right"></i></button></div>
+  </div>
+
+  <!-- 4 · Delivery: prepared or live, as its Feeds allow; how often -->
+  <div data-pane-group="step" data-pane="4" hidden>
+  <div class="meta">Step 4 of 5</div>
+  <h2 class="nq-title">Delivery</h2>
+  <div data-pane-group="from" data-pane="json">
+   <div class="ar-choice" role="radiogroup" aria-label="Prepared or live" style="margin-top:12px">
+    <label class="pick type-pick"><input type="radio" name="ar-mode" checked><span style="flex:1;min-width:0"><b style="font-weight:500">Prepared</b><span class="ar-plat"><i class="ph ph-cloud-arrow-down"></i>From the platform</span><span class="type-def">It reads a copy Data Hub fills after every run that succeeded. When a run fails, it gets the last good delivery, with its date.</span></span></label>
+    <label class="pick type-pick" title="An external Application reads only prepared Feeds"><input type="radio" name="ar-mode" disabled><span style="flex:1;min-width:0"><b style="font-weight:500">Live</b><span class="type-def">Not for this Application: it is external, and both its Feeds are prepared.</span></span></label>
+   </div>
+   <div style="margin-top:16px"><div class="label" style="margin-bottom:0">How often it needs new data<span class="ar-plat"><i class="ph ph-cloud-arrow-down"></i>From the platform</span></div>
+    <div style="display:grid;gap:2px;margin-top:6px" role="radiogroup" aria-label="How often">
+     <label class="pick" style="padding:8px 10px"><input type="radio" name="ar-often" checked><span style="font-size:var(--text-small)">Daily<span class="meta" style="display:block;margin-top:2px">Both Feeds are delivered daily, after the run of dbt-prod: that is as often as it can get them.</span></span></label>
+     <label class="pick" style="padding:8px 10px"><input type="radio" name="ar-often"><span style="font-size:var(--text-small)">Weekly<span class="meta" style="display:block;margin-top:2px">It keeps reading the delivery of Monday all week.</span></span></label>
+    </div>
+   </div>
+  </div>
+  <div data-pane-group="from" data-pane="empty unknown" hidden>
+   <div class="ar-choice" role="radiogroup" aria-label="Prepared or live" style="margin-top:12px">
+    <label class="pick type-pick"><input type="radio" name="ar-mode-e" checked><span style="flex:1;min-width:0"><b style="font-weight:500">Prepared</b><span class="type-def">It reads a copy Data Hub fills after every run that succeeded. When a run fails, it gets the last good delivery, with its date.</span></span></label>
+    <label class="pick type-pick"><input type="radio" name="ar-mode-e"><span style="flex:1;min-width:0"><b style="font-weight:500">Live</b><span class="type-def">Every question runs in BigQuery. Only for an internal Application, on live Feeds.</span></span></label>
+   </div>
+   <div style="margin-top:16px"><div class="label" style="margin-bottom:0">How often it needs new data</div>
+    <div style="display:grid;gap:2px;margin-top:6px" role="radiogroup" aria-label="How often">
+     <label class="pick" style="padding:8px 10px"><input type="radio" name="ar-often-e" checked><span style="font-size:var(--text-small)">Daily<span class="meta" style="display:block;margin-top:2px">The default.</span></span></label>
+     <label class="pick" style="padding:8px 10px"><input type="radio" name="ar-often-e"><span style="font-size:var(--text-small)">After every delivery, at most once an hour</span></label>
+     <label class="pick" style="padding:8px 10px"><input type="radio" name="ar-often-e"><span style="font-size:var(--text-small)">Weekly</span></label>
+    </div>
+   </div>
+  </div>
+  <div class="ml-nav"><button class="btn-quiet outline" type="button" data-step-go="3"><i class="ph ph-arrow-left"></i>Back</button><span style="flex:1"></span><button class="btn-quiet outline" type="button" data-step-go="5">Next: What it knows<i class="ph ph-arrow-right"></i></button></div>
+  </div>
+
+  <!-- 5 · What it knows: one box, required (DEC-AP-11) -->
+  <div data-pane-group="step" data-pane="5" hidden>
+  <div class="meta">Step 5 of 5</div>
+  <h2 class="nq-title">What it knows</h2>
+  <p class="meta" style="display:block;line-height:1.5;margin:6px 0 12px">Required. Every Owner who is asked reads it, as the line the Application signed.</p>
+  <label class="ar-knows" data-pane-group="from" data-pane="json"><input type="checkbox" checked><span>We know this data is <b style="font-weight:500">analytical</b>: the data platform of Immoscoop makes it after the facts, it may come late or not at all, and it is not, or only late, what the transactional system holds. <b style="font-weight:500">The transactional system stays the master</b> of its data. The Agents' portal copes with an old answer and with an error, and never writes this data back as the truth.<span style="display:block;margin-top:6px"><span class="ar-plat" style="margin-left:0"><i class="ph ph-cloud-arrow-down"></i>From the platform</span> <span class="meta" style="display:inline">Signed by Jonas Peeters at the platform, 21 Nov 2026</span></span></span></label>
+  <label class="ar-knows" data-pane-group="from" data-pane="empty unknown" hidden><input type="checkbox"><span>We know this data is <b style="font-weight:500">analytical</b>: the data platform of Immoscoop makes it after the facts, it may come late or not at all, and it is not, or only late, what the transactional system holds. <b style="font-weight:500">The transactional system stays the master</b> of its data. This Application copes with an old answer and with an error, and never writes this data back as the truth.</span></label>
+  <div class="label" style="margin:16px 0 6px">Late or never, as it will meet it</div>
+  <ul class="steps-plain" style="color:var(--text-secondary)">
+   <li><b style="font-weight:500;color:var(--text-primary)">Late:</b> a run did not succeed, or an Owner's Rule holds the deliveries. The last good delivery is served, with its date in the answer. Not an error.</li>
+   <li><b style="font-weight:500;color:var(--text-primary)">Never:</b> a question gets an error, with its cause: Cut off by an Owner, Not allowed, or Data Hub unavailable.</li>
+  </ul>
+  <div class="ml-nav"><button class="btn-quiet outline" type="button" data-step-go="4"><i class="ph ph-arrow-left"></i>Back</button><span style="flex:1"></span><span class="meta">Ask for consent on the right, once every step is done.</span></div>
+  </div>
+ </section>
+
+ <div class="ml-side">
+ <!-- The steps, each with how far it is; a click opens one, in any order (as DEC-UX-229) -->
+ <nav class="card ml-steps" aria-label="Steps of the registration" data-group="step">
+  <button class="ml-stepbtn on" type="button" data-target="1" aria-selected="true"><span class="ml-n">1</span><span class="ml-t"><b>What it is</b><span class="meta"><span data-pane-group="from" data-pane="json">Agents' portal · external</span><span class="ml-warn" data-pane-group="from" data-pane="empty unknown" hidden>No name yet</span></span></span></button>
+  <button class="ml-stepbtn" type="button" data-target="2" aria-selected="false"><span class="ml-n">2</span><span class="ml-t"><b>Users</b><span class="meta"><span data-pane-group="from" data-pane="json">The user pool Agencies</span><span class="ml-warn" data-pane-group="from" data-pane="empty unknown" hidden>Not chosen</span></span></span></button>
+  <button class="ml-stepbtn" type="button" data-target="3" aria-selected="false"><span class="ml-n">3</span><span class="ml-t"><b>Feeds</b><span class="meta"><span data-pane-group="from" data-pane="json">2 Feeds · 2 Binding Rules</span><span class="ml-warn" data-pane-group="from" data-pane="empty unknown" hidden>No Feed yet</span></span></span></button>
+  <button class="ml-stepbtn" type="button" data-target="4" aria-selected="false"><span class="ml-n">4</span><span class="ml-t"><b>Delivery</b><span class="meta"><span data-pane-group="from" data-pane="json">Prepared · daily</span><span data-pane-group="from" data-pane="empty unknown" hidden>Prepared · daily, the default</span></span></span></button>
+  <button class="ml-stepbtn" type="button" data-target="5" aria-selected="false"><span class="ml-n">5</span><span class="ml-t"><b>What it knows</b><span class="meta"><span data-pane-group="from" data-pane="json">Signed by Jonas Peeters</span><span class="ml-warn" data-pane-group="from" data-pane="empty unknown" hidden>Required, not ticked</span></span></span></button>
+ </nav>
+ <aside class="card nq-right" aria-labelledby="ar-ask">
+  <h2 id="ar-ask" class="nq-title">Ask for consent</h2>
+  <div data-pane-group="from" data-pane="json">
+   <p class="meta" style="display:block;line-height:1.5;margin:4px 0 0">Every Owner of every Resource under its Feeds says yes first. They will be asked:</p>
+   <div class="ar-who">
+    <div class="ar-who-row"><i class="ph-fill ph-users-three"></i><b>Sales</b><span class="meta">Leads per agency · for both Feeds</span></div>
+    <div class="ar-who-row"><i class="ph-fill ph-users-three"></i><b>Listings team</b><span class="meta">Listing views per day · for Agency performance per month</span></div>
+    <div class="ar-who-row"><i class="ph-fill ph-users-three"></i><b>Agency success <span class="pill">yours</span></b><span class="meta">Agencies · for Agency performance per month</span></div>
+   </div>
+   <a class="btn-primary" href="application.html?app=waiting" style="width:100%;justify-content:center;margin-top:12px;text-decoration:none;box-sizing:border-box"><i class="ph ph-paper-plane-tilt" style="font-size:15px"></i>Ask for consent</a>
+   <p class="meta" style="display:block;line-height:1.5;margin:8px 0 0">Each gets a Request in Messages, with this Footprint, the Binding Rule written out and the fields of their Resources that leave. The Application gets its key once all three said yes; until then it reads nothing.</p>
+  </div>
+  <div data-pane-group="from" data-pane="empty unknown" hidden>
+   <p class="meta" style="display:block;line-height:1.5;margin:4px 0 0">Who will be asked is read from the Feeds it reads: every Owner Unit of a Resource under them.</p>
+   <div class="empty-run" style="margin:12px 0 0"><i class="ph ph-users-three"></i>No Feed chosen yet.</div>
+   <button class="btn-primary" type="button" disabled style="width:100%;justify-content:center;margin-top:12px"><i class="ph ph-paper-plane-tilt" style="font-size:15px"></i>Ask for consent</button>
+   <p class="meta" style="display:block;line-height:1.5;margin:8px 0 0" data-pane-group="from" data-pane="empty">Still to do: its name, its users, its Feeds, and the box of What it knows.</p>
+   <p class="meta" style="display:block;line-height:1.5;margin:8px 0 0" data-pane-group="from" data-pane="unknown" hidden>Nothing was filled: Data Hub does not know the user pool of the JSON. Paste another, or type it in.</p>
+  </div>
+  <p class="meta" style="display:block;line-height:1.5;margin:14px 0 0;padding-top:12px;border-top:1px solid var(--tint-hover)">An Owner can say no, with why, and withdraw later: by a date, or at once.</p>
+ </aside>
+ </div>
+</div>
+<div style="height:60px"></div>
+</main>
+</div>
+<div class="proto-switch" data-group="from" role="tablist" aria-label="Prototype: the JSON of the Footprint">Footprint
+ <button class="seg on" data-target="json" role="tab" aria-selected="true">Filled from the JSON</button>
+ <button class="seg" data-target="empty" role="tab" aria-selected="false">Empty</button>
+ <button class="seg" data-target="unknown" role="tab" aria-selected="false">Unknown pool</button>
+</div>
+<script>
+// A narrow window opens with the panel closed; the rail opens it over the page (prototype only)
+if (matchMedia('(max-width: 760px)').matches) document.querySelector('.app').classList.remove('panel-open');
+</script>
+<script src="app.js"></script>
+</body>
+</html>

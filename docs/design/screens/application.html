@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<!--
+  Screen: Docks, the page of an Application, and its key (a proposal of 2026-11-23, OP-UX-127)
+  Where the Owner Unit of its Dock looks after an Application. Head: its name with what it does, internal or external,
+  its user pool or no users, its Dock, its owner at IT, and its state in a word and a colour: the state of the Feeds it
+  reads at their worst, so the Agents' portal is Held while one of its Feeds is held (DEC-AP-10, OP-AP-12).
+  Footprint: as written at its registration, read-only, with "Change", which reopens the registration and asks the
+  Owners again only when the change touches what they said yes to (DEC-AP-03, DEC-AP-04).
+  Feeds: each with its Edition, its state, its Binding Rule written out (none without users), and per Owner Unit of
+  every Resource under it the answer: waiting, yes with when and by whom, no with why, or cut off (DEC-AP-05).
+  Its key: none until every Owner said yes; then "Make the key", and Renew later, show it once, to copy into the secret
+  store of the platform of IT; Revoke asks to confirm in place, as an Excel key (OP-AP-04, DEC-DH-79). Renew keeps the
+  old key working for 24 hours, so that the Application switches without going down.
+  How it reads: the questions of the last 14 days per day, and under them the errors per cause, each in its own word and
+  colour: Cut off by an Owner, Not allowed, Data Hub unavailable (DEC-AP-10). Late and Held are no errors: the question
+  gets the last good delivery, with its date. Then its Log: every consent, key, hold, cut off and error of note.
+  States: ?app=portal, the default: the Agents' portal, consent complete, key active, one Feed held, 7 questions not
+  allowed yesterday (a token of the pool Website users); ?app=waiting: Search result pages, no users, waiting for the
+  Listings team, no key, "Make the key" off with why; ?app=cutoff: the Agents' portal after Sales cut it off today, every
+  question since gets "Cut off by an Owner". The key, with the portal: ?key=new, a key made just now, shown once with
+  Copy; ?key=revoking, Revoke asking to confirm in place; ?key=revoked, the key revoked, with "Make the key" again.
+  Requirements: FR-AP-02, FR-AP-05, FR-AP-18, FR-AP-21, FR-AP-22, FR-AP-23, FR-AP-24, FR-AP-25, FR-AP-26, FR-AP-28, FR-AP-30, FR-AP-32, FR-AP-35, FR-AP-37, EC-AP-04, EC-AP-05
+  Decisions: DEC-AP-03, DEC-AP-04, DEC-AP-05, DEC-AP-06, DEC-AP-07, DEC-AP-08, DEC-AP-09, DEC-AP-10, DEC-AP-11, DEC-AP-13, DEC-AP-14, DEC-AP-17, DEC-AP-18, DEC-DH-79, DEC-DH-85.
+  Open points: OP-UX-127, OP-UX-120, OP-AP-04, OP-AP-11, OP-AP-12.
+  Related screens: application-register.html (Change), dock.html, feed.html, application-consent.html (the Request an Owner answers), resource-applications.html (where an Owner withdraws), admin-applications.html (the Data Team revokes a key), my-page.html and admin-keys.html (the Excel keys this follows).
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="owner">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Agents' portal</title>
+<style>
+/* The page of an Application (OP-UX-127) */
+.ap-sec { border-radius: var(--radius-xl); padding: 18px 20px 20px; margin-top: 14px; }
+.ap-sec-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.ap-sec-head .nq-title { flex: 1; }
+.ap-sec-head p { flex-basis: 100%; margin: 0; font-size: var(--text-small); color: var(--text-secondary); line-height: 1.5; }
+.ap-grid { display: block; }
+.ap-key-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px 28px; align-items: start; }
+.ap-key-body > p { margin: 0 !important; }
+.ap-head-state { display: inline-flex; vertical-align: middle; margin-left: 4px; }
+.ap-foot .facts { grid-template-columns: 170px minmax(0, 1fr); gap: 9px 16px; }
+.ap-foot .facts dd { line-height: 1.5; }
+/* Feeds, each with its Binding Rule and the answer of every Owner */
+.ap-feeds { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 10px; }
+.ap-feed { display: grid; gap: 10px; align-content: start; }
+.ap-feed-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ap-feed-head a { font-weight: var(--weight-medium); color: inherit; text-decoration: none; }
+.ap-feed-head a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.ap-feed .binding-rule { background: var(--surface-solid); }
+.binding-rule p { margin: 0; font-size: var(--text-small); line-height: 1.5; }
+.binding-rule .meta { display: block; line-height: 1.5; }
+.ap-answers { width: 100%; font-size: var(--text-small); }
+.ap-answers td { padding: 7px 6px; border-top-color: var(--tint-active); vertical-align: top; }
+.ap-answers tr:first-child td { border-top: 0; }
+.ap-answers .meta { display: block; line-height: 1.45; }
+.ap-yes, .ap-wait, .ap-cut { display: inline-flex; align-items: center; gap: 5px; font-weight: var(--weight-medium); white-space: nowrap; }
+.ap-yes i { color: var(--text-secondary); }
+.ap-wait { color: var(--text-secondary); }
+.ap-cut { color: var(--signal-urgent); }
+/* Its key */
+.ap-key .facts { grid-template-columns: 96px minmax(0, 1fr); }
+.ap-key-acts { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+.ap-key .key-confirm-row { flex-wrap: wrap; align-items: flex-start; padding: 12px; border-radius: var(--radius-md); background: color-mix(in srgb, var(--signal-urgent) 8%, var(--surface-solid)); }
+.ap-key .key-confirm-row > span { flex-basis: 220px; }
+/* How it reads: questions per day as bars, the errors per cause under them, in one table that scrolls in its own box */
+.ap-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 14px; }
+.ap-stat { padding: 10px 12px; border-radius: var(--radius-md); background: var(--surface-sub); }
+.ap-stat b { display: block; font-size: 20px; font-weight: var(--weight-medium); letter-spacing: -.2px; }
+.ap-stat .meta { display: block; line-height: 1.4; }
+.ap-scroll { overflow-x: auto; }
+.ap-reads { min-width: 640px; table-layout: fixed; font-size: var(--text-meta); }
+.ap-reads th, .ap-reads td { padding: 4px 2px; text-align: center; border-top: 0; }
+.ap-reads th:first-child, .ap-reads td:first-child { width: 160px; text-align: left; padding-left: 0; }
+.ap-reads tr.ap-err td { border-top: 1px solid var(--tint-hover); padding: 6px 2px; }
+.ap-bar { height: 92px; display: flex; align-items: flex-end; justify-content: center; }
+.ap-bar span { width: min(22px, 70%); border-radius: 4px 4px 0 0; background: color-mix(in srgb, var(--text-secondary) 55%, transparent); }
+.ap-bar span:hover { background: var(--text-secondary); }
+.ap-bar.today span { background: transparent; outline: 1.5px dashed var(--text-muted); outline-offset: -1.5px; }
+.ap-day { color: var(--text-muted); line-height: 1.3; }
+.ap-day b { display: block; font-weight: var(--weight-medium); color: var(--text-secondary); }
+.ap-cause { display: inline-flex; align-items: center; gap: 6px; color: var(--text-primary); font-size: var(--text-small); white-space: nowrap; }
+.ap-cause i { font-size: 14px; }
+.ap-c-cut { color: var(--signal-urgent); }
+.ap-c-deny { color: var(--signal-warn); }
+.ap-c-down { color: var(--text-secondary); }
+.ap-n { font-weight: var(--weight-medium); }
+.ap-zero { color: var(--text-muted); opacity: .6; }
+.ap-legend { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 16px; margin-top: 12px; font-size: var(--text-small); line-height: 1.5; color: var(--text-secondary); }
+.ap-legend b { font-weight: var(--weight-medium); }
+.ap-notes { display: grid; gap: 6px; margin-top: 12px; }
+.ap-notes .hint p { margin: 0; }
+/* A narrow window: one column, the panel over the page when opened (the prototype only; DEC-UX-91 asks for a message below 900 px) */
+@media (max-width: 1100px) { .ap-key-body { grid-template-columns: minmax(0, 1fr); } .ap-legend { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 760px) {
+  .app { padding: 10px; gap: 8px; }
+  .app .main { padding: 18px 14px 24px; }
+  .app.panel-open .panel { position: fixed; z-index: 25; top: 10px; bottom: 10px; left: 70px; width: min(300px, calc(100vw - 80px)); }
+  .proto-switch { position: static; margin: 10px; flex-wrap: wrap; border-radius: 16px; }
+  .ap-feeds { grid-template-columns: minmax(0, 1fr); }
+  .ap-stats { grid-template-columns: minmax(0, 1fr); }
+  .ap-foot .facts { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .ap-foot .facts dd { margin-bottom: 8px; }
+  .coll-head { flex-wrap: wrap; }
+  .ap-log td:last-child, .ap-log th:last-child { display: none; }
+  .ap-log th:first-child { width: 92px !important; }
+  .ap-log td.nowrap { white-space: normal; }
+  .ap-answers td { display: block; text-align: left !important; padding: 2px 0; }
+  .ap-answers tr td:first-child { padding-top: 8px; }
+  .ap-answers tr + tr td:first-child { border-top: 1px solid var(--tint-active); }
+}
+</style>
+</head>
+<body>
+<div class="app panel-open">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <a class="nav-btn" href="collections-start.html" data-label="Collections" aria-label="Collections"><i class="ph-fill ph-stack"></i></a>
+  <a class="nav-btn" href="query.html" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></a>
+  <a class="nav-btn active" href="docks-start.html" data-label="Docks" aria-label="Docks, where Applications read data" aria-current="page"><i class="ph-fill ph-plugs-connected"></i><span class="flare top"></span><span class="flare bottom"></span></a>
+  <a class="nav-btn" href="#" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <a class="nav-btn nav-admin" href="admin-webhooks.html" data-label="Admin" aria-label="Admin, for the Data Team" data-for="datateam"><i class="ph-fill ph-toolbox"></i></a>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">MP</a>
+</nav>
+<aside class="panel" aria-label="Docks">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:4px">
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Docks</h1>
+   <button class="icon-btn" aria-label="New Dock"><i class="ph-fill ph-plus-circle"></i></button>
+   <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
+  </div>
+  <label class="search card" style="margin:16px 0 4px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search Feeds and Applications"></label>
+  <div class="tree-group card open">
+   <div class="tree-head"><a class="tree-link" href="dock.html"><span class="item-icon"><i class="ph ph-globe-hemisphere-west"></i></span><span class="tree-name"><span class="item-title">Website</span><span class="meta">2 Feeds · 2 Applications</span></span></a><button class="tree-toggle" aria-expanded="true" aria-label="Show what Website holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="feed.html"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span class="tree-res-name"><span class="clip" title="Price statistics per area">Price statistics per area</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="feed.html"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span class="tree-res-name"><span class="clip" title="Listing counts per municipality">Listing counts per municipality</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="application.html"><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span class="tree-res-name"><span class="clip" title="SEO pages">SEO pages</span></span></a>
+     <a class="tree-res" href="application.html?app=waiting" data-pane-group="app" data-pane="portal cutoff"><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span class="tree-res-name"><span class="clip" title="Search result pages · waiting for consent">Search result pages</span></span></a>
+     <a class="tree-res current" aria-current="page" href="application.html?app=waiting" data-pane-group="app" data-pane="waiting" hidden><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span class="tree-res-name"><span class="clip" title="Search result pages · waiting for consent">Search result pages</span></span></a>
+   </div>
+  </div>
+  <div class="tree-group card open">
+   <div class="tree-head"><a class="tree-link" href="dock.html"><span class="item-icon"><i class="ph ph-handshake"></i></span><span class="tree-name"><span class="item-title">Agents' portal</span><span class="meta">2 Feeds · 1 Application</span></span></a><button class="tree-toggle" aria-expanded="true" aria-label="Show what Agents' portal holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="feed.html"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span class="tree-res-name"><span class="clip" title="Agency performance per month">Agency performance per month</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="feed.html"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span class="tree-res-name"><span class="clip" title="Leads per agency per week">Leads per agency per week</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res current" aria-current="page" href="application.html?app=portal" data-pane-group="app" data-pane="portal cutoff"><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span class="tree-res-name"><span class="clip" title="Agents' portal">Agents' portal</span></span></a>
+     <a class="tree-res" href="application.html?app=portal" data-pane-group="app" data-pane="waiting" hidden><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span class="tree-res-name"><span class="clip" title="Agents' portal">Agents' portal</span></span></a>
+   </div>
+  </div>
+  <div class="tree-group card">
+   <div class="tree-head"><a class="tree-link" href="dock.html"><span class="item-icon"><i class="ph ph-lifebuoy"></i></span><span class="tree-name"><span class="item-title">Customer success tools</span><span class="meta">1 Feed · 1 Application</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Customer success tools holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="feed.html"><i class="ph ph-rss-simple kind-icon" role="img" aria-label="Feed"></i><span class="tree-res-name"><span class="clip" title="Agency health score, live">Agency health score</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="application.html"><i class="ph ph-app-window kind-icon" role="img" aria-label="Application"></i><span class="tree-res-name"><span class="clip" title="CS cockpit">CS cockpit</span></span></a>
+   </div>
+  </div>
+ </div>
+</aside>
+<main class="main">
+
+<!-- ================= The Agents' portal: complete (portal), or cut off by Sales (cutoff) ================= -->
+<div data-pane-group="app" data-pane="portal cutoff">
+<div class="breadcrumb"><a href="docks-start.html" style="color:inherit;text-decoration:none">Docks</a> / <a href="dock.html" style="color:inherit;text-decoration:none">Agents' portal</a></div>
+<div class="coll-head">
+ <span class="item-icon large"><i class="ph ph-app-window"></i></span>
+ <div style="flex:1;min-width:0">
+  <h1 class="page-title">Agents' portal</h1>
+  <p class="prose">The portal where agents follow how their agency does on Immoscoop: leads, views, contact rate and response time, per month and per week.</p>
+ </div>
+</div>
+<div class="status-row">
+ <span class="status"><i class="ph-fill ph-globe-simple"></i>External</span>
+ <span class="status"><i class="ph-fill ph-users-three"></i>Users of the pool Agencies</span>
+ <span class="status"><i class="ph-fill ph-plugs-connected"></i>Dock: Agents' portal</span>
+ <span class="status"><i class="ph-fill ph-user"></i>At IT: Jonas Peeters</span>
+ <span class="app-state held" data-pane-group="app" data-pane="portal" title="One of its Feeds is held: the last good delivery is served">Held</span>
+ <span class="app-state cutoff" data-pane-group="app" data-pane="cutoff" hidden title="Sales cut it off today at 09:14">Cut off</span>
+</div>
+<div class="alert" data-pane-group="app" data-pane="portal"><i class="ph-fill ph-pause-circle"></i><p><b style="font-weight:500">Agency performance per month is held since 22 Nov 2026, 07:10.</b> A Rule of Sales on Leads per agency fired: "Leads per day below half of the 4-week average". The portal gets the delivery of 21 Nov, with its date, until Sales releases it. Its agents see figures a day older; no question gets an error.</p></div>
+<div class="alert urgent" data-pane-group="app" data-pane="cutoff" hidden><i class="ph-fill ph-prohibit" style="color:var(--signal-urgent)"></i><p><b style="font-weight:500">Sales cut off the Agents' portal today at 09:14.</b> Both its Feeds read Leads per agency, so every question since gets the error "Cut off by an Owner". Why, from Elif Kaya: "The agreement with the agencies on lead figures is being reviewed by Legal; no lead figures leave until it is signed." Only Sales lifts it, on Leads per agency.</p><a class="alert-btn" href="messages.html">Ask Sales</a></div>
+
+<!-- Footprint, as written, read-only; Change asks the Owners again when it touches what they said yes to -->
+<section class="card ap-sec ap-foot" aria-labelledby="ap-foot-p">
+ <div class="ap-sec-head"><h2 id="ap-foot-p" class="nq-title">Footprint</h2><a class="btn-quiet outline" href="application-register.html?step=1" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-pencil-simple"></i>Change</a>
+  <p>What the Agents' portal declared when it registered, and what every Owner said yes to. A change to its users, a Binding Rule, how often or its Feeds asks the Owners concerned again; until they answer, it reads as before.</p></div>
+ <dl class="facts">
+  <dt>What it does</dt><dd>Shows each agent the figures of their own agency, in charts and tables. It keeps no copy and passes nothing on.</dd>
+  <dt>Who uses it</dt><dd>External: the agents of the agencies that advertise on Immoscoop.</dd>
+  <dt>Its users</dt><dd>The user pool Agencies, each agent with a token of AWS Cognito that names their agency as <span class="mono">company_id</span>.</dd>
+  <dt>Delivery</dt><dd>Prepared, daily. It never reads BigQuery.</dd>
+  <dt>What it knows</dt><dd>That the data is analytical, may come late or not at all, and that the transactional system stays the master. Signed by Jonas Peeters, 30 Oct 2026.</dd>
+  <dt>Registered</dt><dd>By Nora Willems, 2 Nov 2026, from the platform (<span class="mono">agents-portal</span>, footprint 1).</dd>
+ </dl>
+</section>
+
+<!-- Feeds: each with its Edition, its Binding Rule and the answer of every Owner Unit under it -->
+<section class="card ap-sec" aria-labelledby="ap-feeds-p">
+ <div class="ap-sec-head"><h2 id="ap-feeds-p" class="nq-title">Feeds</h2><span class="meta">2 Feeds · <span data-pane-group="app" data-pane="portal">every Owner said yes</span><span data-pane-group="app" data-pane="cutoff" hidden>cut off by Sales</span></span></div>
+ <div class="ap-feeds">
+  <section class="sub-tile ap-feed" aria-label="Agency performance per month">
+   <div class="ap-feed-head"><i class="ph ph-rss-simple kind-icon" aria-hidden="true"></i><a href="feed.html">Agency performance per month</a><span class="meta">Edition 1 · prepared, daily</span><span style="flex:1"></span><span class="app-state held" data-pane-group="app" data-pane="portal" title="Held since 22 Nov 07:10; the delivery of 21 Nov is served">Held</span><span class="app-state cutoff" data-pane-group="app" data-pane="cutoff" hidden>Cut off</span></div>
+   <div class="binding-rule">
+    <p>An agent sees only the rows of their own agency: <span class="mono">company_id</span> of the Feed equals the <span class="mono">company_id</span> of their agency in the user pool Agencies.</p>
+    <code>leads.company_id = agencies.company_id</code>
+    <span class="meta">For one user: an agent of agency 1042 sees only the rows where <span class="mono">company_id</span> is 1042.</span>
+   </div>
+   <table class="ap-answers" aria-label="The answer of every Owner">
+    <tr><td><b style="font-weight:500">Sales</b><span class="meta">Leads per agency</span></td>
+     <td style="text-align:right"><span data-pane-group="app" data-pane="portal"><span class="ap-yes"><i class="ph-fill ph-check-circle"></i>Yes</span><span class="meta">2 Nov 2026 · Elif Kaya</span></span><span data-pane-group="app" data-pane="cutoff" hidden><span class="ap-cut"><i class="ph-fill ph-prohibit"></i>Cut off</span><span class="meta">today 09:14 · Elif Kaya</span></span></td></tr>
+    <tr><td><b style="font-weight:500">Listings team</b><span class="meta">Listing views per day</span></td><td style="text-align:right"><span class="ap-yes"><i class="ph-fill ph-check-circle"></i>Yes</span><span class="meta">3 Nov 2026 · Lotte Janssens</span></td></tr>
+    <tr><td><b style="font-weight:500">Agency success</b><span class="meta">Agencies</span></td><td style="text-align:right"><span class="ap-yes"><i class="ph-fill ph-check-circle"></i>Yes</span><span class="meta">2 Nov 2026 · Nora Willems</span></td></tr>
+   </table>
+  </section>
+  <section class="sub-tile ap-feed" aria-label="Leads per agency per week">
+   <div class="ap-feed-head"><i class="ph ph-rss-simple kind-icon" aria-hidden="true"></i><a href="feed.html">Leads per agency per week</a><span class="meta">Edition 1 · prepared, daily</span><span style="flex:1"></span><span class="app-state ok" data-pane-group="app" data-pane="portal">Up to date</span><span class="app-state cutoff" data-pane-group="app" data-pane="cutoff" hidden>Cut off</span></div>
+   <div class="binding-rule">
+    <p>An agent sees only the rows of their own agency: <span class="mono">company_id</span> of the Feed equals the <span class="mono">company_id</span> of their agency in the user pool Agencies.</p>
+    <code>leads.company_id = agencies.company_id</code>
+    <span class="meta">For one user: an agent of agency 1042 sees only the rows where <span class="mono">company_id</span> is 1042.</span>
+   </div>
+   <table class="ap-answers" aria-label="The answer of every Owner">
+    <tr><td><b style="font-weight:500">Sales</b><span class="meta">Leads per agency</span></td>
+     <td style="text-align:right"><span data-pane-group="app" data-pane="portal"><span class="ap-yes"><i class="ph-fill ph-check-circle"></i>Yes</span><span class="meta">2 Nov 2026 · Elif Kaya</span></span><span data-pane-group="app" data-pane="cutoff" hidden><span class="ap-cut"><i class="ph-fill ph-prohibit"></i>Cut off</span><span class="meta">today 09:14 · Elif Kaya</span></span></td></tr>
+   </table>
+  </section>
+ </div>
+</section>
+
+<div class="ap-grid">
+ <!-- Its key: shown once; Renew and Revoke, as an Excel key (OP-AP-04) -->
+ <section class="card ap-sec ap-key" aria-labelledby="ap-key-p">
+  <div class="ap-sec-head"><h2 id="ap-key-p" class="nq-title">Its key</h2></div>
+  <div data-pane-group="key" data-pane="active revoking">
+   <div class="ap-key-body"><div>
+   <dl class="facts">
+    <dt>State</dt><dd><span class="ap-yes"><i class="ph-fill ph-key"></i>Active</span></dd>
+    <dt>Made</dt><dd>3 Nov 2026, by Nora Willems</dd>
+    <dt>Last used</dt><dd>today, 21:12</dd>
+    <dt>Expires</dt><dd>3 Nov 2027</dd>
+    <dt>Ends in</dt><dd class="mono" style="font-size:12px">…7Q2f</dd>
+   </dl>
+   <p class="meta" style="display:block;line-height:1.5;margin:10px 0 0" data-pane-group="app" data-pane="cutoff" hidden>The key still works: the cut off is the answer of Sales, not of the key.</p>
+   <div class="ap-key-acts" data-pane-group="key" data-pane="active"><button class="btn-quiet outline" type="button" data-go="key:new"><i class="ph ph-arrows-clockwise"></i> Renew</button><button class="btn-quiet outline" type="button" data-go="key:revoking">Revoke</button></div>
+   <div class="key-confirm-row" data-pane-group="key" data-pane="revoking" hidden style="margin-top:14px"><i class="ph-fill ph-warning"></i><span style="flex:1"><b style="font-weight:500">Revoke the key of the Agents' portal?</b> Every question with it gets "Not allowed" at once, and its agents see nothing until a new key is in the secret store of the platform. Jonas Peeters gets a Message that you did.</span><span style="display:flex;gap:8px;margin-left:auto"><button class="btn-quiet outline" type="button" data-go="key:active">Cancel</button><button class="btn-primary danger" type="button" data-go="key:revoked">Revoke</button></span></div>
+   </div>
+   <p class="meta" style="display:block;line-height:1.5;margin:12px 0 0">It lives in the secret store of the platform of IT, never in the code of the app. Renew makes a new one, shown once; the old one keeps working for 24 hours, so that the portal switches without going down. Revoke stops it at once, as for a lost laptop with an Excel key.</p>
+   </div>
+  </div>
+  <div data-pane-group="key" data-pane="revoked" hidden>
+   <dl class="facts">
+    <dt>State</dt><dd><span class="ap-cut"><i class="ph-fill ph-prohibit"></i>Revoked</span> <span class="meta" style="display:inline">today, by you</span></dd>
+    <dt>Made</dt><dd>3 Nov 2026, by Nora Willems</dd>
+    <dt>Last used</dt><dd>today, 21:12</dd>
+   </dl>
+   <p class="meta" style="display:block;line-height:1.5;margin:10px 0 0">Every question with it now gets "Not allowed". Jonas Peeters got a Message. Its Owners still said yes, so a new key can be made at once.</p>
+   <div class="ap-key-acts"><button class="btn-primary" type="button" data-go="key:new"><i class="ph-fill ph-key" style="font-size:15px"></i>Make the key</button></div>
+  </div>
+  <div data-pane-group="key" data-pane="new" hidden style="max-width:720px">
+   <div class="key-once">
+    <div class="label">The new key of the Agents' portal, made just now</div>
+    <div class="key-box"><span class="mono">dhk_live_4Rt9-Vb2Q-Lm7x-Kc3P-Wy8N-Ha5e</span><button class="btn-quiet outline" type="button"><i class="ph ph-copy"></i>Copy</button></div>
+    <p class="key-warn"><i class="ph-fill ph-eye-slash"></i><span><b style="font-weight:500">You see it only now.</b> Data Hub keeps only a fingerprint of it, and cannot show it again. Lost it? Renew it.</span></p>
+   </div>
+   <div class="label" style="margin-top:14px">Next</div>
+   <ol class="steps-plain">
+    <li>Put it in the secret store of the platform of IT, as the Data Hub key of <span class="mono">agents-portal</span>, or send it to Jonas Peeters there.</li>
+    <li>The portal sends it with every question, with the token of the agent.</li>
+    <li>The old key keeps working until tomorrow, 21:40; then only this one does.</li>
+   </ol>
+   <button class="btn-primary" type="button" data-go="key:active" style="margin-top:14px">Done</button>
+  </div>
+ </section>
+
+ <!-- How it reads: questions per day, and the errors per cause (OP-AP-11) -->
+ <section class="card ap-sec" aria-labelledby="ap-reads-p">
+  <div class="ap-sec-head"><h2 id="ap-reads-p" class="nq-title">How it reads</h2><span class="meta">the last 14 days</span></div>
+  <div class="ap-stats" data-pane-group="app" data-pane="portal">
+   <div class="ap-stat"><span class="meta">Questions yesterday</span><b>5,930</b><span class="meta">5,923 answered</span></div>
+   <div class="ap-stat"><span class="meta">Errors yesterday</span><b>7</b><span class="meta"><span class="ap-c-deny">Not allowed</span> · none cut off</span></div>
+   <div class="ap-stat"><span class="meta">From an older delivery</span><b>3,402</b><span class="meta">held, so not an error</span></div>
+  </div>
+  <div class="ap-stats" data-pane-group="app" data-pane="cutoff" hidden>
+   <div class="ap-stat"><span class="meta">Questions today, so far</span><b>6,104</b><span class="meta">714 answered before 09:14</span></div>
+   <div class="ap-stat"><span class="meta">Errors today</span><b>5,390</b><span class="meta"><span class="ap-c-cut">5,388 Cut off by an Owner</span> · 2 not allowed</span></div>
+   <div class="ap-stat"><span class="meta">Questions yesterday</span><b>5,930</b><span class="meta">7 errors, none cut off</span></div>
+  </div>
+  <div class="ap-scroll">
+  <table class="ap-reads" aria-label="Questions per day and errors per cause, 10 to 23 Nov 2026">
+   <thead>
+    <tr><th></th>
+     <td title="Tue 10 Nov: 8,912 questions"><div class="ap-bar"><span style="height:89%"></span></div></td>
+     <td title="Wed 11 Nov, a holiday: 5,488 questions"><div class="ap-bar"><span style="height:55%"></span></div></td>
+     <td title="Thu 12 Nov: 9,104 questions"><div class="ap-bar"><span style="height:91%"></span></div></td>
+     <td title="Fri 13 Nov: 8,640 questions"><div class="ap-bar"><span style="height:86%"></span></div></td>
+     <td title="Sat 14 Nov: 6,215 questions"><div class="ap-bar"><span style="height:62%"></span></div></td>
+     <td title="Sun 15 Nov: 5,702 questions"><div class="ap-bar"><span style="height:57%"></span></div></td>
+     <td title="Mon 16 Nov: 9,380 questions"><div class="ap-bar"><span style="height:94%"></span></div></td>
+     <td title="Tue 17 Nov: 9,021 questions"><div class="ap-bar"><span style="height:90%"></span></div></td>
+     <td title="Wed 18 Nov: 8,877 questions"><div class="ap-bar"><span style="height:89%"></span></div></td>
+     <td title="Thu 19 Nov: 9,240 questions"><div class="ap-bar"><span style="height:92%"></span></div></td>
+     <td title="Fri 20 Nov: 8,515 questions"><div class="ap-bar"><span style="height:85%"></span></div></td>
+     <td title="Sat 21 Nov: 6,402 questions"><div class="ap-bar"><span style="height:64%"></span></div></td>
+     <td title="Sun 22 Nov: 5,930 questions"><div class="ap-bar"><span style="height:59%"></span></div></td>
+     <td title="Today, so far: 6,104 questions"><div class="ap-bar today"><span style="height:61%"></span></div></td>
+    </tr>
+    <tr><th class="meta" style="font-weight:400;text-align:left">Questions, Nov</th>
+     <td class="ap-day"><b>10</b>Tu</td><td class="ap-day"><b>11</b>We</td><td class="ap-day"><b>12</b>Th</td><td class="ap-day"><b>13</b>Fr</td><td class="ap-day"><b>14</b>Sa</td><td class="ap-day"><b>15</b>Su</td><td class="ap-day"><b>16</b>Mo</td><td class="ap-day"><b>17</b>Tu</td><td class="ap-day"><b>18</b>We</td><td class="ap-day"><b>19</b>Th</td><td class="ap-day"><b>20</b>Fr</td><td class="ap-day"><b>21</b>Sa</td><td class="ap-day"><b>22</b>Su</td><td class="ap-day"><b>23</b>today</td>
+    </tr>
+   </thead>
+   <tbody>
+    <tr class="ap-err"><td><span class="ap-cause"><i class="ph-fill ph-prohibit ap-c-cut"></i>Cut off by an Owner</span></td>
+     <td class="ap-zero">·</td><td class="ap-zero">·</td><td class="ap-zero">·</td><td class="ap-zero">·</td><td class="ap-zero">·</td><td class="ap-zero">·</td><td class="ap-zero">·</td><td class="ap-zero">·</td><td class="ap-zero">·</td><td class="ap-zero">·</td><td class="ap-zero">·</td><td class="ap-zero">·</td><td class="ap-zero">·</td>
+     <td><span class="ap-zero" data-pane-group="app" data-pane="portal">·</span><span class="ap-n ap-c-cut" data-pane-group="app" data-pane="cutoff" hidden>5,388</span></td></tr>
+    <tr class="ap-err"><td><span class="ap-cause"><i class="ph-fill ph-lock-key ap-c-deny"></i>Not allowed</span></td>
+     <td class="ap-zero">·</td><td class="ap-zero">·</td><td class="ap-n ap-c-deny">2</td><td class="ap-zero">·</td><td class="ap-zero">·</td><td class="ap-zero">·</td><td class="ap-n ap-c-deny">1</td><td class="ap-zero">·</td><td class="ap-zero">·</td><td class="ap-n ap-c-deny">3</td><td class="ap-zero">·</td><td class="ap-zero">·</td><td class="ap-n ap-c-deny">7</td><td class="ap-n ap-c-deny">2</td></tr>
+    <tr class="ap-err"><td><span class="ap-cause"><i class="ph-fill ph-cloud-slash ap-c-down"></i>Data Hub unavailable</span></td>
+     <td class="ap-zero">·</td><td class="ap-zero">·</td><td class="ap-zero">·</td><td class="ap-n ap-c-down">41</td><td class="ap-zero">·</td><td class="ap-zero">·</td><td class="ap-zero">·</td><td class="ap-zero">·</td><td class="ap-zero">·</td><td class="ap-zero">·</td><td class="ap-zero">·</td><td class="ap-zero">·</td><td class="ap-zero">·</td><td class="ap-zero">·</td></tr>
+   </tbody>
+  </table>
+  </div>
+  <div class="ap-legend">
+   <span><b class="ap-c-cut">Cut off by an Owner.</b> An Owner stopped it. Only that Owner lifts it.</span>
+   <span><b class="ap-c-deny">Not allowed.</b> A wrong key, a token of another pool, or a Feed without every yes.</span>
+   <span><b class="ap-c-down">Data Hub unavailable.</b> Data Hub could not answer. The app asks again.</span>
+  </div>
+  <div class="ap-notes">
+   <div class="hint" data-pane-group="app" data-pane="portal"><i class="ph ph-lock-key"></i><p>Not allowed yesterday: 7 questions carried a token of the user pool Website users; the portal takes only Agencies. Each got that cause as its answer; which user it was, Data Hub does not say.</p></div>
+   <div class="hint" data-pane-group="app" data-pane="portal"><i class="ph ph-clock-counter-clockwise"></i><p>Late and Held are no errors: the question gets the last good delivery, with its date. Since 22 Nov 07:10, questions on Agency performance per month get the delivery of 21 Nov.</p></div>
+   <div class="hint" data-pane-group="app" data-pane="cutoff" hidden><i class="ph ph-prohibit"></i><p>Since 09:14 every question gets "Cut off by an Owner", on both Feeds, as both read Leads per agency. A hold, or a late run, would have served the last good delivery instead: a cut off serves nothing.</p></div>
+  </div>
+ </section>
+</div>
+
+<!-- Its Log: consent, key, holds, cut offs, and errors of note; the newest first -->
+<section class="card ap-sec" aria-labelledby="ap-log-p">
+ <div class="ap-sec-head"><h2 id="ap-log-p" class="nq-title">Log</h2></div>
+ <div class="ap-scroll">
+ <table class="ap-log" aria-label="Log of the Agents' portal">
+  <thead><tr><th style="width:150px">When</th><th>What</th><th style="width:170px">Who</th></tr></thead>
+  <tbody>
+   <tr data-pane-group="app" data-pane="cutoff" hidden><td class="nowrap">today, 09:14</td><td><span class="ap-cut" style="white-space:normal">Cut off by Sales,</span> on Leads per agency: every question gets "Cut off by an Owner". "The agreement with the agencies on lead figures is being reviewed by Legal."</td><td>Elif Kaya</td></tr>
+   <tr data-pane-group="key" data-pane="new" hidden><td class="nowrap">today, 21:40</td><td>Key renewed. The old one works until tomorrow, 21:40.</td><td>You</td></tr>
+   <tr><td class="nowrap">22 Nov 2026</td><td>7 questions not allowed: a token of the user pool Website users.</td><td class="muted">Data Hub</td></tr>
+   <tr><td class="nowrap">22 Nov 2026, 07:10</td><td>Agency performance per month held by the Rule "Leads per day below half of the 4-week average" of Sales on Leads per agency. The delivery of 21 Nov is served.</td><td class="muted">A Rule of Sales</td></tr>
+   <tr><td class="nowrap">13 Nov 2026, 14:02</td><td>Data Hub unavailable for 3 minutes: 41 questions got that answer.</td><td class="muted">Data Hub</td></tr>
+   <tr><td class="nowrap">3 Nov 2026, 16:20</td><td>Key made, once every Owner said yes.</td><td>Nora Willems</td></tr>
+   <tr><td class="nowrap">3 Nov 2026, 11:05</td><td>Listings team said yes, for Agency performance per month.</td><td>Lotte Janssens</td></tr>
+   <tr><td class="nowrap">2 Nov 2026, 15:40</td><td>Sales said yes, for both Feeds.</td><td>Elif Kaya</td></tr>
+   <tr><td class="nowrap">2 Nov 2026, 10:12</td><td>Agency success said yes, for Agency performance per month.</td><td>Nora Willems</td></tr>
+   <tr><td class="nowrap">2 Nov 2026, 09:30</td><td>Registered from the platform. Consent asked of Sales, Listings team and Agency success.</td><td>Nora Willems</td></tr>
+  </tbody>
+ </table>
+ </div>
+</section>
+</div>
+
+<!-- ================= Search result pages: waiting for the Listings team, no key ================= -->
+<div data-pane-group="app" data-pane="waiting" hidden>
+<div class="breadcrumb"><a href="docks-start.html" style="color:inherit;text-decoration:none">Docks</a> / <a href="dock.html" style="color:inherit;text-decoration:none">Website</a></div>
+<div class="coll-head">
+ <span class="item-icon large"><i class="ph ph-app-window"></i></span>
+ <div style="flex:1;min-width:0">
+  <h1 class="page-title">Search result pages</h1>
+  <p class="prose">The backend of the search result pages of the website: it shows the price statistics of the area next to the listings a search finds.</p>
+ </div>
+</div>
+<div class="status-row">
+ <span class="status"><i class="ph-fill ph-globe-simple"></i>External</span>
+ <span class="status"><i class="ph-fill ph-user-minus"></i>No users</span>
+ <span class="status"><i class="ph-fill ph-plugs-connected"></i>Dock: Website</span>
+ <span class="status"><i class="ph-fill ph-user"></i>At IT: Jonas Peeters</span>
+ <span class="app-state waiting" title="Listings team has not answered yet">Waiting for consent</span>
+</div>
+
+<section class="card ap-sec ap-foot" aria-labelledby="ap-foot-w">
+ <div class="ap-sec-head"><h2 id="ap-foot-w" class="nq-title">Footprint</h2><a class="btn-quiet outline" href="application-register.html?step=1" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-pencil-simple"></i>Change</a>
+  <p>What Search result pages declared when it registered. The Owners who are asked read it first.</p></div>
+ <dl class="facts">
+  <dt>What it does</dt><dd>Next to the listings a search finds, it shows the median price and the spread of the street or the municipality searched, as the SEO pages do.</dd>
+  <dt>Who uses it</dt><dd>External: visitors of the website, through its backend.</dd>
+  <dt>Its users</dt><dd>No users: it reads for itself, the whole Feed.</dd>
+  <dt>Delivery</dt><dd>Prepared, daily. It never reads BigQuery.</dd>
+  <dt>What it knows</dt><dd>That the data is analytical, may come late or not at all, and that the transactional system stays the master. Signed by Jonas Peeters, 19 Nov 2026.</dd>
+  <dt>Registered</dt><dd>By Tom Maes, 20 Nov 2026, from the platform (<span class="mono">search-result-pages</span>, footprint 1).</dd>
+ </dl>
+</section>
+
+<section class="card ap-sec" aria-labelledby="ap-feeds-w">
+ <div class="ap-sec-head"><h2 id="ap-feeds-w" class="nq-title">Feeds</h2><span class="meta">1 Feed · 1 of 2 Owners said yes</span></div>
+ <div class="ap-feeds">
+  <section class="sub-tile ap-feed" aria-label="Price statistics per area">
+   <div class="ap-feed-head"><i class="ph ph-rss-simple kind-icon" aria-hidden="true"></i><a href="feed.html">Price statistics per area</a><span class="meta">Edition 2 · prepared, daily</span><span style="flex:1"></span><span class="app-state waiting">Waiting for consent</span></div>
+   <div class="binding-rule"><p>No Binding Rule: without users, it reads the whole Feed, which delivers only aggregates of at least 5 sales.</p></div>
+   <table class="ap-answers" aria-label="The answer of every Owner">
+    <tr><td><b style="font-weight:500">Data Team</b><span class="meta">Streets and municipalities</span></td><td style="text-align:right"><span class="ap-yes"><i class="ph-fill ph-check-circle"></i>Yes</span><span class="meta">20 Nov 2026 · Sam De Wit</span></td></tr>
+    <tr><td><b style="font-weight:500">Listings team</b><span class="meta">Sales prices</span></td><td style="text-align:right"><span class="ap-wait"><i class="ph ph-hourglass-medium"></i>Waiting</span><span class="meta">asked 20 Nov 2026 · <a class="text-link" href="application-consent.html" style="display:inline"><span>the Request</span></a></span></td></tr>
+   </table>
+  </section>
+ </div>
+</section>
+
+<div class="ap-grid">
+ <section class="card ap-sec ap-key" aria-labelledby="ap-key-w">
+  <div class="ap-sec-head"><h2 id="ap-key-w" class="nq-title">Its key</h2></div>
+  <div class="empty-run" style="margin:0"><i class="ph ph-key"></i>No key yet.</div>
+  <p class="meta" style="display:block;line-height:1.5;margin:10px 0 0">An Application gets its key once every Owner said yes. Still waiting for: Listings team, on Sales prices.</p>
+  <span class="why-anchor" tabindex="0" aria-describedby="ap-why-key" style="margin-top:14px"><button class="btn-primary" type="button" disabled><i class="ph-fill ph-key" style="font-size:15px"></i>Make the key</button>
+   <span class="run-pop why-pop" id="ap-why-key" role="tooltip" style="left:0;right:auto"><span class="why-title">Not yet: one Owner has not answered.</span> Listings team decides on Sales prices. Once they say yes, the key is made here, and shown once.</span></span>
+ </section>
+ <section class="card ap-sec" aria-labelledby="ap-reads-w">
+  <div class="ap-sec-head"><h2 id="ap-reads-w" class="nq-title">How it reads</h2><span class="meta">the last 14 days</span></div>
+  <div class="empty-run" style="margin:0"><i class="ph ph-chart-bar"></i>Nothing read yet: without a key, it cannot ask.</div>
+ </section>
+</div>
+
+<section class="card ap-sec" aria-labelledby="ap-log-w">
+ <div class="ap-sec-head"><h2 id="ap-log-w" class="nq-title">Log</h2></div>
+ <div class="ap-scroll">
+ <table class="ap-log" aria-label="Log of Search result pages">
+  <thead><tr><th style="width:150px">When</th><th>What</th><th style="width:170px">Who</th></tr></thead>
+  <tbody>
+   <tr><td class="nowrap">20 Nov 2026, 14:30</td><td>Data Team said yes, for Price statistics per area.</td><td>Sam De Wit</td></tr>
+   <tr><td class="nowrap">20 Nov 2026, 11:02</td><td>Registered from the platform. Consent asked of Listings team and Data Team.</td><td>Tom Maes</td></tr>
+  </tbody>
+ </table>
+ </div>
+</section>
+</div>
+<div style="height:110px"></div>
+</main>
+</div>
+<div class="proto-switch" data-group="key" data-pane-group="app" data-pane="portal cutoff" role="tablist" aria-label="Prototype: the key of the Agents' portal" style="bottom:72px">Key
+ <button class="seg on" data-target="active" role="tab" aria-selected="true">Active</button>
+ <button class="seg" data-target="new" role="tab" aria-selected="false">Made, shown once</button>
+ <button class="seg" data-target="revoking" role="tab" aria-selected="false">Revoking</button>
+ <button class="seg" data-target="revoked" role="tab" aria-selected="false">Revoked</button>
+</div>
+<div class="proto-switch" data-group="app" role="tablist" aria-label="Prototype: which Application">Application
+ <button class="seg on" data-target="portal" role="tab" aria-selected="true">Agents' portal</button>
+ <button class="seg" data-target="waiting" role="tab" aria-selected="false">Search result pages, waiting</button>
+ <button class="seg" data-target="cutoff" role="tab" aria-selected="false">Cut off by Sales</button>
+</div>
+<script>
+// A narrow window opens with the panel closed; the rail opens it over the page (prototype only)
+if (matchMedia('(max-width: 760px)').matches) document.querySelector('.app').classList.remove('panel-open');
+// The title follows the Application shown (prototype only)
+document.querySelectorAll('[data-group="app"] [data-target]').forEach(b => b.addEventListener('click', () => {
+  document.title = 'Data Hub — ' + (b.dataset.target === 'waiting' ? 'Search result pages' : "Agents' portal");
+}));
+</script>
+<script src="app.js"></script>
+</body>
+</html>
