@@ -2807,3 +2807,52 @@ html[data-bg] :is(.flowbox, .flowstrip) { -webkit-backdrop-filter: var(--blur-fr
 .pw-list span { font-size: var(--text-meta); color: var(--text-muted); }
 .pw-acts { display: flex; flex-wrap: wrap; gap: 8px; }
 .pw-claude { display: block; margin: 0; line-height: 1.5; }
+
+/* Long names (long-names.html, OP-UX-120 to OP-UX-122): four ways to fit a long name, in CSS alone. */
+.ln-end { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ln-two { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; min-width: 0; overflow: hidden; overflow-wrap: anywhere; }
+/* The start is cut: the box runs right to left, so "…" falls at the start; the name itself stays left to right. */
+.ln-start { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: rtl; text-align: left; }
+/* The end is kept whole: the name in two parts, the first shrinks with "…", the last does not, unless it alone is too long. */
+.ln-tail { display: flex; min-width: 0; white-space: pre; }
+.ln-tail > :first-child { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.ln-tail > :last-child { flex: 0 0 auto; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.ln-page .ln-intro { max-width: 760px; margin: 10px 0 20px; line-height: 1.6; color: var(--text-secondary); }
+.ln-page .ln-intro em { font-style: normal; color: var(--text-primary); }
+.ln-cols { container-type: inline-size; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; align-items: start; }
+@container (max-width: 980px) { .ln-col { grid-column: span 2; } }
+.ln-col { border-radius: var(--radius-xl); padding: 16px 18px 18px; min-width: 0; }
+.ln-col h2 { display: flex; align-items: center; gap: 8px; font-size: var(--text-section); font-weight: var(--weight-medium); margin: 0; }
+.ln-n { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; background: var(--tint-hover); font-size: var(--text-meta); color: var(--text-secondary); flex: none; }
+.ln-how { display: block; margin: 6px 0 0; }
+.ln-how code { font: var(--text-meta) var(--font-mono); color: var(--text-secondary); }
+.ln-dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 8px; margin: 10px 0 12px; font-size: var(--text-meta); line-height: 1.45; }
+.ln-dl dt { color: var(--text-muted); }
+.ln-dl dd { margin: 0; color: var(--text-secondary); }
+/* Drag the lower right corner: the browser fits every name again, no script. */
+.ln-box { resize: horizontal; overflow: hidden; width: 230px; min-width: 110px; max-width: 100%; box-sizing: border-box; padding: 4px 10px 12px; border-radius: var(--radius-md); background: var(--surface-sub); outline: 1px dashed var(--tint-active); }
+.ln-place { font-size: var(--text-meta); color: var(--text-muted); margin: 12px 0 6px; }
+.ln-item { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: var(--text-small); }
+.ln-item > i { color: var(--text-secondary); flex: none; }
+.ln-item > :nth-child(2) { flex: 1; }
+.ln-item .maturity, .ln-row .maturity { flex: none; }
+.ln-tab { display: flex; align-items: center; gap: 7px; padding: 6px 10px; margin-bottom: 5px; border-radius: var(--radius-sm); background: var(--surface-solid); font-size: var(--text-small); }
+.ln-tab .kbd { flex: none; }
+.ln-tab > :last-child { flex: 1; }
+.ln-row { display: flex; align-items: center; gap: 9px; padding: 9px 10px; border-radius: var(--radius-md); background: var(--surface-solid); }
+.ln-row > i { color: var(--text-secondary); flex: none; }
+.ln-what { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.ln-what .item-title { font-size: var(--text-small); }
+.ln-what .meta { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ln-x { color: var(--text-muted); flex: none; font-size: 12px; }
+.ln-key { font: var(--text-meta) var(--font-mono); color: var(--text-secondary); padding: 3px 0; }
+.ln-key .ln-tail > :last-child { color: var(--text-primary); }
+.ln-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 340px)); gap: 14px; }
+.ln-field-card { border-radius: var(--radius-xl); padding: 4px 18px 18px; }
+.ln-label { display: block; font-size: var(--text-meta); color: var(--text-secondary); margin-bottom: 6px; }
+.ln-input { width: 100%; box-sizing: border-box; font: var(--text-small) var(--font-family); line-height: 1.5; color: var(--text-primary); background: var(--surface-solid);
+  border: 1px solid var(--tint-active); border-radius: var(--radius-field); padding: 8px 10px; }
+/* The field grows to its text where the browser can; elsewhere it shows two lines. */
+.ln-grow { resize: none; min-height: calc(2lh + 18px); field-sizing: content; }
+@supports (field-sizing: content) { .ln-grow { min-height: 0; } }
+.ln-always { margin: 0; padding-left: 18px; line-height: 1.7; color: var(--text-secondary); max-width: 760px; }
