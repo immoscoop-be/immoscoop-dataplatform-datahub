@@ -54,6 +54,17 @@ When a commit implements or relates to a requirement, end its message with git t
 ```text
 Implements: FR-AR-05, FR-AR-06
 Refs: OP-AR-02
+Feedback: https://immoscoopworkspace.slack.com/archives/C0CM086EZLL/p1795613260233849
 ```
 
-Update the status of the requirement in the same change when it moves (for example `Specified` → `Implemented`), then rebuild the matrix.
+Update the status of the requirement in the same change when it moves (for example `Specified` → `Implemented`), then rebuild the matrix. `Feedback:` names the message of `#datahub_feedback` the change answers (see below), one trailer per message.
+
+## Feedback from colleagues
+
+Colleagues post their remarks on Data Hub in the Slack channel `#datahub_feedback` ([C0CM086EZLL](https://immoscoopworkspace.slack.com/archives/C0CM086EZLL)), in Dutch, one remark per message. Every remark ends in a change of the process, a page or a requirement, through the usual way: design first, requirements, build. Max has asked for the replies below; post them as part of the work, without asking again, and tell him in one line what you posted.
+
+- **When Max and Claude start on a remark,** reply in the thread of its message, never in the channel itself: what will change, as the requirements, decisions and open points set up for it, each with its ID and one plain sentence a colleague understands, and what happens next, with screenshots of the design or prototype that answers it. A message with several remarks gets one reply per remark taken up, quoting the remark it answers.
+- **Keep the link.** The requirement, decision or open point notes where it came from, *Raised in #datahub_feedback on <date>: <link to the message>*, and every commit that answers it ends with the trailer `Feedback: <link to the message>`.
+- **When it is live in prod,** once the release pull request from `uat` to `main` is merged and prod runs it, reply in the same thread that it is live in production, what changed and where to see it, with screenshots of the screen in prod. The `Feedback:` trailers of the commits in the release name the threads.
+- **Screenshots go with every reply,** shot with Playwright at `deviceScaleFactor: 2`, without names of colleagues or data a reader of the channel may not see. A reply with screenshots is a file upload into the thread: `slack_get_file_upload_url`, the bytes posted to the address it gives, then `slack_complete_file_upload` with the thread and the text of the reply as its comment. The upload needs `files.slack.com` in the network access of the environment.
+- **Every message Claude posts there starts with 🤖** and says it is written by Claude, not by Max, in Dutch, as the channel is. Nothing else is posted there: no reply for each step in between, and no remark is closed or decided in Slack; an open point is decided by Max.
