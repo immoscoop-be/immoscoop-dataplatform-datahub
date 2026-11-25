@@ -7,6 +7,12 @@
   Requirements: FR-SR-29, FR-LN-01, FR-CV-01, FR-CV-03, FR-CV-04, FR-CV-05, FR-CV-07, FR-CV-17, FR-CV-18
   Decisions: DEC-UX-29, DEC-UX-67, DEC-CV-02, DEC-CV-04, DEC-CV-05, DEC-CV-09.
   Not in v1: "Make it an anomaly" on a Signal, and its mention under the field (FR-SR-30); leave them out.
+  A description from dbt reported as wrong (FR-CV-17, DEC-CV-14): "Seems wrong?" next to it opens this slide-in on a form
+  of its own in place of the new Message, ?from=report: the description quoted, what is wrong, required, and what it
+  should say, filled in from the Business Description. Sent, it is a Request to the Data Team, on top of the list,
+  waiting; the Data Team accepts it, to correct it in dbt, or refuses it with why (?role=datateam).
+  Deleting a Message (FR-CV-18, DEC-UX-339): "Delete" asks to confirm in place, ?del=asking; ?del=deleted shows the list
+  without it.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="owner">
@@ -240,22 +246,45 @@
   <div style="flex:1;min-width:0"><div class="meta">Messages on this Resource</div><h2 id="sheet-title">Weekly lead volume</h2><p class="meta" style="display:block;margin-top:2px">Resource · Credit leads</p></div>
   <a class="icon-btn" href="resource-detail.html" aria-label="Close"><i class="ph ph-x"></i></a>
  </div>
- <div class="composer">
+ <div class="composer" data-pane-group="from" data-pane="messages">
    <div style="display:flex;align-items:center;gap:8px"><span class="label" style="margin:0;flex:1">New Message</span>
     <div data-group="kind" role="tablist" style="display:flex"><button class="seg on" data-target="question" role="tab" aria-selected="true">Question</button><button class="seg" data-target="remark" role="tab" aria-selected="false">Remark</button><button class="seg" data-target="signal" role="tab" aria-selected="false">Signal</button></div>
    </div>
    <textarea placeholder="What do you want to know about this Resource?"></textarea>
    <div class="composer-foot"><p class="meta" data-pane-group="kind" data-pane="question"><i class="ph-fill ph-bell-simple"></i>The credit team, Owner of this Resource, gets a notification.</p><p class="meta" data-pane-group="kind" data-pane="remark" hidden><i class="ph-fill ph-bell-simple"></i>The credit team, Owner of this Resource, gets a notification.</p><p class="meta" data-pane-group="kind" data-pane="signal" hidden><i class="ph-fill ph-bell-simple"></i>The credit team and the Data Team get a notification. They can make it an anomaly.</p><button class="btn-primary"><i class="ph-fill ph-paper-plane-tilt" style="font-size:15px"></i>Post</button></div>
   </div>
- <div class="mc-chips" role="tablist" aria-label="Kind"><button class="seg on" role="tab" aria-selected="true">All<span class="count">3</span></button><button class="seg" role="tab" aria-selected="false">Questions<span class="count">1</span></button><button class="seg" role="tab" aria-selected="false">Remarks<span class="count">1</span></button><button class="seg" role="tab" aria-selected="false">Signals<span class="count">1</span></button></div>
+ <!-- "Seems wrong?" next to a description from dbt (FR-CV-17): the form in place of a new Message -->
+ <div class="composer dbt-report" data-pane-group="from" data-pane="report" hidden aria-label="Report the description from dbt as wrong">
+   <div style="display:flex;align-items:center;gap:8px"><span class="label" style="margin:0;flex:1">The description from dbt seems wrong</span><span class="kind request">Request</span></div>
+   <div class="dbt-quote"><div class="desc-head"><span class="label">Description</span><span class="origin">From dbt</span></div><p>One row per week and lead source with the number of credit leads sent to KBC. A lead counts in the week it was first submitted, not when it was followed up. Test and duplicate requests are excluded.</p></div>
+   <label class="field"><span>What is wrong</span><textarea rows="3" placeholder="What does it say that is not so?">"Duplicate requests are excluded" reads as if someone who applies twice counts once. Only an exact copy of the same request is taken out: someone who applies twice counts twice.</textarea></label>
+   <label class="field"><span>What it should say <span class="meta" style="display:inline;font-weight:400">· optional, filled in from the Business Description</span></span><textarea rows="3">The number of credit leads we send to KBC each week, per lead source. It counts leads, not people: someone who applies twice counts twice. A lead counts in the week it came in, not when KBC followed it up.</textarea></label>
+   <div class="composer-foot"><p class="meta"><i class="ph-fill ph-bell-simple"></i>The Data Team gets the Request; the credit team, Owner of this Resource, is told too.</p><button class="btn-primary"><i class="ph-fill ph-paper-plane-tilt" style="font-size:15px"></i>Send to the Data Team</button></div>
+ </div>
+ <div class="mc-chips" role="tablist" aria-label="Kind"><button class="seg on" role="tab" aria-selected="true">All<span class="count">4</span></button><button class="seg" role="tab" aria-selected="false">Requests<span class="count">1</span></button><button class="seg" role="tab" aria-selected="false">Questions<span class="count">1</span></button><button class="seg" role="tab" aria-selected="false">Remarks<span class="count">1</span></button><button class="seg" role="tab" aria-selected="false">Signals<span class="count">1</span></button></div>
  <div class="sheet-list" style="margin-top:6px">
+  <!-- The Request about the description from dbt (FR-CV-17): waiting; the Data Team decides -->
   <div class="thread">
+    <span class="mini-avatar" style="width:28px;height:28px;font-size:10px">MP</span>
+    <div class="thread-body">
+     <div class="thread-head"><span class="kind request">Request</span><span class="mc-status"><i class="ph ph-hourglass-medium"></i>Waiting</span><span class="item-title">Mia Peeters</span><span class="meta">Today</span></div>
+     <p class="meta" style="display:block;margin:2px 0 6px">The description from dbt seems wrong · to the Data Team</p>
+     <blockquote class="dbt-quoted">One row per week and lead source with the number of credit leads sent to KBC. A lead counts in the week it was first submitted, not when it was followed up. Test and duplicate requests are excluded.</blockquote>
+     <p><b class="req-label">What is wrong</b>"Duplicate requests are excluded" reads as if someone who applies twice counts once. Only an exact copy of the same request is taken out: someone who applies twice counts twice.</p>
+     <p><b class="req-label">What it should say</b>The number of credit leads we send to KBC each week, per lead source. It counts leads, not people: someone who applies twice counts twice.</p>
+     <p class="meta" style="display:block;margin-top:6px"><i class="ph ph-users" aria-hidden="true"></i> Karel Leys joined it. Every reader sees under the description that it is reported.</p>
+     <div class="thread-actions" data-for="datateam"><button class="btn-primary sm"><i class="ph-fill ph-check" style="font-size:14px"></i>Accept: correct it in dbt</button><button class="btn-quiet outline sm"><i class="ph ph-x"></i>Refuse, with why</button></div>
+     <div class="thread-actions" data-for="owner colleague"><a class="text-link"><i class="ph-fill ph-arrow-bend-up-left"></i><span>Reply</span></a><a class="text-link"><i class="ph ph-users"></i><span>Join it</span></a></div>
+    </div>
+   </div>
+  <div class="thread" data-pane-group="del" data-pane="none asking">
     <span class="mini-avatar" style="width:28px;height:28px;font-size:10px">KL</span>
     <div class="thread-body">
      <div class="thread-head"><span class="kind signal">Signal</span><span class="mc-status"><i class="ph ph-circle"></i>Open</span><span class="item-title">Karel Leys</span><span class="meta">3 days ago</span></div>
      <p>The count for the source <span class="mono">partner</span> dropped to zero in the week of 13 Oct. We usually see about forty leads there.</p>
      <div class="reply"><span class="mini-avatar">AC</span><div><div class="thread-head"><span class="item-title" style="font-size:12px">An Claes</span><span class="meta">Owner · 2 days ago</span></div><p>Looking into it with the Data Team. The partner feed was late that week.</p></div></div>
-     <div class="thread-actions"><a class="text-link"><i class="ph-fill ph-arrow-bend-up-left"></i><span>Reply</span></a><a class="text-link"><i class="ph-fill ph-note-pencil"></i><span>Make it an anomaly</span></a><a class="text-link" title="For its writer and the Owner Unit of the Resource: deletes the conversation with its replies, after a confirm (FR-CV-18)"><i class="ph ph-trash"></i><span>Delete</span></a></div>
+     <div class="thread-actions" data-pane-group="del" data-pane="none"><a class="text-link"><i class="ph-fill ph-arrow-bend-up-left"></i><span>Reply</span></a><a class="text-link"><i class="ph-fill ph-note-pencil"></i><span>Make it an anomaly</span></a><a class="text-link" data-for="owner datateam" data-go="del:asking" title="For its writer and the Owner Unit of the Resource: deletes the conversation with its replies, after a confirm (FR-CV-18)"><i class="ph ph-trash"></i><span>Delete</span></a></div>
+     <div class="key-confirm-row msg-confirm" data-pane-group="del" data-pane="asking" hidden><i class="ph-fill ph-warning"></i><span style="flex:1"><b>Delete this Signal and its reply?</b> The conversation goes for everyone: here, in the Message Centre and from the open steps. The Log of the Resource keeps that you deleted it.</span><button class="btn-quiet outline sm" data-go="del:none">Cancel</button><button class="btn-primary danger sm" data-go="del:deleted">Delete</button></div>
     </div>
    </div><div class="thread">
     <span class="mini-avatar" style="width:28px;height:28px;font-size:10px">MP</span>
@@ -277,6 +306,15 @@
  </div>
  <div class="sheet-foot"><p class="meta">Everyone who may see this Resource sees these Messages.</p><a class="text-link" href="messages.html"><span>In the Message Centre</span><i class="ph ph-arrow-right"></i></a></div>
 </section>
+<div class="proto-switch" data-group="from" role="tablist" aria-label="Prototype: opened from" style="bottom:120px">Opened from
+ <button class="seg on" data-target="messages" role="tab" aria-selected="true">Messages</button>
+ <button class="seg" data-target="report" role="tab" aria-selected="false">Seems wrong?</button>
+</div>
+<div class="proto-switch" data-group="del" role="tablist" aria-label="Prototype: deleting a Message" style="bottom:72px">Delete
+ <button class="seg on" data-target="none" role="tab" aria-selected="true">Not asked</button>
+ <button class="seg" data-target="asking" role="tab" aria-selected="false">Asking to confirm</button>
+ <button class="seg" data-target="deleted" role="tab" aria-selected="false">Deleted</button>
+</div>
 <script src="app.js"></script>
 </body>
 </html>

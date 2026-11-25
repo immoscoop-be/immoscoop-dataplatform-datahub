@@ -56,6 +56,11 @@
   behaviour, Pitfalls, Known Gaps and Key fields. Its pop-out gives the definition of the term first, then the Learning
   Cards that explain it (DEC-UX-279, FR-LR-44); the definitions of Pitfall and Known Gap hold the test that tells them
   apart. It replaces the quiet line that said what a text is for (DEC-RC-26, DEC-RC-27).
+  A description from dbt that seems wrong (FR-CV-17, DEC-UX-338): "Seems wrong?" next to it on Description, on the Summary
+  and, on the row the pointer is on, on Columns; it opens the form in the Messages slide-in. ?dbtrep=reported shows the
+  line under it while the Data Team decides, in all three places.
+  Key Fields edited as proposed in OP-UX-125, ?ov=querying&kf=edit: a purpose line on top, and the fields of the grain
+  marked "in the grain".
   Requirements: FR-ED-02, FR-ED-12, FR-MR-22, FR-RC-19, FR-RC-20, FR-RC-21, FR-RC-22, FR-RC-23, FR-RC-24, FR-RC-25, FR-RC-28, FR-RC-29, FR-RC-35, FR-CV-17, FR-SR-50, FR-MR-16, FR-CM-28, FR-CO-43, FR-CO-45, FR-MR-17, FR-MR-18, FR-LR-44, FR-RC-31, FR-RC-32, FR-RC-33, FR-RC-34
   Decisions: DEC-RC-16, DEC-RC-17, DEC-RC-18, DEC-RC-19, DEC-RC-20, DEC-UX-101, DEC-UX-168, DEC-UX-169, DEC-UX-170, DEC-UX-171, DEC-UX-175, DEC-UX-176, DEC-UX-177, DEC-UX-178, DEC-UX-216, DEC-UX-263, DEC-UX-264, DEC-UX-265, DEC-RC-22, DEC-RC-23, DEC-RC-24, DEC-RC-26, DEC-RC-27, DEC-UX-279.
   Rules: ../principles.md  ·  Placeholder content only.
@@ -223,12 +228,12 @@
        </div>
       </div>
       <div class="sub-tile">
-       <div class="desc-head"><span class="label">Description</span><span class="origin">From dbt</span><a class="text-link" href="resource-messages.html" title="Tell the Data Team this description from dbt seems wrong (FR-CV-17)"><i class="ph ph-flag"></i><span>Seems wrong?</span></a></div>
+       <div class="desc-head"><span class="label">Description</span><span class="origin">From dbt</span><a class="text-link" href="resource-messages.html?from=report" title="Tell the Data Team this description from dbt seems wrong (FR-CV-17)"><i class="ph ph-flag"></i><span>Seems wrong?</span></a></div>
        <p class="prose">One row per week and lead source with the number of credit leads sent to KBC. A lead counts in the week it was first submitted, not when it was followed up. Test and duplicate requests are excluded.</p>
-       <p class="dbt-reported" data-pane-group="dbtrep" data-pane="reported" hidden><i class="ph-fill ph-flag"></i><span>Reported as wrong on 25 Nov; the Data Team is looking at it.</span><a class="text-link" href="resource-messages.html">See the request</a></p>
+       <p class="dbt-reported" data-pane-group="dbtrep" data-pane="reported" hidden><i class="ph-fill ph-flag"></i><span>Reported as wrong on 25 Nov; the Data Team is looking at it.</span><a class="text-link" href="resource-messages.html">See the Request</a></p>
       </div>
       <div class="sub-tile row-tile">
-       <div class="desc-head"><span class="label">What one row is</span><span class="origin">From the Data Team</span><span style="flex:1"></span><a class="text-link" data-for="datateam" href="collection-add-relations.html" title="Grain and relations, the model type kept, for a Data Admin (DEC-UX-337)"><i class="ph ph-graph"></i><span>Edit grain and relations</span></a><a class="text-link" data-for="datateam" href="collection-add-type.html?change=aggregate" title="Change model type, for a Data Admin"><i class="ph ph-shapes"></i><span>Change model type</span></a></div>
+       <div class="desc-head"><span class="label">What one row is</span><span class="origin">From the Data Team</span><span style="flex:1"></span><a class="text-link" data-for="datateam" href="collection-add-grain.html?from=resource" title="Grain and relations, the model type kept, for a Data Admin (DEC-UX-337)"><i class="ph ph-graph"></i><span>Edit grain and relations</span></a><a class="text-link" data-for="datateam" href="collection-add-type.html?change=aggregate" title="Change model type, for a Data Admin"><i class="ph ph-shapes"></i><span>Change model type</span></a></div>
        <dl class="type-facts row-facts">
         <dt>Model type</dt><dd><span class="code-chip lc-ref" tabindex="0" title="Explained in Learning Card 2.3.6, Five model types">aggregate<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (explained in the Learning Centre)</span></span> One row per group, with its counts already made: add up its sums, never its unique counts.</dd>
         <dt>Grain</dt><dd><span class="code-chip lc-ref" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-grain">week_start<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (explained in the learning centre)</span></span><span class="code-chip">lead_source</span> One week × one lead source.</dd>
@@ -426,10 +431,17 @@ The lead source is set by the form the visitor used: website, app, partner or ma
        <dl class="facts"><dt>Partitioned</dt><dd>by <span class="mono">week_start</span>, a partition per week · 312 partitions</dd><dt>Clustered</dt><dd>by <span class="mono">lead_source</span>, then <span class="mono">lead_channel</span></dd><dt>Size</dt><dd>6.2 GB in all, about 20 MB a week</dd></dl>
        <p class="prose" style="font-size:12px;margin-top:10px">Filter on <span class="mono">week_start</span> first: without it, a query reads all 6.2 GB. A filter on <span class="mono">lead_source</span> then reads less again.</p>
       </div>
-      <div class="sub-tile">
-       <div class="tile-head"><div class="label"><span class="lc-ref" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-term-keyField">Key fields<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (what it means)</span></span></div><a class="edit-link" data-for="owner datateam" href="resource-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
+      <div class="sub-tile" data-pane-group="kf" data-pane="read">
+       <div class="tile-head"><div class="label"><span class="lc-ref" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-term-keyField">Key Fields<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (what it means)</span></span></div><a class="edit-link" data-for="owner datateam" data-go="kf:edit" href="#"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
        <span class="code-chip">week_start</span><span class="code-chip">lead_source</span><span class="code-chip">lead_count</span><span class="code-chip">lead_channel</span>
       </div>
+      <!-- Edit, as proposed in OP-UX-125: a purpose line on top, and the fields of the grain marked, so a Key Field is not read as the key -->
+      <form class="sub-tile ov-wide" data-pane-group="kf" data-pane="edit" hidden onsubmit="return false" aria-label="Key Fields, editing">
+       <div class="edit-bar"><p>Editing the Key Fields</p><button class="btn-quiet outline sm" type="button" data-go="kf:read">Cancel</button><button class="btn-primary sm" type="button" data-go="kf:read">Save</button></div>
+       <div class="tile-head"><div class="label"><span class="lc-ref" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-term-keyField">Key Fields<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (what it means)</span></span></div><span class="kind-chip kf-proposed">Proposed · OP-UX-125</span></div>
+       <p class="kf-purpose">The two to five fields a colleague starts with: what they look at first and filter on. The EDA explores at least these. Not what makes a row unique: that is the grain.</p>
+       <span class="code-chip">week_start<span class="kf-grain">in the grain</span><button type="button" aria-label="Remove week_start">×</button></span><span class="code-chip">lead_source<span class="kf-grain">in the grain</span><button type="button" aria-label="Remove lead_source">×</button></span><span class="code-chip">lead_count<button type="button" aria-label="Remove lead_count">×</button></span><span class="code-chip">lead_channel<button type="button" aria-label="Remove lead_channel">×</button></span><select class="add-chip" aria-label="Add a Key Field"><option>+ Field</option><option>lead_week_label</option><option>is_partner_feed</option></select>
+      </form>
      </div>
     </section>
 
@@ -437,7 +449,7 @@ The lead source is set by the form the visitor used: website, app, partner or ma
     <section class="ov-pane" data-pane-group="ov" data-pane="entities" hidden aria-label="Entities">
      <div class="ov-head">
       <div style="flex:1;min-width:0"><h2 class="ov-title">Entities</h2><p class="ov-lead">The Entities in its rows, and the Resources they join it to.</p></div>
-      <a class="edit-link" data-for="datateam" href="collection-add-relations.html" title="Grain and relations, for a Data Admin"><i class="ph-fill ph-graph"></i>Edit grain and relations</a>
+      <a class="edit-link" data-for="datateam" href="collection-add-grain.html?from=resource" title="Grain and relations, for a Data Admin"><i class="ph-fill ph-graph"></i>Edit grain and relations</a>
      </div>
      <div class="sub-tile">
       <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:14px;align-items:center">
@@ -623,7 +635,8 @@ The lead source is set by the form the visitor used: website, app, partner or ma
          <p>The number of <strong>credit leads</strong> we send to KBC each week, per lead source. Use it to follow the trend and to compare sources.</p>
          <ul><li>It counts <strong>leads, not people</strong>: someone who applies twice counts twice.</li><li>A lead counts in the week it came in, not when KBC followed it up.</li></ul>
         </div>
-        <p class="sum-dbt"><span class="origin">From dbt</span>One row per week and lead source with the number of credit leads sent to KBC. Test and duplicate requests are excluded.</p>
+        <p class="sum-dbt"><span class="origin">From dbt</span>One row per week and lead source with the number of credit leads sent to KBC. Test and duplicate requests are excluded.<a class="text-link" href="resource-messages.html?from=report" title="Tell the Data Team this description from dbt seems wrong (FR-CV-17)"><i class="ph ph-flag"></i><span>Seems wrong?</span></a></p>
+        <p class="dbt-reported" data-pane-group="dbtrep" data-pane="reported" hidden><i class="ph-fill ph-flag"></i><span>Reported as wrong on 25 Nov; the Data Team is looking at it.</span><a class="text-link" href="resource-messages.html">See the Request</a></p>
        </div>
       </li>
       <li class="sum-part">
@@ -645,7 +658,7 @@ The lead source is set by the form the visitor used: website, app, partner or ma
        <div class="sum-main">
         <div class="sum-title"><h3>How to query it cheaply</h3><a class="text-link" data-go="ov:querying"><span>Querying</span><i class="ph ph-arrow-right"></i></a></div>
         <p class="sum-text-line">Filter on <span class="mono">week_start</span> first, a partition per week: without it a query reads all 6.2 GB, with it about 20 MB a week. Then on <span class="mono">lead_source</span>, the first cluster column.</p>
-        <p class="sum-text-line">Key fields <span class="code-chip">week_start</span><span class="code-chip">lead_source</span><span class="code-chip">lead_count</span><span class="code-chip">lead_channel</span></p>
+        <p class="sum-text-line">Key Fields <span class="code-chip">week_start</span><span class="code-chip">lead_source</span><span class="code-chip">lead_count</span><span class="code-chip">lead_channel</span></p>
        </div>
       </li>
       <li class="sum-part">
@@ -719,12 +732,12 @@ The lead source is set by the form the visitor used: website, app, partner or ma
   </div>
 
   <div data-pane-group="tabs" data-pane="columns" hidden>
-   <div class="tile-head" style="margin:0 6px 4px"><p class="meta" style="flex:1;margin:0">Every field with its Business Description, from the Owner, next to its description from dbt.</p><a class="edit-link" href="collection-add-relations.html" data-for="datateam" title="Grain and relations, for a Data Admin" style="margin-right:12px"><i class="ph-fill ph-graph"></i>Edit grain and relations</a><a class="edit-link" href="resource-columns-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
+   <div class="tile-head" style="margin:0 6px 4px"><p class="meta" style="flex:1;margin:0">Every field with its Business Description, from the Owner, next to its description from dbt.</p><a class="edit-link" href="collection-add-grain.html?from=resource" data-for="datateam" title="Grain and relations, for a Data Admin" style="margin-right:12px"><i class="ph-fill ph-graph"></i>Edit grain and relations</a><a class="edit-link" href="resource-columns-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
    <table><thead><tr><th>Column</th><th>Type</th><th>Business Description <span class="origin">From the Owner</span></th><th>Description <span class="origin">From dbt</span></th><th>Entity</th><th></th></tr></thead><tbody>
-    <tr><td class="mono">week_start</td><td style="color:var(--text-muted)">DATE</td><td class="none" aria-label="No Business Description">–</td><td style="color:var(--text-secondary)">Monday of the week the lead was submitted</td><td></td><td><span class="pill pill-strong">Partition</span></td></tr>
-    <tr><td class="mono">lead_source</td><td style="color:var(--text-muted)">STRING</td><td>Where the lead came in: the website, the app, a partner or a mailing.</td><td style="color:var(--text-secondary)">Where the lead came from</td><td><span class="code-chip" style="margin:0">leadSource.leadSourceId</span></td><td><span class="pill pill-strong">Cluster 1</span></td></tr>
-    <tr><td class="mono">lead_count</td><td style="color:var(--text-muted)">INT64</td><td>How many credit leads went to KBC that week from this source. Someone who applies twice counts twice.</td><td style="color:var(--text-secondary)">Number of credit leads sent to KBC, without test and duplicate requests</td><td></td><td></td></tr>
-    <tr><td class="mono">lead_channel</td><td style="color:var(--text-muted)">STRING</td><td class="none" aria-label="No Business Description">–</td><td style="color:var(--text-secondary)">Channel of the first visit</td><td></td><td><span class="pill pill-strong">Cluster 2</span> <span class="pill" style="color:var(--signal-warn)">New</span></td></tr>
+    <tr><td class="mono">week_start</td><td style="color:var(--text-muted)">DATE</td><td class="none" aria-label="No Business Description">–</td><td style="color:var(--text-secondary)">Monday of the week the lead was submitted<a class="text-link dbt-flag" href="resource-messages.html?from=report" title="Seems wrong? Tell the Data Team (FR-CV-17)" aria-label="Seems wrong? Tell the Data Team"><i class="ph ph-flag"></i></a></td><td></td><td><span class="pill pill-strong">Partition</span></td></tr>
+    <tr><td class="mono">lead_source</td><td style="color:var(--text-muted)">STRING</td><td>Where the lead came in: the website, the app, a partner or a mailing.</td><td style="color:var(--text-secondary)">Where the lead came from<a class="text-link dbt-flag" href="resource-messages.html?from=report" title="Seems wrong? Tell the Data Team (FR-CV-17)" aria-label="Seems wrong? Tell the Data Team"><i class="ph ph-flag"></i></a></td><td><span class="code-chip" style="margin:0">leadSource.leadSourceId</span></td><td><span class="pill pill-strong">Cluster 1</span></td></tr>
+    <tr><td class="mono">lead_count</td><td style="color:var(--text-muted)">INT64</td><td>How many credit leads went to KBC that week from this source. Someone who applies twice counts twice.</td><td style="color:var(--text-secondary)">Number of credit leads sent to KBC, without test and duplicate requests<a class="text-link dbt-flag" href="resource-messages.html?from=report" title="Seems wrong? Tell the Data Team (FR-CV-17)" aria-label="Seems wrong? Tell the Data Team"><i class="ph ph-flag"></i></a><span class="dbt-reported" data-pane-group="dbtrep" data-pane="reported" hidden><i class="ph-fill ph-flag"></i><span>Reported as wrong on 25 Nov</span><a class="text-link" href="resource-messages.html">See the Request</a></span></td><td></td><td></td></tr>
+    <tr><td class="mono">lead_channel</td><td style="color:var(--text-muted)">STRING</td><td class="none" aria-label="No Business Description">–</td><td style="color:var(--text-secondary)">Channel of the first visit<a class="text-link dbt-flag" href="resource-messages.html?from=report" title="Seems wrong? Tell the Data Team (FR-CV-17)" aria-label="Seems wrong? Tell the Data Team"><i class="ph ph-flag"></i></a></td><td></td><td><span class="pill pill-strong">Cluster 2</span> <span class="pill" style="color:var(--signal-warn)">New</span></td></tr>
    </tbody></table>
   </div>
   <p data-pane-group="tabs" data-pane="later" class="meta" style="justify-content:center;padding:40px;font-size:13px" hidden>Not designed yet.</p>
@@ -808,6 +821,10 @@ The lead source is set by the form the visitor used: website, app, partner or ma
  <button class="seg" data-target="maturity" data-go="ov:maturity" role="tab" aria-selected="false">Maturity</button>
  <button class="seg" data-target="monitoring" data-go="ov:monitoring" role="tab" aria-selected="false">Monitoring</button>
  <button class="seg" data-target="danger" data-go="ov:danger" role="tab" aria-selected="false">Danger zone</button>
+</div>
+<div class="proto-switch" data-group="kf" role="tablist" aria-label="Prototype: Key Fields" style="bottom:648px">Key Fields
+ <button class="seg on" data-target="read" role="tab" aria-selected="true">Read</button>
+ <button class="seg" data-target="edit" role="tab" aria-selected="false">Edit, as proposed</button>
 </div>
 <div class="proto-switch" data-group="dbtrep" role="tablist" aria-label="Prototype: a description from dbt reported as wrong" style="bottom:600px">dbt description
  <button class="seg on" data-target="none" role="tab" aria-selected="true">Not reported</button>
