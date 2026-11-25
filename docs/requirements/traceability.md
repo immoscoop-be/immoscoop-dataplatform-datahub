@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 339 | 127 (30 open, 97 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 344 | 127 (25 open, 102 done) |
 | [Backlog](../overview/backlog.md) | – | – | – | 7 (5 open, 2 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
@@ -26,7 +26,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Beta and promotion](functional/11-beta-and-promotion.md) | – | – | – | 1 (1 done) |
 | [Permissions and Excel keys](functional/12-permissions-and-library-cards.md) | 16 (1 proposed, 15 implemented) | 4 (4 implemented) | 10 | 2 (1 open, 1 done) |
 | [Channels](functional/13-channels.md) | 6 (5 proposed, 1 implemented) | – | 6 | 4 (2 open, 2 done) |
-| [Conversations](functional/14-conversations.md) | 18 (2 specified, 16 implemented) | 2 (2 implemented) | 15 | 11 (2 open, 9 done) |
+| [Conversations](functional/14-conversations.md) | 18 (2 specified, 16 implemented) | 2 (2 implemented) | 17 | 11 (11 done) |
 | [EDA](functional/15-eda.md) | 20 (20 implemented) | – | 37 | 13 (7 open, 6 done) |
 | [Learning](functional/16-learning.md) | 44 (13 proposed, 15 implemented, 16 withdrawn) | – | 39 | 40 (9 open, 31 done) |
 | [Claude](functional/17-claude.md) | 39 (1 proposed, 38 implemented) | 5 (5 implemented) | 23 | 12 (7 open, 5 done) |

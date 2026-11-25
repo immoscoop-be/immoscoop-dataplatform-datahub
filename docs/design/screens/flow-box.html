@@ -25,7 +25,6 @@
   Decided by Max on 2026-11-20 (OP-UX-111 to OP-UX-114): the look and the texts as drawn (DEC-UX-305); it keeps nothing,
   reads the state of the Resource and opens from the beginning (DEC-UX-306); below 1360 px the panel folds (DEC-UX-307);
   one at a time (DEC-UX-308).
-  ?kftext=proposed opens the step Key Fields with its texts as proposed in OP-UX-125: what a Key Field is not.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="owner">
@@ -274,10 +273,6 @@
  <button class="seg" data-target="ready" role="tab" aria-selected="false">Ready</button>
  <button class="seg" data-target="published" role="tab" aria-selected="false">Published</button>
 </div>
-<div class="proto-switch" data-group="kftext" role="tablist" aria-label="Prototype: the texts of the step Key Fields" style="right:auto;left:96px;bottom:122px">Key Fields texts
- <button class="seg on" data-target="today" role="tab" aria-selected="true">Today</button>
- <button class="seg" data-target="proposed" role="tab" aria-selected="false">Proposed</button>
-</div>
 <div class="proto-switch" data-group="page" role="tablist" aria-label="Prototype: where the User is" style="right:auto;left:96px;bottom:74px">Page
  <button class="seg on" data-target="resource" role="tab" aria-selected="true">The Resource</button>
  <button class="seg" data-target="query" role="tab" aria-selected="false">Query</button>
@@ -293,14 +288,9 @@ const STEPS = [
     why: 'The description from dbt says how the table is made, not what it means. Without yours, a colleague guesses, or asks you.',
     how: 'On Description, Edit: write it in Markdown, with the description from dbt beside it.' },
   { name: 'Key Fields', done: 'week_start', missing: 'No Key Fields chosen', card: ['K5.15', 'Key Fields'], go: 'Go to Querying',
-    what: 'The two to five fields a reader starts from.',
-    why: 'Most tables hold more fields than anyone reads. The Key Fields say where to start.',
-    how: 'On Querying, Edit: choose them from its fields.',
-    // As proposed in OP-UX-125: say what a Key Field is not, the key of the table, nor the grain
-    proposed: {
-      what: 'The two to five fields a colleague starts with. Not the key of the table, and not the Grain: that says what makes a row unique.',
-      why: 'A colleague knows where to start, the Preview offers them to filter on, and the EDA explores at least these.',
-      how: 'On Querying, Edit: choose them from its fields; a field in the Grain is marked so.' } },
+    what: 'The two to five fields a colleague starts with. Not the key of the table, and not the Grain: that says what makes a row unique.',
+    why: 'A colleague knows where to start, the Preview offers them to filter on, and the EDA explores at least these.',
+    how: 'On Querying, Edit: choose them from its fields; a field in the Grain is marked so.' },
   { name: 'Fields', done: 'Every Key Field described; 3 other fields without a Business Description', missing: 'A Key Field without a Business Description', card: ['K5.14', 'The Business Description'], go: 'Go to Columns',
     what: 'A Business Description for each Key Field: what it holds, in the words of the business.',
     why: 'A field name says little to a colleague outside your team, and the Key Fields are where they start.',
@@ -331,7 +321,7 @@ const STATES = {
   ready: { done: [0, 1, 2, 3, 4, 5], now: 6, here: -1 },
   published: { done: [0, 1, 2, 3, 4, 5, 6], now: -1, here: -1 },
 };
-let page = 'resource', flow = 'open', opened = null, kftext = 'today';
+let page = 'resource', flow = 'open', opened = null;
 const esc = s => s.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
 const mono = s => esc(s).replace(/(week_start|lead_count)/g, '<span class="mono">$1</span>');
 function state() { return flow === 'ready' ? STATES.ready : flow === 'published' ? STATES.published : STATES[page]; }
@@ -344,8 +334,7 @@ function render() {
     `<span class="meta">${n} of ${required} steps required to publish done</span>`;
   document.getElementById('fb-steps').hidden = flow === 'published';
   document.getElementById('fb-done').hidden = flow !== 'published';
-  document.getElementById('fb-steps').innerHTML = STEPS.map((plain, i) => {
-    const step = kftext === 'proposed' && plain.proposed ? { ...plain, ...plain.proposed } : plain;
+  document.getElementById('fb-steps').innerHTML = STEPS.map((step, i) => {
     const isDone = done.has(i), isOpen = i === at, isNow = i === s.now;
     const icon = isDone ? '<i class="ph-fill ph-check-circle fb-tick" aria-hidden="true"></i>' : `<span class="fb-num" aria-hidden="true">${i + 1}</span>`;
     const last = i === STEPS.length - 1;
@@ -369,8 +358,6 @@ function render() {
 }
 document.querySelectorAll('[data-group="page"] [data-target]').forEach(b => b.addEventListener('click', () => { page = b.dataset.target; opened = null; render(); }));
 document.querySelectorAll('[data-group="flow"] [data-target]').forEach(b => b.addEventListener('click', () => { flow = b.dataset.target; opened = null; render(); }));
-// The texts of the step Key Fields, today or as proposed in OP-UX-125; the step opens to show them
-document.querySelectorAll('[data-group="kftext"] [data-target]').forEach(b => b.addEventListener('click', () => { kftext = b.dataset.target; opened = 1; render(); }));
 // Publish: with a step open it warns first; once every step is done, it opens the Publish sheet (DEC-MR-20)
 document.getElementById('publish-btn').addEventListener('click', () => {
   if (flow === 'ready') location.href = 'resource-publish.html';

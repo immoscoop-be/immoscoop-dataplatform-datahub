@@ -59,7 +59,7 @@
   A description from dbt that seems wrong (FR-CV-17, DEC-UX-338): "Seems wrong?" next to it on Description, on the Summary
   and, on the row the pointer is on, on Columns; it opens the form in the Messages slide-in. ?dbtrep=reported shows the
   line under it while the Data Team decides, in all three places.
-  Key Fields edited as proposed in OP-UX-125, ?ov=querying&kf=edit: a purpose line on top, and the fields of the Grain
+  Key Fields edited (DEC-UX-343), ?ov=querying&kf=edit: a purpose line on top, and the fields of the Grain
   marked "in the Grain".
   Requirements: FR-ED-02, FR-ED-12, FR-MR-22, FR-RC-19, FR-RC-20, FR-RC-21, FR-RC-22, FR-RC-23, FR-RC-24, FR-RC-25, FR-RC-28, FR-RC-29, FR-RC-35, FR-CV-17, FR-SR-50, FR-MR-16, FR-CM-28, FR-CO-43, FR-CO-45, FR-MR-17, FR-MR-18, FR-LR-44, FR-RC-31, FR-RC-32, FR-RC-33, FR-RC-34
   Decisions: DEC-RC-16, DEC-RC-17, DEC-RC-18, DEC-RC-19, DEC-RC-20, DEC-UX-101, DEC-UX-168, DEC-UX-169, DEC-UX-170, DEC-UX-171, DEC-UX-175, DEC-UX-176, DEC-UX-177, DEC-UX-178, DEC-UX-216, DEC-UX-263, DEC-UX-264, DEC-UX-265, DEC-RC-22, DEC-RC-23, DEC-RC-24, DEC-RC-26, DEC-RC-27, DEC-UX-279.
@@ -435,10 +435,10 @@ The lead source is set by the form the visitor used: website, app, partner or ma
        <div class="tile-head"><div class="label"><span class="lc-ref" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-term-keyField">Key Fields<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (what it means)</span></span></div><a class="edit-link" data-for="owner datateam" data-go="kf:edit" href="#"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
        <span class="code-chip">week_start</span><span class="code-chip">lead_source</span><span class="code-chip">lead_count</span><span class="code-chip">lead_channel</span>
       </div>
-      <!-- Edit, as proposed in OP-UX-125: a purpose line on top, and the fields of the Grain marked, so a Key Field is not read as the key -->
+      <!-- Edit (DEC-UX-343): a purpose line on top, and the fields of the Grain marked, so a Key Field is not read as the key -->
       <form class="sub-tile ov-wide" data-pane-group="kf" data-pane="edit" hidden onsubmit="return false" aria-label="Key Fields, editing">
        <div class="edit-bar"><p>Editing the Key Fields</p><button class="btn-quiet outline sm" type="button" data-go="kf:read">Cancel</button><button class="btn-primary sm" type="button" data-go="kf:read">Save</button></div>
-       <div class="tile-head"><div class="label"><span class="lc-ref" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-term-keyField">Key Fields<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (what it means)</span></span></div><span class="kind-chip kf-proposed">Proposed · OP-UX-125</span></div>
+       <div class="tile-head"><div class="label"><span class="lc-ref" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-term-keyField">Key Fields<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (what it means)</span></span></div></div>
        <p class="kf-purpose">The two to five fields a colleague starts with: what they look at first and filter on. The EDA explores at least these. Not what makes a row unique: that is the Grain.</p>
        <span class="code-chip">week_start<span class="kf-grain">in the Grain</span><button type="button" aria-label="Remove week_start">×</button></span><span class="code-chip">lead_source<span class="kf-grain">in the Grain</span><button type="button" aria-label="Remove lead_source">×</button></span><span class="code-chip">lead_count<button type="button" aria-label="Remove lead_count">×</button></span><span class="code-chip">lead_channel<button type="button" aria-label="Remove lead_channel">×</button></span><select class="add-chip" aria-label="Add a Key Field"><option>+ Field</option><option>lead_week_label</option><option>is_partner_feed</option></select>
       </form>
@@ -825,7 +825,7 @@ The lead source is set by the form the visitor used: website, app, partner or ma
 </div>
 <div class="proto-switch" data-group="kf" role="tablist" aria-label="Prototype: Key Fields" style="bottom:648px">Key Fields
  <button class="seg on" data-target="read" role="tab" aria-selected="true">Read</button>
- <button class="seg" data-target="edit" role="tab" aria-selected="false">Edit, as proposed</button>
+ <button class="seg" data-target="edit" role="tab" aria-selected="false">Edit</button>
 </div>
 <div class="proto-switch" data-group="dbtrep" role="tablist" aria-label="Prototype: a description from dbt reported as wrong" style="bottom:600px">dbt description
  <button class="seg on" data-target="none" role="tab" aria-selected="true">Not reported</button>
