@@ -958,7 +958,7 @@ if (document.getElementById('type-suggested') && new URLSearchParams(location.se
     state: { homeLoanSimulationId: ['about', 'Suggested from its mapping is'] },
     fact: { collectorDatetime: ['when', 'Suggested from the partition column'], creditAmount: ['measure', 'Suggested: a number'] },
     dimension: {},
-    aggregate: { listingId: ['group', 'Suggested from the grain'], collectorDatetime: ['period', 'Suggested from the partition column'],
+    aggregate: { listingId: ['group', 'Suggested from the Grain'], collectorDatetime: ['period', 'Suggested from the partition column'],
       creditAmount: ['sum', 'Suggested: a number'] },
     other: {},
   };
@@ -2031,7 +2031,7 @@ document.addEventListener('click', e => {
     { group: 'Projects', icon: 'ph-fill ph-folders', title: 'Listings audit', meta: '6 queries · with 4 colleagues', href: 'query-project.html', words: 'project' },
     { group: 'Your queries', icon: 'ph ph-table', title: 'Lead volume per province', meta: 'Mon 26 Oct', href: 'query.html' },
     { group: 'Your queries', icon: 'ph ph-table', title: 'Leads that came back within a week', meta: 'yesterday', href: 'query.html' },
-    { group: 'Learning Cards', icon: 'ph ph-graduation-cap', title: 'What one row stands for', meta: '2.1.3 · grain', href: 'learning-card.html' },
+    { group: 'Learning Cards', icon: 'ph ph-graduation-cap', title: 'What one row stands for', meta: '2.1.3 · Grain', href: 'learning-card.html' },
     { group: 'Learning Cards', icon: 'ph ph-graduation-cap', title: 'When a figure is final', meta: 'K5.4', href: 'learning-card.html' },
   ];
   const KIND = { Resources: 'Resource', Collections: 'Collection', Lenses: 'Lens', Projects: 'Project', 'Your queries': 'Query', 'Learning Cards': 'Learning Card' };

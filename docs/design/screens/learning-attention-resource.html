@@ -148,7 +148,7 @@
       <p class="prose">One row per week and lead source with the number of credit leads sent to KBC. A lead counts in the week it was first submitted, not when it was followed up. Test and duplicate requests are excluded.</p>
      </div>
     </div>
-    <div style="margin-top:12px;display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="code-chip">model type: aggregate</span><span class="code-chip">grain: week × lead source</span><span class="origin">From the Data Team</span></div>
+    <div style="margin-top:12px;display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="code-chip">model type: aggregate</span><span class="code-chip">Grain: week × lead source</span><span class="origin">From the Data Team</span></div>
    </div>
 
    <div class="sub-tile"><div class="label">Maturity</div>
@@ -161,7 +161,7 @@
    </div>
 
    <div class="sub-tile">
-    <div class="tile-head"><div class="label">Known behaviour</div><a class="edit-link" href="resource-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
+    <div class="tile-head"><div class="label">Known Behaviour</div><a class="edit-link" href="resource-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
     <div style="font-size:12px;font-weight:500;display:flex;align-items:center;gap:6px"><i class="ph-fill ph-check-circle" style="color:var(--text-secondary)"></i>Intended use</div><p style="font-size:12px;color:var(--text-secondary);margin:3px 0 10px 20px;line-height:1.5">Weekly trends and comparing lead sources.</p>
     <div style="font-size:12px;font-weight:500;display:flex;align-items:center;gap:6px"><i class="ph-fill ph-warning" style="color:var(--text-secondary)"></i>Pitfalls</div><p style="font-size:12px;color:var(--text-secondary);margin:3px 0 0 20px;line-height:1.5">The current week is incomplete. Don’t sum across sources for unique people.</p></div>
 
@@ -178,7 +178,7 @@
    </div>
 
    <div class="sub-tile">
-    <div class="tile-head"><div class="label">Key fields</div><a class="edit-link" href="resource-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
+    <div class="tile-head"><div class="label">Key Fields</div><a class="edit-link" href="resource-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
     <span class="code-chip">week_start</span><span class="code-chip">lead_source</span><span class="code-chip">lead_count</span><span class="code-chip">lead_channel</span>
     <div class="label" style="margin-top:12px">Parameters</div><span class="code-chip">lead_source</span><span class="code-chip">week_start</span></div>
 
@@ -188,7 +188,7 @@
      <div>
       <div style="font-size:12px;font-weight:500"><span class="code-chip" style="margin:0 6px 0 0">leadSource</span>on <span class="mono">lead_source</span></div>
       <p class="empty" style="margin:4px 0 12px">Joins Lead sources, Credit lead funnel and Lead response time.</p>
-      <div style="font-size:12px;font-weight:500"><span class="code-chip" style="margin:0 6px 0 0">creditLead</span><span style="color:var(--text-muted);font-weight:400">no identifier at this grain</span></div>
+      <div style="font-size:12px;font-weight:500"><span class="code-chip" style="margin:0 6px 0 0">creditLead</span><span style="color:var(--text-muted);font-weight:400">no identifier at this Grain</span></div>
       <p class="empty" style="margin-top:4px">In the lineage, but counted per week: it joins nothing here.</p>
      </div>
      <svg viewBox="0 0 330 150" width="100%" role="img" aria-label="Weekly lead volume joins Lead sources, Credit lead funnel and Lead response time through leadSource">

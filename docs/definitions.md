@@ -173,9 +173,9 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | bucket, bucketgrootte | bucket, size of a bucket |
 | businessbeschrijving | Business Description |
 | datumveld (van een Resource) | Date Field |
-| De grain klopt, Datumbereik, Lege waarden per sleutelveld, Verkapte lege waarden, Volume in de tijd met lege periodes, Verdeling van getallen, Verdeling van categorieën (EDA-Probes) | The grain holds, Date range, Nulls per Key Field, Disguised nulls, Volume over time with empty periods, Distribution of numbers, Distribution of categories |
+| De Grain klopt, Datumbereik, Lege waarden per sleutelveld, Verkapte lege waarden, Volume in de tijd met lege periodes, Verdeling van getallen, Verdeling van categorieën (EDA-Probes) | The Grain holds, Date range, Nulls per Key Field, Disguised nulls, Volume over time with empty periods, Distribution of numbers, Distribution of categories |
 | defect, werkt niet meer | Broken |
-| grain, grainveld, grainwaarde | Grain, Grain field, Grain value |
+| Grain, grainveld, grainwaarde | Grain, Grain field, Grain value |
 | zegt niets (een waarde, Verkapte lege waarden) | says nothing |
 | collectie | Collection |
 | collectiebeheer en wieden | collection management and weeding |

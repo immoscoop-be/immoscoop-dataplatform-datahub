@@ -138,11 +138,11 @@
       <p class="meta" style="margin-top:4px">Changed in dbt yesterday. Not edited here: it changes in the dbt project.</p>
      </div>
     </div>
-    <div style="margin-top:12px;display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="code-chip">model type: aggregate</span><span class="code-chip">grain: week × lead source</span><span class="origin">From the Data Team</span></div>
+    <div style="margin-top:12px;display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="code-chip">model type: aggregate</span><span class="code-chip">Grain: week × lead source</span><span class="origin">From the Data Team</span></div>
    </div>
 
    <div class="sub-tile">
-    <div class="label">Known behaviour</div>
+    <div class="label">Known Behaviour</div>
     <label class="field"><span>Intended use</span><textarea rows="2">Weekly trends and comparing lead sources.</textarea></label>
     <label class="field"><span>Pitfalls</span><textarea rows="3">The current week is incomplete. Don’t sum across sources for unique people.</textarea></label>
    </div>
@@ -177,7 +177,7 @@
    </div>
 
    <div class="sub-tile">
-    <div class="label">Key fields</div>
+    <div class="label">Key Fields</div>
     <span class="code-chip">week_start<button type="button" aria-label="Remove week_start">×</button></span><span class="code-chip">lead_source<button type="button" aria-label="Remove lead_source">×</button></span><span class="code-chip">lead_count<button type="button" aria-label="Remove lead_count">×</button></span><span class="code-chip">lead_channel<button type="button" aria-label="Remove lead_channel">×</button></span><button class="add-chip" type="button">+ Field</button>
     <div class="label" style="margin-top:12px">Parameters</div>
     <span class="code-chip">lead_source<button type="button" aria-label="Remove lead_source">×</button></span><span class="code-chip">week_start<button type="button" aria-label="Remove week_start">×</button></span><button class="add-chip" type="button">+ Field</button>
@@ -185,7 +185,7 @@
 
    <div class="sub-tile">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span class="label" style="margin:0;flex:1">Entities and relationships</span><span class="origin">From the Data Team</span></div>
-    <p class="empty">leadSource on <span class="mono">lead_source</span>: joins Lead sources, Credit lead funnel and Lead response time. creditLead has no identifier at this grain.</p>
+    <p class="empty">leadSource on <span class="mono">lead_source</span>: joins Lead sources, Credit lead funnel and Lead response time. creditLead has no identifier at this Grain.</p>
    </div>
   </div>
  </form>

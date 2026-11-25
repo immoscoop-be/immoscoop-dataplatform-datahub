@@ -16,7 +16,7 @@ Before the first deploy to uat: the one-time bootstrap ([OP-PF-10](../requiremen
 | --- | --- | --- |
 | 1 | The frame: tokens, app shell, themes and backgrounds, language, settings, sign-in, My page | `sign-in`, `my-page` (Profile, Background), `not-found` |
 | 2 | From dbt to Resources: the registry reads the manifests, Registrations, Resources without a Collection | `resource-unassigned` |
-| 3 | Collections: the panel, the start screen, a Collection, adding Resources with grain and relations | `collections-start`, `collection-overview`, `collection-edit`, `collection-add-resources`, `collection-add-relations` |
+| 3 | Collections: the panel, the start screen, a Collection, adding Resources with Grain and relations | `collections-start`, `collection-overview`, `collection-edit`, `collection-add-resources`, `collection-add-relations` |
 | 4 | The page of a Resource: its tabs, publishing and confirming, Levels | `resource-detail`, `resource-lineage`, `resource-history`, `resource-preview`, `resource-edit`, `resource-columns-edit`, `resource-publish` |
 | 5 | Query: the editor, Parameters, the Pre-flight, results and history | `query-new`, `query` |
 | 6 | Lenses: making one, its page, its size and its Requests | `lens-new`, `lens-new-context`, `lens`, `lens-context` |
