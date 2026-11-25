@@ -73,6 +73,7 @@
     removeLater = null,
     onremove,
     onchangetype,
+    onrelate,
     firstRowOf,
     eda,
     part = $bindable('summary'),
@@ -115,6 +116,8 @@
     onremove?: () => Promise<boolean>;
     /** Opens the steps of its relations from the model type on, for a Data Admin (FR-RC-28); undefined for anyone else. */
     onchangetype?: () => void;
+    /** "Edit Grain and relations", for who may set them, in what one row is and in the head of Entities (FR-RC-35). */
+    onrelate?: () => void;
     /** Reads its first row on a date field, for the line under Reliable since (DEC-RC-33). */
     firstRowOf?: (field: string) => Promise<FirstRow | null>;
     /** Its EDA on the maturity ladder, for a User who may explore Resources (FR-ED-02). */
@@ -374,7 +377,7 @@
 {#snippet modelAndGrain()}
   <!-- What one row is, from the Data Team, at the end of the Description (FR-RC-28, DEC-UX-263). -->
   {#if details.modelType || details.grain.length > 0 || onchangetype}
-    <div class="row"><OverviewRow {resource} {onchangetype} /></div>
+    <div class="row"><OverviewRow {resource} {onchangetype} {onrelate} /></div>
   {/if}
 {/snippet}
 
@@ -541,6 +544,9 @@
       {/if}
     {:else if part === 'entities'}
       {@render head(t('overview.entities'), t('overview.entities.lead'))}
+      {#if onrelate}
+        <p class="relate"><LearningRef place="grain" focusable={false}>{#snippet children(mark)}<button type="button" class="edit" title={t('resource.editRelations.title')} onclick={onrelate}><Icon name="graph-fill" />{t('resource.editRelations')}</button>{@render mark?.()}{/snippet}</LearningRef></p>
+      {/if}
       <SubTile label={t('resource.entities')}>
         {#snippet aside()}<OriginTag origin="dataTeam" />{/snippet}
         {#if related === undefined}
@@ -613,6 +619,7 @@
   .head h2 { margin: 0; font-size: var(--text-section); font-weight: var(--weight-medium); }
   .lead { margin: 4px 0 0; font-size: var(--text-small); color: var(--text-secondary); line-height: 1.5; max-width: 72ch; }
   .edit { all: unset; display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: var(--radius-sm); font-size: var(--text-meta); color: var(--text-muted); cursor: pointer; }
+  .relate { display: flex; justify-content: flex-end; margin: -38px 0 18px; }
   .edit:hover { color: var(--text-primary); background: var(--tint-hover); }
   .edit:focus-visible { outline: 2px solid var(--text-secondary); }
   .text-link { all: unset; display: inline-block; margin: 0 0 12px; font-size: var(--text-small); color: var(--text-secondary); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }

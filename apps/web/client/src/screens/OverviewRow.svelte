@@ -17,10 +17,13 @@
   let {
     resource,
     onchangetype,
+    onrelate,
   }: {
     resource: ResourceDetail;
     /** Opens the steps from the model type on, for who may (`resources.assign`); undefined for anyone else. */
     onchangetype?: () => void;
+    /** "Edit Grain and relations", for who may set them: the steps open on the Grain and storage (FR-RC-35). */
+    onrelate?: () => void;
   } = $props();
 
   const details = $derived(resource.details);
@@ -39,6 +42,9 @@
     <span class="label">{t('overview.row')}</span>
     <OriginTag origin="dataTeam" />
     <span class="space"></span>
+    {#if onrelate}
+      <LearningRef place="grain" focusable={false}>{#snippet children(mark)}<button type="button" class="text-link" title={t('resource.editRelations.title')} onclick={onrelate}><Icon name="graph" />{t('resource.editRelations')}</button>{@render mark?.()}{/snippet}</LearningRef>
+    {/if}
     {#if onchangetype}
       <button type="button" class="text-link" onclick={onchangetype}><Icon name="pencil-simple" />{t(details.modelType ? 'overview.row.change' : 'overview.row.choose')}</button>
     {/if}

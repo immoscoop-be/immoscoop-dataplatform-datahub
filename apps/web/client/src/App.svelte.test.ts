@@ -3504,7 +3504,7 @@ describe('the page of a Resource', () => {
     const main = within(await screen.findByRole('main'));
     await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
     await fireEvent.click(main.getByRole('tab', { name: 'Kolommen' }));
-    await fireEvent.click(main.getByRole('button', { name: /Relaties bewerken/ }));
+    await fireEvent.click(main.getByRole('button', { name: /Grain en relaties bewerken/ }));
     // It opens at its model type, the steps on top without choosing a Resource.
     const type = within(await screen.findByRole('dialog', { name: 'Wat is één rij van Weekly lead volume?' }));
     expect(type.getByRole('navigation', { name: 'Stappen' }).textContent).toMatch(/^\s*1\s*Modeltype\s*2\s*Grain en opslag\s*3\s*Velden en relaties\s*$/);
@@ -3542,7 +3542,7 @@ describe('the page of a Resource', () => {
     const main = within(await screen.findByRole('main'));
     await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
     await fireEvent.click(main.getByRole('tab', { name: 'Kolommen' }));
-    await fireEvent.click(main.getByRole('button', { name: /Relaties bewerken/ }));
+    await fireEvent.click(main.getByRole('button', { name: /Grain en relaties bewerken/ }));
     // It opens at the fields, without the steps of the model type and the grain, which only a Data Admin changes.
     const sheet = within(await screen.findByRole('dialog', { name: 'Velden en relaties van Weekly lead volume' }));
     expect(sheet.queryByRole('navigation', { name: 'Stappen' })).toBeNull();
@@ -3977,6 +3977,24 @@ describe('the model type of a Resource and the fields it asks for (FR-CO-44, FR-
         body: expect.objectContaining({ modelType: 'event', typeFields: [{ field: 'week_start', role: 'happenedAt', origin: 'dbt' }] }),
       }),
     );
+  });
+
+  it('lets a Data Admin change its Grain from what one row is, the model type kept, without choosing another (FR-RC-35, DEC-UX-341)', async () => {
+    const calls = serve({ as: 'admin', weekly: AGGREGATE });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    await fireEvent.click(await screen.findByRole('tab', { name: 'Beschrijving' }));
+    // Next to Change model type, with the ⓘ of Grain after it, outside the button.
+    const button = screen.getByRole('button', { name: 'Grain en relaties bewerken' });
+    expect(button.textContent).not.toContain('ⓘ');
+    expect(button.parentElement?.textContent).toContain('ⓘ');
+    await fireEvent.click(button);
+    // It opens on the Grain and storage; Next leads on, and the model type is one click back.
+    const grain = within(await screen.findByRole('dialog', { name: 'Grain en opslag van Weekly lead volume' }));
+    await fireEvent.click(grain.getByRole('button', { name: /Volgende: velden en relaties/ }));
+    const fields = within(await screen.findByRole('dialog', { name: 'Velden en relaties van Weekly lead volume' }));
+    await fireEvent.click(fields.getByRole('button', { name: 'Bewaren' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/resources/r2/details', body: expect.objectContaining({ modelType: 'aggregate' }) }));
   });
 
   it('warns everyone that a field of its model type is gone, and shows the role gone in its Description (FR-RC-29, DEC-UX-264)', async () => {

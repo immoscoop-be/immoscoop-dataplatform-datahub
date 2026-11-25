@@ -449,7 +449,7 @@
     if (resource.changes.length > 0 && describes('description')) rows.push(command('resource:seen', 'check-circle-fill', t('quick.resource.seen'), () => void act(() => catalogue.markSeen(resource.id)), { meta: changedText, words: t('quick.resource.seen.words') }));
     if (relates && goneText) rows.push(command('resource:gone', 'warning-circle-fill', t('resource.gone.choose'), () => (relating = 'fields'), { meta: goneText, words: t('quick.resource.relations.words') }));
     if (relates && missingText) rows.push(command('resource:complete', 'list-checks', t('resource.incomplete.complete'), () => (relating = 'type'), { meta: missingText, words: t('quick.resource.relations.words') }));
-    if (tab === 'columns' && (assigns || describes('entityMapping')) && resource.collectionId !== null) rows.push(command('resource:relations', 'graph-fill', t('resource.editRelations'), () => (relating = 'type'), { meta: t('resource.editRelations.title'), words: t('quick.resource.relations.words') }));
+    if (tab === 'columns' && (assigns || describes('entityMapping')) && resource.collectionId !== null) rows.push(command('resource:relations', 'graph-fill', t('resource.editRelations'), () => (relating = assigns && resource.details.modelType ? 'grain' : 'type'), { meta: t('resource.editRelations.title'), words: t('quick.resource.relations.words') }));
     for (const one of tabs) if (one.id !== tab) rows.push(view(`resource:tab:${one.id}`, TAB_ICONS[one.id] ?? 'list-numbers', t(one.label), () => (tab = one.id), { words: t('quick.tab.words') }));
     if (collection) {
       const into = collection;
@@ -619,6 +619,7 @@
       removeLater={removedByTeam ? (collection?.name ?? null) : null}
       onremove={() => mark(async () => (await catalogue.removeResource(resource.id), catalogue.resource(resource.id)))}
       onchangetype={relates ? () => (relating = resource.details.modelType ? 'change' : 'type') : undefined}
+      onrelate={relates && resource.details.modelType ? () => (relating = 'grain') : undefined}
       firstRowOf={(field) => queries.firstRow(resource.id, field).catch(() => null)}
       eda={ladder}
       bind:part
@@ -629,7 +630,7 @@
       canEdit={describes('description')}
       relate={(assigns || describes('entityMapping')) && resource.collectionId !== null}
       onsave={saveFields}
-      onrelate={() => (relating = 'type')}
+      onrelate={() => (relating = assigns && resource.details.modelType ? 'grain' : 'type')}
       ongaps={() => {
         tab = 'overview';
         part = 'gaps';

@@ -594,7 +594,7 @@ export default {
   'resource.entity.none': 'No field is mapped yet.',
   'resource.entity.picture': '{name} relates to other Resources through {identities}',
   'resource.columns.text': 'Every field with its Business Description, from the Owner, next to its description from dbt.',
-  'resource.editRelations': 'Edit relations',
+  'resource.editRelations': 'Edit Grain and relations',
   'resource.editRelations.title': 'Model type, Grain and relations, for a Data Admin',
   'resource.column.name': 'Column',
   'resource.column.type': 'Type',

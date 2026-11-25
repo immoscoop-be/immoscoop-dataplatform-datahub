@@ -393,7 +393,7 @@ The period of a Known Gap ([FR-RC-24](#fr-rc-24)) may name one date field of the
 <a id="fr-rc-35"></a>
 ### FR-RC-35 · The Grain is changed from wherever it shows
 
-**Status:** Specified · **Source:** Max, 2026-11-25 ([DEC-RC-35](#dec-rc-35)) · **Screens:** [resource-overview](../../design/screens/resource-overview.html), [collection-add-grain](../../design/screens/collection-add-grain.html), [collection-add-relations](../../design/screens/collection-add-relations.html)
+**Status:** Implemented · **Source:** Max, 2026-11-25 ([DEC-RC-35](#dec-rc-35)) · **Screens:** [resource-overview](../../design/screens/resource-overview.html), [collection-add-grain](../../design/screens/collection-add-grain.html), [collection-add-relations](../../design/screens/collection-add-relations.html)
 
 Who may set the Grain and the model type of a Resource, a Data Admin today ([DEC-CO-22](03-collections.md#dec-co-22)), always has a button to change its Grain and the mappings of its fields where they show: in the head of what one row is on its Description, next to "Change model type"; in the head of Entities; and on Columns, where "Edit relations" is today ([DEC-UX-107](../../design/principles.md#dec-ux-107)). Each opens the steps of adding a Resource on Grain and storage, with the model type it has kept, so that Next leads on without choosing another type; Fields and relations follows, and the earlier step Model type stays one click back. Nobody else sees the button. It reads "Edit Grain and relations" ([DEC-UX-341](../../design/principles.md#dec-ux-341)).
 

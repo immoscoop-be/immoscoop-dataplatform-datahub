@@ -593,7 +593,7 @@ export default {
   'resource.entity.none': 'Nog geen veld gemapt.',
   'resource.entity.picture': '{name} hangt via {identities} samen met andere Resources',
   'resource.columns.text': 'Elk veld met zijn Business Description, van de Owner, naast zijn beschrijving uit dbt.',
-  'resource.editRelations': 'Relaties bewerken',
+  'resource.editRelations': 'Grain en relaties bewerken',
   'resource.editRelations.title': 'Modeltype, Grain en relaties, voor een Data Admin',
   'resource.column.name': 'Kolom',
   'resource.column.type': 'Type',
