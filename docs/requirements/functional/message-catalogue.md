@@ -2074,14 +2074,14 @@ Template, English, laid out:
 | Status | Implemented |
 | Comes from | [FR-RC-29](05-resource-card.md#fr-rc-29), [DEC-RC-23](05-resource-card.md#dec-rc-23) |
 
-**What it asks:** Something to do, of the Data Team. A Data Admin chooses another field for each role with Edit relations, which reopens the steps from the model type on ([DEC-CO-27](03-collections.md#dec-co-27), [DEC-UX-107](../../design/principles.md#dec-ux-107)).
+**What it asks:** Something to do, of the Data Team. A Data Admin chooses another field for each role with Edit Grain and relations, which reopens the steps from the model type on ([DEC-CO-27](03-collections.md#dec-co-27), [DEC-UX-107](../../design/principles.md#dec-ux-107), [DEC-UX-341](../../design/principles.md#dec-ux-341)).
 
 **How it ends:** Once a field holds each role again, the warning goes and the Resource leaves the list to complete ([FR-RC-29](05-resource-card.md#fr-rc-29), [FR-CO-45](03-collections.md#fr-co-45)). It starts `open` and ends `chosen`.
 
 | Button | Opens | For |
 | --- | --- | --- |
 | Open the warning · *Waarschuwing openen* | The page of the Resource, at its warning | every recipient |
-| Edit relations · *Relaties bewerken* | Edit relations of the Resource, from the step of the model type on | Data Team |
+| Edit Grain and relations · *Grain en relaties bewerken* | Edit Grain and relations of the Resource, from the step of the model type on | Data Team |
 
 **Learning Card:** Named: **2.3.6 Five model types, and what each means for counting**. The card that explains the model types, listed wherever a model type shows ([FR-LR-39](16-learning.md#fr-lr-39)): what one row is, and so what each role of a model type is for.
 
@@ -2093,7 +2093,7 @@ Template, English, laid out:
 >
 > - `week_start`: de periode
 >
-> Iedereen die de resource ziet, ziet een waarschuwing met de rol, tot een veld die rol weer heeft. Het level blijft 4 · Explored, en ook de publicatie. Kies met Relaties bewerken een ander veld voor elke rol; tot dan staat de resource bij de resources om te vervolledigen.
+> Iedereen die de resource ziet, ziet een waarschuwing met de rol, tot een veld die rol weer heeft. Het level blijft 4 · Explored, en ook de publicatie. Kies met Grain en relaties bewerken een ander veld voor elke rol; tot dan staat de resource bij de resources om te vervolledigen.
 
 **Dutch, plain:**
 
@@ -2109,7 +2109,7 @@ Een veld van het modeltype van Weekly lead volume is verdwenen: week_start, de p
 >
 > - `week_start`: its period
 >
-> Everyone who sees the resource sees a warning that names the role, until a field holds it again. Its level stays 4 · Explored, and so does its publication. Choose another field for each role with Edit relations; until then, the resource is listed to complete.
+> Everyone who sees the resource sees a warning that names the role, until a field holds it again. Its level stays 4 · Explored, and so does its publication. Choose another field for each role with Edit Grain and relations; until then, the resource is listed to complete.
 
 **English, plain:**
 
@@ -2145,7 +2145,7 @@ De dbt-run van {run} verwijderde of hernoemde {count, plural, one {een veld} oth
 
 {gone}
 
-Iedereen die de resource ziet, ziet een waarschuwing met de rol, tot een veld die rol weer heeft. Het level blijft {level}, en ook de publicatie. Kies met Relaties bewerken een ander veld voor elke rol; tot dan staat de resource bij de resources om te vervolledigen.
+Iedereen die de resource ziet, ziet een waarschuwing met de rol, tot een veld die rol weer heeft. Het level blijft {level}, en ook de publicatie. Kies met Grain en relaties bewerken een ander veld voor elke rol; tot dan staat de resource bij de resources om te vervolledigen.
 ```
 
 Template, English, plain:
@@ -2163,7 +2163,7 @@ The dbt run of {run} removed or renamed {count, plural, one {a field} other {fie
 
 {gone}
 
-Everyone who sees the resource sees a warning that names the role, until a field holds it again. Its level stays {level}, and so does its publication. Choose another field for each role with Edit relations; until then, the resource is listed to complete.
+Everyone who sees the resource sees a warning that names the role, until a field holds it again. Its level stays {level}, and so does its publication. Choose another field for each role with Edit Grain and relations; until then, the resource is listed to complete.
 ```
 
 One item of `gone`, Dutch, plain:

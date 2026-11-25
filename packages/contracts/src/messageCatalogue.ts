@@ -1007,7 +1007,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
           '',
           '{gone}',
           '',
-          'Iedereen die de resource ziet, ziet een waarschuwing met de rol, tot een veld die rol weer heeft. Het level blijft {level}, en ook de publicatie. Kies met Relaties bewerken een ander veld voor elke rol; tot dan staat de resource bij de resources om te vervolledigen.',
+          'Iedereen die de resource ziet, ziet een waarschuwing met de rol, tot een veld die rol weer heeft. Het level blijft {level}, en ook de publicatie. Kies met Grain en relaties bewerken een ander veld voor elke rol; tot dan staat de resource bij de resources om te vervolledigen.',
         ),
       },
       en: {
@@ -1019,7 +1019,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
           '',
           '{gone}',
           '',
-          'Everyone who sees the resource sees a warning that names the role, until a field holds it again. Its level stays {level}, and so does its publication. Choose another field for each role with Edit relations; until then, the resource is listed to complete.',
+          'Everyone who sees the resource sees a warning that names the role, until a field holds it again. Its level stays {level}, and so does its publication. Choose another field for each role with Edit Grain and relations; until then, the resource is listed to complete.',
         ),
       },
     },
@@ -1031,10 +1031,10 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     action: {
       asks: 'act',
       of: ['dataTeam'],
-      what: 'A Data Admin chooses another field for each role with Edit relations, which reopens the steps from the model type on (DEC-CO-27, DEC-UX-107).',
+      what: 'A Data Admin chooses another field for each role with Edit Grain and relations, which reopens the steps from the model type on (DEC-CO-27, DEC-UX-107, DEC-UX-341).',
       buttons: [
         { label: { nl: 'Waarschuwing openen', en: 'Open the warning' }, opens: 'The page of the Resource, at its warning' },
-        { label: { nl: 'Relaties bewerken', en: 'Edit relations' }, opens: 'Edit relations of the Resource, from the step of the model type on', for: ['dataTeam'] },
+        { label: { nl: 'Grain en relaties bewerken', en: 'Edit Grain and relations' }, opens: 'Edit Grain and relations of the Resource, from the step of the model type on', for: ['dataTeam'] },
       ],
       states: ['open', 'chosen'],
       done: 'Once a field holds each role again, the warning goes and the Resource leaves the list to complete (FR-RC-29, FR-CO-45).',
