@@ -7,6 +7,7 @@
   import { levelName } from '@datahub/ui/foundations/levels.js';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
+  import LearningRef from './LearningRef.svelte';
   import { ago } from '@datahub/ui/foundations/when.js';
   import MaturityIcon from '@datahub/ui/marks/MaturityIcon.svelte';
   import OriginTag from '@datahub/ui/marks/OriginTag.svelte';
@@ -169,7 +170,7 @@
           </p>
         {:else if part === 'whatItIs'}
           {#if card.businessDescription}<MarkdownText source={card.businessDescription} />{/if}
-          {#if resource.description}<p class="dbt" class:alone={!card.businessDescription}><OriginTag origin="dbt" /><span>{resource.description}</span></p>{/if}
+          {#if resource.description}<p class="dbt" class:alone={!card.businessDescription}><LearningRef place="dbt" shape="chip">{#snippet children(mark)}<OriginTag origin="dbt" {mark} />{/snippet}</LearningRef><span>{resource.description}</span></p>{/if}
         {:else if part === 'oneRow'}
           <p class="line">
             {#if details.grain.length > 0}{details.grainSentence || details.grain.join(' × ')}{#each details.grain as field (field)}{' '}<span class="code">{field}</span>{/each}{/if}

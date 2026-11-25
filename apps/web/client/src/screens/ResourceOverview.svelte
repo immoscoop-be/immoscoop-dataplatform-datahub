@@ -380,7 +380,7 @@
 
 {#snippet dbtDescription(hint: boolean)}
   <SubTile label={t('description.dbt')}>
-    {#snippet aside()}<OriginTag origin="dbt" />{/snippet}
+    {#snippet aside()}<LearningRef place="dbt" shape="chip">{#snippet children(mark)}<OriginTag origin="dbt" {mark} />{/snippet}</LearningRef>{/snippet}
     <p class="prose">{resource.description || t('resource.noDescription')}</p>
     {#if hint}<p class="hint">{#if tableChanged}{t('resource.dbt.changed', { date: day(tableChanged.at) })} {/if}{t('resource.dbt.notEdited')}</p>{/if}
   </SubTile>

@@ -29,7 +29,8 @@ describe('the terms of the dictionary on a screen (DEC-UX-279, TR-LR-10)', () =>
 
   it('tell a term from a marker of system text', () => {
     expect(termOf('knownGap')?.term).toBe('Known Gap');
-    expect(termOf('grain')).toBeNull();
+    expect(termOf('grain')?.term).toBe('Grain');
+    expect(termOf('level')).toBeNull();
     expect(termOf('toString')).toBeNull();
   });
 });

@@ -1778,7 +1778,7 @@ describe('the web app, for the Data Team', () => {
     expect(screen.getByRole('link', { name: /Saved searches/ }).getAttribute('aria-current')).toBe('page');
   });
 
-  it('adds a waiting Resource to a Collection from its own page: the Collection first, then its model type, grain and fields (FR-CO-31, DEC-UX-131)', async () => {
+  it('adds a waiting Resource to a Collection from its own page: the Collection first, then its model type, Grain and fields (FR-CO-31, DEC-UX-131)', async () => {
     const calls = serve({ as: 'admin' });
     open('/resources/r1');
     render(App, { config: CONFIG });
@@ -1795,7 +1795,7 @@ describe('the web app, for the Data Team', () => {
     // The next steps are those of the page of a Collection, with this Resource chosen.
     const type = within(await screen.findByRole('dialog', { name: 'Wat is één rij van Saved searches?' }));
     await fireEvent.click(await type.findByRole('radio', { name: /^dimension/ }));
-    await fireEvent.click(type.getByRole('button', { name: /Volgende: grain en opslag/ }));
+    await fireEvent.click(type.getByRole('button', { name: /Volgende: Grain en opslag/ }));
     const grain = within(await screen.findByRole('dialog', { name: 'Grain en opslag van Saved searches' }));
     await fireEvent.input(grain.getByRole('textbox', { name: 'Wat één rij is, in woorden' }), { target: { value: 'saved search' } });
     await fireEvent.click(grain.getByRole('button', { name: /Volgende: velden en relaties/ }));
@@ -2324,7 +2324,7 @@ const GRAIN_RUN: RunView = {
 };
 
 describe('the guide of an EDA, in the Flow Box (FR-ED-14, DEC-UX-327, TR-ED-09)', () => {
-  /** eda with the EDA of Weekly lead volume, which a run of The grain holds changes. */
+  /** eda with the EDA of Weekly lead volume, which a run of The Grain holds changes. */
   function serveEda(options: { started?: boolean } = {}) {
     let view = edaWith();
     let started = options.started ?? true;
@@ -2371,10 +2371,10 @@ describe('the guide of an EDA, in the Flow Box (FR-ED-14, DEC-UX-327, TR-ED-09)'
     expect(guide.getByRole('button', { name: /^Datumbereik/ }).textContent).toContain('Nog niet toegevoegd');
     expect(guide.getByRole('button', { name: /^Verkapte lege waarden/ }).textContent).toContain('Nog niet toegevoegd');
     expect(guide.getByRole('button', { name: /^Waarden zonder match/ }).textContent).toContain('Komt eraan: Data Hub voert hem nog niet uit');
-    expect(guide.getByRole('button', { name: /^De grain klopt/ }).textContent).toContain('Nog niet toegevoegd');
+    expect(guide.getByRole('button', { name: /^De Grain klopt/ }).textContent).toContain('Nog niet toegevoegd');
     // The step to do now is the best next step, as the page proposes it, unfolded: The grain holds, while it is open,
     // whatever else misses more (DEC-ED-37).
-    expect(guide.getByRole('button', { name: /^De grain klopt/ }).getAttribute('aria-expanded')).toBe('true');
+    expect(guide.getByRole('button', { name: /^De Grain klopt/ }).getAttribute('aria-expanded')).toBe('true');
     expect(guide.getByRole('button', { name: /^Lege waarden per sleutelveld/ }).getAttribute('aria-expanded')).toBe('false');
     expect(guide.getByText(/Nog 10 te gaan, waarvan 3 eraan komen: ze tellen toch mee/)).toBeTruthy();
     // It stays open on every other page; its Resource leads back to its EDA, where, opened there, it stays open.
@@ -2403,7 +2403,7 @@ describe('the guide of an EDA, in the Flow Box (FR-ED-14, DEC-UX-327, TR-ED-09)'
     await vi.waitFor(() => expect(location.pathname).toBe('/eda/r2/probes/grainHolds'));
     // On the detail it is open as the User left it, its step open on the page, without a way there.
     const here = within(await box());
-    const grain = here.getByRole('button', { name: /^De grain klopt/ });
+    const grain = here.getByRole('button', { name: /^De Grain klopt/ });
     expect(grain.getAttribute('aria-expanded')).toBe('true');
     expect(here.getByText('Open op de pagina')).toBeTruthy();
     expect(within(document.getElementById('flow-step-grainHolds') as HTMLElement).queryByRole('button', { name: /Open de EDA-Probe/ })).toBeNull();
@@ -2412,7 +2412,7 @@ describe('the guide of an EDA, in the Flow Box (FR-ED-14, DEC-UX-327, TR-ED-09)'
     await fireEvent.click(await main.findByRole('button', { name: /^Uitvoeren$/ }));
     await vi.waitFor(() => expect(calls).toContainEqual(expect.objectContaining({ method: 'POST', path: 'eda /resources/r2/eda/probes/grainHolds/runs' })));
     await vi.waitFor(() => expect(here.getByText('1 van 10 nodige EDA-Probes af')).toBeTruthy());
-    expect(here.getByRole('button', { name: /^De grain klopt/ }).textContent).toContain('Zoals verwacht');
+    expect(here.getByRole('button', { name: /^De Grain klopt/ }).textContent).toContain('Zoals verwacht');
     expect(here.getByRole('button', { name: /^Lege waarden per sleutelveld/ }).getAttribute('aria-expanded')).toBe('true');
     // Close takes it away; Guide me brings it back.
     await fireEvent.click(here.getByRole('button', { name: 'Sluiten' }));
@@ -2431,7 +2431,7 @@ describe('the guide of an EDA, in the Flow Box (FR-ED-14, DEC-UX-327, TR-ED-09)'
     await fireEvent.click(sheet.getByRole('link', { name: /Lege waarden per sleutelveld/ }));
     await vi.waitFor(() => expect(location.pathname).toBe('/eda/r2/probes/nullsPerKeyField'));
     expect(screen.queryByRole('dialog', { name: 'Een EDA-Probe toevoegen' })).toBeNull();
-    expect(await within(screen.getByRole('main')).findByRole('heading', { level: 2, name: 'Lege waarden per sleutelveld' })).toBeTruthy();
+    expect(await within(screen.getByRole('main')).findByRole('heading', { level: 2, name: /^Lege waarden per sleutelveld/ })).toBeTruthy();
   });
 
   it('is there only while the EDA is in progress', async () => {
@@ -3287,7 +3287,7 @@ describe('the page of a Resource', () => {
     // Every step required to publish done; what is advised or for the EDA holds nothing up (DEC-MR-15).
     expect(sheet.getByText(/Nodig om te publiceren, alles gedaan:/).closest('p')?.textContent).toContain('Business Description; Sleutelvelden; Velden; Beoogd gebruik; Valkuilen; Reliable since.');
     expect(sheet.getByText(/Aangeraden:/).closest('p')?.textContent).toContain('1 ander veld zonder Business Description');
-    expect(sheet.getByText(/Voor de EDA, later:/).closest('p')?.textContent).toContain('geen modeltype vastgelegd; geen grain vastgelegd.');
+    expect(sheet.getByText(/Voor de EDA, later:/).closest('p')?.textContent).toContain('geen modeltype vastgelegd; geen Grain vastgelegd.');
     // The card, read back: what the declaration accepts (DEC-MR-17).
     expect(sheet.getByText('Wat je bevestigt · de kaart, voorgelezen')).toBeTruthy();
     // Reliable since on a line of its own, with why not earlier, before the Known Gaps (FR-RC-31).
@@ -3492,7 +3492,7 @@ describe('the page of a Resource', () => {
     expect(main.queryByRole('tab', { name: 'Gevarenzone' })).toBeNull();
   });
 
-  it('lets a Data Admin change its model type, grain and relations with Edit relations, in three steps (DEC-UX-107, DEC-CO-27)', async () => {
+  it('lets a Data Admin change its model type, Grain and relations with Edit relations, in three steps (DEC-UX-107, DEC-CO-27)', async () => {
     const calls = serve({ as: 'admin' });
     open('/resources/r2');
     render(App, { config: CONFIG });
@@ -3506,7 +3506,7 @@ describe('the page of a Resource', () => {
     expect(type.getByText('Kies een modeltype')).toBeTruthy();
     await fireEvent.click(type.getByRole('radio', { name: /^event/ }));
     expect(type.getByText(/vraagt wanneer het gebeurde/)).toBeTruthy();
-    await fireEvent.click(type.getByRole('button', { name: /Volgende: grain en opslag/ }));
+    await fireEvent.click(type.getByRole('button', { name: /Volgende: Grain en opslag/ }));
     const grain = within(await screen.findByRole('dialog', { name: 'Grain en opslag van Weekly lead volume' }));
     await fireEvent.click(grain.getByRole('button', { name: /Volgende: velden en relaties/ }));
     const sheet = within(await screen.findByRole('dialog', { name: 'Velden en relaties van Weekly lead volume' }));
@@ -3777,7 +3777,7 @@ describe('the web app, for the Data Team, with Collections', () => {
     await fireEvent.click(sheet.getByRole('radio', { name: /Saved searches/ }));
     await fireEvent.click(sheet.getByRole('button', { name: /Volgende: modeltype/ }));
     await fireEvent.click(await screen.findByRole('radio', { name: /^other/ }));
-    await fireEvent.click(screen.getByRole('button', { name: /Volgende: grain en opslag/ }));
+    await fireEvent.click(screen.getByRole('button', { name: /Volgende: Grain en opslag/ }));
     await fireEvent.input(await screen.findByRole('textbox', { name: 'Wat één rij is, in woorden' }), { target: { value: 'saved search' } });
     await fireEvent.click(screen.getByRole('button', { name: /Volgende: velden en relaties/ }));
     const second = within(await screen.findByRole('dialog', { name: 'Velden en relaties van Saved searches' }));
@@ -3816,7 +3816,7 @@ describe('the web app, for the Data Team, with Collections', () => {
     expect(cards.map((card) => card.getAttribute('value'))).toEqual(['event', 'state', 'fact', 'dimension', 'aggregate', 'other']);
     expect(cards.filter((card) => (card as HTMLInputElement).checked)).toEqual([]);
     expect(type.getByRole('radio', { name: /^dimension/ }).closest('label')?.textContent).toContain('Wat het beschrijft · vereist');
-    const toGrain = type.getByRole('button', { name: /Volgende: grain en opslag/ }) as HTMLButtonElement;
+    const toGrain = type.getByRole('button', { name: /Volgende: Grain en opslag/ }) as HTMLButtonElement;
     expect(toGrain.disabled).toBe(true);
     expect(type.getByText('Kies een modeltype')).toBeTruthy();
     await fireEvent.click(type.getByRole('radio', { name: /^dimension/ }));
@@ -3844,7 +3844,7 @@ describe('the web app, for the Data Team, with Collections', () => {
     expect(mapping.value).toBe('is');
     expect((second.getByRole('combobox', { name: 'Entity-identiteit van search_id' }) as HTMLInputElement).value).toBe('search.searchId');
     expect(second.getByText('Voorgesteld op basis van de naam')).toBeTruthy();
-    expect(second.getByText('Eén rij per search: de grain is dit veld')).toBeTruthy();
+    expect(second.getByText('Eén rij per search: de Grain is dit veld')).toBeTruthy();
     // A field mapped by hand, with an Entity the Domain Model does not have yet (DEC-CO-21).
     await fireEvent.change(second.getByRole('combobox', { name: 'Mapping van filters' }), { target: { value: 'occurredWithin' } });
     const identity = second.getByRole('combobox', { name: 'Entity-identiteit van filters' });
@@ -3931,7 +3931,8 @@ const RENAMED = {
 
 describe('the model type of a Resource and the fields it asks for (FR-CO-44, FR-CO-45, FR-RC-28, FR-RC-29)', () => {
   /** The value of a fact of what one row is, by its label. */
-  const fact = (label: string) => (screen.getByText(label, { selector: 'dt' }).nextElementSibling?.textContent ?? '').replace(/\s+/g, ' ').trim();
+  // A label that is a term of the dictionary carries its ⓘ after its text (DEC-UX-340).
+  const fact = (label: string) => ([...document.querySelectorAll('dt')].find((dt) => dt.textContent?.trim().startsWith(label))?.nextElementSibling?.textContent ?? '').replace(/\s+/g, ' ').trim();
 
   it('shows what one row is at the end of its Description, by role, and lets a Data Admin change its model type, which drops its fields (DEC-UX-263, DEC-RC-22)', async () => {
     const calls = serve({ as: 'admin', weekly: AGGREGATE });
@@ -3952,7 +3953,7 @@ describe('the model type of a Resource and the fields it asks for (FR-CO-44, FR-
     expect((type.getByRole('radio', { name: /^aggregate/ }) as HTMLInputElement).checked).toBe(true);
     expect(type.getByRole('radio', { name: /^aggregate/ }).closest('label')?.textContent).toContain('Nu');
     // "Next" waits for another model type.
-    const next = type.getByRole('button', { name: /Volgende: grain en opslag/ }) as HTMLButtonElement;
+    const next = type.getByRole('button', { name: /Volgende: Grain en opslag/ }) as HTMLButtonElement;
     expect(next.disabled).toBe(true);
     expect(type.getByText('Kies een ander modeltype')).toBeTruthy();
     await fireEvent.click(type.getByRole('radio', { name: /^event/ }));
@@ -4040,7 +4041,7 @@ describe('the model type of a Resource and the fields it asks for (FR-CO-44, FR-
     const type = within(await screen.findByRole('dialog', { name: 'Wat is één rij van Weekly lead volume?' }));
     expect((type.getByRole('radio', { name: /^aggregate/ }) as HTMLInputElement).checked).toBe(true);
     expect(type.queryByText(/^Zijn modeltype is nu/)).toBeNull();
-    expect((type.getByRole('button', { name: /Volgende: grain en opslag/ }) as HTMLButtonElement).disabled).toBe(false);
+    expect((type.getByRole('button', { name: /Volgende: Grain en opslag/ }) as HTMLButtonElement).disabled).toBe(false);
   });
 
   it('lists the Resources to complete for the Data Team in the panel, each with what it misses, and opens one (FR-CO-45, DEC-UX-265)', async () => {
@@ -6347,17 +6348,17 @@ describe('the Learning Centre', () => {
 describe('the markers of the Learning Centre', () => {
   const details = { ...WEEKLY_DETAIL.details, grain: ['week_start', 'lead_source'], modelType: 'aggregate' };
 
-  it('explain the grain of a Resource with its written cards, and open one in a floating window over the page (FR-LR-12, FR-LR-35, FR-LR-36)', async () => {
+  it('explain the Grain of a Resource with its written cards, and open one in a floating window over the page (FR-LR-12, FR-LR-35, FR-LR-36)', async () => {
     const calls = serve({ weekly: { details }, learned: [{ card: '1.2.2', seenAt: '2026-10-26T09:00:00Z', lastAt: '2026-10-26T09:00:00Z', step: 'see', understoodAt: null }] });
     open('/resources/r2');
     render(App, { config: CONFIG });
     await fireEvent.click(await screen.findByRole('tab', { name: 'Beschrijving' }));
-    // What one row is, at the end of the Description: the first field of its grain carries the marker (DEC-UX-263).
-    const grain = await screen.findByRole('button', { name: /^week_start/ });
+    // What one row is, at the end of the Description: its label Grain, a term of the dictionary, carries the marker (DEC-UX-340).
+    const grain = await screen.findByRole('button', { name: /^Grain/ });
     expect(grain.textContent).toContain('ⓘ');
     expect(grain.getAttribute('aria-haspopup')).toBe('dialog');
     await fireEvent.keyDown(grain, { key: 'Enter' });
-    const pop = within(screen.getByRole('dialog', { name: 'Uitgelegd in 3 Learning Cards' }));
+    const pop = within(screen.getByRole('dialog', { name: 'Grain: wat het betekent' }));
     expect(pop.getAllByRole('button').map((item) => item.textContent?.slice(0, 5))).toEqual(['2.3.5', '1.2.2', '1.2.1']);
     expect(await pop.findByText(/^Gezien/)).toBeTruthy();
     expect(pop.getAllByText('Nog niet gezien')).toHaveLength(2);

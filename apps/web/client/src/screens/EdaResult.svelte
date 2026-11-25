@@ -21,6 +21,7 @@
   import MenuButton from '@datahub/ui/containers/MenuButton.svelte';
   import Sentence from '@datahub/ui/foundations/Sentence.svelte';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
+  import LearningRef from './LearningRef.svelte';
   import Button from '@datahub/ui/primitives/Button.svelte';
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import { digFrom } from '../lib/dig.js';
@@ -186,7 +187,7 @@
     <div class="low">
       <dl class="numbers">
         <div><dt>{t('eda.grain.rows')}</dt><dd>{number(data.rows, language)}</dd></div>
-        <div><dt>{t('eda.grain.values')}</dt><dd>{number(data.values, language)}</dd></div>
+        <div><dt><LearningRef place="grain">{#snippet children(mark)}<span>{t('eda.grain.values')}{@render mark?.()}</span>{/snippet}</LearningRef></dt><dd>{number(data.values, language)}</dd></div>
         <div><dt>{t('eda.grain.onMore')}</dt><dd class:warn={data.onMoreThanOne > 0}>{number(data.onMoreThanOne, language)}</dd></div>
         <div><dt>{t('eda.grain.covered')}</dt><dd class:warn={data.rowsCovered > 0}>{number(data.rowsCovered, language)}</dd></div>
         <div><dt>{t('eda.grain.emptyGrain')}</dt><dd class:warn={data.emptyGrain > 0}>{number(data.emptyGrain, language)}</dd></div>

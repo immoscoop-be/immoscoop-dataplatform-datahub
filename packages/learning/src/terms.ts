@@ -30,6 +30,36 @@ export const TERMS = {
       },
     },
   },
+  grain: {
+    term: 'Grain',
+    text: {
+      en: {
+        name: 'Grain',
+        definition:
+          'What one row of a Resource is: the fields that together identify each row, with one sentence, such as "one row per listing per day". No two rows have the same values in them. Not a Key Field, which is where a colleague starts.',
+      },
+      nl: {
+        name: 'Grain',
+        definition:
+          'Wat één rij van een Resource is: de velden die samen elke rij aanduiden, met één zin, zoals "één rij per pand per dag". Geen twee rijen hebben dezelfde waarden erin. Geen Key Field: dat is waar een collega begint.',
+      },
+    },
+  },
+  dbt: {
+    term: 'dbt',
+    text: {
+      en: {
+        name: 'dbt',
+        definition:
+          'The tool in which the Data Team builds the tables of BigQuery from SQL models, in dbt projects. Data Hub follows those projects; the description from dbt is what its dbt project says of a table or a field.',
+      },
+      nl: {
+        name: 'dbt',
+        definition:
+          'De tool waarin het Data Team de tabellen van BigQuery bouwt uit SQL-modellen, in dbt-projecten. Data Hub volgt die projecten; de beschrijving uit dbt is wat zijn dbt-project over een tabel of een veld zegt.',
+      },
+    },
+  },
   keyField: {
     term: 'Key Field',
     text: {

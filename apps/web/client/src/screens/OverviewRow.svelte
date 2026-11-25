@@ -56,15 +56,9 @@
       {/if}
     </dd>
     {#if details.grain.length > 0 || details.grainSentence}
-      <dt>{t('overview.row.grain')}</dt>
+      <dt><LearningRef place="grain">{#snippet children(mark)}<span>{t('overview.row.grain')}{@render mark?.()}</span>{/snippet}</LearningRef></dt>
       <dd>
-        {#each details.grain as name, index (name)}
-          {#if index === 0}
-            <LearningRef place="grain" shape="chip">
-              {#snippet children(mark)}<span class="code">{name}{@render mark?.()}</span>{/snippet}
-            </LearningRef>
-          {:else}<span class="code">{name}</span>{/if}
-        {/each}
+        {#each details.grain as name (name)}<span class="code">{name}</span>{/each}
         {#if details.grainSentence}<span>{t('overview.row.sentence', { sentence: details.grainSentence })}</span>{/if}
       </dd>
     {/if}

@@ -6,13 +6,15 @@
   /**
    * The marker ⓘ (U+24D8) right after a system text that the Learning Centre explains (Marker ⓘ, DEC-UX-54,
    * OP-UX-22): the sign only, in the colour of its text, smaller and raised, from a symbol font, as Poppins has
-   * none. A tap on it opens the pop-out of what holds it, and keeps a button from doing its own action.
+   * none. A tap on it opens the pop-out of what holds it, and keeps a button from doing its own action. Right after a
+   * link or a button, outside it (DEC-UX-340), a click of the mouse opens it too: there it has no other action.
    */
   const host = getContext<ExplainedHost | undefined>(EXPLAINED);
   let touched = false;
 
   function tap(event: MouseEvent): void {
-    if (!touched || !host) return;
+    const within = (event.currentTarget as Element | null)?.closest('a, button') != null;
+    if (!host || (!touched && within)) return;
     event.preventDefault();
     event.stopPropagation();
     host.tap();

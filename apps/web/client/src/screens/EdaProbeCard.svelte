@@ -2,8 +2,9 @@
   import type { EdaView, ProbeView } from '@datahub/contracts/eda';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
+  import LearningRef from './LearningRef.svelte';
   import { day } from '@datahub/ui/foundations/when.js';
-  import { overallReading, PROBE_TEXTS } from '../lib/eda.js';
+  import { overallReading, PROBE_TERMS, PROBE_TEXTS } from '../lib/eda.js';
   import { cardSentence } from '../lib/edaWords.js';
   import { probePath } from '../lib/routes.js';
   import EdaDrawing from './EdaDrawing.svelte';
@@ -22,6 +23,8 @@
   const language = $derived(currentLanguage());
   const name = $derived(t(PROBE_TEXTS[probe.key]));
   const reading = $derived(overallReading(probe.lastRun?.results ?? []));
+  /** The term of the dictionary its name holds, whose ⓘ follows the link (DEC-UX-340). */
+  const term = $derived(PROBE_TERMS[probe.key]);
   const setOn = $derived(probe.fields.length > 0 ? probe.fields : probe.applies.fields);
   const setOnText = $derived(setOn.length > 0 ? t('eda.card.setOn', { fields: setOn.join(', ') }) : t('eda.card.setOnTable'));
 </script>
@@ -29,7 +32,9 @@
 <article class="card" aria-label={name}>
   <header>
     {#if reading}<EdaTone {reading} />{/if}
-    <h4 title={name}><a href={probePath(view.resource.id, probe.key)}>{name}</a></h4>
+    {#if term}
+      <h4 title={name}><LearningRef place={term} focusable={false}>{#snippet children(mark)}<a href={probePath(view.resource.id, probe.key)}>{name}</a>{@render mark?.()}{/snippet}</LearningRef></h4>
+    {:else}<h4 title={name}><a href={probePath(view.resource.id, probe.key)}>{name}</a></h4>{/if}
   </header>
   <EdaDrawing probe={probe.key} fields={view.resource.fields} {setOn} results={probe.lastRun?.results ?? []} label={name} />
   <p class="result"><EdaSaid parts={cardSentence(probe, view, language)} /></p>

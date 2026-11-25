@@ -145,6 +145,13 @@ export type EdaClient = ReturnType<typeof createEda>;
 // What the screens read from an EDA
 
 /** The name of an EDA-Probe, in the language of the User: its English name is the contract's, its words a sentence. */
+/** The term of the dictionary a probe is named after, whose ⓘ its title carries (DEC-UX-340). */
+export const PROBE_TERMS: Readonly<Partial<Record<ProbeKey, 'grain' | 'keyField'>>> = {
+  grainHolds: 'grain',
+  nullsPerKeyField: 'keyField',
+  correlations: 'keyField',
+};
+
 export const PROBE_TEXTS: Readonly<Record<ProbeKey, string>> = {
   grainHolds: 'eda.probe.grainHolds',
   dateRange: 'eda.probe.dateRange',

@@ -147,7 +147,7 @@
       <div class="row headrow">
         <span class="label">{t('resource.column.field')}</span>
         <span class="label">{@render business()} <OriginTag origin="owner" /></span>
-        <span class="label">{t('description.dbt')} <OriginTag origin="dbt" /></span>
+        <span class="label">{t('description.dbt')} <LearningRef place="dbt" shape="chip">{#snippet children(mark)}<OriginTag origin="dbt" {mark} />{/snippet}</LearningRef></span>
       </div>
       {#each listed as field (field.name)}
         {@const changed = changedInDbt.get(field.name)}
@@ -181,7 +181,7 @@
           <th>{t('resource.column.name')}</th>
           <th>{t('resource.column.type')}</th>
           <th>{@render business()} <OriginTag origin="owner" /></th>
-          <th>{t('description.dbt')} <OriginTag origin="dbt" /></th>
+          <th>{t('description.dbt')} <LearningRef place="dbt" shape="chip">{#snippet children(mark)}<OriginTag origin="dbt" {mark} />{/snippet}</LearningRef></th>
           <th>{t('resource.column.entity')}</th>
           <th></th>
         </tr>
