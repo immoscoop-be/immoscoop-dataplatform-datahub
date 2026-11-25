@@ -1653,6 +1653,115 @@ describe.skipIf(!url)('the routes of Collections', () => {
         expect((await dirk('DELETE', `/messages/${system.id}`)).statusCode).toBe(409);
       }
     });
+    it('sends a description from dbt reported as wrong to the Data Team, joins a second one to it, and closes it once dbt changes it (FR-CV-17, DEC-CV-14)', async () => {
+      const an = await user('An', [DIGIKOM]);
+      const kim = await user('Kim', [DIGIKOM]);
+      const lies = await user('Lies', [DIGIKOM]);
+      const eva = await user('Eva', [AGENTS]);
+      const dirk = await user('Dirk', [], 'admin');
+      // A dbt project of its own, so that its runs follow on from each other alone.
+      const run = (runId: string, table: string, field: string) =>
+        app.inject({
+          method: 'POST',
+          url: '/internal/resources',
+          headers: { authorization: 'Bearer registry-id-token' },
+          payload: {
+            projectId: '5151',
+            projectName: 'reports_test',
+            runId,
+            generatedAt: '2026-11-27T06:12:00Z',
+            tables: [
+              {
+                key: 'immoscoop-dataplatform.dbt_marts.r_cards',
+                nodeId: 'model.reports_test.r_cards',
+                name: 'r_cards',
+                resourceType: 'model',
+                description: table,
+                exposures: ['datahub_r_cards'],
+                label: null,
+                checksum: 'sum-r_cards',
+                columns: [
+                  { name: 'r_cards_id', position: 1, dataType: 'STRING', description: field },
+                  { name: 'week', position: 2, dataType: 'DATE', description: '' },
+                ],
+              },
+            ],
+          },
+        });
+      expect((await run('1', 'Cards per week.', 'The number of the card.')).statusCode).toBe(200);
+      const waiting = (await dirk('GET', '/resources?collection=none')).json().resources as { id: string; name: string }[];
+      const cards = waiting.find((resource) => resource.name === 'r_cards')!.id;
+      const reported = (await an('POST', '/collections', { name: 'Reported', description: 'Reported.', icon: 'flag', ownerUnit: DIGIKOM.id })).json();
+      expect((await dirk('PUT', `/resources/${cards}/collection`, { collectionId: reported.id })).statusCode).toBe(200);
+      const report = (who: typeof an, body: object) => who('POST', `/resources/${cards}/description-reports`, body);
+
+      // From next to the description of a field: the Request quotes it as dbt has it, and names the field.
+      expect((await report(kim, { field: 'r_cards_id', text: '' })).statusCode).toBe(400);
+      expect((await report(kim, { field: 'nope', text: 'Wrong.' })).statusCode).toBe(404);
+      expect((await report(eva, { field: 'r_cards_id', text: 'Wrong.' })).statusCode).toBe(404);
+      const sent = await report(kim, { field: 'r_cards_id', text: 'It is not a number, it is a code.', should: 'The code of the card, as printed on it.' });
+      expect(sent.statusCode).toBe(201);
+      const request = sent.json().message;
+      expect(sent.json().outcome).toBe('sent');
+      expect(request).toMatchObject({
+        type: 'MSG-RES-10',
+        kind: 'request',
+        state: 'waiting',
+        subject: { kind: 'resource', id: cards },
+        params: { on: 'field', field: 'r_cards_id', quoted: 'The number of the card.', text: 'It is not a number, it is a code.', should: 'The code of the card, as printed on it.' },
+        mine: true,
+        mayReply: false,
+        mayJoin: false,
+      });
+      // Every reader sees that it is reported, with the Request.
+      expect((await lies('GET', `/resources/${cards}`)).json().resource.reports).toEqual([{ id: request.id, field: 'r_cards_id', state: 'waiting', at: expect.any(String) }]);
+      expect((await dirk('GET', '/messages?view=forYou')).json().messages.map((message: { id: string }) => message.id)).toContain(request.id);
+
+      // Its writer again changes nothing; a colleague joins it, with their words, or with "Join it".
+      expect((await report(kim, { field: 'r_cards_id', text: 'Still wrong.' })).json()).toMatchObject({ outcome: 'already', message: { id: request.id } });
+      expect((await an('GET', `/messages/${request.id}`)).json().message.mayJoin).toBe(true);
+      const joined = await report(an, { field: 'r_cards_id', text: 'Agents read it as a count.' });
+      expect(joined.statusCode).toBe(200);
+      expect(joined.json().outcome).toBe('joined');
+      expect(JSON.parse(joined.json().message.params.joins)).toEqual([{ id: 'u-An', name: 'An', text: 'Agents read it as a count.', at: expect.any(String) }]);
+      expect((await lies('POST', `/messages/${request.id}/join`)).json().outcome).toBe('joined');
+      expect((await lies('POST', `/messages/${request.id}/join`)).json().outcome).toBe('already');
+      expect((await lies('GET', '/messages?view=forYou')).json().messages.map((message: { id: string }) => message.id)).toContain(request.id);
+      expect(await database.db.selectFrom('messages').select('id').where('type', '=', 'MSG-RES-10').where('subjectId', '=', cards).execute()).toHaveLength(1);
+
+      // The description of the table is a Request of its own; a description dbt does not have is none to report.
+      const table = (await report(lies, { text: 'Cards are counted per month.' })).json().message;
+      expect(table.params).toMatchObject({ on: 'table', quoted: 'Cards per week.' });
+      expect(table.params.field).toBeUndefined();
+      expect((await report(kim, { field: 'week', text: 'Empty.' })).json().error).toBe('no_description');
+      // Only who may write Messages reports or joins one; a Request takes no reply.
+      const silent = await user('Silent', [DIGIKOM], 'businessAnalyst', { 'messages.write': { on: false, values: {} } });
+      expect((await silent('POST', `/resources/${cards}/description-reports`, { text: 'Hm.' })).statusCode).toBe(403);
+      expect((await silent('POST', `/messages/${table.id}/join`)).statusCode).toBe(403);
+      expect((await kim('POST', `/messages/${table.id}/replies`, { text: 'Also.' })).statusCode).toBe(409);
+
+      // The Data Team accepts it: the description is to be corrected in dbt.
+      expect((await kim('POST', `/messages/${request.id}/decision`, { outcome: 'accepted' })).statusCode).toBe(403);
+      const accepted = (await dirk('POST', `/messages/${request.id}/decision`, { outcome: 'accepted', text: 'We correct it in dbt.' })).json().message;
+      expect(accepted).toMatchObject({ state: 'accepted', mayJoin: false, replies: [{ type: 'MSG-CNV-05', params: { outcome: 'accepted' } }] });
+      expect((await kim('GET', `/resources/${cards}`)).json().resource.reports.map((one: { field: string | null; state: string }) => [one.field, one.state])).toEqual([
+        ['r_cards_id', 'accepted'],
+        [null, 'waiting'],
+      ]);
+
+      // dbt changes both descriptions: Data Hub closes both Requests itself, accepted or waiting, and the lines go.
+      expect((await run('2', 'Cards per month.', 'The code of the card, as printed on it.')).statusCode).toBe(200);
+      const corrected = (await kim('GET', `/messages/${request.id}`)).json().message;
+      expect(corrected.state).toBe('corrected');
+      expect(corrected.replies.map((reply: { type: string; writer: unknown; params: Record<string, string> }) => [reply.type, reply.writer === null, reply.params])).toEqual([
+        ['MSG-CNV-05', false, expect.objectContaining({ outcome: 'accepted' })],
+        ['MSG-RES-11', true, { on: 'field', field: 'r_cards_id', run: expect.any(String), after: 'The code of the card, as printed on it.' }],
+      ]);
+      expect((await lies('GET', `/messages/${table.id}`)).json().message).toMatchObject({ state: 'corrected', replies: [{ type: 'MSG-RES-11', params: { on: 'table', after: 'Cards per month.' } }] });
+      expect((await kim('GET', `/resources/${cards}`)).json().resource.reports).toEqual([]);
+      // A closed Request stays: its decision and its correction belong to the history of the Resource (DEC-CV-16).
+      expect((await kim('DELETE', `/messages/${request.id}`)).statusCode).toBe(409);
+    });
   });
 
   describe('Permission groups (TR-PL-06, DEC-PL-02 to DEC-PL-06)', () => {

@@ -103,7 +103,7 @@ export function createRequests(db: Kysely<CatalogueDatabase>): Requests {
       const row = await db
         .insertInto('messages')
         .values({ type: fields.type, subjectKind: SUBJECT_OF[fields.type], subjectId: fields.subjectId, writerId: writer.id, params, state: 'waiting', lastWriterId: writer.id })
-        .onConflict((conflict) => conflict.columns(['type', 'subjectKind', 'subjectId', 'writerId']).where('state', '=', 'waiting').where('writerId', 'is not', null).doNothing())
+        .onConflict((conflict) => conflict.columns(['type', 'subjectKind', 'subjectId', 'writerId']).where('state', '=', 'waiting').where('writerId', 'is not', null).where('type', '<>', 'MSG-RES-10').doNothing())
         .returningAll()
         .executeTakeFirst();
       if (row) {

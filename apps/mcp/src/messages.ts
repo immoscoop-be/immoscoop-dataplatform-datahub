@@ -88,6 +88,46 @@ export function messageTools({ server, hub, permits }: Context): void {
     );
   }
 
+  // A description from dbt that seems wrong, to the Data Team (FR-CV-17), for who may write Messages on a Resource, only
+  // after the User agreed to exactly that (DEC-CV-17).
+  if (first) {
+    server.registerTool(
+      'report_description',
+      {
+        title: 'Report a description from dbt as wrong',
+        description:
+          'Tells the Data Team that a description from dbt seems wrong: that of a Resource, or of one of its fields. It is a Request to the Data Team on the Resource that quotes the description as dbt has it now; its Owner Unit is told too, and every reader sees at the description that it is reported until the Data Team decides. When one already waits on the same description, the User joins it, with their words. Show the User the description, what is wrong and what it should say, and call this only once they agree; pass in before the description as you showed it.',
+        inputSchema: {
+          resource: z.string().describe('The ID of the Resource.'),
+          field: z.string().optional().describe('The field whose description it is; leave it out for the description of the Resource itself.'),
+          text: z.string().min(1).max(4000).describe('What is wrong with it, as the User agreed to it.'),
+          should: z.string().max(4000).optional().describe('What it should say, as the User agreed to it.'),
+          before: z.string().optional().describe('The description from dbt as you showed it to the User.'),
+        },
+        annotations: SHARE,
+      },
+      ({ resource, field, text, should, before }) =>
+        attempt(async () => {
+          if (before !== undefined) {
+            const { resource: found } = await hub.get<{ resource: { description: string; fields: { name: string; description: string }[] } }>('catalogue', `/resources/${enc(resource)}`);
+            const now = field === undefined ? found.description : found.fields.find((one) => one.name === field)?.description;
+            if (now !== undefined && now !== before) return refusal(`Changed in dbt since you showed it: it now reads ${JSON.stringify(now)}. Show the User the description as it is, and ask again.`);
+          }
+          const reported = await hub.send<{ outcome: 'sent' | 'joined' | 'already'; message: Shown }>('catalogue', 'POST', `/resources/${enc(resource)}/description-reports`, {
+            field: field ?? null,
+            text,
+            should: should ?? '',
+          });
+          const said = {
+            sent: 'Sent to the Data Team as a Request; the Owner Unit is told too, and every reader sees at the description that it is reported.',
+            joined: 'A colleague had reported it already: the User joined that Request, and hears its decision and when it is corrected.',
+            already: 'The User had reported it already; nothing changed.',
+          }[reported.outcome];
+          return answer({ outcome: reported.outcome, message: shown(reported.message) }, said);
+        }),
+    );
+  }
+
   // A User always replies in their own Questions and Signals; in those of others only with messages.reply.
   if (permits.reply) {
     server.registerTool(

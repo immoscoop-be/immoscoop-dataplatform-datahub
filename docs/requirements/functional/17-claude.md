@@ -111,6 +111,7 @@ Every endpoint around Resources, with the tool that answers it. Who may use a to
 | "Ask the Owner why March is missing" | `write_message` | catalogue `POST /messages` | Whoever sees it | Text, posted after the User agrees ([FR-CL-13](#fr-cl-13)) |
 | "Answer that it is fixed" | `reply_to_message` | catalogue `POST /messages/:id/replies` | Whoever sees the Message | Text, posted after the User agrees |
 | "Delete the Question I posted by mistake" | `delete_message` | catalogue `DELETE /messages/:id` | Its writer, the Owner Unit of its object, the Data Team | Deleted for everyone, after the User agrees ([DEC-CV-17](14-conversations.md#dec-cv-17)) |
+| "The description of lead_source is wrong, tell the Data Team" | `report_description` | catalogue `POST /resources/:id/description-reports` | Who may write Messages on the Resource | A Request to the Data Team, or the waiting one joined, after the User agrees to the description, what is wrong and what it should say ([FR-CV-17](14-conversations.md#fr-cv-17), [DEC-CV-17](14-conversations.md#dec-cv-17)) |
 
 ### Concepts and how-to-use
 

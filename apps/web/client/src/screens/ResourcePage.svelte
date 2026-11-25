@@ -17,10 +17,10 @@
   import { useLearning } from '../lib/learning-context.js';
   import type { CardChanges, Catalogue, Collection, DescribeAttribute, KnownGap, LogEntry, Related, ResourceDetail } from '../lib/catalogue.js';
   import { can, canWith, reach, removable, type Permissions } from '../lib/permissions.js';
-  import type { Conversation, WrittenKind } from '../lib/messages.js';
+  import { type Conversation, REPORT, type Reported, type Reporting, type WrittenKind } from '../lib/messages.js';
   import type { QueryClient, Storage } from '../lib/query.js';
   import type { Registry } from '../lib/registry.js';
-  import { collectionPath, edaPath, newQueryPath, type ResourceSpot, resourcePath } from '../lib/routes.js';
+  import { collectionPath, contextPath, edaPath, newQueryPath, type ResourceSpot, resourcePath } from '../lib/routes.js';
   import type { EdaClient } from '../lib/eda.js';
   import { command, place, useScreenCommands, view } from '../lib/commands.svelte.js';
   import type { IconName } from '@datahub/ui/foundations/icons.js';
@@ -92,7 +92,14 @@
     onrun?: () => void;
     /** "Messages" with their number, which opens the slide-in (FR-CV-07); left out while they are read. */
     /** Its Messages: how many, where, the kinds the User may write on it, and writing one of a kind (DEC-UX-257). */
-    messages?: { count: number | null; href: string; kinds?: readonly WrittenKind[]; write?: (kind: WrittenKind) => void };
+    messages?: {
+      count: number | null;
+      href: string;
+      kinds?: readonly WrittenKind[];
+      write?: (kind: WrittenKind) => void;
+      /** Opens the form that reports a description from dbt as wrong, quoted, with what it should say to start with (FR-CV-17). */
+      report?: (report: { field: string | null; quoted: string; should: string }) => void;
+    };
     /** The Questions, Remarks and Signals on it, the newest first, for its Summary; undefined while they are read. */
     threads?: readonly Conversation[];
     /** The spot its address opens on: a tab, or a part of its Overview, as a link from Claude names it (DEC-CL-19). */
@@ -227,6 +234,31 @@
   const canDeprecate = $derived(resource.canDeprecate ?? (canEdit && can(permissions, 'resources.deprecate')));
   /** The queries on it: for who sees every query, or the queries on the Resources of their Owner Units (DEC-SR-41, `queries.seeOthers`). */
   const seesQueries = $derived(reach(permissions, 'queries.seeOthers') === 'every' || (reach(permissions, 'queries.seeOthers') === 'theirs' && canEdit));
+  /**
+   * "Seems wrong?" next to a description from dbt, for who may write Messages on it, and what every reader sees while one
+   * is reported: the waiting or accepted Request about each description, from its Messages (FR-CV-17, DEC-UX-338).
+   */
+  const reporting = $derived.by<Reporting>(() => {
+    const reported = new Map<string, Reported>();
+    for (const thread of threads ?? []) {
+      if (thread.type !== REPORT || (thread.state !== 'waiting' && thread.state !== 'accepted')) continue;
+      const key = thread.params.field ?? '';
+      if (!reported.has(key)) reported.set(key, { id: thread.id, state: thread.state, at: thread.createdAt, href: contextPath({ kind: 'resource', id: resource.id }, thread.id) });
+    }
+    const open = messages?.report;
+    const writes = (messages?.kinds?.length ?? 0) > 0;
+    return {
+      reported,
+      report:
+        open && writes
+          ? (field) => {
+              const one = field === null ? null : resource.fields.find((candidate) => candidate.name === field);
+              open({ field, quoted: field === null ? resource.description : (one?.description ?? ''), should: field === null ? resource.card.businessDescription : (one?.businessDescription ?? '') });
+            }
+          : undefined,
+    };
+  });
+
   const tabs = $derived(TABS.filter(({ id }) => (id !== 'history' || seesQueries) && (id !== 'preview' || can(permissions, 'resources.preview'))));
   /** Only its Owner publishes it: a member of the Owner Unit of its Collection, who may publish (FR-SR-16, DEC-PL-06). */
   const isOwner = $derived(collection !== undefined && (collection.owned ?? groups.includes(collection.ownerUnit.id)));
@@ -605,6 +637,7 @@
       {storage}
       {threads}
       messagesHref={messages?.href}
+      {reporting}
       {describes}
       {canDeprecate}
       onsave={saveCard}
@@ -627,6 +660,7 @@
   {:else if tab === 'columns'}
     <ResourceColumns
       {resource}
+      {reporting}
       canEdit={describes('description')}
       relate={(assigns || describes('entityMapping')) && resource.collectionId !== null}
       onsave={saveFields}

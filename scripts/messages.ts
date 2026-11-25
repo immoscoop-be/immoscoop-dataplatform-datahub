@@ -40,6 +40,7 @@ const RECIPIENTS: Record<MessageRecipient, string> = {
   author: 'its author',
   consumers: 'Consumers',
   lensUsers: 'who used the Lens lately',
+  joiners: 'who joined it',
 };
 /** The four actors of the overview: whoever receives a Message is one of them. */
 const ACTOR_OF: Record<MessageRecipient, MessageSender> = {
@@ -51,6 +52,7 @@ const ACTOR_OF: Record<MessageRecipient, MessageSender> = {
   author: 'user',
   consumers: 'user',
   lensUsers: 'user',
+  joiners: 'user',
 };
 const SUBJECTS: Record<string, string> = {
   collection: 'Collection',

@@ -197,7 +197,7 @@ Its writer, the Owner Unit of its object and the Data Team can close an open Que
 <a id="fr-cv-17"></a>
 ### FR-CV-17 · Reporting a description from dbt as wrong
 
-**Status:** Specified · **Source:** Max, 2026-11-25 ([DEC-CV-14](#dec-cv-14)) · **Screens:** [resource-overview](../../design/screens/resource-overview.html), [resource-messages](../../design/screens/resource-messages.html)
+**Status:** Implemented · **Source:** Max, 2026-11-25 ([DEC-CV-14](#dec-cv-14)) · **Screens:** [resource-overview](../../design/screens/resource-overview.html), [resource-messages](../../design/screens/resource-messages.html)
 
 Next to a description from dbt, wherever it shows, the Description and the Summary of a Resource and each field on Columns, everyone who may write Messages on the Resource has "Seems wrong?". It opens a short form on the Resource: the description quoted as dbt has it now, what is wrong with it, required, and what it should say, optional and filled in with the Business Description when there is one. Sent, it is a Request to the Data Team about the Resource, which names the field when it is about one, in the Message Catalogue as a type of its own; the Owner Unit is told too. A colleague who finds the same description wrong while a Request waits joins it, as with a card that is wanted ([MSG-LRN-01](message-catalogue.md#msg-lrn-01)).
 

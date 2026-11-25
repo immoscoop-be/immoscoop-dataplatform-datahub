@@ -29,6 +29,7 @@
     worksAgain: 'check-circle',
     withdrawn: 'prohibit-fill',
     closed: 'minus-circle',
+    corrected: 'check-circle',
   };
 </script>
 
@@ -40,7 +41,7 @@
   import Avatar from '@datahub/ui/primitives/Avatar.svelte';
   import Button from '@datahub/ui/primitives/Button.svelte';
   import { initialsOf } from '../lib/initials.js';
-  import { cardOfType, type Conversation, messageText, STATE_TEXTS, SUBJECT_TITLES } from '../lib/messages.js';
+  import { cardOfType, type Conversation, joinersOf, messageText, REPORT, STATE_TEXTS, SUBJECT_TITLES } from '../lib/messages.js';
   import MessageComposer from './MessageComposer.svelte';
   import LearningInline from './LearningInline.svelte';
   import MessageText from './MessageText.svelte';
@@ -57,6 +58,7 @@
     onclose,
     onreopen,
     ondelete,
+    onjoin,
     notify = '',
   }: {
     message: Conversation;
@@ -71,6 +73,8 @@
      * place that says what goes (FR-CV-18, DEC-UX-339); true when it is gone.
      */
     ondelete?: (id: string) => Promise<boolean>;
+    /** Offers "Join it" on a waiting Request about a description from dbt the User did not send or join (FR-CV-17). */
+    onjoin?: () => Promise<boolean>;
     /** Who a reply notifies, under its field. */
     notify?: string;
   } = $props();
@@ -113,6 +117,19 @@
     if (!deleteFailed) deleting = null;
   }
 
+  /** A description from dbt reported as wrong (FR-CV-17): what it quotes, what is wrong, and who joined it. */
+  const report = $derived(message.type === REPORT);
+  const joiners = $derived(report ? joinersOf(message.params) : []);
+  const joinable = $derived(report && message.mayJoin === true && onjoin !== undefined);
+  let joining = $state(false);
+  let joinFailed = $state(false);
+  async function join(): Promise<void> {
+    if (!onjoin) return;
+    joining = true;
+    joinFailed = !(await onjoin().catch(() => false));
+    joining = false;
+  }
+
   const name = (writer: Conversation['writer']) => writer?.name ?? 'Data Hub';
   const reads = $derived(Number(message.params.reads ?? 0));
   const threshold = $derived(Number(message.params.threshold ?? 0));
@@ -141,7 +158,15 @@
       {#if reopenable}<span class="end"><Button variant="outline" disabled={reopening} onclick={reopen}><Icon name="arrow-counter-clockwise" />{t('messages.reopen')}</Button></span>{/if}
     </div>
     {#if reopenFailed}<p class="meta failed" role="alert">{t('messages.failed.close')}</p>{/if}
-    {#if person && message.params.text}
+    {#if report}
+      <p class="meta about">{message.params.field ? t('messages.report.aboutField', { field: message.params.field }) : t('messages.report.about')}</p>
+      <blockquote class="quoted">{message.params.quoted}</blockquote>
+      <p class="words"><b class="label">{t('messages.report.wrong')}</b>{message.params.text}</p>
+      {#if message.params.should}<p class="words"><b class="label">{t('messages.report.should')}</b>{message.params.should}</p>{/if}
+      {#each joiners as joiner (joiner.id)}
+        <p class="joined"><Icon name="users" /><span>{t('messages.report.joined', { name: joiner.name })}{#if joiner.text}: “{joiner.text}”{/if}</span></p>
+      {/each}
+    {:else if person && message.params.text}
       <p class="words">{message.params.text}</p>
     {:else if rich}
       <div class="rich"><MessageText text={rich} /></div>
@@ -165,7 +190,11 @@
             {#if reply.kind === 'closing'}<span class="state"><Icon name="minus-circle" />{t('messages.state.closed')}</span>{/if}
             {#if reply.mayDelete && ondelete && deleting !== reply.id}<button type="button" class="link end" onclick={() => (deleting = reply.id)}><Icon name="trash" />{t('messages.delete')}</button>{/if}
           </div>
-          {#if reply.params.text}<p class="words">{reply.params.text}</p>{/if}
+          {#if reply.writer === null}
+            <!-- What Data Hub replies, such as a description corrected in dbt (MSG-RES-11), in the texts of the Message Catalogue. -->
+            {@const said = messageText({ ...reply, subject: message.subject }, language, 'rich')}
+            {#if said}<div class="rich"><MessageText text={said} /></div>{/if}
+          {:else if reply.params.text}<p class="words">{reply.params.text}</p>{/if}
           {#if deleting === reply.id}{@render confirm(reply.id, t('messages.delete.reply'))}{/if}
         </div>
       </div>
@@ -191,12 +220,14 @@
     {/if}
     {#if deleting === message.id}
       {@render confirm(message.id, message.replies.length > 0 ? t('messages.delete.conversation', { kind: KIND_NAMES[message.kind], count: message.replies.length }) : t('messages.delete.one', { kind: KIND_NAMES[message.kind] }))}
-    {:else if (repliable && !replying) || (message.mayDelete && ondelete)}
+    {:else if (repliable && !replying) || (message.mayDelete && ondelete) || joinable}
       <div class="actions">
         {#if repliable && !replying}<button type="button" class="link" onclick={() => (replying = true)}><Icon name="arrow-bend-up-left-fill" />{t('messages.reply')}</button>{/if}
+        {#if joinable}<button type="button" class="link" title={t('messages.join.who')} disabled={joining} onclick={join}><Icon name="users" />{t('messages.join')}</button>{/if}
         {#if message.mayDelete && ondelete}<button type="button" class="link" title={t('messages.delete.who')} onclick={() => (deleting = message.id)}><Icon name="trash" />{t('messages.delete')}</button>{/if}
       </div>
     {/if}
+    {#if joinFailed}<p class="meta failed" role="alert">{t('messages.join.failed')}</p>{/if}
     {#if repliable && !replying}
       <!-- Reply sits in the actions above. -->
     {:else if repliable && onreply}
@@ -234,6 +265,11 @@
   .meta { font-size: var(--text-meta); color: var(--text-muted); }
   .words { margin: 6px 0 0; font-size: var(--text-small); line-height: 1.55; white-space: pre-line; overflow-wrap: anywhere; }
   .rich { margin-top: 6px; }
+  .about { display: block; margin: 2px 0 6px; }
+  .quoted { margin: 0 0 8px; padding: 2px 0 2px 10px; border-left: 2px solid var(--tint-active); color: var(--text-secondary); font-size: var(--text-small); line-height: 1.5; white-space: pre-line; }
+  .label { display: block; font-size: var(--text-meta); font-weight: var(--weight-medium); color: var(--text-muted); }
+  .joined { display: flex; align-items: baseline; gap: 6px; margin: 6px 0 0; font-size: var(--text-meta); color: var(--text-secondary); line-height: 1.5; }
+  .joined :global(.icon) { flex: none; }
   .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin: 10px 0 0; padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface-sub); }
   .facts div { display: flex; flex-direction: column; gap: 2px; font-size: var(--text-small); }
   .facts dt { font-size: var(--text-meta); color: var(--text-muted); }

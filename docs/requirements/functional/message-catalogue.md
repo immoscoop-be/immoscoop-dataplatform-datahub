@@ -27,10 +27,10 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 
 | From ↓ to → | User | Owner | Data Team |
 | --- | --- | --- | --- |
-| User | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-04](#msg-cnv-04), [MSG-CNV-07](#msg-cnv-07) | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-03](#msg-cnv-03), [MSG-LRN-01](#msg-lrn-01) | [MSG-CNV-03](#msg-cnv-03), [MSG-LEN-01](#msg-len-01), [MSG-QRY-01](#msg-qry-01) |
+| User | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-04](#msg-cnv-04), [MSG-CNV-07](#msg-cnv-07) | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-03](#msg-cnv-03), [MSG-RES-10](#msg-res-10), [MSG-LRN-01](#msg-lrn-01) | [MSG-CNV-03](#msg-cnv-03), [MSG-RES-10](#msg-res-10), [MSG-LEN-01](#msg-len-01), [MSG-QRY-01](#msg-qry-01) |
 | Owner | [MSG-RES-07](#msg-res-07) | – | – |
 | Data Team | [MSG-CNV-05](#msg-cnv-05) | – | – |
-| Data Hub | [MSG-CNV-06](#msg-cnv-06), [MSG-LEN-02](#msg-len-02), [MSG-LEN-06](#msg-len-06), [MSG-KEY-01](#msg-key-01), [MSG-KEY-02](#msg-key-02), [MSG-USR-01](#msg-usr-01), [MSG-QRY-03](#msg-qry-03), [MSG-QRY-04](#msg-qry-04), [MSG-QRY-05](#msg-qry-05) | [MSG-RES-02](#msg-res-02), [MSG-RES-03](#msg-res-03), [MSG-RES-04](#msg-res-04), [MSG-RES-05](#msg-res-05), [MSG-RES-06](#msg-res-06), [MSG-RES-08](#msg-res-08), [MSG-LEN-03](#msg-len-03), [MSG-LEN-04](#msg-len-04), [MSG-LEN-05](#msg-len-05), [MSG-QRY-02](#msg-qry-02), [MSG-RPT-01](#msg-rpt-01) | [MSG-COL-01](#msg-col-01), [MSG-RES-01](#msg-res-01), [MSG-RES-09](#msg-res-09), [MSG-LEN-03](#msg-len-03), [MSG-USR-02](#msg-usr-02), [MSG-USR-03](#msg-usr-03) |
+| Data Hub | [MSG-CNV-06](#msg-cnv-06), [MSG-RES-11](#msg-res-11), [MSG-LEN-02](#msg-len-02), [MSG-LEN-06](#msg-len-06), [MSG-KEY-01](#msg-key-01), [MSG-KEY-02](#msg-key-02), [MSG-USR-01](#msg-usr-01), [MSG-QRY-03](#msg-qry-03), [MSG-QRY-04](#msg-qry-04), [MSG-QRY-05](#msg-qry-05) | [MSG-RES-02](#msg-res-02), [MSG-RES-03](#msg-res-03), [MSG-RES-04](#msg-res-04), [MSG-RES-05](#msg-res-05), [MSG-RES-06](#msg-res-06), [MSG-RES-08](#msg-res-08), [MSG-LEN-03](#msg-len-03), [MSG-LEN-04](#msg-len-04), [MSG-LEN-05](#msg-len-05), [MSG-QRY-02](#msg-qry-02), [MSG-RPT-01](#msg-rpt-01) | [MSG-COL-01](#msg-col-01), [MSG-RES-01](#msg-res-01), [MSG-RES-09](#msg-res-09), [MSG-LEN-03](#msg-len-03), [MSG-USR-02](#msg-usr-02), [MSG-USR-03](#msg-usr-03) |
 
 ## Overview
 
@@ -40,7 +40,7 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | [MSG-CNV-02](#msg-cnv-02) | Remark | Collection, Resource, Lens, query or Learning Card | User → Owner and who wrote in the conversation | Nothing | By the writer | Implemented |
 | [MSG-CNV-03](#msg-cnv-03) | Signal | Resource or Lens | User → Owner and Data Team | Something to do | By the writer | Implemented |
 | [MSG-CNV-04](#msg-cnv-04) | Reply | Collection, Resource, Lens, query or Learning Card | User → its writer and who wrote in the conversation | Nothing | By the writer | Implemented |
-| [MSG-CNV-05](#msg-cnv-05) | Decision on a Request | Lens or query | Data Team → its writer and its author | Nothing | By the writer | Implemented |
+| [MSG-CNV-05](#msg-cnv-05) | Decision on a Request | Resource, Lens or query | Data Team → its writer, who joined it and its author | Nothing | By the writer | Implemented |
 | [MSG-CNV-06](#msg-cnv-06) | A Request lapsed | Lens or query | Data Hub → its writer and its author | Something to do | Named: K5.6 | Withdrawn |
 | [MSG-CNV-07](#msg-cnv-07) | A Question or Signal closed | Collection, Resource, Lens, query or Learning Card | User → its writer | Nothing | By the writer | Implemented |
 | [MSG-COL-01](#msg-col-01) | A Collection has no Owner any more | Collection | Data Hub → Data Team | Something to do | Proposed: K3.2 | Withdrawn |
@@ -53,6 +53,8 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | [MSG-RES-07](#msg-res-07) | The Owner tells the Consumers about a change | Resource | Owner → Consumers | Nothing | By the writer | Proposed |
 | [MSG-RES-08](#msg-res-08) | A Resource arrived in your Collection | Resource | Data Hub → Owner | Something to do | Named: 4.7.1 | Implemented |
 | [MSG-RES-09](#msg-res-09) | A field of its model type is gone | Resource | Data Hub → Data Team | Something to do | Named: 2.3.6 | Implemented |
+| [MSG-RES-10](#msg-res-10) | A description from dbt seems wrong | Resource | User → Data Team and Owner | A decision | By the writer | Implemented |
+| [MSG-RES-11](#msg-res-11) | A reported description was corrected in dbt | Resource | Data Hub → its writer and who joined it | Nothing | Proposed: K2.4 | Implemented |
 | [MSG-LEN-01](#msg-len-01) | Request to accept a very large Lens | Lens | User → Data Team | A decision | By the writer | Implemented |
 | [MSG-LEN-02](#msg-len-02) | A Lens grew into large | Lens | Data Hub → its author | Nothing | Named: K5.6 | Implemented |
 | [MSG-LEN-03](#msg-len-03) | A Lens grew into very large | Lens | Data Hub → Data Team and Owner | A decision | Named: K5.6 | Implemented |
@@ -413,13 +415,13 @@ Template, English, laid out:
 | | |
 | --- | --- |
 | Kind | decision |
-| About | Lens or query |
-| From → to | Data Team → its writer and its author |
-| When | A member of the Data Team accepts or refuses a Request ([MSG-LEN-01](#msg-len-01), [MSG-LEN-03](#msg-len-03), [MSG-QRY-01](#msg-qry-01)). The decision is its reply. |
+| About | Resource, Lens or query |
+| From → to | Data Team → its writer, who joined it and its author |
+| When | A member of the Data Team accepts or refuses a Request ([MSG-LEN-01](#msg-len-01), [MSG-LEN-03](#msg-len-03), [MSG-QRY-01](#msg-qry-01), [MSG-RES-10](#msg-res-10)). The decision is its reply. |
 | Status | Implemented |
-| Comes from | [FR-CV-08](14-conversations.md#fr-cv-08), [FR-LE-09](09-lenses.md#fr-le-09), [DEC-SR-29](04-stacks-and-resources.md#dec-sr-29), [DEC-SR-36](04-stacks-and-resources.md#dec-sr-36) |
+| Comes from | [FR-CV-08](14-conversations.md#fr-cv-08), [FR-LE-09](09-lenses.md#fr-le-09), [DEC-SR-29](04-stacks-and-resources.md#dec-sr-29), [DEC-SR-36](04-stacks-and-resources.md#dec-sr-36), [FR-CV-17](14-conversations.md#fr-cv-17) |
 
-**What it asks:** Nothing. It tells the writer of the Request the decision; a refused Lens or query is theirs to change.
+**What it asks:** Nothing. It tells the writer of the Request, and who joined it, the decision; a refused Lens or query is theirs to change.
 
 **How it ends:** When it is read.
 
@@ -481,7 +483,7 @@ Template, Dutch, laid out:
 
 > {text}
 
-{outcome, select, accepted {{subjectKind, select, lens {De lens is gepubliceerd.} other {De query mag draaien.}}} other {{subjectKind, select, lens {De lens blijft ongepubliceerd: pas hem aan en stuur hem opnieuw.} other {De query draait niet: laat hem minder lezen en draai hem opnieuw.}}}}
+{outcome, select, accepted {{subjectKind, select, lens {De lens is gepubliceerd.} resource {De beschrijving wordt aangepast in dbt.} other {De query mag draaien.}}} other {{subjectKind, select, lens {De lens blijft ongepubliceerd: pas hem aan en stuur hem opnieuw.} resource {De beschrijving blijft zoals ze is.} other {De query draait niet: laat hem minder lezen en draai hem opnieuw.}}}}
 ```
 
 Template, English, plain:
@@ -498,7 +500,7 @@ Template, English, laid out:
 
 > {text}
 
-{outcome, select, accepted {{subjectKind, select, lens {The lens is published.} other {The query may run.}}} other {{subjectKind, select, lens {The lens stays unpublished: change it and send it again.} other {The query does not run: make it read less and run it again.}}}}
+{outcome, select, accepted {{subjectKind, select, lens {The lens is published.} resource {The description is to be corrected in dbt.} other {The query may run.}}} other {{subjectKind, select, lens {The lens stays unpublished: change it and send it again.} resource {The description stays as it is.} other {The query does not run: make it read less and run it again.}}}}
 ```
 
 </details>
@@ -718,6 +720,125 @@ One item of `changes`, English, laid out:
 
 ```markdown
 - `{field}`: {change, select, added {added} removed {removed} renamed {renamed; it was `{old}`} other {its type changed from `{old}` to `{new}`}}
+```
+
+</details>
+
+<a id="msg-res-10"></a>
+
+### MSG-RES-10 · A description from dbt seems wrong
+
+| | |
+| --- | --- |
+| Kind | Request |
+| About | Resource |
+| From → to | User → Data Team and Owner |
+| When | A User who may write Messages on a Resource presses "Seems wrong?" next to a description from dbt, of the Resource or of one of its fields, and sends the form ([FR-CV-17](14-conversations.md#fr-cv-17), [DEC-CV-14](14-conversations.md#dec-cv-14)). |
+| How many | One per description while it waits: a colleague who finds the same description wrong joins it, with their words if they wrote any, and sending again changes nothing. |
+| Status | Implemented |
+| Comes from | [FR-CV-17](14-conversations.md#fr-cv-17), [DEC-CV-14](14-conversations.md#dec-cv-14), [DEC-UX-338](../../design/principles.md#dec-ux-338) |
+
+**What it asks:** A decision, of the Data Team. A member of the Data Team reads the description in context and decides: Accept, to correct it in dbt, or Refuse, with why. While it waits, every reader sees at the description that it is reported; once accepted, that it is to be corrected in dbt ([FR-CV-17](14-conversations.md#fr-cv-17)).
+
+**How it ends:** The decision is its reply ([MSG-CNV-05](#msg-cnv-05)), which notifies its writer and who joined it. When the description changes in dbt, while it waits or once accepted, Data Hub closes it itself ([MSG-RES-11](#msg-res-11)). It starts `waiting` and ends `accepted`, `refused` or `corrected`.
+
+| Button | Opens | For |
+| --- | --- | --- |
+| Open in context · *Openen in context* | The page of the Resource, with the Request in a floating window over it ([FR-CV-09](14-conversations.md#fr-cv-09)) | every recipient |
+| Accept · *Aanvaarden* | Decides in the floating window: the description is to be corrected in dbt | Data Team |
+| Refuse · *Weigeren* | Decides in the floating window, after a reason, which is needed for a refusal; the line at the description goes | Data Team |
+
+**Learning Card:** By the writer. Its writer says what is wrong and what it should say; the description and its field come from dbt.
+
+**Dutch, laid out**, with the example:
+
+> **Mia Peeters vindt dat de beschrijving uit dbt van het veld `lead_count` van Weekly lead volume niet klopt**
+>
+> **Nu in dbt:** Number of credit leads sent to KBC, without test and duplicate requests
+>
+> **Wat niet klopt:** "Duplicate requests" reads as if someone who applies twice counts once. Only an exact copy of the same request is taken out.
+>
+> **Wat er zou moeten staan:** How many credit leads went to KBC that week from this source. Someone who applies twice counts twice.
+>
+> Het datateam aanvaardt de melding, om de beschrijving in dbt aan te passen, of weigert ze met de reden. Tot dan ziet iedereen bij de beschrijving dat ze gemeld is.
+
+**Dutch, plain:**
+
+```text
+Mia Peeters vindt dat de beschrijving uit dbt van het veld lead_count van Weekly lead volume niet klopt.
+“"Duplicate requests" reads as if someone who applies twice counts once. Only an exact copy of the same request is taken out.”
+```
+
+**English, laid out**, with the example:
+
+> **Mia Peeters finds that the description from dbt of the field `lead_count` of Weekly lead volume seems wrong**
+>
+> **In dbt now:** Number of credit leads sent to KBC, without test and duplicate requests
+>
+> **What is wrong:** "Duplicate requests" reads as if someone who applies twice counts once. Only an exact copy of the same request is taken out.
+>
+> **What it should say:** How many credit leads went to KBC that week from this source. Someone who applies twice counts twice.
+>
+> The data team accepts it, to correct the description in dbt, or refuses it with why. Until then, everyone sees at the description that it is reported.
+
+**English, plain:**
+
+```text
+Mia Peeters finds that the description from dbt of the field lead_count of Weekly lead volume seems wrong.
+“"Duplicate requests" reads as if someone who applies twice counts once. Only an exact copy of the same request is taken out.”
+```
+
+<details>
+<summary>Parameters and templates</summary>
+
+| Parameter | Type | Holds |
+| --- | --- | --- |
+| `on` | choice: `table`, `field` | Whether it is the description of the table or of one of its fields |
+| `field` | name, optional | The field whose description it is |
+| `quoted` | text | The description as dbt had it when it was sent |
+| `text` | text | What is wrong with it, in the words of its writer |
+| `should` | text, optional | What it should say, in the words of its writer; filled in with the Business Description when there is one |
+
+Template, Dutch, plain:
+
+```text
+{writer} vindt dat de beschrijving uit dbt van {on, select, field {het veld {field} van {subject}} other {{subject}}} niet klopt.
+“{text}”
+```
+
+Template, Dutch, laid out:
+
+```markdown
+**{writer} vindt dat de beschrijving uit dbt van {on, select, field {het veld `{field}` van {subject}} other {{subject}}} niet klopt**
+
+**Nu in dbt:** {quoted}
+
+**Wat niet klopt:** {text}
+
+**Wat er zou moeten staan:** {should}
+
+Het datateam aanvaardt de melding, om de beschrijving in dbt aan te passen, of weigert ze met de reden. Tot dan ziet iedereen bij de beschrijving dat ze gemeld is.
+```
+
+Template, English, plain:
+
+```text
+{writer} finds that the description from dbt of {on, select, field {the field {field} of {subject}} other {{subject}}} seems wrong.
+“{text}”
+```
+
+Template, English, laid out:
+
+```markdown
+**{writer} finds that the description from dbt of {on, select, field {the field `{field}` of {subject}} other {{subject}}} seems wrong**
+
+**In dbt now:** {quoted}
+
+**What is wrong:** {text}
+
+**What it should say:** {should}
+
+The data team accepts it, to correct the description in dbt, or refuses it with why. Until then, everyone sees at the description that it is reported.
 ```
 
 </details>
@@ -2067,6 +2188,102 @@ One item of `gone`, English, laid out:
 
 ```markdown
 - `{field}`: {role, select, happenedAt {when it happened} about {what it is about} createdAt {when it was created} updatedAt {when it was last updated} asOf {as of when} occurredAt {when it occurred} measure {a measure} describes {what it describes} groupedBy {what it is grouped by} period {its period} addsUp {a count or sum that adds up} uniqueCount {a unique count}}
+```
+
+</details>
+
+<a id="msg-res-11"></a>
+
+### MSG-RES-11 · A reported description was corrected in dbt
+
+| | |
+| --- | --- |
+| Kind | Data Hub |
+| About | Resource |
+| From → to | Data Hub → its writer and who joined it |
+| When | A new Current Version changes a description from dbt that a Request reported as wrong ([MSG-RES-10](#msg-res-10)), while it waits or once it was accepted ([FR-CV-17](14-conversations.md#fr-cv-17), [FR-RC-17](05-resource-card.md#fr-rc-17)). |
+| How many | One per Request: its last reply, which closes it. |
+| Status | Implemented |
+| Comes from | [FR-CV-17](14-conversations.md#fr-cv-17), [DEC-CV-14](14-conversations.md#dec-cv-14), [FR-RC-17](05-resource-card.md#fr-rc-17) |
+
+**What it asks:** Nothing. It tells who sent the Request and who joined it that the description was corrected; the line at the description goes.
+
+**How it ends:** When it is read.
+
+| Button | Opens | For |
+| --- | --- | --- |
+| Open in context · *Openen in context* | The page of its object as it is, with the Message in a floating window over it ([FR-CV-09](14-conversations.md#fr-cv-09)) | every recipient |
+
+**Learning Card:** Proposed: **K2.4 dbt**. The card on dbt, where the Data Team writes the descriptions that a run brings to Data Hub; the term dbt carries it wherever it shows ([DEC-UX-340](../../design/principles.md#dec-ux-340)).
+
+**Dutch, laid out**, with the example:
+
+> **De gemelde beschrijving van het veld `lead_count` van Weekly lead volume is aangepast in dbt**
+>
+> De dbt-run van 27 november 2026 veranderde de beschrijving die als fout gemeld was. Data Hub sloot de melding daarmee.
+>
+> **Nu in dbt:** How many credit leads went to KBC that week from this source. Someone who applies twice counts twice.
+
+**Dutch, plain:**
+
+```text
+De gemelde beschrijving uit dbt van het veld lead_count van Weekly lead volume is aangepast in dbt.
+```
+
+**English, laid out**, with the example:
+
+> **The reported description of the field `lead_count` of Weekly lead volume was corrected in dbt**
+>
+> The dbt run of 27 November 2026 changed the description that was reported as wrong. Data Hub closed the request with it.
+>
+> **In dbt now:** How many credit leads went to KBC that week from this source. Someone who applies twice counts twice.
+
+**English, plain:**
+
+```text
+The reported description from dbt of the field lead_count of Weekly lead volume was corrected in dbt.
+```
+
+<details>
+<summary>Parameters and templates</summary>
+
+| Parameter | Type | Holds |
+| --- | --- | --- |
+| `on` | choice: `table`, `field` | Whether it is the description of the table or of one of its fields |
+| `field` | name, optional | The field whose description it is |
+| `run` | date | The day of the run of the Source Job |
+| `after` | text, optional | The description as dbt has it now; empty when dbt no longer describes it |
+
+Template, Dutch, plain:
+
+```text
+De gemelde beschrijving uit dbt van {on, select, field {het veld {field} van {subject}} other {{subject}}} is aangepast in dbt.
+```
+
+Template, Dutch, laid out:
+
+```markdown
+**De gemelde beschrijving van {on, select, field {het veld `{field}` van {subject}} other {{subject}}} is aangepast in dbt**
+
+De dbt-run van {run} veranderde de beschrijving die als fout gemeld was. Data Hub sloot de melding daarmee.
+
+**Nu in dbt:** {after}
+```
+
+Template, English, plain:
+
+```text
+The reported description from dbt of {on, select, field {the field {field} of {subject}} other {{subject}}} was corrected in dbt.
+```
+
+Template, English, laid out:
+
+```markdown
+**The reported description of {on, select, field {the field `{field}` of {subject}} other {{subject}}} was corrected in dbt**
+
+The dbt run of {run} changed the description that was reported as wrong. Data Hub closed the request with it.
+
+**In dbt now:** {after}
 ```
 
 </details>

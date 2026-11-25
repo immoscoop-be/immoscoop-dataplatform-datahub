@@ -69,6 +69,24 @@ const REQUEST = {
   lastAt: '2026-10-28T12:00:00Z',
 };
 
+/** A colleague reported the description from dbt of lead_source as wrong; it waits for the Data Team (MSG-RES-10, FR-CV-17). */
+const REPORTED = {
+  id: 'm4',
+  type: 'MSG-RES-10',
+  kind: 'request',
+  subject: { kind: 'resource', id: 'r2', name: 'Weekly lead volume', collection: { id: 'c1', name: 'Credit leads' }, exists: true },
+  writer: { id: '8', name: 'Karel Leys', as: null },
+  params: { writer: 'Karel Leys', subject: 'Weekly lead volume', on: 'field', field: 'lead_source', quoted: 'Where the lead came from', text: 'It is where the lead came in, not where the person came from.' },
+  state: 'waiting',
+  createdAt: '2026-11-25T09:00:00Z',
+  lastAt: '2026-11-25T09:00:00Z',
+  replies: [],
+  replyCount: 0,
+  unread: false,
+  mine: false,
+  mayJoin: true,
+};
+
 interface Saved {
   method: string;
   path: string;
@@ -1389,6 +1407,23 @@ function serve({
       talk.unshift(made);
       return json({ message: made }, 201);
     }
+    // A description from dbt reported as wrong: a Request to the Data Team on the Resource (FR-CV-17).
+    if (path === '/resources/r2/description-reports' && method === 'POST') {
+      const body = JSON.parse(init.body as string) as { field: string | null; text: string; should: string };
+      const quoted = body.field === null ? WEEKLY_DETAIL.description : (WEEKLY_DETAIL.fields.find((field) => field.name === body.field)?.description ?? '');
+      const made = {
+        ...REPORTED,
+        id: `m-${talk.length + 1}`,
+        writer: { id: '1', name: 'Max Verstraete', as: null },
+        params: { writer: 'Max Verstraete', on: body.field === null ? 'table' : 'field', ...(body.field === null ? {} : { field: body.field }), quoted, text: body.text, ...(body.should ? { should: body.should } : {}) },
+        createdAt: '2026-11-25T10:00:00Z',
+        lastAt: '2026-11-25T10:00:00Z',
+        mine: true,
+        mayJoin: false,
+      };
+      talk.unshift(made);
+      return json({ outcome: 'sent', message: made }, 201);
+    }
     const message = talk.find((candidate) => path.startsWith(`/messages/${candidate.id as string}`));
     // Deleted for everyone (FR-CV-18): the conversation leaves the list.
     if (message && path === `/messages/${message.id as string}` && method === 'DELETE') {
@@ -1417,6 +1452,11 @@ function serve({
     }
     if (message && path === `/messages/${message.id as string}/reopen` && method === 'POST') {
       message.state = 'open';
+      return json({ message });
+    }
+    if (message && path === `/messages/${message.id as string}/join` && method === 'POST') {
+      message.params = { ...(message.params as Record<string, string>), joins: JSON.stringify([{ id: '1', name: 'Max Verstraete', at: '2026-11-25T11:00:00Z' }]) };
+      message.mayJoin = false;
       return json({ message });
     }
     if (message && path === `/messages/${message.id as string}/decision` && method === 'POST') {
@@ -6160,6 +6200,80 @@ describe('Messages', () => {
     await fireEvent.click(main.getByRole('button', { name: /Aanvaarden/ }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/messages/m3/decision', body: { outcome: 'accepted', text: 'Once, for the review.' } }));
     expect(await main.findByText('Aanvaard', { selector: '.reply .state' })).toBeTruthy();
+  });
+
+  it('reports a description from dbt as wrong from next to it, and shows every reader it is reported (FR-CV-17, DEC-UX-338)', async () => {
+    const calls = serve({ groups: ['g1'] });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' }, { timeout: 3000 });
+    // Next to the description from dbt on the Summary: it opens the form in the Messages, the description quoted.
+    await fireEvent.click((await main.findAllByRole('button', { name: /Klopt niet\?/ }))[0]!);
+    const sheet = within(await screen.findByRole('dialog', { name: 'Weekly lead volume' }));
+    const form = within(sheet.getByRole('region', { name: 'Wat niet klopt' }));
+    expect(form.getByText('One row per week and lead source.')).toBeTruthy();
+    expect(form.getByText('Het Data Team krijgt de Request; Data, Owner van deze Resource, hoort het ook.')).toBeTruthy();
+    const send = form.getByRole('button', { name: /Naar het Data Team sturen/ });
+    expect((send as HTMLButtonElement).disabled).toBe(true);
+    await fireEvent.input(form.getByRole('textbox', { name: /Wat niet klopt/ }), { target: { value: 'It is one row per week, lead source and region.' } });
+    await fireEvent.click(send);
+    await vi.waitFor(() =>
+      expect(calls).toContainEqual({ method: 'POST', path: '/resources/r2/description-reports', body: { field: null, text: 'It is one row per week, lead source and region.', should: '' } }),
+    );
+    // Sent, a new Message is back on top, and the Request waits in the list, with a chip of its own.
+    expect(await sheet.findByRole('textbox', { name: 'Nieuw bericht' })).toBeTruthy();
+    expect(await sheet.findByText('De beschrijving uit dbt lijkt niet te kloppen · aan het Data Team')).toBeTruthy();
+    expect(sheet.getByRole('radio', { name: /Requests 1/ })).toBeTruthy();
+    await fireEvent.click(sheet.getByRole('button', { name: /Sluiten/ }));
+    // Every reader sees under the description that it is reported, with the Request.
+    const line = await main.findByRole('note');
+    expect(line.textContent).toContain('Gemeld als fout op');
+    expect(line.textContent).toContain('het Data Team bekijkt het.');
+    expect(within(line).getByRole('link', { name: 'De Request bekijken' }).getAttribute('href')).toBe('/resources/r2/messages/m-1');
+  });
+
+  it('reports the description of a field from Columns, what it should say filled in from its Business Description (FR-CV-17)', async () => {
+    const calls = serve({ groups: ['g1'] });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('tab', { name: 'Kolommen' }, { timeout: 3000 }));
+    const flags = await main.findAllByRole('button', { name: 'Laat het Data Team weten dat deze beschrijving uit dbt niet lijkt te kloppen' });
+    expect(flags).toHaveLength(2);
+    await fireEvent.click(flags[1]!);
+    const form = within(within(await screen.findByRole('dialog', { name: 'Weekly lead volume' })).getByRole('region', { name: 'Wat niet klopt' }));
+    expect(form.getByText('lead_source')).toBeTruthy();
+    expect(form.getByText('Where the lead came from')).toBeTruthy();
+    expect((form.getByRole('textbox', { name: /Wat er zou moeten staan/ }) as HTMLTextAreaElement).value).toBe('The website, the app or a partner.');
+    await fireEvent.input(form.getByRole('textbox', { name: /Wat niet klopt/ }), { target: { value: 'Not where the person came from.' } });
+    await fireEvent.click(form.getByRole('button', { name: /Naar het Data Team sturen/ }));
+    await vi.waitFor(() =>
+      expect(calls).toContainEqual({ method: 'POST', path: '/resources/r2/description-reports', body: { field: 'lead_source', text: 'Not where the person came from.', should: 'The website, the app or a partner.' } }),
+    );
+  });
+
+  it('lets a colleague join a reported description, and the Data Team decide on it where it shows (FR-CV-17)', async () => {
+    let calls = serve({ groups: ['g1'], conversations: [{ ...REPORTED }] });
+    open('/resources/r2/messages');
+    const { unmount } = render(App, { config: CONFIG });
+    let sheet = within(await screen.findByRole('dialog', { name: 'Weekly lead volume' }));
+    expect(await sheet.findByText('De beschrijving van lead_source uit dbt lijkt niet te kloppen · aan het Data Team')).toBeTruthy();
+    expect(sheet.getByText('Where the lead came from')).toBeTruthy();
+    await fireEvent.click(sheet.getByRole('button', { name: /Aansluiten/ }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/messages/m4/join' }));
+    expect(await sheet.findByText('Max Verstraete sloot zich aan')).toBeTruthy();
+    // Who does not decide on Requests sees no decision.
+    expect(sheet.queryByRole('textbox', { name: 'Je beslissing' })).toBeNull();
+    unmount();
+
+    calls = serve({ as: 'admin', conversations: [{ ...REPORTED }] });
+    open('/resources/r2/messages');
+    render(App, { config: CONFIG });
+    sheet = within(await screen.findByRole('dialog', { name: 'Weekly lead volume' }));
+    await fireEvent.input(await sheet.findByRole('textbox', { name: 'Je beslissing' }), { target: { value: 'We correct it in dbt.' } });
+    await fireEvent.click(sheet.getByRole('button', { name: /Aanvaarden/ }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/messages/m4/decision', body: { outcome: 'accepted', text: 'We correct it in dbt.' } }));
   });
 
   it('opens the Messages on a Resource in a slide-in, to write a Question, Remark or Signal (FR-CV-07)', async () => {

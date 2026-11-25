@@ -26,7 +26,56 @@ export const STATE_TEXTS: Readonly<Record<string, string>> = {
   closed: 'messages.state.closed',
   // A Request on a Lens that was deleted (FR-LE-18).
   withdrawn: 'messages.state.withdrawn',
+  // A description reported as wrong that dbt changed: Data Hub closed it (FR-CV-17, MSG-RES-11).
+  corrected: 'messages.state.corrected',
 };
+
+/** A Request about a description from dbt that seems wrong (FR-CV-17), by its Message ID. */
+export const REPORT = 'MSG-RES-10';
+
+/** A colleague who joined a Request about a description from dbt, with their words if they wrote any (FR-CV-17). */
+export interface Joiner {
+  id: string;
+  name: string;
+  text?: string;
+  should?: string;
+  at: string;
+}
+
+/** Who joined a Request about a description from dbt, in the order they joined. */
+export function joinersOf(params: Readonly<Record<string, string>>): Joiner[] {
+  try {
+    const joins = JSON.parse(params.joins ?? '[]') as unknown;
+    return Array.isArray(joins) ? joins.filter((joiner): joiner is Joiner => typeof (joiner as Joiner | null)?.id === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+/** A description from dbt reported as wrong while the Data Team decides, or once it accepted (FR-CV-17). */
+export interface Reported {
+  id: string;
+  state: 'waiting' | 'accepted';
+  /** When it was reported. */
+  at: string;
+  /** The Request, opened in context (FR-CV-09). */
+  href: string;
+}
+
+/** "Seems wrong?" next to a description from dbt, and what every reader sees while it is reported (FR-CV-17, DEC-UX-338). */
+export interface Reporting {
+  /** Opens the form on the Resource, for the description of the table (null) or of a field; absent for who may not write Messages. */
+  report?: (field: string | null) => void;
+  /** The waiting or accepted Request about each description, by its field; '' for that of the table. */
+  reported: ReadonlyMap<string, Reported>;
+}
+
+/** What a User reports about a description from dbt: that of the table, or of a field, with their words (FR-CV-17). */
+export interface DescriptionReport {
+  field: string | null;
+  text: string;
+  should: string;
+}
 /** The kinds it filters on: what a person writes, and what Data Hub tells. */
 export type FilterKind = 'question' | 'remark' | 'signal' | 'request' | 'dataHub';
 export const FILTER_KINDS: readonly FilterKind[] = ['question', 'remark', 'signal', 'request', 'dataHub'];
@@ -87,6 +136,8 @@ export interface Message {
   mayReply?: boolean;
   /** Whether the User may delete it with its replies: its writer, the Owner Unit and the Data Team (FR-CV-18). */
   mayDelete?: boolean;
+  /** Whether the User may join it: a Request about a description from dbt that waits, not theirs yet (FR-CV-17). */
+  mayJoin?: boolean;
 }
 
 export interface Reply {
@@ -165,6 +216,18 @@ export function createMessages(config: Config, session: Pick<Session, 'accessTok
     /** Opens a closed Question or Signal again (FR-CV-16). */
     async reopen(id: string): Promise<Conversation> {
       return conversation(await call(`${one(id)}/reopen`, { method: 'POST' }));
+    },
+    /**
+     * Reports a description from dbt as wrong (FR-CV-17): a Request to the Data Team on the Resource, or joins the one that
+     * waits on the same description.
+     */
+    async report(resourceId: string, report: DescriptionReport): Promise<{ outcome: 'sent' | 'joined' | 'already'; message: Conversation }> {
+      const answer = (await (await call(`/resources/${encodeURIComponent(resourceId)}/description-reports`, { method: 'POST', body: report })).json()) as { outcome: 'sent' | 'joined' | 'already'; message: Conversation };
+      return answer;
+    },
+    /** "Join it" on a waiting Request about a description from dbt (FR-CV-17). */
+    async join(id: string): Promise<Conversation> {
+      return conversation(await call(`${one(id)}/join`, { method: 'POST' }));
     },
     /** The decision of the Data Team on a Request to run a query (FR-CV-08); one on a Lens is decided on the Lens. */
     async decide(id: string, outcome: 'accepted' | 'refused', text: string): Promise<Conversation> {

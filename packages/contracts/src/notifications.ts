@@ -11,7 +11,7 @@ import type { Language } from './messages.js';
  * the Data Team (DEC-LN-03, DEC-LN-07), as the writer of the Request it decides, as who started the
  * conversation it answers or wrote in it, as the author of its Lens, or as the User it is about (FR-PL-12).
  */
-export type NotificationReason = 'owner' | 'dataTeam' | 'request' | 'started' | 'participant' | 'author' | 'lensUser' | 'self';
+export type NotificationReason = 'owner' | 'dataTeam' | 'request' | 'started' | 'participant' | 'author' | 'lensUser' | 'joined' | 'self';
 
 export interface NotificationTexts {
   /** Why it came: `{group}` is the Owner Unit, by name, and `{kind}` the kind of the object, as a Defined Term. */
@@ -32,6 +32,7 @@ export const NOTIFICATION_TEXTS: Readonly<Record<Language, NotificationTexts>> =
       participant: 'Je krijgt dit omdat je in dit gesprek schreef.',
       author: 'Je krijgt dit als auteur van deze {kind}.',
       lensUser: 'Je krijgt dit omdat je deze lens de voorbije 30 dagen gebruikte.',
+      joined: 'Je krijgt dit omdat je je bij deze melding aansloot.',
       self: 'Je krijgt dit omdat het over jou gaat.',
     },
     centre: 'Elk bericht staat in je Message Centre.',
@@ -46,6 +47,7 @@ export const NOTIFICATION_TEXTS: Readonly<Record<Language, NotificationTexts>> =
       participant: 'You get this because you wrote in this conversation.',
       author: 'You get this as the author of this {kind}.',
       lensUser: 'You get this because you used this lens in the last 30 days.',
+      joined: 'You get this because you joined this request.',
       self: 'You get this because it is about you.',
     },
     centre: 'Every Message is in your Message Centre.',

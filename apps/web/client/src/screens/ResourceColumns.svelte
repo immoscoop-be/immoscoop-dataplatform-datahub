@@ -10,6 +10,9 @@
   import { scopeLine } from '../lib/gaps.js';
   import { flowBox, markPlace } from '../lib/flowBox.svelte.js';
   import LearningRef from './LearningRef.svelte';
+  import ReportedLine from './ReportedLine.svelte';
+  import SeemsWrong from './SeemsWrong.svelte';
+  import type { Reporting } from '../lib/messages.js';
 
   /**
    * The Columns of a Resource (Columns table): each field with its type, its Business Description next
@@ -26,9 +29,12 @@
     onsave,
     onrelate,
     ongaps,
+    reporting,
   }: {
     resource: ResourceDetail;
     canEdit: boolean;
+    /** "Seems wrong?" next to the description from dbt of a field, and that it is reported (FR-CV-17). */
+    reporting?: Reporting;
     /** Whether the User may change the grain and relations: a Data Admin. */
     relate: boolean;
     onsave: (fields: { name: string; businessDescription: string }[]) => Promise<boolean>;
@@ -193,7 +199,7 @@
             <td class="mono">{field.name}</td>
             <td class="type">{field.dataType ?? ''}</td>
             {#if field.businessDescription}<td>{field.businessDescription}</td>{:else}<td class="none" aria-label={t('resource.noBusiness')}>–</td>{/if}
-            <td class="dbt">{field.description || '–'}</td>
+            <td class="dbt">{field.description || '–'}{#if field.description}<SeemsWrong {reporting} field={field.name} compact />{/if}<ReportedLine {reporting} field={field.name} short /></td>
             <td>{#if mapping}<span class="code">{mapping.identity}</span>{/if}</td>
             <td><span class="roles">{@render pills(field)}</span></td>
           </tr>

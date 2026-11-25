@@ -48,6 +48,8 @@ interface Detail extends Item {
   fields: Field[];
   card: Record<string, unknown>;
   deprecation: { at: string; by: string; reason: string; insteadOf: { id: string; displayName: string } | null } | null;
+  /** The descriptions from dbt reported as wrong, while the Data Team decides or once it accepted: no field for the table (FR-CV-17). */
+  reports?: { field: string | null; state: 'waiting' | 'accepted' }[];
   [key: string]: unknown;
 }
 
@@ -200,6 +202,11 @@ export function resourceTools(context: Context): void {
     }
     if (!resource.published) parts.push('It is not published: only its Owner Unit and the Data Team see it.');
     if (resource.withdrawn) parts.push('It is withdrawn: dbt no longer exposes it.');
+    // A description from dbt reported as wrong: say so when you use it (FR-CV-17).
+    for (const report of resource.reports ?? []) {
+      const which = report.field ? `The description from dbt of the field ${report.field}` : 'Its description from dbt';
+      parts.push(`${which} is reported as wrong; ${report.state === 'accepted' ? 'the Data Team will correct it in dbt' : 'the Data Team is looking at it'}. Say so when you use it.`);
+    }
     return parts.join(' ');
   }
 

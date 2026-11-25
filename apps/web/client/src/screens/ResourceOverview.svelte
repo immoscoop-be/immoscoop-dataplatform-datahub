@@ -28,7 +28,7 @@
   import type { CardChanges, DescribeAttribute, KnownGap, LogEntry, Related, ResourceDetail } from '../lib/catalogue.js';
   import { carriersOf, nounOf } from '../lib/grain.js';
   import type { MarkerPlace } from '../lib/learning.js';
-  import type { Conversation } from '../lib/messages.js';
+  import type { Conversation, Reporting } from '../lib/messages.js';
   import type { FirstRow, Storage } from '../lib/query.js';
   import { sizeText } from '../lib/size.js';
   import { command, useScreenCommands, view } from '../lib/commands.svelte.js';
@@ -40,6 +40,8 @@
   import OverviewReliable from './OverviewReliable.svelte';
   import OverviewRow from './OverviewRow.svelte';
   import OverviewSummary from './OverviewSummary.svelte';
+  import ReportedLine from './ReportedLine.svelte';
+  import SeemsWrong from './SeemsWrong.svelte';
 
   /**
    * The Overview of a Resource, in parts, each a page of its own, with a navigation on the left under the tabs
@@ -59,6 +61,7 @@
     storage,
     threads,
     messagesHref,
+    reporting,
     describes,
     canDeprecate,
     onsave,
@@ -87,6 +90,8 @@
     threads: readonly Conversation[] | undefined;
     /** Where "Messages" opens them. */
     messagesHref: string | undefined;
+    /** "Seems wrong?" next to its description from dbt, and that it is reported, on Description and the Summary (FR-CV-17). */
+    reporting?: Reporting;
     /** Whether the User may describe an attribute of it (`resources.describe`, DEC-PL-03). */
     describes: (attribute: DescribeAttribute) => boolean;
     /** Whether the User may deprecate it, and undo that (`resources.deprecate`). */
@@ -387,8 +392,9 @@
 
 {#snippet dbtDescription(hint: boolean)}
   <SubTile label={t('description.dbt')}>
-    {#snippet aside()}<LearningRef place="dbt" shape="chip">{#snippet children(mark)}<OriginTag origin="dbt" {mark} />{/snippet}</LearningRef>{/snippet}
+    {#snippet aside()}<LearningRef place="dbt" shape="chip">{#snippet children(mark)}<OriginTag origin="dbt" {mark} />{/snippet}</LearningRef>{#if resource.description}<SeemsWrong {reporting} field={null} />{/if}{/snippet}
     <p class="prose">{resource.description || t('resource.noDescription')}</p>
+    <ReportedLine {reporting} field={null} />
     {#if hint}<p class="hint">{#if tableChanged}{t('resource.dbt.changed', { date: day(tableChanged.at) })} {/if}{t('resource.dbt.notEdited')}</p>{/if}
   </SubTile>
 {/snippet}
@@ -410,7 +416,7 @@
   <div class="body" role="tabpanel" aria-label={t((shown.find((one) => one.id === part) ?? PARTS[0]!).label)}>
     {#if part === 'summary'}
       {@render head(t('overview.summary'), t('overview.summary.lead', { name: resource.displayName }))}
-      <OverviewSummary {resource} {related} {threads} {log} {size} {messagesHref} ongo={go} />
+      <OverviewSummary {resource} {related} {threads} {log} {size} {messagesHref} {reporting} ongo={go} />
     {:else if part === 'description'}
       {@render head(t('resource.description'), t('overview.description.lead', { name: resource.displayName }), described ? 'description' : undefined)}
       {#if editing === 'description'}

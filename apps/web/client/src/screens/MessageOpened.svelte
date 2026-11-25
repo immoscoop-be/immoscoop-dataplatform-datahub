@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { NO_PASSWORD_MANAGER } from '@datahub/ui/foundations/fields.js';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import Button from '@datahub/ui/primitives/Button.svelte';
   import { buttonsOf, type Conversation, type MessagesClient, SUBJECT_TITLES } from '../lib/messages.js';
   import MessageComposer from './MessageComposer.svelte';
   import MessageThread from './MessageThread.svelte';
+  import RequestDecision from './RequestDecision.svelte';
   import { command, useScreenCommands } from '../lib/commands.svelte.js';
   import type { QuickRow } from '../lib/quick.js';
 
@@ -43,39 +43,24 @@
   /** The labels of Accept and Refuse, from the Message Catalogue (FR-CV-13). */
   const label = (english: string) => buttonsOf(message.type).find((button) => button.label.en === english)?.label[language] ?? english;
 
-  let reason = $state('');
-  let busy = $state(false);
-  let problem = $state('');
-
-  async function decide(outcome: 'accepted' | 'refused'): Promise<void> {
-    if (outcome === 'refused' && !reason.trim()) {
-      problem = t('messages.decision.needReason');
-      return;
-    }
-    busy = true;
-    problem = '';
-    try {
-      if (message.subject.kind === 'lens') {
-        await decideLens(message.subject.id, outcome, reason.trim());
-        onchanged(await client.conversation(message.id));
-      } else {
-        onchanged(await client.decide(message.id, outcome, reason.trim()));
-      }
-      reason = '';
-    } catch (error) {
-      console.error('The decision could not be saved', error);
-      problem = t('messages.decision.failed');
-    } finally {
-      busy = false;
+  /** The decision of the Data Team: one on a Lens in query, which changes the Lens with it (FR-LE-09). */
+  async function decide(outcome: 'accepted' | 'refused', reason: string): Promise<void> {
+    if (message.subject.kind === 'lens') {
+      await decideLens(message.subject.id, outcome, reason);
+      onchanged(await client.conversation(message.id));
+    } else {
+      onchanged(await client.decide(message.id, outcome, reason));
     }
   }
 
   const decisionNote = $derived(
     message.subject.kind === 'query'
       ? t('messages.decision.query', { writer: message.writer?.name ?? '' })
-      : message.writer
-        ? t('messages.decision.lens', { writer: message.writer.name })
-        : t('messages.decision.stopped'),
+      : message.subject.kind === 'resource'
+        ? t('messages.decision.resource', { writer: message.writer?.name ?? '' })
+        : message.writer
+          ? t('messages.decision.lens', { writer: message.writer.name })
+          : t('messages.decision.stopped'),
   );
 
   let replyBox = $state<HTMLElement | undefined>();
@@ -123,6 +108,15 @@
       return false;
     }
   }}
+  onjoin={async () => {
+    try {
+      onchanged(await client.join(message.id));
+      return true;
+    } catch (error) {
+      console.error('The Request could not be joined', error);
+      return false;
+    }
+  }}
   ondelete={async (id) => {
     try {
       const gone = await client.remove(id);
@@ -155,36 +149,13 @@
   />
   </div>
 {:else if waiting && decides}
-  <div class="decision" bind:this={decisionBox}>
-    <label class="label" for="reason-{message.id}">{t('messages.decision')}</label>
-    <textarea {...NO_PASSWORD_MANAGER}
-      id="reason-{message.id}"
-      rows="2"
-      maxlength="1000"
-      bind:value={reason}
-      placeholder={message.writer
-        ? t('messages.decision.placeholder', { writer: message.writer.name, kind: kindName })
-        : t('messages.decision.placeholder.dataHub', { kind: kindName })}
-    ></textarea>
-    <p class="meta note" role={problem ? 'alert' : undefined}>{#if problem}{problem}{:else}<Icon name="bell-simple-fill" />{decisionNote}{/if}</p>
-    <div class="buttons">
-      <Button variant="outline" disabled={busy} onclick={() => decide('refused')}><Icon name="x" />{label('Refuse')}</Button>
-      <Button disabled={busy} onclick={() => decide('accepted')}><Icon name="check-fill" />{label('Accept')}</Button>
-    </div>
-  </div>
+  <RequestDecision {message} note={decisionNote} ondecide={decide} bind:box={decisionBox} />
 {:else if waiting && message.mine}
   <p class="waiting"><Icon name="hourglass-medium-fill" /><span><b>{t('messages.waiting')}</b> {t('messages.waiting.text')}</span></p>
 {/if}
 
 <style>
   .reply { display: contents; }
-  .decision { border-radius: var(--radius-lg); padding: 14px 16px; background: var(--surface-sub); margin-top: 6px; }
-  .label { display: block; margin-bottom: 8px; font-size: var(--text-meta); font-weight: var(--weight-medium); color: var(--text-secondary); }
-  textarea { width: 100%; box-sizing: border-box; font: var(--text-small) var(--font-family); line-height: 1.5; color: var(--text-primary); background: var(--surface-solid);
-    border: 1px solid var(--tint-active); border-radius: var(--radius-field); padding: 8px 10px; resize: vertical; }
-  textarea:focus { outline: 2px solid var(--text-secondary); outline-offset: 1px; }
-  .note { margin: 8px 0 0; display: flex; align-items: center; gap: 5px; line-height: 1.4; }
-  .buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
   .waiting { display: flex; gap: 10px; align-items: flex-start; margin: 6px 0 0; padding: 10px 12px; border-radius: var(--radius-md); background: var(--surface-sub); font-size: var(--text-small); line-height: 1.5; }
   .waiting :global(.icon) { font-size: 18px; color: var(--text-secondary); flex: none; }
   b { font-weight: var(--weight-medium); }

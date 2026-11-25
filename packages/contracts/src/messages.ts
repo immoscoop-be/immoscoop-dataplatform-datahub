@@ -39,8 +39,9 @@ export type MessageSender = 'user' | 'owner' | 'dataTeam' | 'dataHub';
  * - `author`: who made the Lens or the query; the User of an Excel key, or the User a Message is about
  * - `consumers`: the Consumers of a Resource (FR-LN-03)
  * - `lensUsers`: who ran a Lens in the 30 days before it was deleted, also from Excel, named in the Message (FR-LE-18)
+ * - `joiners`: who joined a Request about a description from dbt, which names them (MSG-RES-10, FR-CV-17)
  */
-export type MessageRecipient = 'owner' | 'resourceOwners' | 'dataTeam' | 'writer' | 'participants' | 'author' | 'consumers' | 'lensUsers';
+export type MessageRecipient = 'owner' | 'resourceOwners' | 'dataTeam' | 'writer' | 'participants' | 'author' | 'consumers' | 'lensUsers' | 'joiners';
 
 /** The status of a type of Message: that of the requirement it comes from (docs/requirements/README.md). */
 export type MessageStatus = 'Proposed' | 'Specified' | 'Implemented' | 'Verified' | 'Withdrawn';

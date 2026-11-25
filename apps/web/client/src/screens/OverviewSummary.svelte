@@ -13,10 +13,12 @@
   import OriginTag from '@datahub/ui/marks/OriginTag.svelte';
   import type { LogEntry, Related, ResourceDetail } from '../lib/catalogue.js';
   import { carriersOf } from '../lib/grain.js';
-  import type { Conversation } from '../lib/messages.js';
+  import type { Conversation, Reporting } from '../lib/messages.js';
   import { STATE_TEXTS } from '../lib/messages.js';
   import { resourcePath } from '../lib/routes.js';
   import GapScopeView from './GapScope.svelte';
+  import ReportedLine from './ReportedLine.svelte';
+  import SeemsWrong from './SeemsWrong.svelte';
   import { KIND_NAMES, STANDING_NAMES } from './MessageThread.svelte';
 
   /**
@@ -33,6 +35,7 @@
     log,
     size,
     messagesHref,
+    reporting,
     ongo,
     compact = false,
   }: {
@@ -44,6 +47,8 @@
     /** Its size, as the part Querying says it; null when BigQuery does not tell it. */
     size: string | null;
     messagesHref: string | undefined;
+    /** "Seems wrong?" next to its description from dbt, and that it is reported (FR-CV-17). */
+    reporting?: Reporting;
     /** Opens a part of the Overview, or the Columns; the Messages are a link. Without it, the parts have no way to themselves. */
     ongo?: (target: Exclude<SummarySource, 'messages'>) => void;
     /** In a floating window over a query: one column, no legend, no way to each part (DEC-UX-221). */
@@ -170,7 +175,7 @@
           </p>
         {:else if part === 'whatItIs'}
           {#if card.businessDescription}<MarkdownText source={card.businessDescription} />{/if}
-          {#if resource.description}<p class="dbt" class:alone={!card.businessDescription}><LearningRef place="dbt" shape="chip">{#snippet children(mark)}<OriginTag origin="dbt" {mark} />{/snippet}</LearningRef><span>{resource.description}</span></p>{/if}
+          {#if resource.description}<p class="dbt" class:alone={!card.businessDescription}><LearningRef place="dbt" shape="chip">{#snippet children(mark)}<OriginTag origin="dbt" {mark} />{/snippet}</LearningRef><span>{resource.description}<SeemsWrong {reporting} field={null} /></span></p><ReportedLine {reporting} field={null} />{/if}
         {:else if part === 'oneRow'}
           <p class="line">
             {#if details.grain.length > 0}{details.grainSentence || details.grain.join(' × ')}{#each details.grain as field (field)}{' '}<span class="code">{field}</span>{/each}{/if}

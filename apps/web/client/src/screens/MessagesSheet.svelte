@@ -6,8 +6,10 @@
   import Loading from '@datahub/ui/primitives/Loading.svelte';
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import { type Conversation, type MessagesClient, SUBJECT_TITLES, WRITTEN_ON, type WrittenKind, type WrittenOn } from '../lib/messages.js';
+  import DescriptionReport from './DescriptionReport.svelte';
   import MessageComposer from './MessageComposer.svelte';
   import MessageThread, { KIND_NAMES } from './MessageThread.svelte';
+  import RequestDecision from './RequestDecision.svelte';
 
   /**
    * The Messages on a Collection, a Resource or a Lens, in a slide-in over its page (DEC-UX-29, FR-CV-07): on
@@ -25,6 +27,9 @@
     onclose,
     writes = ['question', 'remark', 'signal'],
     start = null,
+    report = null,
+    onreported,
+    decides = false,
   }: {
     /** The kinds of Message the User may write (`messages.write`, DEC-PL-04); none hides the new Message. */
     writes?: readonly string[];
@@ -41,6 +46,15 @@
     onclose: () => void;
     /** The kind to write, when the quick window asked for one, such as Add a Remark (DEC-UX-257). */
     start?: WrittenKind | null;
+    /**
+     * A description from dbt reported as wrong, when "Seems wrong?" opened the slide-in: its form takes the place of a
+     * new Message (FR-CV-17, DEC-UX-338).
+     */
+    report?: { field: string | null; quoted: string; should: string } | null;
+    /** The form is sent or cancelled: a new Message is back on top. */
+    onreported?: () => void;
+    /** The User decides on Requests (`requests.decide`): a Request about a description from dbt takes it here. */
+    decides?: boolean;
   } = $props();
 
   const kinds = $derived(WRITTEN_ON[subject.kind]);
@@ -52,10 +66,12 @@
   $effect(() => {
     if (writable.length > 0 && !writable.includes(kind)) kind = writable[0]!;
   });
-  type Chip = 'all' | WrittenKind;
+  type Chip = 'all' | WrittenKind | 'request';
   let chip = $state<Chip>('all');
   const shown = $derived((messages ?? []).filter((message) => chip === 'all' || message.kind === chip));
   const count = (of: Chip) => (messages ?? []).filter((message) => of === 'all' || message.kind === of).length;
+  /** The chips: Requests only once a description from dbt was reported on it (FR-CV-17). */
+  const chips = $derived<Chip[]>(['all', ...(count('request') > 0 ? (['request'] as const) : []), ...kinds]);
 
   /** Who a new Message notifies (FR-CV-03): a Signal also the Data Team. */
   const notify = $derived(
@@ -72,7 +88,28 @@
 <Sheet title={subject.name} {onclose}>
   {#snippet top()}<p class="meta over">{t('messages.sheet.title', { kind: kindName })}</p>{/snippet}
   {#snippet head()}<p class="meta">{meta}</p>{/snippet}
-  {#if writable.length > 0}
+  {#if report}
+    {#key report}
+      <DescriptionReport
+        field={report.field}
+        quoted={report.quoted}
+        should={report.should}
+        {owner}
+        oncancel={() => onreported?.()}
+        onsend={async (text, should) => {
+          try {
+            await client.report(subject.id, { field: report.field, text, should });
+            onchanged();
+            onreported?.();
+            return true;
+          } catch (error) {
+            console.error('The description could not be reported', error);
+            return false;
+          }
+        }}
+      />
+    {/key}
+  {:else if writable.length > 0}
   <MessageComposer
     label={t('messages.new')}
     kinds={writable.map((value) => ({ value, label: KIND_NAMES[value] }))}
@@ -95,7 +132,7 @@
   {/if}
   <div class="chips">
     <Segmented
-      options={(['all', ...kinds] as Chip[]).map((value) => ({ value, label: `${value === 'all' ? t('messages.all') : `${KIND_NAMES[value]}s`} ${count(value)}` }))}
+      options={chips.map((value) => ({ value, label: `${value === 'all' ? t('messages.all') : `${KIND_NAMES[value]}s`} ${count(value)}` }))}
       bind:value={chip}
       label={t('messages.kind')}
     />
@@ -130,6 +167,16 @@
               return false;
             }
           }}
+          onjoin={async () => {
+            try {
+              await client.join(message.id);
+              onchanged();
+              return true;
+            } catch (error) {
+              console.error('The Request could not be joined', error);
+              return false;
+            }
+          }}
           ondelete={async (id) => {
             try {
               await client.remove(id);
@@ -151,6 +198,16 @@
             }
           }}
         />
+        {#if decides && message.kind === 'request' && message.state === 'waiting'}
+          <RequestDecision
+            {message}
+            note={t('messages.decision.resource', { writer: message.writer?.name ?? '' })}
+            ondecide={async (outcome, reason) => {
+              await client.decide(message.id, outcome, reason);
+              onchanged();
+            }}
+          />
+        {/if}
       {/each}
     {/if}
   </div>

@@ -16,6 +16,7 @@ import type { Viewer } from './collections.js';
 import type { CatalogueDatabase, MappingKind, MappingOrigin, Origin, Origins, PartitionFilter, PartitionUnit, SchemaChange } from './database.js';
 import { type Column, CONFIRMED, EXPLORED, fingerprint, type LeftOut, levelAtRegistration, retyped, splitColumns, withEda } from './fields.js';
 import { logText, type ResourceLogId } from './log.js';
+import { closeCorrected, REPORT } from './messages.js';
 import { seesAll, seesPublic, theirs } from './viewer.js';
 
 /** A table under an exposure tagged `datahub`, as registry tells it (TR-AR-08). */
@@ -215,6 +216,11 @@ export interface ResourceDetail extends Resource {
   changes: { field: string; change: SchemaChange; old: string | null; new: string | null; at: Date }[];
   /** The descriptions from dbt that changed in the last 30 days, with the text before: no field for the table (FR-RC-17). */
   descriptionChanges: { field: string | null; before: string; at: Date }[];
+  /**
+   * The descriptions from dbt reported as wrong, while the Data Team decides or once it accepted to correct them in dbt:
+   * no field for the table (FR-CV-17). Every reader sees it at the description, with the Request.
+   */
+  reports: { id: string; field: string | null; state: 'waiting' | 'accepted'; at: Date }[];
   /** The Owner Journey: its steps, the next one, and whether it is ready to publish (DEC-MR-15, OP-CL-12). */
   journey: Journey;
 }
@@ -620,6 +626,8 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
     if (descriptions.length > 0) {
       await trx.insertInto('descriptionChanges').values(descriptions.map((change) => ({ resourceId: row.id, ...change, runId: run }))).execute();
       await write(trx, row.id, 'ART-013', { sourceNode, distance: '0' });
+      // A description reported as wrong that dbt changed: Data Hub closes its Request, and tells who sent or joined it (FR-CV-17).
+      await closeCorrected(trx, row.id, descriptions.map(({ field, after }) => ({ field, after })), runDay);
       if (row.collectionId) {
         const business = new Map(
           (await trx.selectFrom('fieldDescriptions').select(['field', 'text']).where('resourceId', '=', row.id).execute()).map((entry) => [entry.field, entry.text]),
@@ -1071,6 +1079,18 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         .orderBy(sql`coalesce(field, '')`)
         .orderBy('id', 'desc')
         .execute();
+      const reports = (
+        await db
+          .selectFrom('messages')
+          .select(['id', 'params', 'state', 'createdAt'])
+          .where('type', '=', REPORT)
+          .where('subjectKind', '=', 'resource')
+          .where('subjectId', '=', id)
+          .where('parentId', 'is', null)
+          .where('state', 'in', ['waiting', 'accepted'])
+          .orderBy('createdAt')
+          .execute()
+      ).map((report) => ({ id: report.id, field: report.params.field ?? null, state: report.state as 'waiting' | 'accepted', at: report.createdAt }));
       return {
         ...present(row),
         explored: row.explored,
@@ -1088,6 +1108,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
           : null,
         changes,
         descriptionChanges,
+        reports,
         journey: await journeyFrom(db, row),
       };
     },
