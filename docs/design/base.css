@@ -2880,3 +2880,5 @@ td .dbt-reported { margin-top: 4px; }
 .kf-purpose { margin: 0 0 10px; font-size: var(--text-small); line-height: 1.5; color: var(--text-secondary); max-width: 640px; }
 .kf-grain { margin-left: 6px; padding: 0 6px; border-radius: var(--radius-pill); font: 10px var(--font-family); color: var(--text-secondary); background: var(--tint-hover); }
 .kf-proposed { margin-left: auto; }
+/* The ⓘ of a term right after a button or a link, outside it, as a marker of its own (DEC-UX-340) */
+.lc-ref.lc-after { margin-left: -6px; padding: 0 2px; color: var(--text-secondary); }

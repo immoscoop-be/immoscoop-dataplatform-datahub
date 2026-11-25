@@ -255,7 +255,7 @@
   </div>
  <!-- "Seems wrong?" next to a description from dbt (FR-CV-17): the form in place of a new Message -->
  <div class="composer dbt-report" data-pane-group="from" data-pane="report" hidden aria-label="Report the description from dbt as wrong">
-   <div style="display:flex;align-items:center;gap:8px"><span class="label" style="margin:0;flex:1">The description from dbt seems wrong</span><span class="kind request">Request</span></div>
+   <div style="display:flex;align-items:center;gap:8px"><span class="label" style="margin:0;flex:1">The description from <span class="lc-ref" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-term-dbt">dbt<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (what it means)</span></span> seems wrong</span><span class="kind request">Request</span></div>
    <div class="dbt-quote"><div class="desc-head"><span class="label">Description</span><span class="origin">From dbt</span></div><p>One row per week and lead source with the number of credit leads sent to KBC. A lead counts in the week it was first submitted, not when it was followed up. Test and duplicate requests are excluded.</p></div>
    <label class="field"><span>What is wrong</span><textarea rows="3" placeholder="What does it say that is not so?">"Duplicate requests are excluded" reads as if someone who applies twice counts once. Only an exact copy of the same request is taken out: someone who applies twice counts twice.</textarea></label>
    <label class="field"><span>What it should say <span class="meta" style="display:inline;font-weight:400">· optional, filled in from the Business Description</span></span><textarea rows="3">The number of credit leads we send to KBC each week, per lead source. It counts leads, not people: someone who applies twice counts twice. A lead counts in the week it came in, not when KBC followed it up.</textarea></label>
@@ -315,6 +315,7 @@
  <button class="seg" data-target="asking" role="tab" aria-selected="false">Asking to confirm</button>
  <button class="seg" data-target="deleted" role="tab" aria-selected="false">Deleted</button>
 </div>
+<div class="lc-pop" id="pop-term-dbt" role="dialog" aria-label="dbt: what it means" hidden><div class="lc-pop-head"><span class="lc-mark" aria-hidden="true">ⓘ</span>What it means</div><p class="lc-pop-def"><b>dbt</b>The tool in which the Data Team builds the tables of BigQuery from SQL models, in dbt projects. Data Hub follows those projects; the description from dbt is what its dbt project says of a table or a field.</p><div class="lc-pop-head">Explained in a Learning Card soon</div><div class="lc-pop-items"><div class="lc-pop-item"><span class="lc-pop-title"><i class="ph ph-compass" aria-hidden="true"></i><span><span class="lc-num">K2.4</span>dbt</span></span><span class="lc-pop-seen">Coming soon</span></div></div><div class="lc-pop-foot"><a class="text-link" href="learning-start.html"><span>Open the Learning Centre</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div>
 <script src="app.js"></script>
 </body>
 </html>
