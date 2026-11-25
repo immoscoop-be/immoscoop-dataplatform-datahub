@@ -210,7 +210,7 @@ While it waits, the description says so wherever it shows, for every reader, wit
 <a id="fr-cv-18"></a>
 ### FR-CV-18 · Deleting a Message
 
-**Status:** Specified · **Source:** Max, 2026-11-25 ([DEC-CV-15](#dec-cv-15)) · **Screens:** [resource-messages](../../design/screens/resource-messages.html)
+**Status:** Implemented · **Source:** Max, 2026-11-25 ([DEC-CV-15](#dec-cv-15)) · **Screens:** [resource-messages](../../design/screens/resource-messages.html)
 
 The writer of a Message deletes it, wherever it shows; the Owner Unit of a Resource deletes every Message on that Resource. "Delete" asks to confirm in place, saying what goes: the Message alone, or, for the first Message of a conversation, the conversation with its replies. A deleted Message is gone for everyone, from its conversation, the Message Centre and its counts, the open steps of the Owner Journey and the curated Q&A of the Summary. The Log of the Resource keeps who deleted which Message and when. The Owner Unit of a Collection or a Lens deletes the Messages on it, and the Data Team every Message; a decided Request stays ([DEC-CV-16](#dec-cv-16)). Anyone else cannot delete it. In Claude, both are done only after the User agreed ([DEC-CV-17](#dec-cv-17)).
 

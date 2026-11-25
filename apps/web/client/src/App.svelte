@@ -792,6 +792,14 @@
     if (talkedAbout) readOnObject(talkedAbout);
     readUnread();
   }
+  /** A conversation deleted for everyone (FR-CV-18): it leaves the Message Centre, the window and the counts. */
+  function deletedMessage(id: string): void {
+    if (openedMessage?.id === id) openedMessage = undefined;
+    if (centre) centre = { ...centre, messages: centre.messages.filter((item) => item.id !== id) };
+    if (talkedAbout) readOnObject(talkedAbout);
+    readUnread();
+    router.go(router.path.replace(/\/messages\/[^/]+$/, page.kind === 'messages' ? '/messages' : ''));
+  }
   /** The decision of the Data Team on a Request on a Lens, in query, which changes the Lens with it (FR-LE-09). */
   async function decideLens(lensId: string, outcome: 'accepted' | 'refused', text: string): Promise<void> {
     const lens = await queries.decideLens(lensId, outcome, text);
@@ -1328,6 +1336,7 @@
         decides={can(permissions, 'requests.decide')}
         {decideLens}
         onchanged={changedMessage}
+        ondeleted={deletedMessage}
         onreadall={readAll}
       />
     {:else if queryPage && !mayQuery(permissions)}
@@ -1783,6 +1792,7 @@
         decides={can(permissions, 'requests.decide')}
         {decideLens}
         onchanged={changedMessage}
+        ondeleted={deletedMessage}
         onclose={() => router.go(router.path.replace(/\/messages\/[^/]+$/, ''))}
       />
     {/if}

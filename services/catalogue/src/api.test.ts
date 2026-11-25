@@ -1602,6 +1602,57 @@ describe.skipIf(!url)('the routes of Collections', () => {
       const log = (await dirk('GET', `/resources/${resource}/log`)).json().entries;
       expect(log[0]).toMatchObject({ logId: 'CNV-050', text: 'Signal raised by Dirk', params: { conversation: signal.id } });
     });
+
+    it('lets the writer, the Owner Unit and the Data Team delete a Message for everyone, its replies with it (FR-CV-18, DEC-CV-15, DEC-CV-16)', async () => {
+      const an = await user('Ann', [CREDIT]);
+      const bert = await user('Bert', [BROKERS]);
+      const els = await user('Eva', [AGENTS]);
+      const dirk = await user('Dirk', [], 'admin');
+      const talk = (await an('GET', '/collections')).json().collections.find((one: { name: string }) => one.name === 'Talk');
+      const ask = async (text: string) => (await bert('POST', '/messages', { subjectKind: 'collection', subjectId: talk.id, kind: 'question', text })).json().message;
+
+      // Its writer may delete it; who only sees it may not, and sees no Delete.
+      const mistake = await ask('Posted by mistake.');
+      expect(mistake.mayDelete).toBe(true);
+      expect((await els('GET', `/messages/${mistake.id}`)).json().message.mayDelete).toBe(false);
+      expect((await els('DELETE', `/messages/${mistake.id}`)).statusCode).toBe(403);
+      expect((await bert('DELETE', `/messages/${mistake.id}`)).json()).toEqual({ deleted: 'conversation', conversation: mistake.id });
+      expect((await bert('GET', `/messages/${mistake.id}`)).statusCode).toBe(404);
+      expect((await bert('GET', '/messages?view=written')).json().messages.map((message: { id: string }) => message.id)).not.toContain(mistake.id);
+      expect((await bert('DELETE', `/messages/${mistake.id}`)).statusCode).toBe(404);
+
+      // A reply goes alone, by its writer or the Owner Unit; the last reply gone, the Question is open again.
+      const asked = await ask('Will it be published this month?');
+      const answered = (await an('POST', `/messages/${asked.id}/replies`, { text: 'Yes, next week.' })).json().message;
+      expect(answered.state).toBe('answered');
+      const answer = answered.replies[0];
+      expect(answer.mayDelete).toBe(true);
+      expect((await bert('GET', `/messages/${asked.id}`)).json().message.replies[0].mayDelete).toBe(false);
+      expect((await bert('DELETE', `/messages/${answer.id}`)).statusCode).toBe(403);
+      expect((await an('DELETE', `/messages/${answer.id}`)).json()).toEqual({ deleted: 'reply', conversation: asked.id });
+      expect((await bert('GET', `/messages/${asked.id}`)).json().message).toMatchObject({ state: 'open', replies: [] });
+
+      // The Owner Unit and the Data Team delete what others wrote on it, with its replies.
+      await bert('POST', `/messages/${asked.id}/replies`, { text: 'Thanks.' });
+      expect((await an('GET', `/messages/${asked.id}`)).json().message.mayDelete).toBe(true);
+      expect((await an('DELETE', `/messages/${asked.id}`)).json().deleted).toBe('conversation');
+      expect((await bert('GET', `/messages/${asked.id}`)).statusCode).toBe(404);
+      const other = await ask('Another one.');
+      expect((await dirk('DELETE', `/messages/${other.id}`)).json().deleted).toBe('conversation');
+
+      // What Data Hub wrote stays; on a Resource, the Log keeps who deleted what.
+      const cards = (await dirk('GET', '/collections')).json().collections.find((one: { name: string }) => one.name === 'Cards');
+      const resource = cards.resources[0].id;
+      const signal = (await dirk('POST', '/messages', { subjectKind: 'resource', subjectId: resource, kind: 'signal', text: 'Oops.' })).json().message;
+      expect((await dirk('DELETE', `/messages/${signal.id}`)).json().deleted).toBe('conversation');
+      const log = (await dirk('GET', `/resources/${resource}/log`)).json().entries;
+      expect(log[0]).toMatchObject({ logId: 'CNV-052', text: 'Signal of Dirk deleted by Dirk' });
+      const system = (await dirk('GET', `/messages/on/resource/${resource}`)).json().messages.find((message: { writer: unknown }) => message.writer === null);
+      if (system) {
+        expect(system.mayDelete).toBe(false);
+        expect((await dirk('DELETE', `/messages/${system.id}`)).statusCode).toBe(409);
+      }
+    });
   });
 
   describe('Permission groups (TR-PL-06, DEC-PL-02 to DEC-PL-06)', () => {

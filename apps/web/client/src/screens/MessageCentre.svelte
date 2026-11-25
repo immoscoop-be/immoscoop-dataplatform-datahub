@@ -43,6 +43,7 @@
     decides,
     decideLens,
     onchanged,
+    ondeleted,
     onreadall,
   }: {
     filter: Filter;
@@ -58,6 +59,8 @@
     decideLens: (lensId: string, outcome: 'accepted' | 'refused', text: string) => Promise<void>;
     /** After a reply or a decision: the Message as it is now. */
     onchanged: (message: Conversation) => void;
+    /** The opened conversation is deleted, for everyone (FR-CV-18). */
+    ondeleted?: (id: string) => void;
     /** Marks these Messages read, those of the list shown that are unread (DEC-UX-255). */
     onreadall?: (ids: string[]) => void;
   } = $props();
@@ -172,7 +175,7 @@
       </div>
       {#if !message.subject.exists}<p class="meta gone">{t('messages.gone', { kind: SUBJECT_TITLES[message.subject.kind] })}</p>{/if}
       {#key message.id}
-        <MessageOpened {message} {client} {decides} {decideLens} {onchanged} />
+        <MessageOpened {message} {client} {decides} {decideLens} {onchanged} {ondeleted} />
       {/key}
     {:else if opened?.message === null}
       <p class="meta empty" role="alert">{t('messages.failed.read')}</p>

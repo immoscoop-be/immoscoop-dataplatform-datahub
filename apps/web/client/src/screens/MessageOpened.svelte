@@ -21,6 +21,7 @@
     decides,
     decideLens,
     onchanged,
+    ondeleted,
   }: {
     message: Conversation;
     client: MessagesClient;
@@ -30,6 +31,8 @@
     decideLens: (lensId: string, outcome: 'accepted' | 'refused', text: string) => Promise<void>;
     /** The Message as it is after a reply or a decision. */
     onchanged: (message: Conversation) => void;
+    /** Its conversation is deleted, for everyone (FR-CV-18). */
+    ondeleted?: (id: string) => void;
   } = $props();
 
   const language = $derived(currentLanguage());
@@ -117,6 +120,17 @@
       return true;
     } catch (error) {
       console.error('The Message could not be reopened', error);
+      return false;
+    }
+  }}
+  ondelete={async (id) => {
+    try {
+      const gone = await client.remove(id);
+      if (gone.deleted === 'conversation') ondeleted?.(message.id);
+      else onchanged(await client.conversation(message.id));
+      return true;
+    } catch (error) {
+      console.error('The Message could not be deleted', error);
       return false;
     }
   }}

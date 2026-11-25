@@ -130,6 +130,16 @@
               return false;
             }
           }}
+          ondelete={async (id) => {
+            try {
+              await client.remove(id);
+              onchanged();
+              return true;
+            } catch (error) {
+              console.error('The Message could not be deleted', error);
+              return false;
+            }
+          }}
           onreopen={async () => {
             try {
               await client.reopen(message.id);

@@ -56,6 +56,7 @@
     onreply,
     onclose,
     onreopen,
+    ondelete,
     notify = '',
   }: {
     message: Conversation;
@@ -65,6 +66,11 @@
     onclose?: (text: string) => Promise<boolean>;
     /** Offers "Reopen" on a closed one to the same people. */
     onreopen?: () => Promise<boolean>;
+    /**
+     * Offers "Delete" on what the User may delete, the Message with its replies or a reply alone, after a confirm in
+     * place that says what goes (FR-CV-18, DEC-UX-339); true when it is gone.
+     */
+    ondelete?: (id: string) => Promise<boolean>;
     /** Who a reply notifies, under its field. */
     notify?: string;
   } = $props();
@@ -95,10 +101,32 @@
     reopening = false;
   }
 
+  /** The Message or reply asking to be deleted, and whether that failed. */
+  let deleting = $state<string | null>(null);
+  let deleteFailed = $state(false);
+  let removing = $state(false);
+  async function remove(id: string): Promise<void> {
+    if (!ondelete) return;
+    removing = true;
+    deleteFailed = !(await ondelete(id).catch(() => false));
+    removing = false;
+    if (!deleteFailed) deleting = null;
+  }
+
   const name = (writer: Conversation['writer']) => writer?.name ?? 'Data Hub';
   const reads = $derived(Number(message.params.reads ?? 0));
   const threshold = $derived(Number(message.params.threshold ?? 0));
 </script>
+
+{#snippet confirm(id: string, what: string)}
+  <div class="confirm" role="group" aria-label={t('messages.delete')}>
+    <Icon name="warning-fill" />
+    <p><b>{what}</b> {t('messages.delete.goes')}</p>
+    <Button variant="outline" disabled={removing} onclick={() => (deleting = null)}>{t('collection.cancel')}</Button>
+    <Button variant="danger" disabled={removing} onclick={() => remove(id)}>{t('messages.delete')}</Button>
+  </div>
+  {#if deleteFailed}<p class="meta failed" role="alert">{t('messages.delete.failed')}</p>{/if}
+{/snippet}
 
 <article class="thread">
   <Avatar initials={message.writer ? initialsOf(message.writer.name) : 'DH'} />
@@ -135,8 +163,10 @@
             <span class="meta">{#if reply.writer?.as}{STANDING_NAMES[reply.writer.as]} · {/if}{ago(reply.createdAt, language)}</span>
             {#if reply.kind === 'decision' && reply.params.outcome && STATE_TEXTS[reply.params.outcome]}<span class="state"><Icon name={STATE_ICONS[reply.params.outcome] ?? 'check-circle'} />{t(STATE_TEXTS[reply.params.outcome]!)}</span>{/if}
             {#if reply.kind === 'closing'}<span class="state"><Icon name="minus-circle" />{t('messages.state.closed')}</span>{/if}
+            {#if reply.mayDelete && ondelete && deleting !== reply.id}<button type="button" class="link end" onclick={() => (deleting = reply.id)}><Icon name="trash" />{t('messages.delete')}</button>{/if}
           </div>
           {#if reply.params.text}<p class="words">{reply.params.text}</p>{/if}
+          {#if deleting === reply.id}{@render confirm(reply.id, t('messages.delete.reply'))}{/if}
         </div>
       </div>
     {/each}
@@ -159,8 +189,16 @@
         />
       </div>
     {/if}
+    {#if deleting === message.id}
+      {@render confirm(message.id, message.replies.length > 0 ? t('messages.delete.conversation', { kind: KIND_NAMES[message.kind], count: message.replies.length }) : t('messages.delete.one', { kind: KIND_NAMES[message.kind] }))}
+    {:else if (repliable && !replying) || (message.mayDelete && ondelete)}
+      <div class="actions">
+        {#if repliable && !replying}<button type="button" class="link" onclick={() => (replying = true)}><Icon name="arrow-bend-up-left-fill" />{t('messages.reply')}</button>{/if}
+        {#if message.mayDelete && ondelete}<button type="button" class="link" title={t('messages.delete.who')} onclick={() => (deleting = message.id)}><Icon name="trash" />{t('messages.delete')}</button>{/if}
+      </div>
+    {/if}
     {#if repliable && !replying}
-      <div class="actions"><button type="button" class="link" onclick={() => (replying = true)}><Icon name="arrow-bend-up-left-fill" />{t('messages.reply')}</button></div>
+      <!-- Reply sits in the actions above. -->
     {:else if repliable && onreply}
       <div class="inline">
         <MessageComposer
@@ -211,4 +249,8 @@
   .inline { margin-top: 10px; }
   .end { margin-left: auto; }
   .failed { margin: 6px 0 0; color: var(--signal-urgent); }
+  .confirm { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 8px 10px; border-radius: var(--radius-md); background: var(--surface-sub); font-size: var(--text-small); line-height: 1.5; }
+  .confirm > :global(svg) { flex: none; color: var(--signal-urgent); font-size: 18px; }
+  .confirm p { flex: 1; margin: 0; color: var(--text-secondary); }
+  .confirm b { color: var(--text-primary); font-weight: var(--weight-medium); }
 </style>

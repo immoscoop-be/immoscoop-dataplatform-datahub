@@ -281,6 +281,16 @@ export async function messageRoutes(app: FastifyInstance, options: MessageRouteO
     return { message: outcome };
   });
 
+  // Deleting a Message for everyone (FR-CV-18): a first Message with its conversation, a reply alone; by its writer, the
+  // Owner Unit of its object or the Data Team (DEC-CV-15, DEC-CV-16). What Data Hub wrote and a decided Request stay.
+  app.delete<{ Params: { id: string } }>('/messages/:id', async (request, reply) => {
+    const outcome = await messages.remove(request.params.id, await sightOf(request));
+    if (outcome === 'not_found') return reply.code(404).send(NO_MESSAGE);
+    if (outcome === 'stays') return reply.code(409).send({ error: 'stays', message: 'What Data Hub wrote, a closing, a decision and a decided Request stay.' });
+    if (outcome === 'not_allowed') return reply.code(403).send({ error: 'forbidden', message: 'Only its writer, the Owner Unit of its object and the Data Team delete a Message.' });
+    return outcome;
+  });
+
   // The User read a conversation: unread again once someone else moves it.
   app.post<{ Params: { id: string } }>('/messages/:id/read', async (request, reply) =>
     (await messages.read(request.params.id, await sightOf(request))) ? reply.code(204).send() : reply.code(404).send(NO_MESSAGE),

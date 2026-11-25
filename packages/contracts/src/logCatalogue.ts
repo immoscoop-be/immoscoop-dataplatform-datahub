@@ -284,6 +284,14 @@ export const LOG_CATALOGUE = {
     parameters: ['actor', 'conversation', 'anomaly'],
     text: { en: 'Signal turned into an Anomaly by {actor}', nl: 'Signal omgezet in een Anomaly door {actor}' },
   },
+  'CNV-052': {
+    about: 'resource',
+    parameters: ['actor', 'writer', 'kind'],
+    text: {
+      en: '{kind, select, question {Question} remark {Remark} signal {Signal} request {Request} reply {Reply} other {Message}} of {writer} deleted by {actor}',
+      nl: '{kind, select, question {Question} remark {Remark} signal {Signal} request {Request} reply {Antwoord} other {Message}} van {writer} verwijderd door {actor}',
+    },
+  },
   'BRK-001': {
     about: 'output',
     parameters: ['missing', 'run'],

@@ -1,7 +1,7 @@
 import { MESSAGE_CATALOGUE } from '@datahub/contracts/message-catalogue';
 import { renderMessage } from '@datahub/contracts/messages';
 import { z } from 'zod';
-import { answer, attempt } from './answers.js';
+import { answer, attempt, refusal } from './answers.js';
 import { type Context, READ, SHARE } from './context.js';
 import { pages } from './datahub.js';
 
@@ -105,6 +105,31 @@ export function messageTools({ server, hub, permits }: Context): void {
         attempt(async () => {
           const replied = await hub.send<{ message: Shown }>('catalogue', 'POST', `/messages/${enc(message)}/replies`, { text });
           return answer({ message: shown(replied.message) }, 'Replied under the name of the User.');
+        }),
+    );
+
+    // Deleting a Message, for everyone (FR-CV-18), only after the User agreed to exactly that (DEC-CV-17).
+    server.registerTool(
+      'delete_message',
+      {
+        title: 'Delete a Message',
+        description:
+          'Deletes a Message for everyone: a first Message with its whole conversation, a reply alone. The User may delete their own Messages; the Owner Unit and the Data Team every Message on their objects. What Data Hub wrote and a decided Request stay. Show the User what goes, the Message and how many replies with it, and call this only once they agree; pass in before its text as you showed it.',
+        inputSchema: {
+          message: z.string().describe('The ID of the Message to delete: a first Message or a reply.'),
+          before: z.string().optional().describe('The text of the Message as you showed it to the User.'),
+        },
+        annotations: SHARE,
+      },
+      ({ message, before }) =>
+        attempt(async () => {
+          if (before !== undefined) {
+            const { message: found } = await hub.get<{ message: Shown }>('catalogue', `/messages/${enc(message)}`);
+            const text = textOf(found);
+            if (text !== before && (found.params.text ?? '') !== before) return refusal(`Changed since you showed it: it now reads ${JSON.stringify(text)}. Show the User the Message as it is, and ask again.`);
+          }
+          const deleted = await hub.send<{ deleted: 'conversation' | 'reply'; conversation: string }>('catalogue', 'DELETE', `/messages/${enc(message)}`);
+          return answer(deleted, deleted.deleted === 'conversation' ? 'Deleted, with its replies, for everyone; the Log of the Resource keeps that the User did.' : 'The reply is deleted, for everyone.');
         }),
     );
   }

@@ -82,6 +82,7 @@ Log IDs are not requirement IDs: they are codes in the app itself. Requirement I
 | `JRN-002` | {step, select, data {Know the data} fields {Fields} admin {Table type, grain and mappings} messages {Open Questions and Signals} pitfalls {Pitfalls} gaps {Known Gaps} parameters {Parameters} other {{step}}}: nothing to add, according to {actor} | {step, select, data {De data kennen} fields {Velden} admin {Tabeltype, grain en mappings} messages {Open Questions en Signals} pitfalls {Valkuilen} gaps {Known Gaps} parameters {Parameters} other {{step}}}: niets toe te voegen, volgens {actor} | step, actor |
 | `CNV-050` | Signal raised by {actor} | Signal gemeld door {actor} | actor, conversation |
 | `CNV-051` | Signal turned into an Anomaly by {actor} | Signal omgezet in een Anomaly door {actor} | actor, conversation, anomaly |
+| `CNV-052` | {kind, select, question {Question} remark {Remark} signal {Signal} request {Request} reply {Reply} other {Message}} of {writer} deleted by {actor} | {kind, select, question {Question} remark {Remark} signal {Signal} request {Request} reply {Antwoord} other {Message}} van {writer} verwijderd door {actor} | actor, writer, kind |
 | `BRK-001` | Broken: {missing} no longer exists | Broken: {missing} bestaat niet meer | missing, run |
 | `BRK-002` | Works again: {restored} exists again | Werkt weer: {restored} bestaat weer | restored, run |
 | `LEN-001` | Request accepted by {actor} | Aanvraag aanvaard door {actor} | actor, conversation |

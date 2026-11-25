@@ -104,6 +104,11 @@ export interface MessageView {
   mayClose: boolean;
   /** Whether the viewer may reply in it: its writer always, others with `messages.reply`, likewise (DEC-PL-04). */
   mayReply: boolean;
+  /**
+   * Whether the viewer may delete it, with its replies (FR-CV-18): its writer, the Owner Unit of its object and the
+   * Data Team (DEC-CV-15, DEC-CV-16); never what Data Hub wrote, nor a Request once it is decided.
+   */
+  mayDelete: boolean;
 }
 
 /** A reply, the decision on a Request, or the closing of a Question or a Signal, under the Message it is about. */
@@ -115,6 +120,8 @@ export interface ReplyView {
   params: Record<string, string>;
   createdAt: Date;
   mine: boolean;
+  /** Whether the viewer may delete this reply alone: a reply written by a User, by its writer, the Owner Unit or the Data Team. */
+  mayDelete: boolean;
 }
 
 export interface Conversation extends MessageView {
@@ -185,6 +192,11 @@ export interface Messages {
    * with an optional line why: the closing stands under it in its conversation, and tells its writer (FR-CV-16, MSG-CNV-07).
    */
   close(id: string, sight: Sight, text: string): Promise<Conversation | 'not_found' | 'not_closable' | 'not_allowed' | 'not_open'>;
+  /**
+   * Deletes a Message for everyone (FR-CV-18): a first Message with its whole conversation, a reply alone. By its writer,
+   * the Owner Unit of its object or the Data Team (DEC-CV-15, DEC-CV-16); the Log of a Resource keeps who did (CNV-052).
+   */
+  remove(id: string, sight: Sight): Promise<{ deleted: 'conversation' | 'reply'; conversation: string } | 'not_found' | 'not_allowed' | 'stays'>;
   /** Opens a closed Question or Signal again, by the same people; its closing stays in the conversation (FR-CV-16). */
   reopen(id: string, sight: Sight): Promise<Conversation | 'not_found' | 'not_closable' | 'not_allowed' | 'not_closed'>;
   /** The decision on a waiting Request, by someone with `requests.decide`: its reply, which ends it (FR-CV-08, MSG-CNV-05). */
@@ -458,6 +470,7 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
       mine: row.writerId === sight.viewer.id,
       mayClose: mayClose(row, sight),
       mayReply: mayReply(row, sight),
+      mayDelete: mayDelete(row, sight),
     };
   }
 
@@ -495,6 +508,23 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
     return row.writerId === sight.viewer.id || reachesObject(sight, 'messages.reply', row.subjectKind, row.subjectId);
   }
 
+  /**
+   * Whether a Message may be deleted at all (FR-CV-18): what a User wrote, a first Message or a reply; never what Data
+   * Hub wrote, a closing or a decision, nor a Request once it is decided, whose decision belongs to its history (DEC-CV-16).
+   */
+  function deletable(row: Pick<Row, 'type' | 'writerId' | 'parentId' | 'state'>): boolean {
+    if (row.writerId === null) return false;
+    if (row.parentId !== null) return row.type === REPLY;
+    if (REQUESTS.includes(row.type)) return row.state === 'waiting';
+    return (Object.values(WRITTEN) as string[]).includes(row.type);
+  }
+
+  /** Whether the viewer may delete it: its writer, the Owner Unit of its object, or the Data Team (DEC-CV-15, DEC-CV-16). */
+  function mayDelete(row: Pick<Row, 'type' | 'writerId' | 'parentId' | 'state' | 'subjectKind' | 'subjectId'>, sight: Sight): boolean {
+    if (!deletable(row)) return false;
+    return row.writerId === sight.viewer.id || standing(sight, row.subjectKind, row.subjectId) !== null;
+  }
+
   const replyOf = (row: Row, sight: Sight): ReplyView => ({
     id: row.id,
     type: row.type,
@@ -503,6 +533,7 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
     params: row.params,
     createdAt: row.createdAt,
     mine: row.writerId === sight.viewer.id,
+    mayDelete: mayDelete(row, sight),
   });
 
   /** Conversations with their replies, oldest reply first, and whether each is unread for the viewer. */
@@ -745,6 +776,34 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
           .executeTakeFirstOrThrow();
         await markRead(trx, row.id, viewer.id);
         return (await conversations([updated], sight, trx))[0]!;
+      });
+    },
+
+    async remove(id, sight) {
+      if (!UUID.test(id)) return 'not_found';
+      const viewer = sight.viewer;
+      return db.transaction().execute(async (trx) => {
+        const row = await trx.selectFrom('messages').selectAll().where('id', '=', id).forUpdate().executeTakeFirst();
+        if (!row || !seesRow(sight, row)) return 'not_found' as const;
+        if (!deletable(row)) return 'stays' as const;
+        if (!mayDelete(row, sight)) return 'not_allowed' as const;
+        // A reply goes alone; a first Message takes its conversation with it, and the marks of who read it.
+        const gone = row.parentId === null ? [row.id, ...(await trx.selectFrom('messages').select('id').where('parentId', '=', row.id).execute()).map((reply) => reply.id)] : [row.id];
+        await trx.deleteFrom('messageReads').where('messageId', 'in', gone).execute();
+        if (row.parentId === null) await trx.deleteFrom('messages').where('parentId', '=', row.id).execute();
+        await trx.deleteFrom('messages').where('id', '=', row.id).execute();
+        if (row.parentId !== null) {
+          const replies = await trx.selectFrom('messages').select((eb) => eb.fn.countAll<string>().as('count')).where('parentId', '=', row.parentId).where('type', '=', REPLY).executeTakeFirstOrThrow();
+          // The last reply gone, a Question is open again: nobody answered it.
+          if (Number(replies.count) === 0) await trx.updateTable('messages').set({ state: 'open' }).where('id', '=', row.parentId).where('state', '=', 'answered').execute();
+        }
+        if (row.subjectKind === 'resource') {
+          await trx
+            .insertInto('resourceLog')
+            .values({ resourceId: row.subjectId, logId: 'CNV-052', params: { actor: viewer.name, writer: row.params.writer ?? '', kind: row.parentId === null ? kindOf(row.type) : 'reply' }, actorId: viewer.id })
+            .execute();
+        }
+        return { deleted: row.parentId === null ? ('conversation' as const) : ('reply' as const), conversation: row.parentId ?? row.id };
       });
     },
 

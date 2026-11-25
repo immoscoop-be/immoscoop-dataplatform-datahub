@@ -1390,6 +1390,11 @@ function serve({
       return json({ message: made }, 201);
     }
     const message = talk.find((candidate) => path.startsWith(`/messages/${candidate.id as string}`));
+    // Deleted for everyone (FR-CV-18): the conversation leaves the list.
+    if (message && path === `/messages/${message.id as string}` && method === 'DELETE') {
+      talk.splice(talk.indexOf(message), 1);
+      return json({ deleted: 'conversation', conversation: message.id });
+    }
     if (message && path === `/messages/${message.id as string}`) {
       return json({ message });
     }
@@ -6044,6 +6049,34 @@ describe('Messages', () => {
     await main.findByRole('button', { name: /Heropenen/ });
     await quickDo('deze message heropenen');
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/messages/m1/reopen' }));
+  });
+
+  it('lets whoever may delete it delete a Question for everyone, after a confirm in place that says what goes (FR-CV-18, DEC-UX-339)', async () => {
+    const calls = serve({ groups: ['g1'], conversations: [{ ...QUESTION, mayDelete: true }] });
+    open('/messages/m1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('button', { name: /^Verwijderen$/ }));
+    // It asks first, in place, and says what goes; Cancel keeps it.
+    const asks = within(main.getByRole('group', { name: 'Verwijderen' }));
+    expect(asks.getByText('Deze Question verwijderen?')).toBeTruthy();
+    await fireEvent.click(asks.getByRole('button', { name: 'Annuleren' }));
+    expect(main.queryByRole('group', { name: 'Verwijderen' })).toBeNull();
+    await fireEvent.click(main.getByRole('button', { name: /^Verwijderen$/ }));
+    await fireEvent.click(within(main.getByRole('group', { name: 'Verwijderen' })).getByRole('button', { name: 'Verwijderen' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/messages/m1' }));
+    // Gone: the Message Centre no longer opens it.
+    await vi.waitFor(() => expect(location.pathname).toBe('/messages'));
+    expect(main.queryByText('Will KBC follow-up be published this month?')).toBeNull();
+  });
+
+  it('offers no Delete to whoever may not delete a Message (FR-CV-18)', async () => {
+    serve({ groups: ['g1'], conversations: [{ ...QUESTION, mayDelete: false }] });
+    open('/messages/m1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByText('Will KBC follow-up be published this month?')).toBeTruthy();
+    expect(main.queryByRole('button', { name: /^Verwijderen$/ })).toBeNull();
   });
 
   it('offers no Close to whoever may not close a Question (FR-CV-16)', async () => {

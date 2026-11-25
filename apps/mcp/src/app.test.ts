@@ -845,7 +845,7 @@ describe('the Permissions of the User in Claude (TR-PL-09)', () => {
   // A Project holds queries, so its tools come with queries.make (DEC-SR-49).
   const PROJECT_TOOLS = ['add_query_to_project', 'create_project', 'get_project', 'list_projects', 'remove_query_from_project', 'update_project'];
   const PREVIEW_TOOLS = ['preview_resource', 'run_preview_approved', 'send_preview_request'];
-  const WRITES = ['add_known_gap', 'change_known_gap', 'deprecate_resource', 'describe_fields', 'mark_changes_seen', 'record_journey_step', 'remove_known_gap', 'reply_to_message', 'undeprecate_resource', 'update_resource_card', 'write_message'];
+  const WRITES = ['add_known_gap', 'change_known_gap', 'delete_message', 'deprecate_resource', 'describe_fields', 'mark_changes_seen', 'record_journey_step', 'remove_known_gap', 'reply_to_message', 'undeprecate_resource', 'update_resource_card', 'write_message'];
   // The fields suggested by Claude, decided by the User in a card: only for who may describe them (FR-CL-38).
   const FIELDS = ['save_fields', 'suggest_fields'];
   // The EDA, for who may explore Resources (DEC-ED-25, DEC-ED-29).
@@ -859,7 +859,7 @@ describe('the Permissions of the User in Claude (TR-PL-09)', () => {
   it('offers a Lens user no query tools and no Preview, and lets Claude write only their Questions and Signals', async () => {
     const tools = await toolsOf(await issuer.sign({ as: 'lensUser' }));
     // They run the Lenses they see, in a card only, whose rows the MCP App reads itself (FR-CL-28, FR-CL-36).
-    expect(names(tools)).toEqual([...READS, ...LENS_RUNS, 'read_result_rows', 'reply_to_message', 'write_message'].sort());
+    expect(names(tools)).toEqual([...READS, ...LENS_RUNS, 'delete_message', 'read_result_rows', 'reply_to_message', 'write_message'].sort());
     for (const name of [...QUERY_TOOLS, ...PROJECT_TOOLS, ...PREVIEW_TOOLS, 'read_preview_choices', 'publish_resource', 'get_resource_queries']) expect(names(tools)).not.toContain(name);
     expect(tools.find((item) => item.name === 'write_message')?.inputSchema.properties.kind?.enum).toEqual(['question', 'signal']);
     // The instructions tell Claude from the start that they make no queries and see results in a card only.
@@ -873,7 +873,7 @@ describe('the Permissions of the User in Claude (TR-PL-09)', () => {
     // Claude writes only Messages for them: no descriptions or deprecations, though they may describe and deprecate in Data Hub.
     const messagesOnly = permissionsOf('businessAnalyst', (permissions) => (permissions['claude.use'].values = { writes: ['messages'], note: '' }));
     const tools = names(await toolsOf(await issuer.sign({ permissions: messagesOnly })));
-    expect(tools).toEqual(expect.arrayContaining(['write_message', 'reply_to_message', 'publish_resource', 'create_query', 'preview_resource']));
+    expect(tools).toEqual(expect.arrayContaining(['write_message', 'reply_to_message', 'delete_message', 'publish_resource', 'create_query', 'preview_resource']));
     for (const name of ['update_resource_card', 'describe_fields', ...FIELDS, 'add_known_gap', 'change_known_gap', 'remove_known_gap', 'mark_changes_seen', 'deprecate_resource', 'undeprecate_resource', 'record_journey_step']) expect(tools).not.toContain(name);
 
     // Only the attributes they may describe: pitfalls, so no Business Descriptions of fields and no changes marked seen.

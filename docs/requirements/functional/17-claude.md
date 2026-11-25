@@ -110,6 +110,7 @@ Every endpoint around Resources, with the tool that answers it. Who may use a to
 | "Did anyone ask about this?" | `get_messages` | catalogue `GET /messages/on/resource/:id`, `GET /messages/:id` | Whoever sees it | Text |
 | "Ask the Owner why March is missing" | `write_message` | catalogue `POST /messages` | Whoever sees it | Text, posted after the User agrees ([FR-CL-13](#fr-cl-13)) |
 | "Answer that it is fixed" | `reply_to_message` | catalogue `POST /messages/:id/replies` | Whoever sees the Message | Text, posted after the User agrees |
+| "Delete the Question I posted by mistake" | `delete_message` | catalogue `DELETE /messages/:id` | Its writer, the Owner Unit of its object, the Data Team | Deleted for everyone, after the User agrees ([DEC-CV-17](14-conversations.md#dec-cv-17)) |
 
 ### Concepts and how-to-use
 

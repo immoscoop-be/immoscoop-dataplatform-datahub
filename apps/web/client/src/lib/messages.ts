@@ -85,6 +85,8 @@ export interface Message {
   mayClose: boolean;
   /** Whether the User may reply in it (`messages.reply`, DEC-PL-04); left out by an older catalogue. */
   mayReply?: boolean;
+  /** Whether the User may delete it with its replies: its writer, the Owner Unit and the Data Team (FR-CV-18). */
+  mayDelete?: boolean;
 }
 
 export interface Reply {
@@ -95,6 +97,8 @@ export interface Reply {
   params: Record<string, string>;
   createdAt: string;
   mine: boolean;
+  /** Whether the User may delete this reply alone (FR-CV-18). */
+  mayDelete?: boolean;
 }
 
 /** A Message with its replies, the decision on a Request among them. */
@@ -153,6 +157,10 @@ export function createMessages(config: Config, session: Pick<Session, 'accessTok
     /** Closes an open Question or Signal, with an optional line why (FR-CV-16, MSG-CNV-07). */
     async close(id: string, text: string): Promise<Conversation> {
       return conversation(await call(`${one(id)}/close`, { method: 'POST', body: { text } }));
+    },
+    /** Deletes a Message for everyone: a first Message with its conversation, a reply alone (FR-CV-18). */
+    async remove(id: string): Promise<{ deleted: 'conversation' | 'reply'; conversation: string }> {
+      return (await (await call(one(id), { method: 'DELETE' })).json()) as { deleted: 'conversation' | 'reply'; conversation: string };
     },
     /** Opens a closed Question or Signal again (FR-CV-16). */
     async reopen(id: string): Promise<Conversation> {
