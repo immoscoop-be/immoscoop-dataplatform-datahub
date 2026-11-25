@@ -9,7 +9,7 @@
     with nothing in it is left out. Claude reads the same.
   - Description: the Business Description, written in Markdown and shown
     rendered, the description from dbt under it, and what one row is: the model type, the grain and each field its model
-    type asks for by its role, with "Change model type" for a Data Admin (FR-RC-28, DEC-UX-263). Edit opens the Markdown editor of the app
+    type asks for by its role, with "Edit grain and relations" and "Change model type" for a Data Admin (FR-RC-28, DEC-UX-263, FR-RC-35, DEC-UX-337); Entities and Columns have the same "Edit grain and relations" (OP-UX-123 names it). Edit opens the Markdown editor of the app
     (MarkdownEditor, DEC-UX-158), as for the intro of a Collection, with the description from dbt beside it, read-only.
   - Known behaviour: intended use and pitfalls, in Markdown (DEC-RC-19).
   - Known Gaps: on top, Reliable since in a tile of its own (DEC-UX-296): from which day the whole table can be relied on,
@@ -56,7 +56,7 @@
   behaviour, Pitfalls, Known Gaps and Key fields. Its pop-out gives the definition of the term first, then the Learning
   Cards that explain it (DEC-UX-279, FR-LR-44); the definitions of Pitfall and Known Gap hold the test that tells them
   apart. It replaces the quiet line that said what a text is for (DEC-RC-26, DEC-RC-27).
-  Requirements: FR-ED-02, FR-ED-12, FR-MR-22, FR-RC-19, FR-RC-20, FR-RC-21, FR-RC-22, FR-RC-23, FR-RC-24, FR-RC-25, FR-RC-28, FR-RC-29, FR-SR-50, FR-MR-16, FR-CM-28, FR-CO-43, FR-CO-45, FR-MR-17, FR-MR-18, FR-LR-44, FR-RC-31, FR-RC-32, FR-RC-33, FR-RC-34
+  Requirements: FR-ED-02, FR-ED-12, FR-MR-22, FR-RC-19, FR-RC-20, FR-RC-21, FR-RC-22, FR-RC-23, FR-RC-24, FR-RC-25, FR-RC-28, FR-RC-29, FR-RC-35, FR-SR-50, FR-MR-16, FR-CM-28, FR-CO-43, FR-CO-45, FR-MR-17, FR-MR-18, FR-LR-44, FR-RC-31, FR-RC-32, FR-RC-33, FR-RC-34
   Decisions: DEC-RC-16, DEC-RC-17, DEC-RC-18, DEC-RC-19, DEC-RC-20, DEC-UX-101, DEC-UX-168, DEC-UX-169, DEC-UX-170, DEC-UX-171, DEC-UX-175, DEC-UX-176, DEC-UX-177, DEC-UX-178, DEC-UX-216, DEC-UX-263, DEC-UX-264, DEC-UX-265, DEC-RC-22, DEC-RC-23, DEC-RC-24, DEC-RC-26, DEC-RC-27, DEC-UX-279.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -227,7 +227,7 @@
        <p class="prose">One row per week and lead source with the number of credit leads sent to KBC. A lead counts in the week it was first submitted, not when it was followed up. Test and duplicate requests are excluded.</p>
       </div>
       <div class="sub-tile row-tile">
-       <div class="desc-head"><span class="label">What one row is</span><span class="origin">From the Data Team</span><span style="flex:1"></span><a class="text-link" data-for="datateam" href="collection-add-type.html?change=aggregate" title="Change model type, for a Data Admin"><i class="ph ph-shapes"></i><span>Change model type</span></a></div>
+       <div class="desc-head"><span class="label">What one row is</span><span class="origin">From the Data Team</span><span style="flex:1"></span><a class="text-link" data-for="datateam" href="collection-add-relations.html" title="Grain and relations, the model type kept, for a Data Admin (DEC-UX-337)"><i class="ph ph-graph"></i><span>Edit grain and relations</span></a><a class="text-link" data-for="datateam" href="collection-add-type.html?change=aggregate" title="Change model type, for a Data Admin"><i class="ph ph-shapes"></i><span>Change model type</span></a></div>
        <dl class="type-facts row-facts">
         <dt>Model type</dt><dd><span class="code-chip lc-ref" tabindex="0" title="Explained in Learning Card 2.3.6, Five model types">aggregate<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (explained in the Learning Centre)</span></span> One row per group, with its counts already made: add up its sums, never its unique counts.</dd>
         <dt>Grain</dt><dd><span class="code-chip lc-ref" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-grain">week_start<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (explained in the learning centre)</span></span><span class="code-chip">lead_source</span> One week × one lead source.</dd>
@@ -436,7 +436,7 @@ The lead source is set by the form the visitor used: website, app, partner or ma
     <section class="ov-pane" data-pane-group="ov" data-pane="entities" hidden aria-label="Entities">
      <div class="ov-head">
       <div style="flex:1;min-width:0"><h2 class="ov-title">Entities</h2><p class="ov-lead">The Entities in its rows, and the Resources they join it to.</p></div>
-      <a class="edit-link" data-for="datateam" href="collection-add-relations.html" title="Grain and relations, for a Data Admin"><i class="ph-fill ph-graph"></i>Edit relations</a>
+      <a class="edit-link" data-for="datateam" href="collection-add-relations.html" title="Grain and relations, for a Data Admin"><i class="ph-fill ph-graph"></i>Edit grain and relations</a>
      </div>
      <div class="sub-tile">
       <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:14px;align-items:center">
@@ -718,7 +718,7 @@ The lead source is set by the form the visitor used: website, app, partner or ma
   </div>
 
   <div data-pane-group="tabs" data-pane="columns" hidden>
-   <div class="tile-head" style="margin:0 6px 4px"><p class="meta" style="flex:1;margin:0">Every field with its Business Description, from the Owner, next to its description from dbt.</p><a class="edit-link" href="collection-add-relations.html" data-for="datateam" title="Grain and relations, for a Data Admin" style="margin-right:12px"><i class="ph-fill ph-graph"></i>Edit relations</a><a class="edit-link" href="resource-columns-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
+   <div class="tile-head" style="margin:0 6px 4px"><p class="meta" style="flex:1;margin:0">Every field with its Business Description, from the Owner, next to its description from dbt.</p><a class="edit-link" href="collection-add-relations.html" data-for="datateam" title="Grain and relations, for a Data Admin" style="margin-right:12px"><i class="ph-fill ph-graph"></i>Edit grain and relations</a><a class="edit-link" href="resource-columns-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
    <table><thead><tr><th>Column</th><th>Type</th><th>Business Description <span class="origin">From the Owner</span></th><th>Description <span class="origin">From dbt</span></th><th>Entity</th><th></th></tr></thead><tbody>
     <tr><td class="mono">week_start</td><td style="color:var(--text-muted)">DATE</td><td class="none" aria-label="No Business Description">–</td><td style="color:var(--text-secondary)">Monday of the week the lead was submitted</td><td></td><td><span class="pill pill-strong">Partition</span></td></tr>
     <tr><td class="mono">lead_source</td><td style="color:var(--text-muted)">STRING</td><td>Where the lead came in: the website, the app, a partner or a mailing.</td><td style="color:var(--text-secondary)">Where the lead came from</td><td><span class="code-chip" style="margin:0">leadSource.leadSourceId</span></td><td><span class="pill pill-strong">Cluster 1</span></td></tr>
