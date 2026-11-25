@@ -145,6 +145,8 @@
   const dangers = $derived(canDeprecate || (removeFrom !== null && onremove !== undefined) || removeLater !== null);
   const shown = $derived(PARTS.filter((one) => one.id !== 'danger' || dangers));
   /** Which attributes each part edits: Known Behaviour holds the intended use and the pitfalls; Reliable since is on Known Gaps (DEC-UX-296). */
+  /** Whether a field is one of the Grain, marked so where Key Fields are chosen (DEC-UX-343). */
+  const inGrain = (name: string): boolean => details.grain.includes(name);
   const EDITS: Record<Editable, readonly DescribeAttribute[]> = { description: ['description'], behaviour: ['behaviour', 'pitfalls'], querying: ['keyFields'] };
   const mayEdit = (which: Editable) => EDITS[which].some((attribute) => describes(attribute));
   /** Who said there is nothing to add to a step, and when, from the journey of the Resource (DEC-MR-16). */
@@ -346,14 +348,16 @@
   {#if failed}<p class="failed" role="alert">{t('resource.saveFailed')}</p>{/if}
 {/snippet}
 
-{#snippet chips(names: readonly string[])}
+{#snippet chips(names: readonly string[])}<!-- Key Fields as read. -->
   {#each names as name (name)}<span class="code">{name}</span>{:else}<p class="empty">{t('resource.noneChosen')}</p>{/each}
 {/snippet}
 
 {#snippet chosen(key: 'keyFields')}
+  <!-- What Key Fields are, where they are chosen, and the fields of the Grain marked so the two are told apart (DEC-UX-343). -->
+  <p class="purpose">{t('resource.keyFields.purpose')}</p>
   <div class="chosen">
     {#each draft[key] as name (name)}
-      <span class="code">{name}<button type="button" aria-label={t('resource.removeField', { name })} onclick={() => (draft[key] = draft[key].filter((other) => other !== name))}>×</button></span>
+      <span class="code">{name}{#if inGrain(name)}<span class="in-grain">{t('resource.keyFields.inGrain')}</span>{/if}<button type="button" aria-label={t('resource.removeField', { name })} onclick={() => (draft[key] = draft[key].filter((other) => other !== name))}>×</button></span>
     {/each}
     <select
       class="add"
@@ -369,7 +373,7 @@
       }}
     >
       <option value="">+ {t('resource.addField')}</option>
-      {#each resource.fields.filter((field) => !draft[key].includes(field.name)) as field (field.name)}<option value={field.name}>{field.name}</option>{/each}
+      {#each resource.fields.filter((field) => !draft[key].includes(field.name)) as field (field.name)}<option value={field.name}>{inGrain(field.name) ? t('resource.keyFields.option', { name: field.name }) : field.name}</option>{/each}
     </select>
   </div>
 {/snippet}
@@ -619,6 +623,8 @@
   .head h2 { margin: 0; font-size: var(--text-section); font-weight: var(--weight-medium); }
   .lead { margin: 4px 0 0; font-size: var(--text-small); color: var(--text-secondary); line-height: 1.5; max-width: 72ch; }
   .edit { all: unset; display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: var(--radius-sm); font-size: var(--text-meta); color: var(--text-muted); cursor: pointer; }
+  .purpose { margin: 0 0 10px; font-size: var(--text-small); line-height: 1.5; color: var(--text-secondary); max-width: 640px; }
+  .in-grain { margin-left: 6px; padding: 0 6px; border-radius: var(--radius-pill); font: 10px var(--font-family); color: var(--text-secondary); background: var(--tint-hover); }
   .relate { display: flex; justify-content: flex-end; margin: -38px 0 18px; }
   .edit:hover { color: var(--text-primary); background: var(--tint-hover); }
   .edit:focus-visible { outline: 2px solid var(--text-secondary); }

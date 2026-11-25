@@ -2380,7 +2380,7 @@ describe('the guide of an EDA, in the Flow Box (FR-ED-14, DEC-UX-327, TR-ED-09)'
     // The step to do now is the best next step, as the page proposes it, unfolded: The grain holds, while it is open,
     // whatever else misses more (DEC-ED-37).
     expect(guide.getByRole('button', { name: /^De Grain klopt/ }).getAttribute('aria-expanded')).toBe('true');
-    expect(guide.getByRole('button', { name: /^Lege waarden per sleutelveld/ }).getAttribute('aria-expanded')).toBe('false');
+    expect(guide.getByRole('button', { name: /^Lege waarden per Key Field/ }).getAttribute('aria-expanded')).toBe('false');
     expect(guide.getByText(/Nog 10 te gaan, waarvan 3 eraan komen: ze tellen toch mee/)).toBeTruthy();
     // It stays open on every other page; its Resource leads back to its EDA, where, opened there, it stays open.
     await fireEvent.click(within(screen.getByRole('navigation', { name: 'Hoofdnavigatie' })).getByRole('link', { name: 'Query' }));
@@ -2418,7 +2418,7 @@ describe('the guide of an EDA, in the Flow Box (FR-ED-14, DEC-UX-327, TR-ED-09)'
     await vi.waitFor(() => expect(calls).toContainEqual(expect.objectContaining({ method: 'POST', path: 'eda /resources/r2/eda/probes/grainHolds/runs' })));
     await vi.waitFor(() => expect(here.getByText('1 van 10 nodige EDA-Probes af')).toBeTruthy());
     expect(here.getByRole('button', { name: /^De Grain klopt/ }).textContent).toContain('Zoals verwacht');
-    expect(here.getByRole('button', { name: /^Lege waarden per sleutelveld/ }).getAttribute('aria-expanded')).toBe('true');
+    expect(here.getByRole('button', { name: /^Lege waarden per Key Field/ }).getAttribute('aria-expanded')).toBe('true');
     // Close takes it away; Guide me brings it back.
     await fireEvent.click(here.getByRole('button', { name: 'Sluiten' }));
     expect(screen.queryByRole('complementary', { name: /Zijn EDA opzetten/ })).toBeNull();
@@ -2433,10 +2433,10 @@ describe('the guide of an EDA, in the Flow Box (FR-ED-14, DEC-UX-327, TR-ED-09)'
     const gaps = within(await screen.findByRole('region', { name: 'Hiaten' }));
     await fireEvent.click(gaps.getByRole('button', { name: /Probe toevoegen/ }));
     const sheet = within(await screen.findByRole('dialog', { name: 'Een EDA-Probe toevoegen' }));
-    await fireEvent.click(sheet.getByRole('link', { name: /Lege waarden per sleutelveld/ }));
+    await fireEvent.click(sheet.getByRole('link', { name: /Lege waarden per Key Field/ }));
     await vi.waitFor(() => expect(location.pathname).toBe('/eda/r2/probes/nullsPerKeyField'));
     expect(screen.queryByRole('dialog', { name: 'Een EDA-Probe toevoegen' })).toBeNull();
-    expect(await within(screen.getByRole('main')).findByRole('heading', { level: 2, name: /^Lege waarden per sleutelveld/ })).toBeTruthy();
+    expect(await within(screen.getByRole('main')).findByRole('heading', { level: 2, name: /^Lege waarden per Key Field/ })).toBeTruthy();
   });
 
   it('is there only while the EDA is in progress', async () => {
@@ -3009,7 +3009,7 @@ describe('the page of a Resource', () => {
     await fireEvent.click(main.getByRole('button', { name: /Bewerken/ }));
     // Intended use and pitfalls are Markdown too, each in the Markdown editor (FR-RC-23).
     expect(main.getByRole('toolbar', { name: /Beoogd gebruik/ })).toBeTruthy();
-    expect(main.getByRole('toolbar', { name: /Valkuilen/ })).toBeTruthy();
+    expect(main.getByRole('toolbar', { name: /Pitfalls/ })).toBeTruthy();
     await fireEvent.input(main.getByRole('textbox', { name: 'Beoogd gebruik' }), { target: { value: 'Weekly **trends**.' } });
     await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/resources/r2', body: { intendedUse: 'Weekly **trends**.', pitfalls: '' } }));
@@ -3095,7 +3095,7 @@ describe('the page of a Resource', () => {
     await quickDo('het beoogde gebruik bijwerken');
     await vi.waitFor(() => expect((document.activeElement as HTMLElement | null)?.id).toBe('intended-use'));
     await fireEvent.click(main.getByRole('button', { name: 'Annuleren' }));
-    await quickDo('een sleutelveld toevoegen');
+    await quickDo('een Key Field toevoegen');
     await vi.waitFor(() => expect((document.activeElement as HTMLElement | null)?.getAttribute('data-pick')).toBe('keyFields'));
   });
 
@@ -3275,8 +3275,8 @@ describe('the page of a Resource', () => {
     await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
     await fireEvent.click(main.getByRole('tab', { name: 'Kolommen' }));
     const rowOf = (name: string) => main.getByRole('cell', { name }).closest('tr') as HTMLElement;
-    expect([...rowOf('week_start').querySelectorAll('.pill')].map((pill) => pill.textContent?.trim())).toEqual(['Sleutelveld', 'Partitie']);
-    expect(rowOf('lead_source').textContent).not.toContain('Sleutelveld');
+    expect([...rowOf('week_start').querySelectorAll('.pill')].map((pill) => pill.textContent?.trim())).toEqual(['Key Field', 'Partitie']);
+    expect(rowOf('lead_source').textContent).not.toContain('Key Field');
   });
 
   it('lets its Owner publish it, its first Confirmation, once the declaration is ticked (FR-SR-49, DEC-UX-63)', async () => {
@@ -3290,7 +3290,7 @@ describe('the page of a Resource', () => {
     expect(sheet.getByText(/het hele bedrijf, want de Collection is publiek/)).toBeTruthy();
     expect(sheet.getByText(/jij mag hem publiceren/)).toBeTruthy();
     // Every step required to publish done; what is advised or for the EDA holds nothing up (DEC-MR-15).
-    expect(sheet.getByText(/Nodig om te publiceren, alles gedaan:/).closest('p')?.textContent).toContain('Business Description; Sleutelvelden; Velden; Beoogd gebruik; Valkuilen; Reliable since.');
+    expect(sheet.getByText(/Nodig om te publiceren, alles gedaan:/).closest('p')?.textContent).toContain('Business Description; Key Fields; Velden; Beoogd gebruik; Pitfalls; Reliable since.');
     expect(sheet.getByText(/Aangeraden:/).closest('p')?.textContent).toContain('1 ander veld zonder Business Description');
     expect(sheet.getByText(/Voor de EDA, later:/).closest('p')?.textContent).toContain('geen modeltype vastgelegd; geen Grain vastgelegd.');
     // The card, read back: what the declaration accepts (DEC-MR-17).
@@ -3330,7 +3330,7 @@ describe('the page of a Resource', () => {
     expect(await sheet.findByRole('alert')).toHaveProperty('textContent', 'Niet gepubliceerd: een stap die nodig is om te publiceren staat open. De lijst hierboven toont welke.');
     const reads = calls.filter((call) => call.method === 'GET' && call.path === '/resources/r2');
     expect(reads.length).toBeGreaterThan(1);
-    expect(sheet.getByText('Velden:').closest('p')?.textContent).toContain('Sleutelvelden zonder Business Description: week_start;');
+    expect(sheet.getByText('Velden:').closest('p')?.textContent).toContain('Key Fields zonder Business Description: week_start;');
     expect((sheet.getByRole('checkbox') as HTMLInputElement).disabled).toBe(true);
     expect(main.queryByText('Gepubliceerd', { selector: '.chip' })).toBeNull();
   });
@@ -3349,7 +3349,7 @@ describe('the page of a Resource', () => {
     await fireEvent.click(main.getAllByRole('button', { name: /Publiceren/ })[0]!);
     const warning = within(await main.findByRole('dialog', { name: 'Nog niet klaar om te publiceren' }));
     expect(warning.getByText('1 van de 6 stappen die nodig zijn om te publiceren is nog open:')).toBeTruthy();
-    expect(warning.getByRole('button', { name: /^Valkuilen/ }).textContent).toContain('geen geschreven, en niemand zei dat er geen zijn');
+    expect(warning.getByRole('button', { name: /^Pitfalls/ }).textContent).toContain('geen geschreven, en niemand zei dat er geen zijn');
     // The Known Gaps are advised: they hold nothing up (DEC-MR-22).
     expect(warning.queryByRole('button', { name: /^Known Gaps/ })).toBeNull();
     expect(warning.getByRole('button', { name: 'Begeleid me' })).toBeTruthy();
@@ -3359,7 +3359,7 @@ describe('the page of a Resource', () => {
     expect(main.queryByRole('dialog', { name: 'Nog niet klaar om te publiceren' })).toBeNull();
     // A step leads to its place, opened for editing, its field in focus (DEC-UX-303).
     await fireEvent.click(main.getAllByRole('button', { name: /Publiceren/ })[0]!);
-    await fireEvent.click(within(await main.findByRole('dialog', { name: 'Nog niet klaar om te publiceren' })).getByRole('button', { name: /^Valkuilen/ }));
+    await fireEvent.click(within(await main.findByRole('dialog', { name: 'Nog niet klaar om te publiceren' })).getByRole('button', { name: /^Pitfalls/ }));
     await vi.waitFor(() => expect(document.activeElement?.id).toBe('pitfalls'));
     expect(main.queryByRole('dialog', { name: 'Nog niet klaar om te publiceren' })).toBeNull();
     // Its pitfalls: write them, or say there are none.
@@ -3382,16 +3382,16 @@ describe('the page of a Resource', () => {
     const box = within(await screen.findByRole('complementary', { name: 'Beschrijven en publiceren · Weekly lead volume' }));
     expect(box.getByText('5 van de 6 stappen die nodig zijn om te publiceren klaar')).toBeTruthy();
     // It starts at the first step still open, with what, why and how; a done step carries its tick and is folded.
-    expect(box.getByRole('button', { name: /^Valkuilen/ }).getAttribute('aria-expanded')).toBe('true');
-    expect(box.getByText(/Jij kent de valkuilen/)).toBeTruthy();
+    expect(box.getByRole('button', { name: /^Pitfalls/ }).getAttribute('aria-expanded')).toBe('true');
+    expect(box.getByText(/Jij kent de Pitfalls/)).toBeTruthy();
     expect(box.getByRole('button', { name: /^Business Description/ }).getAttribute('aria-expanded')).toBe('false');
     expect(box.getByRole('button', { name: /^Business Description/ }).textContent).toContain('klaar');
     expect(box.getByRole('button', { name: /^Teruglezen en publiceren/ }).textContent).toContain('Na de stappen hierboven');
     // A step opens by a click, and its button leads to its place, opened for editing (DEC-UX-303).
     await fireEvent.click(box.getByRole('button', { name: /^Beoogd gebruik/ }));
     expect(box.getByRole('button', { name: /^Beoogd gebruik/ }).getAttribute('aria-expanded')).toBe('true');
-    await fireEvent.click(box.getByRole('button', { name: /^Valkuilen/ }));
-    await fireEvent.click(box.getByRole('button', { name: /Schrijf de valkuilen/ }));
+    await fireEvent.click(box.getByRole('button', { name: /^Pitfalls/ }));
+    await fireEvent.click(box.getByRole('button', { name: /Schrijf de Pitfalls/ }));
     await vi.waitFor(() => expect(document.activeElement?.id).toBe('pitfalls'));
     // Minimize folds it to a strip with its progress; Maximize opens it again (DEC-UX-301).
     await fireEvent.click(box.getByRole('button', { name: 'Minimaliseren' }));

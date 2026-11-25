@@ -373,7 +373,7 @@ describe('the page of an EDA (FR-ED-04, DEC-UX-321, DEC-UX-322)', () => {
     setLanguage('nl');
     try {
       show(viewOf({ grainHolds: GRAIN_HOLDS, nullsPerKeyField: NULLS }));
-      const kaart = (await screen.findAllByRole('article', { name: 'Lege waarden per sleutelveld' }))[0] as HTMLElement;
+      const kaart = (await screen.findAllByRole('article', { name: 'Lege waarden per Key Field' }))[0] as HTMLElement;
       expect([...kaart.querySelectorAll('svg.drawing text.name')].map((name) => name.textContent)).toEqual(['id', 'id', 'aantal', 'tekst']);
     } finally {
       setLanguage('en');
