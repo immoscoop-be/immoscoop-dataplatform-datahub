@@ -67,6 +67,7 @@ Pointers to material this domain will build on, collected during the migration. 
 - <a id="dec-rc-32"></a>**DEC-RC-32** · A Resource whose table type gives no Date Field, a `dimension`, another table type or none recorded yet, gets the one its Owner Unit or the Data Team chooses among its fields of type DATE, DATETIME or TIMESTAMP; Claude proposes one from the data. Once a table type with a time role is recorded and its field differs, the tile of Reliable Since shows the warning, without a Message. A Resource without any date field has no Date Field: its Reliable Since can only be From its first row ([OP-RC-30](#op-rc-30)). *Decided on 2026-11-20, by Max, approving the design as proposed: "Brilliant, this is perfect. You may commit everything and then start building, please."*
 - <a id="dec-rc-33"></a>**DEC-RC-33** · The first row of a Resource comes from the partitions BigQuery keeps, which costs nothing to read, when the table is partitioned on its Date Field; otherwise from the lowest value of its Date Field, read once a day when the Pre-flight says it reads under 100 MB; otherwise there is none, and the line starts at Reliable Since with earlier rows undated ([OP-RC-31](#op-rc-31)). *Decided on 2026-11-20, by Max, approving the design as proposed: "Brilliant, this is perfect. You may commit everything and then start building, please."*
 - <a id="dec-rc-34"></a>**DEC-RC-34** · A Resource has no Parameters of its own any more: they fold into its Key Fields. Its Preview offers, besides its window and its first cluster column, the Key Fields that sort its rows: those of text or yes/no, and no identifier (`...Id`, `...Uid`, `..._id`). The Owner Journey loses its advised step Parameters; the lists kept and the answers "nothing to add" to that step go, and the Log keeps what was set and said. "Parameter" means only an input of a query or a Lens again ([Parameter](../../definitions.md#parameter)). *Decided on 2026-11-20, by Max: "I really don't see the use of it", then "fold it into the key fields, go ahead", the first of two ways Claude proposed; the other dropped them without a choice in the Preview. In prod none of the ten Resources had a Parameter, and one had said there were none.*
+- <a id="dec-rc-35"></a>**DEC-RC-35** · The grain of a Resource is changed with a button that is always there wherever the grain or the mappings show: in what one row is on its Description, in the head of Entities and on Columns. It keeps the model type and opens on the step Grain and storage; the model type is changed with "Change model type", as before ([DEC-RC-22](#dec-rc-22)). Only who may set the grain and the model type of a Resource sees it, a Data Admin today ([DEC-CO-22](03-collections.md#dec-co-22)). *Decided on 2026-11-25, by Max: the button should be more permanent, for admins only, after a colleague found the grain only by changing the model type and back.* *Raised in #datahub_feedback on 2026-11-25: [the remark](https://immoscoopworkspace.slack.com/archives/C0CM086EZLL/p1795616617706439).*
 
 ## Requirements
 
@@ -325,6 +326,8 @@ The Description on the Overview of a Resource shows its model type, its grain an
 
 **Makes easy:** a reader seeing at once which field says when an event happened or what a state is about. **Makes hard:** a model type that changes without its fields, or its EDA, following.
 
+*Note of 2026-11-25: the grain is changed with a button of its own next to "Change model type", which keeps the model type ([FR-RC-35](#fr-rc-35)).*
+
 *Note of 2026-11-16, on building it: the EDA-Revalidation that a change of model type triggers comes with the [EDA](15-eda.md); until then the change drops the fields of the old model type.*
 
 <a id="fr-rc-29"></a>
@@ -386,6 +389,17 @@ The period of a Known Gap ([FR-RC-24](#fr-rc-24)) is one day or a period. One da
 The period of a Known Gap ([FR-RC-24](#fr-rc-24)) may name one date field of the Resource it holds on, a field of type DATE, DATETIME or TIMESTAMP. It is optional: the form offers "The Date Field of the Resource" first, which names none, and the gap then follows the [Date Field](../../definitions.md#date-field), also when it changes; every gap written before keeps following it. A gap that names another field says so on its chip, "on `loaded_at`", in the Summary and in Claude, as `[period: 2026-10-21 on loaded_at]`; one that follows the Date Field adds nothing. Claude's `add_known_gap` and `change_known_gap` take the field as an optional `dateField`. When the field leaves the Resource, the gap shows so, as for a field it names ([EC-RC-01](#ec-rc-01)).
 
 **Makes easy:** writing down a gap about the day rows were loaded, on a table that counts by week. **Makes hard:** a period that silently reads on another time than its author meant, and a default that looks like a choice.
+
+<a id="fr-rc-35"></a>
+### FR-RC-35 · The grain is changed from wherever it shows
+
+**Status:** Specified · **Source:** Max, 2026-11-25 ([DEC-RC-35](#dec-rc-35)) · **Screens:** [resource-overview](../../design/screens/resource-overview.html), [collection-add-relations](../../design/screens/collection-add-relations.html)
+
+Who may set the grain and the model type of a Resource, a Data Admin today ([DEC-CO-22](03-collections.md#dec-co-22)), always has a button to change its grain and the mappings of its fields where they show: in the head of what one row is on its Description, next to "Change model type"; in the head of Entities; and on Columns, where "Edit relations" is today ([DEC-UX-107](../../design/principles.md#dec-ux-107)). Each opens the steps of adding a Resource on Grain and storage, with the model type it has kept, so that Next leads on without choosing another type; Fields and relations follows, and the earlier step Model type stays one click back. Nobody else sees the button. The label is [OP-UX-123](../../design/principles.md#op-ux-123).
+
+**Makes easy:** correcting a grain that turns out wrong, from the place where it is read. **Makes hard:** changing the model type to reach the grain and back, and a grain changed by someone who may not set it.
+
+*Raised in #datahub_feedback on 2026-11-25: [the remark](https://immoscoopworkspace.slack.com/archives/C0CM086EZLL/p1795616617706439).*
 
 ## Edge cases
 

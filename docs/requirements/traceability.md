@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 337 | 124 (27 open, 97 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 338 | 125 (28 open, 97 done) |
 | [Backlog](../overview/backlog.md) | – | – | – | 7 (5 open, 2 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
@@ -17,7 +17,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [User management](functional/02-user-management.md) | 21 (14 implemented, 7 withdrawn) | 5 (1 implemented, 4 withdrawn) | 12 | 8 (1 open, 7 done) |
 | [Collections](functional/03-collections.md) | 45 (1 proposed, 40 implemented, 4 withdrawn) | 2 (2 specified) | 27 | 18 (1 open, 17 done) |
 | [Resources](functional/04-stacks-and-resources.md) | 73 (5 specified, 60 implemented, 8 withdrawn) | 5 (1 specified, 1 implemented, 3 withdrawn) | 49 | 25 (4 open, 21 done) |
-| [Resource card](functional/05-resource-card.md) | 34 (4 proposed, 2 specified, 26 implemented, 2 withdrawn) | 1 (1 implemented) | 34 | 31 (3 open, 28 done) |
+| [Resource card](functional/05-resource-card.md) | 35 (4 proposed, 3 specified, 26 implemented, 2 withdrawn) | 1 (1 implemented) | 35 | 31 (3 open, 28 done) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 22 (3 specified, 13 implemented, 6 withdrawn) | – | 22 | 9 (2 open, 7 done) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 7 (3 proposed, 4 implemented) | 1 (1 implemented) | 8 | 8 (8 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | 39 (39 specified) | 4 (4 proposed) | 30 | 15 (15 open) |
@@ -263,6 +263,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-RC-32](functional/05-resource-card.md#fr-rc-32) | The Date Field of a Resource, from its table type | Implemented | – | [resource-overview](../design/screens/resource-overview.html), [owner-journey](../design/screens/owner-journey.html) | [TR-SR-35](technical/04-stacks-and-resources.md#tr-sr-35) | [b9b038b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/b9b038bb4531b08dffb70d0ab4d25dab138b9d57) implements, 2026-11-20<br>[48efec3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/48efec3adb15359105cabd0ea55006f18745febe) refs, 2026-11-20<br>[5a5b317](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/5a5b31780963eccf7c5f8117baed34f4849b653f) refs, 2026-11-20 |
 | [FR-RC-33](functional/05-resource-card.md#fr-rc-33) | A Known Gap of one day | Implemented | – | [resource-overview](../design/screens/resource-overview.html) | [TR-SR-35](technical/04-stacks-and-resources.md#tr-sr-35) | [b9b038b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/b9b038bb4531b08dffb70d0ab4d25dab138b9d57) implements, 2026-11-20<br>[48efec3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/48efec3adb15359105cabd0ea55006f18745febe) refs, 2026-11-20<br>[5a5b317](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/5a5b31780963eccf7c5f8117baed34f4849b653f) refs, 2026-11-20 |
 | [FR-RC-34](functional/05-resource-card.md#fr-rc-34) | The period of a Known Gap names its date field | Implemented | – | [resource-overview](../design/screens/resource-overview.html) | [TR-SR-35](technical/04-stacks-and-resources.md#tr-sr-35) | [b9b038b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/b9b038bb4531b08dffb70d0ab4d25dab138b9d57) implements, 2026-11-20<br>[48efec3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/48efec3adb15359105cabd0ea55006f18745febe) refs, 2026-11-20 |
+| [FR-RC-35](functional/05-resource-card.md#fr-rc-35) | The grain is changed from wherever it shows | Specified | – | [resource-overview](../design/screens/resource-overview.html), [collection-add-relations](../design/screens/collection-add-relations.html) | – | – |
 
 ### [Maturity and release](functional/06-maturity-and-release.md)
 
@@ -423,8 +424,8 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-CV-14](functional/14-conversations.md#fr-cv-14) | Every type of Message from Data Hub has its Learning Card | Implemented | – | – | – | [402201b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/402201b1b5d266b2dc2b0d8472c2bc0b71ffb547) implements, 2026-10-28 |
 | [FR-CV-15](functional/14-conversations.md#fr-cv-15) | A Message reaches every channel from the same texts | Implemented | – | [messages](../design/screens/messages.html), [notifications](../design/screens/notifications.html) | [TR-LN-03](technical/07-log-and-notifications.md#tr-ln-03), [TR-LN-04](technical/07-log-and-notifications.md#tr-ln-04) | [7ac425d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7ac425df72259094edf4e3a4ffb0d8cd629ca936) implements, 2026-10-29<br>[45f391e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/45f391e5b6e2788846ee66b5e197ecaab046337f) refs, 2026-10-29<br>[c92b276](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c92b2768f0cf5debc75c2ef904884298fd11b42c) refs, 2026-10-29<br>[402201b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/402201b1b5d266b2dc2b0d8472c2bc0b71ffb547) refs, 2026-10-28 |
 | [FR-CV-16](functional/14-conversations.md#fr-cv-16) | Closing and reopening a Question or a Signal | Implemented | – | [messages](../design/screens/messages.html) | – | [3ce424e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/3ce424e4caabec26ac9434aab937189b95f2a710) implements, 2026-11-04<br>[dfe92a9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/dfe92a9994b3d9bde2c9bdff63b32589d991a921) refs, 2026-11-04 |
-| [FR-CV-17](functional/14-conversations.md#fr-cv-17) | Reporting a description from dbt as wrong | Specified | – | [resource-overview](../design/screens/resource-overview.html), [resource-messages](../design/screens/resource-messages.html) | – | – |
-| [FR-CV-18](functional/14-conversations.md#fr-cv-18) | Deleting a Message | Specified | – | [resource-messages](../design/screens/resource-messages.html) | – | – |
+| [FR-CV-17](functional/14-conversations.md#fr-cv-17) | Reporting a description from dbt as wrong | Specified | – | [resource-overview](../design/screens/resource-overview.html), [resource-messages](../design/screens/resource-messages.html) | – | [f30e92b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f30e92b1531ea04f68e1567928d5a5ec933586bb) refs, 2026-11-25 |
+| [FR-CV-18](functional/14-conversations.md#fr-cv-18) | Deleting a Message | Specified | – | [resource-messages](../design/screens/resource-messages.html) | – | [f30e92b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f30e92b1531ea04f68e1567928d5a5ec933586bb) refs, 2026-11-25 |
 
 ### [EDA](functional/15-eda.md)
 
