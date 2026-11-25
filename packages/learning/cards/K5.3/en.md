@@ -3,16 +3,16 @@ number: K5.3
 status: reviewed
 minutes: 5
 added: 2026-11-12
-changed: 2026-11-12
+changed: 2026-11-25
 gain: You know where data is missing from a Resource before you draw a conclusion from it, and you save your colleagues from making the same mistake.
 ---
 
 # Why now
 
-> Why is the lead source empty for all those leads? What happened there?
-> — A colleague who works with leads, not the first to ask
+> Data is like an old friend: not always perfect, but always heartwarming.
+> — A colleague of the Data Team
 
-The answer is always the same: for a period, the lead source was not registered with the leads. Nobody wrote it down, so the question keeps coming back. And the colleague who does not notice the hole asks nothing at all: they draw a conclusion, and it is wrong.
+Just like with an old friend, you know what you can and cannot count on. For a period the lead source was not registered with the leads, and nobody wrote it down: so the same question keeps coming back, or a colleague draws a conclusion that is wrong. Documenting the Known Gaps is like the manual that comes with that friend: that way you always get the best out of it.
 
 Promise: why a hole in the data only misleads when nobody wrote it down, and where to write it.
 

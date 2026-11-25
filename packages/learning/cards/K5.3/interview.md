@@ -16,7 +16,9 @@ The input of the card as the interview gave it: what the author said, what Claud
 
 **Answer:** Not one question but the same one over and over: there was a mistake in the data, and we got asked about it again and again, because it never got documented. No literal quote was given.
 
-**In the card:** Why now. The quote, "Why is the lead source empty for all those leads? What happened there?", and who says it, "A colleague who works with leads, not the first to ask", are Claude's wording of this answer, to word with the author (see To do). The situation: the same answer every time, nobody wrote it down, so the question keeps coming back.
+**Later, 2026-11-25:** the author gave the quote himself, in Dutch: "data is zoals een oude vriend, niet altijd perfect maar altijd hartverwarmend", and what goes with it: just as with an old friend you know what you can and cannot count on, documenting the Known Gaps is like the manual that comes with that friend, and that way you always get the best out of it.
+
+**In the card:** Why now. The quote is the author's, "Data is like an old friend: not always perfect, but always heartwarming", said by "A colleague of the Data Team". It replaces Claude's first wording, "Why is the lead source empty for all those leads? What happened there?", said by "A colleague who works with leads, not the first to ask". The situation is the author's two sentences of 2026-11-25, with between them, in one sentence, the case of question 2 that Core idea goes on with: the lead source was not registered for a period, nobody wrote it down, so the question keeps coming back or a colleague draws a wrong conclusion. Unlike the recipe, which keeps the concept out of Why now, the situation names the Known Gaps, as the author put it.
 
 ## 2. What went wrong
 
@@ -78,14 +80,14 @@ See it shows the third rung as the Chart Server draws it, from example figures u
 
 The author brought the repeated question, the case of the lead source, the two sides of the trap and the ban. Claude brought the first wording of the aha, the pothole and the first question.
 
-Writing the card, Claude also brought: the wording of the quote of Why now and of who says it; the example figures and the kind of chart of See it, and the period of the example gap; the gain; the four questions of Check your understanding, all Claude's, with their wrong answers taken from the two sides of question 2 and the ban of question 5, except "The Resource is unreliable, so you look for another one" (third question) and "When the Data Team will fix it" and "How many colleagues ran into it" (fourth question), which are Claude's own traps; the choice of the neighbours under Where to next; and the facts of Data Hub behind the example and the questions, checked in `docs/requirements/functional/05-resource-card.md`: a Known Gap is an item of its own on the Overview of a Resource, in plain text, with who added it and when (FR-RC-21); the Owner and the Data Team add, change and remove one (FR-RC-21; per attribute through `resources.describe`, DEC-PL-03); it may be narrowed down by a period, fields and rows (FR-RC-24); Claude reads that scope (FR-RC-25). The card does not mention the warning on a query that reads a Known Gap (FR-RC-27), which is proposed and not in v1.
+The author also brought, on 2026-11-25, the quote of Why now and the old friend with its manual around it. Writing the card, Claude also brought: the first wording of the quote of Why now and of who says it, since replaced; the example figures and the kind of chart of See it, and the period of the example gap; the gain; the four questions of Check your understanding, all Claude's, with their wrong answers taken from the two sides of question 2 and the ban of question 5, except "The Resource is unreliable, so you look for another one" (third question) and "When the Data Team will fix it" and "How many colleagues ran into it" (fourth question), which are Claude's own traps; the choice of the neighbours under Where to next; and the facts of Data Hub behind the example and the questions, checked in `docs/requirements/functional/05-resource-card.md`: a Known Gap is an item of its own on the Overview of a Resource, in plain text, with who added it and when (FR-RC-21); the Owner and the Data Team add, change and remove one (FR-RC-21; per attribute through `resources.describe`, DEC-PL-03); it may be narrowed down by a period, fields and rows (FR-RC-24); Claude reads that scope (FR-RC-25). The card does not mention the warning on a query that reads a Known Gap (FR-RC-27), which is proposed and not in v1.
 
 The fact check, by an independent pass of Claude on 2026-11-14, read the card against the requirements, the Message Catalogue and the code. Nothing to change.
 
 ## To do
 
 - [ ] Ask the author for the figures and the period of the missing lead source, for See it, and replace the example figures and the example gap (mid-March to mid-April 2026) by them; keep "example figures" until then, or "rounded figures" once real
-- [ ] Word the quote of Why now with the author, and who says it
+- [x] Word the quote of Why now with the author, and who says it (the author gave it on 2026-11-25)
 - [ ] Confirm the first question of question 5 with the author
 - [ ] Ask the author whether the wrong answers of the four questions are misconceptions he really heard
 - [ ] Ask the author whether the pothole needs its other half (without the sign, every cyclist rides into it), which the card now leaves to the reader
