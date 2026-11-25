@@ -2856,3 +2856,7 @@ html[data-bg] :is(.flowbox, .flowstrip) { -webkit-backdrop-filter: var(--blur-fr
 .ln-grow { resize: none; min-height: calc(2lh + 18px); field-sizing: content; }
 @supports (field-sizing: content) { .ln-grow { min-height: 0; } }
 .ln-always { margin: 0; padding-left: 18px; line-height: 1.7; color: var(--text-secondary); max-width: 760px; }
+
+/* A description from dbt reported as wrong (DEC-UX-338, FR-CV-17): a line under it while the Data Team decides. */
+.dbt-reported { display: flex; align-items: center; gap: 6px; margin: 8px 0 0; font-size: var(--text-meta); color: var(--signal-warn); }
+.dbt-reported .text-link { color: var(--signal-warn); }

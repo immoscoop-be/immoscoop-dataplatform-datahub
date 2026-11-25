@@ -56,7 +56,7 @@
   behaviour, Pitfalls, Known Gaps and Key fields. Its pop-out gives the definition of the term first, then the Learning
   Cards that explain it (DEC-UX-279, FR-LR-44); the definitions of Pitfall and Known Gap hold the test that tells them
   apart. It replaces the quiet line that said what a text is for (DEC-RC-26, DEC-RC-27).
-  Requirements: FR-ED-02, FR-ED-12, FR-MR-22, FR-RC-19, FR-RC-20, FR-RC-21, FR-RC-22, FR-RC-23, FR-RC-24, FR-RC-25, FR-RC-28, FR-RC-29, FR-SR-50, FR-MR-16, FR-CM-28, FR-CO-43, FR-CO-45, FR-MR-17, FR-MR-18, FR-LR-44, FR-RC-31, FR-RC-32, FR-RC-33, FR-RC-34
+  Requirements: FR-ED-02, FR-ED-12, FR-MR-22, FR-RC-19, FR-RC-20, FR-RC-21, FR-RC-22, FR-RC-23, FR-RC-24, FR-RC-25, FR-RC-28, FR-RC-29, FR-CV-17, FR-SR-50, FR-MR-16, FR-CM-28, FR-CO-43, FR-CO-45, FR-MR-17, FR-MR-18, FR-LR-44, FR-RC-31, FR-RC-32, FR-RC-33, FR-RC-34
   Decisions: DEC-RC-16, DEC-RC-17, DEC-RC-18, DEC-RC-19, DEC-RC-20, DEC-UX-101, DEC-UX-168, DEC-UX-169, DEC-UX-170, DEC-UX-171, DEC-UX-175, DEC-UX-176, DEC-UX-177, DEC-UX-178, DEC-UX-216, DEC-UX-263, DEC-UX-264, DEC-UX-265, DEC-RC-22, DEC-RC-23, DEC-RC-24, DEC-RC-26, DEC-RC-27, DEC-UX-279.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -223,8 +223,9 @@
        </div>
       </div>
       <div class="sub-tile">
-       <div class="desc-head"><span class="label">Description</span><span class="origin">From dbt</span></div>
+       <div class="desc-head"><span class="label">Description</span><span class="origin">From dbt</span><a class="text-link" href="resource-messages.html" title="Tell the Data Team this description from dbt seems wrong (FR-CV-17)"><i class="ph ph-flag"></i><span>Seems wrong?</span></a></div>
        <p class="prose">One row per week and lead source with the number of credit leads sent to KBC. A lead counts in the week it was first submitted, not when it was followed up. Test and duplicate requests are excluded.</p>
+       <p class="dbt-reported" data-pane-group="dbtrep" data-pane="reported" hidden><i class="ph-fill ph-flag"></i><span>Reported as wrong on 25 Nov; the Data Team is looking at it.</span><a class="text-link" href="resource-messages.html">See the request</a></p>
       </div>
       <div class="sub-tile row-tile">
        <div class="desc-head"><span class="label">What one row is</span><span class="origin">From the Data Team</span><span style="flex:1"></span><a class="text-link" data-for="datateam" href="collection-add-type.html?change=aggregate" title="Change model type, for a Data Admin"><i class="ph ph-shapes"></i><span>Change model type</span></a></div>
@@ -807,6 +808,10 @@ The lead source is set by the form the visitor used: website, app, partner or ma
  <button class="seg" data-target="maturity" data-go="ov:maturity" role="tab" aria-selected="false">Maturity</button>
  <button class="seg" data-target="monitoring" data-go="ov:monitoring" role="tab" aria-selected="false">Monitoring</button>
  <button class="seg" data-target="danger" data-go="ov:danger" role="tab" aria-selected="false">Danger zone</button>
+</div>
+<div class="proto-switch" data-group="dbtrep" role="tablist" aria-label="Prototype: a description from dbt reported as wrong" style="bottom:600px">dbt description
+ <button class="seg on" data-target="none" role="tab" aria-selected="true">Not reported</button>
+ <button class="seg" data-target="reported" role="tab" aria-selected="false">Reported</button>
 </div>
 <div class="proto-switch" data-group="cardfill" role="tablist" aria-label="Prototype: pitfalls and Known Gaps" style="bottom:312px">Pitfalls, gaps
  <button class="seg on" data-target="written" role="tab" aria-selected="true">Written</button>
