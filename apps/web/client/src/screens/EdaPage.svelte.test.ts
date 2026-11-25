@@ -277,7 +277,7 @@ describe('the page of an EDA (FR-ED-04, DEC-UX-321, DEC-UX-322)', () => {
     cleanup();
 
     show(viewOf({ grainHolds: GRAIN_HOLDS }));
-    const grain = await screen.findByTitle(/^Counted by The grain holds, 21 Nov/);
+    const grain = await screen.findByTitle(/^Counted by The Grain holds, 21 Nov/);
     expect(grain.textContent?.trim()).toBe('16,224 rows');
     expect(grain.closest('.facts')).toBeTruthy();
     cleanup();
@@ -291,7 +291,7 @@ describe('the page of an EDA (FR-ED-04, DEC-UX-321, DEC-UX-322)', () => {
     setLanguage('nl');
     try {
       show(viewOf({ grainHolds: GRAIN_HOLDS }));
-      expect((await screen.findByTitle(/^Geteld door De grain klopt, 21 nov/)).textContent?.trim()).toBe('16.224 rijen');
+      expect((await screen.findByTitle(/^Geteld door De Grain klopt, 21 nov/)).textContent?.trim()).toBe('16.224 rijen');
     } finally {
       setLanguage('en');
     }
@@ -308,12 +308,12 @@ describe('the page of an EDA (FR-ED-04, DEC-UX-321, DEC-UX-322)', () => {
     expect(screen.getAllByRole('region').map((region) => region.getAttribute('aria-label')).slice(0, 5)).toEqual(['Basis', 'Gaps', 'Weight', 'Correctness', 'Relations between fields']);
     const basis = step('Basis');
     expect(basis.getByText('1 of 3 needed')).toBeTruthy();
-    const card = within(basis.getByRole('article', { name: 'The grain holds' }));
+    const card = within(basis.getByRole('article', { name: 'The Grain holds' }));
     expect(card.getByText('As expected')).toBeTruthy();
     expect(card.getByText(/none twice in 16,224 rows/)).toBeTruthy();
     expect(card.getByText('Set on week_start, lead_source')).toBeTruthy();
     // The whole card opens the detail of its EDA-Probe: its title is the link, stretched over the card.
-    expect(card.getByRole('link', { name: 'The grain holds' }).getAttribute('href')).toBe('/eda/r2/probes/grainHolds');
+    expect(card.getByRole('link', { name: 'The Grain holds' }).getAttribute('href')).toBe('/eda/r2/probes/grainHolds');
     expect(basis.getByRole('button', { name: /Add probe/ }).textContent).toContain('2 needed still in Basis');
     expect(step('Gaps').getByText('0 of 3 needed')).toBeTruthy();
     // Coming ones count as EDA-Probes left to add, as the list shows them (FR-ED-04, DEC-ED-27).
@@ -338,7 +338,7 @@ describe('the page of an EDA (FR-ED-04, DEC-UX-321, DEC-UX-322)', () => {
     expect(side.getByRole('link', { name: /Add this EDA-Probe/ }).getAttribute('href')).toBe('/eda/r2/probes/nullsPerKeyField');
     const table = side.getByRole('heading', { name: 'The table as a whole' }).parentElement as HTMLElement;
     expect([...table.querySelectorAll('li')].map((item) => item.textContent?.replace(/\s+/g, ' ').trim())).toEqual([
-      'The grain holds Added',
+      'The Grain holds Added',
       'Date range Needed',
       'Volume over time, with empty periods Needed',
       'Settling between EDA-Reruns On request · Coming',
@@ -373,7 +373,7 @@ describe('the page of an EDA (FR-ED-04, DEC-UX-321, DEC-UX-322)', () => {
     setLanguage('nl');
     try {
       show(viewOf({ grainHolds: GRAIN_HOLDS, nullsPerKeyField: NULLS }));
-      const kaart = (await screen.findAllByRole('article', { name: 'Lege waarden per sleutelveld' }))[0] as HTMLElement;
+      const kaart = (await screen.findAllByRole('article', { name: 'Lege waarden per Key Field' }))[0] as HTMLElement;
       expect([...kaart.querySelectorAll('svg.drawing text.name')].map((name) => name.textContent)).toEqual(['id', 'id', 'aantal', 'tekst']);
     } finally {
       setLanguage('en');
@@ -449,9 +449,9 @@ describe('the list to add an EDA-Probe (FR-ED-13, DEC-UX-328)', () => {
 
   it('shows each EDA-Probe offered with its question for this Resource, how much it is asked for, and its state', async () => {
     const sheet = await openList(viewOf({ grainHolds: GRAIN_HOLDS, nullsPerKeyField: ran(['week_start', 'lead_source', 'lead_count'], NULLS.results.slice(0, 3).map((result) => [result.subject, result.data, result.reading])) }), 'Basis');
-    expect(rows(sheet, 'Basis')).toEqual(['The grain holds', 'Date range', 'Volume over time, with empty periods', 'Settling between EDA-Reruns']);
+    expect(rows(sheet, 'Basis')).toEqual(['The Grain holds', 'Date range', 'Volume over time, with empty periods', 'Settling between EDA-Reruns']);
     // Added, with Data Hub's reading.
-    const grain = sheet.getByRole('link', { name: /The grain holds/ });
+    const grain = sheet.getByRole('link', { name: /The Grain holds/ });
     expect(grain.textContent).toContain('Is every row one thing: one row per week_start, lead_source?');
     expect(grain.textContent).toContain('As expected');
     expect(grain.textContent).toContain('Added');
@@ -493,11 +493,11 @@ describe('the list to add an EDA-Probe (FR-ED-13, DEC-UX-328)', () => {
     const sheet = await openList(viewOf({ grainHolds: GRAIN_HOLDS }), 'Basis');
     await fireEvent.click(sheet.getByRole('radio', { name: 'Data Hub runs it' }));
     expect(sheet.getAllByRole('region').map((region) => region.getAttribute('aria-label'))).toEqual(['Basis', 'Gaps', 'Weight']);
-    expect(rows(sheet, 'Basis')).toEqual(['The grain holds', 'Date range', 'Volume over time, with empty periods']);
+    expect(rows(sheet, 'Basis')).toEqual(['The Grain holds', 'Date range', 'Volume over time, with empty periods']);
     expect(rows(sheet, 'Gaps')).toEqual(['Nulls per Key Field', 'Disguised nulls']);
     expect(rows(sheet, 'Weight')).toEqual(['Distribution of numbers', 'Distribution of categories']);
     await fireEvent.click(sheet.getByRole('radio', { name: 'Added' }));
-    expect(rows(sheet, 'Basis')).toEqual(['The grain holds']);
+    expect(rows(sheet, 'Basis')).toEqual(['The Grain holds']);
     await fireEvent.click(sheet.getByRole('radio', { name: 'Needed' }));
     expect(rows(sheet, 'Weight')).toEqual(['Distribution of numbers', 'Distribution of categories', 'Spread']);
     await fireEvent.click(sheet.getByRole('radio', { name: 'All' }));
@@ -505,7 +505,7 @@ describe('the list to add an EDA-Probe (FR-ED-13, DEC-UX-328)', () => {
     expect(sheet.getAllByRole('region').map((region) => region.getAttribute('aria-label'))).toEqual(['Basis', 'Gaps']);
     expect(rows(sheet, 'Gaps')).toEqual(['Nulls per Key Field', 'Where gaps cluster']);
     await fireEvent.input(sheet.getByRole('searchbox'), { target: { value: 'week_start' } });
-    expect(rows(sheet, 'Basis')).toEqual(['The grain holds', 'Date range']);
+    expect(rows(sheet, 'Basis')).toEqual(['The Grain holds', 'Date range']);
     await fireEvent.input(sheet.getByRole('searchbox'), { target: { value: 'nothing like this' } });
     expect(sheet.getByText('No EDA-Probe fits what you look for.')).toBeTruthy();
   });
@@ -520,7 +520,7 @@ describe('the list to add an EDA-Probe (FR-ED-13, DEC-UX-328)', () => {
       await fireEvent.click(weight.getByRole('button', { name: /Probe toevoegen/ }));
       const dutch = within(await screen.findByRole('dialog', { name: 'Een EDA-Probe toevoegen' }));
       expect(dutch.getByText('Vanaf zijn tegel')).toBeTruthy();
-      expect(dutch.getByRole('link', { name: /De grain klopt/ }).textContent).toContain('Is elke rij één ding: één rij per week_start, lead_source?');
+      expect(dutch.getByRole('link', { name: /De Grain klopt/ }).textContent).toContain('Is elke rij één ding: één rij per week_start, lead_source?');
       expect(dutch.getAllByText('Komt eraan').length).toBeGreaterThan(0);
     } finally {
       setLanguage('en');
@@ -580,19 +580,19 @@ describe('the detail of an EDA-Probe (FR-ED-06, DEC-UX-324)', () => {
     expect((await screen.findByRole('alert')).textContent).toContain('It does not run: It reads more than you may approve.');
   });
 
-  it('keeps Run off where the grain is not recorded, and says who records it', async () => {
+  it('keeps Run off where the Grain is not recorded, and says who records it', async () => {
     show(viewOf({}, { ...WEEKLY, fields: WEEKLY.fields.map((field) => ({ ...field, grain: false })) }), { probe: 'grainHolds' });
     const run = await screen.findByRole('button', { name: /^Run$/ });
     expect((run as HTMLButtonElement).disabled).toBe(true);
-    expect(screen.getByRole('status').textContent).toContain('the Data Team records its grain first');
+    expect(screen.getByRole('status').textContent).toContain('the Data Team records its Grain first');
   });
 
-  it('draws The grain holds: the grain values on more than one row on the wrong side, the numbers and examples (FR-ED-07)', async () => {
+  it('draws The Grain holds: the Grain values on more than one row on the wrong side, the numbers and examples (FR-ED-07)', async () => {
     show(viewOf({ grainHolds: GRAIN_TWICE }), { probe: 'grainHolds' });
     const result = within(await screen.findByRole('region', { name: 'Result' }));
-    expect(result.getByText('34 grain values are on more than one row')).toBeTruthy();
+    expect(result.getByText('34 Grain values are on more than one row')).toBeTruthy();
     expect(result.getByText(/covering 70 of 16,260 rows/)).toBeTruthy();
-    expect(result.getByRole('img', { name: 'How many grain values of week_start, lead_source are on one row, two rows, three rows or more' })).toBeTruthy();
+    expect(result.getByRole('img', { name: 'How many Grain values of week_start, lead_source are on one row, two rows, three rows or more' })).toBeTruthy();
     expect(result.getByText('wrong: on more than one row')).toBeTruthy();
     expect(result.getByText('Examples, the first 2 of 34')).toBeTruthy();
     expect(result.getAllByRole('row')).toHaveLength(3);

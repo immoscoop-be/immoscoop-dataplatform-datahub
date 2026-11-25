@@ -1,9 +1,10 @@
 <script lang="ts" module>
   /**
-   * Where the steps open: at the model type, by "Edit relations" and "Complete it", or to change it, by "Change model
-   * type", which waits for another one; or at the fields, by "Choose another field" (DEC-CO-27, DEC-UX-263, DEC-UX-264).
+   * Where the steps open: at the model type, by "Complete it", or to change it, by "Change model type", which waits for
+   * another one; at the Grain and storage, the model type kept, by "Edit Grain and relations" (FR-RC-35, DEC-UX-341);
+   * or at the fields, by "Choose another field" (DEC-CO-27, DEC-UX-263, DEC-UX-264).
    */
-  export type RelationsStart = 'type' | 'change' | 'fields';
+  export type RelationsStart = 'type' | 'change' | 'grain' | 'fields';
 </script>
 
 <script lang="ts">
@@ -61,7 +62,7 @@
   let draft: Draft = $state(untrack(() => recordedDraftOf(resource)));
   /** The model type it has now, when the sheet opened to change it: "Next" waits for another one. */
   const now: ModelType | null = untrack(() => (start === 'change' ? resource.details.modelType : null));
-  let step = $state(untrack(() => (start === 'fields' || !assigns ? FIELDS : TYPE)));
+  let step = $state(untrack(() => (start === 'fields' || !assigns ? FIELDS : start === 'grain' ? GRAIN : TYPE)));
   let show: 'all' | 'mapped' = $state('all');
   let saving = $state(false);
   let failed = $state(false);

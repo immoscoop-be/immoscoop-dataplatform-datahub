@@ -16,6 +16,7 @@ import { MESSAGE_CENTRE, NOTIFICATION_TEXTS, type NotificationReason } from '@da
 import { topicOf } from '@datahub/learning';
 import { type Kysely, type Selectable, sql } from 'kysely';
 import type { CatalogueDatabase } from './database.js';
+import { joinersOf } from './messages.js';
 
 /**
  * Notifications (DEC-LN-02, DEC-UX-129): every Message notifies at once, outside Data Hub by e-mail and as
@@ -307,6 +308,8 @@ export function createNotifications(db: Kysely<CatalogueDatabase>, options: Noti
       if (recipient === 'author') addUser(subject.authorId, subject.kind === 'user' ? 'self' : 'author');
       // Who ran a deleted Lens lately, named in its Message by query, never who deleted it (MSG-LEN-06, FR-LE-18).
       if (recipient === 'lensUsers') for (const id of (row.params.users ?? '').split(',').filter(Boolean)) addUser(id, 'lensUser');
+      // Who joined a Request about a description from dbt, named in it, hears its decision and its correction (MSG-RES-10).
+      if (recipient === 'joiners') for (const joiner of joinersOf(root.params)) addUser(joiner.id, 'joined');
       // The Owners of the Resources under a Lens, and the Consumers of a Resource, come with the Messages that need them.
     }
 

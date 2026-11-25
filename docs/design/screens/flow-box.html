@@ -165,16 +165,16 @@
     <button class="ov-item" type="button"><i class="ph ph-list-numbers" aria-hidden="true"></i><span class="ov-name">Summary</span></button>
     <div class="ov-sep" role="presentation"></div>
     <button class="ov-item" type="button"><i class="ph ph-text-align-left" aria-hidden="true"></i><span class="ov-name">Description</span></button>
-    <button class="ov-item on" type="button" aria-current="true"><i class="ph ph-compass" aria-hidden="true"></i><span class="ov-name">Known behaviour</span></button>
+    <button class="ov-item on" type="button" aria-current="true"><i class="ph ph-compass" aria-hidden="true"></i><span class="ov-name">Known Behaviour</span></button>
     <button class="ov-item" type="button"><i class="ph ph-circle-dashed" aria-hidden="true"></i><span class="ov-name">Known Gaps</span></button>
     <button class="ov-item" type="button"><i class="ph ph-funnel" aria-hidden="true"></i><span class="ov-name">Querying</span></button>
     <button class="ov-item" type="button"><i class="ph ph-graph" aria-hidden="true"></i><span class="ov-name">Entities</span></button>
     <div class="ov-sep" role="presentation"></div>
     <button class="ov-item" type="button"><i class="ph ph-stairs" aria-hidden="true"></i><span class="ov-name">Maturity</span></button>
    </nav>
-   <section class="ov-pane" aria-label="Known behaviour">
+   <section class="ov-pane" aria-label="Known Behaviour">
     <div class="ov-head">
-     <div style="flex:1;min-width:0"><h2 class="ov-title">Known behaviour</h2><p class="ov-lead">What it is meant for, and where it trips people up.</p></div>
+     <div style="flex:1;min-width:0"><h2 class="ov-title">Known Behaviour</h2><p class="ov-lead">What it is meant for, and where it trips people up.</p></div>
     </div>
     <div class="ov-grid">
      <div class="sub-tile"><div class="said"><i class="ph-fill ph-check-circle"></i>Intended use</div><div class="md"><p>Weekly trends, and comparing <b>lead sources</b>: the review with KBC on Monday, the share of partner leads.</p></div></div>
@@ -288,9 +288,9 @@ const STEPS = [
     why: 'The description from dbt says how the table is made, not what it means. Without yours, a colleague guesses, or asks you.',
     how: 'On Description, Edit: write it in Markdown, with the description from dbt beside it.' },
   { name: 'Key Fields', done: 'week_start', missing: 'No Key Fields chosen', card: ['K5.15', 'Key Fields'], go: 'Go to Querying',
-    what: 'The two to five fields a reader starts from.',
-    why: 'Most tables hold more fields than anyone reads. The Key Fields say where to start.',
-    how: 'On Querying, Edit: choose them from its fields.' },
+    what: 'The two to five fields a colleague starts with. Not the key of the table, and not the Grain: that says what makes a row unique.',
+    why: 'A colleague knows where to start, the Preview offers them to filter on, and the EDA explores at least these.',
+    how: 'On Querying, Edit: choose them from its fields; a field in the Grain is marked so.' },
   { name: 'Fields', done: 'Every Key Field described; 3 other fields without a Business Description', missing: 'A Key Field without a Business Description', card: ['K5.14', 'The Business Description'], go: 'Go to Columns',
     what: 'A Business Description for each Key Field: what it holds, in the words of the business.',
     why: 'A field name says little to a colleague outside your team, and the Key Fields are where they start.',
@@ -298,11 +298,11 @@ const STEPS = [
   { name: 'Intended use', done: 'Written by An Claes, 12 Nov', missing: 'Not written yet', card: ['3.3.3', 'Reliable for which purpose'], go: 'Go to Known Behaviour',
     what: 'What the table is meant for, and what it is not meant for.',
     why: 'A table answers some questions well and others badly. A colleague who knows which uses it for the right one.',
-    how: 'On Known behaviour, Edit the intended use, in Markdown.' },
+    how: 'On Known Behaviour, Edit the intended use, in Markdown.' },
   { name: 'Pitfalls', done: 'Written by An Claes, today', missing: 'Not written, and nobody said there are none', card: ['K5.16', 'Pitfalls'], go: 'Write the pitfalls',
     what: 'Where a reader trips up: a field that means something else than its name says, a count that doubles, a week that is not complete yet.',
     why: 'You know the traps; a colleague only finds them by falling in. Written down, nobody falls in twice.',
-    how: 'On Known behaviour, write them in Markdown, or press Nothing to add when there are none.' },
+    how: 'On Known Behaviour, write them in Markdown, or press Nothing to add when there are none.' },
   { name: 'Reliable since', done: '1 Jan 2025, on week_start', missing: 'Not set yet', card: ['K5.17', 'Reliable since'], go: 'Go to Known Gaps',
     what: 'From which day the whole table can be relied on, and why not earlier; or from its first row.',
     why: 'A trend that starts too early compares with a start-up period that was never complete.',

@@ -141,7 +141,7 @@
                 <code>{field.name}</code>
                 {#if field.dataType}<span class="meta">{field.dataType.toLowerCase()}</span>{/if}
                 {#if draft.grain.includes(field.name)}
-                  <span class="grain-mark" title={t('grain.mark.title')}><Icon name="key" />grain</span>
+                  <span class="grain-mark" title={t('grain.mark.title')}><Icon name="key" />{t('overview.row.grain')}</span>
                 {/if}
               </span>
               {#if field.description}<span class="description">{field.description}</span>{/if}

@@ -111,7 +111,7 @@ registry reads the Domain Model in use from `GET /domain-model/immoscoop` of the
 `GET /domain-model`, for the Data Team, answers with the name, version and release, the relation types a field can map to, and every identity: `entity.identifier`, and `entity.action` for the ID of an event. The relation types are those the Domain Model uses in its references; their inverses, such as `basisFor`, count from the other side and are left out ([DEC-RC-05](../functional/05-resource-card.md#dec-rc-05)). Each type comes with its cardinality, one or many, or both while the Domain Model gives it both. Without the collector it answers `503 domain_model_unavailable`.
 
 <a id="tr-ar-10"></a>
-### TR-AR-10 · registry proposes the grain, storage and mappings of a Resource
+### TR-AR-10 · registry proposes the Grain, storage and mappings of a Resource
 
 **Status:** Implemented · **Realises:** [FR-AR-17](../functional/01-artifact-registry.md#fr-ar-17), [FR-CO-33](../functional/03-collections.md#fr-co-33), [FR-CO-34](../functional/03-collections.md#fr-co-34), [DEC-RC-07](../functional/05-resource-card.md#dec-rc-07), [DEC-RC-09](../functional/05-resource-card.md#dec-rc-09), [DEC-RC-14](../functional/05-resource-card.md#dec-rc-14), [DEC-RC-25](../functional/05-resource-card.md#dec-rc-25), [DEC-SR-34](../functional/04-stacks-and-resources.md#dec-sr-34)
 
@@ -119,7 +119,7 @@ registry reads the Domain Model in use from `GET /domain-model/immoscoop` of the
 
 - **How it is stored:** from the nearest model up the lineage, the Node itself first, that is partitioned or clustered ([DEC-SR-34](../functional/04-stacks-and-resources.md#dec-sr-34)). Only a column the Node has under the same name counts: a view that derives its own column promises nothing. A partition filter that model requires is required by BigQuery.
 - **What it is built on:** the Node itself, or the nearest Colleciónes model up the lineage, with its Entity and action ([FR-AR-16](../functional/01-artifact-registry.md#fr-ar-16)).
-- **The grain:** the field of a `unique` test on the Node, from a dbt test; else the field the Colleciónes model declares by the word of its grain, `eventId` for an event, its identifier for a state, from the Domain Model.
+- **The Grain:** the field of a `unique` test on the Node, from a dbt test; else the field the Colleciónes model declares by the word of its Grain, `eventId` for an event, its identifier for a state, from the Domain Model.
 - **The model type:** none: `modelType` is always `null`, as Data Hub suggests no model type from the words of a Colleciónes model ([DEC-RC-25](../functional/05-resource-card.md#dec-rc-25)). *Changed on 2026-11-16: it was `event` or `state` from the strategy of the Colleciónes model.*
 - **The mappings, per field:** first what `meta.domain` of the column says, on the Node or on the same column of the Colleciónes model ([DEC-AR-07](../functional/01-artifact-registry.md#dec-ar-07)); then, from the Domain Model, for a Colleciónes model: `eventId` is `entity.action`, an identifier of its Entity is that identity, a field named as an identifier of the target of one of its references maps with that relation type, and the field named as an identifier of who performs the action is "performed by", one per event ([DEC-RC-14](../functional/05-resource-card.md#dec-rc-14)); last, for any Node, a field named as the identifier of one Entity, or of the Entity named after it when several share it, is that identity, suggested from its name.
 

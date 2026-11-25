@@ -22,6 +22,7 @@
     decides,
     decideLens,
     onchanged,
+    ondeleted,
     onclose,
   }: {
     id: string;
@@ -34,6 +35,8 @@
     decides: boolean;
     decideLens: (lensId: string, outcome: 'accepted' | 'refused', text: string) => Promise<void>;
     onchanged: (message: Conversation) => void;
+    /** Its conversation is deleted (FR-CV-18); without it, the window closes. */
+    ondeleted?: (id: string) => void;
     onclose: () => void;
   } = $props();
 
@@ -48,7 +51,7 @@
 >
   {#if message}
     {#key message.id}
-      <MessageOpened {message} {client} {decides} {decideLens} {onchanged} />
+      <MessageOpened {message} {client} {decides} {decideLens} {onchanged} ondeleted={ondeleted ?? (() => onclose())} />
     {/key}
   {:else if message === null}
     <p class="meta" role="alert">{t('messages.failed.read')}</p>

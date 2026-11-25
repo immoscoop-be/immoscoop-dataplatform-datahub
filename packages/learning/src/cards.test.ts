@@ -5,6 +5,7 @@ import { parseCard, versionOf } from './card.js';
 import { interviewMisfits } from './interview.js';
 import { MARKERS } from './markers.js';
 import { LEVELS, SECTIONS, TOPICS, topicOf } from './plan.js';
+import { termOf } from './terms.js';
 
 const CARDS = join(import.meta.dirname, '..', 'cards');
 const written = readdirSync(CARDS, { withFileTypes: true })
@@ -166,6 +167,8 @@ describe('the markers on system text (FR-LR-35, DEC-LR-22)', () => {
     for (const [place, cards] of Object.entries(MARKERS)) {
       expect(new Set(cards).size, place).toBe(cards.length);
       for (const card of cards) expect(topicOf(card), `${place} lists ${card}`).toBeDefined();
+      // A term of the dictionary shows its definition while none of its cards is written yet (DEC-UX-279).
+      if (termOf(place)) continue;
       expect(cards.some((card) => written.includes(card)), `${place} has a written card`).toBe(true);
     }
   });

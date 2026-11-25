@@ -1,20 +1,20 @@
 <!DOCTYPE html>
 <!--
   Screen: the page of a Collection, adding Resources, step 4: fields and relations
-  After choosing a Resource (collection-add-resources.html), its model type (collection-add-type.html) and its grain
+  After choosing a Resource (collection-add-resources.html), its model type (collection-add-type.html) and its Grain
   and storage (collection-add-grain.html), the Data Admin
   says per field what it is for the model type, in the column "For the <type>" of the field table (FR-CO-44); a field is
   offered only the roles its type fits. The block on top lists what the model type needs, chosen or missing; a required one
   not chosen keeps "Add Resource" greyed. ?type=event, state, fact, dimension, aggregate or other shows each. Then the Data Admin checks how it is stored (FR-CO-34)
-  and what one row is: its grain, the fields that together identify each row, with a sentence (DEC-RC-07). Then each
+  and what one row is: its Grain, the fields that together identify each row, with a sentence (DEC-RC-07). Then each
   field maps to nothing, to `is` (the field is the identity of an entity the row is about, DEC-RC-06), or to a relation
   type of the domain model with the entity identity it points at (DEC-RC-05). The cardinality is never chosen: rows per
-  entity follow from `is` and the grain, a relation's from its type, per instance of its subject (DEC-RC-08). A list, a
+  entity follow from `is` and the Grain, a relation's from its type, per instance of its subject (DEC-RC-08). A list, a
   struct or JSON is no field of a Resource: those columns are left out and named under the table (DEC-SR-33). A Colleciónes model gets everything from the domain
   model; another model gets suggestions from the names of its fields.
-  Requirements: FR-AR-15, FR-AR-16, FR-AR-17, FR-CO-31, FR-CO-33, FR-CO-44, FR-RC-08, FR-RC-09
+  Requirements: FR-AR-15, FR-AR-16, FR-AR-17, FR-CO-31, FR-CO-33, FR-CO-44, FR-RC-08, FR-RC-09, FR-RC-35
   Decisions: DEC-UX-58, DEC-UX-262, DEC-RC-05, DEC-RC-06, DEC-RC-07, DEC-RC-08, DEC-RC-10, DEC-SR-33, DEC-AR-04, DEC-AR-05.
-  Not in v1: OP-RC-15 (matchOn). Data Hub does not check the grain against the data (DEC-RC-15).
+  Not in v1: OP-RC-15 (matchOn). Data Hub does not check the Grain against the data (DEC-RC-15).
   Related screens: collection-add-resources.html, collection-overview.html.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -181,16 +181,16 @@
    <thead><tr><th>Field</th><th id="role-head">For the event</th><th>Mapping</th><th>Entity identity</th></tr></thead>
    <tbody>
    <tr class="rel-row" data-ftype="id" data-map="is">
-    <td><span class="rel-field"><code>eventId</code><span class="meta">string</span><span class="grain-mark" title="Part of the grain: together these fields identify each row"><i class="ph ph-key"></i>grain</span></span><span class="rel-desc">The ID of the generation event.</span></td>
+    <td><span class="rel-field"><code>eventId</code><span class="meta">string</span><span class="grain-mark" title="Part of the Grain: together these fields identify each row"><i class="ph ph-key"></i>Grain</span></span><span class="rel-desc">The ID of the generation event.</span></td>
     <td><select class="rel-role" aria-label="What eventId is for its model type"><option value="">—</option></select></td>
     <td><select class="rel-map" aria-label="Mapping of eventId"><option value="none">No mapping</option><option value="is" selected>is</option><optgroup label="Relation, one per subject"><option value="placedIn" data-card="one">placedIn</option><option value="occurredWithin" data-card="one">occurredWithin</option><option value="basedOn" data-card="one">basedOn</option><option value="references" data-card="one">references</option><option value="hasType" data-card="one">hasType</option><option value="represents" data-card="one">represents</option><option value="narrows" data-card="one">narrows</option></optgroup><optgroup label="Relation, many per subject"><option value="contains" data-card="many">contains</option><option value="partOf" data-card="many">partOf</option><option value="serves" data-card="many">serves</option><option value="expresses" data-card="many">expresses</option><option value="relatesTo" data-card="many">relatesTo</option></optgroup><optgroup label="Of the action"><option value="performedBy" data-card="one">performed by</option></optgroup></select></td>
-    <td><span class="rel-ref"><input value="homeLoanSimulation.generate" placeholder="entity.identity" list="identities" aria-label="Entity identity of eventId"><span class="rel-under"><span class="rel-src" title="Read from the Domain Model, through the lineage of the Colleciónes model"><i class="ph ph-graph"></i>From the Domain Model</span></span><span class="rel-card"><b class="card-badge">1 row</b><span>One row per generation: the grain is this field</span></span></span></td>
+    <td><span class="rel-ref"><input value="homeLoanSimulation.generate" placeholder="entity.identity" list="identities" aria-label="Entity identity of eventId"><span class="rel-under"><span class="rel-src" title="Read from the Domain Model, through the lineage of the Colleciónes model"><i class="ph ph-graph"></i>From the Domain Model</span></span><span class="rel-card"><b class="card-badge">1 row</b><span>One row per generation: the Grain is this field</span></span></span></td>
    </tr>
    <tr class="rel-row" data-ftype="id" data-map="is">
     <td><span class="rel-field"><code>homeLoanSimulationId</code><span class="meta">string</span></span><span class="rel-desc">The simulation that was generated.</span></td>
     <td><select class="rel-role" aria-label="What homeLoanSimulationId is for its model type"><option value="">—</option></select></td>
     <td><select class="rel-map" aria-label="Mapping of homeLoanSimulationId"><option value="none">No mapping</option><option value="is" selected>is</option><optgroup label="Relation, one per subject"><option value="placedIn" data-card="one">placedIn</option><option value="occurredWithin" data-card="one">occurredWithin</option><option value="basedOn" data-card="one">basedOn</option><option value="references" data-card="one">references</option><option value="hasType" data-card="one">hasType</option><option value="represents" data-card="one">represents</option><option value="narrows" data-card="one">narrows</option></optgroup><optgroup label="Relation, many per subject"><option value="contains" data-card="many">contains</option><option value="partOf" data-card="many">partOf</option><option value="serves" data-card="many">serves</option><option value="expresses" data-card="many">expresses</option><option value="relatesTo" data-card="many">relatesTo</option></optgroup><optgroup label="Of the action"><option value="performedBy" data-card="one">performed by</option></optgroup></select></td>
-    <td><span class="rel-ref"><input value="homeLoanSimulation.homeLoanSimulationId" placeholder="entity.identity" list="identities" aria-label="Entity identity of homeLoanSimulationId"><span class="rel-under"><span class="rel-src" title="Read from the Domain Model, through the lineage of the Colleciónes model"><i class="ph ph-graph"></i>From the Domain Model</span></span><span class="rel-card"><b class="card-badge">n rows</b><span>Many rows per simulation: the grain is wider than this field</span></span></span></td>
+    <td><span class="rel-ref"><input value="homeLoanSimulation.homeLoanSimulationId" placeholder="entity.identity" list="identities" aria-label="Entity identity of homeLoanSimulationId"><span class="rel-under"><span class="rel-src" title="Read from the Domain Model, through the lineage of the Colleciónes model"><i class="ph ph-graph"></i>From the Domain Model</span></span><span class="rel-card"><b class="card-badge">n rows</b><span>Many rows per simulation: the Grain is wider than this field</span></span></span></td>
    </tr>
    <tr class="rel-row" data-ftype="id" data-map="rel">
     <td><span class="rel-field"><code>listingId</code><span class="meta">string</span></span><span class="rel-desc">The listing the simulation is based on.</span></td>

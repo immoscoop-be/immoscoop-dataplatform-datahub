@@ -5,6 +5,7 @@
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
   import { type Draft, ORIGINS, UNITS } from '../lib/grain.js';
   import ResourceDraftHead from './ResourceDraftHead.svelte';
+  import LearningRef from './LearningRef.svelte';
 
   /**
    * One Resource at the step of its grain and storage (FR-CO-33, FR-CO-34, DEC-UX-262): its model type as a chip with
@@ -66,7 +67,7 @@
       <button type="button" class="text-link" onclick={onchangetype}>{t('grain.change')}</button>
     </div>
 
-    <span class="meta">Grain</span>
+    <span class="meta"><LearningRef place="grain">{#snippet children(mark)}<span>{t('overview.row.grain')}{@render mark?.()}</span>{/snippet}</LearningRef></span>
     <span class="value">
       {#each draft.grain as name (name)}
         <span class="chip">{name}<button type="button" aria-label={t('grain.remove', { name })} onclick={() => remove('grain', name)}>×</button></span>

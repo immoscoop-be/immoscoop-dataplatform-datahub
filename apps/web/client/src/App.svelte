@@ -19,7 +19,7 @@
   import { dragging, type Mover } from './lib/dragging.svelte.js';
   import type { Config } from './lib/config.js';
   import { createIdentity, type GroupSummary, SignedOut, type Me } from './lib/identity.js';
-  import { type Conversation, type Counts, createMessages, type Filter, type Message, SUBJECT_TITLES, WRITTEN_ON, type WrittenKind, type WrittenOn } from './lib/messages.js';
+  import { type Conversation, type Counts, createMessages, type Filter, type Message, REPORT, SUBJECT_TITLES, WRITTEN_ON, type WrittenKind, type WrittenOn } from './lib/messages.js';
   import { initialsOf } from './lib/initials.js';
   import { type OpenedFrom, provideLearning } from './lib/learning-context.js';
   import { type Card, cardsIn, createLearning, drawExample, LEVELS, type LevelId, type Progress, type Step, suggestedLevels, topicOf, writtenCards } from './lib/learning.js';
@@ -714,9 +714,10 @@
     const key = `${subject.kind}:${subject.id}`;
     if (onObject?.key !== key) onObject = { key };
     messages.on(subject.kind, subject.id).then(
-      // What a person writes on it: Questions, Remarks and Signals (FR-CV-07).
+      // What a person writes on it: Questions, Remarks and Signals (FR-CV-07), and a description from dbt reported as wrong (FR-CV-17).
       (found) =>
-        onObject?.key === key && (onObject = { key, messages: found.messages.filter((message) => ['question', 'remark', 'signal'].includes(message.kind)), kinds: found.kinds }),
+        onObject?.key === key &&
+        (onObject = { key, messages: found.messages.filter((message) => ['question', 'remark', 'signal'].includes(message.kind) || message.type === REPORT), kinds: found.kinds }),
       (error: unknown) => {
         if (!(error instanceof Missing)) console.error('The Messages on this page could not be read', error);
         if (onObject?.key === key) onObject = { key, messages: [] };
@@ -792,6 +793,14 @@
     if (talkedAbout) readOnObject(talkedAbout);
     readUnread();
   }
+  /** A conversation deleted for everyone (FR-CV-18): it leaves the Message Centre, the window and the counts. */
+  function deletedMessage(id: string): void {
+    if (openedMessage?.id === id) openedMessage = undefined;
+    if (centre) centre = { ...centre, messages: centre.messages.filter((item) => item.id !== id) };
+    if (talkedAbout) readOnObject(talkedAbout);
+    readUnread();
+    router.go(router.path.replace(/\/messages\/[^/]+$/, page.kind === 'messages' ? '/messages' : ''));
+  }
   /** The decision of the Data Team on a Request on a Lens, in query, which changes the Lens with it (FR-LE-09). */
   async function decideLens(lensId: string, outcome: 'accepted' | 'refused', text: string): Promise<void> {
     const lens = await queries.decideLens(lensId, outcome, text);
@@ -801,8 +810,11 @@
   /** "Messages" in the head of the page, with their number once they are read. */
   /** The kind a Message is to be written in, when the quick window asked for one, such as Add a Remark (DEC-UX-257). */
   let writeKind = $state<WrittenKind | null>(null);
+  /** A description from dbt reported as wrong: "Seems wrong?" opens the Messages on its form (FR-CV-17). */
+  let reportOn = $state<{ resource: string; field: string | null; quoted: string; should: string } | null>(null);
   const messagesButton = $derived.by(() => {
     if (!talkedAbout) return undefined;
+    const about = talkedAbout;
     const href = messagesOnPath(talkedAbout);
     const kinds = (onObject?.kinds ?? writes).filter((kind): kind is WrittenKind => (WRITTEN_ON[talkedAbout.kind] as readonly string[]).includes(kind));
     return {
@@ -813,6 +825,13 @@
         writeKind = kind;
         router.go(href);
       },
+      report:
+        talkedAbout.kind === 'resource'
+          ? (report: { field: string | null; quoted: string; should: string }) => {
+              reportOn = { resource: about.id, ...report };
+              router.go(href);
+            }
+          : undefined,
     };
   });
 
@@ -1328,6 +1347,7 @@
         decides={can(permissions, 'requests.decide')}
         {decideLens}
         onchanged={changedMessage}
+        ondeleted={deletedMessage}
         onreadall={readAll}
       />
     {:else if queryPage && !mayQuery(permissions)}
@@ -1727,9 +1747,13 @@
           }}
           onclose={() => {
             writeKind = null;
+            reportOn = null;
             router.go(objectPath(about));
           }}
           start={writeKind}
+          report={page.kind === 'resource' && reportOn?.resource === about.id ? reportOn : null}
+          onreported={() => (reportOn = null)}
+          decides={can(permissions, 'requests.decide')}
         />
       {/if}
     {/if}
@@ -1783,6 +1807,7 @@
         decides={can(permissions, 'requests.decide')}
         {decideLens}
         onchanged={changedMessage}
+        ondeleted={deletedMessage}
         onclose={() => router.go(router.path.replace(/\/messages\/[^/]+$/, ''))}
       />
     {/if}

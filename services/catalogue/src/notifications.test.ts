@@ -10,7 +10,7 @@ import { type Collection, createCollections, type Viewer } from './collections.j
 import type { CatalogueDatabase } from './database.js';
 import { createPeople } from './identity.js';
 import { migrations } from './migrations/index.js';
-import { createMessages, type Messages } from './messages.js';
+import { closeCorrected, createMessages, type Messages } from './messages.js';
 import { createNotifications, type Email, htmlOf, type Notifications, type Person, slackOf, type SlackMessage, subjectLine } from './notifications.js';
 import { createSlack, slackTokenFrom } from './slack.js';
 
@@ -460,6 +460,42 @@ describe.skipIf(!url)('notifications by e-mail and in Slack (DEC-LN-02, DEC-LN-0
     // Its link goes to the Message itself: the Lens is no longer there.
     expect(mails[0]?.html).toContain('https://web.test/messages/');
     expect(slacked.map((sent) => sent.email)).not.toContain('an@immoscoop.be');
+  });
+
+  it('sends a description reported as wrong to the Data Team and the Owner Unit, and its decision and correction to who sent or joined it (FR-CV-17, MSG-RES-10, MSG-RES-11)', async () => {
+    const { rows } = await sql<{ id: string }>`
+      insert into resources (key, project_id, node_id, name, resource_type, requested_name, display_name, level, collection_id, description, published_at)
+      values ('p.d.credit_leads', '9367', 'model.p.credit_leads', 'credit_leads', 'model', 'Credit leads per week', 'Credit leads per week', 2, ${credit.id}, 'Leads per week.', now())
+      returning id`.execute(database.db);
+    const resource = rows[0]!.id;
+    const sent = await messages.report(await sightOf(karel), resource, { field: null, text: 'It counts requests, not leads.', should: '' });
+    expect(sent.outcome).toBe('sent');
+    await notifications.deliver();
+    expect(mails.map((mail) => mail.to).sort()).toEqual(['an@immoscoop.be', 'datahub-datateam@immoscoop.be', 'jan@immoscoop.be']);
+    expect(mails.find((mail) => mail.to === 'an@immoscoop.be')?.subject).toBe('Karel Leys finds that the description from dbt of Credit leads per week seems wrong.');
+    mails = [];
+    slacked = [];
+
+    // An joins it: nothing is sent for that; the decision reaches Karel, who sent it, and An, who joined it.
+    const joined = await messages.report(await sightOf(an), resource, { field: null, text: 'Agreed.', should: '' });
+    expect(joined.outcome).toBe('joined');
+    await notifications.deliver();
+    expect(mails).toEqual([]);
+    const id = 'conversation' in sent ? sent.conversation.id : '';
+    await messages.decide(id, 'accepted', '', { id: 'u-dirk', name: 'Dirk Vos' }, await sightOf(dirk));
+    await notifications.deliver();
+    expect(mails.map((mail) => mail.to)).toEqual(['karel@immoscoop.be', 'an@immoscoop.be']);
+    expect(mails[1]?.html).toContain('You get this because you joined this request.');
+    mails = [];
+    slacked = [];
+
+    // dbt corrects it: Data Hub tells both, never as someone who wrote it.
+    await database.db.transaction().execute((trx) => closeCorrected(trx, resource, [{ field: null, after: 'Requests per week.' }], '2026-11-27'));
+    await notifications.deliver();
+    expect(mails.map((mail) => [mail.to, mail.subject])).toEqual([
+      ['karel@immoscoop.be', 'De gemelde beschrijving uit dbt van Credit leads per week is aangepast in dbt.'],
+      ['an@immoscoop.be', 'The reported description from dbt of Credit leads per week was corrected in dbt.'],
+    ]);
   });
 
   it('sends what a request wrote before it answers, and lets only the scheduler start a round', async () => {

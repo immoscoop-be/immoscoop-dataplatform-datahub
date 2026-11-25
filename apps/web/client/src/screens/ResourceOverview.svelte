@@ -28,7 +28,7 @@
   import type { CardChanges, DescribeAttribute, KnownGap, LogEntry, Related, ResourceDetail } from '../lib/catalogue.js';
   import { carriersOf, nounOf } from '../lib/grain.js';
   import type { MarkerPlace } from '../lib/learning.js';
-  import type { Conversation } from '../lib/messages.js';
+  import type { Conversation, Reporting } from '../lib/messages.js';
   import type { FirstRow, Storage } from '../lib/query.js';
   import { sizeText } from '../lib/size.js';
   import { command, useScreenCommands, view } from '../lib/commands.svelte.js';
@@ -40,6 +40,8 @@
   import OverviewReliable from './OverviewReliable.svelte';
   import OverviewRow from './OverviewRow.svelte';
   import OverviewSummary from './OverviewSummary.svelte';
+  import ReportedLine from './ReportedLine.svelte';
+  import SeemsWrong from './SeemsWrong.svelte';
 
   /**
    * The Overview of a Resource, in parts, each a page of its own, with a navigation on the left under the tabs
@@ -59,6 +61,7 @@
     storage,
     threads,
     messagesHref,
+    reporting,
     describes,
     canDeprecate,
     onsave,
@@ -73,6 +76,7 @@
     removeLater = null,
     onremove,
     onchangetype,
+    onrelate,
     firstRowOf,
     eda,
     part = $bindable('summary'),
@@ -86,6 +90,8 @@
     threads: readonly Conversation[] | undefined;
     /** Where "Messages" opens them. */
     messagesHref: string | undefined;
+    /** "Seems wrong?" next to its description from dbt, and that it is reported, on Description and the Summary (FR-CV-17). */
+    reporting?: Reporting;
     /** Whether the User may describe an attribute of it (`resources.describe`, DEC-PL-03). */
     describes: (attribute: DescribeAttribute) => boolean;
     /** Whether the User may deprecate it, and undo that (`resources.deprecate`). */
@@ -115,6 +121,8 @@
     onremove?: () => Promise<boolean>;
     /** Opens the steps of its relations from the model type on, for a Data Admin (FR-RC-28); undefined for anyone else. */
     onchangetype?: () => void;
+    /** "Edit Grain and relations", for who may set them, in what one row is and in the head of Entities (FR-RC-35). */
+    onrelate?: () => void;
     /** Reads its first row on a date field, for the line under Reliable since (DEC-RC-33). */
     firstRowOf?: (field: string) => Promise<FirstRow | null>;
     /** Its EDA on the maturity ladder, for a User who may explore Resources (FR-ED-02). */
@@ -142,6 +150,8 @@
   const dangers = $derived(canDeprecate || (removeFrom !== null && onremove !== undefined) || removeLater !== null);
   const shown = $derived(PARTS.filter((one) => one.id !== 'danger' || dangers));
   /** Which attributes each part edits: Known Behaviour holds the intended use and the pitfalls; Reliable since is on Known Gaps (DEC-UX-296). */
+  /** Whether a field is one of the Grain, marked so where Key Fields are chosen (DEC-UX-343). */
+  const inGrain = (name: string): boolean => details.grain.includes(name);
   const EDITS: Record<Editable, readonly DescribeAttribute[]> = { description: ['description'], behaviour: ['behaviour', 'pitfalls'], querying: ['keyFields'] };
   const mayEdit = (which: Editable) => EDITS[which].some((attribute) => describes(attribute));
   /** Who said there is nothing to add to a step, and when, from the journey of the Resource (DEC-MR-16). */
@@ -343,14 +353,16 @@
   {#if failed}<p class="failed" role="alert">{t('resource.saveFailed')}</p>{/if}
 {/snippet}
 
-{#snippet chips(names: readonly string[])}
+{#snippet chips(names: readonly string[])}<!-- Key Fields as read. -->
   {#each names as name (name)}<span class="code">{name}</span>{:else}<p class="empty">{t('resource.noneChosen')}</p>{/each}
 {/snippet}
 
 {#snippet chosen(key: 'keyFields')}
+  <!-- What Key Fields are, where they are chosen, and the fields of the Grain marked so the two are told apart (DEC-UX-343). -->
+  <p class="purpose">{t('resource.keyFields.purpose')}</p>
   <div class="chosen">
     {#each draft[key] as name (name)}
-      <span class="code">{name}<button type="button" aria-label={t('resource.removeField', { name })} onclick={() => (draft[key] = draft[key].filter((other) => other !== name))}>×</button></span>
+      <span class="code">{name}{#if inGrain(name)}<span class="in-grain">{t('resource.keyFields.inGrain')}</span>{/if}<button type="button" aria-label={t('resource.removeField', { name })} onclick={() => (draft[key] = draft[key].filter((other) => other !== name))}>×</button></span>
     {/each}
     <select
       class="add"
@@ -366,7 +378,7 @@
       }}
     >
       <option value="">+ {t('resource.addField')}</option>
-      {#each resource.fields.filter((field) => !draft[key].includes(field.name)) as field (field.name)}<option value={field.name}>{field.name}</option>{/each}
+      {#each resource.fields.filter((field) => !draft[key].includes(field.name)) as field (field.name)}<option value={field.name}>{inGrain(field.name) ? t('resource.keyFields.option', { name: field.name }) : field.name}</option>{/each}
     </select>
   </div>
 {/snippet}
@@ -374,14 +386,15 @@
 {#snippet modelAndGrain()}
   <!-- What one row is, from the Data Team, at the end of the Description (FR-RC-28, DEC-UX-263). -->
   {#if details.modelType || details.grain.length > 0 || onchangetype}
-    <div class="row"><OverviewRow {resource} {onchangetype} /></div>
+    <div class="row"><OverviewRow {resource} {onchangetype} {onrelate} /></div>
   {/if}
 {/snippet}
 
 {#snippet dbtDescription(hint: boolean)}
   <SubTile label={t('description.dbt')}>
-    {#snippet aside()}<OriginTag origin="dbt" />{/snippet}
+    {#snippet aside()}<LearningRef place="dbt" shape="chip">{#snippet children(mark)}<OriginTag origin="dbt" {mark} />{/snippet}</LearningRef>{#if resource.description}<SeemsWrong {reporting} field={null} />{/if}{/snippet}
     <p class="prose">{resource.description || t('resource.noDescription')}</p>
+    <ReportedLine {reporting} field={null} />
     {#if hint}<p class="hint">{#if tableChanged}{t('resource.dbt.changed', { date: day(tableChanged.at) })} {/if}{t('resource.dbt.notEdited')}</p>{/if}
   </SubTile>
 {/snippet}
@@ -403,7 +416,7 @@
   <div class="body" role="tabpanel" aria-label={t((shown.find((one) => one.id === part) ?? PARTS[0]!).label)}>
     {#if part === 'summary'}
       {@render head(t('overview.summary'), t('overview.summary.lead', { name: resource.displayName }))}
-      <OverviewSummary {resource} {related} {threads} {log} {size} {messagesHref} ongo={go} />
+      <OverviewSummary {resource} {related} {threads} {log} {size} {messagesHref} {reporting} ongo={go} />
     {:else if part === 'description'}
       {@render head(t('resource.description'), t('overview.description.lead', { name: resource.displayName }), described ? 'description' : undefined)}
       {#if editing === 'description'}
@@ -541,6 +554,9 @@
       {/if}
     {:else if part === 'entities'}
       {@render head(t('overview.entities'), t('overview.entities.lead'))}
+      {#if onrelate}
+        <p class="relate"><LearningRef place="grain" focusable={false}>{#snippet children(mark)}<button type="button" class="edit" title={t('resource.editRelations.title')} onclick={onrelate}><Icon name="graph-fill" />{t('resource.editRelations')}</button>{@render mark?.()}{/snippet}</LearningRef></p>
+      {/if}
       <SubTile label={t('resource.entities')}>
         {#snippet aside()}<OriginTag origin="dataTeam" />{/snippet}
         {#if related === undefined}
@@ -613,6 +629,9 @@
   .head h2 { margin: 0; font-size: var(--text-section); font-weight: var(--weight-medium); }
   .lead { margin: 4px 0 0; font-size: var(--text-small); color: var(--text-secondary); line-height: 1.5; max-width: 72ch; }
   .edit { all: unset; display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: var(--radius-sm); font-size: var(--text-meta); color: var(--text-muted); cursor: pointer; }
+  .purpose { margin: 0 0 10px; font-size: var(--text-small); line-height: 1.5; color: var(--text-secondary); max-width: 640px; }
+  .in-grain { margin-left: 6px; padding: 0 6px; border-radius: var(--radius-pill); font: 10px var(--font-family); color: var(--text-secondary); background: var(--tint-hover); }
+  .relate { display: flex; justify-content: flex-end; margin: -38px 0 18px; }
   .edit:hover { color: var(--text-primary); background: var(--tint-hover); }
   .edit:focus-visible { outline: 2px solid var(--text-secondary); }
   .text-link { all: unset; display: inline-block; margin: 0 0 12px; font-size: var(--text-small); color: var(--text-secondary); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }

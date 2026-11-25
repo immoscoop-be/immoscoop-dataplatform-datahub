@@ -50,7 +50,7 @@ export const LOG_CATALOGUE = {
     parameters: ['field', 'actor'],
     text: {
       en: '{field, select, businessDescription {Business Description} intendedUse {Intended use} pitfalls {Pitfalls} knownGaps {Known Gaps} reliableSince {Reliable since} dateField {Date Field} keyFields {Key fields} parameters {Parameters} other {{field}}} updated by {actor}',
-      nl: '{field, select, businessDescription {Business Description} intendedUse {Beoogd gebruik} pitfalls {Valkuilen} knownGaps {Known Gaps} reliableSince {Betrouwbaar sinds} dateField {Datumveld} keyFields {Sleutelvelden} parameters {Parameters} other {{field}}} bijgewerkt door {actor}',
+      nl: '{field, select, businessDescription {Business Description} intendedUse {Beoogd gebruik} pitfalls {Pitfalls} knownGaps {Known Gaps} reliableSince {Betrouwbaar sinds} dateField {Datumveld} keyFields {Sleutelvelden} parameters {Parameters} other {{field}}} bijgewerkt door {actor}',
     },
   },
   'RES-006': {
@@ -262,16 +262,16 @@ export const LOG_CATALOGUE = {
     about: 'resource',
     parameters: ['step', 'actor'],
     text: {
-      en: 'Owner Journey: {step, select, data {Know the data} fields {Fields} admin {Table type, grain and mappings} messages {Open Questions and Signals} pitfalls {Pitfalls} gaps {Known Gaps} parameters {Parameters} other {{step}}} gone through by {actor}',
-      nl: 'Owner Journey: {step, select, data {De data kennen} fields {Velden} admin {Tabeltype, grain en mappings} messages {Open Questions en Signals} pitfalls {Valkuilen} gaps {Known Gaps} parameters {Parameters} other {{step}}} doorlopen door {actor}',
+      en: 'Owner Journey: {step, select, data {Know the data} fields {Fields} admin {Table type, Grain and mappings} messages {Open Questions and Signals} pitfalls {Pitfalls} gaps {Known Gaps} parameters {Parameters} other {{step}}} gone through by {actor}',
+      nl: 'Owner Journey: {step, select, data {De data kennen} fields {Velden} admin {Tabeltype, Grain en mappings} messages {Open Questions en Signals} pitfalls {Pitfalls} gaps {Known Gaps} parameters {Parameters} other {{step}}} doorlopen door {actor}',
     },
   },
   'JRN-002': {
     about: 'resource',
     parameters: ['step', 'actor'],
     text: {
-      en: '{step, select, data {Know the data} fields {Fields} admin {Table type, grain and mappings} messages {Open Questions and Signals} pitfalls {Pitfalls} gaps {Known Gaps} parameters {Parameters} other {{step}}}: nothing to add, according to {actor}',
-      nl: '{step, select, data {De data kennen} fields {Velden} admin {Tabeltype, grain en mappings} messages {Open Questions en Signals} pitfalls {Valkuilen} gaps {Known Gaps} parameters {Parameters} other {{step}}}: niets toe te voegen, volgens {actor}',
+      en: '{step, select, data {Know the data} fields {Fields} admin {Table type, Grain and mappings} messages {Open Questions and Signals} pitfalls {Pitfalls} gaps {Known Gaps} parameters {Parameters} other {{step}}}: nothing to add, according to {actor}',
+      nl: '{step, select, data {De data kennen} fields {Velden} admin {Tabeltype, Grain en mappings} messages {Open Questions en Signals} pitfalls {Pitfalls} gaps {Known Gaps} parameters {Parameters} other {{step}}}: niets toe te voegen, volgens {actor}',
     },
   },
   'CNV-050': {
@@ -283,6 +283,14 @@ export const LOG_CATALOGUE = {
     about: 'resource',
     parameters: ['actor', 'conversation', 'anomaly'],
     text: { en: 'Signal turned into an Anomaly by {actor}', nl: 'Signal omgezet in een Anomaly door {actor}' },
+  },
+  'CNV-052': {
+    about: 'resource',
+    parameters: ['actor', 'writer', 'kind'],
+    text: {
+      en: '{kind, select, question {Question} remark {Remark} signal {Signal} request {Request} reply {Reply} other {Message}} of {writer} deleted by {actor}',
+      nl: '{kind, select, question {Question} remark {Remark} signal {Signal} request {Request} reply {Antwoord} other {Message}} van {writer} verwijderd door {actor}',
+    },
   },
   'BRK-001': {
     about: 'output',

@@ -244,10 +244,28 @@ describe.skipIf(!url)('catalogue migrations', () => {
 
   it('keeps whether a Resource is explored, none to start with (TR-ED-05)', async () => {
     const id = (await sql<{ id: string }>`select id from resources where key = 'p.d.journey'`.execute(admin.db)).rows[0]!.id;
-    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    const results = await migrate({ db: admin.db, schema, migrations: before('0030'), serviceUser: 'postgres' });
     expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0029-explored', 'Success']]);
     const explored = await sql<{ explored: boolean }>`select explored from resources where id = ${id}`.execute(admin.db);
     expect(explored.rows).toEqual([{ explored: false }]);
     await expect(sql`update resources set explored = null where id = ${id}`.execute(admin.db)).rejects.toThrow(/null/);
+  });
+
+  it('lets one Request wait per description from dbt reported as wrong, whoever sent it, and the others one per writer (FR-CV-17)', async () => {
+    const id = (await sql<{ id: string }>`select id from resources where key = 'p.d.journey'`.execute(admin.db)).rows[0]!.id;
+    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0030-description-reports', 'Success']]);
+    const report = (writer: string, field: string | null) =>
+      sql`insert into messages (type, subject_kind, subject_id, writer_id, params, state) values ('MSG-RES-10', 'resource', ${id}, ${writer}, ${JSON.stringify(field ? { field } : {})}::jsonb, 'waiting')`.execute(admin.db);
+    await report('u-an', 'week_start');
+    // The same writer reports another description; someone else the same one is refused, and joins it instead.
+    await report('u-an', null);
+    await expect(report('u-jan', 'week_start')).rejects.toThrow(/messages_one_waiting_report/);
+    // The other Requests keep one waiting per writer, object and type.
+    const query = (writer: string) =>
+      sql`insert into messages (type, subject_kind, subject_id, writer_id, params, state) values ('MSG-QRY-01', 'query', 'q-1', ${writer}, '{}'::jsonb, 'waiting')`.execute(admin.db);
+    await query('u-an');
+    await expect(query('u-an')).rejects.toThrow(/messages_one_waiting_request/);
+    await query('u-jan');
   });
 });

@@ -84,7 +84,7 @@ describe('the guide of an EDA in the Flow Box (FR-ED-14, DEC-UX-327)', () => {
   it('has one step per needed EDA-Probe, in the order of the EDA-Steps and grouped under them, the coming ones counted', () => {
     const flow = edaFlowOf(viewOf());
     expect(flow.steps.map((step) => [step.number, step.group, step.name])).toEqual([
-      [1, 'Basis', 'The grain holds'],
+      [1, 'Basis', 'The Grain holds'],
       [2, 'Basis', 'Date range'],
       [3, 'Basis', 'Volume over time, with empty periods'],
       [4, 'Gaps', 'Nulls per Key Field'],
@@ -122,12 +122,12 @@ describe('the guide of an EDA in the Flow Box (FR-ED-14, DEC-UX-327)', () => {
   });
 
   it('unfolds What, Why and How, the Learning Card where one is written, and Open the EDA-Probe, except on its own detail', () => {
-    const flow = edaFlowOf(viewOf(), { here: 'grainHolds', cardTitle: (card) => (card === '2.3.5' ? 'The grain question' : undefined) });
+    const flow = edaFlowOf(viewOf(), { here: 'grainHolds', cardTitle: (card) => (card === '2.3.5' ? 'The Grain question' : undefined) });
     const grain = flow.steps.find((step) => step.id === 'grainHolds');
     expect(grain?.what).toMatch(/^It checks that every row is one thing: one row per week_start, lead_source/);
-    expect(grain?.why).toMatch(/^When a grain value is on two rows/);
-    expect(grain?.how).toBe('On its detail: it is set on the whole grain. Run reads the table once, through Query, as you.');
-    expect(grain).toMatchObject({ here: true, card: { number: '2.3.5', title: 'The grain question' } });
+    expect(grain?.why).toMatch(/^When a Grain value is on two rows/);
+    expect(grain?.how).toBe('On its detail: it is set on the whole Grain. Run reads the table once, through Query, as you.');
+    expect(grain).toMatchObject({ here: true, card: { number: '2.3.5', title: 'The Grain question' } });
     expect(grain?.go).toBeUndefined();
     expect(flow.steps.find((step) => step.id === 'volumeOverTime')?.how).toBe('On its detail: set on week_start, the date it counts by; other dates can be added. Run.');
     // The two built next have What, Why and How of their own (FR-ED-17, FR-ED-18).
@@ -151,8 +151,8 @@ describe('the guide of an EDA in the Flow Box (FR-ED-14, DEC-UX-327)', () => {
     const view = viewOf();
     const without = { ...view, probes: view.probes.map((probe) => (probe.key === 'grainHolds' ? { ...probe, applies: { ...probe.applies, block: 'noGrain' as const } } : probe)) };
     const grain = edaFlowOf(without).steps.find((step) => step.id === 'grainHolds');
-    expect(grain?.said).toBe('Its grain is not recorded yet');
-    expect(grain?.how).toMatch(/the Data Team records its grain first/);
+    expect(grain?.said).toBe('Its Grain is not recorded yet');
+    expect(grain?.how).toMatch(/the Data Team records its Grain first/);
   });
 });
 
@@ -212,7 +212,7 @@ describe('the question an EDA-Probe asks of a Resource (FR-ED-13)', () => {
     expect(saidText([askOf('valuesWithoutAMatch', WEEKLY)])).toBe('Which values of lead_source have no match in what they are mapped to?');
     expect(saidText([askOf('disguisedNulls', WEEKLY)])).toBe('How many rows say nothing, per Key Field: no value, "n/a", "unknown" or 1900-01-01?');
     const plain = { ...WEEKLY, fields: WEEKLY.fields.map((field) => ({ ...field, grain: false, mapped: false, role: null })) };
-    expect(saidText([askOf('grainHolds', plain)])).toBe('Is every row one thing, one row per value of its grain?');
+    expect(saidText([askOf('grainHolds', plain)])).toBe('Is every row one thing, one row per value of its Grain?');
     expect(saidText([askOf('volumeOverTime', plain)])).toBe('How much comes in per day, and are there days without rows?');
   });
 });

@@ -30,18 +30,48 @@ export const TERMS = {
       },
     },
   },
+  grain: {
+    term: 'Grain',
+    text: {
+      en: {
+        name: 'Grain',
+        definition:
+          'What one row of a Resource is: the fields that together identify each row, with one sentence, such as "one row per listing per day". No two rows have the same values in them. Not a Key Field, which is where a colleague starts.',
+      },
+      nl: {
+        name: 'Grain',
+        definition:
+          'Wat één rij van een Resource is: de velden die samen elke rij aanduiden, met één zin, zoals "één rij per pand per dag". Geen twee rijen hebben dezelfde waarden erin. Geen Key Field: dat is waar een collega begint.',
+      },
+    },
+  },
+  dbt: {
+    term: 'dbt',
+    text: {
+      en: {
+        name: 'dbt',
+        definition:
+          'The tool in which the Data Team builds the tables of BigQuery from SQL models, in dbt projects. Data Hub follows those projects; the description from dbt is what its dbt project says of a table or a field.',
+      },
+      nl: {
+        name: 'dbt',
+        definition:
+          'De tool waarin het Data Team de tabellen van BigQuery bouwt uit SQL-modellen, in dbt-projecten. Data Hub volgt die projecten; de beschrijving uit dbt is wat zijn dbt-project over een tabel of een veld zegt.',
+      },
+    },
+  },
   keyField: {
     term: 'Key Field',
     text: {
       en: {
         name: 'Key Field',
         definition:
-          'A field of a Resource that matters most, marked on its Resource Card by its Owner or the Data Team: most questions about the Resource go through it. Its Business Description is required before the Resource is published.',
+          'A field of a Resource that matters most, marked on its Resource Card by its Owner or the Data Team: where a colleague starts, and what the EDA explores at least. Not the key of the table, and not the Grain, which says what makes a row unique. Its Business Description is required before the Resource is published.',
       },
       nl: {
-        name: 'Sleutelveld',
+        name: 'Key Field',
         definition:
-          'Een veld van een Resource dat het meest telt, aangeduid op de Resource Card door de Owner of het Data Team: de meeste vragen over de Resource lopen erlangs. Zijn Business Description is verplicht voor de Resource gepubliceerd wordt.',
+          'Een veld van een Resource dat het meest telt, aangeduid op de Resource Card door de Owner of het Data Team: waar een collega begint, en wat de EDA minstens onderzoekt. Niet de sleutel van de tabel, en niet de Grain, die zegt wat een rij uniek maakt. Zijn Business Description is verplicht voor de Resource gepubliceerd wordt.',
       },
     },
   },
@@ -56,7 +86,7 @@ export const TERMS = {
       nl: {
         name: 'Known Gap',
         definition:
-          'Een gat in de data zelf: een periode, een veld of rijen die ontbreken of maar gedeeltelijk aanwezig zijn. Het zou verdwijnen als de data hersteld werd. Wat waar blijft, ook als elke rij klopt, is een valkuil.',
+          'Een gat in de data zelf: een periode, een veld of rijen die ontbreken of maar gedeeltelijk aanwezig zijn. Het zou verdwijnen als de data hersteld werd. Wat waar blijft, ook als elke rij klopt, is een Pitfall.',
       },
     },
   },
@@ -99,7 +129,7 @@ export const TERMS = {
           'A way to read a Resource wrongly that looks right: what a field means, what a figure counts or when it is final. It is about how the data is read, not the data itself: it stays true even when every row is right. A gap in the data is a Known Gap.',
       },
       nl: {
-        name: 'Valkuil',
+        name: 'Pitfall',
         definition:
           'Een manier om een Resource verkeerd te lezen die juist lijkt: wat een veld betekent, wat een cijfer telt of wanneer het definitief is. Het gaat over hoe de data gelezen wordt, niet over de data zelf: het blijft waar, ook als elke rij klopt. Een gat in de data is een Known Gap.',
       },
@@ -114,7 +144,7 @@ export const TERMS = {
       },
       nl: {
         name: 'Known Behaviour',
-        definition: 'Het deel van de Resource Card dat zegt hoe de data zich gedraagt in gebruik: waarvoor ze bedoeld is, haar valkuilen, haar Known Gaps en vanaf wanneer ze betrouwbaar is.',
+        definition: 'Het deel van de Resource Card dat zegt hoe de data zich gedraagt in gebruik: waarvoor ze bedoeld is, haar Pitfalls, haar Known Gaps en vanaf wanneer ze betrouwbaar is.',
       },
     },
   },
