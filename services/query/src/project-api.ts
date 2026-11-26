@@ -81,7 +81,7 @@ export async function projectRoutes(app: FastifyInstance, options: ProjectRouteO
 
   /** A Project as its page shows it: who is in it, and its queries in their order, locked where the User may not see a Resource. */
   async function view(request: FastifyRequest, project: Project) {
-    const [members, list] = await Promise.all([projects.members(project.id), projects.queries(project.id)]);
+    const [members, list, archivedAt] = await Promise.all([projects.members(project.id), projects.queries(project.id), projects.archivedAt(project.id, viewer(request).id)]);
     const ids = [...new Set(list.flatMap((query) => query.resources.map((resource) => resource.id)))];
     const seen = new Map(await Promise.all(ids.map(async (id) => [id, (await catalogue.resource(id, authorization(request))) !== null] as const)));
     const made = (userId: string) => list.filter((query) => query.ownerId === userId).length;
@@ -92,6 +92,8 @@ export async function projectRoutes(app: FastifyInstance, options: ProjectRouteO
       madeBy: { id: project.madeById, name: project.madeByName },
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,
+      // Archived by this User: its page says so, with Back in your panel (DEC-UX-356); for the others it is as before.
+      archivedAt,
       members: members.map((one) => ({
         id: one.userId,
         name: one.userName,
@@ -180,6 +182,20 @@ export async function projectRoutes(app: FastifyInstance, options: ProjectRouteO
     );
     return reply.code(204).send();
   });
+
+  // Archived by the User, out of their panel and nobody else's, or put back in it (DEC-UX-354, DEC-UX-355): at once,
+  // as the one undoes the other, and nobody is told. It changes nothing of the Project itself.
+  for (const [method, archived] of [['PUT', true], ['DELETE', false]] as const) {
+    app.route<{ Params: { id: string } }>({
+      method,
+      url: '/projects/:id/archive',
+      handler: async (request, reply) => {
+        const project = await member(request, reply);
+        if (!project) return reply;
+        return { archivedAt: await projects.archive(project.id, viewer(request).id, archived) };
+      },
+    });
+  }
 
   // Shared with a colleague, by anyone in it (FR-SR-65): who cannot run queries is added all the same (OP-UX-98), and
   // told so; whoever is added is told (MSG-QRY-03, OP-UX-101).

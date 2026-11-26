@@ -166,6 +166,7 @@ describe('the addresses of the web app', () => {
     expect(objectPath({ kind: 'user', id: '42' }, 'MSG-QRY-05', { projectId: 'p1' })).toBe('/query/projects/p1');
     expect(objectPath({ kind: 'user', id: '42' }, 'MSG-QRY-04', { projectId: 'p1' })).toBe('/query');
     expect(route('/query/projects/p1')).toMatchObject({ kind: 'project', id: 'p1' });
+    expect(route('/query/projects')).toMatchObject({ kind: 'projects' });
     expect(objectPath({ kind: 'user', id: '42' }, 'MSG-USR-03')).toBe('/admin/users/42');
   });
 

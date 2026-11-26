@@ -230,6 +230,8 @@ export interface QueryDatabase {
     addedById: string | null;
     addedByName: string | null;
     addedAt: Timestamp;
+    /** When this User archived it, out of their panel only (DEC-UX-354, DEC-UX-355); null while it is in it. */
+    archivedAt: ColumnType<Date | null, Date | null | undefined, Date | null>;
   };
   /** The queries of a Project, in one order for everyone in it (OP-UX-95); a query is in one Project at most (OP-UX-93). */
   projectQueries: {

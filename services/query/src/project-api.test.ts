@@ -127,6 +127,31 @@ describe.skipIf(!url)('who is told about a Project (MSG-QRY-03 to MSG-QRY-05, OP
     ]);
   });
 
+  it('archives a Project for one User only, out of their panel, and puts it back; nobody is told (DEC-UX-354, DEC-UX-355, DEC-UX-356)', async () => {
+    const id = await project();
+    told = [];
+    const listed = async (user: string) => (await call(user, 'GET', '/projects')).json().projects.find((one: { id: string }) => one.id === id) as { archivedAt: string | null; updatedAt: string };
+    const before = await listed('101');
+    expect(before.archivedAt).toBeNull();
+    const archived = await call('101', 'PUT', `/projects/${id}/archive`);
+    expect(archived.statusCode).toBe(200);
+    expect(archived.json().archivedAt).toEqual(expect.any(String));
+    // Archived for An, listed with when; still in the panel of Karel, and the Project itself did not change.
+    expect((await listed('101')).archivedAt).toBe(archived.json().archivedAt);
+    expect((await listed('101')).updatedAt).toBe(before.updatedAt);
+    expect((await listed('102')).archivedAt).toBeNull();
+    // Archived again keeps when it was first archived; its page says so to An only.
+    expect((await call('101', 'PUT', `/projects/${id}/archive`)).json().archivedAt).toBe(archived.json().archivedAt);
+    expect((await call('101', 'GET', `/projects/${id}`)).json().project.archivedAt).toBe(archived.json().archivedAt);
+    expect((await call('102', 'GET', `/projects/${id}`)).json().project.archivedAt).toBeNull();
+    // Back in her panel.
+    expect((await call('101', 'DELETE', `/projects/${id}/archive`)).json()).toEqual({ archivedAt: null });
+    expect((await listed('101')).archivedAt).toBeNull();
+    // Only who is in it archives it.
+    expect((await call('999', 'PUT', `/projects/${id}/archive`)).statusCode).toBe(404);
+    expect(told).toEqual([]);
+  });
+
   it('changes the Project all the same when catalogue does not answer', async () => {
     const id = await project();
     told = [];

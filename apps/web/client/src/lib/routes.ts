@@ -57,6 +57,8 @@ export type Route =
   | ({ readonly kind: 'query'; readonly id: string; readonly run: number | 'all' | null; readonly section: Section } & Talk)
   /** The page of a Project, in the section Query (DEC-UX-285). */
   | { readonly kind: 'project'; readonly id: string; readonly section: Section }
+  /** All projects: every Project the User is in, the archived ones too (DEC-UX-354). */
+  | { readonly kind: 'projects'; readonly section: Section }
   /** Make it a lens, from a query, in the section Query (DEC-UX-25). */
   | { readonly kind: 'newLens'; readonly query: string; readonly section: Section }
   /** The page of a Lens, in the section Collections (DEC-UX-66). */
@@ -286,6 +288,9 @@ export function route(address: string, adminTools: readonly AdminTool[] = ADMIN_
   const [, lensFrom] = /^\/query\/([^/]+)\/lens$/.exec(clean) ?? [];
   const [, projectId] = /^\/query\/projects\/([^/]+)$/.exec(clean) ?? [];
   try {
+    if (query && clean === '/query/projects') {
+      return { kind: 'projects', section: query };
+    }
     if (query && projectId) {
       return { kind: 'project', id: decodeURIComponent(projectId), section: query };
     }
