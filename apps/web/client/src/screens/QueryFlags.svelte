@@ -169,7 +169,7 @@
   </div>
 
   {#if pop === 'all'}
-    <div class="pop end" role="menu" aria-label={t('row.all.hint')}>
+    <div class="pop right" role="menu" aria-label={t('row.all.hint')}>
       <div class="pop-h">{project.name} · {t('row.queries', { count: items.length })}</div>
       {#each items as item, at (item.id)}
         <a class="opt" class:on={item.id === current} role="menuitem" href={item.locked ? projectPath(project.id) : queryPath(item.id)} onclick={() => (pop = null)}>
@@ -232,7 +232,8 @@
   .all:hover, .all[aria-expanded='true'] { background: var(--tint-hover); color: var(--text-primary); }
   .kbd { font-size: var(--text-meta); font-weight: var(--weight-medium); background: var(--card); border-radius: var(--radius-mark); padding: 1px 5px; }
   .pop { position: absolute; top: calc(100% + 6px); left: 4px; z-index: 40; width: 360px; max-height: min(520px, 70vh); overflow: auto; padding: 8px; border-radius: var(--radius-md); background: var(--surface-solid); box-shadow: var(--sheet-shadow); font-size: var(--text-small); }
-  .pop.end { left: auto; right: 4px; }
+  /* Its own name for the right edge: `end` is the flex box of "All 7" and made the list one row, the queries out of view. */
+  .pop.right { left: auto; right: 4px; }
   .pop-h { font-size: var(--text-meta); color: var(--text-muted); margin: 2px 8px 4px; }
   .opt { display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 8px; border: 0; border-radius: var(--radius-sm); background: none; color: var(--text-primary); font: inherit; text-align: left; cursor: pointer; text-decoration: none; }
   .opt:hover, .opt.on { background: var(--tint-hover); }
