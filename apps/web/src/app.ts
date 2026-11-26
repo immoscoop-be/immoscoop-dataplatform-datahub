@@ -150,7 +150,10 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
       return reply.redirect(`/?error=${encodeURIComponent(reason)}`);
     };
     if (incoming.query.error) {
-      return failed(incoming.query.error);
+      // A User switched off in Admin is told so, apart from an account of another company (FR-PL-17); the
+      // description starts with SIGN_IN_DEACTIVATED of @datahub/contracts.
+      const deactivated = incoming.query.error === 'access_denied' && (incoming.query.error_description ?? '').startsWith('account_deactivated');
+      return failed(deactivated ? 'deactivated' : incoming.query.error);
     }
     if (!state || !verifier || incoming.query.state !== state || !incoming.query.code) {
       return failed('expired');

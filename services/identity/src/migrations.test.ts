@@ -30,7 +30,7 @@ describe.skipIf(!url)('identity migrations', () => {
     const columns = await sql<{ columnName: string }>`
       select column_name from information_schema.columns
       where table_schema = ${schema} and table_name = 'users' order by ordinal_position`.execute(admin.db);
-    expect(columns.rows.map((row) => row.columnName)).toEqual(['google_id', 'email', 'name', 'created_at', 'last_login_at', 'groups', 'roles', 'permission_group_id', 'active', 'workspace_groups']);
+    expect(columns.rows.map((row) => row.columnName)).toEqual(['google_id', 'email', 'name', 'created_at', 'last_login_at', 'groups', 'roles', 'permission_group_id', 'active', 'workspace_groups', 'deactivated_at', 'deactivated_by_id', 'deactivated_by_name']);
   });
 });
 

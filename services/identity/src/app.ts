@@ -54,6 +54,7 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
       groups: options.signIn.groups,
       ...(options.signIn.userNotices ? { notices: options.signIn.userNotices } : {}),
       ...(options.signIn.webClient ? { webClientId: options.signIn.webClient.clientId } : {}),
+      endSessions: (googleId: string, reason: string) => store.endSessionsOf(googleId, reason),
     });
     await app.register(settingsRoutes, { store: options.signIn.store });
     if (options.peopleCallers) await app.register(peopleRoutes, { store: options.signIn.store, callers: options.peopleCallers });

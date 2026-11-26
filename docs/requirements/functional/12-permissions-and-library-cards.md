@@ -31,6 +31,7 @@ Pointers to material this domain will build on, collected during the migration. 
 - <a id="dec-pl-08"></a>**DEC-PL-08** · Taking a Resource out of its Collection is a Permission of its own, `resources.remove`, apart from `resources.assign`: for their Owner Units it holds only while the Resource is not published; with every Resource as its reach, published or not. Admin has it for every Resource, Business analyst for their Owner Units, Lens user not. Existing Permission groups get it as `resources.assign` and `resources.publish` say: every with the first, their Owner Units with only the second, else not. *Decided on 2026-11-12, by Max: a Permission of its own rather than following who may publish ([FR-CO-43](03-collections.md#fr-co-43)); its values and defaults proposed the same day, and approved by Max: "the designs are okay, you may start building them".*
 - <a id="dec-pl-09"></a>**DEC-PL-09** · Querying tables outside Data Hub is a Permission of its own, `queries.outside`, for power users ([DEC-SR-46](04-stacks-and-resources.md#dec-sr-46)): only Admin has it to start; Business analyst and Lens user do not. A group of power users is a Permission group made in Admin, with this Permission on. *Decided on 2026-11-13, by Max.*
 - <a id="dec-pl-10"></a>**DEC-PL-10** · Exploring Resources is a Permission of its own, `eda.use`, for the EDA ([DEC-ED-25](15-eda.md#dec-ed-25)): only Admin has it to start; Business analyst and Lens user do not, until the EDA is opened up to business. *Decided on 2026-11-21, by Max.*
+- <a id="dec-pl-11"></a>**DEC-PL-11** · A User of Admin sets another User active or inactive, on their sheet in Users. Inactive, they no longer sign in: not in the web app, not in Claude, not with an Excel key. Only signing in changes, never what is theirs, and the sheet says so. *Decided on 2026-11-26, by Max, in Dutch: Users can be set active or inactive, to switch them off, with a toggle in the detail of a User on Users, with the note that it affects only their signing in, not their Resources and the rest; built without a prototype, as he asked.*
 - <a id="dec-pl-07"></a>**DEC-PL-07** · Three Permission groups to start with. **Admin:** the Data Admins of today, every Permission at its widest, locked. **Business analyst:** what every other User can do today. **Lens user:** only Lenses: they find and run them, write Questions and Signals but no Remarks, reply to no Messages of others, take a result to Excel, and see a result of Claude in a card only. Lens user is the default for new Users; at the start, the members of `datahub-datateam@` get Admin and every other User Business analyst, so that nothing changes for anyone. *Decided on 2026-11-06, by Max: "admin (data-admin today), business-analist (what is currently available …) and a new user role with only lens usage"; on the default, "ok"; on the Lens user, "correct".*
 
 ## Requirements
@@ -81,6 +82,8 @@ A Permission group has a name, a sentence that says what it allows, and a value 
 
 With `admin.open` for Users, Admin has Users: everyone who signed in to the environment, with their Permission group, their Owner Units, what they use (the web app, Claude, Excel) and when they last signed in. A search finds a User by name or address; a filter shows one Permission group, each with its count. A User who can no longer sign in stays listed, greyed, with their Permission group.
 
+*Note of 2026-11-26: so does a User set inactive in Admin, marked inactive ([FR-PL-17](#fr-pl-17)).*
+
 <a id="fr-pl-07"></a>
 ### FR-PL-07 · The Permission group of a User is changed after seeing what it changes
 
@@ -94,6 +97,8 @@ A User opened on Users shows in a sheet who they are, since when, what they use,
 **Status:** Implemented · **Source:** Max, 2026-11-06 ([DEC-UX-188](../../design/principles.md#dec-ux-188), [DEC-PL-07](#dec-pl-07)) · [design](../../design/principles.md#admin) · **Screens:** [admin-users](../../design/screens/admin-users.html), [admin-permission-groups](../../design/screens/admin-permission-groups.html)
 
 Nobody changes their own Permission group. The Permission group Admin has every Permission at its widest; its Permissions cannot be changed, it cannot be deleted, and it keeps at least one User: the last User of Admin cannot be moved to another group.
+
+*Note of 2026-11-26: a User set inactive cannot sign in, so Admin keeps at least one User who is active: the last one can neither be moved out nor set inactive ([FR-PL-17](#fr-pl-17)).*
 
 <a id="fr-pl-09"></a>
 ### FR-PL-09 · Permission groups shows each group with its Permissions, and changes them all at once
@@ -153,6 +158,16 @@ When someone signs in to Data Hub for the first time, in the web app, through Cl
 
 **Makes easy:** giving a new colleague the Permission group they need on their first day, instead of finding out weeks later that the default did not fit; seeing who starts using Data Hub.
 **Makes hard:** a new User staying unnoticed in a Permission group that gives them too much or too little; telling the new User about a check that is not theirs to make.
+
+<a id="fr-pl-17"></a>
+### FR-PL-17 · A User is set active or inactive
+
+**Status:** Implemented · **Source:** Max, 2026-11-26 ([DEC-PL-11](#dec-pl-11)) · [design](../../design/principles.md#admin) · **Screens:** [admin-users](../../design/screens/admin-users.html)
+
+On the sheet of a User in Users, who may open Users in Admin sets them active or inactive, at once, without Save. Inactive, they no longer sign in: not in the web app, not in Claude, not with an Excel key. Their sessions end, so that whoever is signed in is out within 15 minutes, the life of their last Access Token. Only signing in changes: their Collections, Resources, queries, Lenses, Messages, Groups, Permission group and Excel keys stay as they are. Beside the switch the sheet says so, and since when and by whom they are inactive. Set active again, they sign in as before and their Excel keys work again. Nobody sets themselves inactive, and Admin keeps at least one User who can sign in ([FR-PL-08](#fr-pl-08)). An inactive User stays listed on Users, greyed and marked inactive; when they try to sign in, they are told that their account is inactive in Data Hub, and to ask the Data Team.
+
+**Makes easy:** switching off a colleague who leaves or should no longer use Data Hub, at once and in one place, without losing anything they made or own.
+**Makes hard:** someone switched off who still gets in through Claude or an Excel key; locking Data Hub out by setting oneself, or its last User of Admin, inactive.
 
 <a id="the-permissions"></a>
 ## The Permissions

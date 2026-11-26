@@ -3,6 +3,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createTestIssuer } from '@datahub/auth/testing';
+import { SIGN_IN_DEACTIVATED } from '@datahub/contracts';
 import type { FastifyInstance } from 'fastify';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { buildApp, CLIENT_ID } from './app.js';
@@ -213,6 +214,17 @@ describe('the server of the web app', () => {
       headers: { cookie: cookies(login.headers)['datahub_sign_in']?.split(';')[0] ?? '' },
     });
     expect(callback.headers.location).toBe('/?error=access_denied');
+  });
+
+  it('says that a User switched off in Admin was refused, apart from another domain (FR-PL-17)', async () => {
+    const login = await app.inject({ url: '/auth/login' });
+    const state = new URL(login.headers.location as string).searchParams.get('state');
+    const description = encodeURIComponent(`${SIGN_IN_DEACTIVATED}: this account is switched off in Data Hub`);
+    const callback = await app.inject({
+      url: `/auth/callback?error=access_denied&error_description=${description}&state=${state}`,
+      headers: { cookie: cookies(login.headers)['datahub_sign_in']?.split(';')[0] ?? '' },
+    });
+    expect(callback.headers.location).toBe('/?error=deactivated');
   });
 
   it('gives the page an Access Token for the Refresh Token, and a new Refresh Token', async () => {

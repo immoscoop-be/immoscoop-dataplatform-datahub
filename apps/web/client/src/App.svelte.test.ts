@@ -464,6 +464,7 @@ const MAX_USER = {
   lastLoginAt: new Date(Date.now() - HOUR).toISOString(),
   uses: { web: true, claude: true, excel: false },
   active: true,
+  deactivated: null as { at: string; by: string | null } | null,
 };
 const AN_USER = {
   googleId: '2',
@@ -478,6 +479,7 @@ const AN_USER = {
   lastLoginAt: new Date(Date.now() - 2 * HOUR).toISOString(),
   uses: { web: true, claude: true, excel: true },
   active: true,
+  deactivated: null as { at: string; by: string | null } | null,
 };
 const ELIF_USER = {
   googleId: '3',
@@ -489,6 +491,7 @@ const ELIF_USER = {
   lastLoginAt: new Date(Date.now() - 20 * HOUR).toISOString(),
   uses: { web: true, claude: false, excel: false },
   active: true,
+  deactivated: null as { at: string; by: string | null } | null,
 };
 const BRAM_USER = {
   googleId: '4',
@@ -500,6 +503,7 @@ const BRAM_USER = {
   lastLoginAt: '2026-09-14T08:00:00Z',
   uses: { web: false, claude: false, excel: false },
   active: false,
+  deactivated: null as { at: string; by: string | null } | null,
 };
 const USERS = [MAX_USER, AN_USER, ELIF_USER, BRAM_USER];
 
@@ -1300,11 +1304,20 @@ function serve({
     if (path === '/users' && method === 'GET') {
       return mayAdmin('users') ? json({ users: people }) : json({ error: 'forbidden', permission: 'admin.open' }, 403);
     }
-    const [, userId, moving] = /^\/users\/([^/]+)(\/permission-group)?$/.exec(path) ?? [];
+    const [, userId, moving] = /^\/users\/([^/]+)(\/permission-group|\/active)?$/.exec(path) ?? [];
     if (userId && !moving && method === 'GET') {
       const user = people.find((one) => one.googleId === userId);
       const history = userId === '2' ? [{ at: '2026-10-14T09:00:00Z', from: 'pg-businessAnalyst', to: 'pg-lensUser', by: 'Ruth Aerts' }, { at: '2026-09-02T08:00:00Z', from: null, to: 'pg-businessAnalyst', by: null }] : [];
       return user ? json({ user, history }) : json({ error: 'not_found' }, 404);
+    }
+    // identity, as Admin sets a User active or inactive (FR-PL-17).
+    if (userId && moving === '/active' && method === 'PUT') {
+      const user = people.find((one) => one.googleId === userId);
+      if (!user) return json({ error: 'not_found' }, 404);
+      if (userId === ME.sub) return json({ error: 'own_user' }, 403);
+      const { active } = JSON.parse(init.body as string) as { active: boolean };
+      user.deactivated = active ? null : { at: '2026-11-26T09:00:00Z', by: ME.name };
+      return json({ user });
     }
     if (userId && moving && method === 'PUT') {
       const user = people.find((one) => one.googleId === userId);
@@ -1545,6 +1558,13 @@ describe('the web app, signed out', () => {
     render(App, { config: CONFIG });
     expect((await screen.findByRole('alert')).textContent).toContain('Enkel actieve accounts van het bedrijf');
     expect(location.search).toBe('');
+  });
+
+  it('tells a User set inactive in Admin why they cannot sign in (FR-PL-17)', async () => {
+    serve({ signedIn: false });
+    open('/collections?error=deactivated');
+    render(App, { config: CONFIG });
+    expect((await screen.findByRole('alert')).textContent?.trim()).toBe('Je account staat op inactief in Data Hub. Vraag het Data Team om het weer actief te zetten.');
   });
 });
 
@@ -2624,6 +2644,43 @@ describe('Users, in Admin', () => {
     expect(sheet.queryByRole('button', { name: 'Bewaren' })).toBeNull();
     await fireEvent.click(sheet.getAllByRole('button', { name: 'Sluiten' }).at(-1)!);
     expect(calls.some((call) => call.method === 'PUT')).toBe(false);
+  });
+
+  it('sets a User inactive and active again at once, saying that only signing in changes (FR-PL-17)', async () => {
+    const calls = serve({ as: 'admin' });
+    open('/admin/users');
+    render(App, { config: UAT });
+    await screen.findByRole('table', { name: 'Users' });
+    await fireEvent.click(row('An Claes'));
+    const sheet = within(await screen.findByRole('dialog', { name: 'An Claes' }));
+    expect(sheet.getByText(/^Dit heeft enkel invloed op het aanmelden: een inactieve User kan zich niet meer aanmelden/)).toBeTruthy();
+    expect(sheet.getByText(/Hun Collections, Resources, queries, Lenses, berichten, Groups en Permission group blijven zoals ze zijn\.$/)).toBeTruthy();
+    expect(sheet.getByRole('radio', { name: 'Actief' }).getAttribute('aria-checked')).toBe('true');
+
+    await fireEvent.click(sheet.getByRole('radio', { name: 'Inactief' }));
+    expect(calls).toContainEqual({ method: 'PUT', path: '/users/2/active', body: { active: false } });
+    expect(await sheet.findByText(/^Inactief sinds .+, gezet door Max Verstraete\.$/)).toBeTruthy();
+    // It takes effect at once: the sheet stays open, and the row says so.
+    expect(screen.getByRole('dialog', { name: 'An Claes' })).toBeTruthy();
+    expect(row('An Claes').textContent).toContain('inactief');
+    expect(row('An Claes').classList.contains('gone')).toBe(true);
+
+    await fireEvent.click(sheet.getByRole('radio', { name: 'Actief' }));
+    expect(calls).toContainEqual({ method: 'PUT', path: '/users/2/active', body: { active: true } });
+    await vi.waitFor(() => expect(row('An Claes').textContent).not.toContain('inactief'));
+    expect(sheet.queryByText(/^Inactief sinds/)).toBeNull();
+  });
+
+  it('lets nobody set themselves inactive (FR-PL-17)', async () => {
+    const calls = serve({ as: 'admin' });
+    open('/admin/users');
+    render(App, { config: UAT });
+    await screen.findByRole('table', { name: 'Users' });
+    await fireEvent.click(row('Max Verstraete'));
+    const sheet = within(await screen.findByRole('dialog', { name: 'Max Verstraete' }));
+    expect(sheet.getByText('Je kan jezelf niet op inactief zetten. Een andere User van het Data Team kan het wel.')).toBeTruthy();
+    expect(sheet.queryByRole('radio', { name: 'Inactief' })).toBeNull();
+    expect(calls.some((call) => call.path.endsWith('/active'))).toBe(false);
   });
 
   it('says so when the last User of Admin would leave it (FR-PL-08)', async () => {

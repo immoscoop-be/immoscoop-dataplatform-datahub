@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { SignInError, type GoogleIdentity, type GoogleSignIn } from './google-sign-in.js';
-import { canWith } from '@datahub/contracts';
+import { canWith, SIGN_IN_DEACTIVATED } from '@datahub/contracts';
 import type { PermissionGroups, UserNotices } from './permission-groups.js';
 import { randomToken, type Store } from './store.js';
 import type { TokenIssuer, TokenSubject } from './tokens.js';
@@ -210,9 +210,10 @@ export async function signInRoutes(app: FastifyInstance, options: SignInOptions)
       back.searchParams.set('state', pending.clientState);
     }
     back.searchParams.set('iss', issuer);
-    const deny = (reason: string, account?: string) => {
+    const deny = (reason: string, account?: string, description?: string) => {
       request.log.warn({ reason }, 'sign-in refused');
       back.searchParams.set('error', 'access_denied');
+      if (description) back.searchParams.set('error_description', description);
       // The refused account goes back in the fragment, which no server receives or logs: the
       // browser keeps it through the redirects, and the sign-in names it to the User.
       if (account) {
@@ -231,6 +232,10 @@ export async function signInRoutes(app: FastifyInstance, options: SignInOptions)
       identity = await google.identity({ code: request.query.code, codeVerifier: pending.googleCodeVerifier, nonce: pending.nonce });
       if (!(await workspace.isActive(identity.sub))) {
         return deny('The account is suspended or removed in Workspace');
+      }
+      // A User switched off in Admin does not get in, until switched on again; nothing of theirs changes (FR-PL-17).
+      if (await store.deactivated(identity.sub)) {
+        return deny('The User is switched off in Data Hub', undefined, `${SIGN_IN_DEACTIVATED}: this account is switched off in Data Hub`);
       }
       // A new User is made first, in the default Permission group, so that their first token carries it (FR-PL-04).
       const saved = await store.saveUser(identity);
@@ -296,6 +301,11 @@ export async function signInRoutes(app: FastifyInstance, options: SignInOptions)
         return refuse(reply, 'invalid_grant', 'The Refresh Token is not valid');
       }
       const user = await store.user(session.googleId);
+      // A User switched off in Admin renews nothing: their sessions end, in the web app and in Claude (FR-PL-17).
+      if (user && (await store.deactivated(session.googleId))) {
+        await store.endSessionsOf(session.googleId, 'deactivated');
+        return refuse(reply, 'invalid_grant', 'The account is switched off in Data Hub');
+      }
       let active = false;
       let claims: TokenSubject | undefined;
       try {

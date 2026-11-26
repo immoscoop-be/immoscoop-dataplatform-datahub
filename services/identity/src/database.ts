@@ -22,6 +22,10 @@ export interface IdentityDatabase {
     active: ColumnType<boolean, boolean | undefined, boolean>;
     /** The Google groups identity last read for them, so that the Owner Units move once (TR-UM-04). */
     workspaceGroups: ColumnType<string[], string[] | undefined, string[]>;
+    /** Switched off in Admin: they cannot sign in until switched on again (FR-PL-17); null while they may. */
+    deactivatedAt: ColumnType<Date | null, Date | null | undefined, Date | null>;
+    deactivatedById: ColumnType<string | null, string | null | undefined, string | null>;
+    deactivatedByName: ColumnType<string | null, string | null | undefined, string | null>;
   };
   /** The Groups kept in Data Hub (TR-UM-01): managed by another Group or by themselves. */
   groups: {
