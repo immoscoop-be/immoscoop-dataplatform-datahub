@@ -11,7 +11,7 @@
   import { type QueryClient, type QueryDay, type QueryItem, type Run, SHOWN, type Shown } from '../lib/query.js';
   import { lensPath, queryPath, queryRunsPath } from '../lib/routes.js';
   import { digitOf, keyed } from '../lib/flags.js';
-  import { isDeleted, type ProjectItem, type ProjectPage, projectMatches, projectPath, withWhom } from '../lib/projects.js';
+  import { ALL_PROJECTS, inPanel, isDeleted, type ProjectItem, type ProjectPage, projectMatches, projectPath, withWhom } from '../lib/projects.js';
 
   /**
    * The panel of Query (DEC-UX-20): the queries that ran, one item per query (DEC-UX-74), each labelled
@@ -42,6 +42,7 @@
     currentProject,
     loadProject,
     onnewproject,
+    onarchive,
   }: {
     client: Pick<QueryClient, 'list' | 'days' | 'hide'>;
     /** The User sees the queries of everyone (`queries.seeOthers`, every, FR-PL-14). */
@@ -68,6 +69,8 @@
     loadProject?: (id: string) => Promise<ProjectPage>;
     /** New project, as its + does. */
     onnewproject?: () => void;
+    /** Archives a Project out of the panel of the User, from its hover (DEC-UX-354). */
+    onarchive?: (project: ProjectItem) => void;
   } = $props();
 
   /** The Projects in view before "Show all" (DEC-UX-285). */
@@ -192,10 +195,13 @@
   /** The Projects in view: those matching the search by their name or a query of theirs it found (DEC-UX-285). */
   const projectsShown = $derived.by(() => {
     // The Project the User works in comes first (DEC-UX-295).
-    const list = [...(projects ?? [])].sort((a, b) => Number(b.id === active) - Number(a.id === active));
+    // Not the Projects the User archived, unless the one active now, while it is open (DEC-UX-354, DEC-UX-356).
+    const list = inPanel(projects ?? [], active).sort((a, b) => Number(b.id === active) - Number(a.id === active));
     if (!words) return list;
     return list.filter((project) => projectMatches(project, words) || (found?.items ?? []).some((item) => item.project?.id === project.id));
   });
+  /** How many Projects the User archived, said on the line to All projects (DEC-UX-354). */
+  const archivedCount = $derived((projects ?? []).filter((project) => project.archivedAt).length);
   /** The queries the search found in a Project, which unfolds to them. */
   const foundIn = (id: string) => (words ? (found?.items ?? []).filter((item) => item.project?.id === id) : []);
 
@@ -323,6 +329,8 @@
   </div>
   {#if projects.length === 0}
     <p class="meta empty">{t('query.projects.none')}</p>
+  {:else if projectsShown.length === 0 && !words}
+    <!-- Every Project archived: All projects finds them, under the empty list (DEC-UX-354). -->
   {:else if projectsShown.length === 0}
     <p class="meta empty">{t('query.projects.noMatch')}</p>
   {/if}
@@ -331,15 +339,19 @@
     {@const open = unfoldedProjects[project.id] || matched.length > 0}
     {@const listed = matched.length > 0 ? matched.map(({ id, name }) => ({ id, name, locked: false })) : projectQueries[project.id]}
     <div class="entry">
-      <a class="item card" class:current={project.id === currentProject || project.id === active} href={projectPath(project.id)} aria-current={project.id === currentProject ? 'page' : undefined}>
+      <a class="item card" class:unfolds={onarchive !== undefined && !project.archivedAt && project.queries > 0} class:current={project.id === currentProject || project.id === active} href={projectPath(project.id)} aria-current={project.id === currentProject ? 'page' : undefined}>
         <span class="kind"><Icon name="folders-fill" label="Project" /></span>
-        <span class="text"><span class="name" title={project.name}>{project.name}</span><span class="meta">{t('row.queries', { count: project.queries })} · {withWho(project)}</span></span>
+        <span class="text"><span class="name" title={project.name}>{project.name}</span><span class="meta">{t('row.queries', { count: project.queries })} · {withWho(project)}{#if project.archivedAt}{' · '}{t('query.projects.archivedMark')}{/if}</span></span>
       </a>
-      {#if project.queries > 0}
-        <span class="buttons">
+      <span class="buttons">
+        <!-- Archive on hover, as the eye on a query (DEC-UX-354); not on one archived already, open now (DEC-UX-356). -->
+        {#if onarchive && !project.archivedAt}
+          <button type="button" class="eye" aria-label={t('query.projects.archive', { name: project.name })} title={t('query.projects.archive.hint')} onclick={() => onarchive(project)}><Icon name="archive" /></button>
+        {/if}
+        {#if project.queries > 0}
           <button type="button" class="unfold" aria-expanded={open} aria-label={t('query.projects.itsQueries', { name: project.name })} onclick={() => unfoldProject(project.id)}><Icon name="caret-down" /></button>
-        </span>
-      {/if}
+        {/if}
+      </span>
       {#if open}
         <nav class="runs" aria-label={t('query.projects.itsQueries', { name: project.name })}>
           {#if listed === null || listed === undefined}
@@ -360,6 +372,10 @@
   {/each}
   {#if !words && !allProjects && projectsShown.length > FIRST_PROJECTS}
     <button type="button" class="more" onclick={() => (allProjects = true)}>{t('query.projects.showAll', { count: projectsShown.length })}</button>
+  {/if}
+  {#if projects.length > 0 && !words}
+    <!-- The quiet line to All projects, the archived ones too (DEC-UX-354). -->
+    <a class="all-projects" href={ALL_PROJECTS}><Icon name="archive" /><span>{t('query.projects.allLink')}</span>{#if archivedCount > 0}<span class="meta">{t('query.projects.archivedCount', { count: archivedCount })}</span>{/if}</a>
   {/if}
 {/if}
 
@@ -417,6 +433,10 @@
   .add:hover { background: var(--tint-hover); color: var(--text-primary); }
   .more { all: unset; cursor: pointer; display: block; margin: 0 4px 10px; font-size: var(--text-meta); color: var(--text-secondary); text-decoration: underline; }
   .more:hover { color: var(--text-primary); }
+  .all-projects { display: flex; align-items: center; gap: 7px; margin: 2px 4px 10px; padding: 5px 6px; border-radius: var(--radius-sm); font-size: var(--text-small); color: var(--text-muted); text-decoration: none; }
+  .all-projects:hover { background: var(--tint-hover); color: var(--text-secondary); }
+  .all-projects:focus-visible { outline: 2px solid var(--text-secondary); }
+  .all-projects .meta { margin-left: auto; }
   .key { min-width: 10px; font-size: var(--text-meta); color: var(--text-muted); flex: none; }
   .clip { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   .label { margin: 4px 4px 8px; font-size: var(--text-meta); color: var(--text-muted); }

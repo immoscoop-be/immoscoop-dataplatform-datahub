@@ -19,6 +19,8 @@ export interface ProjectItem {
   queries: number;
   /** Who is in it, in the order they were added. */
   members: { id: string; name: string }[];
+  /** When the User archived it, out of their panel only (DEC-UX-354, DEC-UX-355); null while it is in it. */
+  archivedAt: string | null;
 }
 
 /** Someone in a Project, with who added them and how many of its queries they made (FR-SR-65). */
@@ -55,6 +57,8 @@ export interface Project {
   updatedAt: string;
   members: ProjectMember[];
   queries: ProjectQuery[];
+  /** When the User archived it: its page says so, with Back in your panel (DEC-UX-356). */
+  archivedAt?: string | null;
 }
 
 export interface DeletedProject {
@@ -94,6 +98,13 @@ export function moved<T>(items: readonly T[], from: number, to: number): T[] {
 }
 
 export const projectPath = (id: string): string => `/query/projects/${encodeURIComponent(id)}`;
+/** All projects: every Project the User is in, the archived ones too (DEC-UX-354). */
+export const ALL_PROJECTS = '/query/projects';
+
+/** The Projects in the panel: not the ones the User archived, unless it is the active one, open now (DEC-UX-356). */
+export function inPanel<T extends Pick<ProjectItem, 'id' | 'archivedAt'>>(projects: readonly T[], active: string | null | undefined): T[] {
+  return projects.filter((project) => !project.archivedAt || project.id === active);
+}
 
 export function createProjects(config: Config, session: Pick<Session, 'accessToken'>, request?: typeof fetch) {
   const call: Call = createCall('query', config.queryUrl, session, request);
@@ -114,6 +125,14 @@ export function createProjects(config: Config, session: Pick<Session, 'accessTok
     /** Its name or what it is for, changed in place by anyone in it. */
     async update(id: string, fields: { name?: string; description?: string }): Promise<void> {
       await call(project(id), { method: 'PATCH', body: fields });
+    },
+    /** Archives it for the User alone, out of their panel (DEC-UX-354, DEC-UX-355). */
+    async archive(id: string): Promise<void> {
+      await call(`${project(id)}/archive`, { method: 'PUT' });
+    },
+    /** Puts it back in the panel of the User. */
+    async unarchive(id: string): Promise<void> {
+      await call(`${project(id)}/archive`, { method: 'DELETE' });
     },
     /** Deletes it for everyone, with an optional reason (OP-UX-100). */
     async remove(id: string, reason?: string): Promise<void> {

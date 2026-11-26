@@ -396,3 +396,9 @@ catalogue drops the column `parameters` of `resources` and the records of the Ow
 
 query reads the Key Fields from the card of the Resource and offers, after its first cluster column, those of type `STRING` or `BOOL` whose name does not end in `Id`, `Uid` or `_id`, nor is `id`, the way the dbt projects name an identifier: a list of their values sorts nothing ([TR-SR-19](#tr-sr-19)). The web app marks such a choice "Key Field" in the Preview, as it marks the cluster column, and calls the bar of choices "Filter". mcp has no `parameters` in `update_resource_card` and no step `parameters` in `record_journey_step`.
 
+<a id="tr-sr-38"></a>
+### TR-SR-38 · Archiving a Project is kept per User
+
+**Status:** Implemented · **Realises:** [FR-SR-74](../functional/04-stacks-and-resources.md#fr-sr-74), [DEC-UX-355](../../design/principles.md#dec-ux-355)
+
+query keeps when a User archived a Project on their own row of `project_members`, in `archived_at`, null while it is in their panel (migration `0015-project-archive`). `PUT /projects/:id/archive` archives it for the caller and keeps the first moment when archived again; `DELETE /projects/:id/archive` puts it back. Only who is in the Project archives it, and neither changes the Project nor when it changed, nor tells anyone. `GET /projects` lists the archived ones too, each with `archivedAt` for the caller, and `GET /projects/:id` gives the caller's `archivedAt`; the web app leaves out of the panel the ones archived, except the active one (DEC-UX-356), and the MCP passes `archivedAt` on in list_projects.

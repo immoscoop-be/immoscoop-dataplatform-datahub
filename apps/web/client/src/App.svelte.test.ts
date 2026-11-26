@@ -1150,7 +1150,7 @@ function serve({
       return json({ query: made }, 201);
     }
     // The Projects of Query (TR-SR-33).
-    const listItem = (one: FakeProject) => ({ id: one.id, name: one.name, description: one.description, updatedAt: '2026-11-19T09:00:00Z', queries: one.queries.length, members: one.members.map(({ id, name }) => ({ id, name })) });
+    const listItem = (one: FakeProject) => ({ id: one.id, name: one.name, description: one.description, updatedAt: '2026-11-19T09:00:00Z', queries: one.queries.length, members: one.members.map(({ id, name }) => ({ id, name })), archivedAt: one.archivedAt ?? null });
     if (path === '/projects' && method === 'GET') return json({ projects: projects.map(listItem) });
     if (path === '/projects' && method === 'POST') {
       const body = JSON.parse(init.body as string) as { name: string; description?: string; queries?: string[] };
@@ -1170,6 +1170,11 @@ function serve({
     if (project && !rest && method === 'DELETE') {
       projects.splice(projects.indexOf(project), 1);
       return new Response(null, { status: 204 });
+    }
+    // Archived for the User alone, or put back in their panel (DEC-UX-354, DEC-UX-355).
+    if (project && rest === '/archive' && (method === 'PUT' || method === 'DELETE')) {
+      project.archivedAt = method === 'PUT' ? (project.archivedAt ?? '2026-11-20T10:00:00Z') : null;
+      return json({ archivedAt: project.archivedAt });
     }
     const [, inQueries, queryId] = /^\/(queries)\/([^/]+)$/.exec(rest ?? '') ?? [];
     if (project && inQueries && method === 'PUT') {
@@ -5436,6 +5441,59 @@ describe('Query', () => {
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/projects/p1/queries/q1', body: undefined }));
   });
 
+  it('keeps an archived Project out of the panel, says how many under All projects, and archives one on hover (DEC-UX-354)', async () => {
+    const partner = { id: 'p2', name: 'Partner review', description: '', members: [{ id: ME_ID, name: ME.name }], queries: [] };
+    const credit = { id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: ['q1'] };
+    const wim = { id: 'p3', name: 'Wim-Advert', description: '', members: [{ id: ME_ID, name: ME.name }], queries: [], archivedAt: '2026-11-20T10:00:00Z' };
+    const calls = serve({ queries: [{ ...QUERY }], projects: [partner, credit, wim] });
+    open('/query/new');
+    render(App, { config: CONFIG });
+    const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
+    expect(await panel.findByRole('link', { name: /Partner review/ })).toBeTruthy();
+    expect(panel.queryByRole('link', { name: /Wim-Advert/ })).toBeNull();
+    const all = panel.getByRole('link', { name: /Alle projecten/ });
+    expect(all.getAttribute('href')).toBe('/query/projects');
+    expect(all.textContent).toContain('1 gearchiveerd');
+    // Archive on hover: out of the panel at once, and counted under All projects.
+    await fireEvent.click(panel.getByRole('button', { name: 'Partner review archiveren: uit je paneel' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/projects/p2/archive' }));
+    await vi.waitFor(() => expect(panel.queryByRole('link', { name: /Partner review/ })).toBeNull());
+    expect(panel.getByRole('link', { name: /Alle projecten/ }).textContent).toContain('2 gearchiveerd');
+  });
+
+  it('lists every Project in All projects, opening on Archived, and puts one back in the panel (DEC-UX-354)', async () => {
+    const credit = { id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: ['q1'] };
+    const wim = { id: 'p3', name: 'Wim-Advert', description: 'Banners per zone', members: [{ id: ME_ID, name: ME.name }], queries: [], archivedAt: '2026-11-20T10:00:00Z' };
+    const calls = serve({ queries: [{ ...QUERY }], projects: [credit, wim] });
+    open('/query/projects');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByRole('heading', { level: 1, name: 'Alle projecten' })).toBeTruthy();
+    // It opens on Archived: only Wim-Advert, with Back in your panel.
+    const row = await main.findByRole('link', { name: /Wim-Advert/ });
+    expect(main.queryByRole('link', { name: /Credit leads Q4/ })).toBeNull();
+    expect(row.textContent).toContain('Door jou gearchiveerd op');
+    await fireEvent.click(within(row).getByRole('button', { name: /Terug in je paneel/ }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/projects/p3/archive' }));
+    // Back in the panel, and none archived any more.
+    const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
+    expect(await panel.findByRole('link', { name: /Wim-Advert/ })).toBeTruthy();
+    await fireEvent.click(main.getByRole('radio', { name: /^Alle 2/ }));
+    expect(main.getByRole('link', { name: /Credit leads Q4/ })).toBeTruthy();
+  });
+
+  it('shows an archived Project in the panel while it is open, and leaves it archived (DEC-UX-356)', async () => {
+    const wim = { id: 'p3', name: 'Wim-Advert', description: '', members: [{ id: ME_ID, name: ME.name }], queries: ['q1'], archivedAt: '2026-11-20T10:00:00Z' };
+    const calls = serve({ queries: [{ ...QUERY }], projects: [wim] });
+    open('/query/projects/p3');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByText(/^Je archiveerde het op/)).toBeTruthy();
+    const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
+    expect((await panel.findByRole('link', { name: /Wim-Advert/ })).textContent).toContain('gearchiveerd');
+    expect(calls.some((call) => call.path === '/projects/p3/archive')).toBe(false);
+  });
+
   it('puts the active Project first in the panel, standing out, with no Close project (DEC-UX-317)', async () => {
     const partner = { id: 'p2', name: 'Partner review', description: '', members: [{ id: ME_ID, name: ME.name }], queries: [] };
     const credit = { id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: ['q1'] };
@@ -6722,6 +6780,8 @@ interface FakeProject {
   description: string;
   members: { id: string; name: string }[];
   queries: string[];
+  /** When the User archived it, out of their panel (DEC-UX-354). */
+  archivedAt?: string | null;
 }
 
 /** The page of a Project, as query answers it (TR-SR-33). */
@@ -6731,6 +6791,7 @@ function projectView(project: FakeProject, queries: Record<string, unknown>[]) {
     name: project.name,
     description: project.description,
     madeBy: project.members[0],
+    archivedAt: project.archivedAt ?? null,
     createdAt: '2026-11-19T09:00:00Z',
     updatedAt: '2026-11-19T09:00:00Z',
     members: project.members.map((member) => ({ ...member, addedBy: null, addedAt: '2026-11-19T09:00:00Z', queriesMade: 0 })),

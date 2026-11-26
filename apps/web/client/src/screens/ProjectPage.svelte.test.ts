@@ -54,6 +54,8 @@ function fakes(pages: (Page | Error)[] = [credit()]) {
     remove: vi.fn(async () => {}),
     addMember: vi.fn(async () => true),
     removeMember: vi.fn(async () => ({ left: 2, deleted: false })),
+    archive: vi.fn(async () => {}),
+    unarchive: vi.fn(async () => {}),
     addQuery: vi.fn(async () => {}),
     removeQuery: vi.fn(async () => {}),
     order: vi.fn(async (_id: string, ids: readonly string[]) => [...ids]),
@@ -140,7 +142,10 @@ describe('the page of a Project (FR-SR-63, DEC-UX-285)', () => {
     const { projects, go, onchanged } = show();
     await fireEvent.click(await screen.findByRole('button', { name: 'Take Karel Leys out of Credit leads Q4: the queries they made stay in it' }));
     expect(projects.removeMember).toHaveBeenCalledWith('p-1', 'u-karel');
-    await fireEvent.click(screen.getByRole('button', { name: 'Leave Credit leads Q4' }));
+    // Leave next to one's name opens the Danger zone, in a sheet (DEC-UX-357).
+    await fireEvent.click(screen.getByRole('button', { name: 'Leave' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Danger zone' });
+    await fireEvent.click(within(sheet).getByRole('button', { name: 'Leave Credit leads Q4' }));
     await waitFor(() => expect(projects.removeMember).toHaveBeenCalledWith('p-1', 'u-max'));
     await waitFor(() => expect(go).toHaveBeenCalledWith('/query'));
     expect(onchanged).toHaveBeenCalled();
@@ -149,14 +154,42 @@ describe('the page of a Project (FR-SR-63, DEC-UX-285)', () => {
   it('deletes it for everyone with a reason, and then says so (OP-UX-100)', async () => {
     const deleted: Page = { id: 'p-1', name: 'Credit leads Q4', deleted: { at: '2026-11-19T09:30:00Z', by: 'Maxime Passenier', reason: 'The quarter is closed.' } };
     const { projects } = show({ pages: [credit(), deleted] });
-    await fireEvent.click(await screen.findByRole('button', { name: 'Delete the project' }));
-    const sheet = await screen.findByRole('dialog', { name: 'Delete this project' });
+    // No Danger zone on the page: the bin in its head opens it in a sheet (DEC-UX-357).
+    await screen.findByRole('heading', { level: 1, name: /Credit leads Q4/ });
+    expect(screen.queryByRole('heading', { name: 'Danger zone' })).toBeNull();
+    await fireEvent.click(screen.getByRole('button', { name: 'Leave or delete Credit leads Q4' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Danger zone' });
     expect(sheet.textContent).toContain('Karel Leys, Lotte Dewulf are told, with your reason.');
     await fireEvent.input(within(sheet).getByRole('textbox'), { target: { value: 'The quarter is closed.' } });
     await fireEvent.click(within(sheet).getByRole('button', { name: 'Delete for good' }));
     expect(projects.remove).toHaveBeenCalledWith('p-1', 'The quarter is closed.');
     expect(await screen.findByText('This project was deleted.')).toBeTruthy();
     expect(screen.getByText(/The quarter is closed\./)).toBeTruthy();
+  });
+
+  it('archives it out of the panel of the User with the box in its head, and says so once archived, with Back in your panel (DEC-UX-354, DEC-UX-356)', async () => {
+    const archived: Page = { ...credit(), archivedAt: '2026-11-20T10:00:00Z' };
+    const { projects, onchanged } = show({ pages: [credit(), archived, credit()] });
+    await fireEvent.click(await screen.findByRole('button', { name: 'Archive Credit leads Q4' }));
+    expect(projects.archive).toHaveBeenCalledWith('p-1');
+    // Archived, its page says so on top, and the box becomes Back in your panel.
+    expect(await screen.findByText(/^You archived it on 20 Nov/)).toBeTruthy();
+    expect(onchanged).toHaveBeenCalled();
+    const back = screen.getAllByRole('button', { name: 'Back in your panel' });
+    expect(back).toHaveLength(2);
+    await fireEvent.click(back[0] as HTMLElement);
+    expect(projects.unarchive).toHaveBeenCalledWith('p-1');
+    await waitFor(() => expect(screen.queryByText(/^You archived it on/)).toBeNull());
+  });
+
+  it('points to Archive in the sheet of its Danger zone, for who only wants it out of the way (DEC-UX-357)', async () => {
+    const { projects } = show();
+    await fireEvent.click(await screen.findByRole('button', { name: 'Leave or delete Credit leads Q4' }));
+    const sheet = within(await screen.findByRole('dialog', { name: 'Danger zone' }));
+    expect(sheet.getByText(/Only want it out of your panel\?/)).toBeTruthy();
+    await fireEvent.click(sheet.getByRole('button', { name: 'Archive it' }));
+    expect(projects.archive).toHaveBeenCalledWith('p-1');
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Danger zone' })).toBeNull());
   });
 
   it('lets who may not make queries read it, without changing its queries (OP-UX-98)', async () => {
@@ -166,8 +199,9 @@ describe('the page of a Project (FR-SR-63, DEC-UX-285)', () => {
     expect(screen.queryByRole('button', { name: /^Remove / })).toBeNull();
     expect(screen.queryByRole('button', { name: 'New query' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Move it: drag, or Alt with the up and down arrows' })).toBeNull();
-    // Renaming, sharing and leaving stay theirs.
-    expect(screen.getByRole('button', { name: 'Leave Credit leads Q4' })).toBeTruthy();
+    // Renaming, sharing, archiving and leaving stay theirs.
+    expect(screen.getByRole('button', { name: 'Archive Credit leads Q4' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Leave or delete Credit leads Q4' })).toBeTruthy();
   });
 
   it('says how to add a query to a Project just made', async () => {

@@ -15,18 +15,23 @@
   - who is in it, with who added them: a colleague whose Permission group does not let them make or run queries is
     in it all the same, marked "cannot run queries" (DEC-UX-286, OP-UX-98); a query that reads a Resource someone may
     not see shows locked to them, its name and what they may not see, never its SQL or rows (OP-UX-97);
-  - the Danger zone: Leave it, and Delete it, which anyone in it may do; its queries stay, each with whoever made it,
-    and the others are told (OP-UX-100).
+  - in its head, after Share and New query, two quiet icon buttons (OP-UX-128): Archive, which takes it out of your
+    panel and nobody else's (OP-UX-129, OP-UX-130), and the bin, which opens the Danger zone in a sheet: Leave it, and
+    Delete it, which anyone in it may do; its queries stay, each with whoever made it, and the others are told (OP-UX-100).
+    The Danger zone is no longer a part of the page.
+  An archived Project opened, from a link or a query of it in the history, says so on top, with "Back in your panel";
+  it is active while it is open and in the panel only then (OP-UX-131). All projects lists them all (query-projects.html).
   Share opens a sheet: a search over the colleagues of Immoscoop, each with their Permission group, marked when they
   cannot run queries, with what that means; everyone in it, with × to take them out. Whoever is added gets a Message
   (OP-UX-101). Everyone in a Project has every right on it and on its queries (DEC-UX-286); a query runs with the
   rights of whoever runs it.
-  The switches at the bottom: the Project as it is, just made and deleted (?proj=new, ?proj=deleted); seen by you or
-  by Lotte Dewulf, who cannot run queries (?seen=lotte); ?share=open opens the share
-  sheet, ?delete=open the delete sheet. The quick window holds every command of the page (DEC-UX-288).
-  Requirements: FR-SR-63, FR-SR-65, FR-SR-66, FR-SR-68, FR-SR-69, FR-SR-72
+  The switches at the bottom: the Project as it is, just made, archived and deleted (?proj=new, ?proj=archived,
+  ?proj=deleted); seen by you or by Lotte Dewulf, who cannot run queries (?seen=lotte); ?share=open opens the share
+  sheet, ?danger=open the sheet of the Danger zone. The quick window holds every command of the page (DEC-UX-288).
+  Requirements: FR-SR-63, FR-SR-65, FR-SR-66, FR-SR-68, FR-SR-69, FR-SR-72, FR-SR-74
   Decisions: DEC-UX-282, DEC-UX-283, DEC-UX-285, DEC-UX-286, DEC-UX-288, DEC-UX-290, DEC-UX-291, DEC-UX-317, DEC-UX-319.
-  Related screens: query.html (the row on top, the panel, Add to a project).
+  Open points: OP-UX-128 to OP-UX-131 (the Danger zone in a sheet, and archiving a Project).
+  Related screens: query.html (the row on top, the panel, Add to a project); query-projects.html (All projects).
   Rules: ../principles.md#projects  ·  Placeholder content only.
 -->
 <html lang="en" data-role="colleague">
@@ -91,7 +96,7 @@
    <div class="panel-label with-add"><span>Projects</span><button class="icon-btn" type="button" data-row-pop="newproj" aria-label="New project" title="New project"><i class="ph ph-plus"></i></button></div>
    <div class="proj-entry open" data-proj="credit">
     <a class="list-item card proj-item current" aria-current="page" href="query-project.html" data-name="credit leads q4 leads per source name partner share per week weekly lead volume lead sources listings saved searches"><i class="ph-fill ph-folders kind-icon" role="img" aria-label="Project"></i><span><span class="item-title">Credit leads Q4</span><span class="meta">14 queries · with 3 colleagues</span></span><i class="ph-fill ph-flag flag-mark" role="img" aria-label="You work in it" title="You work in it: its queries are in the row on top"></i></a>
-    <button class="icon-btn q-unfold" aria-expanded="true" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
+    <button class="icon-btn proj-archive" type="button" aria-label="Archive it: out of your panel" title="Archive it: out of your panel, not out of anyone else\'s; All projects finds it again"><i class="ph ph-archive"></i></button><button class="icon-btn q-unfold" aria-expanded="true" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
     <div class="proj-queries" aria-label="Its queries">
      <a href="query.html"><span class="kbd">1</span><span class="clip">Leads per source name</span></a>
      <a href="query.html"><span class="kbd">2</span><span class="clip">Partner share per week</span><i class="ph ph-circle-notch q-flag-spin" role="img" aria-label="Running"></i></a>
@@ -101,25 +106,27 @@
    </div>
    <div class="proj-entry" data-proj="partner">
     <a class="list-item card proj-item" href="query-project.html" data-name="partner review partner contracts"><i class="ph-fill ph-folders kind-icon" role="img" aria-label="Project"></i><span><span class="item-title">Partner review</span><span class="meta">4 queries · only you</span></span></a>
-    <button class="icon-btn q-unfold" aria-expanded="false" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
+    <button class="icon-btn proj-archive" type="button" aria-label="Archive it: out of your panel" title="Archive it: out of your panel, not out of anyone else\'s; All projects finds it again"><i class="ph ph-archive"></i></button><button class="icon-btn q-unfold" aria-expanded="false" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
     <div class="proj-queries" aria-label="Its queries"></div>
    </div>
    <div class="proj-entry" data-proj="listings">
     <a class="list-item card proj-item" href="query-project.html" data-name="listings audit listings price"><i class="ph-fill ph-folders kind-icon" role="img" aria-label="Project"></i><span><span class="item-title">Listings audit</span><span class="meta">6 queries · with 4 colleagues</span></span></a>
-    <button class="icon-btn q-unfold" aria-expanded="false" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
+    <button class="icon-btn proj-archive" type="button" aria-label="Archive it: out of your panel" title="Archive it: out of your panel, not out of anyone else\'s; All projects finds it again"><i class="ph ph-archive"></i></button><button class="icon-btn q-unfold" aria-expanded="false" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
     <div class="proj-queries" aria-label="Its queries"></div>
    </div>
    <div class="proj-entry more" data-proj="broker" hidden>
     <a class="list-item card proj-item" href="query-project.html" data-name="broker follow-up response time broker contacts"><i class="ph-fill ph-folders kind-icon" role="img" aria-label="Project"></i><span><span class="item-title">Broker follow-up</span><span class="meta">3 queries · with Lotte Dewulf</span></span></a>
-    <button class="icon-btn q-unfold" aria-expanded="false" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
+    <button class="icon-btn proj-archive" type="button" aria-label="Archive it: out of your panel" title="Archive it: out of your panel, not out of anyone else\'s; All projects finds it again"><i class="ph ph-archive"></i></button><button class="icon-btn q-unfold" aria-expanded="false" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
     <div class="proj-queries" aria-label="Its queries"></div>
    </div>
    <div class="proj-entry more" data-proj="search" hidden>
     <a class="list-item card proj-item" href="query-project.html" data-name="search behaviour saved searches"><i class="ph-fill ph-folders kind-icon" role="img" aria-label="Project"></i><span><span class="item-title">Search behaviour</span><span class="meta">2 queries · only you</span></span></a>
-    <button class="icon-btn q-unfold" aria-expanded="false" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
+    <button class="icon-btn proj-archive" type="button" aria-label="Archive it: out of your panel" title="Archive it: out of your panel, not out of anyone else\'s; All projects finds it again"><i class="ph ph-archive"></i></button><button class="icon-btn q-unfold" aria-expanded="false" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
     <div class="proj-queries" aria-label="Its queries"></div>
    </div>
    <button class="text-link proj-more" type="button"><span>Show all 5</span></button>
+   <!-- The Projects you archived are not in the panel; this quiet line leads to all of them (OP-UX-129) -->
+   <a class="proj-all" href="query-projects.html"><i class="ph ph-archive" aria-hidden="true"></i><span>All projects</span><span class="meta">2 archived</span></a>
   </div>
   <div class="panel-label" data-for="owner colleague">History</div>
   <div data-pane-group="scope" data-pane="yours">
@@ -200,7 +207,7 @@
 </nav>
 <div class="breadcrumb crumbs"><a href="query.html">Query</a> / <span>Credit leads Q4</span></div>
 
-<div data-pane-group="proj" data-pane="shared new">
+<div data-pane-group="proj" data-pane="shared new archived">
 <div class="coll-head">
  <span class="item-icon large"><i class="ph-fill ph-folders"></i></span>
  <div style="flex:1;min-width:0">
@@ -219,19 +226,25 @@
   <button class="btn-quiet outline" type="button" data-sheet-open="share-sheet" style="display:inline-flex;align-items:center;gap:8px" title="Who is in it, and add a colleague"><span class="proj-people" aria-hidden="true"><span class="mini-avatar">MP</span><span class="mini-avatar">KL</span><span class="mini-avatar">AC</span><span class="mini-avatar">LD</span></span>Share</button>
   <a class="btn-quiet outline" href="query.html?empty=1" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none" title="An empty query, in Credit leads Q4 from the start: you add its Resources in it" data-pane-group="seen" data-pane="me"><i class="ph ph-plus"></i>New query</a>
   <!-- No button to work in it: it is active while it is open (DEC-UX-317). -->
+  <!-- Two quiet icon buttons (OP-UX-128): Archive, only for your panel (OP-UX-129, OP-UX-130); the bin opens the Danger zone in a sheet -->
+  <button class="btn-quiet outline icon-only" type="button" data-go="proj:archived" data-pane-group="proj" data-pane="shared new" aria-label="Archive Credit leads Q4" title="Archive it: out of your panel, not out of anyone else's. All projects finds it again"><i class="ph ph-archive"></i></button>
+  <button class="btn-quiet outline icon-only" type="button" data-go="proj:shared" data-pane-group="proj" data-pane="archived" hidden aria-label="Back in your panel" title="Back in your panel"><i class="ph ph-arrow-u-up-left"></i></button>
+  <button class="btn-quiet outline icon-only" type="button" data-sheet-open="danger-sheet" aria-label="Leave or delete Credit leads Q4" title="Leave it, or delete it"><i class="ph ph-trash"></i></button>
  </div>
 </div>
+<!-- Archived by you: out of your panel, not out of anyone else's; active while it is open (OP-UX-129, OP-UX-131) -->
+<div class="notice" data-pane-group="proj" data-pane="archived" hidden><i class="ph-fill ph-archive"></i><p><b>You archived it on 20 Nov.</b> It is not in your panel; Karel Leys, An Claes and Lotte Dewulf still have it in theirs. Its queries work as before, and it is active while it is open.</p><button class="btn-quiet outline" type="button" data-go="proj:shared" style="display:inline-flex;align-items:center;gap:6px"><i class="ph ph-arrow-u-up-left"></i>Back in your panel</button></div>
 <div class="status-row">
- <span class="status"><i class="ph ph-table kind-icon"></i><span data-pane-group="proj" data-pane="shared">14 queries</span><span data-pane-group="proj" data-pane="new" hidden>No queries yet</span></span>
- <span class="status"><i class="ph ph-users"></i><span data-pane-group="proj" data-pane="shared">4 people in it</span><span data-pane-group="proj" data-pane="new" hidden>Only you</span></span>
+ <span class="status"><i class="ph ph-table kind-icon"></i><span data-pane-group="proj" data-pane="shared archived">14 queries</span><span data-pane-group="proj" data-pane="new" hidden>No queries yet</span></span>
+ <span class="status"><i class="ph ph-users"></i><span data-pane-group="proj" data-pane="shared archived">4 people in it</span><span data-pane-group="proj" data-pane="new" hidden>Only you</span></span>
  <span class="status"><span>Made by <span data-pane-group="seen" data-pane="me">you</span><span data-pane-group="seen" data-pane="lotte" hidden>Maxime Passenier</span>, 12 Nov 2026</span></span>
- <span class="status" data-pane-group="proj" data-pane="shared">Last run 08:12, by Karel Leys</span>
+ <span class="status" data-pane-group="proj" data-pane="shared archived">Last run 08:12, by Karel Leys</span>
 </div>
 <!-- Seen by a colleague whose Permission group does not let them make or run queries: in it all the same, told why (DEC-UX-286, OP-UX-98) -->
 <div class="notice" data-pane-group="seen" data-pane="lotte" hidden><i class="ph-fill ph-info"></i><p><b>You can open these queries and read their SQL, but not run or change them.</b> Your Permission group, Reader, does not let you make or run queries; the Data Team changes it, in Admin. One query reads a Resource you may not see: it shows locked.</p></div>
 
-<div class="section-head"><h2>Its queries</h2><span class="meta" data-pane-group="proj" data-pane="shared">In the order of the row on top. Drag a row to change its place and its key, for everyone in it</span></div>
-<div class="table-card card files proj-table" data-pane-group="proj" data-pane="shared"><table>
+<div class="section-head"><h2>Its queries</h2><span class="meta" data-pane-group="proj" data-pane="shared archived">In the order of the row on top. Drag a row to change its place and its key, for everyone in it</span></div>
+<div class="table-card card files proj-table" data-pane-group="proj" data-pane="shared archived"><table>
  <thead><tr><th aria-label="Place"></th><th>Key</th><th>Query</th><th class="hide-narrow">Reads</th><th class="hide-narrow">Made by</th><th>Last run</th><th aria-label="Remove from project"></th></tr></thead>
  <tbody>
   <tr draggable="true"><td class="proj-drag" tabindex="0" role="button" aria-label="Move it: drag, or Alt with the up and down arrows" title="Drag to change its place and its key, or Alt with ↑ and ↓"><i class="ph ph-dots-six-vertical"></i></td><td class="proj-key"><span class="kbd">⌘1</span></td><td><span class="q-cell"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><a href="query.html">Leads per source name</a><span class="meta">Which sources bring our leads, week by week?</span></span></span></td><td class="hide-narrow">Weekly lead volume +1</td><td class="hide-narrow">You</td><td><span class="marks"><span>08:12 · Karel Leys</span></span></td><td><button class="btn-quiet proj-remove row-x" type="button" aria-label="Remove Leads per source name from Credit leads Q4" title="It stays with you, who made it, in the history"><i class="ph ph-minus-circle"></i><span>Remove from project</span></button></td></tr>
@@ -256,31 +269,17 @@
 <div class="card proj-empty" data-pane-group="proj" data-pane="new" hidden><i class="ph ph-folders"></i>Nothing in it yet.<br>Open a query and add it with its Project button, or start an empty one here.<br><a class="btn-quiet outline" href="query.html?empty=1" style="display:inline-flex;align-items:center;gap:6px;margin-top:10px;text-decoration:none"><i class="ph ph-plus"></i>New query</a></div>
 
 <div class="section-head"><h2>In it</h2><button class="btn-quiet outline" type="button" data-sheet-open="share-sheet" style="display:inline-flex;align-items:center;gap:6px"><i class="ph ph-user-plus"></i>Share</button></div>
-<div class="card" style="padding:6px;border-radius:var(--radius-lg)" data-pane-group="proj" data-pane="shared">
-<div class="me-row"><span class="mini-avatar" aria-hidden="true" style="width:30px;height:30px;font-size:10px;display:inline-flex;align-items:center;justify-content:center">MP</span><span style="flex:1;min-width:0"><span class="item-title">Maxime Passenier<span data-pane-group="seen" data-pane="me"> (you)</span></span><span class="meta" style="display:block">made it, 12 Nov 2026 · made 6 of its queries</span></span><button class="text-link" type="button" data-pane-group="seen" data-pane="me" onclick="document.getElementById('leave').scrollIntoView({block:'center',behavior:'smooth'})"><span>Leave</span></button><button class="icon-btn" type="button" data-pane-group="seen" data-pane="lotte" hidden aria-label="Take Maxime Passenier out of Credit leads Q4"><i class="ph ph-x"></i></button></div>
+<div class="card" style="padding:6px;border-radius:var(--radius-lg)" data-pane-group="proj" data-pane="shared archived">
+<div class="me-row"><span class="mini-avatar" aria-hidden="true" style="width:30px;height:30px;font-size:10px;display:inline-flex;align-items:center;justify-content:center">MP</span><span style="flex:1;min-width:0"><span class="item-title">Maxime Passenier<span data-pane-group="seen" data-pane="me"> (you)</span></span><span class="meta" style="display:block">made it, 12 Nov 2026 · made 6 of its queries</span></span><button class="text-link" type="button" data-pane-group="seen" data-pane="me" data-sheet-open="danger-sheet"><span>Leave</span></button><button class="icon-btn" type="button" data-pane-group="seen" data-pane="lotte" hidden aria-label="Take Maxime Passenier out of Credit leads Q4"><i class="ph ph-x"></i></button></div>
 <div class="me-row"><span class="mini-avatar" aria-hidden="true" style="width:30px;height:30px;font-size:10px;display:inline-flex;align-items:center;justify-content:center">KL</span><span style="flex:1;min-width:0"><span class="item-title">Karel Leys</span><span class="meta" style="display:block">since 12 Nov, added by you · made 4 of its queries</span></span><button class="icon-btn" type="button" aria-label="Take Karel Leys out of Credit leads Q4" title="Take Karel Leys out of it: the queries they made stay in it"><i class="ph ph-x"></i></button></div>
 <div class="me-row"><span class="mini-avatar" aria-hidden="true" style="width:30px;height:30px;font-size:10px;display:inline-flex;align-items:center;justify-content:center">AC</span><span style="flex:1;min-width:0"><span class="item-title">An Claes</span><span class="meta" style="display:block">since 13 Nov, added by Karel Leys · made 4 of its queries</span></span><button class="icon-btn" type="button" aria-label="Take An Claes out of Credit leads Q4" title="Take An Claes out of it: the queries they made stay in it"><i class="ph ph-x"></i></button></div>
-<div class="me-row"><span class="mini-avatar" aria-hidden="true" style="width:30px;height:30px;font-size:10px;display:inline-flex;align-items:center;justify-content:center">LD</span><span style="flex:1;min-width:0"><span class="item-title">Lotte Dewulf<span data-pane-group="seen" data-pane="lotte" hidden> (you)</span></span> <span class="pill warn"><i class="ph-fill ph-warning"></i>cannot run queries</span><span class="meta" style="display:block">since today, added by An Claes</span><span class="meta proj-member-note warn">Her Permission group, Reader, does not let her make or run queries: she opens the queries and reads their SQL, but does not run or change them. She does not see Response time per broker, which reads a Resource of Brokers, a private Collection.</span></span><button class="icon-btn" type="button" data-pane-group="seen" data-pane="me" aria-label="Take Lotte Dewulf out of Credit leads Q4" title="Take Lotte Dewulf out of it: the queries she made stay in it"><i class="ph ph-x"></i></button><button class="text-link" type="button" data-pane-group="seen" data-pane="lotte" hidden onclick="document.getElementById('leave').scrollIntoView({block:'center',behavior:'smooth'})"><span>Leave</span></button></div>
+<div class="me-row"><span class="mini-avatar" aria-hidden="true" style="width:30px;height:30px;font-size:10px;display:inline-flex;align-items:center;justify-content:center">LD</span><span style="flex:1;min-width:0"><span class="item-title">Lotte Dewulf<span data-pane-group="seen" data-pane="lotte" hidden> (you)</span></span> <span class="pill warn"><i class="ph-fill ph-warning"></i>cannot run queries</span><span class="meta" style="display:block">since today, added by An Claes</span><span class="meta proj-member-note warn">Her Permission group, Reader, does not let her make or run queries: she opens the queries and reads their SQL, but does not run or change them. She does not see Response time per broker, which reads a Resource of Brokers, a private Collection.</span></span><button class="icon-btn" type="button" data-pane-group="seen" data-pane="me" aria-label="Take Lotte Dewulf out of Credit leads Q4" title="Take Lotte Dewulf out of it: the queries she made stay in it"><i class="ph ph-x"></i></button><button class="text-link" type="button" data-pane-group="seen" data-pane="lotte" hidden data-sheet-open="danger-sheet"><span>Leave</span></button></div>
 </div>
 <div class="card" style="padding:6px;border-radius:var(--radius-lg)" data-pane-group="proj" data-pane="new" hidden>
-<div class="me-row"><span class="mini-avatar" aria-hidden="true" style="width:30px;height:30px;font-size:10px;display:inline-flex;align-items:center;justify-content:center">MP</span><span style="flex:1;min-width:0"><span class="item-title">Maxime Passenier<span data-pane-group="seen" data-pane="me"> (you)</span></span><span class="meta" style="display:block">made it, just now</span></span><button class="text-link" type="button" data-pane-group="seen" data-pane="me" onclick="document.getElementById('leave').scrollIntoView({block:'center',behavior:'smooth'})"><span>Leave</span></button><button class="icon-btn" type="button" data-pane-group="seen" data-pane="lotte" hidden aria-label="Take Maxime Passenier out of Credit leads Q4"><i class="ph ph-x"></i></button></div>
+<div class="me-row"><span class="mini-avatar" aria-hidden="true" style="width:30px;height:30px;font-size:10px;display:inline-flex;align-items:center;justify-content:center">MP</span><span style="flex:1;min-width:0"><span class="item-title">Maxime Passenier<span data-pane-group="seen" data-pane="me"> (you)</span></span><span class="meta" style="display:block">made it, just now</span></span><button class="text-link" type="button" data-pane-group="seen" data-pane="me" data-sheet-open="danger-sheet"><span>Leave</span></button><button class="icon-btn" type="button" data-pane-group="seen" data-pane="lotte" hidden aria-label="Take Maxime Passenier out of Credit leads Q4"><i class="ph ph-x"></i></button></div>
  <p class="meta" style="display:block;padding:4px 6px 6px;line-height:1.5">Only you see it. Share it to work on it together: everyone in it may open, change and run its queries.</p>
 </div>
 
-<div class="section-head"><h2>Danger zone</h2></div>
-<section class="danger proj-danger" id="leave">
- <div class="danger-head"><i class="ph-fill ph-sign-out" aria-hidden="true"></i><div><h3>Leave it</h3><p>When you no longer work on it. The others keep it, with the queries you made in it.</p></div></div>
- <div class="danger-foot"><span class="meta">Someone in it can add you again.</span><button class="btn-quiet outline" type="button">Leave Credit leads Q4</button></div>
-</section>
-<section class="danger proj-danger">
- <div class="danger-head"><i class="ph-fill ph-trash" aria-hidden="true"></i><div><h3>Delete it</h3><p>When its work is done. Anyone in it may delete it, for everyone. It cannot be undone.</p></div></div>
- <div class="danger-what">
-  <p class="line"><i class="ph-fill ph-folders" aria-hidden="true"></i><span><b>It is gone for the 4 people in it:</b> from their panel and from the row on top.</span></p>
-  <p class="line"><i class="ph-fill ph-table" aria-hidden="true"></i><span><b>Its 14 queries stay, each with whoever made it:</b> in their history, with every run. Who did not make a query no longer sees it.</span></p>
-  <p class="line"><i class="ph-fill ph-chat-circle-text" aria-hidden="true"></i><span><b>The others are told:</b> Karel Leys, An Claes and Lotte Dewulf get a Message that you deleted it, with your reason.</span></p>
- </div>
- <div class="danger-foot"><span class="meta">Data Hub keeps who deleted it, when and why.</span><button class="btn-primary danger" type="button" data-sheet-open="delete-sheet" style="display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-trash"></i>Delete the project</button></div>
-</section>
 </div>
 
 <!-- Deleted: its address says so, by whom, when and why; the queries stay with whoever made them (OP-UX-100) -->
@@ -312,46 +311,52 @@
    </div>
   </div>
   <div class="label" style="margin-top:16px">In it · 4</div>
-  <div class="me-row"><span class="mini-avatar" aria-hidden="true" style="width:30px;height:30px;font-size:10px;display:inline-flex;align-items:center;justify-content:center">MP</span><span style="flex:1;min-width:0"><span class="item-title">Maxime Passenier<span data-pane-group="seen" data-pane="me"> (you)</span></span><span class="meta" style="display:block">made it, 12 Nov 2026</span></span><button class="text-link" type="button" data-sheet-close onclick="document.getElementById('leave').scrollIntoView({block:'center',behavior:'smooth'})"><span>Leave</span></button></div>
+  <div class="me-row"><span class="mini-avatar" aria-hidden="true" style="width:30px;height:30px;font-size:10px;display:inline-flex;align-items:center;justify-content:center">MP</span><span style="flex:1;min-width:0"><span class="item-title">Maxime Passenier<span data-pane-group="seen" data-pane="me"> (you)</span></span><span class="meta" style="display:block">made it, 12 Nov 2026</span></span><button class="text-link" type="button" data-sheet-close data-sheet-open="danger-sheet"><span>Leave</span></button></div>
   <div class="me-row"><span class="mini-avatar" aria-hidden="true" style="width:30px;height:30px;font-size:10px;display:inline-flex;align-items:center;justify-content:center">KL</span><span style="flex:1;min-width:0"><span class="item-title">Karel Leys</span><span class="meta" style="display:block">since 12 Nov, added by you</span></span><button class="icon-btn" type="button" aria-label="Take Karel Leys out of Credit leads Q4" title="Take Karel Leys out of it: the queries they made stay in it"><i class="ph ph-x"></i></button></div>
   <div class="me-row"><span class="mini-avatar" aria-hidden="true" style="width:30px;height:30px;font-size:10px;display:inline-flex;align-items:center;justify-content:center">AC</span><span style="flex:1;min-width:0"><span class="item-title">An Claes</span><span class="meta" style="display:block">since 13 Nov, added by Karel Leys</span></span><button class="icon-btn" type="button" aria-label="Take An Claes out of Credit leads Q4" title="Take An Claes out of it: the queries they made stay in it"><i class="ph ph-x"></i></button></div>
-  <div class="me-row"><span class="mini-avatar" aria-hidden="true" style="width:30px;height:30px;font-size:10px;display:inline-flex;align-items:center;justify-content:center">LD</span><span style="flex:1;min-width:0"><span class="item-title">Lotte Dewulf<span data-pane-group="seen" data-pane="lotte" hidden> (you)</span></span> <span class="pill warn"><i class="ph-fill ph-warning"></i>cannot run queries</span><span class="meta" style="display:block">since today, added by An Claes</span><span class="meta proj-member-note warn">Reader does not let her make or run queries. She does not see 1 of the 14 queries: it reads a Resource of Brokers, a private Collection.</span></span><button class="icon-btn" type="button" data-pane-group="seen" data-pane="me" aria-label="Take Lotte Dewulf out of Credit leads Q4" title="Take Lotte Dewulf out of it: the queries she made stay in it"><i class="ph ph-x"></i></button><button class="text-link" type="button" data-pane-group="seen" data-pane="lotte" hidden onclick="document.getElementById('leave').scrollIntoView({block:'center',behavior:'smooth'})"><span>Leave</span></button></div>
+  <div class="me-row"><span class="mini-avatar" aria-hidden="true" style="width:30px;height:30px;font-size:10px;display:inline-flex;align-items:center;justify-content:center">LD</span><span style="flex:1;min-width:0"><span class="item-title">Lotte Dewulf<span data-pane-group="seen" data-pane="lotte" hidden> (you)</span></span> <span class="pill warn"><i class="ph-fill ph-warning"></i>cannot run queries</span><span class="meta" style="display:block">since today, added by An Claes</span><span class="meta proj-member-note warn">Reader does not let her make or run queries. She does not see 1 of the 14 queries: it reads a Resource of Brokers, a private Collection.</span></span><button class="icon-btn" type="button" data-pane-group="seen" data-pane="me" aria-label="Take Lotte Dewulf out of Credit leads Q4" title="Take Lotte Dewulf out of it: the queries she made stay in it"><i class="ph ph-x"></i></button><button class="text-link" type="button" data-pane-group="seen" data-pane="lotte" hidden data-sheet-open="danger-sheet"><span>Leave</span></button></div>
  </div>
  <div class="sheet-foot"><p class="meta">Whoever you add gets a Message, with a link to it.</p><button class="btn-primary" type="button" data-sheet-close>Done</button></div>
 </section>
 </div>
 
-<!-- Delete: anyone in it may; the queries stay, each with whoever made it, and the others are told (OP-UX-100) -->
-<div class="sheet-wrap" id="delete-sheet" hidden>
+<!-- The Danger zone, in a sheet from the bin in the head (OP-UX-128): Leave it, as the others keep it; and Delete it, which
+     anyone in it may, for everyone; its queries stay, each with whoever made it, and the others are told (OP-UX-100) -->
+<div class="sheet-wrap" id="danger-sheet" hidden>
 <div class="sheet-backdrop" data-sheet-close></div>
-<section class="sheet" role="dialog" aria-modal="true" aria-labelledby="delete-title">
+<section class="sheet" role="dialog" aria-modal="true" aria-labelledby="danger-title">
  <div style="display:flex;align-items:flex-start;gap:10px">
-  <i class="ph-fill ph-trash" style="font-size:22px;color:var(--text-secondary);margin-top:2px" aria-hidden="true"></i>
-  <div style="flex:1;min-width:0"><div class="meta">Credit leads Q4</div><h2 id="delete-title">Delete this project</h2></div>
+  <i class="ph-fill ph-warning-diamond" style="font-size:22px;color:var(--text-secondary);margin-top:2px" aria-hidden="true"></i>
+  <div style="flex:1;min-width:0"><div class="meta">Credit leads Q4</div><h2 id="danger-title">Danger zone</h2></div>
   <button class="icon-btn" data-sheet-close aria-label="Close"><i class="ph ph-x"></i></button>
  </div>
  <div class="sheet-list">
-  <p class="meta" style="display:block;line-height:1.5;margin-top:4px">For everyone in it. Deleting is for good: it cannot be undone.</p>
-  <div class="danger-what">
-   <p class="line"><i class="ph-fill ph-folders" aria-hidden="true"></i><span><b>It is gone for the 4 people in it,</b> from their panel and from the row on top.</span></p>
-   <p class="line"><i class="ph-fill ph-table" aria-hidden="true"></i><span><b>Its 14 queries stay, each with whoever made it:</b> your 6 stay yours. Who did not make a query no longer sees it.</span></p>
-   <p class="line"><i class="ph-fill ph-chat-circle-text" aria-hidden="true"></i><span><b>Karel Leys, An Claes and Lotte Dewulf are told,</b> with your reason.</span></p>
-  </div>
-  <form class="danger-form" onsubmit="return false">
-   <label class="field"><span class="field-label">Why you delete it · optional</span><textarea rows="3" placeholder="The review is done; the quarter is closed."></textarea></label>
-  </form>
+  <p class="meta" style="display:block;line-height:1.5;margin:4px 6px 10px">Only want it out of your panel? <button class="text-link" type="button" data-go="proj:archived" data-sheet-close><span>Archive it</span></button>: nothing changes for the others, and All projects finds it again.</p>
+  <section class="danger proj-danger" id="leave">
+   <div class="danger-head"><i class="ph-fill ph-sign-out" aria-hidden="true"></i><div><h3>Leave it</h3><p>When you no longer work on it. The others keep it, with the queries you made in it.</p></div></div>
+   <div class="danger-foot"><span class="meta">Someone in it can add you again.</span><button class="btn-quiet outline" type="button" data-sheet-close>Leave Credit leads Q4</button></div>
+  </section>
+  <section class="danger proj-danger">
+   <div class="danger-head"><i class="ph-fill ph-trash" aria-hidden="true"></i><div><h3>Delete it</h3><p>When its work is done. Anyone in it may delete it, for everyone. It cannot be undone.</p></div></div>
+   <div class="danger-what">
+    <p class="line"><i class="ph-fill ph-folders" aria-hidden="true"></i><span><b>It is gone for the 4 people in it,</b> from their panel and from the row on top.</span></p>
+    <p class="line"><i class="ph-fill ph-table" aria-hidden="true"></i><span><b>Its 14 queries stay, each with whoever made it:</b> your 6 stay yours. Who did not make a query no longer sees it.</span></p>
+    <p class="line"><i class="ph-fill ph-chat-circle-text" aria-hidden="true"></i><span><b>Karel Leys, An Claes and Lotte Dewulf are told,</b> with your reason.</span></p>
+   </div>
+   <form class="danger-form" onsubmit="return false">
+    <label class="field"><span class="field-label">Why you delete it · optional</span><textarea rows="3" placeholder="The review is done; the quarter is closed."></textarea></label>
+   </form>
+   <div class="danger-foot"><span class="meta">Data Hub keeps who deleted it, when and why.</span><button class="btn-primary danger" type="button" data-go="proj:deleted" data-sheet-close style="display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-trash"></i>Delete for good</button></div>
+  </section>
  </div>
- <div class="sheet-foot">
-  <p class="meta">Data Hub keeps who deleted it, when and why.</p>
-  <button class="btn-quiet" data-sheet-close>Keep it</button>
-  <button class="btn-primary danger" type="button" data-go="proj:deleted" data-sheet-close style="display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-trash"></i>Delete for good</button>
- </div>
+ <div class="sheet-foot"><button class="btn-quiet" data-sheet-close>Close</button></div>
 </section>
 </div>
 
 <div class="proto-switch" data-group="proj" role="tablist" aria-label="Prototype: the Project" style="bottom:24px;top:auto;right:24px">Project
  <button class="seg on" data-target="shared" role="tab" aria-selected="true">As it is</button>
  <button class="seg" data-target="new" role="tab" aria-selected="false">Just made</button>
+ <button class="seg" data-target="archived" role="tab" aria-selected="false">Archived by you</button>
  <button class="seg" data-target="deleted" role="tab" aria-selected="false">Deleted</button>
 </div>
 <div class="proto-switch" data-group="seen" role="tablist" aria-label="Prototype: seen by" style="bottom:68px;top:auto;right:24px">Seen by
@@ -400,11 +405,16 @@
   const editing = on => { $('[data-head-view]').hidden = on; $('[data-head-edit]').hidden = !on; };
   document.querySelectorAll('[data-edit]').forEach(t => t.addEventListener('click', () => editing(true)));
   document.querySelectorAll('[data-edit-done]').forEach(b => b.addEventListener('click', () => editing(false)));
-  // The prototype: ?share=open and ?delete=open open their sheet; a button that closes a sheet and switches a state
+  // The prototype: ?share=open and ?danger=open open their sheet; a button that closes a sheet and switches a state
   const ask = new URLSearchParams(location.search);
   if (ask.get('share') === 'open') $('#share-sheet').hidden = false;
-  if (ask.get('delete') === 'open') $('#delete-sheet').hidden = false;
+  if (ask.get('danger') === 'open' || ask.get('delete') === 'open') $('#danger-sheet').hidden = false;
   if (ask.has('edit')) editing(true);
+  // Archive in the panel: the Project leaves your panel at once, and All projects counts it (OP-UX-129)
+  document.querySelectorAll('.proj-archive').forEach(b => b.addEventListener('click', () => {
+    b.closest('.proj-entry').hidden = true;
+    const n = document.querySelector('.proj-all .meta'); if (n) n.textContent = `${parseInt(n.textContent, 10) + 1} archived`;
+  }));
   // Every command of the page in the quick window (DEC-UX-240, DEC-UX-288)
   window.QUICK = {
     group: 'This project',
@@ -415,8 +425,10 @@
         { icon: 'ph ph-plus', title: 'New query in Credit leads Q4', meta: 'an empty one, in it from the start', run: () => { location.href = 'query.html?empty=1'; }, words: 'query new create start empty blank' },
         { icon: 'ph ph-pencil-simple', title: 'Rename Credit leads Q4', meta: 'its name and what it is for, in place', run: () => editing(true), words: 'rename name description edit' },
         { icon: 'ph ph-arrows-down-up', title: 'Change the order of its queries', meta: 'drag a row; the keys follow, for everyone', run: () => document.querySelector('.proj-drag')?.focus(), words: 'order sort move key' },
-        { icon: 'ph ph-sign-out', title: 'Leave Credit leads Q4', meta: 'the others keep it', run: () => document.getElementById('leave').scrollIntoView({ block: 'center', behavior: 'smooth' }), words: 'leave quit exit' },
-        { icon: 'ph ph-trash', title: 'Delete Credit leads Q4', meta: 'for everyone in it; its queries stay with whoever made them', click: '[data-sheet-open="delete-sheet"]', words: 'delete remove project' },
+        { icon: 'ph ph-archive', title: 'Archive Credit leads Q4', meta: 'out of your panel, not out of anyone else\'s', click: '[aria-label="Archive Credit leads Q4"]', words: 'archive hide inactive put away panel' },
+        { icon: 'ph ph-sign-out', title: 'Leave Credit leads Q4', meta: 'the others keep it', click: '[data-sheet-open="danger-sheet"]', words: 'leave quit exit' },
+        { icon: 'ph ph-trash', title: 'Delete Credit leads Q4', meta: 'for everyone in it; its queries stay with whoever made them', click: '[data-sheet-open="danger-sheet"]', words: 'delete remove project' },
+        { icon: 'ph ph-archive', title: 'All projects', meta: 'the archived ones too', run: () => { location.href = 'query-projects.html'; }, words: 'all projects archived overview list' },
       ];
     },
   };

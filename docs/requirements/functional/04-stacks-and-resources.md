@@ -632,6 +632,15 @@ In the head of every query, a menu button "Project" offers what fits it: in no P
 
 **Makes easy:** putting the query on screen into a piece of work, or moving it to another, from where it is. **Makes hard:** a query in two Projects at once, and moving a query someone else writes.
 
+<a id="fr-sr-74"></a>
+### FR-SR-74 · A User archives a Project out of their panel
+
+**Status:** Implemented · **Source:** Max, 2026-11-26 ([DEC-UX-354](../../design/principles.md#dec-ux-354), [DEC-UX-355](../../design/principles.md#dec-ux-355), [DEC-UX-356](../../design/principles.md#dec-ux-356)) · **Screens:** [query-projects](../../design/screens/query-projects.html), [query-project](../../design/screens/query-project.html), [query](../../design/screens/query.html)
+
+A User archives a Project they no longer work on, from the head of its page, on hover in the panel of Query or from the quick window, at once and without asking. It leaves their panel and nobody else's: the others in it keep it, are not told, and its queries work and run as before. Under the Projects in the panel, a quiet line "All projects", with how many are archived, opens a page with every Project the User is in, In your panel, Archived and All, opening on Archived when there is any, where "Back in your panel" puts one back. An archived Project can still be opened, from that page, a link or a query of it in the history: it is active while it is open, in the panel then and marked archived, its page says when the User archived it, and it stays archived. Claude sees when the User archived a Project in list_projects.
+
+**Makes easy:** a short panel of the work going on now, and finding finished work again in one place. **Makes hard:** losing a Project by archiving it, and archiving it away from colleagues who still work in it.
+
 <a id="fr-sr-35"></a>
 ### FR-SR-35 · A new Resource waits for a Collection
 

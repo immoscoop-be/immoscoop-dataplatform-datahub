@@ -31,6 +31,8 @@ export interface Member {
 export interface ProjectItem extends Pick<Project, 'id' | 'name' | 'description' | 'updatedAt'> {
   queries: number;
   members: { id: string; name: string }[];
+  /** When the User archived it, out of their panel; null while it is in it (DEC-UX-354). */
+  archivedAt: Date | null;
 }
 
 /** A query of a Project, in its order, as its page and the row on top show it (FR-SR-63). */
@@ -47,8 +49,15 @@ export interface ProjectQuery {
 }
 
 export interface Projects {
-  /** The Projects the User is in, the one changed last first. */
+  /** The Projects the User is in, the one changed last first, the ones they archived too (DEC-UX-354). */
   list(userId: string): Promise<ProjectItem[]>;
+  /**
+   * Archives a Project for this User, out of their panel and nobody else's, or puts it back (DEC-UX-354, DEC-UX-355);
+   * answers when it was archived, null once it is back. Neither changes the Project itself, nor when it changed.
+   */
+  archive(id: string, userId: string, archived: boolean): Promise<Date | null>;
+  /** When this User archived the Project; null while it is in their panel. */
+  archivedAt(id: string, userId: string): Promise<Date | null>;
   /** A Project by its ID, deleted or not. */
   get(id: string): Promise<Project | undefined>;
   members(id: string): Promise<Member[]>;
@@ -84,7 +93,7 @@ export function createProjects(db: Kysely<QueryDatabase>): Projects {
       const rows = await db
         .selectFrom('projects as p')
         .innerJoin('projectMembers as m', 'm.projectId', 'p.id')
-        .select(['p.id', 'p.name', 'p.description', 'p.updatedAt'])
+        .select(['p.id', 'p.name', 'p.description', 'p.updatedAt', 'm.archivedAt'])
         .select((eb) => eb.selectFrom('projectQueries as pq').whereRef('pq.projectId', '=', 'p.id').select(sql<string>`count(*)`.as('n')).as('queries'))
         .where('m.userId', '=', userId)
         .where('p.deletedAt', 'is', null)
@@ -108,7 +117,25 @@ export function createProjects(db: Kysely<QueryDatabase>): Projects {
         updatedAt: row.updatedAt,
         queries: Number(row.queries ?? 0),
         members: members.filter((member) => member.projectId === row.id).map((member) => ({ id: member.userId, name: member.userName })),
+        archivedAt: row.archivedAt,
       }));
+    },
+
+    async archive(id, userId, archived) {
+      const row = await db
+        .updateTable('projectMembers')
+        // Archived again keeps when it was first archived.
+        .set({ archivedAt: archived ? sql<Date>`coalesce(archived_at, now())` : null })
+        .where('projectId', '=', id)
+        .where('userId', '=', userId)
+        .returning('archivedAt')
+        .executeTakeFirst();
+      return row?.archivedAt ?? null;
+    },
+
+    async archivedAt(id, userId) {
+      const row = await db.selectFrom('projectMembers').select('archivedAt').where('projectId', '=', id).where('userId', '=', userId).executeTakeFirst();
+      return row?.archivedAt ?? null;
     },
 
     async get(id) {
