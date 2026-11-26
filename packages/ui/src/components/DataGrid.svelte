@@ -19,7 +19,9 @@
    * narrower or wider, and a double click fits it again. A value that does not fit ends in "…" and shows
    * whole on hover. Numbers to the right, `null` in grey. A click selects a cell, Ctrl+C copies it, the
    * arrows move. The menu of a column sorts this page only, fits it, or copies its name. A column with a
-   * description has a dotted line under its name and shows it on a hover (DEC-UX-230).
+   * description has a dotted line under its name and shows it on a hover (DEC-UX-230). A row starts on one line;
+   * the lower edge of its number drags it taller, and its values then wrap over its height, each scrolling
+   * within when longer; a double click there puts it back on one line (DEC-UX-352).
    */
   let {
     columns,
@@ -49,17 +51,23 @@
   }
 
   let widths = $derived(columns.map((_, index) => fitted(index)));
+  /** The rows made taller, by their number, in px: a row not in it stays on one line (DEC-UX-352). */
+  let heights: Record<number, number> = $state({});
+  /** A row is never dragged shorter than one line, nor taller than this. */
+  const ROW_MIN = 33;
+  const ROW_MAX = 640;
   let sort: { column: number; direction: 'ascending' | 'descending' } | null = $state(null);
   let selected: { row: number; column: number } | null = $state(null);
   let menu: { column: number; x: number; y: number } | null = $state(null);
   let table: HTMLTableElement | undefined = $state();
   let wrap: HTMLDivElement | undefined = $state();
 
-  // Another page or result: its own order and selection.
+  // Another page or result: its own order and selection, every row on one line again.
   $effect(() => {
     void rows;
     sort = null;
     selected = null;
+    heights = {};
   });
 
   const compare = (a: string | null, b: string | null, numeric: boolean): number => {
@@ -129,6 +137,33 @@
     event.preventDefault();
   }
 
+  /** Drags a row taller or shorter by the lower edge of its number (DEC-UX-352). */
+  function resizeRow(event: PointerEvent, number: number): void {
+    const start = event.clientY;
+    const handle = event.currentTarget as HTMLElement;
+    const height = heights[number] ?? handle.closest('tr')?.getBoundingClientRect().height ?? ROW_MIN;
+    handle.setPointerCapture(event.pointerId);
+    const move = (next: PointerEvent) => {
+      const wanted = Math.min(ROW_MAX, Math.max(ROW_MIN, height + next.clientY - start));
+      heights = { ...heights, [number]: wanted };
+    };
+    const stop = () => {
+      handle.removeEventListener('pointermove', move);
+      handle.removeEventListener('pointerup', stop);
+      // Dragged back to one line, it is one line again.
+      if ((heights[number] ?? 0) <= ROW_MIN) oneLine(number);
+    };
+    handle.addEventListener('pointermove', move);
+    handle.addEventListener('pointerup', stop);
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  function oneLine(number: number): void {
+    const { [number]: _gone, ...rest } = heights;
+    heights = rest;
+  }
+
   function openMenu(event: MouseEvent, column: number): void {
     // Placed in the grid itself: a glass card around it makes `fixed` follow the card, not the window.
     const box = (event.currentTarget as HTMLElement).getBoundingClientRect();
@@ -181,8 +216,19 @@
       </thead>
       <tbody>
         {#each shown as row, r (row.number)}
-          <tr>
-            <td class="rn">{row.number}</td>
+          {@const tall = heights[row.number]}
+          <tr class:tall={tall !== undefined} style:height={tall !== undefined ? `${tall}px` : undefined} style:--row-height={tall !== undefined ? `${tall}px` : undefined}>
+            <td class="rn"
+              >{row.number}<span
+                class="row-resize"
+                role="separator"
+                aria-orientation="horizontal"
+                aria-label={t('grid.rowResize', { number: row.number })}
+                title={t('grid.rowResize', { number: row.number })}
+                onpointerdown={(event) => resizeRow(event, row.number)}
+                ondblclick={(event) => (event.stopPropagation(), oneLine(row.number))}
+              ></span></td
+            >
             {#each row.values as value, c (c)}
               <td
                 role="gridcell"
@@ -191,7 +237,7 @@
                 class:sel={selected?.row === r && selected?.column === c}
                 aria-selected={selected?.row === r && selected?.column === c}
                 title={value !== null && value.length * CHAR + 20 > (widths[c] ?? 0) ? value : undefined}
-              >{#if value === null}<span class="null">null</span>{:else}{value}{/if}</td>
+              >{#if value === null}<span class="null">null</span>{:else if tall !== undefined}<span class="value">{value}</span>{:else}{value}{/if}</td>
             {/each}
           </tr>
         {/each}
@@ -242,6 +288,13 @@
   tbody tr:hover td.rn { background: var(--tint-active); }
   tbody td.sel { outline: 2px solid var(--text-secondary); outline-offset: -2px; background: var(--surface-solid); }
   .null { color: var(--text-muted); font-style: italic; }
+  /* A row dragged taller: its values wrap over its height, each scrolling within when longer (DEC-UX-352). */
+  .row-resize { position: absolute; left: 0; right: 0; bottom: 0; height: 7px; cursor: row-resize; z-index: 2; touch-action: none; }
+  .row-resize::after { content: ''; position: absolute; left: 6px; right: 6px; bottom: 1px; height: 2px; border-radius: var(--radius-pill); }
+  .rn:hover .row-resize::after, tr.tall .row-resize::after { background: var(--text-muted); }
+  tr.tall td { vertical-align: top; white-space: normal; text-overflow: clip; }
+  tr.tall td.rn { vertical-align: top; }
+  tr.tall .value { display: block; max-height: calc(var(--row-height) - 15px); overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
   .menu { position: absolute; z-index: 30; width: 270px; padding: 6px; border-radius: var(--radius-md); background: var(--surface-solid); outline: 1px solid var(--tint-active); box-shadow: var(--sheet-shadow); }
   .menu button { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 8px; width: 100%; padding: 7px 8px; border-radius: var(--radius-sm); font-size: var(--text-small); color: var(--text-primary); cursor: pointer; }
   .menu button:hover, .menu button:focus-visible { background: var(--tint-hover); }
