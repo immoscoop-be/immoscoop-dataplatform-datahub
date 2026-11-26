@@ -7,7 +7,7 @@ import { type BigQuery, BigQueryRefused, type Page } from './bigquery.js';
 import type { QueryResource } from './catalogue.js';
 import type { NamedResource } from './database.js';
 import type { Parameter } from './parameters.js';
-import type { Preflight, Problem, ResourceOfQuery, Thresholds } from './preflight.js';
+import { billedAtMost, type Preflight, type Problem, type ResourceOfQuery, type Thresholds } from './preflight.js';
 import type { Queries, Viewer } from './queries.js';
 
 /** What the route of the EDA-Probes shares with those of queries: who asks, the checks and the Resource (TR-ED-04). */
@@ -117,8 +117,10 @@ export async function edaRoutes(app: FastifyInstance, context: EdaContext): Prom
     if (!resource) return reply;
     const read: ResourceOfQuery[] = [{ named: named(resource), resource }];
 
-    // The ranges of the User (runs.ranges), without a Request above them: an EDA-Probe that reads more does not run.
-    const ranges: Required<Thresholds> = { ...rangesOf(permissions), above: 'refuse' };
+    // The ranges of the User (runs.ranges), without a Request above them: an EDA-Probe that reads more does not run, unless
+    // the User approves any run themselves (DEC-PL-12).
+    const own = rangesOf(permissions);
+    const ranges: Required<Thresholds> = { ...own, above: own.above === 'approve' ? 'approve' : 'refuse' };
     let checked: Preflight;
     try {
       checked = await check(body.sql, [], read, ranges);
@@ -141,8 +143,8 @@ export async function edaRoutes(app: FastifyInstance, context: EdaContext): Prom
       const run = await queries.startRun({ query, user: who, sql: body.sql, parameters: [], estimatedBytes: estimated, approved: checked.range !== 'free' });
       try {
         const finished = await bigquery.run(ownCase(body.sql, read, checked.tables), {
-          // Never more than the second range of the User (runs.ranges).
-          maximumBytesBilled: ranges.request,
+          // Never more than the second range of the User (runs.ranges), or a little above the Pre-flight when they approve any run.
+          maximumBytesBilled: billedAtMost(estimated, ranges, ranges.above === 'approve' && estimated > ranges.request),
           labels: { 'datahub-user': label(who.id), 'datahub-query': run.queryRef, 'datahub-purpose': 'eda', 'datahub-eda-probe': label(body.probe) },
           requestId: randomUUID(),
           pageSize: PROBE_ROWS,

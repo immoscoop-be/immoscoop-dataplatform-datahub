@@ -57,7 +57,9 @@ describe('the Permissions in the web app (FR-PL-05, FR-PL-14)', () => {
     expect(shownValue('collections.manage', 'reach', 'every')).toBe('Every Collection');
     expect(shownValue('messages.write', 'kinds', ['question', 'signal'])).toBe('Questions and Signals');
     expect(shownValue('messages.write', 'kinds', [])).toBe('none');
-    expect(summaryOf('runs.ranges', startingPermissions('admin')['runs.ranges'])).toBe('Runs freely up to: 100 MB · Runs once they approve, up to: 1 GB · Above that: They send a Request to the Data Team');
+    expect(summaryOf('runs.ranges', startingPermissions('businessAnalyst')['runs.ranges'])).toBe('Runs freely up to: 100 MB · Runs once they approve, up to: 1 GB · Above that: They send a Request to the Data Team');
+    // Admin runs without a limit, after a warning (DEC-PL-12).
+    expect(summaryOf('runs.ranges', startingPermissions('admin')['runs.ranges'])).toBe('Runs freely up to: 100 MB · Runs once they approve, up to: 1 GB · Above that: They approve it themselves, without a limit, after a warning');
   });
 
   it('count the Permissions changed, a several choice in any order the same', () => {

@@ -7,13 +7,14 @@ import { comparedWith, filtersOn, inOwnCase, names, recent, tablesOf, withFilter
 
 /**
  * The two thresholds, in bytes: above the first the User approves, above the second the Data Team decides
- * (DEC-SR-29); or, for a User whose Permission group says so, it cannot run at all (`runs.ranges`).
+ * (DEC-SR-29); or, for a User whose Permission group says so, it cannot run at all, or they approve it too, without a
+ * limit (`runs.ranges`, DEC-PL-12).
  */
 export interface Thresholds {
   approve: number;
   request: number;
-  /** Above the second: a Request to the Data Team, or it cannot run; a Request when not said, as for a Lens. */
-  above?: 'request' | 'refuse';
+  /** Above the second: a Request to the Data Team, it cannot run, or the User approves it; a Request when not said, as for a Lens. */
+  above?: 'request' | 'refuse' | 'approve';
 }
 
 /** Up to the first threshold a query runs; up to the second its author approves it; above, it goes to the Data Team (DEC-SR-29). */
@@ -87,7 +88,16 @@ export interface ResourceOfQuery {
   resource: QueryResource | null;
 }
 
-export const rangeOf = (bytes: number, thresholds: Thresholds): Range => (bytes > thresholds.request ? 'request' : bytes > thresholds.approve ? 'approve' : 'free');
+export const rangeOf = (bytes: number, thresholds: Thresholds): Range =>
+  // Above the second threshold the Data Team decides, unless the User approves any run themselves (DEC-PL-12).
+  bytes > thresholds.request ? (thresholds.above === 'approve' ? 'approve' : 'request') : bytes > thresholds.approve ? 'approve' : 'free';
+
+/** What one run may bill at most: the second threshold, or a little above what it reads when it may read more (DEC-PL-12). */
+export const billedAtMost = (estimated: number, thresholds: Pick<Thresholds, 'request'>, beyond: boolean): number =>
+  beyond ? Math.max(thresholds.request, Math.ceil(estimated * BEYOND_MARGIN)) : thresholds.request;
+
+/** Above an accepted Request, or for a User who approves any run (DEC-PL-12), BigQuery bills at most this much more than the Pre-flight said (DEC-SR-36). */
+export const BEYOND_MARGIN = 1.1;
 
 /** Whether its SQL itself can run: nothing keeps it from running but, for this User, its size (FR-SR-52). */
 export const sound = (checked: Preflight): boolean => checked.range !== null && checked.problems.every((problem) => problem.kind === 'tooLarge');

@@ -1424,6 +1424,10 @@
                   .filter(Boolean)
                   .join(' ')}</span
               >
+              {#if flight.thresholds.above === 'approve' && flight.bytes > flight.thresholds.request}
+                <!-- No limit for who approves any run (DEC-PL-12), but a warning above the second threshold -->
+                <span class="warning large-run" title={t('query.large', { request: bytes(flight.thresholds.request) })}><Icon name="warning-fill" /><span class="said">{t('query.large', { request: bytes(flight.thresholds.request) })}</span></span>
+              {/if}
               {#each flight.warnings.slice(0, 1) as warning, index (index)}
                 <span class="warning" title={said(warning)}><Icon name="warning-fill" /><span class="said">{said(warning)}</span>{@render fixOf(warning)}</span>
               {/each}
@@ -1477,7 +1481,13 @@
             {#snippet explain()}
               {#if current?.bytes !== null && current?.bytes !== undefined}
                 {@const words = { bytes: bytes(current.bytes), approve: bytes(current.thresholds.approve), request: bytes(current.thresholds.request) }}
-                <b>{current.range === 'request' ? t('query.explain.accepted', words) : current.range === 'approve' ? t('query.explain.approve', words) : t('query.explain.free', words)}</b>
+                {@const own = current.thresholds.above === 'approve'}
+                {#if own && current.range === 'approve' && current.bytes > current.thresholds.request}
+                  <!-- Without a limit, with a warning: above the second threshold the User approves it themselves (DEC-PL-12) -->
+                  <b>{t('query.explain.large', words)}</b>
+                {:else}
+                  <b>{current.range === 'request' ? t('query.explain.accepted', words) : current.range === 'approve' ? t(own ? 'query.explain.approve.own' : 'query.explain.approve', words) : t(own ? 'query.explain.free.own' : 'query.explain.free', words)}</b>
+                {/if}
                 {t('query.explain.atMost')}
                 {#if partitioned.length > 0}
                   {t('query.explain.less', { columns: partitioned.map((resource) => resource.partition?.field).join(', ') })}

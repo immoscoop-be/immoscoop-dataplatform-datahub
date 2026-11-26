@@ -354,7 +354,8 @@ export interface Preflight {
   problems: Problem[];
   warnings: Warning[];
   /** The ranges of the User, from their Permission group (`runs.ranges`): above `request`, a Request or no run at all. */
-  thresholds: { approve: number; request: number; above?: 'request' | 'refuse' };
+  /** Above the second: a Request, it cannot run, or the User approves it too, without a limit (DEC-PL-12). */
+  thresholds: { approve: number; request: number; above?: 'request' | 'refuse' | 'approve' };
   /** The Parameters that are not in the SQL: they are not sent. */
   unused: string[];
   /** The tables outside Data Hub a power user's query reads: Data Hub knows them, they are no Resource (FR-SR-56). */

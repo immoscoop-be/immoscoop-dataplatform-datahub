@@ -436,6 +436,8 @@ function preflightOf(sql: string, parameters: { name: string }[] = []) {
     return { ...base, runnable: false, bytes: null, range: null, partitions: null, problems: [{ kind: 'undefinedParameter', name: 'leadChannel', start: at, end: at + 12, suggestedKind: 'choice' }] };
   }
   if (sql.includes('-- every year')) return { ...base, runnable: true, bytes: 4_800_000_000, range: 'request' };
+  // For a Data Admin, who approves any run themselves (DEC-PL-12).
+  if (sql.includes('-- five years')) return { ...base, runnable: true, bytes: 4_800_000_000, range: 'approve', thresholds: { ...base.thresholds, above: 'approve' } };
   // A power user's query reads a table Data Hub knows that is no Resource (FR-SR-56).
   if (sql.includes('stg_oltp__leads')) {
     const key = 'immoscoop-dataplatform-398214.dbt_prod_staging.stg_oltp__leads';
@@ -4788,6 +4790,20 @@ describe('Query', () => {
     await fireEvent.click(run);
     // It opened formatted, as Format writes it (DEC-UX-233).
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/runs', body: { sql: formatBigQuery(`${QUERY.sql}-- all weeks\n`), parameters: [], approve: true } }));
+  });
+
+  it('lets a Data Admin approve a run above 1 GB themselves, with a warning and no Request (DEC-PL-12)', async () => {
+    const calls = serve({ queries: [{ ...QUERY, sql: `${QUERY.sql}-- five years\n` }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const run = await main.findByRole('button', { name: /Goedkeuren en uitvoeren\s*4,8 GB/ }, { timeout: 3000 });
+    expect(main.getAllByText('Leest meer dan 1 GB: kijk na of dat moet').length).toBeGreaterThan(0);
+    expect(main.getByText('Hoogstens 4,8 GB, meer dan 1 GB: je keurt hem zelf goed, zonder grens. Kijk eerst na of hij zoveel moet lezen.')).toBeTruthy();
+    expect(main.queryByRole('button', { name: /Naar het Data Team sturen/ })).toBeNull();
+    await vi.waitFor(() => expect((run as HTMLButtonElement).disabled).toBe(false));
+    await fireEvent.click(run);
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/runs', body: { sql: formatBigQuery(`${QUERY.sql}-- five years\n`), parameters: [], approve: true } }));
   });
 
   it('shows a Broken query with what it misses and since when, Run off, and a red dot in the panel (FR-SR-53, DEC-UX-160)', async () => {

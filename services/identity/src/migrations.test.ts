@@ -243,3 +243,30 @@ describe.skipIf(!url)('identity migration 0012-eda', () => {
     ]);
   });
 });
+
+describe.skipIf(!url)('identity migration 0014-admin-without-limit', () => {
+  const schema = `identity_test_${randomBytes(4).toString('hex')}`;
+  const admin = createDatabase<unknown>({ connectionString: url }, schema);
+
+  afterAll(async () => {
+    await sql`drop schema if exists ${sql.id(schema)} cascade`.execute(admin.db);
+    await admin.close();
+  });
+
+  it('lets Admin approve any run itself, and leaves every other group as it was (DEC-PL-12)', async () => {
+    await migrate({ db: admin.db, schema, migrations: before('0014'), serviceUser: 'postgres' });
+    const groups = sql.id(schema, 'permission_groups');
+    // Admin as it was before: a Request to the Data Team above its ranges.
+    await sql`update ${groups} set permissions = jsonb_set(permissions, '{runs.ranges,values,above}', '"request"'::jsonb)`.execute(admin.db);
+
+    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0014-admin-without-limit', 'Success']]);
+    const held = await sql<{ name: string; above: string }>`
+      select name, permissions #>> '{runs.ranges,values,above}' as above from ${groups} order by name`.execute(admin.db);
+    expect(held.rows).toEqual([
+      { name: 'Admin', above: 'approve' },
+      { name: 'Business analyst', above: 'request' },
+      { name: 'Lens user', above: 'request' },
+    ]);
+  });
+});

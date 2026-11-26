@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { type BigQuery, BigQueryRefused, type DryRun, type QueryParameter } from './bigquery.js';
 import type { QueryResource } from './catalogue.js';
 import type { Parameter } from './parameters.js';
-import { createBeneath, preflight, rangeOf, type ResourceOfQuery, sound } from './preflight.js';
+import { billedAtMost, createBeneath, preflight, rangeOf, type ResourceOfQuery, sound } from './preflight.js';
 
 const PROJECT = 'immoscoop-dataplatform';
 const thresholds = { approve: 100_000_000, request: 1_000_000_000 };
@@ -64,6 +64,15 @@ describe('the range of a query (DEC-SR-29)', () => {
     expect(rangeOf(100_000_001, thresholds)).toBe('approve');
     expect(rangeOf(1_000_000_000, thresholds)).toBe('approve');
     expect(rangeOf(1_000_000_001, thresholds)).toBe('request');
+  });
+
+  it('is approved above the second too, for a User who approves any run themselves; billed a little above the Pre-flight (DEC-PL-12)', () => {
+    const own = { ...thresholds, above: 'approve' as const };
+    expect(rangeOf(1_000_000_001, own)).toBe('approve');
+    expect(rangeOf(100_000_000, own)).toBe('free');
+    expect(billedAtMost(4_800_000_000, own, true)).toBe(5_280_000_000);
+    expect(billedAtMost(4_800_000_000, own, false)).toBe(own.request);
+    expect(billedAtMost(500_000_000, own, true)).toBe(own.request);
   });
 
   it('above the second, cannot run for a User whose Permission group sends nothing to the Data Team, though its SQL is sound (runs.ranges)', async () => {
