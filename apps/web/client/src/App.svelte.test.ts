@@ -4412,6 +4412,24 @@ describe('Query', () => {
     await vi.waitFor(() => expect(location.pathname).toBe('/query/q3'));
   });
 
+  it('lists every query of a row of more than six under All, each with its key, below the row at its right (DEC-UX-283)', async () => {
+    const names = ['Leads per source name', 'Partner share per week', 'Listings per postal code', 'Visits per channel', 'Leads per region', 'Price per square metre', 'Credit leads per week'];
+    const queries = names.map((name, at) => ({ ...QUERY, id: `q${at + 1}`, name }));
+    serve({ queries, projects: [{ id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: queries.map((query) => query.id) }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const row = within(await screen.findByRole('navigation', { name: 'De queries van Credit leads Q4' }, { timeout: 3000 }));
+    await row.findByRole('link', { name: /Credit leads per week/ }, { timeout: 3000 });
+    await fireEvent.click(row.getByRole('button', { name: /Alle 7/ }));
+    const menu = row.getByRole('menu', { name: 'Elke query van deze rij, met zijn toets' });
+    expect(within(menu).getAllByRole('menuitem').map((item) => item.querySelector('.title')?.textContent)).toEqual(names);
+    // Its own name for the right edge: `end` is the flex box of All, which made the list one row with the queries out of view.
+    expect(menu.classList.contains('end')).toBe(false);
+    expect(menu.classList.contains('right')).toBe(true);
+    await fireEvent.click(within(menu).getByRole('menuitem', { name: /Price per square metre/ }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/query/q6'));
+  });
+
   it('opens the quick window with Ctrl+K and Ctrl+Shift+P, with the commands of the query first, and does one (DEC-UX-237, OP-UX-87)', async () => {
     const calls = serve({ queries: [{ ...QUERY }] });
     open('/query/q1');
