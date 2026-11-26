@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { tick } from 'svelte';
+  import { tick, untrack } from 'svelte';
   import Breadcrumb from '@datahub/ui/components/Breadcrumb.svelte';
   import InPlaceHead from '@datahub/ui/components/InPlaceHead.svelte';
   import Callout from '@datahub/ui/containers/Callout.svelte';
@@ -49,6 +49,7 @@
    */
   let {
     id,
+    version = 0,
     projects,
     identity,
     me,
@@ -58,6 +59,8 @@
     go,
   }: {
     id: string;
+    /** Grows when the User reads the queries again (DEC-UX-163): the page reads the Project again, as it stands now. */
+    version?: number;
     projects: Projects;
     identity: { people(q: string): Promise<Person[]>; peopleByIds(ids: readonly string[]): Promise<Person[]> };
     me: { id: string; name: string };
@@ -120,6 +123,13 @@
   $effect(() => {
     void id;
     [page, removed, sharing, deleting, problem] = [undefined, null, false, false, ''];
+    void load();
+  });
+  // Read again on ↻ or the quick window, keeping what is open on the page, such as Share.
+  let loaded = untrack(() => version);
+  $effect(() => {
+    if (version === loaded) return;
+    loaded = version;
     void load();
   });
 
