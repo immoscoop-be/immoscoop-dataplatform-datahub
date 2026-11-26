@@ -76,3 +76,10 @@ A migration of identity makes Admin (locked, every Permission at its widest), Bu
 **Status:** Implemented · **Realises:** [FR-PL-14](../functional/12-permissions-and-library-cards.md#fr-pl-14), [DEC-PL-05](../functional/12-permissions-and-library-cards.md#dec-pl-05), [FR-CL-28](../functional/17-claude.md#fr-cl-28)
 
 The MCP server makes its tools per request, for its User: it registers only the tools the User may use, and the how-to-use says what they may do, with the note for Claude of their Permission group. `claude.results` decides what a result answers to Claude: in Claude, the rows as today; in a card only, the head of the result without its rows, and the values of the choices of a Preview left out, while the MCP App reads the rows through a tool only it calls; not in Claude, the link to Data Hub. In a card only, the MCP App does not pass the rows on to Claude when the User approves a run.
+
+<a id="tr-pl-10"></a>
+### TR-PL-10 · identity refuses a User set inactive
+
+**Status:** Implemented · **Realises:** [FR-PL-17](../functional/12-permissions-and-library-cards.md#fr-pl-17), [DEC-PL-11](../functional/12-permissions-and-library-cards.md#dec-pl-11)
+
+identity keeps on each User when they were set inactive and by whom (migration `0013-deactivate-users`). `PUT /users/{googleId}/active`, with `admin.open` for Users, sets it; never for oneself (`own_user`), and never for the last User of Admin who is still active (`last_admin`), which also holds when moving a User out of Admin. Setting a User inactive ends every session they have. While they are inactive, identity refuses them at three doors: at the callback of a sign-in, with `access_denied` and an `error_description` that starts with `account_deactivated`, which the web app turns into a message of its own; at the renewal of a session, ending all of them; and at the exchange of an Excel key. An Access Token already given stays valid until it expires, 15 minutes at most, as the services check no list. The way back in ([EC-PL-03](../functional/12-permissions-and-library-cards.md#ec-pl-03)) counts a User of Admin set inactive as one who cannot sign in.

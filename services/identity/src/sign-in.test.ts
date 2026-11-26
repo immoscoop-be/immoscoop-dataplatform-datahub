@@ -428,4 +428,23 @@ describe.skipIf(!url)('signing in', () => {
     expect((await groups.claimsOf('piet')).permissionGroup.name).toBe('Admin');
     expect((await groups.history('piet'))[0]).toMatchObject({ to: 'Admin', by: null });
   });
+  it('lets no User switched off in Admin sign in or renew, and says why to the web app (FR-PL-17)', async () => {
+    const clientId = await registerClaude();
+    const pair = await signIn(clientId, CLAUDE);
+    await database.db.updateTable('users').set({ deactivatedAt: new Date(clock), deactivatedById: 'max', deactivatedByName: 'Max' }).where('googleId', '=', JAN.sub).execute();
+
+    const renewed = await renew(clientId, pair.refresh_token);
+    expect(renewed.json().error).toBe('invalid_grant');
+    const ended = await database.db.selectFrom('sessions').select('endReason').where('googleId', '=', JAN.sub).where('endReason', '=', 'deactivated').execute();
+    expect(ended.length).toBeGreaterThan(0);
+
+    const refused = await authorize(clientId, CLAUDE);
+    expect(refused.back.searchParams.get('error')).toBe('access_denied');
+    expect(refused.back.searchParams.get('error_description')).toMatch(/^account_deactivated/);
+    expect(refused.back.searchParams.has('code')).toBe(false);
+
+    // Switched on again, they sign in as before.
+    await database.db.updateTable('users').set({ deactivatedAt: null, deactivatedById: null, deactivatedByName: null }).where('googleId', '=', JAN.sub).execute();
+    await signIn(clientId, CLAUDE);
+  });
 });

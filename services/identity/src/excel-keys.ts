@@ -133,20 +133,20 @@ export function createExcelKeys(db: Kysely<IdentityDatabase>, now: () => Date = 
     },
 
     /** The key and its User for a key as Excel sends it, if it may be used now: not revoked, not expired. */
-    async use(secret: string): Promise<{ key: Row; user: { googleId: string; email: string; name: string } } | undefined> {
+    async use(secret: string): Promise<{ key: Row; user: { googleId: string; email: string; name: string; deactivated: boolean } } | undefined> {
       if (!secret.startsWith(KEY_PREFIX) || secret.length > 200) return undefined;
       const found = await db
         .selectFrom('excelKeys')
         .innerJoin('users', 'users.googleId', 'excelKeys.googleId')
         .selectAll('excelKeys')
-        .select(['users.email', 'users.name as userName'])
+        .select(['users.email', 'users.name as userName', 'users.deactivatedAt'])
         .where('keyHash', '=', hash(secret))
         .executeTakeFirst();
       if (!found || found.revokedAt || found.expiresAt <= now()) return undefined;
       if (!found.lastUsedAt || now().getTime() - found.lastUsedAt.getTime() > TOUCH_SECONDS * 1000) {
         await db.updateTable('excelKeys').set({ lastUsedAt: now() }).where('id', '=', found.id).execute();
       }
-      return { key: found, user: { googleId: found.googleId, email: found.email, name: found.userName } };
+      return { key: found, user: { googleId: found.googleId, email: found.email, name: found.userName, deactivated: found.deactivatedAt !== null } };
     },
 
     /** The keys that expire within a month and whose User was not told yet; they are marked told. */
@@ -263,6 +263,8 @@ export async function excelKeyRoutes(app: FastifyInstance, options: ExcelKeyOpti
     const secret = (request.body as { key?: unknown } | null)?.key;
     const found = typeof secret === 'string' ? await keys.use(secret) : undefined;
     if (!found) return reply.code(401).send({ error: 'invalid_key', message: 'This Excel key is not known, revoked or expired.' });
+    // It stops at once when its User is switched off in Admin, and works again when they are switched on (FR-PL-17).
+    if (found.user.deactivated) return reply.code(401).send({ error: 'invalid_key', message: 'The User of this Excel key is switched off in Data Hub.' });
     let claims;
     try {
       // It stops at once when its User can no longer sign in with Google (FR-PL-03).

@@ -7,6 +7,7 @@
   import Avatar from '@datahub/ui/primitives/Avatar.svelte';
   import Button from '@datahub/ui/primitives/Button.svelte';
   import Loading from '@datahub/ui/primitives/Loading.svelte';
+  import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import { Refused } from '../lib/api.js';
   import type { GroupMove, Identity, PermissionGroup, UserOfAdmin } from '../lib/identity.js';
   import { initialsOf } from '../lib/initials.js';
@@ -21,6 +22,10 @@
    * before it is saved, what the User gains and loses, and that their Groups stay. Then the history of their
    * Permission group. Nobody changes their own (FR-PL-08): for yourself the choice is greyed, with why. identity
    * refuses that too, and moving the last User out of Admin; the sheet says so.
+   *
+   * Above the Permission group, whether the User is active (FR-PL-17): set inactive, they no longer sign in, in the web
+   * app, in Claude or with an Excel key, and the sheet says that only signing in changes. It takes effect at once,
+   * without Save; nobody sets themselves inactive, nor the last User of Admin who still signs in.
    */
   let {
     user,
@@ -29,6 +34,7 @@
     counts,
     identity,
     onsaved,
+    onchanged,
     onclose,
   }: {
     user: UserOfAdmin;
@@ -37,9 +43,11 @@
     self: boolean;
     /** How many Users each Permission group has, by its id. */
     counts: Readonly<Record<string, number>>;
-    identity: Pick<Identity, 'user' | 'moveUser'>;
+    identity: Pick<Identity, 'user' | 'moveUser' | 'setActive'>;
     /** The User as identity keeps them after the change. */
     onsaved: (user: UserOfAdmin) => void;
+    /** The User after being set active or inactive; the sheet stays open. */
+    onchanged: (user: UserOfAdmin) => void;
     onclose: () => void;
   } = $props();
 
@@ -49,6 +57,9 @@
   let history: GroupMove[] | null | undefined = $state();
   let saving = $state(false);
   let problem = $state('');
+  // svelte-ignore state_referenced_locally
+  let active: 'on' | 'off' = $state(user.deactivated ? 'off' : 'on');
+  let activeProblem = $state('');
 
   $effect(() => {
     const id = user.googleId;
@@ -74,6 +85,23 @@
   function moved(move: GroupMove): string {
     if (move.from === null) return t('users.history.first', { group: nameOf(move.to) });
     return move.by ? t('users.history.movedBy', { from: nameOf(move.from), to: nameOf(move.to), by: move.by }) : t('users.history.moved', { from: nameOf(move.from), to: nameOf(move.to) });
+  }
+
+  /** Sets the User active or inactive at once; refused, the choice goes back and the sheet says why. */
+  async function setActive(next: 'on' | 'off') {
+    activeProblem = '';
+    try {
+      onchanged(await identity.setActive(user.googleId, next === 'on'));
+    } catch (error) {
+      console.error(`${user.name} could not be set ${next === 'on' ? 'active' : 'inactive'}`, error);
+      active = user.deactivated ? 'off' : 'on';
+      activeProblem =
+        error instanceof Refused && error.code === 'own_user'
+          ? t('users.active.self')
+          : error instanceof Refused && error.code === 'last_admin'
+            ? t('users.active.lastAdmin', { group: now?.name ?? 'Admin' })
+            : t('users.active.failed');
+    }
   }
 
   async function save() {
@@ -112,6 +140,30 @@
         <span class="meta">· {t('users.onGroups')}</span>
       </dd>
     </FactsList>
+
+    <div class="label">{t('users.active.label')}</div>
+    {#if self}
+      <Callout icon="lock-simple-fill">{t('users.active.self')}</Callout>
+    {:else}
+      <Segmented
+        options={[
+          { value: 'on', label: t('users.active.on') },
+          { value: 'off', label: t('users.active.off') },
+        ]}
+        bind:value={active}
+        label={t('users.active.label')}
+        surface="sub"
+        onchange={setActive}
+      />
+    {/if}
+    {#if user.deactivated}
+      <p class="meta active-line">
+        {user.deactivated.by
+          ? t('users.active.sinceBy', { day: day(user.deactivated.at, language), by: user.deactivated.by })
+          : t('users.active.since', { day: day(user.deactivated.at, language) })}
+      </p>
+    {/if}
+    <p class="meta active-line" class:problem={activeProblem} role={activeProblem ? 'alert' : undefined}>{activeProblem || t('users.active.note')}</p>
 
     <div class="label">Permission group</div>
     {#if self}
@@ -183,4 +235,5 @@
   .when { color: var(--text-muted); font-size: var(--text-meta); }
   .note { flex: 1; margin: 0; line-height: 1.5; }
   .problem { color: var(--signal-urgent); }
+  .active-line { display: block; margin: 8px 0 0; line-height: 1.5; max-width: 560px; }
 </style>

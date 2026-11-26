@@ -178,6 +178,12 @@ export function createStore(db: Kysely<IdentityDatabase>, now: () => Date = () =
       return db.selectFrom('users').select(['googleId', 'email', 'name']).where('googleId', '=', googleId).executeTakeFirst();
     },
 
+    /** Whether a User is switched off in Admin (FR-PL-17): then they do not sign in, nor renew a session. */
+    async deactivated(googleId: string): Promise<boolean> {
+      const row = await db.selectFrom('users').select('deactivatedAt').where('googleId', '=', googleId).executeTakeFirst();
+      return Boolean(row?.deactivatedAt);
+    },
+
     /** A one-time code for the client, valid for one minute, with what goes into the first Access Token. */
     async createCode(code: { clientId: string; redirectUri: string; codeChallenge: string; claims: TokenSubject }): Promise<string> {
       const value = randomToken();

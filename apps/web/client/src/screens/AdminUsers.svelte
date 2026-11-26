@@ -19,7 +19,7 @@
    * Users, a tool of Admin (FR-PL-06, DEC-UX-190): everyone who signed in to this environment, with their Permission
    * group, their Groups by name, each the way to it on Groups (DEC-UX-200), what they use (the web app, Claude, Excel) and when they last signed in. A search finds
    * a User by name or address; a filter shows one Permission group, each with its count. A User who can no longer
-   * sign in stays listed, greyed; a new one is marked new, with "the default" next to their group. A row opens the
+   * sign in stays listed, greyed, and so does one set inactive in Admin, marked inactive (FR-PL-17); a new one is marked new, with "the default" next to their group. A row opens the
    * User in a sheet over the page, where their Permission group changes (FR-PL-07); saved, the row says so and a
    * toast says it takes effect within 15 minutes (FR-PL-11).
    */
@@ -32,7 +32,7 @@
     groupsHref,
     oncount,
   }: {
-    identity: Pick<Identity, 'users' | 'user' | 'moveUser' | 'permissionGroups'>;
+    identity: Pick<Identity, 'users' | 'user' | 'moveUser' | 'setActive' | 'permissionGroups'>;
     /** The environment of Data Hub, such as uat. */
     environment: string;
     /** The Google ID of the User signed in, who cannot change their own Permission group (FR-PL-08). */
@@ -99,6 +99,11 @@
     opened = user.googleId;
   }
 
+  /** A User set active or inactive in the sheet: their row follows, and the sheet stays open. */
+  function changed(user: UserOfAdmin) {
+    users = (users ?? []).map((one) => (one.googleId === user.googleId ? user : one));
+  }
+
   function moved(user: UserOfAdmin) {
     users = (users ?? []).map((one) => (one.googleId === user.googleId ? user : one));
     changedHere = [...changedHere.filter((id) => id !== user.googleId), user.googleId];
@@ -146,7 +151,7 @@
     {#each listed as user (user.googleId)}
       <tr
         class="row"
-        class:gone={!user.active}
+        class:gone={!user.active || user.deactivated}
         class:on={opened === user.googleId}
         tabindex="0"
         aria-label={user.name}
@@ -159,7 +164,7 @@
             <span>
               <span class="name">{user.name}</span>
               {#if user.googleId === me}<span class="pill">{t('users.you')}</span>{/if}
-              {#if !user.active}<span class="pill">{t('admin.users.gone')}</span>{:else if isNew(user)}<span class="pill">{t('admin.users.new')}</span>{/if}
+              {#if user.deactivated}<span class="pill">{t('admin.users.inactive')}</span>{:else if !user.active}<span class="pill">{t('admin.users.gone')}</span>{:else if isNew(user)}<span class="pill">{t('admin.users.new')}</span>{/if}
               <span class="meta email">{user.email}</span>
             </span>
           </span>
@@ -200,6 +205,7 @@
       {counts}
       {identity}
       onsaved={moved}
+      onchanged={changed}
       onclose={() => (opened = undefined)}
     />
   {/key}
