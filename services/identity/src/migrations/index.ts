@@ -11,6 +11,7 @@ import * as removeAndWithdrawn from './0009-remove-and-withdrawn.js';
 import * as queryOutside from './0010-query-outside.js';
 import * as forgetFlags from './0011-forget-flags.js';
 import * as eda from './0012-eda.js';
+import * as deactivateUsers from './0013-deactivate-users.js';
 
 /** The migrations of identity, by name; they run in the order of their names (TR-PF-09). */
 export const migrations: Record<string, Migration> = {
@@ -26,4 +27,5 @@ export const migrations: Record<string, Migration> = {
   '0010-query-outside': queryOutside,
   '0011-forget-flags': forgetFlags,
   '0012-eda': eda,
+  '0013-deactivate-users': deactivateUsers,
 };

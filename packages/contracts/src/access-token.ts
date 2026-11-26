@@ -25,3 +25,9 @@ export const accessTokenClaims = z.object({
 });
 
 export type AccessTokenClaims = z.infer<typeof accessTokenClaims>;
+
+/**
+ * The `error_description` with which identity refuses the sign-in of a User switched off in Admin (FR-PL-17), so that
+ * the web app can say why, apart from an account of another company.
+ */
+export const SIGN_IN_DEACTIVATED = 'account_deactivated';

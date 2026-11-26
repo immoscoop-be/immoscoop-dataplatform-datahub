@@ -36,6 +36,8 @@ export interface UserOfAdmin {
   uses: { web: boolean; claude: boolean; excel: boolean };
   /** Whether they can still sign in with Google. */
   active: boolean;
+  /** Set to inactive in Admin, since when and by whom: they do not sign in until set active again (FR-PL-17). */
+  deactivated: { at: string; by: string | null } | null;
 }
 
 /** One move of the Permission group of a User, newest first; `from` and `by` are null for the default at their first sign-in (FR-PL-07). */
@@ -235,6 +237,14 @@ export function createIdentity(config: Config, session: Pick<Session, 'accessTok
     /** Moves a User to another Permission group: refused for yourself (own_group) and for the last User of Admin (last_admin, FR-PL-08). */
     async moveUser(googleId: string, groupId: string): Promise<UserOfAdmin> {
       const answer = await call(`/users/${encodeURIComponent(googleId)}/permission-group`, { method: 'PUT', body: { groupId } });
+      return ((await answer.json()) as { user: UserOfAdmin }).user;
+    },
+    /**
+     * Sets a User active or inactive (FR-PL-17): inactive, they no longer sign in; nothing else of theirs changes. Refused
+     * for yourself (own_user) and for the last User of Admin who still signs in (last_admin).
+     */
+    async setActive(googleId: string, active: boolean): Promise<UserOfAdmin> {
+      const answer = await call(`/users/${encodeURIComponent(googleId)}/active`, { method: 'PUT', body: { active } });
       return ((await answer.json()) as { user: UserOfAdmin }).user;
     },
     /** Every Permission group, with its Permissions and number of Users (FR-PL-09). */

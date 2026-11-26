@@ -39,7 +39,10 @@ export interface UserView {
   createdAt: string;
   lastLoginAt: string;
   uses: { web: boolean; claude: boolean; excel: boolean };
+  /** Whether they can still sign in with Google. */
   active: boolean;
+  /** Switched off in Admin, since when and by whom: they do not sign in until switched on again (FR-PL-17). */
+  deactivated: { at: string; by: string | null } | null;
 }
 
 /** One move of a User from one Permission group to another (FR-PL-07). */
@@ -66,7 +69,7 @@ export interface UserNotices {
   tellUser(notice: UserNotice): Promise<void>;
 }
 
-export type GroupError = 'not_found' | 'locked' | 'name_taken' | 'own_group' | 'last_admin' | 'invalid_move';
+export type GroupError = 'not_found' | 'locked' | 'name_taken' | 'own_group' | 'own_user' | 'last_admin' | 'invalid_move';
 
 export class PermissionGroupError extends Error {
   constructor(readonly code: GroupError) {
@@ -161,6 +164,20 @@ export function createPermissionGroups(db: Kysely<IdentityDatabase>, now: () => 
       .execute();
 
   const adminId = async () => (await db.selectFrom('permissionGroups').select('id').where('starting', '=', 'admin').executeTakeFirstOrThrow()).id;
+
+  /** How many other Users of a group are not switched off: Admin keeps at least one who signs in (FR-PL-08, FR-PL-17). */
+  const othersWhoSignIn = async (groupId: string, except: string) =>
+    Number(
+      (
+        await db
+          .selectFrom('users')
+          .select((eb) => eb.fn.countAll<number>().as('count'))
+          .where('permissionGroupId', '=', groupId)
+          .where('googleId', '<>', except)
+          .where('deactivatedAt', 'is', null)
+          .executeTakeFirstOrThrow()
+      ).count,
+    );
 
   return {
     async list(): Promise<PermissionGroupView[]> {
@@ -265,10 +282,32 @@ export function createPermissionGroups(db: Kysely<IdentityDatabase>, now: () => 
       });
       if (user.permissionGroupId === groupId) return null;
       const from = await one(user.permissionGroupId);
-      if (from.locked && from.users <= 1) throw new PermissionGroupError('last_admin');
+      if (from.locked && (await othersWhoSignIn(from.id, googleId)) === 0) throw new PermissionGroupError('last_admin');
       await db.updateTable('users').set({ permissionGroupId: groupId }).where('googleId', '=', googleId).execute();
       await log({ kind: 'moved', googleId, groupId, fromName: from.name, toName: to.name, by });
       return { name: user.name, from, to };
+    },
+
+    /**
+     * Switches a User off or on again (FR-PL-17, DEC-PL-11). Off, they no longer sign in: in the web app, in Claude or with
+     * an Excel key; everything of theirs stays. Never the one who asks, and never the last User of Admin who still signs in
+     * (FR-PL-08). Says whether anything changed.
+     */
+    async setActive(googleId: string, active: boolean, by: Actor): Promise<boolean> {
+      if (googleId === by.id) throw new PermissionGroupError('own_user');
+      const user = await db.selectFrom('users').select(['googleId', 'permissionGroupId', 'deactivatedAt']).where('googleId', '=', googleId).executeTakeFirst();
+      if (!user) throw new PermissionGroupError('not_found');
+      if (active === (user.deactivatedAt === null)) return false;
+      if (!active && user.permissionGroupId === (await adminId()) && (await othersWhoSignIn(user.permissionGroupId, googleId)) === 0) {
+        throw new PermissionGroupError('last_admin');
+      }
+      await db
+        .updateTable('users')
+        .set(active ? { deactivatedAt: null, deactivatedById: null, deactivatedByName: null } : { deactivatedAt: now(), deactivatedById: by.id, deactivatedByName: by.name })
+        .where('googleId', '=', googleId)
+        .execute();
+      await log({ kind: active ? 'reactivated' : 'deactivated', googleId, by });
+      return true;
     },
 
     /**
@@ -278,7 +317,8 @@ export function createPermissionGroups(db: Kysely<IdentityDatabase>, now: () => 
      */
     async restoreAdminIfNoneLeft(googleId: string, workspace: Pick<Workspace, 'isActive'>): Promise<boolean> {
       const admin = await adminId();
-      const members = await db.selectFrom('users').select('googleId').where('permissionGroupId', '=', admin).execute();
+      // A User of Admin switched off in Admin cannot sign in either (FR-PL-17).
+      const members = await db.selectFrom('users').select('googleId').where('permissionGroupId', '=', admin).where('deactivatedAt', 'is', null).execute();
       if (members.some((member) => member.googleId === googleId)) return false;
       const open = await db
         .selectFrom('sessions')
@@ -309,6 +349,8 @@ export function createPermissionGroups(db: Kysely<IdentityDatabase>, now: () => 
             where group_members.email = lower(users.email)), '[]'::json)`.as('groups'),
           'users.createdAt',
           'users.lastLoginAt',
+          'users.deactivatedAt',
+          'users.deactivatedByName',
           'permissionGroups.id as groupId',
           'permissionGroups.name as groupName',
         ])
@@ -343,6 +385,7 @@ export function createPermissionGroups(db: Kysely<IdentityDatabase>, now: () => 
         lastLoginAt: row.lastLoginAt.toISOString(),
         uses: { web: Boolean(row.web), claude: Boolean(row.claude), excel: Boolean(row.excel) },
         active: !row.gone,
+        deactivated: row.deactivatedAt ? { at: row.deactivatedAt.toISOString(), by: row.deactivatedByName } : null,
       }));
     },
 
@@ -381,14 +424,21 @@ const ERRORS: Record<GroupError, [number, string]> = {
   locked: [409, 'Admin can do everything and keeps it: it cannot be changed or deleted.'],
   name_taken: [409, 'Another Permission group has this name.'],
   own_group: [403, 'Nobody changes their own Permission group: another User of Admin can.'],
-  last_admin: [409, 'Admin keeps at least one User: this is its last.'],
+  own_user: [403, 'Nobody switches themselves off: another User of Admin can.'],
+  last_admin: [409, 'Admin keeps at least one User who signs in: this is its last.'],
   invalid_move: [400, 'Choose another Permission group, not Admin and not this one.'],
 };
 
 /** Users and Permission groups in Admin (FR-PL-06 to FR-PL-10, TR-PL-07). */
 export async function permissionGroupRoutes(
   app: FastifyInstance,
-  options: { groups: PermissionGroups; notices?: UserNotices; webClientId?: string },
+  options: {
+    groups: PermissionGroups;
+    notices?: UserNotices;
+    webClientId?: string;
+    /** Ends every session of a User, when they are switched off (FR-PL-17). */
+    endSessions?: (googleId: string, reason: string) => Promise<void>;
+  },
 ): Promise<void> {
   const { groups, notices } = options;
   const tool = (request: FastifyRequest, name: string) => canWith(request.user!.permissions, 'admin.open', 'tools', name);
@@ -433,6 +483,23 @@ export async function permissionGroupRoutes(
         const { gains, losses } = changesBetween(moved.from.permissions, moved.to.permissions);
         await tell(request, { type: 'MSG-USR-01', userId: request.params.googleId, name: moved.name, actor: actor(request).name, from: moved.from.name, to: moved.to.name, gains, losses, deleted: false });
       }
+      const user = (await groups.users(options.webClientId)).find((one) => one.googleId === request.params.googleId);
+      return { user };
+    } catch (error) {
+      return fail(reply, error);
+    }
+  });
+
+  // Switches a User off or on again (FR-PL-17): off, their sessions end at once, so that they are out within the
+  // life of their last Access Token, 15 minutes at most.
+  app.put<{ Params: { googleId: string }; Body: unknown }>('/users/:googleId/active', async (request, reply) => {
+    if (!tool(request, 'users')) return forbidden(reply, 'Users');
+    const active = (request.body as { active?: unknown } | null)?.active;
+    if (typeof active !== 'boolean') return reply.code(400).send({ error: 'invalid_request', message: 'Say whether the User is active: true or false.' });
+    try {
+      const changed = await groups.setActive(request.params.googleId, active, actor(request));
+      if (changed && !active) await options.endSessions?.(request.params.googleId, 'deactivated');
+      if (changed) request.log.info({ googleId: request.params.googleId, active, by: request.user!.sub }, active ? 'a User was switched on' : 'a User was switched off');
       const user = (await groups.users(options.webClientId)).find((one) => one.googleId === request.params.googleId);
       return { user };
     } catch (error) {

@@ -23,6 +23,7 @@
 
   const PROBLEMS: Record<string, string> = {
     access_denied: 'signIn.problem.access_denied',
+    deactivated: 'signIn.problem.deactivated',
     server_error: 'signIn.problem.unavailable',
     temporarily_unavailable: 'signIn.problem.unavailable',
     expired: 'signIn.problem.expired',

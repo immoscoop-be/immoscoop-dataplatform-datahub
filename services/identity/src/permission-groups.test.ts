@@ -8,6 +8,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildApp } from './app.js';
 import type { IdentityDatabase } from './database.js';
 import { migrations } from './migrations/index.js';
+import { createExcelKeys } from './excel-keys.js';
 import { changesBetween, createPermissionGroups, type UserNotice } from './permission-groups.js';
 import { createStore } from './store.js';
 import { createLocalKeyService } from './testing.js';
@@ -169,5 +170,32 @@ describe.skipIf(!url)('Users and Permission groups in Admin (FR-PL-06 to FR-PL-1
     const claims = await createPermissionGroups(database.db).claimsOf('an');
     expect(claims.permissionGroup.name).toBe('Business analyst');
     expect(claims.permissions['runs.ranges'].values).toEqual({ freeMb: 50, approveGb: 2, above: 'refuse' });
+  });
+  it('switches a User off and on again: only signing in changes, never by themselves, and Admin keeps one who signs in (FR-PL-17)', async () => {
+    const max = await as('max');
+    const store = createStore(database.db);
+    const { refreshToken } = await store.startSession({ googleId: 'an', clientId: 'web', lifetimeSeconds: 3600 });
+    const { secret } = await createExcelKeys(database.db).make('an', 'Weekly sheet');
+
+    expect((await (await as('an', 'businessAnalyst'))('PUT', '/users/ruth/active', { active: false })).statusCode).toBe(403);
+    expect((await max('PUT', '/users/an/active', { active: 'no' })).statusCode).toBe(400);
+    expect((await max('PUT', '/users/max/active', { active: false })).json().error).toBe('own_user');
+
+    const off = await max('PUT', '/users/an/active', { active: false });
+    expect(off.statusCode).toBe(200);
+    expect(off.json().user.deactivated).toMatchObject({ by: 'max' });
+    // Their sessions end at once, in the web app and in Claude; their Excel keys stop, kept as they are.
+    expect(await store.checkRefreshToken(refreshToken, 'web')).toBe('ended');
+    expect((await createExcelKeys(database.db).use(secret))?.user.deactivated).toBe(true);
+    expect(await store.deactivated('an')).toBe(true);
+    // Nothing else of theirs changes: their Permission group stays.
+    expect(off.json().user.permissionGroup.name).toBe('Business analyst');
+
+    const on = await max('PUT', '/users/an/active', { active: true });
+    expect(on.json().user.deactivated).toBeNull();
+    expect((await createExcelKeys(database.db).use(secret))?.user.deactivated).toBe(false);
+
+    // Max is the only User of Admin who signs in: switching him off, or moving him out, would lock Data Hub out.
+    expect((await (await as('ruth'))('PUT', '/users/max/active', { active: false })).json().error).toBe('last_admin');
   });
 });
