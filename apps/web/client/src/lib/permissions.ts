@@ -141,7 +141,10 @@ export const PERMISSION_TEXTS: { readonly [K in PermissionKey]: { name: string; 
     values: {
       freeMb: { label: 'permission.runs.ranges.freeMb' },
       approveGb: { label: 'permission.runs.ranges.approveGb' },
-      above: { label: 'permission.runs.ranges.above', options: { request: 'permission.runs.ranges.above.request', refuse: 'permission.runs.ranges.above.refuse' } },
+      above: {
+        label: 'permission.runs.ranges.above',
+        options: { request: 'permission.runs.ranges.above.request', refuse: 'permission.runs.ranges.above.refuse', approve: 'permission.runs.ranges.above.approve' },
+      },
     },
   },
   'queries.seeOthers': {
@@ -309,7 +312,7 @@ export function changedKeys(saved: Permissions, edited: Permissions): Permission
 
 /** The options of a choice from the narrowest to the widest, where the catalogue lists them otherwise. */
 const NARROW_TO_WIDE: Readonly<Record<string, readonly string[]>> = {
-  'runs.ranges.above': ['refuse', 'request'],
+  'runs.ranges.above': ['refuse', 'request', 'approve'],
   'claude.results.show': ['none', 'card', 'claude'],
 };
 

@@ -68,6 +68,8 @@ describe('the Permissions of Data Hub (TR-PL-03)', () => {
 
   it('turns the ranges into bytes (DEC-SR-29)', () => {
     expect(rangesOf(startingPermissions('businessAnalyst'))).toEqual({ approve: 100_000_000, request: 1_000_000_000, above: 'request' });
+    // Admin approves any run itself, without a limit (DEC-PL-12).
+    expect(rangesOf(startingPermissions('admin')).above).toBe('approve');
   });
 
   it('names a part of Data Hub for every Permission', () => {

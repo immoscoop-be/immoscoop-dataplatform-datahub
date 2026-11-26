@@ -13,7 +13,7 @@ import { lensRoutes } from './lens-api.js';
 import { outsideTable } from './outside.js';
 import type { Lenses } from './lenses.js';
 import { bind, type Parameter, parseParameters } from './parameters.js';
-import { type Preflight, preflight, type ResourceOfQuery, sound, type Thresholds } from './preflight.js';
+import { billedAtMost, type Preflight, preflight, type ResourceOfQuery, sound, type Thresholds } from './preflight.js';
 import { projectRoutes } from './project-api.js';
 import type { Projects } from './projects.js';
 import { type Choice, choicesOf, chosenParameters, previewSql, type StorageReader, valuesSql, type Window, WINDOWS, windowFilter } from './preview.js';
@@ -53,8 +53,6 @@ export interface ApiOptions {
 export const PAGE_SIZE = 100;
 /** How many runs of its history a page holds at most (DEC-UX-74). */
 const HISTORY_LIMIT = 50;
-/** Above an accepted Request, BigQuery bills at most this much more than the Pre-flight said (DEC-SR-36). */
-const ACCEPTED_MARGIN = 1.1;
 const NO_QUERY = { error: 'not_found', message: 'There is no such query, or it is not yours.' };
 const NO_RESOURCE = { error: 'not_found', message: 'There is no such Resource, or you may not see it.' };
 /** The numbers on top of the tab History count the last 30 days (FR-SR-44). */
@@ -651,8 +649,9 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     const run = await queries.startRun({ query, user: who, sql: body.sql, parameters: body.parameters, estimatedBytes: estimated, approved: checked.range !== 'free' });
     try {
       const finished = await bigquery.run(ownCase(bound.sql, resources, checked.tables), {
-        // Never more than the second threshold without an accepted Request (DEC-SR-29); with one, a little above the Pre-flight.
-        maximumBytesBilled: accepted ? Math.max(ranges.request, Math.ceil(estimated * ACCEPTED_MARGIN)) : ranges.request,
+        // Never more than the second threshold without an accepted Request (DEC-SR-29); with one, or for a User who
+        // approves any run themselves (DEC-PL-12), a little above the Pre-flight.
+        maximumBytesBilled: billedAtMost(estimated, ranges, accepted || (ranges.above === 'approve' && estimated > ranges.request)),
         labels: { 'datahub-user': label(who.id), 'datahub-query': run.queryRef },
         requestId: randomUUID(),
         pageSize: excel ? excel.rows : PAGE_SIZE,

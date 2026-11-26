@@ -59,7 +59,8 @@ export const PERMISSIONS = {
     values: {
       freeMb: { kind: 'number', unit: 'MB', min: 1, max: 1_000_000 },
       approveGb: { kind: 'number', unit: 'GB', min: 0.1, max: 10_000 },
-      above: { kind: 'choice', options: ['request', 'refuse'] },
+      // Above that: a Request to the Data Team, it cannot run, or they approve it themselves, without a limit (DEC-PL-12).
+      above: { kind: 'choice', options: ['request', 'refuse', 'approve'] },
     },
   },
   'queries.seeOthers': { name: 'See the queries of others', part: 'query', values: { reach: REACH } },
@@ -132,7 +133,8 @@ const ADMIN: Permissions = {
   'resources.preview': on(),
   'queries.make': on(),
   'queries.outside': on(),
-  'runs.ranges': on(RANGES),
+  // Without a limit: above 1 GB a Data Admin approves the run themselves, after its warning (DEC-PL-12).
+  'runs.ranges': on({ ...RANGES, above: 'approve' }),
   'queries.seeOthers': on({ reach: 'every' }),
   'requests.decide': on(),
   'lenses.make': on(),
@@ -309,13 +311,21 @@ export function sees(permissions: Permissions): 'theirs' | 'public' | 'all' {
   return see === 'all' || see === 'public' ? see : 'theirs';
 }
 
-/** The ranges of one run of a User, in bytes (DEC-SR-29): free up to, approved up to, and what happens above. */
-export function rangesOf(permissions: Permissions): { approve: number; request: number; above: 'request' | 'refuse' } {
+/** What happens above the ranges: a Request when the value is missing or unknown. */
+function aboveOf(value: unknown): 'request' | 'refuse' | 'approve' {
+  return value === 'refuse' || value === 'approve' ? value : 'request';
+}
+
+/**
+ * The ranges of one run of a User, in bytes (DEC-SR-29): free up to, approved up to, and what happens above: a Request
+ * to the Data Team, it cannot run, or the User approves it too, without a limit (DEC-PL-12).
+ */
+export function rangesOf(permissions: Permissions): { approve: number; request: number; above: 'request' | 'refuse' | 'approve' } {
   const free = Number(permissionValue(permissions, 'runs.ranges', 'freeMb') ?? RANGES.freeMb);
   const approve = Number(permissionValue(permissions, 'runs.ranges', 'approveGb') ?? RANGES.approveGb);
   return {
     approve: Math.round(free * 1_000_000),
     request: Math.max(Math.round(approve * 1_000_000_000), Math.round(free * 1_000_000)),
-    above: permissionValue(permissions, 'runs.ranges', 'above') === 'refuse' ? 'refuse' : 'request',
+    above: aboveOf(permissionValue(permissions, 'runs.ranges', 'above')),
   };
 }
