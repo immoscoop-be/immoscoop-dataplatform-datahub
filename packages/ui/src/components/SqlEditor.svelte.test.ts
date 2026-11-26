@@ -79,6 +79,21 @@ describe('the SQL editor', () => {
     expect(lines[3]).toBe('        ');
   });
 
+  it('indents a level of 4 spaces with Tab, as Format does, and takes it back with Shift+Tab (DEC-UX-353)', async () => {
+    render(SqlEditor, { value: 'select\na,', suggestions: [], label: 'SQL' });
+    const editor = content();
+    const lines = () => [...editor.querySelectorAll('.cm-line')].map((line) => line.textContent);
+    editor.focus();
+    await fireEvent.keyDown(editor, { key: 'End', code: 'End', ctrlKey: true });
+    await fireEvent.keyDown(editor, { key: 'Tab', code: 'Tab' });
+    expect(lines()[1]).toBe('    a,');
+    // Enter keeps that level: the next field lines up under the first, as after Format.
+    await fireEvent.keyDown(editor, { key: 'Enter', code: 'Enter' });
+    expect(lines()[2]).toBe('    ');
+    await fireEvent.keyDown(editor, { key: 'Tab', code: 'Tab', shiftKey: true });
+    expect(lines()[2]).toBe('');
+  });
+
   it('suggests the Resources of the query after from, and a new Resource that starts a new query (DEC-UX-148)', async () => {
     const onnewtable = vi.fn();
     // A table outside Data Hub that the query reads is explained, never suggested (FR-SR-62).

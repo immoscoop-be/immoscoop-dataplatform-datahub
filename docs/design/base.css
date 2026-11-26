@@ -2440,6 +2440,25 @@ svg.mp, svg.mp-g { display: block; width: 100%; height: auto; overflow: visible;
 .proj-queries a .clip { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .proj-queries a.locked { color: var(--text-muted); }
 .proj-more { display: block; margin: 0 4px 8px; }
+/* Archive on a Project in the panel, on hover, as the eye on a query (OP-UX-129) */
+.proj-entry > .proj-archive { position: absolute; right: 36px; top: 9px; width: 26px; height: 26px; font-size: 14px; opacity: 0; }
+.proj-entry:hover > .proj-archive, .proj-entry > .proj-archive:focus-visible { opacity: 1; }
+.proj-entry:hover > .proj-item .flag-mark { opacity: 0; }
+/* The quiet line under the Projects to All projects, the archived ones too (OP-UX-129) */
+.proj-all { display: flex; align-items: center; gap: 7px; margin: 2px 4px 10px; padding: 5px 6px; border-radius: 8px; font-size: var(--text-small); color: var(--text-muted); text-decoration: none; }
+.proj-all:hover { background: var(--tint-hover); color: var(--text-secondary); }
+.proj-all i { font-size: 15px; }
+.proj-all .meta { margin-left: auto; }
+/* A quiet button with only an icon, in the head of a page (OP-UX-128) */
+.btn-quiet.icon-only { display: inline-flex; align-items: center; justify-content: center; padding: 8px 10px; }
+.btn-quiet.icon-only i { font-size: 16px; }
+/* All projects (OP-UX-129): an archived one quieter, with Back in your panel */
+.projs-table tr.archived td, .projs-table tr.archived .q-cell a { color: var(--text-muted); }
+.projs-table tr.archived .kind-icon { color: var(--text-muted); }
+.projs-table td:last-child { width: 1%; white-space: nowrap; text-align: right; }
+.projs-table .proj-state { display: inline-flex; align-items: center; gap: 5px; }
+.projs-segs { display: inline-flex; gap: 2px; padding: 3px; border-radius: var(--radius-pill); background: var(--surface-sub); }
+.projs-segs .count { margin-left: 3px; color: var(--text-muted); font-weight: var(--weight-regular); }
 
 /* The page of a Project (DEC-UX-285): its head, who is in it, its queries and its Danger zone */
 .proj-people { display: flex; align-items: center; }

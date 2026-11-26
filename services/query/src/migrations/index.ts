@@ -13,6 +13,7 @@ import * as lensDeletion from './0011-lens-deletion.js';
 import * as lensFields from './0012-lens-fields.js';
 import * as projects from './0013-projects.js';
 import * as edaRuns from './0014-eda-runs.js';
+import * as projectArchive from './0015-project-archive.js';
 
 /** The migrations of query, by name; they run in the order of their names (TR-PF-09). */
 export const migrations: Record<string, Migration> = {
@@ -30,4 +31,5 @@ export const migrations: Record<string, Migration> = {
   '0012-lens-fields': lensFields,
   '0013-projects': projects,
   '0014-eda-runs': edaRuns,
+  '0015-project-archive': projectArchive,
 };

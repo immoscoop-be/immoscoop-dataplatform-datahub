@@ -14,6 +14,8 @@ interface ProjectItem {
   description: string;
   queries: number;
   members: { id: string; name: string }[];
+  /** When the User archived it, out of their panel only (DEC-UX-354); null while it is in it. */
+  archivedAt?: string | null;
   [key: string]: unknown;
 }
 
@@ -95,7 +97,7 @@ export function projectTools({ server, hub, permits }: Context): void {
     {
       title: 'Find your Projects',
       description:
-        'The Projects the User is in, the one changed last first, each with its name, what it is for, how many queries it holds and who is in it. A Project holds the queries of an analysis, worked on together by who is in it, in one order.',
+        'The Projects the User is in, the one changed last first, each with its name, what it is for, how many queries it holds and who is in it. A Project holds the queries of an analysis, worked on together by who is in it, in one order. archivedAt says when the User archived it, out of their panel only: it works as before, and they find it under All projects in Query.',
       annotations: READ,
     },
     () =>

@@ -26,7 +26,7 @@
   import { createQuery, type DeletedLens, type Lens, LensDeleted, type LensItem, type Run } from './lib/query.js';
   import { createRegistry } from './lib/registry.js';
   import { digitOf, type FlagMark, keyed, markOf, modLabel, onMac, placeOf, type QueryStatus, withMod } from './lib/flags.js';
-  import { createProjects, isDeleted, moved as reordered, type Project, type ProjectItem, projectPath } from './lib/projects.js';
+  import { ALL_PROJECTS, createProjects, isDeleted, moved as reordered, type Project, type ProjectItem, projectPath } from './lib/projects.js';
   import { type QuickRow, used } from './lib/quick.js';
   import { provideScreenCommands } from './lib/commands.svelte.js';
   import { collectionPath, edaPath, GROUPS, learningPath, lensPath, messagesOnPath, myPagePath, NEW_COLLECTION, NEW_QUERY, objectPath, probePath, queryPath, resourcePath, route } from './lib/routes.js';
@@ -71,6 +71,7 @@
   import { day } from '@datahub/ui/foundations/when.js';
   import QueryFlags from './screens/QueryFlags.svelte';
   import ProjectSheet from './screens/ProjectSheet.svelte';
+  import AllProjects from './screens/AllProjects.svelte';
   import ProjectPage from './screens/ProjectPage.svelte';
   import QueryPanel from './screens/QueryPanel.svelte';
   import QuickWindow from './screens/QuickWindow.svelte';
@@ -403,6 +404,17 @@
   async function refreshQueries(): Promise<void> {
     if (openQuery) readRuns(openQuery);
     queriesVersion += 1;
+  }
+  /** Grows when the User asks to read the queries again: the page of a Project open then reads itself again too. */
+  let refreshed = $state(0);
+  /**
+   * The User reads the queries again, with ↻ in the panel or the quick window (DEC-UX-163, DEC-UX-254): the panel, and
+   * the Projects too, their row and the page of one, as Claude may have made or moved queries in them meanwhile.
+   */
+  function refreshAll(): void {
+    void refreshQueries();
+    refreshProjects();
+    refreshed += 1;
   }
   // Query opens on the last query of the User, or on a new one when they have none; previews, Lenses and hidden queries do not count (DEC-UX-137).
   $effect(() => {
@@ -873,6 +885,8 @@
                     ? (queryName?.id === page.id ? queryName.name : 'Query')
                     : page.kind === 'project'
                       ? (projectList?.find((one) => one.id === page.id)?.name ?? 'Query')
+                    : page.kind === 'projects'
+                      ? t('projects.title')
                     : page.kind === 'newLens'
                       ? t('lens.make.title')
                       : page.kind === 'lens'
@@ -913,6 +927,7 @@
       page.kind === 'newQuery' ||
       page.kind === 'query' ||
       page.kind === 'project' ||
+      page.kind === 'projects' ||
       page.kind === 'newLens' ||
       page.kind === 'lens' ||
       page.kind === 'editLens' ||
@@ -990,6 +1005,15 @@
   let projectSheet = $state<{ mode: 'add' | 'move' | 'new'; query: { id: string; name: string } | null } | null>(null);
   function refreshProjects(): void {
     projectsVersion += 1;
+  }
+  /** Archives a Project out of the panel of the User, from its hover there (DEC-UX-354, DEC-UX-355). */
+  async function archiveProject(project: ProjectItem): Promise<void> {
+    try {
+      await projectsClient.archive(project.id);
+    } catch (error) {
+      console.error('The project could not be archived', error);
+    }
+    refreshProjects();
   }
   $effect(() => {
     if (status.kind !== 'signedIn' || !mayQuery(permissions)) return;
@@ -1175,7 +1199,7 @@
     }
     // On the screens of Query, the queries read again, as ↻ in the head of its panel does (DEC-UX-254, DEC-UX-163).
     if (section?.id === 'query') {
-      rows.push({ key: 'refresh-queries', group: 'commands', icon: 'arrows-clockwise', title: t('quick.query.refresh'), meta: t('quick.query.refresh.meta'), kind: command, words: t('quick.query.refresh.words'), does: 'do', run: () => void refreshQueries() });
+      rows.push({ key: 'refresh-queries', group: 'commands', icon: 'arrows-clockwise', title: t('quick.query.refresh'), meta: t('quick.query.refresh.meta'), kind: command, words: t('quick.query.refresh.words'), does: 'do', run: refreshAll });
     }
     // On a query of the row, the next and the previous one, round the row (DEC-UX-241).
     const open = (item: (typeof rowItems)[number]) => router.go(item.locked && working ? projectPath(working) : queryPath(item.id));
@@ -1196,9 +1220,14 @@
     if (section?.id === 'query' && can(permissions, 'queries.make')) {
       rows.push({ key: 'project:new', group: 'commands', icon: 'plus', title: t('row.newProject'), kind: command, words: t('quick.project.words'), does: 'do', run: () => (projectSheet = { mode: 'new', query: null }) });
     }
-    // Each Project is a place to go to, after the queries of the row (DEC-UX-288).
+    // All projects, the archived ones too, on every screen of Query (DEC-UX-354).
+    if (section?.id === 'query' && (projectList?.length ?? 0) > 0) {
+      rows.push({ key: 'projects:all', group: 'commands', icon: 'archive', title: t('quick.projects.all'), meta: t('quick.projects.all.meta'), kind: command, words: t('quick.projects.all.words'), does: 'go', run: () => router.go(ALL_PROJECTS) });
+    }
+    // Each Project is a place to go to, after the queries of the row (DEC-UX-288); an archived one says so.
     for (const one of projectList ?? []) {
-      rows.push({ key: `projectPage:${one.id}`, group: 'projects', icon: 'folders-fill', title: one.name, meta: t('row.queries', { count: one.queries }), words: one.description, kind: 'Project', does: 'open', run: () => router.go(projectPath(one.id)) });
+      const meta = one.archivedAt ? `${t('row.queries', { count: one.queries })} · ${t('query.projects.archivedMark')}` : t('row.queries', { count: one.queries });
+      rows.push({ key: `projectPage:${one.id}`, group: 'projects', icon: 'folders-fill', title: one.name, meta, words: one.description, kind: 'Project', does: 'open', run: () => router.go(projectPath(one.id)) });
     }
     for (const collection of collections ?? []) {
       rows.push({ key: `collection:${collection.id}`, group: 'collections', icon: 'stack', title: collection.name, meta: t('quick.collection.meta', { count: collection.resources.filter((item) => !item.withdrawn).length }), kind: 'Collection', does: 'open', run: () => router.go(collectionPath(collection.id)) });
@@ -1266,7 +1295,7 @@
       : suggestedLevels({ dataAdmin: false, owner: false }),
   );
   /** A page of Query, which a User who may neither make queries nor Preview does not have (FR-PL-14). */
-  const queryPage = $derived(page.kind === 'newQuery' || page.kind === 'query' || page.kind === 'project' || page.kind === 'newLens' || (page.kind === 'start' && page.section.id === 'query'));
+  const queryPage = $derived(page.kind === 'newQuery' || page.kind === 'query' || page.kind === 'project' || page.kind === 'projects' || page.kind === 'newLens' || (page.kind === 'start' && page.section.id === 'query'));
   /** The kinds of Message the User may write (`messages.write`, DEC-PL-04). */
   const writes = $derived.by(() => {
     const kinds = permissions['messages.write'].values.kinds;
@@ -1458,6 +1487,7 @@
         {@const projectId = page.id}
         <ProjectPage
           id={projectId}
+          version={refreshed}
           projects={projectsClient}
           {identity}
           me={{ id: signedIn.me.sub, name: signedIn.me.name }}
@@ -1470,6 +1500,16 @@
           go={(path) => router.go(path)}
         />
       {/key}
+    {:else if page.kind === 'projects'}
+      <!-- All projects: every Project the User is in, the archived ones too (DEC-UX-354). -->
+      <AllProjects
+        list={projectList}
+        projects={projectsClient}
+        me={signedIn.me.sub}
+        onchanged={refreshProjects}
+        onnewproject={can(permissions, 'queries.make') ? () => (projectSheet = { mode: 'new', query: null }) : undefined}
+        go={(path) => router.go(path)}
+      />
     {:else if page.kind === 'newLens'}
       {#key page.query}
         <LensNew
@@ -1902,6 +1942,7 @@
       currentProject={page.kind === 'project' ? page.id : undefined}
       loadProject={(id) => projectsClient.get(id)}
       onnewproject={can(permissions, 'queries.make') ? () => (projectSheet = { mode: 'new', query: null }) : undefined}
+      onarchive={archiveProject}
     />
   {:else if section?.id === 'eda' && status.kind === 'signedIn' && mayExplore}
     <EdaPanel list={edas} {collections} current={page.kind === 'eda' ? page.id : undefined} />
@@ -1911,8 +1952,8 @@
 {/snippet}
 
 {#snippet newQuery()}
-  <!-- Reads the queries again, such as those Claude made meanwhile (DEC-UX-163). -->
-  <IconButton icon="arrows-clockwise" label={t('query.refresh')} onclick={() => refreshQueries()} />
+  <!-- Reads the queries again, such as those Claude made meanwhile, and the Projects with them (DEC-UX-163). -->
+  <IconButton icon="arrows-clockwise" label={t('query.refresh')} onclick={refreshAll} />
   <IconButton icon="plus-circle-fill" label={t('query.new')} href={NEW_QUERY} />
 {/snippet}
 

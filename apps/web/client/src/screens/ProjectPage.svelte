@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { tick } from 'svelte';
+  import { tick, untrack } from 'svelte';
   import Breadcrumb from '@datahub/ui/components/Breadcrumb.svelte';
   import InPlaceHead from '@datahub/ui/components/InPlaceHead.svelte';
   import Callout from '@datahub/ui/containers/Callout.svelte';
@@ -42,13 +42,17 @@
    *   see, never its SQL (OP-UX-97);
    * - who is in it, each with who added them and how many of its queries they made, marked "cannot run queries" when
    *   their Permission group does not let them (OP-UX-98); Leave for oneself and × for the others;
-   * - its Danger zone (DEC-UX-176): Leave it, and Delete it, in a sheet with an optional reason (OP-UX-100).
+   * - in its head, after Share and New query, two buttons with only an icon (DEC-UX-357): Archive, out of the panel of
+   *   the User and nobody else's (DEC-UX-354, DEC-UX-355), or Back in your panel once archived, which its page then says
+   *   on top (DEC-UX-356); and the bin, which opens its Danger zone in a sheet: Leave it, and Delete it with an optional
+   *   reason (DEC-UX-176, OP-UX-100). Leave next to one's name opens the same sheet.
    * A User whose Permission group does not let them make queries reads it all, and changes neither its queries nor
    * their order. A Project just made says how to add a query; a deleted one says by whom, when and why. The quick
    * window holds every command of the page (DEC-UX-288).
    */
   let {
     id,
+    version = 0,
     projects,
     identity,
     me,
@@ -58,6 +62,8 @@
     go,
   }: {
     id: string;
+    /** Grows when the User reads the queries again (DEC-UX-163): the page reads the Project again, as it stands now. */
+    version?: number;
     projects: Projects;
     identity: { people(q: string): Promise<Person[]>; peopleByIds(ids: readonly string[]): Promise<Person[]> };
     me: { id: string; name: string };
@@ -79,7 +85,9 @@
   /** What identity knows of who is in it, by their ID. */
   let people: ReadonlyMap<string, Person> = $state(new Map());
   let sharing = $state(false);
-  let deleting = $state(false);
+  /** The sheet of its Danger zone, from the bin in its head: Leave it, and Delete it (DEC-UX-357). */
+  let dangering = $state(false);
+  let archiving = $state(false);
   let reason = $state('');
   let busy = $state(false);
   let problem = $state('');
@@ -91,8 +99,7 @@
   let over: number | null = $state(null);
   let head: HTMLElement | undefined = $state();
   let list: HTMLElement | undefined = $state();
-  let leaveButton: HTMLElement | undefined = $state();
-  let deleteButton: HTMLElement | undefined = $state();
+  let deleteReason: HTMLTextAreaElement | undefined = $state();
 
   async function load(): Promise<void> {
     const wanted = id;
@@ -119,7 +126,14 @@
 
   $effect(() => {
     void id;
-    [page, removed, sharing, deleting, problem] = [undefined, null, false, false, ''];
+    [page, removed, sharing, dangering, problem] = [undefined, null, false, false, ''];
+    void load();
+  });
+  // Read again on ↻ or the quick window, keeping what is open on the page, such as Share.
+  let loaded = untrack(() => version);
+  $effect(() => {
+    if (version === loaded) return;
+    loaded = version;
     void load();
   });
 
@@ -241,13 +255,37 @@
     problem = '';
     try {
       await projects.remove(project.id, reason.trim() || undefined);
-      [deleting, reason] = [false, ''];
+      [dangering, reason] = [false, ''];
       await changed();
     } catch (error) {
       console.error('The Project could not be deleted', error);
       problem = t('project.delete.failed');
     }
     busy = false;
+  }
+
+  /** Archives it for the User alone, or puts it back in their panel, at once and without asking (DEC-UX-354, DEC-UX-355). */
+  async function archive(archived: boolean): Promise<void> {
+    if (!project || archiving) return;
+    archiving = true;
+    problem = '';
+    try {
+      if (archived) await projects.archive(project.id);
+      else await projects.unarchive(project.id);
+    } catch (error) {
+      console.error('The Project could not be archived or put back', error);
+      problem = t('project.failed');
+    }
+    archiving = false;
+    await changed();
+  }
+
+  /** The sheet of its Danger zone; from the quick window, with the focus on what was asked. */
+  async function openDanger(focus?: 'delete'): Promise<void> {
+    dangering = true;
+    if (focus !== 'delete') return;
+    await tick();
+    deleteReason?.focus();
   }
 
   async function newQuery(): Promise<void> {
@@ -271,11 +309,6 @@
   /** Who is told when it is deleted: the others, by name, or how many. */
   const toldNames = $derived(others.length <= 3 ? others.map((member) => member.name).join(', ') : t('project.delete.told.many', { count: others.length }));
 
-  function focusOn(element: HTMLElement | undefined): void {
-    element?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
-    element?.focus();
-  }
-
   // The quick window holds every command of the page (FR-SR-69, DEC-UX-288).
   useScreenCommands(() => {
     const shown = project;
@@ -288,8 +321,13 @@
     if (canMake && shown.queries.length > 1) {
       rows.push(command('project:order', 'dots-six-vertical', t('project.quick.order'), () => list?.querySelector<HTMLElement>('[data-handle]')?.focus(), { meta: t('project.quick.order.meta'), words: t('project.quick.order.words') }));
     }
-    rows.push(command('project:leave', 'sign-out-fill', t('project.quick.leave', { name }), () => focusOn(leaveButton), { meta: t('project.quick.leave.meta'), words: t('project.quick.leave.words') }));
-    rows.push(command('project:delete', 'trash', t('project.quick.delete', { name }), () => focusOn(deleteButton), { meta: t('project.quick.delete.meta'), words: t('project.quick.delete.words') }));
+    rows.push(
+      shown.archivedAt
+        ? command('project:unarchive', 'arrow-bend-up-left-fill', t('project.quick.unarchive', { name }), () => void archive(false), { meta: t('project.quick.unarchive.meta'), words: t('project.quick.archive.words') })
+        : command('project:archive', 'archive', t('project.quick.archive', { name }), () => void archive(true), { meta: t('project.quick.archive.meta'), words: t('project.quick.archive.words') }),
+    );
+    rows.push(command('project:leave', 'sign-out-fill', t('project.quick.leave', { name }), () => void openDanger(), { meta: t('project.quick.leave.meta'), words: t('project.quick.leave.words') }));
+    rows.push(command('project:delete', 'trash', t('project.quick.delete', { name }), () => void openDanger('delete'), { meta: t('project.quick.delete.meta'), words: t('project.quick.delete.words') }));
     return { group: t('project.quick.group'), where: `Query · ${name}`, rows };
   });
 </script>
@@ -328,8 +366,23 @@
       {#if canMake}
         <Button variant="outline" title={t('project.newQuery.hint', { name: shown.name })} disabled={making} onclick={newQuery}><Icon name="plus" />{t('project.newQuery')}</Button>
       {/if}
+      <!-- Two buttons with only an icon (DEC-UX-357): Archive, out of your panel only (DEC-UX-354, DEC-UX-355); the bin, its Danger zone. -->
+      {#if shown.archivedAt}
+        <Button variant="outline" label={t('project.unarchive')} title={t('project.unarchive')} disabled={archiving} onclick={() => archive(false)}><Icon name="arrow-bend-up-left-fill" /></Button>
+      {:else}
+        <Button variant="outline" label={t('project.archive', { name: shown.name })} title={t('project.archive.hint')} disabled={archiving} onclick={() => archive(true)}><Icon name="archive" /></Button>
+      {/if}
+      <Button variant="outline" label={t('project.danger.open', { name: shown.name })} title={t('project.danger.hint')} onclick={() => openDanger()}><Icon name="trash" /></Button>
     </div>
   </div>
+  {#if shown.archivedAt}
+    <!-- Archived by the User: active while it is open, out of their panel after (DEC-UX-356). -->
+    <Callout icon="archive-fill">
+      <b>{t('project.archived.title', { day: day(shown.archivedAt, language) })}</b>
+      {others.length === 0 ? t('project.archived.textAlone') : t('project.archived.text')}
+      {#snippet action()}<Button variant="outline" disabled={archiving} onclick={() => archive(false)}><Icon name="arrow-bend-up-left-fill" />{t('project.unarchive')}</Button>{/snippet}
+    </Callout>
+  {/if}
   <div class="status-row">
     <Chip><Icon name="table" />{shown.queries.length === 0 ? t('project.fact.none') : t('project.fact.queries', { count: shown.queries.length })}</Chip>
     <Chip><Icon name="users" />{shown.members.length === 1 ? t('project.fact.alone') : t('project.fact.people', { count: shown.members.length })}</Chip>
@@ -477,7 +530,7 @@
           {#if person?.canQuery === false}<span class="meta note warn">{t('project.cannotRun.text', { group: person.permissionGroup ?? '' })}</span>{/if}
         </span>
         {#if self}
-          <button type="button" class="text-link" onclick={() => focusOn(leaveButton)}>{t('project.member.leave')}</button>
+          <button type="button" class="text-link" onclick={() => openDanger()}>{t('project.member.leave')}</button>
         {:else}
           <IconButton icon="x" label={t('project.member.out', { name: member.name, project: shown.name })} onclick={() => takeOut(member)} />
         {/if}
@@ -485,34 +538,6 @@
     {/each}
     {#if shown.members.length === 1}<p class="meta alone">{t('project.alone')}</p>{/if}
   </div>
-
-  <!-- Its Danger zone (DEC-UX-176): Leave it, as the others keep it; and Delete it, for everyone (OP-UX-100). -->
-  <div class="section-head"><h2>{t('project.danger')}</h2></div>
-  <section class="danger">
-    <div class="danger-head">
-      <Icon name="sign-out-fill" />
-      <div><h3>{t('project.leave.title')}</h3><p>{others.length === 0 ? t('project.leave.textLast') : t('project.leave.text')}</p></div>
-    </div>
-    <div class="danger-foot">
-      <span class="meta">{t('project.leave.foot')}</span>
-      <span bind:this={leaveButton} tabindex="-1" class="focus"><Button variant="outline" disabled={busy} onclick={leave}>{t('project.leave.button', { name: shown.name })}</Button></span>
-    </div>
-  </section>
-  <section class="danger">
-    <div class="danger-head">
-      <Icon name="trash-fill" />
-      <div><h3>{t('project.delete.title')}</h3><p>{t('project.delete.text')}</p></div>
-    </div>
-    <div class="does">
-      <p class="line"><Icon name="folders-fill" /><span><b>{t('project.delete.gone.title', { count: shown.members.length })}</b> {t('project.delete.gone.text')}</span></p>
-      <p class="line"><Icon name="table" /><span><b>{t('project.delete.stay.title', { count: shown.queries.length })}</b> {t('project.delete.stay.text')}</span></p>
-      {#if others.length > 0}<p class="line"><Icon name="chat-circle-text-fill" /><span><b>{t('project.delete.told.title')}</b> {t('project.delete.told.text', { names: toldNames })}</span></p>{/if}
-    </div>
-    <div class="danger-foot">
-      <span class="meta">{t('project.delete.foot')}</span>
-      <span bind:this={deleteButton} tabindex="-1" class="focus"><Button variant="danger" onclick={() => (deleting = true)}><Icon name="trash-fill" />{t('project.delete.button')}</Button></span>
-    </div>
-  </section>
 
   {#if sharing}
     <ProjectShare
@@ -524,28 +549,50 @@
       onchanged={changed}
       onleave={() => {
         sharing = false;
-        focusOn(leaveButton);
+        void openDanger();
       }}
       onclose={() => (sharing = false)}
     />
   {/if}
-  {#if deleting}
-    <Sheet title={t('project.delete.sheet')} roomy onclose={() => (deleting = false)}>
+  {#if dangering}
+    <!-- Its Danger zone, in a sheet from the bin (DEC-UX-357): Leave it, as the others keep it; and Delete it, for everyone (OP-UX-100). -->
+    <Sheet title={t('project.danger')} roomy onclose={() => (dangering = false)}>
       {#snippet top()}<p class="meta over">{shown.name}</p>{/snippet}
-      <p class="when">{t('project.delete.when')}</p>
-      <div class="does">
-        <p class="line"><Icon name="folders-fill" /><span><b>{t('project.delete.gone.title', { count: shown.members.length })}</b> {t('project.delete.gone.sheet')}</span></p>
-        <p class="line"><Icon name="table" /><span><b>{t('project.delete.stay.title', { count: shown.queries.length })}</b> {#if madeByMe > 0}{t('project.delete.mine', { count: madeByMe })}{' '}{/if}{t('project.delete.stay.sheet')}</span></p>
-        {#if others.length > 0}<p class="line"><Icon name="chat-circle-text-fill" /><span><b>{t('project.delete.told.sheet', { names: toldNames })}</b></span></p>{/if}
-      </div>
-      <div class="why">
-        <Field label={t('project.delete.reason')}><textarea {...NO_PASSWORD_MANAGER} bind:value={reason} rows="3" maxlength="500" placeholder={t('project.delete.reason.placeholder')}></textarea></Field>
-      </div>
+      {#if !shown.archivedAt}
+        <p class="when">{t('project.danger.archive')} <button type="button" class="text-link" disabled={archiving} onclick={() => { dangering = false; void archive(true); }}>{t('project.danger.archive.link')}</button>{t('project.danger.archive.after')}</p>
+      {/if}
+      <section class="danger">
+        <div class="danger-head">
+          <Icon name="sign-out-fill" />
+          <div><h3>{t('project.leave.title')}</h3><p>{others.length === 0 ? t('project.leave.textLast') : t('project.leave.text')}</p></div>
+        </div>
+        <div class="danger-foot">
+          <span class="meta">{t('project.leave.foot')}</span>
+          <Button variant="quiet" disabled={busy} onclick={leave}><Icon name="sign-out-fill" />{t('project.leave.button', { name: shown.name })}</Button>
+        </div>
+      </section>
+      <section class="danger">
+        <div class="danger-head">
+          <Icon name="trash-fill" />
+          <div><h3>{t('project.delete.title')}</h3><p>{t('project.delete.text')}</p></div>
+        </div>
+        <div class="does">
+          <p class="line"><Icon name="folders-fill" /><span><b>{t('project.delete.gone.title', { count: shown.members.length })}</b> {t('project.delete.gone.sheet')}</span></p>
+          <p class="line"><Icon name="table" /><span><b>{t('project.delete.stay.title', { count: shown.queries.length })}</b> {#if madeByMe > 0}{t('project.delete.mine', { count: madeByMe })}{' '}{/if}{t('project.delete.stay.sheet')}</span></p>
+          {#if others.length > 0}<p class="line"><Icon name="chat-circle-text-fill" /><span><b>{t('project.delete.told.sheet', { names: toldNames })}</b></span></p>{/if}
+        </div>
+        <div class="why">
+          <Field label={t('project.delete.reason')}><textarea {...NO_PASSWORD_MANAGER} bind:this={deleteReason} bind:value={reason} rows="3" maxlength="500" placeholder={t('project.delete.reason.placeholder')}></textarea></Field>
+        </div>
+        <div class="danger-foot">
+          <span class="meta">{t('project.delete.foot')}</span>
+          <Button variant="danger" disabled={busy} onclick={remove_}><Icon name="trash-fill" />{t('project.delete.forGood')}</Button>
+        </div>
+      </section>
       {#if problem}<p class="problem" role="alert">{problem}</p>{/if}
       {#snippet foot()}
-        <span class="meta kept">{t('project.delete.foot')}</span>
-        <Button variant="quiet" disabled={busy} onclick={() => (deleting = false)}>{t('project.delete.keep')}</Button>
-        <Button variant="danger" disabled={busy} onclick={remove_}><Icon name="trash-fill" />{t('project.delete.forGood')}</Button>
+        <span class="kept"></span>
+        <Button variant="quiet" disabled={busy} onclick={() => (dangering = false)}>{t('project.danger.close')}</Button>
       {/snippet}
     </Sheet>
   {/if}
@@ -629,13 +676,11 @@
   .danger-head p { margin: 4px 0 0; font-size: var(--text-small); line-height: 1.55; color: var(--text-secondary); max-width: 720px; }
   .danger-foot { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
   .danger-foot .meta { flex: 1; }
-  .focus { display: inline-flex; border-radius: var(--radius-sm); }
-  .focus:focus-visible { outline: 2px solid var(--text-secondary); outline-offset: 2px; }
   .does { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--tint-hover); }
   .line { display: flex; gap: 10px; align-items: flex-start; margin: 0; padding: 4px 0; font-size: var(--text-small); line-height: 1.55; color: var(--text-secondary); }
   .line > :global(.icon) { font-size: 16px; margin-top: 2px; flex: none; }
   .over { margin: 0 0 2px; }
-  .when { margin: 12px 0 0; font-size: var(--text-small); line-height: 1.55; color: var(--text-secondary); }
+  .when { margin: 12px 0 14px; font-size: var(--text-small); line-height: 1.55; color: var(--text-secondary); }
   .why { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--tint-hover); }
   textarea { width: 100%; box-sizing: border-box; font: var(--text-small) var(--font-family); line-height: 1.5; color: var(--text-primary); background: var(--surface-solid); border: 1px solid var(--tint-active); border-radius: var(--radius-field); padding: 8px 10px; resize: vertical; }
   textarea:focus { outline: 2px solid var(--text-secondary); outline-offset: 1px; }

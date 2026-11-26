@@ -1725,7 +1725,9 @@
   .why-title { display: block; margin-bottom: 4px; font-weight: var(--weight-medium); color: var(--text-primary); }
   .why-list { display: grid; gap: 4px; margin: 6px 0 8px; }
   .why-item { display: flex; align-items: center; gap: 6px; color: var(--text-primary); }
-  .why-item .meta { margin-left: auto; }
+  /* The pop-out is itself the hover, so a table name shows whole: it wraps anywhere inside the box rather than run out of it, and its layer stays in view. */
+  .why-item .mono { min-width: 0; overflow-wrap: anywhere; }
+  .why-item .meta { margin-left: auto; flex: none; white-space: nowrap; }
   /* The page fills the height of the screen: the query and the result split it, each scrolling on its own (DEC-UX-144). */
   .page { height: 100%; min-height: 0; display: flex; flex-direction: column; }
   .head { flex: none; }
