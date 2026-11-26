@@ -647,6 +647,25 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     expect(fake.runs.at(-1)?.options.maximumBytesBilled).toBe(5_280_000_000);
   });
 
+  it('lets a Data Admin approve a run above 1 GB themselves, without a Request, billed a little above its Pre-flight (DEC-PL-12)', async () => {
+    const made = await call(dataTeam, 'POST', '/queries', { name: 'Five years of weekly leads', resources: [WEEKLY.id] });
+    const big = made.json().query.id as string;
+    const huge = `${weekly} -- reads 4800000000`;
+    const checked = await call(dataTeam, 'POST', `/queries/${big}/preflight`, { sql: huge });
+    expect(checked.json().preflight).toMatchObject({ runnable: true, range: 'approve', bytes: 4_800_000_000, thresholds: { request: 1_000_000_000, above: 'approve' } });
+    // Still an approval: the warning comes first.
+    expect((await call(dataTeam, 'POST', `/queries/${big}/runs`, { sql: huge })).json()).toMatchObject({ error: 'approval_needed', preflight: { range: 'approve' } });
+    const ran = await call(dataTeam, 'POST', `/queries/${big}/runs`, { sql: huge, approve: true });
+    expect(ran.statusCode).toBe(201);
+    expect(ran.json().run).toMatchObject({ approved: true });
+    expect(fake.runs.at(-1)?.options.maximumBytesBilled).toBe(5_280_000_000);
+    // Nothing goes to the Data Team.
+    expect((await call(dataTeam, 'POST', `/queries/${big}/requests`, { sql: huge, text: 'Please' })).json()).toMatchObject({ error: 'not_needed' });
+    // Gone again, so that the tests after count as before.
+    await sql`delete from runs where query_id = ${big}`.execute(database.db);
+    await sql`delete from queries where id = ${big}`.execute(database.db);
+  });
+
   it('starts a new query from another, with its SQL and Parameters, after its last run (DEC-UX-73)', async () => {
     const made = await call(an, 'POST', '/queries', { name: 'Leads per source, weekly only', resources: [WEEKLY.id], sql: withParameters, parameters: [dateFrom, channel], startedFrom: id });
     expect(made.statusCode).toBe(201);

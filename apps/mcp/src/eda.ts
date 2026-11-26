@@ -87,6 +87,8 @@ export function edaTools({ server, hub, user, permits }: Context): void {
   const ranges = rangesOf(user.permissions);
   const free = bytes(ranges.approve);
   const large = bytes(ranges.request);
+  // A User who approves any run themselves runs an EDA-Probe of any size once they approve it (DEC-PL-12).
+  const unlimited = ranges.above === 'approve';
   // The values of the data reach Claude only as the Permission group of the User says (FR-CL-28).
   const values = permits.results === 'claude';
 
@@ -363,7 +365,7 @@ export function edaTools({ server, hub, user, permits }: Context): void {
         },
       };
       return said(
-        `${name} reads ${bytes(ran.bytes)}, more than the ${free} Data Hub runs freely; up to ${large} the User may approve it. Only the User approves it, in the window; you cannot. Set on fewer fields it reads less.`,
+        `${name} reads ${bytes(ran.bytes)}, more than the ${free} Data Hub runs freely; ${unlimited ? 'the User may approve it, without a limit' : `up to ${large} the User may approve it`}. Only the User approves it, in the window; you cannot. Set on fewer fields it reads less.`,
         shown,
       );
     }
@@ -400,7 +402,7 @@ export function edaTools({ server, hub, user, permits }: Context): void {
     'run_eda_probe',
     {
       title: 'Run an EDA-Probe',
-      description: `Runs an EDA-Probe Data Hub runs on a Resource that has an EDA, as the User, and shows its conclusion and its result per field in the conversation, with the buttons of the User's reading; it is added to the EDA when it was not. Up to ${free} it runs; above, up to ${large}, only the User approves it, in the window; above that it does not run. Run it when the User asks, such as after a fix; the reading of a result is always theirs, never yours.`,
+      description: `Runs an EDA-Probe Data Hub runs on a Resource that has an EDA, as the User, and shows its conclusion and its result per field in the conversation, with the buttons of the User's reading; it is added to the EDA when it was not. Up to ${free} it runs; above, ${unlimited ? 'without a limit' : `up to ${large}`}, only the User approves it, in the window${unlimited ? '' : '; above that it does not run'}. Run it when the User asks, such as after a fix; the reading of a result is always theirs, never yours.`,
       inputSchema: { id, probe, fields, params },
       annotations: { ...WRITE, idempotentHint: false },
       _meta: SHOWS,

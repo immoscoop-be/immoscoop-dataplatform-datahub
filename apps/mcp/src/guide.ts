@@ -127,7 +127,9 @@ export function mayDo(permissions: Permissions, permits: Permits): string[] {
       can(permissions, 'queries.outside') &&
       'Query tables outside Data Hub: every table Data Hub knows from the dbt projects it follows, also without Resources; such a query never becomes a Lens',
     (can(permissions, 'queries.make') || can(permissions, 'resources.preview')) &&
-      `A run reads freely up to ${bytes(ranges.approve)}, up to ${bytes(ranges.request)} once you approve it, and above that ${ranges.above === 'request' ? 'once the Data Team accepts a Request' : 'not at all'}`,
+      ranges.above === 'approve'
+        ? `A run reads freely up to ${bytes(ranges.approve)}, and above that once you approve it, without a limit; above ${bytes(ranges.request)} with a warning first`
+        : `A run reads freely up to ${bytes(ranges.approve)}, up to ${bytes(ranges.request)} once you approve it, and above that ${ranges.above === 'request' ? 'once the Data Team accepts a Request' : 'not at all'}`,
     can(permissions, 'queries.seeOthers') && where('queries.seeOthers', 'See the queries on the Resources of your Owner Units, with who ran them', 'See every query, with who ran it'),
     can(permissions, 'requests.decide') && 'Decide on the Requests to run a large query, Preview or Lens',
     'Find and run the Lenses you see',
@@ -172,7 +174,7 @@ export function howToUse(user: Member, permits: Permits, home: string): string {
     permits.query && '- "Set up a Project for the review of the credit leads." Claude makes it and keeps the queries of the analysis in it, in the order you want; you share it with colleagues, or delete it, in Data Hub.',
     !permits.query && '- "Is there a Lens on the share of partner leads?" Claude finds the Lenses that answer it and runs one for you, with the values of your question.',
     (permits.query || permits.preview) &&
-      `- Up to ${bytes(ranges.approve)} a run goes at once. Above that, you approve it yourself in the window${ranges.above === 'request' ? `; above ${bytes(ranges.request)} you can send a Request to the Data Team` : `, up to ${bytes(ranges.request)}`}.`,
+      `- Up to ${bytes(ranges.approve)} a run goes at once. Above that, you approve it yourself in the window${ranges.above === 'request' ? `; above ${bytes(ranges.request)} you can send a Request to the Data Team` : ranges.above === 'approve' ? `, without a limit; above ${bytes(ranges.request)} it warns you first` : `, up to ${bytes(ranges.request)}`}.`,
     (permits.query || permits.preview) && permits.results === 'card' && '- Your Permission group shows results in a card only: you see the rows in the window, Claude does not read them. Claude tells you its columns, how many rows and what it read, and can help you raise a Signal.',
     (permits.query || permits.preview) && permits.results === 'none' && '- Your Permission group does not show results in Claude: Claude gives you the link to open them in Data Hub.',
   ];
