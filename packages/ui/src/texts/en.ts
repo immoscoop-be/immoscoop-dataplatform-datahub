@@ -65,6 +65,7 @@ export default {
   'grid.row': 'Row',
   'grid.menu': 'Column {name}',
   'grid.resize': 'Width of {name}',
+  'grid.rowResize': 'Make row {number} taller or shorter: drag its lower edge, double-click puts it back on one line',
   'grid.sortAscending': 'Sort this page ascending',
   'grid.sortDescending': 'Sort this page descending',
   'grid.fit': 'Fit the column',
