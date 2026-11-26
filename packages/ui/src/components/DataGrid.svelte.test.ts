@@ -43,4 +43,25 @@ describe('the data grid of a result (DEC-UX-72)', () => {
     await fireEvent.keyDown(screen.getByRole('grid'), { key: 'c', ctrlKey: true });
     expect(writeText).toHaveBeenCalledWith('app');
   });
+
+  it('drags a row taller, so that its values wrap, and puts it back on one line with a double click (DEC-UX-352)', async () => {
+    const long = '{"floorNumber":"0","propertyTypes":"appartement","offerType":"te-koop","priceMax":350000}';
+    render(DataGrid, { columns, rows: [[long, '1'], ['app', '84']], label: 'Result' });
+    const edge = screen.getByRole('separator', { name: /Rij 1 hoger of lager maken/ });
+    const row = edge.closest('tr') as HTMLTableRowElement;
+    expect(row.classList.contains('tall')).toBe(false);
+    edge.setPointerCapture = () => {};
+    await fireEvent.pointerDown(edge, { clientY: 100, pointerId: 1 });
+    await fireEvent.pointerMove(edge, { clientY: 220, pointerId: 1 });
+    await fireEvent.pointerUp(edge, { clientY: 220, pointerId: 1 });
+    expect(row.classList.contains('tall')).toBe(true);
+    expect(row.style.height).toMatch(/px$/);
+    // Its long value is whole, in a block that wraps; the other row stays on one line.
+    expect(within(row).getByText(long).classList.contains('value')).toBe(true);
+    expect((screen.getByRole('separator', { name: /Rij 2/ }).closest('tr') as HTMLElement).classList.contains('tall')).toBe(false);
+
+    await fireEvent.dblClick(edge);
+    expect(row.classList.contains('tall')).toBe(false);
+    expect(row.style.height).toBe('');
+  });
 });
