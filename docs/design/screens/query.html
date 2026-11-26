@@ -159,7 +159,7 @@
    <div class="panel-label with-add"><span>Projects</span><button class="icon-btn" type="button" data-project-sheet="new" aria-label="New project" title="New project"><i class="ph ph-plus"></i></button></div>
    <div class="proj-entry open" data-proj="credit">
     <a class="list-item card proj-item" href="query-project.html" data-name="credit leads q4 leads per source name partner share per week weekly lead volume lead sources listings saved searches"><i class="ph-fill ph-folders kind-icon" role="img" aria-label="Project"></i><span><span class="item-title">Credit leads Q4</span><span class="meta">14 queries · with 3 colleagues</span></span><i class="ph-fill ph-flag flag-mark" role="img" aria-label="You work in it" title="You work in it: its queries are in the row on top"></i></a>
-    <button class="icon-btn q-unfold" aria-expanded="true" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
+    <button class="icon-btn proj-archive" type="button" aria-label="Archive it: out of your panel" title="Archive it: out of your panel, not out of anyone else\'s; All projects finds it again"><i class="ph ph-archive"></i></button><button class="icon-btn q-unfold" aria-expanded="true" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
     <div class="proj-queries" aria-label="Its queries">
      <a href="query.html" aria-current="page"><span class="kbd">1</span><span class="clip">Leads per source name</span></a>
      <a href="query.html"><span class="kbd">2</span><span class="clip">Partner share per week</span><i class="ph ph-circle-notch q-flag-spin" role="img" aria-label="Running"></i></a>
@@ -169,25 +169,27 @@
    </div>
    <div class="proj-entry" data-proj="partner">
     <a class="list-item card proj-item" href="query-project.html" data-name="partner review partner contracts"><i class="ph-fill ph-folders kind-icon" role="img" aria-label="Project"></i><span><span class="item-title">Partner review</span><span class="meta">4 queries · only you</span></span></a>
-    <button class="icon-btn q-unfold" aria-expanded="false" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
+    <button class="icon-btn proj-archive" type="button" aria-label="Archive it: out of your panel" title="Archive it: out of your panel, not out of anyone else\'s; All projects finds it again"><i class="ph ph-archive"></i></button><button class="icon-btn q-unfold" aria-expanded="false" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
     <div class="proj-queries" aria-label="Its queries"></div>
    </div>
    <div class="proj-entry" data-proj="listings">
     <a class="list-item card proj-item" href="query-project.html" data-name="listings audit listings price"><i class="ph-fill ph-folders kind-icon" role="img" aria-label="Project"></i><span><span class="item-title">Listings audit</span><span class="meta">6 queries · with 4 colleagues</span></span></a>
-    <button class="icon-btn q-unfold" aria-expanded="false" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
+    <button class="icon-btn proj-archive" type="button" aria-label="Archive it: out of your panel" title="Archive it: out of your panel, not out of anyone else\'s; All projects finds it again"><i class="ph ph-archive"></i></button><button class="icon-btn q-unfold" aria-expanded="false" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
     <div class="proj-queries" aria-label="Its queries"></div>
    </div>
    <div class="proj-entry more" data-proj="broker" hidden>
     <a class="list-item card proj-item" href="query-project.html" data-name="broker follow-up response time broker contacts"><i class="ph-fill ph-folders kind-icon" role="img" aria-label="Project"></i><span><span class="item-title">Broker follow-up</span><span class="meta">3 queries · with Lotte Dewulf</span></span></a>
-    <button class="icon-btn q-unfold" aria-expanded="false" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
+    <button class="icon-btn proj-archive" type="button" aria-label="Archive it: out of your panel" title="Archive it: out of your panel, not out of anyone else\'s; All projects finds it again"><i class="ph ph-archive"></i></button><button class="icon-btn q-unfold" aria-expanded="false" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
     <div class="proj-queries" aria-label="Its queries"></div>
    </div>
    <div class="proj-entry more" data-proj="search" hidden>
     <a class="list-item card proj-item" href="query-project.html" data-name="search behaviour saved searches"><i class="ph-fill ph-folders kind-icon" role="img" aria-label="Project"></i><span><span class="item-title">Search behaviour</span><span class="meta">2 queries · only you</span></span></a>
-    <button class="icon-btn q-unfold" aria-expanded="false" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
+    <button class="icon-btn proj-archive" type="button" aria-label="Archive it: out of your panel" title="Archive it: out of your panel, not out of anyone else\'s; All projects finds it again"><i class="ph ph-archive"></i></button><button class="icon-btn q-unfold" aria-expanded="false" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
     <div class="proj-queries" aria-label="Its queries"></div>
    </div>
    <button class="text-link proj-more" type="button"><span>Show all 5</span></button>
+   <!-- The Projects you archived are not in the panel; this quiet line leads to all of them (OP-UX-129) -->
+   <a class="proj-all" href="query-projects.html"><i class="ph ph-archive" aria-hidden="true"></i><span>All projects</span><span class="meta">2 archived</span></a>
   </div>
   <div class="panel-label" data-for="owner colleague">History</div>
   <div data-pane-group="scope" data-pane="yours">

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<!--
+  Screen: All projects, in Query (OP-UX-129, a proposal)
+  Every Project the User is in, the ones they archived too: archiving takes a Project out of their panel, and of
+  nobody else's (OP-UX-130); here it is found again. It opens from the quiet line "All projects · 2 archived" under the
+  Projects in the panel, and from the quick window.
+  - Its head: All projects, what archiving does, and New project.
+  - A search, and chips: In your panel, Archived, All (the first chip that has any, Archived when you come from the
+    count of archived ones).
+  - One row per Project: its name and what it is for, how many queries, who is in it, its last run, and at its end
+    Archive (an icon) or, for one you archived, "Back in your panel". An archived one is quieter, with when you archived it.
+  - A click on a Project opens its page, which makes it active, archived or not (OP-UX-131).
+  Requirements: none yet; archiving gets its own once its open points are decided.
+  Open points: OP-UX-128 to OP-UX-131.
+  Related screens: query-project.html (the page of a Project), query.html (the panel).
+  Rules: ../principles.md#projects  ·  Placeholder content only.
+-->
+<html lang="en" data-role="colleague">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Query — All projects</title>
+</head>
+<body>
+<div class="app panel-open">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <a class="nav-btn" href="collections-start.html" data-label="Collections" aria-label="Collections"><i class="ph-fill ph-stack"></i></a>
+  <button class="nav-btn active" data-label="Query" aria-label="Query" aria-current="page"><i class="ph-fill ph-terminal-window"></i><span class="flare top"></span><span class="flare bottom"></span></button>
+  <a class="nav-btn" href="#" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <a class="nav-btn nav-admin" href="admin-webhooks.html" data-label="Admin" aria-label="Admin, for the Data Team" data-for="datateam"><i class="ph-fill ph-toolbox"></i></a>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">MP</a>
+</nav>
+<aside class="panel" aria-label="Queries that ran">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:4px">
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Query</h1>
+   <button class="icon-btn" type="button" aria-label="Refresh the list of queries" title="Refresh the list of queries, such as those Claude made meanwhile (DEC-UX-163)"><i class="ph ph-arrows-clockwise"></i></button>
+   <a class="icon-btn" href="query-new.html" aria-label="New query"><i class="ph-fill ph-plus-circle"></i></a>
+   <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
+  </div>
+  <!-- Previews, the queries of Lenses and hidden queries are left out until they are ticked in the filter, which folds open
+       under the search; folded, one line says what it adds (DEC-UX-137, DEC-UX-150). ?filter=open shows it open. -->
+  <div class="q-search-row">
+   <label class="search card"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search projects and queries"></label>
+   <button class="icon-btn q-filter-toggle" aria-expanded="false" aria-controls="q-filter" aria-label="Filter: also show previews, Lenses or hidden queries" title="Filter"><i class="ph ph-sliders-horizontal"></i><span class="q-filter-count">1</span></button>
+  </div>
+  <form class="q-filter card" id="q-filter" hidden>
+   <fieldset data-for="datateam">
+    <legend>Whose queries</legend>
+    <label class="q-option"><input type="radio" name="whose" checked onchange="document.querySelector('[data-group=scope] [data-target=yours]').click()"><span class="q-option-text"><span>Yours</span><span class="meta">the queries you ran</span></span></label>
+    <label class="q-option"><input type="radio" name="whose" onchange="document.querySelector('[data-group=scope] [data-target=all]').click()"><span class="q-option-text"><span>All</span><span class="meta">everyone's, for the Data Team only</span></span></label>
+   </fieldset>
+   <fieldset>
+    <legend>Also show</legend>
+    <label class="q-option"><input type="checkbox" checked><span class="q-option-text"><span>Previews</span><span class="meta">of Resources, from their Preview tab</span></span><span class="count">6</span></label>
+    <label class="q-option"><input type="checkbox"><span class="q-option-text"><span>Lenses</span><span class="meta">your runs of a Lens</span></span><span class="count">2</span></label>
+    <label class="q-option"><input type="checkbox"><span class="q-option-text"><span>Hidden</span><span class="meta">queries you hid with the eye</span></span><span class="count">3</span></label>
+   </fieldset>
+   <div class="q-filter-foot"><button type="reset" class="text-link">Reset</button><span class="meta">Only your panel changes</span></div>
+  </form>
+  <p class="q-filter-on"><span>Also showing: Previews</span><button class="q-filter-x" aria-label="Stop showing Previews"><i class="ph ph-x"></i></button></p>
+  <div data-group="scope" hidden><button data-target="yours"></button><button data-target="all"></button></div>
+  <!-- The Projects, above the history (DEC-UX-285): each with how many queries it holds and who is in it; the one the
+       User has active comes first and stands out (DEC-UX-317). A click opens its page; the arrow unfolds its queries, with their keys.
+       The search looks through both: a Project whose name matches stays, one with a matching query unfolds to it. -->
+  <div class="proj-list" id="proj-list">
+   <div class="panel-label with-add"><span>Projects</span><button class="icon-btn" type="button" data-row-pop="newproj" aria-label="New project" title="New project"><i class="ph ph-plus"></i></button></div>
+   <div class="proj-entry open" data-proj="credit">
+    <a class="list-item card proj-item" href="query-project.html" data-name="credit leads q4 leads per source name partner share per week weekly lead volume lead sources listings saved searches"><i class="ph-fill ph-folders kind-icon" role="img" aria-label="Project"></i><span><span class="item-title">Credit leads Q4</span><span class="meta">14 queries · with 3 colleagues</span></span></a>
+    <button class="icon-btn proj-archive" type="button" aria-label="Archive it: out of your panel" title="Archive it: out of your panel, not out of anyone else\'s; All projects finds it again"><i class="ph ph-archive"></i></button><button class="icon-btn q-unfold" aria-expanded="true" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
+    <div class="proj-queries" aria-label="Its queries">
+     <a href="query.html"><span class="kbd">1</span><span class="clip">Leads per source name</span></a>
+     <a href="query.html"><span class="kbd">2</span><span class="clip">Partner share per week</span><i class="ph ph-circle-notch q-flag-spin" role="img" aria-label="Running"></i></a>
+     <a href="query.html"><span class="kbd">3</span><span class="clip">Listings per postal code, last 28 days</span></a>
+     <a href="query-project.html" class="text-link" style="color:var(--text-muted)"><span class="kbd"></span><span class="clip">All 14, on its page</span><i class="ph ph-arrow-right"></i></a>
+    </div>
+   </div>
+   <div class="proj-entry" data-proj="partner">
+    <a class="list-item card proj-item" href="query-project.html" data-name="partner review partner contracts"><i class="ph-fill ph-folders kind-icon" role="img" aria-label="Project"></i><span><span class="item-title">Partner review</span><span class="meta">4 queries · only you</span></span></a>
+    <button class="icon-btn proj-archive" type="button" aria-label="Archive it: out of your panel" title="Archive it: out of your panel, not out of anyone else\'s; All projects finds it again"><i class="ph ph-archive"></i></button><button class="icon-btn q-unfold" aria-expanded="false" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
+    <div class="proj-queries" aria-label="Its queries"></div>
+   </div>
+   <div class="proj-entry" data-proj="listings">
+    <a class="list-item card proj-item" href="query-project.html" data-name="listings audit listings price"><i class="ph-fill ph-folders kind-icon" role="img" aria-label="Project"></i><span><span class="item-title">Listings audit</span><span class="meta">6 queries · with 4 colleagues</span></span></a>
+    <button class="icon-btn proj-archive" type="button" aria-label="Archive it: out of your panel" title="Archive it: out of your panel, not out of anyone else\'s; All projects finds it again"><i class="ph ph-archive"></i></button><button class="icon-btn q-unfold" aria-expanded="false" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
+    <div class="proj-queries" aria-label="Its queries"></div>
+   </div>
+   <div class="proj-entry more" data-proj="broker" hidden>
+    <a class="list-item card proj-item" href="query-project.html" data-name="broker follow-up response time broker contacts"><i class="ph-fill ph-folders kind-icon" role="img" aria-label="Project"></i><span><span class="item-title">Broker follow-up</span><span class="meta">3 queries · with Lotte Dewulf</span></span></a>
+    <button class="icon-btn proj-archive" type="button" aria-label="Archive it: out of your panel" title="Archive it: out of your panel, not out of anyone else\'s; All projects finds it again"><i class="ph ph-archive"></i></button><button class="icon-btn q-unfold" aria-expanded="false" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
+    <div class="proj-queries" aria-label="Its queries"></div>
+   </div>
+   <div class="proj-entry more" data-proj="search" hidden>
+    <a class="list-item card proj-item" href="query-project.html" data-name="search behaviour saved searches"><i class="ph-fill ph-folders kind-icon" role="img" aria-label="Project"></i><span><span class="item-title">Search behaviour</span><span class="meta">2 queries · only you</span></span></a>
+    <button class="icon-btn proj-archive" type="button" aria-label="Archive it: out of your panel" title="Archive it: out of your panel, not out of anyone else\'s; All projects finds it again"><i class="ph ph-archive"></i></button><button class="icon-btn q-unfold" aria-expanded="false" aria-label="Its queries"><i class="ph ph-caret-down"></i></button>
+    <div class="proj-queries" aria-label="Its queries"></div>
+   </div>
+   <button class="text-link proj-more" type="button"><span>Show all 5</span></button>
+   <!-- The Projects you archived are not in the panel; this quiet line leads to all of them (OP-UX-129) -->
+   <a class="proj-all" href="query-projects.html" aria-current="page"><i class="ph ph-archive" aria-hidden="true"></i><span>All projects</span><span class="meta">2 archived</span></a>
+  </div>
+  <div class="panel-label" data-for="owner colleague">History</div>
+  <div data-pane-group="scope" data-pane="yours">
+  <!-- Per day this week, per week back to the start of last month, then per month; every period starts folded, today
+       too, and loads when opened (DEC-UX-139). -->
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>Today</span><span class="count">2</span></button>
+   <div class="q-entry">
+    <a class="list-item card q-item" href="query.html" data-name="leads per source name weekly lead volume lead sources"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources" data-pane-group="qstate" data-pane="works"></i><i class="ph ph-table kind-icon broken-mark" role="img" aria-label="On Resources, broken" title="Broken: the column lead_channel of Weekly lead volume no longer exists" data-pane-group="qstate" data-pane="broken" hidden></i><span><span class="item-title">Leads per source name</span><span class="meta">Weekly lead volume +1 · 14 runs · 08:12</span></span></a>
+    <button class="icon-btn q-unfold" aria-expanded="false" aria-label="Its runs"><i class="ph ph-caret-down"></i></button>
+    <div class="q-runs" aria-label="Its last runs">
+     <button class="q-run on" data-run="14"><span>Run 14</span><span class="meta">today, 08:12</span></button>
+     <button class="q-run" data-run="13"><span>Run 13</span><span class="meta">today, 08:05</span></button>
+     <button class="q-run" data-run="12"><span>Run 12</span><span class="meta">yesterday, 17:40</span></button>
+     <button class="q-run q-run-all" data-run="all"><span>All 14 runs</span><i class="ph ph-arrow-right"></i></button>
+    </div>
+   </div>
+   <div class="q-entry">
+    <a class="list-item card q-item" href="query.html" data-name="partner share per week weekly lead volume lead sources"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><span class="item-title">Partner share per week</span><span class="meta">Weekly lead volume +1 · 3 runs · 07:58</span></span></a><button class="icon-btn q-hide" aria-label="Hide this query" title="Hide this query; Hidden shows it again"><i class="ph ph-eye-slash"></i></button>
+   </div>
+  </div>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>Yesterday</span><span class="count">4</span></button>
+  </div>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>Wed 28 Oct</span><span class="count">2</span></button>
+  </div>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>Mon 26 Oct</span><span class="count">1</span></button>
+  </div>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>19 – 25 Oct</span><span class="count">6</span></button>
+  </div>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>12 – 18 Oct</span><span class="count">3</span></button>
+  </div>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>5 – 11 Oct</span><span class="count">2</span></button>
+  </div>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>28 Sep – 4 Oct</span><span class="count">4</span></button>
+  </div>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>21 – 27 Sep</span><span class="count">3</span></button>
+  </div>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>1 – 6 Sep</span><span class="count">2</span></button>
+  </div>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>August</span><span class="count">9</span></button>
+  </div>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>July</span><span class="count">14</span></button>
+  </div>
+  </div>
+  <div data-pane-group="scope" data-pane="all" data-for="datateam" hidden>
+  <p class="meta" style="margin:12px 4px 0;line-height:1.5;display:block">Everyone's queries, with their SQL. Only the Data Team sees them.</p>
+  <div class="panel-label">Today</div>
+  <a class="list-item card q-item current" aria-current="page" href="query.html" data-name="you leads per source name weekly lead volume lead sources"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><span class="item-title">Leads per source name</span><span class="meta">You · Weekly lead volume +1 · 80 MB</span></span></a>
+  <a class="list-item card q-item" href="query.html" data-name="dirk vos saved searches per week"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><span class="item-title">Saved searches per week</span><span class="meta">Dirk Vos · Saved searches · 340 MB</span></span></a>
+  <a class="list-item card q-item" href="query.html" data-name="you preview weekly lead volume"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><span class="item-title">Preview · Weekly lead volume</span><span class="meta">You · Weekly lead volume · 980 MB</span></span><span class="pill">Preview</span></a>
+  <div class="panel-label">Yesterday</div>
+  <a class="list-item card q-item" href="query.html" data-name="karel leys partner share per month weekly lead volume"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><span class="item-title">Partner share per month</span><span class="meta">Karel Leys · Weekly lead volume · 640 MB</span></span><span class="pill">Claude</span></a>
+  <a class="list-item card q-item" href="query.html" data-name="ruth aerts lens response time by broker"><i class="ph ph-aperture kind-icon" role="img" aria-label="On a Lens"></i><span><span class="item-title">Response time by broker</span><span class="meta">Ruth Aerts · Lens · 640 MB</span></span></a>
+  <a class="list-item card q-item" href="query.html" data-name="an claes weekly volume since 2024"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><span class="item-title">Weekly volume since 2024</span><span class="meta">An Claes · Weekly lead volume · 2.9 GB</span></span><span class="pill">Accepted</span></a>
+  </div>
+  <p id="no-results" class="meta" style="padding:8px 4px" hidden>No queries match your search.</p>
+ </div>
+</aside>
+<main class="main">
+<div class="breadcrumb crumbs"><a href="query.html">Query</a> / <span>All projects</span></div>
+<div class="coll-head">
+ <span class="item-icon large"><i class="ph-fill ph-folders"></i></span>
+ <div style="flex:1;min-width:0">
+  <h1 class="page-title">All projects</h1>
+  <p class="lead-text">Every project you are in. One you archive leaves your panel, and nobody else's; here you find it again, and put it back.</p>
+ </div>
+ <div class="coll-actions">
+  <button class="btn-quiet outline" type="button" style="display:inline-flex;align-items:center;gap:6px"><i class="ph ph-plus"></i>New project</button>
+ </div>
+</div>
+<div style="display:flex;align-items:center;gap:10px;margin:18px 0 10px;flex-wrap:wrap">
+ <label class="search card" style="flex:1;min-width:220px;max-width:360px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="projs-search" placeholder="Search projects"></label>
+ <div class="projs-segs" data-group="projs" role="tablist" aria-label="Which projects">
+  <button class="seg" data-target="panel" role="tab" aria-selected="false">In your panel <span class="count">5</span></button>
+  <button class="seg on" data-target="archived" role="tab" aria-selected="true">Archived <span class="count">2</span></button>
+  <button class="seg" data-target="all" role="tab" aria-selected="false">All <span class="count">7</span></button>
+ </div>
+</div>
+<div class="table-card card files proj-table projs-table"><table>
+ <thead><tr><th>Project</th><th class="hide-narrow">Queries</th><th class="hide-narrow">In it</th><th>Last run</th><th aria-label="Archive or put back"></th></tr></thead>
+ <tbody>
+  <tr data-in="panel"><td><span class="q-cell"><i class="ph-fill ph-folders kind-icon" aria-hidden="true"></i><span><a href="query-project.html">Credit leads Q4</a><span class="meta">The queries behind the quarterly review of credit leads.</span></span></span></td><td class="hide-narrow">14</td><td class="hide-narrow">with 3 colleagues</td><td>08:12 · Karel Leys</td><td><button class="btn-quiet outline icon-only" type="button" data-archive aria-label="Archive Credit leads Q4" title="Archive it: out of your panel, not out of anyone else's"><i class="ph ph-archive"></i></button></td></tr>
+  <tr data-in="panel"><td><span class="q-cell"><i class="ph-fill ph-folders kind-icon" aria-hidden="true"></i><span><a href="query-project.html">Partner review</a><span class="meta">Contracts and lead share of our partners.</span></span></span></td><td class="hide-narrow">4</td><td class="hide-narrow">only you</td><td>yesterday · you</td><td><button class="btn-quiet outline icon-only" type="button" data-archive aria-label="Archive Partner review" title="Archive it: out of your panel, not out of anyone else's"><i class="ph ph-archive"></i></button></td></tr>
+  <tr data-in="panel"><td><span class="q-cell"><i class="ph-fill ph-folders kind-icon" aria-hidden="true"></i><span><a href="query-project.html">Listings audit</a><span class="meta">Are new listings complete and priced right?</span></span></span></td><td class="hide-narrow">6</td><td class="hide-narrow">with 4 colleagues</td><td>Mon · An Claes</td><td><button class="btn-quiet outline icon-only" type="button" data-archive aria-label="Archive Listings audit" title="Archive it: out of your panel, not out of anyone else's"><i class="ph ph-archive"></i></button></td></tr>
+  <tr data-in="panel"><td><span class="q-cell"><i class="ph-fill ph-folders kind-icon" aria-hidden="true"></i><span><a href="query-project.html">Broker follow-up</a><span class="meta">How fast brokers answer a lead.</span></span></span></td><td class="hide-narrow">3</td><td class="hide-narrow">with Lotte Dewulf</td><td>16 Nov · you</td><td><button class="btn-quiet outline icon-only" type="button" data-archive aria-label="Archive Broker follow-up" title="Archive it: out of your panel, not out of anyone else's"><i class="ph ph-archive"></i></button></td></tr>
+  <tr data-in="panel"><td><span class="q-cell"><i class="ph-fill ph-folders kind-icon" aria-hidden="true"></i><span><a href="query-project.html">Search behaviour</a><span class="meta">What people search for, and save.</span></span></span></td><td class="hide-narrow">2</td><td class="hide-narrow">only you</td><td>12 Nov · you</td><td><button class="btn-quiet outline icon-only" type="button" data-archive aria-label="Archive Search behaviour" title="Archive it: out of your panel, not out of anyone else's"><i class="ph ph-archive"></i></button></td></tr>
+  <tr class="archived" data-in="archived"><td><span class="q-cell"><i class="ph-fill ph-folders kind-icon" aria-hidden="true"></i><span><a href="query-project.html?proj=archived">Wim-Advert</a><span class="meta">Search result pages per postal code, as a base for broker banners. Archived by you on 20 Nov.</span></span></span></td><td class="hide-narrow">5</td><td class="hide-narrow">only you</td><td>20 Nov · you</td><td><button class="btn-quiet outline" type="button" data-unarchive style="display:inline-flex;align-items:center;gap:6px"><i class="ph ph-arrow-u-up-left"></i>Back in your panel</button></td></tr>
+  <tr class="archived" data-in="archived"><td><span class="q-cell"><i class="ph-fill ph-folders kind-icon" aria-hidden="true"></i><span><a href="query-project.html?proj=archived">Q3 review</a><span class="meta">The review of the third quarter. Archived by you on 2 Oct; still in the panel of Karel Leys.</span></span></span></td><td class="hide-narrow">11</td><td class="hide-narrow">with Karel Leys</td><td>30 Sep · Karel Leys</td><td><button class="btn-quiet outline" type="button" data-unarchive style="display:inline-flex;align-items:center;gap:6px"><i class="ph ph-arrow-u-up-left"></i>Back in your panel</button></td></tr>
+ </tbody>
+</table></div>
+<p class="meta" style="display:block;margin:10px 4px;line-height:1.5">Archiving changes only your panel: the others in a project keep it in theirs, and its queries work as before. A project deleted is gone for everyone; archive it when you only want it out of the way.</p>
+</main>
+</div>
+<script>
+  // The chips: In your panel, Archived, All (OP-UX-129)
+  const rows = [...document.querySelectorAll('.projs-table tbody tr')];
+  const show = which => rows.forEach(r => { r.hidden = which !== 'all' && r.dataset.in !== which; });
+  const counts = () => {
+    const n = w => rows.filter(r => r.dataset.in === w).length;
+    document.querySelector('[data-target=panel] .count').textContent = n('panel');
+    document.querySelector('[data-target=archived] .count').textContent = n('archived');
+    const all = document.querySelector('.proj-all .meta'); if (all) all.textContent = `${n('archived')} archived`;
+  };
+  document.querySelectorAll('[data-group=projs] [data-target]').forEach(c => c.addEventListener('click', () => {
+    document.querySelectorAll('[data-group=projs] [data-target]').forEach(o => { o.classList.toggle('on', o === c); o.setAttribute('aria-selected', o === c); });
+    show(c.dataset.target);
+  }));
+  show(new URLSearchParams(location.search).get('show') || 'archived');
+  if (new URLSearchParams(location.search).get('show')) document.querySelector(`[data-group=projs] [data-target=${new URLSearchParams(location.search).get('show')}]`)?.click();
+  // Archive and Back in your panel, at once, without asking: both undo each other (OP-UX-129)
+  document.querySelector('.projs-table tbody').addEventListener('click', e => {
+    const b = e.target.closest('[data-archive], [data-unarchive]'); if (!b) return;
+    const r = b.closest('tr'), off = b.hasAttribute('data-archive');
+    r.dataset.in = off ? 'archived' : 'panel'; r.classList.toggle('archived', off);
+    const name = r.querySelector('.q-cell a').textContent;
+    b.closest('td').innerHTML = off
+      ? '<button class="btn-quiet outline" type="button" data-unarchive style="display:inline-flex;align-items:center;gap:6px"><i class="ph ph-arrow-u-up-left"></i>Back in your panel</button>'
+      : `<button class="btn-quiet outline icon-only" type="button" data-archive aria-label="Archive ${name}" title="Archive it: out of your panel, not out of anyone else's"><i class="ph ph-archive"></i></button>`;
+    counts();
+    show(document.querySelector('[data-group=projs] .on').dataset.target);
+  });
+  document.getElementById('projs-search').addEventListener('input', e => { const q = e.target.value.toLowerCase(); rows.forEach(r => { if (!r.hidden || !q) r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none'; }); });
+  window.QUICK = {
+    group: 'All projects',
+    where: 'Query · All projects',
+    get commands() { return [{ icon: 'ph ph-plus', title: 'New project', meta: 'its name, and what it is for', run: () => {}, words: 'new project create' }]; },
+  };
+</script>
+<script src="app.js"></script>
+</body>
+</html>
