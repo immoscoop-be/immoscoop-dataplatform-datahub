@@ -63,6 +63,7 @@ export default {
   'grid.row': 'Rij',
   'grid.menu': 'Kolom {name}',
   'grid.resize': 'Breedte van {name}',
+  'grid.rowResize': 'Rij {number} hoger of lager maken: sleep de onderrand, dubbelklik zet hem terug op één regel',
   'grid.sortAscending': 'Deze pagina oplopend sorteren',
   'grid.sortDescending': 'Deze pagina aflopend sorteren',
   'grid.fit': 'Kolom passend maken',
