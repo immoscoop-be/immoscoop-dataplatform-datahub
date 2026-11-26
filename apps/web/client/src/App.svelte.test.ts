@@ -69,6 +69,24 @@ const REQUEST = {
   lastAt: '2026-10-28T12:00:00Z',
 };
 
+/** A colleague reported the description from dbt of lead_source as wrong; it waits for the Data Team (MSG-RES-10, FR-CV-17). */
+const REPORTED = {
+  id: 'm4',
+  type: 'MSG-RES-10',
+  kind: 'request',
+  subject: { kind: 'resource', id: 'r2', name: 'Weekly lead volume', collection: { id: 'c1', name: 'Credit leads' }, exists: true },
+  writer: { id: '8', name: 'Karel Leys', as: null },
+  params: { writer: 'Karel Leys', subject: 'Weekly lead volume', on: 'field', field: 'lead_source', quoted: 'Where the lead came from', text: 'It is where the lead came in, not where the person came from.' },
+  state: 'waiting',
+  createdAt: '2026-11-25T09:00:00Z',
+  lastAt: '2026-11-25T09:00:00Z',
+  replies: [],
+  replyCount: 0,
+  unread: false,
+  mine: false,
+  mayJoin: true,
+};
+
 interface Saved {
   method: string;
   path: string;
@@ -1389,7 +1407,29 @@ function serve({
       talk.unshift(made);
       return json({ message: made }, 201);
     }
+    // A description from dbt reported as wrong: a Request to the Data Team on the Resource (FR-CV-17).
+    if (path === '/resources/r2/description-reports' && method === 'POST') {
+      const body = JSON.parse(init.body as string) as { field: string | null; text: string; should: string };
+      const quoted = body.field === null ? WEEKLY_DETAIL.description : (WEEKLY_DETAIL.fields.find((field) => field.name === body.field)?.description ?? '');
+      const made = {
+        ...REPORTED,
+        id: `m-${talk.length + 1}`,
+        writer: { id: '1', name: 'Max Verstraete', as: null },
+        params: { writer: 'Max Verstraete', on: body.field === null ? 'table' : 'field', ...(body.field === null ? {} : { field: body.field }), quoted, text: body.text, ...(body.should ? { should: body.should } : {}) },
+        createdAt: '2026-11-25T10:00:00Z',
+        lastAt: '2026-11-25T10:00:00Z',
+        mine: true,
+        mayJoin: false,
+      };
+      talk.unshift(made);
+      return json({ outcome: 'sent', message: made }, 201);
+    }
     const message = talk.find((candidate) => path.startsWith(`/messages/${candidate.id as string}`));
+    // Deleted for everyone (FR-CV-18): the conversation leaves the list.
+    if (message && path === `/messages/${message.id as string}` && method === 'DELETE') {
+      talk.splice(talk.indexOf(message), 1);
+      return json({ deleted: 'conversation', conversation: message.id });
+    }
     if (message && path === `/messages/${message.id as string}`) {
       return json({ message });
     }
@@ -1412,6 +1452,11 @@ function serve({
     }
     if (message && path === `/messages/${message.id as string}/reopen` && method === 'POST') {
       message.state = 'open';
+      return json({ message });
+    }
+    if (message && path === `/messages/${message.id as string}/join` && method === 'POST') {
+      message.params = { ...(message.params as Record<string, string>), joins: JSON.stringify([{ id: '1', name: 'Max Verstraete', at: '2026-11-25T11:00:00Z' }]) };
+      message.mayJoin = false;
       return json({ message });
     }
     if (message && path === `/messages/${message.id as string}/decision` && method === 'POST') {
@@ -1778,7 +1823,7 @@ describe('the web app, for the Data Team', () => {
     expect(screen.getByRole('link', { name: /Saved searches/ }).getAttribute('aria-current')).toBe('page');
   });
 
-  it('adds a waiting Resource to a Collection from its own page: the Collection first, then its model type, grain and fields (FR-CO-31, DEC-UX-131)', async () => {
+  it('adds a waiting Resource to a Collection from its own page: the Collection first, then its model type, Grain and fields (FR-CO-31, DEC-UX-131)', async () => {
     const calls = serve({ as: 'admin' });
     open('/resources/r1');
     render(App, { config: CONFIG });
@@ -1795,7 +1840,7 @@ describe('the web app, for the Data Team', () => {
     // The next steps are those of the page of a Collection, with this Resource chosen.
     const type = within(await screen.findByRole('dialog', { name: 'Wat is één rij van Saved searches?' }));
     await fireEvent.click(await type.findByRole('radio', { name: /^dimension/ }));
-    await fireEvent.click(type.getByRole('button', { name: /Volgende: grain en opslag/ }));
+    await fireEvent.click(type.getByRole('button', { name: /Volgende: Grain en opslag/ }));
     const grain = within(await screen.findByRole('dialog', { name: 'Grain en opslag van Saved searches' }));
     await fireEvent.input(grain.getByRole('textbox', { name: 'Wat één rij is, in woorden' }), { target: { value: 'saved search' } });
     await fireEvent.click(grain.getByRole('button', { name: /Volgende: velden en relaties/ }));
@@ -2324,7 +2369,7 @@ const GRAIN_RUN: RunView = {
 };
 
 describe('the guide of an EDA, in the Flow Box (FR-ED-14, DEC-UX-327, TR-ED-09)', () => {
-  /** eda with the EDA of Weekly lead volume, which a run of The grain holds changes. */
+  /** eda with the EDA of Weekly lead volume, which a run of The Grain holds changes. */
   function serveEda(options: { started?: boolean } = {}) {
     let view = edaWith();
     let started = options.started ?? true;
@@ -2371,11 +2416,11 @@ describe('the guide of an EDA, in the Flow Box (FR-ED-14, DEC-UX-327, TR-ED-09)'
     expect(guide.getByRole('button', { name: /^Datumbereik/ }).textContent).toContain('Nog niet toegevoegd');
     expect(guide.getByRole('button', { name: /^Verkapte lege waarden/ }).textContent).toContain('Nog niet toegevoegd');
     expect(guide.getByRole('button', { name: /^Waarden zonder match/ }).textContent).toContain('Komt eraan: Data Hub voert hem nog niet uit');
-    expect(guide.getByRole('button', { name: /^De grain klopt/ }).textContent).toContain('Nog niet toegevoegd');
+    expect(guide.getByRole('button', { name: /^De Grain klopt/ }).textContent).toContain('Nog niet toegevoegd');
     // The step to do now is the best next step, as the page proposes it, unfolded: The grain holds, while it is open,
     // whatever else misses more (DEC-ED-37).
-    expect(guide.getByRole('button', { name: /^De grain klopt/ }).getAttribute('aria-expanded')).toBe('true');
-    expect(guide.getByRole('button', { name: /^Lege waarden per sleutelveld/ }).getAttribute('aria-expanded')).toBe('false');
+    expect(guide.getByRole('button', { name: /^De Grain klopt/ }).getAttribute('aria-expanded')).toBe('true');
+    expect(guide.getByRole('button', { name: /^Lege waarden per Key Field/ }).getAttribute('aria-expanded')).toBe('false');
     expect(guide.getByText(/Nog 10 te gaan, waarvan 3 eraan komen: ze tellen toch mee/)).toBeTruthy();
     // It stays open on every other page; its Resource leads back to its EDA, where, opened there, it stays open.
     await fireEvent.click(within(screen.getByRole('navigation', { name: 'Hoofdnavigatie' })).getByRole('link', { name: 'Query' }));
@@ -2403,7 +2448,7 @@ describe('the guide of an EDA, in the Flow Box (FR-ED-14, DEC-UX-327, TR-ED-09)'
     await vi.waitFor(() => expect(location.pathname).toBe('/eda/r2/probes/grainHolds'));
     // On the detail it is open as the User left it, its step open on the page, without a way there.
     const here = within(await box());
-    const grain = here.getByRole('button', { name: /^De grain klopt/ });
+    const grain = here.getByRole('button', { name: /^De Grain klopt/ });
     expect(grain.getAttribute('aria-expanded')).toBe('true');
     expect(here.getByText('Open op de pagina')).toBeTruthy();
     expect(within(document.getElementById('flow-step-grainHolds') as HTMLElement).queryByRole('button', { name: /Open de EDA-Probe/ })).toBeNull();
@@ -2412,8 +2457,8 @@ describe('the guide of an EDA, in the Flow Box (FR-ED-14, DEC-UX-327, TR-ED-09)'
     await fireEvent.click(await main.findByRole('button', { name: /^Uitvoeren$/ }));
     await vi.waitFor(() => expect(calls).toContainEqual(expect.objectContaining({ method: 'POST', path: 'eda /resources/r2/eda/probes/grainHolds/runs' })));
     await vi.waitFor(() => expect(here.getByText('1 van 10 nodige EDA-Probes af')).toBeTruthy());
-    expect(here.getByRole('button', { name: /^De grain klopt/ }).textContent).toContain('Zoals verwacht');
-    expect(here.getByRole('button', { name: /^Lege waarden per sleutelveld/ }).getAttribute('aria-expanded')).toBe('true');
+    expect(here.getByRole('button', { name: /^De Grain klopt/ }).textContent).toContain('Zoals verwacht');
+    expect(here.getByRole('button', { name: /^Lege waarden per Key Field/ }).getAttribute('aria-expanded')).toBe('true');
     // Close takes it away; Guide me brings it back.
     await fireEvent.click(here.getByRole('button', { name: 'Sluiten' }));
     expect(screen.queryByRole('complementary', { name: /Zijn EDA opzetten/ })).toBeNull();
@@ -2428,10 +2473,10 @@ describe('the guide of an EDA, in the Flow Box (FR-ED-14, DEC-UX-327, TR-ED-09)'
     const gaps = within(await screen.findByRole('region', { name: 'Hiaten' }));
     await fireEvent.click(gaps.getByRole('button', { name: /Probe toevoegen/ }));
     const sheet = within(await screen.findByRole('dialog', { name: 'Een EDA-Probe toevoegen' }));
-    await fireEvent.click(sheet.getByRole('link', { name: /Lege waarden per sleutelveld/ }));
+    await fireEvent.click(sheet.getByRole('link', { name: /Lege waarden per Key Field/ }));
     await vi.waitFor(() => expect(location.pathname).toBe('/eda/r2/probes/nullsPerKeyField'));
     expect(screen.queryByRole('dialog', { name: 'Een EDA-Probe toevoegen' })).toBeNull();
-    expect(await within(screen.getByRole('main')).findByRole('heading', { level: 2, name: 'Lege waarden per sleutelveld' })).toBeTruthy();
+    expect(await within(screen.getByRole('main')).findByRole('heading', { level: 2, name: /^Lege waarden per Key Field/ })).toBeTruthy();
   });
 
   it('is there only while the EDA is in progress', async () => {
@@ -3004,7 +3049,7 @@ describe('the page of a Resource', () => {
     await fireEvent.click(main.getByRole('button', { name: /Bewerken/ }));
     // Intended use and pitfalls are Markdown too, each in the Markdown editor (FR-RC-23).
     expect(main.getByRole('toolbar', { name: /Beoogd gebruik/ })).toBeTruthy();
-    expect(main.getByRole('toolbar', { name: /Valkuilen/ })).toBeTruthy();
+    expect(main.getByRole('toolbar', { name: /Pitfalls/ })).toBeTruthy();
     await fireEvent.input(main.getByRole('textbox', { name: 'Beoogd gebruik' }), { target: { value: 'Weekly **trends**.' } });
     await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/resources/r2', body: { intendedUse: 'Weekly **trends**.', pitfalls: '' } }));
@@ -3090,7 +3135,7 @@ describe('the page of a Resource', () => {
     await quickDo('het beoogde gebruik bijwerken');
     await vi.waitFor(() => expect((document.activeElement as HTMLElement | null)?.id).toBe('intended-use'));
     await fireEvent.click(main.getByRole('button', { name: 'Annuleren' }));
-    await quickDo('een sleutelveld toevoegen');
+    await quickDo('een Key Field toevoegen');
     await vi.waitFor(() => expect((document.activeElement as HTMLElement | null)?.getAttribute('data-pick')).toBe('keyFields'));
   });
 
@@ -3270,8 +3315,8 @@ describe('the page of a Resource', () => {
     await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
     await fireEvent.click(main.getByRole('tab', { name: 'Kolommen' }));
     const rowOf = (name: string) => main.getByRole('cell', { name }).closest('tr') as HTMLElement;
-    expect([...rowOf('week_start').querySelectorAll('.pill')].map((pill) => pill.textContent?.trim())).toEqual(['Sleutelveld', 'Partitie']);
-    expect(rowOf('lead_source').textContent).not.toContain('Sleutelveld');
+    expect([...rowOf('week_start').querySelectorAll('.pill')].map((pill) => pill.textContent?.trim())).toEqual(['Key Field', 'Partitie']);
+    expect(rowOf('lead_source').textContent).not.toContain('Key Field');
   });
 
   it('lets its Owner publish it, its first Confirmation, once the declaration is ticked (FR-SR-49, DEC-UX-63)', async () => {
@@ -3285,9 +3330,9 @@ describe('the page of a Resource', () => {
     expect(sheet.getByText(/het hele bedrijf, want de Collection is publiek/)).toBeTruthy();
     expect(sheet.getByText(/jij mag hem publiceren/)).toBeTruthy();
     // Every step required to publish done; what is advised or for the EDA holds nothing up (DEC-MR-15).
-    expect(sheet.getByText(/Nodig om te publiceren, alles gedaan:/).closest('p')?.textContent).toContain('Business Description; Sleutelvelden; Velden; Beoogd gebruik; Valkuilen; Reliable since; Known Gaps.');
+    expect(sheet.getByText(/Nodig om te publiceren, alles gedaan:/).closest('p')?.textContent).toContain('Business Description; Key Fields; Velden; Beoogd gebruik; Pitfalls; Reliable since.');
     expect(sheet.getByText(/Aangeraden:/).closest('p')?.textContent).toContain('1 ander veld zonder Business Description');
-    expect(sheet.getByText(/Voor de EDA, later:/).closest('p')?.textContent).toContain('geen modeltype vastgelegd; geen grain vastgelegd.');
+    expect(sheet.getByText(/Voor de EDA, later:/).closest('p')?.textContent).toContain('geen modeltype vastgelegd; geen Grain vastgelegd.');
     // The card, read back: what the declaration accepts (DEC-MR-17).
     expect(sheet.getByText('Wat je bevestigt · de kaart, voorgelezen')).toBeTruthy();
     // Reliable since on a line of its own, with why not earlier, before the Known Gaps (FR-RC-31).
@@ -3325,7 +3370,7 @@ describe('the page of a Resource', () => {
     expect(await sheet.findByRole('alert')).toHaveProperty('textContent', 'Niet gepubliceerd: een stap die nodig is om te publiceren staat open. De lijst hierboven toont welke.');
     const reads = calls.filter((call) => call.method === 'GET' && call.path === '/resources/r2');
     expect(reads.length).toBeGreaterThan(1);
-    expect(sheet.getByText('Velden:').closest('p')?.textContent).toContain('Sleutelvelden zonder Business Description: week_start;');
+    expect(sheet.getByText('Velden:').closest('p')?.textContent).toContain('Key Fields zonder Business Description: week_start;');
     expect((sheet.getByRole('checkbox') as HTMLInputElement).disabled).toBe(true);
     expect(main.queryByText('Gepubliceerd', { selector: '.chip' })).toBeNull();
   });
@@ -3338,14 +3383,15 @@ describe('the page of a Resource', () => {
     await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
     // Maturity names the steps required to publish, the open ones with the way to them.
     await fireEvent.click(main.getByRole('tab', { name: 'Maturiteit' }));
-    expect(main.getByText('Daarvoor zijn de stappen gedaan die nodig zijn om te publiceren: nu 5 van 7.')).toBeTruthy();
+    expect(main.getByText('Daarvoor zijn de stappen gedaan die nodig zijn om te publiceren: nu 5 van 6.')).toBeTruthy();
     expect(main.getByText(/Of laat Claude je er stap voor stap door leiden/)).toBeTruthy();
     // Publish warns first: what is open, the way to each, and "Guide me"; the publication does not open.
     await fireEvent.click(main.getAllByRole('button', { name: /Publiceren/ })[0]!);
     const warning = within(await main.findByRole('dialog', { name: 'Nog niet klaar om te publiceren' }));
-    expect(warning.getByText('2 van de 7 stappen die nodig zijn om te publiceren zijn nog open:')).toBeTruthy();
-    expect(warning.getByRole('button', { name: /^Valkuilen/ }).textContent).toContain('geen geschreven, en niemand zei dat er geen zijn');
-    expect(warning.getByRole('button', { name: /^Known Gaps/ })).toBeTruthy();
+    expect(warning.getByText('1 van de 6 stappen die nodig zijn om te publiceren is nog open:')).toBeTruthy();
+    expect(warning.getByRole('button', { name: /^Pitfalls/ }).textContent).toContain('geen geschreven, en niemand zei dat er geen zijn');
+    // The Known Gaps are advised: they hold nothing up (DEC-MR-22).
+    expect(warning.queryByRole('button', { name: /^Known Gaps/ })).toBeNull();
     expect(warning.getByRole('button', { name: 'Begeleid me' })).toBeTruthy();
     expect(screen.queryByRole('dialog', { name: 'Weekly lead volume' })).toBeNull();
     // "I'll do it myself" closes it.
@@ -3353,7 +3399,7 @@ describe('the page of a Resource', () => {
     expect(main.queryByRole('dialog', { name: 'Nog niet klaar om te publiceren' })).toBeNull();
     // A step leads to its place, opened for editing, its field in focus (DEC-UX-303).
     await fireEvent.click(main.getAllByRole('button', { name: /Publiceren/ })[0]!);
-    await fireEvent.click(within(await main.findByRole('dialog', { name: 'Nog niet klaar om te publiceren' })).getByRole('button', { name: /^Valkuilen/ }));
+    await fireEvent.click(within(await main.findByRole('dialog', { name: 'Nog niet klaar om te publiceren' })).getByRole('button', { name: /^Pitfalls/ }));
     await vi.waitFor(() => expect(document.activeElement?.id).toBe('pitfalls'));
     expect(main.queryByRole('dialog', { name: 'Nog niet klaar om te publiceren' })).toBeNull();
     // Its pitfalls: write them, or say there are none.
@@ -3374,22 +3420,22 @@ describe('the page of a Resource', () => {
     await fireEvent.click(main.getAllByRole('button', { name: /Publiceren/ })[0]!);
     await fireEvent.click(await main.findByRole('button', { name: 'Begeleid me' }));
     const box = within(await screen.findByRole('complementary', { name: 'Beschrijven en publiceren · Weekly lead volume' }));
-    expect(box.getByText('5 van de 7 stappen die nodig zijn om te publiceren klaar')).toBeTruthy();
+    expect(box.getByText('5 van de 6 stappen die nodig zijn om te publiceren klaar')).toBeTruthy();
     // It starts at the first step still open, with what, why and how; a done step carries its tick and is folded.
-    expect(box.getByRole('button', { name: /^Valkuilen/ }).getAttribute('aria-expanded')).toBe('true');
-    expect(box.getByText(/Jij kent de valkuilen/)).toBeTruthy();
+    expect(box.getByRole('button', { name: /^Pitfalls/ }).getAttribute('aria-expanded')).toBe('true');
+    expect(box.getByText(/Jij kent de Pitfalls/)).toBeTruthy();
     expect(box.getByRole('button', { name: /^Business Description/ }).getAttribute('aria-expanded')).toBe('false');
     expect(box.getByRole('button', { name: /^Business Description/ }).textContent).toContain('klaar');
     expect(box.getByRole('button', { name: /^Teruglezen en publiceren/ }).textContent).toContain('Na de stappen hierboven');
     // A step opens by a click, and its button leads to its place, opened for editing (DEC-UX-303).
     await fireEvent.click(box.getByRole('button', { name: /^Beoogd gebruik/ }));
     expect(box.getByRole('button', { name: /^Beoogd gebruik/ }).getAttribute('aria-expanded')).toBe('true');
-    await fireEvent.click(box.getByRole('button', { name: /^Valkuilen/ }));
-    await fireEvent.click(box.getByRole('button', { name: /Schrijf de valkuilen/ }));
+    await fireEvent.click(box.getByRole('button', { name: /^Pitfalls/ }));
+    await fireEvent.click(box.getByRole('button', { name: /Schrijf de Pitfalls/ }));
     await vi.waitFor(() => expect(document.activeElement?.id).toBe('pitfalls'));
     // Minimize folds it to a strip with its progress; Maximize opens it again (DEC-UX-301).
     await fireEvent.click(box.getByRole('button', { name: 'Minimaliseren' }));
-    const strip = within(await screen.findByRole('complementary', { name: /Beschrijven en publiceren · Weekly lead volume · 5 van de 7/ }));
+    const strip = within(await screen.findByRole('complementary', { name: /Beschrijven en publiceren · Weekly lead volume · 5 van de 6/ }));
     expect(strip.getByText('5')).toBeTruthy();
     await fireEvent.click(strip.getByRole('button', { name: 'Maximaliseren' }));
     // It stays open on every page of Data Hub (DEC-UX-300).
@@ -3491,21 +3537,21 @@ describe('the page of a Resource', () => {
     expect(main.queryByRole('tab', { name: 'Gevarenzone' })).toBeNull();
   });
 
-  it('lets a Data Admin change its model type, grain and relations with Edit relations, in three steps (DEC-UX-107, DEC-CO-27)', async () => {
+  it('lets a Data Admin change its model type, Grain and relations with Edit relations, in three steps (DEC-UX-107, DEC-CO-27)', async () => {
     const calls = serve({ as: 'admin' });
     open('/resources/r2');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
     await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
     await fireEvent.click(main.getByRole('tab', { name: 'Kolommen' }));
-    await fireEvent.click(main.getByRole('button', { name: /Relaties bewerken/ }));
+    await fireEvent.click(main.getByRole('button', { name: /Grain en relaties bewerken/ }));
     // It opens at its model type, the steps on top without choosing a Resource.
     const type = within(await screen.findByRole('dialog', { name: 'Wat is één rij van Weekly lead volume?' }));
     expect(type.getByRole('navigation', { name: 'Stappen' }).textContent).toMatch(/^\s*1\s*Modeltype\s*2\s*Grain en opslag\s*3\s*Velden en relaties\s*$/);
     expect(type.getByText('Kies een modeltype')).toBeTruthy();
     await fireEvent.click(type.getByRole('radio', { name: /^event/ }));
     expect(type.getByText(/vraagt wanneer het gebeurde/)).toBeTruthy();
-    await fireEvent.click(type.getByRole('button', { name: /Volgende: grain en opslag/ }));
+    await fireEvent.click(type.getByRole('button', { name: /Volgende: Grain en opslag/ }));
     const grain = within(await screen.findByRole('dialog', { name: 'Grain en opslag van Weekly lead volume' }));
     await fireEvent.click(grain.getByRole('button', { name: /Volgende: velden en relaties/ }));
     const sheet = within(await screen.findByRole('dialog', { name: 'Velden en relaties van Weekly lead volume' }));
@@ -3536,7 +3582,7 @@ describe('the page of a Resource', () => {
     const main = within(await screen.findByRole('main'));
     await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
     await fireEvent.click(main.getByRole('tab', { name: 'Kolommen' }));
-    await fireEvent.click(main.getByRole('button', { name: /Relaties bewerken/ }));
+    await fireEvent.click(main.getByRole('button', { name: /Grain en relaties bewerken/ }));
     // It opens at the fields, without the steps of the model type and the grain, which only a Data Admin changes.
     const sheet = within(await screen.findByRole('dialog', { name: 'Velden en relaties van Weekly lead volume' }));
     expect(sheet.queryByRole('navigation', { name: 'Stappen' })).toBeNull();
@@ -3776,7 +3822,7 @@ describe('the web app, for the Data Team, with Collections', () => {
     await fireEvent.click(sheet.getByRole('radio', { name: /Saved searches/ }));
     await fireEvent.click(sheet.getByRole('button', { name: /Volgende: modeltype/ }));
     await fireEvent.click(await screen.findByRole('radio', { name: /^other/ }));
-    await fireEvent.click(screen.getByRole('button', { name: /Volgende: grain en opslag/ }));
+    await fireEvent.click(screen.getByRole('button', { name: /Volgende: Grain en opslag/ }));
     await fireEvent.input(await screen.findByRole('textbox', { name: 'Wat één rij is, in woorden' }), { target: { value: 'saved search' } });
     await fireEvent.click(screen.getByRole('button', { name: /Volgende: velden en relaties/ }));
     const second = within(await screen.findByRole('dialog', { name: 'Velden en relaties van Saved searches' }));
@@ -3815,7 +3861,7 @@ describe('the web app, for the Data Team, with Collections', () => {
     expect(cards.map((card) => card.getAttribute('value'))).toEqual(['event', 'state', 'fact', 'dimension', 'aggregate', 'other']);
     expect(cards.filter((card) => (card as HTMLInputElement).checked)).toEqual([]);
     expect(type.getByRole('radio', { name: /^dimension/ }).closest('label')?.textContent).toContain('Wat het beschrijft · vereist');
-    const toGrain = type.getByRole('button', { name: /Volgende: grain en opslag/ }) as HTMLButtonElement;
+    const toGrain = type.getByRole('button', { name: /Volgende: Grain en opslag/ }) as HTMLButtonElement;
     expect(toGrain.disabled).toBe(true);
     expect(type.getByText('Kies een modeltype')).toBeTruthy();
     await fireEvent.click(type.getByRole('radio', { name: /^dimension/ }));
@@ -3843,7 +3889,7 @@ describe('the web app, for the Data Team, with Collections', () => {
     expect(mapping.value).toBe('is');
     expect((second.getByRole('combobox', { name: 'Entity-identiteit van search_id' }) as HTMLInputElement).value).toBe('search.searchId');
     expect(second.getByText('Voorgesteld op basis van de naam')).toBeTruthy();
-    expect(second.getByText('Eén rij per search: de grain is dit veld')).toBeTruthy();
+    expect(second.getByText('Eén rij per search: de Grain is dit veld')).toBeTruthy();
     // A field mapped by hand, with an Entity the Domain Model does not have yet (DEC-CO-21).
     await fireEvent.change(second.getByRole('combobox', { name: 'Mapping van filters' }), { target: { value: 'occurredWithin' } });
     const identity = second.getByRole('combobox', { name: 'Entity-identiteit van filters' });
@@ -3930,7 +3976,8 @@ const RENAMED = {
 
 describe('the model type of a Resource and the fields it asks for (FR-CO-44, FR-CO-45, FR-RC-28, FR-RC-29)', () => {
   /** The value of a fact of what one row is, by its label. */
-  const fact = (label: string) => (screen.getByText(label, { selector: 'dt' }).nextElementSibling?.textContent ?? '').replace(/\s+/g, ' ').trim();
+  // A label that is a term of the dictionary carries its ⓘ after its text (DEC-UX-340).
+  const fact = (label: string) => ([...document.querySelectorAll('dt')].find((dt) => dt.textContent?.trim().startsWith(label))?.nextElementSibling?.textContent ?? '').replace(/\s+/g, ' ').trim();
 
   it('shows what one row is at the end of its Description, by role, and lets a Data Admin change its model type, which drops its fields (DEC-UX-263, DEC-RC-22)', async () => {
     const calls = serve({ as: 'admin', weekly: AGGREGATE });
@@ -3951,7 +3998,7 @@ describe('the model type of a Resource and the fields it asks for (FR-CO-44, FR-
     expect((type.getByRole('radio', { name: /^aggregate/ }) as HTMLInputElement).checked).toBe(true);
     expect(type.getByRole('radio', { name: /^aggregate/ }).closest('label')?.textContent).toContain('Nu');
     // "Next" waits for another model type.
-    const next = type.getByRole('button', { name: /Volgende: grain en opslag/ }) as HTMLButtonElement;
+    const next = type.getByRole('button', { name: /Volgende: Grain en opslag/ }) as HTMLButtonElement;
     expect(next.disabled).toBe(true);
     expect(type.getByText('Kies een ander modeltype')).toBeTruthy();
     await fireEvent.click(type.getByRole('radio', { name: /^event/ }));
@@ -3970,6 +4017,24 @@ describe('the model type of a Resource and the fields it asks for (FR-CO-44, FR-
         body: expect.objectContaining({ modelType: 'event', typeFields: [{ field: 'week_start', role: 'happenedAt', origin: 'dbt' }] }),
       }),
     );
+  });
+
+  it('lets a Data Admin change its Grain from what one row is, the model type kept, without choosing another (FR-RC-35, DEC-UX-341)', async () => {
+    const calls = serve({ as: 'admin', weekly: AGGREGATE });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    await fireEvent.click(await screen.findByRole('tab', { name: 'Beschrijving' }));
+    // Next to Change model type, with the ⓘ of Grain after it, outside the button.
+    const button = screen.getByRole('button', { name: 'Grain en relaties bewerken' });
+    expect(button.textContent).not.toContain('ⓘ');
+    expect(button.parentElement?.textContent).toContain('ⓘ');
+    await fireEvent.click(button);
+    // It opens on the Grain and storage; Next leads on, and the model type is one click back.
+    const grain = within(await screen.findByRole('dialog', { name: 'Grain en opslag van Weekly lead volume' }));
+    await fireEvent.click(grain.getByRole('button', { name: /Volgende: velden en relaties/ }));
+    const fields = within(await screen.findByRole('dialog', { name: 'Velden en relaties van Weekly lead volume' }));
+    await fireEvent.click(fields.getByRole('button', { name: 'Bewaren' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/resources/r2/details', body: expect.objectContaining({ modelType: 'aggregate' }) }));
   });
 
   it('warns everyone that a field of its model type is gone, and shows the role gone in its Description (FR-RC-29, DEC-UX-264)', async () => {
@@ -4039,7 +4104,7 @@ describe('the model type of a Resource and the fields it asks for (FR-CO-44, FR-
     const type = within(await screen.findByRole('dialog', { name: 'Wat is één rij van Weekly lead volume?' }));
     expect((type.getByRole('radio', { name: /^aggregate/ }) as HTMLInputElement).checked).toBe(true);
     expect(type.queryByText(/^Zijn modeltype is nu/)).toBeNull();
-    expect((type.getByRole('button', { name: /Volgende: grain en opslag/ }) as HTMLButtonElement).disabled).toBe(false);
+    expect((type.getByRole('button', { name: /Volgende: Grain en opslag/ }) as HTMLButtonElement).disabled).toBe(false);
   });
 
   it('lists the Resources to complete for the Data Team in the panel, each with what it misses, and opens one (FR-CO-45, DEC-UX-265)', async () => {
@@ -4055,7 +4120,9 @@ describe('the model type of a Resource and the fields it asks for (FR-CO-44, FR-
     render(App, { config: CONFIG });
     const panel = within(await screen.findByRole('complementary', { name: 'Collections' }));
     expect(await panel.findByText('Te vervolledigen')).toBeTruthy();
-    expect(panel.getByText(/modeltypes te vervolledigen · enkel Data Team/).textContent).toContain('3');
+    // How many, before its name; only Data Admins see it (DEC-UX-335).
+    expect(panel.getByText('modeltypes te vervolledigen · enkel Data Admins')).toBeTruthy();
+    expect(panel.getByText('Te vervolledigen').previousElementSibling?.textContent).toBe('3');
     const weekly = panel.getByRole('link', { name: /Weekly lead volume/ });
     expect(weekly.textContent).toContain('lead_count niet gemarkeerd');
     expect(panel.getByRole('link', { name: /Lead sources/ }).textContent).toContain('nog geen modeltype');
@@ -6042,6 +6109,34 @@ describe('Messages', () => {
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/messages/m1/reopen' }));
   });
 
+  it('lets whoever may delete it delete a Question for everyone, after a confirm in place that says what goes (FR-CV-18, DEC-UX-339)', async () => {
+    const calls = serve({ groups: ['g1'], conversations: [{ ...QUESTION, mayDelete: true }] });
+    open('/messages/m1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('button', { name: /^Verwijderen$/ }));
+    // It asks first, in place, and says what goes; Cancel keeps it.
+    const asks = within(main.getByRole('group', { name: 'Verwijderen' }));
+    expect(asks.getByText('Deze Question verwijderen?')).toBeTruthy();
+    await fireEvent.click(asks.getByRole('button', { name: 'Annuleren' }));
+    expect(main.queryByRole('group', { name: 'Verwijderen' })).toBeNull();
+    await fireEvent.click(main.getByRole('button', { name: /^Verwijderen$/ }));
+    await fireEvent.click(within(main.getByRole('group', { name: 'Verwijderen' })).getByRole('button', { name: 'Verwijderen' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/messages/m1' }));
+    // Gone: the Message Centre no longer opens it.
+    await vi.waitFor(() => expect(location.pathname).toBe('/messages'));
+    expect(main.queryByText('Will KBC follow-up be published this month?')).toBeNull();
+  });
+
+  it('offers no Delete to whoever may not delete a Message (FR-CV-18)', async () => {
+    serve({ groups: ['g1'], conversations: [{ ...QUESTION, mayDelete: false }] });
+    open('/messages/m1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByText('Will KBC follow-up be published this month?')).toBeTruthy();
+    expect(main.queryByRole('button', { name: /^Verwijderen$/ })).toBeNull();
+  });
+
   it('offers no Close to whoever may not close a Question (FR-CV-16)', async () => {
     serve({ groups: ['g1'], conversations: [{ ...QUESTION, mayClose: false }] });
     open('/messages/m1');
@@ -6105,6 +6200,80 @@ describe('Messages', () => {
     await fireEvent.click(main.getByRole('button', { name: /Aanvaarden/ }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/messages/m3/decision', body: { outcome: 'accepted', text: 'Once, for the review.' } }));
     expect(await main.findByText('Aanvaard', { selector: '.reply .state' })).toBeTruthy();
+  });
+
+  it('reports a description from dbt as wrong from next to it, and shows every reader it is reported (FR-CV-17, DEC-UX-338)', async () => {
+    const calls = serve({ groups: ['g1'] });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' }, { timeout: 3000 });
+    // Next to the description from dbt on the Summary: it opens the form in the Messages, the description quoted.
+    await fireEvent.click((await main.findAllByRole('button', { name: /Klopt niet\?/ }))[0]!);
+    const sheet = within(await screen.findByRole('dialog', { name: 'Weekly lead volume' }));
+    const form = within(sheet.getByRole('region', { name: 'Wat niet klopt' }));
+    expect(form.getByText('One row per week and lead source.')).toBeTruthy();
+    expect(form.getByText('Het Data Team krijgt de Request; Data, Owner van deze Resource, hoort het ook.')).toBeTruthy();
+    const send = form.getByRole('button', { name: /Naar het Data Team sturen/ });
+    expect((send as HTMLButtonElement).disabled).toBe(true);
+    await fireEvent.input(form.getByRole('textbox', { name: /Wat niet klopt/ }), { target: { value: 'It is one row per week, lead source and region.' } });
+    await fireEvent.click(send);
+    await vi.waitFor(() =>
+      expect(calls).toContainEqual({ method: 'POST', path: '/resources/r2/description-reports', body: { field: null, text: 'It is one row per week, lead source and region.', should: '' } }),
+    );
+    // Sent, a new Message is back on top, and the Request waits in the list, with a chip of its own.
+    expect(await sheet.findByRole('textbox', { name: 'Nieuw bericht' })).toBeTruthy();
+    expect(await sheet.findByText('De beschrijving uit dbt lijkt niet te kloppen · aan het Data Team')).toBeTruthy();
+    expect(sheet.getByRole('radio', { name: /Requests 1/ })).toBeTruthy();
+    await fireEvent.click(sheet.getByRole('button', { name: /Sluiten/ }));
+    // Every reader sees under the description that it is reported, with the Request.
+    const line = await main.findByRole('note');
+    expect(line.textContent).toContain('Gemeld als fout op');
+    expect(line.textContent).toContain('het Data Team bekijkt het.');
+    expect(within(line).getByRole('link', { name: 'De Request bekijken' }).getAttribute('href')).toBe('/resources/r2/messages/m-1');
+  });
+
+  it('reports the description of a field from Columns, what it should say filled in from its Business Description (FR-CV-17)', async () => {
+    const calls = serve({ groups: ['g1'] });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('tab', { name: 'Kolommen' }, { timeout: 3000 }));
+    const flags = await main.findAllByRole('button', { name: 'Laat het Data Team weten dat deze beschrijving uit dbt niet lijkt te kloppen' });
+    expect(flags).toHaveLength(2);
+    await fireEvent.click(flags[1]!);
+    const form = within(within(await screen.findByRole('dialog', { name: 'Weekly lead volume' })).getByRole('region', { name: 'Wat niet klopt' }));
+    expect(form.getByText('lead_source')).toBeTruthy();
+    expect(form.getByText('Where the lead came from')).toBeTruthy();
+    expect((form.getByRole('textbox', { name: /Wat er zou moeten staan/ }) as HTMLTextAreaElement).value).toBe('The website, the app or a partner.');
+    await fireEvent.input(form.getByRole('textbox', { name: /Wat niet klopt/ }), { target: { value: 'Not where the person came from.' } });
+    await fireEvent.click(form.getByRole('button', { name: /Naar het Data Team sturen/ }));
+    await vi.waitFor(() =>
+      expect(calls).toContainEqual({ method: 'POST', path: '/resources/r2/description-reports', body: { field: 'lead_source', text: 'Not where the person came from.', should: 'The website, the app or a partner.' } }),
+    );
+  });
+
+  it('lets a colleague join a reported description, and the Data Team decide on it where it shows (FR-CV-17)', async () => {
+    let calls = serve({ groups: ['g1'], conversations: [{ ...REPORTED }] });
+    open('/resources/r2/messages');
+    const { unmount } = render(App, { config: CONFIG });
+    let sheet = within(await screen.findByRole('dialog', { name: 'Weekly lead volume' }));
+    expect(await sheet.findByText('De beschrijving van lead_source uit dbt lijkt niet te kloppen · aan het Data Team')).toBeTruthy();
+    expect(sheet.getByText('Where the lead came from')).toBeTruthy();
+    await fireEvent.click(sheet.getByRole('button', { name: /Aansluiten/ }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/messages/m4/join' }));
+    expect(await sheet.findByText('Max Verstraete sloot zich aan')).toBeTruthy();
+    // Who does not decide on Requests sees no decision.
+    expect(sheet.queryByRole('textbox', { name: 'Je beslissing' })).toBeNull();
+    unmount();
+
+    calls = serve({ as: 'admin', conversations: [{ ...REPORTED }] });
+    open('/resources/r2/messages');
+    render(App, { config: CONFIG });
+    sheet = within(await screen.findByRole('dialog', { name: 'Weekly lead volume' }));
+    await fireEvent.input(await sheet.findByRole('textbox', { name: 'Je beslissing' }), { target: { value: 'We correct it in dbt.' } });
+    await fireEvent.click(sheet.getByRole('button', { name: /Aanvaarden/ }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/messages/m4/decision', body: { outcome: 'accepted', text: 'We correct it in dbt.' } }));
   });
 
   it('opens the Messages on a Resource in a slide-in, to write a Question, Remark or Signal (FR-CV-07)', async () => {
@@ -6344,17 +6513,17 @@ describe('the Learning Centre', () => {
 describe('the markers of the Learning Centre', () => {
   const details = { ...WEEKLY_DETAIL.details, grain: ['week_start', 'lead_source'], modelType: 'aggregate' };
 
-  it('explain the grain of a Resource with its written cards, and open one in a floating window over the page (FR-LR-12, FR-LR-35, FR-LR-36)', async () => {
+  it('explain the Grain of a Resource with its written cards, and open one in a floating window over the page (FR-LR-12, FR-LR-35, FR-LR-36)', async () => {
     const calls = serve({ weekly: { details }, learned: [{ card: '1.2.2', seenAt: '2026-10-26T09:00:00Z', lastAt: '2026-10-26T09:00:00Z', step: 'see', understoodAt: null }] });
     open('/resources/r2');
     render(App, { config: CONFIG });
     await fireEvent.click(await screen.findByRole('tab', { name: 'Beschrijving' }));
-    // What one row is, at the end of the Description: the first field of its grain carries the marker (DEC-UX-263).
-    const grain = await screen.findByRole('button', { name: /^week_start/ });
+    // What one row is, at the end of the Description: its label Grain, a term of the dictionary, carries the marker (DEC-UX-340).
+    const grain = await screen.findByRole('button', { name: /^Grain/ });
     expect(grain.textContent).toContain('ⓘ');
     expect(grain.getAttribute('aria-haspopup')).toBe('dialog');
     await fireEvent.keyDown(grain, { key: 'Enter' });
-    const pop = within(screen.getByRole('dialog', { name: 'Uitgelegd in 3 Learning Cards' }));
+    const pop = within(screen.getByRole('dialog', { name: 'Grain: wat het betekent' }));
     expect(pop.getAllByRole('button').map((item) => item.textContent?.slice(0, 5))).toEqual(['2.3.5', '1.2.2', '1.2.1']);
     expect(await pop.findByText(/^Gezien/)).toBeTruthy();
     expect(pop.getAllByText('Nog niet gezien')).toHaveLength(2);

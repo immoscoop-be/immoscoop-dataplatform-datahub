@@ -177,6 +177,7 @@ import pencilSimple from '@phosphor-icons/core/assets/regular/pencil-simple.svg?
 import plugsConnected from '@phosphor-icons/core/assets/regular/plugs-connected.svg?raw';
 import shieldCheck from '@phosphor-icons/core/assets/regular/shield-check.svg?raw';
 import userPlus from '@phosphor-icons/core/assets/regular/user-plus.svg?raw';
+import flagFill from '@phosphor-icons/core/assets/fill/flag-fill.svg?raw';
 import users from '@phosphor-icons/core/assets/regular/users.svg?raw';
 // The row on top of Query and the quick window (DEC-UX-317, DEC-UX-237).
 import arrowsInLineVertical from '@phosphor-icons/core/assets/regular/arrows-in-line-vertical.svg?raw';
@@ -371,6 +372,8 @@ export const ICONS = {
   'plugs-connected': plugsConnected,
   'shield-check': shieldCheck,
   'user-plus': userPlus,
+  // A description from dbt reported as wrong, while the Data Team decides (FR-CV-17).
+  'flag-fill': flagFill,
   users: users,
   'arrows-in-line-vertical': arrowsInLineVertical,
   'circle-notch': circleNotch,

@@ -281,6 +281,48 @@ export async function messageRoutes(app: FastifyInstance, options: MessageRouteO
     return { message: outcome };
   });
 
+  // Deleting a Message for everyone (FR-CV-18): a first Message with its conversation, a reply alone; by its writer, the
+  // Owner Unit of its object or the Data Team (DEC-CV-15, DEC-CV-16). What Data Hub wrote and a decided Request stay.
+  app.delete<{ Params: { id: string } }>('/messages/:id', async (request, reply) => {
+    const outcome = await messages.remove(request.params.id, await sightOf(request));
+    if (outcome === 'not_found') return reply.code(404).send(NO_MESSAGE);
+    if (outcome === 'stays') return reply.code(409).send({ error: 'stays', message: 'What Data Hub wrote, a closing, a decision and a decided Request stay.' });
+    if (outcome === 'not_allowed') return reply.code(403).send({ error: 'forbidden', message: 'Only its writer, the Owner Unit of its object and the Data Team delete a Message.' });
+    return outcome;
+  });
+
+  // A description from dbt reported as wrong (FR-CV-17, MSG-RES-10): a Request to the Data Team on the Resource, from
+  // whoever may write Messages on it; while one waits on the same description, it is joined instead.
+  const reports = (who: Viewer) => WRITTEN_ON.resource.some((kind) => writes(who, kind));
+  app.post<{ Params: { id: string }; Body: unknown }>('/resources/:id/description-reports', async (request, reply) => {
+    const id = objectId('resource', request.params.id);
+    if (!id) return reply.code(404).send({ error: 'not_found', message: 'No such Resource, or not one you see.' });
+    const body = (request.body ?? {}) as Record<string, unknown>;
+    const field = body.field === undefined || body.field === null ? null : typeof body.field === 'string' && body.field.length > 0 && body.field.length <= 1024 ? body.field : undefined;
+    if (field === undefined) return reply.code(400).send({ error: 'invalid_request', message: 'The field is the name of a field of the Resource, or null for the description of the table.' });
+    const text = parseText(body);
+    if (text === null) return reply.code(400).send({ error: 'invalid_request', message: `What is wrong has 1 to ${TEXT} characters.` });
+    const should = typeof body.should === 'string' ? body.should.trim() : body.should === undefined || body.should === null ? '' : null;
+    if (should === null || should.length > TEXT) return reply.code(400).send({ error: 'invalid_request', message: `What it should say is text of at most ${TEXT} characters.` });
+    if (!reports(viewer(request))) return reply.code(403).send(forbidden('messages.write', 'You may not write Messages on a Resource.'));
+    const outcome = await messages.report(await sightOf(request), id, { field, text, should });
+    if (outcome.outcome === 'not_found') return reply.code(404).send({ error: 'not_found', message: 'No such Resource or field, or not one you see.' });
+    if (outcome.outcome === 'no_description') return reply.code(409).send({ error: 'no_description', message: 'dbt has no description here to report.' });
+    return reply.code(outcome.outcome === 'sent' ? 201 : 200).send({ outcome: outcome.outcome, message: outcome.conversation });
+  });
+
+  // "Join it" on a waiting Request about a description from dbt (FR-CV-17): its decision and its correction reach the
+  // viewer too.
+  app.post<{ Params: { id: string } }>('/messages/:id/join', async (request, reply) => {
+    if (!reports(viewer(request))) return reply.code(403).send(forbidden('messages.write', 'You may not write Messages on a Resource.'));
+    const outcome = await messages.join(request.params.id, await sightOf(request));
+    if (outcome.outcome === 'not_found') return reply.code(404).send(NO_MESSAGE);
+    if (outcome.outcome === 'not_a_report') return reply.code(409).send({ error: 'not_a_report', message: 'Only a Request about a description from dbt is joined.' });
+    if (outcome.outcome === 'not_waiting') return reply.code(409).send({ error: 'not_waiting', message: 'This Request was decided already.' });
+    if (outcome.outcome === 'no_description') return reply.code(409).send({ error: 'no_description', message: 'dbt has no description here to report.' });
+    return { outcome: outcome.outcome, message: outcome.conversation };
+  });
+
   // The User read a conversation: unread again once someone else moves it.
   app.post<{ Params: { id: string } }>('/messages/:id/read', async (request, reply) =>
     (await messages.read(request.params.id, await sightOf(request))) ? reply.code(204).send() : reply.code(404).send(NO_MESSAGE),

@@ -1,4 +1,4 @@
-import { NO_PERMISSIONS, type Permissions, reach } from '@datahub/contracts';
+import { canWith, NO_PERMISSIONS, type Permissions, reach } from '@datahub/contracts';
 import { MESSAGE_CATALOGUE } from '@datahub/contracts/message-catalogue';
 import type { MessageKind, MessageType, SubjectKind } from '@datahub/contracts/messages';
 import { topicOf } from '@datahub/learning';
@@ -41,6 +41,73 @@ const DECISION = 'MSG-CNV-05';
 const CLOSING = 'MSG-CNV-07';
 /** What can be closed and reopened: a Question and a Signal (DEC-CV-13). */
 const CLOSABLE: readonly string[] = [WRITTEN.question, WRITTEN.signal];
+
+/** A description from dbt reported as wrong (MSG-RES-10), and the reply of Data Hub once dbt corrected it (MSG-RES-11, FR-CV-17). */
+export const REPORT = 'MSG-RES-10';
+const CORRECTED = 'MSG-RES-11';
+
+/** A colleague who joined a Request about a description from dbt, with their words if they wrote any (FR-CV-17). */
+export interface Joiner {
+  id: string;
+  name: string;
+  text?: string;
+  should?: string;
+  /** When they joined, as an ISO timestamp. */
+  at: string;
+}
+
+/** Who joined a Request about a description from dbt, as its parameters keep them, in the order they joined. */
+export function joinersOf(params: Record<string, string>): Joiner[] {
+  try {
+    const joins = JSON.parse(params.joins ?? '[]') as unknown;
+    return Array.isArray(joins) ? joins.filter((joiner): joiner is Joiner => typeof (joiner as Joiner | null)?.id === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+/** What a User reports about a description from dbt (FR-CV-17): that of the table, or of one field, with their words. */
+export interface DescriptionReport {
+  /** The field whose description it is; null for the description of the table. */
+  field: string | null;
+  /** What is wrong with it. */
+  text: string;
+  /** What it should say; empty when they left it out. */
+  should: string;
+}
+
+/** What reporting a description came to: a new Request, joined the one that waits, or nothing new; or why not. */
+export type Reported = { outcome: 'sent' | 'joined' | 'already'; conversation: Conversation } | { outcome: 'not_found' } | { outcome: 'no_description' };
+
+/**
+ * Closes every Request about a description from dbt that dbt changed (FR-CV-17, DEC-CV-14), waiting or accepted: Data
+ * Hub replies that it was corrected (MSG-RES-11), which tells its writer and who joined it, and the line at the
+ * description goes. Called while a new Current Version is read, in its transaction.
+ */
+export async function closeCorrected(trx: Database, resourceId: string, changes: readonly { field: string | null; after: string }[], run: string): Promise<number> {
+  let closed = 0;
+  for (const change of changes) {
+    const rows = await trx
+      .selectFrom('messages')
+      .select(['id'])
+      .where('type', '=', REPORT)
+      .where('subjectKind', '=', 'resource')
+      .where('subjectId', '=', resourceId)
+      .where('parentId', 'is', null)
+      .where('state', 'in', ['waiting', 'accepted'])
+      .where(sql<SqlBool>`coalesce(params->>'field', '') = ${change.field ?? ''}`)
+      .forUpdate()
+      .execute();
+    for (const row of rows) {
+      const now = new Date();
+      const params: Record<string, string> = { on: change.field === null ? 'table' : 'field', ...(change.field === null ? {} : { field: change.field }), run, ...(change.after ? { after: change.after } : {}) };
+      await trx.insertInto('messages').values({ type: CORRECTED, subjectKind: 'resource', subjectId: resourceId, writerId: null, params, state: null, parentId: row.id }).execute();
+      await trx.updateTable('messages').set({ state: 'corrected', lastAt: now, lastWriterId: null, updatedAt: now }).where('id', '=', row.id).execute();
+      closed += 1;
+    }
+  }
+  return closed;
+}
 
 /** The Message Centre filters on these kinds and kinds of object (FR-CV-06). */
 export const FILTER_KINDS = ['question', 'remark', 'signal', 'request', 'dataHub'] as const;
@@ -104,6 +171,16 @@ export interface MessageView {
   mayClose: boolean;
   /** Whether the viewer may reply in it: its writer always, others with `messages.reply`, likewise (DEC-PL-04). */
   mayReply: boolean;
+  /**
+   * Whether the viewer may delete it, with its replies (FR-CV-18): its writer, the Owner Unit of its object and the
+   * Data Team (DEC-CV-15, DEC-CV-16); never what Data Hub wrote, nor a Request once it is decided.
+   */
+  mayDelete: boolean;
+  /**
+   * Whether the viewer may join it: a Request about a description from dbt that waits, which they did not send or join
+   * yet, on a Resource they may write Messages on ("Join it", FR-CV-17).
+   */
+  mayJoin: boolean;
 }
 
 /** A reply, the decision on a Request, or the closing of a Question or a Signal, under the Message it is about. */
@@ -115,6 +192,8 @@ export interface ReplyView {
   params: Record<string, string>;
   createdAt: Date;
   mine: boolean;
+  /** Whether the viewer may delete this reply alone: a reply written by a User, by its writer, the Owner Unit or the Data Team. */
+  mayDelete: boolean;
 }
 
 export interface Conversation extends MessageView {
@@ -185,8 +264,21 @@ export interface Messages {
    * with an optional line why: the closing stands under it in its conversation, and tells its writer (FR-CV-16, MSG-CNV-07).
    */
   close(id: string, sight: Sight, text: string): Promise<Conversation | 'not_found' | 'not_closable' | 'not_allowed' | 'not_open'>;
+  /**
+   * Deletes a Message for everyone (FR-CV-18): a first Message with its whole conversation, a reply alone. By its writer,
+   * the Owner Unit of its object or the Data Team (DEC-CV-15, DEC-CV-16); the Log of a Resource keeps who did (CNV-052).
+   */
+  remove(id: string, sight: Sight): Promise<{ deleted: 'conversation' | 'reply'; conversation: string } | 'not_found' | 'not_allowed' | 'stays'>;
   /** Opens a closed Question or Signal again, by the same people; its closing stays in the conversation (FR-CV-16). */
   reopen(id: string, sight: Sight): Promise<Conversation | 'not_found' | 'not_closable' | 'not_allowed' | 'not_closed'>;
+  /**
+   * Reports a description from dbt as wrong (FR-CV-17, DEC-CV-14): a Request to the Data Team on the Resource that quotes
+   * the description as dbt has it and names its field (MSG-RES-10). While one waits on the same description, the viewer
+   * joins it with their words instead; its writer, or who joined it, sending again changes nothing.
+   */
+  report(sight: Sight, resourceId: string, report: DescriptionReport): Promise<Reported>;
+  /** Joins a waiting Request about a description from dbt, without words ("Join it", FR-CV-17). */
+  join(id: string, sight: Sight): Promise<Reported | { outcome: 'not_a_report' } | { outcome: 'not_waiting' }>;
   /** The decision on a waiting Request, by someone with `requests.decide`: its reply, which ends it (FR-CV-08, MSG-CNV-05). */
   decide(id: string, outcome: 'accepted' | 'refused', text: string, decider: Decider, sight?: Sight): Promise<Decided>;
   /** The Request Data Hub sends when a Lens grew into very large; one that waits is given back (MSG-LEN-03). */
@@ -361,6 +453,7 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
       or (m.type = any(${list(TO_OWNER)}) and m.subject_kind = 'query' and m.params->>'owner' = ${me})
       or (m.type = any(${list(TO_AUTHOR)}) and m.subject_kind in ('excelKey', 'user') and m.params->>'user' = ${me})
       or (m.type = any(${list(TO_LENS_USERS)}) and ${me} = any(string_to_array(m.params->>'users', ',')))
+      or (m.type = ${REPORT} and (m.params->>'joins')::jsonb @> jsonb_build_array(jsonb_build_object('id', ${me}::text)))
       ))
     )`;
   }
@@ -458,7 +551,33 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
       mine: row.writerId === sight.viewer.id,
       mayClose: mayClose(row, sight),
       mayReply: mayReply(row, sight),
+      mayDelete: mayDelete(row, sight),
+      mayJoin: mayJoin(row, sight),
     };
+  }
+
+  /** Whether the viewer may join a Request about a description from dbt (FR-CV-17): one that waits, not theirs yet. */
+  function mayJoin(row: Pick<Row, 'type' | 'state' | 'writerId' | 'params'>, sight: Sight): boolean {
+    if (row.type !== REPORT || row.state !== 'waiting' || row.writerId === sight.viewer.id) return false;
+    if (joinersOf(row.params).some((joiner) => joiner.id === sight.viewer.id)) return false;
+    return WRITTEN_ON.resource.some((kind) => canWith(sight.viewer.permissions, 'messages.write', 'kinds', kind));
+  }
+
+  /** The viewer joins a waiting Request about a description from dbt, with their words if any; once is enough. */
+  async function joining(trx: Database, row: Row, sight: Sight, words: { text?: string; should?: string }): Promise<Reported> {
+    const me = sight.viewer.id;
+    const joiners = joinersOf(row.params);
+    if (row.writerId === me || joiners.some((joiner) => joiner.id === me)) return { outcome: 'already', conversation: (await conversations([row], sight, trx))[0]! };
+    const now = new Date();
+    const joiner: Joiner = { id: me, name: sight.viewer.name, ...(words.text ? { text: words.text } : {}), ...(words.should ? { should: words.should } : {}), at: now.toISOString() };
+    const updated = await trx
+      .updateTable('messages')
+      .set({ params: { ...row.params, joins: JSON.stringify([...joiners, joiner]) }, lastAt: now, lastWriterId: me, updatedAt: now })
+      .where('id', '=', row.id)
+      .returningAll()
+      .executeTakeFirstOrThrow();
+    await markRead(trx, row.id, me);
+    return { outcome: 'joined', conversation: (await conversations([updated], sight, trx))[0]! };
   }
 
   /**
@@ -495,6 +614,23 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
     return row.writerId === sight.viewer.id || reachesObject(sight, 'messages.reply', row.subjectKind, row.subjectId);
   }
 
+  /**
+   * Whether a Message may be deleted at all (FR-CV-18): what a User wrote, a first Message or a reply; never what Data
+   * Hub wrote, a closing or a decision, nor a Request once it is decided, whose decision belongs to its history (DEC-CV-16).
+   */
+  function deletable(row: Pick<Row, 'type' | 'writerId' | 'parentId' | 'state'>): boolean {
+    if (row.writerId === null) return false;
+    if (row.parentId !== null) return row.type === REPLY;
+    if (REQUESTS.includes(row.type)) return row.state === 'waiting';
+    return (Object.values(WRITTEN) as string[]).includes(row.type);
+  }
+
+  /** Whether the viewer may delete it: its writer, the Owner Unit of its object, or the Data Team (DEC-CV-15, DEC-CV-16). */
+  function mayDelete(row: Pick<Row, 'type' | 'writerId' | 'parentId' | 'state' | 'subjectKind' | 'subjectId'>, sight: Sight): boolean {
+    if (!deletable(row)) return false;
+    return row.writerId === sight.viewer.id || standing(sight, row.subjectKind, row.subjectId) !== null;
+  }
+
   const replyOf = (row: Row, sight: Sight): ReplyView => ({
     id: row.id,
     type: row.type,
@@ -503,6 +639,7 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
     params: row.params,
     createdAt: row.createdAt,
     mine: row.writerId === sight.viewer.id,
+    mayDelete: mayDelete(row, sight),
   });
 
   /** Conversations with their replies, oldest reply first, and whether each is unread for the viewer. */
@@ -748,6 +885,34 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
       });
     },
 
+    async remove(id, sight) {
+      if (!UUID.test(id)) return 'not_found';
+      const viewer = sight.viewer;
+      return db.transaction().execute(async (trx) => {
+        const row = await trx.selectFrom('messages').selectAll().where('id', '=', id).forUpdate().executeTakeFirst();
+        if (!row || !seesRow(sight, row)) return 'not_found' as const;
+        if (!deletable(row)) return 'stays' as const;
+        if (!mayDelete(row, sight)) return 'not_allowed' as const;
+        // A reply goes alone; a first Message takes its conversation with it, and the marks of who read it.
+        const gone = row.parentId === null ? [row.id, ...(await trx.selectFrom('messages').select('id').where('parentId', '=', row.id).execute()).map((reply) => reply.id)] : [row.id];
+        await trx.deleteFrom('messageReads').where('messageId', 'in', gone).execute();
+        if (row.parentId === null) await trx.deleteFrom('messages').where('parentId', '=', row.id).execute();
+        await trx.deleteFrom('messages').where('id', '=', row.id).execute();
+        if (row.parentId !== null) {
+          const replies = await trx.selectFrom('messages').select((eb) => eb.fn.countAll<string>().as('count')).where('parentId', '=', row.parentId).where('type', '=', REPLY).executeTakeFirstOrThrow();
+          // The last reply gone, a Question is open again: nobody answered it.
+          if (Number(replies.count) === 0) await trx.updateTable('messages').set({ state: 'open' }).where('id', '=', row.parentId).where('state', '=', 'answered').execute();
+        }
+        if (row.subjectKind === 'resource') {
+          await trx
+            .insertInto('resourceLog')
+            .values({ resourceId: row.subjectId, logId: 'CNV-052', params: { actor: viewer.name, writer: row.params.writer ?? '', kind: row.parentId === null ? kindOf(row.type) : 'reply' }, actorId: viewer.id })
+            .execute();
+        }
+        return { deleted: row.parentId === null ? ('conversation' as const) : ('reply' as const), conversation: row.parentId ?? row.id };
+      });
+    },
+
     async reopen(id, sight) {
       if (!UUID.test(id)) return 'not_found';
       return db.transaction().execute(async (trx) => {
@@ -765,6 +930,66 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
           .executeTakeFirstOrThrow();
         await markRead(trx, row.id, sight.viewer.id);
         return (await conversations([updated], sight, trx))[0]!;
+      });
+    },
+
+    async report(sight, resourceId, { field, text, should }) {
+      if (!UUID.test(resourceId) || !sees(sight, 'resource', resourceId)) return { outcome: 'not_found' };
+      const viewer = sight.viewer;
+      return db.transaction().execute(async (trx): Promise<Reported> => {
+        const resource = await trx.selectFrom('resources').select(['displayName', 'description']).where('id', '=', resourceId).executeTakeFirst();
+        if (!resource) return { outcome: 'not_found' };
+        const quoted =
+          field === null
+            ? resource.description
+            : (await trx.selectFrom('resourceFields').select('description').where('resourceId', '=', resourceId).where('name', '=', field).executeTakeFirst())?.description;
+        if (quoted === undefined) return { outcome: 'not_found' };
+        // Only a description dbt has can be wrong in dbt.
+        if (!quoted.trim()) return { outcome: 'no_description' };
+        const as = standing(sight, 'resource', resourceId);
+        const params: Record<string, string> = {
+          writer: viewer.name,
+          subject: resource.displayName,
+          on: field === null ? 'table' : 'field',
+          ...(field === null ? {} : { field }),
+          quoted,
+          text,
+          ...(should ? { should } : {}),
+          ...(as ? { as } : {}),
+        };
+        // One Request waits per description (MSG-RES-10): a second one becomes joining the first.
+        const row = await trx
+          .insertInto('messages')
+          .values({ type: REPORT, subjectKind: 'resource', subjectId: resourceId, writerId: viewer.id, params, state: 'waiting', lastWriterId: viewer.id })
+          .onConflict((conflict) => conflict.expression(sql`subject_id, (coalesce(params->>'field', ''))`).where('type', '=', REPORT).where('state', '=', 'waiting').doNothing())
+          .returningAll()
+          .executeTakeFirst();
+        if (row) {
+          await markRead(trx, row.id, viewer.id);
+          return { outcome: 'sent', conversation: (await conversations([row], sight, trx))[0]! };
+        }
+        const waiting = await trx
+          .selectFrom('messages')
+          .selectAll()
+          .where('type', '=', REPORT)
+          .where('subjectKind', '=', 'resource')
+          .where('subjectId', '=', resourceId)
+          .where('state', '=', 'waiting')
+          .where(sql<SqlBool>`coalesce(params->>'field', '') = ${field ?? ''}`)
+          .forUpdate()
+          .executeTakeFirstOrThrow();
+        return joining(trx, waiting, sight, { text, should });
+      });
+    },
+
+    async join(id, sight) {
+      if (!UUID.test(id)) return { outcome: 'not_found' };
+      return db.transaction().execute(async (trx) => {
+        const row = await trx.selectFrom('messages').selectAll().where('id', '=', id).where('parentId', 'is', null).forUpdate().executeTakeFirst();
+        if (!row || !seesRow(sight, row)) return { outcome: 'not_found' as const };
+        if (row.type !== REPORT) return { outcome: 'not_a_report' as const };
+        if (row.state !== 'waiting') return { outcome: 'not_waiting' as const };
+        return joining(trx, row, sight, {});
       });
     },
 

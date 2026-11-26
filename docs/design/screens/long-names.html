@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<!--
+  Screen: long names (designed on 2026-11-23, at the request of Max).
+  Our names often say what matters last: "Credit leads, current (flat)", "…, monthly", the date of a query, the table
+  after its dataset and the part after its last __. A browser cuts a name at its end, which cuts exactly that. This page
+  draws four ways to fit a long name, in CSS alone and without measuring a name in code, side by side on names from uat,
+  in four places: the panel, a tab of a Project, a Resource on a new query and a Key as Find a table lists it. Drag the
+  lower right corner of a column to make it narrower or wider. Under them, the name field of a new query.
+  Every name shows in full on hover, whatever the way.
+  Requirements: none; this is a design rule.
+  Open points: OP-UX-120 (Keys), OP-UX-121 (names), OP-UX-122 (the name field of a new query).
+  Decisions it would change: DEC-UX-251, DEC-UX-336, the rule "One line per name" of the panel.
+  Rules: ../principles.md#long-names  ·  Names from uat; no data.
+-->
+<html lang="en" data-role="owner">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Long names</title>
+</head>
+<body>
+<div class="app">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <a class="nav-btn" href="collections-start.html" data-label="Collections" aria-label="Collections"><i class="ph-fill ph-stack"></i></a>
+  <a class="nav-btn active" href="query.html" data-label="Query" aria-label="Query" aria-current="page"><i class="ph-fill ph-terminal-window"></i></a>
+  <a class="nav-btn" href="charts.html" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
+  <a class="nav-btn" href="eda.html" data-label="EDA" aria-label="EDA"><i class="ph-fill ph-binoculars"></i></a>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages"><i class="ph-fill ph-chat-circle-text"></i></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <a class="nav-btn nav-admin" href="admin-webhooks.html" data-label="Admin" aria-label="Admin, for the Data Team" data-for="datateam"><i class="ph-fill ph-toolbox"></i></a>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">MP</a>
+</nav>
+<main class="main ln-page">
+ <div class="meta">Design</div>
+ <h1 class="page-title">Long names</h1>
+ <p class="ln-intro">Our names often say what matters last: <em>current (flat)</em>, <em>monthly</em>, the date of a query, the table after its dataset. A browser cuts a name at its end, which cuts exactly that. Four ways to fit a long name, in CSS alone, on names from uat. <strong>Drag the lower right corner of a column</strong> to make it narrower or wider; every name shows in full on hover.</p>
+ <div class="ln-cols">
+<section class="card ln-col" aria-labelledby="ln-end">
+  <h2 id="ln-end"><span class="ln-n">1</span>Cut the end <span class="kind-chip">today</span></h2>
+  <p class="meta ln-how"><code>text-overflow: ellipsis</code></p>
+  <dl class="ln-dl"><dt>Keeps</dt><dd>the start</dd><dt>Loses</dt><dd>the end: “current (flat)”, “monthly”, the date, the table</dd></dl>
+  <div class="ln-box" title="Drag the lower right corner">
+   <div class="ln-place">In the panel</div>
+   <div class="ln-item"><i class="ph ph-table" aria-hidden="true"></i><span class="ln-end" title="Credit leads">Credit leads</span><span class="maturity" data-level="3"></span></div>
+   <div class="ln-item"><i class="ph ph-table" aria-hidden="true"></i><span class="ln-end" title="Credit leads, current (flat)">Credit leads, current (flat)</span><span class="maturity" data-level="2"></span></div>
+   <div class="ln-item"><i class="ph ph-table" aria-hidden="true"></i><span class="ln-end" title="Lead sources, current (flat)">Lead sources, current (flat)</span><span class="maturity" data-level="2"></span></div>
+   <div class="ln-item"><i class="ph ph-table" aria-hidden="true"></i><span class="ln-end" title="Credit lead creations (flat)">Credit lead creations (flat)</span><span class="maturity" data-level="2"></span></div>
+   <div class="ln-item"><i class="ph ph-table" aria-hidden="true"></i><span class="ln-end" title="IO coverage and purity per municipality, monthly">IO coverage and purity per municipality, monthly</span><span class="maturity" data-level="2"></span></div>
+   <div class="ln-place">A tab of a Project</div>
+   <div class="ln-tab"><span class="kbd">⌘2</span><span class="ln-end" title="CTAs, Flow types, Lead sources en Views, 2 nov">CTAs, Flow types, Lead sources en Views, 2 nov</span></div>
+   <div class="ln-tab"><span class="kbd">⌘3</span><span class="ln-end" title="Credit lead creations (flat), 9 nov">Credit lead creations (flat), 9 nov</span></div>
+   <div class="ln-place">A Resource on a new query</div>
+   <div class="ln-row"><i class="ph ph-table" aria-hidden="true"></i><div class="ln-what"><span class="ln-end item-title" title="IO coverage and purity per municipality, monthly">IO coverage and purity per municipality, monthly</span><span class="meta">Attraction · partitioned by month_start</span></div><span class="maturity" data-level="2"></span><i class="ph ph-x ln-x" aria-hidden="true"></i></div>
+   <div class="ln-place">A Key, as Find a table lists it</div>
+   <div class="ln-key"><span class="ln-end" title="immoscoop-dataplatform.colleciones_dbt.mrt_immoscoop__creditLead__create__flatEvent">immoscoop-dataplatform.colleciones_dbt.mrt_immoscoop__creditLead__create__flatEvent</span></div>
+   <div class="ln-key"><span class="ln-end" title="immoscoop-dataplatform.colleciones_dbt.mrt_reports_digicomm_io__inLeads">immoscoop-dataplatform.colleciones_dbt.mrt_reports_digicomm_io__inLeads</span></div>
+  </div>
+</section>
+<section class="card ln-col" aria-labelledby="ln-two">
+  <h2 id="ln-two"><span class="ln-n">2</span>Two lines, then cut</h2>
+  <p class="meta ln-how"><code>line-clamp: 2; a Key breaks anywhere</code></p>
+  <dl class="ln-dl"><dt>Keeps</dt><dd>almost every name whole</dd><dt>Loses</dt><dd>only what passes two lines; rows differ in height</dd></dl>
+  <div class="ln-box" title="Drag the lower right corner">
+   <div class="ln-place">In the panel</div>
+   <div class="ln-item"><i class="ph ph-table" aria-hidden="true"></i><span class="ln-two" title="Credit leads">Credit leads</span><span class="maturity" data-level="3"></span></div>
+   <div class="ln-item"><i class="ph ph-table" aria-hidden="true"></i><span class="ln-two" title="Credit leads, current (flat)">Credit leads, current (flat)</span><span class="maturity" data-level="2"></span></div>
+   <div class="ln-item"><i class="ph ph-table" aria-hidden="true"></i><span class="ln-two" title="Lead sources, current (flat)">Lead sources, current (flat)</span><span class="maturity" data-level="2"></span></div>
+   <div class="ln-item"><i class="ph ph-table" aria-hidden="true"></i><span class="ln-two" title="Credit lead creations (flat)">Credit lead creations (flat)</span><span class="maturity" data-level="2"></span></div>
+   <div class="ln-item"><i class="ph ph-table" aria-hidden="true"></i><span class="ln-two" title="IO coverage and purity per municipality, monthly">IO coverage and purity per municipality, monthly</span><span class="maturity" data-level="2"></span></div>
+   <div class="ln-place">A tab of a Project</div>
+   <div class="ln-tab"><span class="kbd">⌘2</span><span class="ln-two" title="CTAs, Flow types, Lead sources en Views, 2 nov">CTAs, Flow types, Lead sources en Views, 2 nov</span></div>
+   <div class="ln-tab"><span class="kbd">⌘3</span><span class="ln-two" title="Credit lead creations (flat), 9 nov">Credit lead creations (flat), 9 nov</span></div>
+   <div class="ln-place">A Resource on a new query</div>
+   <div class="ln-row"><i class="ph ph-table" aria-hidden="true"></i><div class="ln-what"><span class="ln-two item-title" title="IO coverage and purity per municipality, monthly">IO coverage and purity per municipality, monthly</span><span class="meta">Attraction · partitioned by month_start</span></div><span class="maturity" data-level="2"></span><i class="ph ph-x ln-x" aria-hidden="true"></i></div>
+   <div class="ln-place">A Key, as Find a table lists it</div>
+   <div class="ln-key"><span class="ln-two" title="immoscoop-dataplatform.colleciones_dbt.mrt_immoscoop__creditLead__create__flatEvent">immoscoop-dataplatform.colleciones_dbt.mrt_immoscoop__creditLead__create__flatEvent</span></div>
+   <div class="ln-key"><span class="ln-two" title="immoscoop-dataplatform.colleciones_dbt.mrt_reports_digicomm_io__inLeads">immoscoop-dataplatform.colleciones_dbt.mrt_reports_digicomm_io__inLeads</span></div>
+  </div>
+</section>
+<section class="card ln-col" aria-labelledby="ln-start">
+  <h2 id="ln-start"><span class="ln-n">3</span>Cut the start</h2>
+  <p class="meta ln-how"><code>direction: rtl, the name kept left to right</code></p>
+  <dl class="ln-dl"><dt>Keeps</dt><dd>the end</dd><dt>Loses</dt><dd>the start, which for a Key is the project and dataset</dd></dl>
+  <div class="ln-box" title="Drag the lower right corner">
+   <div class="ln-place">In the panel</div>
+   <div class="ln-item"><i class="ph ph-table" aria-hidden="true"></i><span class="ln-start" title="Credit leads"><span dir="ltr">Credit leads</span></span><span class="maturity" data-level="3"></span></div>
+   <div class="ln-item"><i class="ph ph-table" aria-hidden="true"></i><span class="ln-start" title="Credit leads, current (flat)"><span dir="ltr">Credit leads, current (flat)</span></span><span class="maturity" data-level="2"></span></div>
+   <div class="ln-item"><i class="ph ph-table" aria-hidden="true"></i><span class="ln-start" title="Lead sources, current (flat)"><span dir="ltr">Lead sources, current (flat)</span></span><span class="maturity" data-level="2"></span></div>
+   <div class="ln-item"><i class="ph ph-table" aria-hidden="true"></i><span class="ln-start" title="Credit lead creations (flat)"><span dir="ltr">Credit lead creations (flat)</span></span><span class="maturity" data-level="2"></span></div>
+   <div class="ln-item"><i class="ph ph-table" aria-hidden="true"></i><span class="ln-start" title="IO coverage and purity per municipality, monthly"><span dir="ltr">IO coverage and purity per municipality, monthly</span></span><span class="maturity" data-level="2"></span></div>
+   <div class="ln-place">A tab of a Project</div>
+   <div class="ln-tab"><span class="kbd">⌘2</span><span class="ln-start" title="CTAs, Flow types, Lead sources en Views, 2 nov"><span dir="ltr">CTAs, Flow types, Lead sources en Views, 2 nov</span></span></div>
+   <div class="ln-tab"><span class="kbd">⌘3</span><span class="ln-start" title="Credit lead creations (flat), 9 nov"><span dir="ltr">Credit lead creations (flat), 9 nov</span></span></div>
+   <div class="ln-place">A Resource on a new query</div>
+   <div class="ln-row"><i class="ph ph-table" aria-hidden="true"></i><div class="ln-what"><span class="ln-start item-title" title="IO coverage and purity per municipality, monthly"><span dir="ltr">IO coverage and purity per municipality, monthly</span></span><span class="meta">Attraction · partitioned by month_start</span></div><span class="maturity" data-level="2"></span><i class="ph ph-x ln-x" aria-hidden="true"></i></div>
+   <div class="ln-place">A Key, as Find a table lists it</div>
+   <div class="ln-key"><span class="ln-start" title="immoscoop-dataplatform.colleciones_dbt.mrt_immoscoop__creditLead__create__flatEvent"><span dir="ltr">immoscoop-dataplatform.colleciones_dbt.mrt_immoscoop__creditLead__create__flatEvent</span></span></div>
+   <div class="ln-key"><span class="ln-start" title="immoscoop-dataplatform.colleciones_dbt.mrt_reports_digicomm_io__inLeads"><span dir="ltr">immoscoop-dataplatform.colleciones_dbt.mrt_reports_digicomm_io__inLeads</span></span></div>
+  </div>
+</section>
+<section class="card ln-col" aria-labelledby="ln-tail">
+  <h2 id="ln-tail"><span class="ln-n">4</span>Keep the end whole</h2>
+  <p class="meta ln-how"><code>two parts: the first shrinks with “…”, the last never</code></p>
+  <dl class="ln-dl"><dt>Keeps</dt><dd>the start and the end</dd><dt>Loses</dt><dd>the middle; the name is split once, at its last comma or __</dd></dl>
+  <div class="ln-box" title="Drag the lower right corner">
+   <div class="ln-place">In the panel</div>
+   <div class="ln-item"><i class="ph ph-table" aria-hidden="true"></i><span class="ln-end" title="Credit leads">Credit leads</span><span class="maturity" data-level="3"></span></div>
+   <div class="ln-item"><i class="ph ph-table" aria-hidden="true"></i><span class="ln-tail" title="Credit leads, current (flat)"><span>Credit leads</span><span>, current (flat)</span></span><span class="maturity" data-level="2"></span></div>
+   <div class="ln-item"><i class="ph ph-table" aria-hidden="true"></i><span class="ln-tail" title="Lead sources, current (flat)"><span>Lead sources</span><span>, current (flat)</span></span><span class="maturity" data-level="2"></span></div>
+   <div class="ln-item"><i class="ph ph-table" aria-hidden="true"></i><span class="ln-end" title="Credit lead creations (flat)">Credit lead creations (flat)</span><span class="maturity" data-level="2"></span></div>
+   <div class="ln-item"><i class="ph ph-table" aria-hidden="true"></i><span class="ln-tail" title="IO coverage and purity per municipality, monthly"><span>IO coverage and purity per municipality</span><span>, monthly</span></span><span class="maturity" data-level="2"></span></div>
+   <div class="ln-place">A tab of a Project</div>
+   <div class="ln-tab"><span class="kbd">⌘2</span><span class="ln-tail" title="CTAs, Flow types, Lead sources en Views, 2 nov"><span>CTAs, Flow types, Lead sources en Views</span><span>, 2 nov</span></span></div>
+   <div class="ln-tab"><span class="kbd">⌘3</span><span class="ln-tail" title="Credit lead creations (flat), 9 nov"><span>Credit lead creations (flat)</span><span>, 9 nov</span></span></div>
+   <div class="ln-place">A Resource on a new query</div>
+   <div class="ln-row"><i class="ph ph-table" aria-hidden="true"></i><div class="ln-what"><span class="ln-tail item-title" title="IO coverage and purity per municipality, monthly"><span>IO coverage and purity per municipality</span><span>, monthly</span></span><span class="meta">Attraction · partitioned by month_start</span></div><span class="maturity" data-level="2"></span><i class="ph ph-x ln-x" aria-hidden="true"></i></div>
+   <div class="ln-place">A Key, as Find a table lists it</div>
+   <div class="ln-key"><span class="ln-tail" title="immoscoop-dataplatform.colleciones_dbt.mrt_immoscoop__creditLead__create__flatEvent"><span>immoscoop-dataplatform.colleciones_dbt.mrt_immoscoop__creditLead__create</span><span>__flatEvent</span></span></div>
+   <div class="ln-key"><span class="ln-tail" title="immoscoop-dataplatform.colleciones_dbt.mrt_reports_digicomm_io__inLeads"><span>immoscoop-dataplatform.colleciones_dbt.mrt_reports_digicomm_io</span><span>__inLeads</span></span></div>
+  </div>
+</section>
+ </div>
+
+ <div class="section-head"><h2>The name field of a new query</h2><span class="meta">Suggested from its Resources and the date, so its end is the date</span></div>
+ <div class="ln-fields">
+  <section class="card ln-field-card" aria-label="Today: one line">
+   <div class="ln-place">Today: one line, the date falls off</div>
+   <label class="ln-label" for="ln-f1">Name</label>
+   <input id="ln-f1" class="ln-input" type="text" value="IO coverage and purity per municipality, monthly, 23 nov">
+  </section>
+  <section class="card ln-field-card" aria-label="Proposed: it grows a line">
+   <div class="ln-place">Proposed: the field grows a line, <code>field-sizing: content</code></div>
+   <label class="ln-label" for="ln-f2">Name</label>
+   <textarea id="ln-f2" class="ln-input ln-grow" rows="1">IO coverage and purity per municipality, monthly, 23 nov</textarea>
+  </section>
+ </div>
+
+ <div class="section-head"><h2>Whatever is chosen</h2></div>
+ <ul class="ln-always">
+  <li>The whole name shows on hover, and search finds any part of it.</li>
+  <li>A Key keeps its copy button where it has one, so nobody types it over.</li>
+  <li>No name is measured in code: the browser fits it.</li>
+ </ul>
+</main>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

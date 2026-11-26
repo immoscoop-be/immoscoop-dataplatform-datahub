@@ -153,7 +153,7 @@
       <p class="prose">One row per week and lead source with the number of credit leads sent to KBC. A lead counts in the week it was first submitted, not when it was followed up. Test and duplicate requests are excluded.</p>
      </div>
     </div>
-    <div style="margin-top:12px;display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="code-chip">model type: aggregate</span><span class="code-chip">grain: week × lead source</span><span class="origin">From the Data Team</span></div>
+    <div style="margin-top:12px;display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="code-chip">model type: aggregate</span><span class="code-chip">Grain: week × lead source</span><span class="origin">From the Data Team</span></div>
    </div>
 
    <div class="sub-tile"><div class="label">Maturity</div>
@@ -166,7 +166,7 @@
    </div>
 
    <div class="sub-tile">
-    <div class="tile-head"><div class="label">Known behaviour</div><a class="edit-link" href="resource-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
+    <div class="tile-head"><div class="label">Known Behaviour</div><a class="edit-link" href="resource-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
     <div style="font-size:12px;font-weight:500;display:flex;align-items:center;gap:6px"><i class="ph-fill ph-check-circle" style="color:var(--text-secondary)"></i>Intended use</div><p style="font-size:12px;color:var(--text-secondary);margin:3px 0 10px 20px;line-height:1.5">Weekly trends and comparing lead sources.</p>
     <div style="font-size:12px;font-weight:500;display:flex;align-items:center;gap:6px"><i class="ph-fill ph-warning" style="color:var(--text-secondary)"></i>Pitfalls</div><p style="font-size:12px;color:var(--text-secondary);margin:3px 0 0 20px;line-height:1.5">The current week is incomplete. Don’t sum across sources for unique people.</p></div>
 
@@ -183,7 +183,7 @@
    </div>
 
    <div class="sub-tile">
-    <div class="tile-head"><div class="label">Key fields</div><a class="edit-link" href="resource-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
+    <div class="tile-head"><div class="label">Key Fields</div><a class="edit-link" href="resource-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
     <span class="code-chip">week_start</span><span class="code-chip">lead_source</span><span class="code-chip">lead_count</span><span class="code-chip">lead_channel</span>
 </div>
 
@@ -193,7 +193,7 @@
      <div>
       <div style="font-size:12px;font-weight:500"><span class="code-chip" style="margin:0 6px 0 0">leadSource</span>on <span class="mono">lead_source</span></div>
       <p class="empty" style="margin:4px 0 12px">Joins Lead sources, Credit lead funnel and Lead response time.</p>
-      <div style="font-size:12px;font-weight:500"><span class="code-chip" style="margin:0 6px 0 0">creditLead</span><span style="color:var(--text-muted);font-weight:400">no identifier at this grain</span></div>
+      <div style="font-size:12px;font-weight:500"><span class="code-chip" style="margin:0 6px 0 0">creditLead</span><span style="color:var(--text-muted);font-weight:400">no identifier at this Grain</span></div>
       <p class="empty" style="margin-top:4px">In the lineage, but counted per week: it joins nothing here.</p>
      </div>
      <svg viewBox="0 0 330 150" width="100%" role="img" aria-label="Weekly lead volume joins Lead sources, Credit lead funnel and Lead response time through leadSource">
@@ -258,12 +258,11 @@
    <div class="label">What Data Hub checked</div>
    <div class="check-line"><i class="ph-fill ph-check-circle"></i><span>In Credit leads, owned by the credit team: you may publish it.</span></div>
    <div class="check-line" data-pane-group="ready" data-pane="ready steps"><i class="ph-fill ph-check-circle"></i><span><b>Described in dbt:</b> the view and its 4 columns have a description.</span></div>
-   <div class="check-line" data-pane-group="ready" data-pane="ready"><i class="ph-fill ph-check-circle"></i><span><b>Required to publish, all done:</b> its Business Description; 2 Key Fields, each described; its intended use; its pitfalls; reliable since 1 Jan 2025, on <span class="mono">week_start</span>; 1 Known Gap.</span></div>
+   <div class="check-line" data-pane-group="ready" data-pane="ready"><i class="ph-fill ph-check-circle"></i><span><b>Required to publish, all done:</b> its Business Description; 2 Key Fields, each described; its intended use; its pitfalls; reliable since 1 Jan 2025, on <span class="mono">week_start</span>.</span></div>
    <div class="check-line" data-pane-group="ready" data-pane="steps" hidden><i class="ph-fill ph-check-circle"></i><span><b>Done:</b> its Business Description; 2 Key Fields, each described; its intended use; reliable since 1 Jan 2025, on <span class="mono">week_start</span>.</span></div>
    <div class="check-line missing" data-pane-group="ready" data-pane="steps" hidden><i class="ph-fill ph-warning-circle"></i><span><b>Pitfalls:</b> none written, and nobody said there are none. <a class="text-link" href="resource-overview.html?ov=behaviour" style="display:inline"><span>Write them, or say there are none</span></a></span></div>
-   <div class="check-line missing" data-pane-group="ready" data-pane="steps" hidden><i class="ph-fill ph-warning-circle"></i><span><b>Known Gaps:</b> none written, and nobody said there are none. <a class="text-link" href="resource-overview.html?ov=gaps" style="display:inline"><span>Add them, or say there are none</span></a></span></div>
    <div class="check-line" data-pane-group="ready" data-pane="ready steps"><i class="ph ph-circle"></i><span><b>Advised:</b> 2 fields without a Business Description; 1 open Question. They don't hold up the publication.</span></div>
-   <div class="check-line" data-pane-group="ready" data-pane="ready steps"><i class="ph ph-diamond" style="color:var(--col-olive)"></i><span><b>For the EDA, later:</b> the table type and the grain, recorded by a Data Admin.</span></div>
+   <div class="check-line" data-pane-group="ready" data-pane="ready steps"><i class="ph ph-diamond" style="color:var(--col-olive)"></i><span><b>For the EDA, later:</b> the table type and the Grain, recorded by a Data Admin.</span></div>
    <p class="meta" data-pane-group="ready" data-pane="steps" hidden style="display:block;line-height:1.5;margin:8px 0 0"><i class="ph ph-chat-circle-text" aria-hidden="true" style="vertical-align:-2px"></i> Or let Claude take you through them, one step at a time: ask Claude, with the Data Hub connector, to help you publish Weekly lead volume.</p>
    <div class="check-line missing" data-pane-group="ready" data-pane="notready" hidden><i class="ph-fill ph-warning-circle"></i><span><b>Not described in dbt:</b> the view has no description yet, and none of its columns has one. The Data Team describes it in dbt; until then the Resource stays 1 · Available and cannot be published. <a class="text-link" href="resource-messages.html" style="display:inline"><span>Ask the Data Team</span></a></span></div>
   </div><div class="pub-block" data-pane-group="ready" data-pane="ready">

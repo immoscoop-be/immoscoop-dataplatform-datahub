@@ -35,7 +35,7 @@ Every route needs the Access Token of a User whose Permission group holds `eda.u
 | `POST /resources/{id}/eda/probes/{probe}/runs` | Adds an EDA-Probe if it is not yet, with its fields and parameters, and runs it through query ([TR-ED-04](#tr-ed-04)); without fields or parameters, an EDA-Probe added runs again as it is set; answers the EDA as `GET`, or what the Pre-flight asks: to approve, or that it cannot run |
 | `PUT /resources/{id}/eda/probes/{probe}/readings` | The reading of a subject: `{ subject, reading }` ([FR-ED-11](../functional/15-eda.md#fr-ed-11)) |
 
-For a Resource, eda asks catalogue with the token of the User whether the User sees it, and its Level, model type, fields with their types, Key Fields, the roles of its model type, its grain fields, and the partition column of its table.
+For a Resource, eda asks catalogue with the token of the User whether the User sees it, and its Level, model type, fields with their types, Key Fields, the roles of its model type, its Grain fields, and the partition column of its table.
 
 <a id="tr-ed-02"></a>
 ### TR-ED-02 · One catalogue of EDA-Probes, shared
@@ -48,7 +48,7 @@ A needed EDA-Probe is complete once a run of it covers what it applies to ([DEC-
 
 | EDA-Probe | Applies to |
 | --- | --- |
-| The grain holds | The table, through its grain fields; without recorded grain fields it cannot run |
+| The Grain holds | The table, through its Grain fields; without recorded Grain fields it cannot run |
 | Nulls per Key Field | Every Key Field |
 | Volume over time, with empty periods | The date its role names: when it happened, when it occurred, created at or as of when, the period of an aggregate |
 | Distribution of numbers | The numbers among the Key Fields |
@@ -60,7 +60,7 @@ A needed EDA-Probe is complete once a run of it covers what it applies to ([DEC-
 
 Per EDA-Probe that Data Hub runs, eda writes one `SELECT` over the table of the Resource, by its full name, from the fields it is set on, that returns aggregates only, never rows of the table; a table that requires a filter on its partition column gets one that keeps every partition. eda then turns the answer into the result per subject and Data Hub's reading, so that the numbers in the web app are those kept.
 
-- **The grain holds:** the rows; the grain values; per number of rows a grain value is on, 1, 2, 3 or 4 and more, how many grain values; the rows with an empty grain field; and the 5 grain values on the most rows, above one. Expected when none is on more than one row and none is empty; look at this otherwise.
+- **The Grain holds:** the rows; the Grain values; per number of rows a Grain value is on, 1, 2, 3 or 4 and more, how many Grain values; the rows with an empty Grain field; and the 5 Grain values on the most rows, above one. Expected when none is on more than one row and none is empty; look at this otherwise.
 - **Nulls per Key Field:** the rows, and per field the rows where it is empty. Per field: expected without empty values; for you to judge with some; look at this with some in a field that holds a role of the model type ([DEC-ED-22](../functional/15-eda.md#dec-ed-22)).
 - **Volume over time:** per date it is set on, per period of the unit of the date (a day, or the week from a Monday of the period of an aggregate), the rows and, for an aggregate or a fact, the sum of the field that adds up. eda adds up the blocks of 7, 14, 21 and 28 days from a Monday, leaving out a block with a period without rows and the current, incomplete one, and gives per unit the average, the standard deviation, P25, the median, P75, the lowest and the highest. Look at this with a period without rows between the first and the last; expected otherwise ([DEC-ED-23](../functional/15-eda.md#dec-ed-23)).
 - **Distribution of numbers:** per field the rows with a value, the lowest, P25, the median, P75, P95, the highest and the mean, by `APPROX_QUANTILES`; a round bin width of 1, 2, 5, 10, 20, 25, 50 or 100 times a power of ten such that about twelve bins reach P95, or the width and tail the User gave; and the rows per bin, the tail in one bin. Always for you to judge ([DEC-ED-24](../functional/15-eda.md#dec-ed-24)).
@@ -116,7 +116,7 @@ The list to add an EDA-Probe is a sheet of the web app, as [eda](../../design/sc
 
 **Status:** Implemented · **Realises:** [FR-ED-15](../functional/15-eda.md#fr-ed-15), [FR-ED-16](../functional/15-eda.md#fr-ed-16), [DEC-ED-29](../functional/15-eda.md#dec-ed-29), [DEC-UX-329](../../design/principles.md#dec-ux-329)
 
-mcp calls eda at its address (`DATAHUB_EDA_URL`) with the token of the User, as it calls the other services, and lists the EDA tools only for a User with `eda.use`. `get_eda` answers the EDA of a Resource in words for Claude; `show_eda` shows it in the MCP App, a kind of its own in its one page, or, with `probe`, the last result of one EDA-Probe with the buttons of the User's reading, without running it; `run_eda_probe` runs an EDA-Probe through `POST /resources/{id}/eda/probes/{probe}/runs`, on its own fields and parameters unless others are given, and shows its result, or, when the Pre-flight asks for approval, a frame in which the User approves it, which runs it with `approve` through `run_eda_probe_approved`, a tool only the frame calls, as `run_query_approved` is. The reading of the User is given from the frame, through `PUT …/readings`, by `give_eda_reading`, a tool only the frame calls. The sentences of a result are made once by mcp, for Claude and the frame alike; examples of grain values, which are values of the data, reach Claude only when the Permission group of the User lets results reach Claude. Infrastructure gives mcp `DATAHUB_EDA_URL`.
+mcp calls eda at its address (`DATAHUB_EDA_URL`) with the token of the User, as it calls the other services, and lists the EDA tools only for a User with `eda.use`. `get_eda` answers the EDA of a Resource in words for Claude; `show_eda` shows it in the MCP App, a kind of its own in its one page, or, with `probe`, the last result of one EDA-Probe with the buttons of the User's reading, without running it; `run_eda_probe` runs an EDA-Probe through `POST /resources/{id}/eda/probes/{probe}/runs`, on its own fields and parameters unless others are given, and shows its result, or, when the Pre-flight asks for approval, a frame in which the User approves it, which runs it with `approve` through `run_eda_probe_approved`, a tool only the frame calls, as `run_query_approved` is. The reading of the User is given from the frame, through `PUT …/readings`, by `give_eda_reading`, a tool only the frame calls. The sentences of a result are made once by mcp, for Claude and the frame alike; examples of Grain values, which are values of the data, reach Claude only when the Permission group of the User lets results reach Claude. Infrastructure gives mcp `DATAHUB_EDA_URL`.
 
 <a id="tr-ed-11"></a>
 ### TR-ED-11 · Every EDA-Probe runs on a selection of rows

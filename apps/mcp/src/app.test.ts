@@ -257,6 +257,30 @@ describe('Resources through Claude', () => {
     });
   });
 
+  it('reports a description from dbt as wrong only as the User agreed, and says when one is reported (FR-CV-17, DEC-CV-17)', async () => {
+    const token = await issuer.sign();
+    answers[`GET ${CATALOGUE}/resources/${RESOURCE_ID}`] = () => [200, detail({ reports: [{ field: 'week_start', state: 'waiting' }] })];
+    answers[`GET ${CATALOGUE}/collections/c-1`] = () => [200, collection];
+    answers[`POST ${CATALOGUE}/resources/${RESOURCE_ID}/description-reports`] = (body) => [
+      201,
+      {
+        outcome: 'sent',
+        message: { id: 'm9', type: 'MSG-RES-10', kind: 'request', subject: { kind: 'resource', id: RESOURCE_ID }, writer: { name: 'Jan' }, params: { writer: 'Jan', subject: 'Weekly lead volume', on: 'field', field: 'week_start', quoted: 'Monday of the week', ...(body as Record<string, string>) }, state: 'waiting', createdAt: '2026-11-25T10:00:00Z' },
+      },
+    ];
+    // Claude reads that a description is reported, and says so when it uses it.
+    expect((await tool('get_resource', { id: RESOURCE_ID }, token)).content[0]?.text).toContain('The description from dbt of the field week_start is reported as wrong; the Data Team is looking at it.');
+    // What it showed no longer stands: it asks again, and sends nothing.
+    const changed = await tool('report_description', { resource: RESOURCE_ID, field: 'week_start', text: 'It is the Sunday.', before: 'Sunday of the week' }, token);
+    expect(changed.isError).toBe(true);
+    expect(changed.content[0]?.text).toContain('Changed in dbt since you showed it');
+    expect(asked.some((one) => one.method === 'POST')).toBe(false);
+    const sent = await tool('report_description', { resource: RESOURCE_ID, field: 'week_start', text: 'It is the Sunday.', before: 'Monday of the week' }, token);
+    expect(sent.isError).toBeFalsy();
+    expect(asked.find((one) => one.method === 'POST')?.body).toEqual({ field: 'week_start', text: 'It is the Sunday.', should: '' });
+    expect(sent.content[0]?.text).toContain('Sent to the Data Team');
+  });
+
   it('reads a Resource with its Level, its size and whether the User may publish it (FR-CL-05, FR-CL-07)', async () => {
     answers[`GET ${CATALOGUE}/resources/${RESOURCE_ID}`] = () => [200, detail()];
     answers[`GET ${CATALOGUE}/collections/c-1`] = () => [200, collection];
@@ -391,7 +415,7 @@ describe('Resources through Claude', () => {
     const guided = await tool('guide_owner_journey', { id: RESOURCE_ID }, owner);
     expect(guided.structuredContent).toMatchObject({
       ready: false,
-      open: ['businessDescription', 'keyFields', 'fields', 'pitfalls', 'since', 'gaps'],
+      open: ['businessDescription', 'keyFields', 'fields', 'pitfalls', 'since'],
       you: { mayPublish: true, mayDescribe: true },
       next: { number: 2, step: 'businessDescription', mark: 'required to publish', writes: 'update_resource_card' },
     });
@@ -408,15 +432,17 @@ describe('Resources through Claude', () => {
     // The window keeps the overview at hand, the definitions of the terms of the step behind the ⓘ after its title, and
     // links to its spot (FR-CL-33, FR-LR-44, DEC-CL-19).
     const shown = guided.structuredContent as { window: { overview: { steps: { number: number; state: string; mark: string; says: string }[]; done: number; open: number }; terms: { name: string; definition: string }[]; link: { url: string; label: string } } };
-    expect(shown.window.overview.open).toBe(6);
+    expect(shown.window.overview.open).toBe(5);
     expect(shown.window.overview.steps.find((step) => step.number === 1)).toMatchObject({ state: 'done', says: 'Done' });
+    // The Known Gaps are optional now (DEC-MR-22).
+    expect(shown.window.overview.steps.find((step) => step.number === 8)).toMatchObject({ mark: 'Optional' });
     expect(shown.window.overview.steps.find((step) => step.number === 2)).toMatchObject({ state: 'now', mark: 'Required' });
     expect(shown.window.overview.steps.find((step) => step.number === 10)).toMatchObject({ state: 'optional', mark: 'Optional' });
     expect(shown.window.terms).toEqual([{ name: 'Business Description', definition: expect.stringContaining('the description from dbt, which says how the data is made') }]);
     expect(shown.window).not.toHaveProperty('purpose');
     expect(shown.window.link).toEqual({ url: `${WEB}/resources/${RESOURCE_ID}/description`, label: 'Open the Description in Data Hub' });
     expect(guided.content[0]?.text).toContain('Step 2 of 12 is next: Business Description, required to publish.');
-    expect(guided.content[0]?.text).toContain('Still open before it can be published: Business Description, Key Fields, Fields, Pitfalls, Reliable since, Known Gaps.');
+    expect(guided.content[0]?.text).toContain('Still open before it can be published: Business Description, Key Fields, Fields, Pitfalls, Reliable since.');
 
     // The publication shows what is open, and sends Claude back to the journey: no declaration to tick yet (DEC-MR-15).
     const publish = await tool('publish_resource', { id: RESOURCE_ID }, owner);
@@ -515,7 +541,7 @@ describe('Resources through Claude', () => {
     const data = guided.structuredContent as { next: { number: number; step: string; writes: string; ask: string }; open: string[]; window: { held: { label: string; text?: string; chips?: string[]; none?: string }[]; link: { label: string; url: string }; total: number } };
     expect(data.next).toMatchObject({ number: 7, step: 'since', writes: 'update_resource_card' });
     expect(data.next.ask).toContain('Never choose one for the Owner');
-    expect(data.open).toEqual(['since', 'gaps']);
+    expect(data.open).toEqual(['since']);
     expect(data.window.total).toBe(12);
     expect(data.window.held).toEqual([
       { label: 'Reliable since', text: undefined, none: expect.stringContaining('neither from its first row nor from a later day') },
@@ -843,7 +869,7 @@ describe('the Permissions of the User in Claude (TR-PL-09)', () => {
   // A Project holds queries, so its tools come with queries.make (DEC-SR-49).
   const PROJECT_TOOLS = ['add_query_to_project', 'create_project', 'get_project', 'list_projects', 'remove_query_from_project', 'update_project'];
   const PREVIEW_TOOLS = ['preview_resource', 'run_preview_approved', 'send_preview_request'];
-  const WRITES = ['add_known_gap', 'change_known_gap', 'deprecate_resource', 'describe_fields', 'mark_changes_seen', 'record_journey_step', 'remove_known_gap', 'reply_to_message', 'undeprecate_resource', 'update_resource_card', 'write_message'];
+  const WRITES = ['add_known_gap', 'change_known_gap', 'delete_message', 'deprecate_resource', 'describe_fields', 'mark_changes_seen', 'record_journey_step', 'remove_known_gap', 'reply_to_message', 'report_description', 'undeprecate_resource', 'update_resource_card', 'write_message'];
   // The fields suggested by Claude, decided by the User in a card: only for who may describe them (FR-CL-38).
   const FIELDS = ['save_fields', 'suggest_fields'];
   // The EDA, for who may explore Resources (DEC-ED-25, DEC-ED-29).
@@ -857,7 +883,7 @@ describe('the Permissions of the User in Claude (TR-PL-09)', () => {
   it('offers a Lens user no query tools and no Preview, and lets Claude write only their Questions and Signals', async () => {
     const tools = await toolsOf(await issuer.sign({ as: 'lensUser' }));
     // They run the Lenses they see, in a card only, whose rows the MCP App reads itself (FR-CL-28, FR-CL-36).
-    expect(names(tools)).toEqual([...READS, ...LENS_RUNS, 'read_result_rows', 'reply_to_message', 'write_message'].sort());
+    expect(names(tools)).toEqual([...READS, ...LENS_RUNS, 'delete_message', 'read_result_rows', 'reply_to_message', 'report_description', 'write_message'].sort());
     for (const name of [...QUERY_TOOLS, ...PROJECT_TOOLS, ...PREVIEW_TOOLS, 'read_preview_choices', 'publish_resource', 'get_resource_queries']) expect(names(tools)).not.toContain(name);
     expect(tools.find((item) => item.name === 'write_message')?.inputSchema.properties.kind?.enum).toEqual(['question', 'signal']);
     // The instructions tell Claude from the start that they make no queries and see results in a card only.
@@ -871,7 +897,7 @@ describe('the Permissions of the User in Claude (TR-PL-09)', () => {
     // Claude writes only Messages for them: no descriptions or deprecations, though they may describe and deprecate in Data Hub.
     const messagesOnly = permissionsOf('businessAnalyst', (permissions) => (permissions['claude.use'].values = { writes: ['messages'], note: '' }));
     const tools = names(await toolsOf(await issuer.sign({ permissions: messagesOnly })));
-    expect(tools).toEqual(expect.arrayContaining(['write_message', 'reply_to_message', 'publish_resource', 'create_query', 'preview_resource']));
+    expect(tools).toEqual(expect.arrayContaining(['write_message', 'reply_to_message', 'delete_message', 'publish_resource', 'create_query', 'preview_resource']));
     for (const name of ['update_resource_card', 'describe_fields', ...FIELDS, 'add_known_gap', 'change_known_gap', 'remove_known_gap', 'mark_changes_seen', 'deprecate_resource', 'undeprecate_resource', 'record_journey_step']) expect(tools).not.toContain(name);
 
     // Only the attributes they may describe: pitfalls, so no Business Descriptions of fields and no changes marked seen.

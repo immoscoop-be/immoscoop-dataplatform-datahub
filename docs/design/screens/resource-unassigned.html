@@ -4,7 +4,7 @@
   A new Resource came in through an exposure and waits for the Data Team to add it to a collection.
   Panel = the Collections, with "Without a collection" on top, unfolded, that only the Data Team has; main = the resource.
   "Add to a Collection" opens the sheet that adds Resources, with as first step the choice of the Collection and this
-  Resource ticked; next, its grain and relations, as from the page of a Collection (DEC-UX-131). ?addto=open opens it.
+  Resource ticked; next, its Grain and relations, as from the page of a Collection (DEC-UX-131). ?addto=open opens it.
   Requirements: FR-CO-07, FR-CO-14, FR-CO-18, FR-SR-06, FR-SR-07, FR-SR-09, FR-SR-31, FR-SR-32, FR-SR-35, FR-MR-10
   Decisions: DEC-UX-16, DEC-UX-131, DEC-SR-22, DEC-CO-12.
   Related screens: collections-start.html (the same panel, as everyone sees it).
@@ -45,7 +45,7 @@
   <label class="search card" style="margin:16px 0 4px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search Resources and Lenses"></label>
   <div style="height:14px" data-for="datateam"></div>
   <div class="tree-group card open unassigned" data-for="datateam">
-   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-tray"></i></span><span class="tree-name"><span class="item-title">Without a Collection</span><span class="meta"><b class="count-badge">3</b> waiting · Data Team only</span></span></a><button class="tree-toggle" aria-expanded="true" aria-label="Show what Without a Collection holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-tray"></i></span><span class="tree-name"><span class="tree-title-line"><b class="count-badge">3</b><span class="item-title">Without a Collection</span></span><span class="meta">waiting · Data Admins only</span></span></a><button class="tree-toggle" aria-expanded="true" aria-label="Show what Without a Collection holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
    <div class="tree-children">
      <a class="tree-res current" aria-current="page" href="resource-unassigned.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Saved searches">Saved searches</span></span><span class="maturity" data-level="1"></span></a>
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Agency reviews">Agency reviews</span></span><span class="maturity" data-level="2"></span></a>
@@ -137,7 +137,7 @@
    <div class="sub-tile" style="grid-column:1/-1">
     <div class="tile-head"><div class="label">Description</div><span class="origin">From dbt</span></div>
     <p class="prose desc-alone">One row per saved search, with the filters a visitor saved and when they last received an alert for it.</p>
-    <div style="margin-top:10px"><span class="code-chip">model type: state</span><span class="code-chip">grain: one saved search</span></div>
+    <div style="margin-top:10px"><span class="code-chip">model type: state</span><span class="code-chip">Grain: one saved search</span></div>
     <p class="empty" style="margin-top:6px">No Business Description yet: the Owner can add one next to it once the Resource is in a Collection.</p>
    </div>
    <div class="sub-tile"><div class="label">Maturity</div>
@@ -161,7 +161,7 @@
   <label class="pick"><input type="radio" name="into"><span style="flex:1;min-width:0"><span style="display:flex;align-items:center;gap:8px"><i class="ph ph-briefcase kind-icon" aria-hidden="true"></i><span class="item-title">Brokers</span></span><span class="meta" style="display:block;margin-top:4px">Broker team · 11 Resources · private</span></span></label>
   <label class="pick"><input type="radio" name="into"><span style="flex:1;min-width:0"><span style="display:flex;align-items:center;gap:8px"><i class="ph ph-magnifying-glass kind-icon" aria-hidden="true"></i><span class="item-title">Search behaviour</span></span><span class="meta" style="display:block;margin-top:4px">Web team · 4 Resources · public</span></span></label>
  </div>
- <div class="sheet-foot"><p class="meta">Into Credit leads · next, its grain and relations</p><button class="btn-quiet" data-sheet-close>Cancel</button><a class="btn-primary" href="collection-add-relations.html" style="text-decoration:none">Next: grain and relations<i class="ph ph-arrow-right" style="font-size:15px"></i></a></div>
+ <div class="sheet-foot"><p class="meta">Into Credit leads · next, its Grain and relations</p><button class="btn-quiet" data-sheet-close>Cancel</button><a class="btn-primary" href="collection-add-relations.html" style="text-decoration:none">Next: Grain and relations<i class="ph ph-arrow-right" style="font-size:15px"></i></a></div>
 </section>
 </div>
 <div hidden data-group="addto"><button data-target="open"></button></div>

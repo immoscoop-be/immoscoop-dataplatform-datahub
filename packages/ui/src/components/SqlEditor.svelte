@@ -602,7 +602,8 @@
   .editor :global(.cm-cursor) { border-left-color: var(--text-primary); }
   .editor :global(.cm-selectionBackground), .editor :global(.cm-focused .cm-selectionBackground) { background: var(--tint-active); }
   .editor :global(.cm-activeLine) { background: none; }
-  .editor :global(.cm-gutters) { background: none; border-right: 1px solid var(--tint-active); color: var(--text-muted); }
+  /* The line numbers stay put while a long line scrolls sideways, so they cover it with the colour of the editor's box (--surface-sub). */
+  .editor :global(.cm-gutters) { background: var(--surface-sub); border-right: 1px solid var(--tint-active); color: var(--text-muted); }
   .editor :global(.cm-lineNumbers .cm-gutterElement) { min-width: 26px; padding: 0 8px 0 0; text-align: right; }
   .editor :global(.cm-foldGutter .cm-gutterElement) { width: 22px; display: flex; align-items: center; justify-content: center; }
   .editor :global(.cm-fold-arrow) { display: inline-flex; width: 18px; height: 18px; align-items: center; justify-content: center; border-radius: var(--radius-sm); cursor: pointer; color: var(--text-muted); }

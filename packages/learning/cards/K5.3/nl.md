@@ -3,17 +3,17 @@ number: K5.3
 status: reviewed
 minutes: 5
 added: 2026-11-12
-changed: 2026-11-12
+changed: 2026-11-25
 gain: Je weet waar data ontbreekt in een Resource voor je er een conclusie uit trekt, en je behoedt je collega's voor dezelfde fout.
-translatedFrom: 454cc89e71e9
+translatedFrom: bddfcd011a20
 ---
 
 # Why now
 
-> Waarom is de leadbron leeg voor al die leads? Wat is daar gebeurd?
-> — Een collega die met leads werkt, niet de eerste die het vraagt
+> Data is zoals een oude vriend: niet altijd perfect, maar altijd hartverwarmend.
+> — Een collega van het Data Team
 
-Het antwoord is altijd hetzelfde: een tijdlang werd de leadbron niet geregistreerd bij de leads. Niemand schreef het op, dus de vraag komt telkens terug. En de collega die het gat niet opmerkt, vraagt helemaal niets: die trekt een conclusie, en die klopt niet.
+Net zoals bij een oude vriend weet je waar je wel en niet op kan rekenen. Een tijdlang werd de leadbron niet geregistreerd bij de leads, en niemand schreef het op: dus komt dezelfde vraag telkens terug, of trekt een collega een conclusie die niet klopt. De Known Gaps documenteren is zoals de handleiding bij die vriend: zo haal je er altijd het beste uit.
 
 Promise: waarom een gat in de data alleen misleidt als niemand het opschreef, en waar je het opschrijft.
 

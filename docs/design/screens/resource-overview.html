@@ -8,10 +8,10 @@
     weight: Read first, Before you query, When interpreting results, or Context. A deprecation comes first; a part
     with nothing in it is left out. Claude reads the same.
   - Description: the Business Description, written in Markdown and shown
-    rendered, the description from dbt under it, and what one row is: the model type, the grain and each field its model
-    type asks for by its role, with "Change model type" for a Data Admin (FR-RC-28, DEC-UX-263). Edit opens the Markdown editor of the app
+    rendered, the description from dbt under it, and what one row is: the model type, the Grain and each field its model
+    type asks for by its role, with "Edit Grain and relations" and "Change model type" for a Data Admin (FR-RC-28, DEC-UX-263, FR-RC-35, DEC-UX-337); Entities and Columns have the same "Edit Grain and relations" (OP-UX-123 names it). Edit opens the Markdown editor of the app
     (MarkdownEditor, DEC-UX-158), as for the intro of a Collection, with the description from dbt beside it, read-only.
-  - Known behaviour: intended use and pitfalls, in Markdown (DEC-RC-19).
+  - Known Behaviour: intended use and pitfalls, in Markdown (DEC-RC-19).
   - Known Gaps: on top, Reliable since in a tile of its own (DEC-UX-296): from which day the whole table can be relied on,
     on the one date field of the Resource, which its table type gives (DEC-RC-29), and why not earlier; or From its first
     row. Under it the time of its data as a line, before that day shaded; the line draws no Known Gaps. Then the gaps. ?rs=start, ?rs=empty, ?rs=edit and ?rs=odd show its other states; ?ov=gaps opens it.
@@ -53,10 +53,15 @@
   opens it in the section EDA (eda.html, DEC-UX-320); ?lvl=eda shows its EDA in progress, with how many needed EDA-Probes are
   complete and "Open its EDA".
   A term of the dictionary carries the marker ⓘ where it heads a part or labels a text: Business Description, Known
-  behaviour, Pitfalls, Known Gaps and Key fields. Its pop-out gives the definition of the term first, then the Learning
+  behaviour, Pitfalls, Known Gaps and Key Fields. Its pop-out gives the definition of the term first, then the Learning
   Cards that explain it (DEC-UX-279, FR-LR-44); the definitions of Pitfall and Known Gap hold the test that tells them
   apart. It replaces the quiet line that said what a text is for (DEC-RC-26, DEC-RC-27).
-  Requirements: FR-ED-02, FR-ED-12, FR-MR-22, FR-RC-19, FR-RC-20, FR-RC-21, FR-RC-22, FR-RC-23, FR-RC-24, FR-RC-25, FR-RC-28, FR-RC-29, FR-SR-50, FR-MR-16, FR-CM-28, FR-CO-43, FR-CO-45, FR-MR-17, FR-MR-18, FR-LR-44, FR-RC-31, FR-RC-32, FR-RC-33, FR-RC-34
+  A description from dbt that seems wrong (FR-CV-17, DEC-UX-338): "Seems wrong?" next to it on Description, on the Summary
+  and, on the row the pointer is on, on Columns; it opens the form in the Messages slide-in. ?dbtrep=reported shows the
+  line under it while the Data Team decides, in all three places.
+  Key Fields edited (DEC-UX-343), ?ov=querying&kf=edit: a purpose line on top, and the fields of the Grain
+  marked "in the Grain".
+  Requirements: FR-ED-02, FR-ED-12, FR-MR-22, FR-RC-19, FR-RC-20, FR-RC-21, FR-RC-22, FR-RC-23, FR-RC-24, FR-RC-25, FR-RC-28, FR-RC-29, FR-RC-35, FR-CV-17, FR-SR-50, FR-MR-16, FR-CM-28, FR-CO-43, FR-CO-45, FR-MR-17, FR-MR-18, FR-LR-44, FR-RC-31, FR-RC-32, FR-RC-33, FR-RC-34
   Decisions: DEC-RC-16, DEC-RC-17, DEC-RC-18, DEC-RC-19, DEC-RC-20, DEC-UX-101, DEC-UX-168, DEC-UX-169, DEC-UX-170, DEC-UX-171, DEC-UX-175, DEC-UX-176, DEC-UX-177, DEC-UX-178, DEC-UX-216, DEC-UX-263, DEC-UX-264, DEC-UX-265, DEC-RC-22, DEC-RC-23, DEC-RC-24, DEC-RC-26, DEC-RC-27, DEC-UX-279.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -190,7 +195,7 @@
     <button class="ov-item on" data-target="summary" role="tab" aria-selected="true"><i class="ph ph-list-numbers" aria-hidden="true"></i><span class="ov-name">Summary</span><span class="ov-note">Start here</span></button>
     <div class="ov-sep" role="presentation"></div>
     <button class="ov-item" data-target="description" role="tab" aria-selected="false"><i class="ph ph-text-align-left" aria-hidden="true"></i><span class="ov-name">Description</span></button>
-    <button class="ov-item" data-target="behaviour" role="tab" aria-selected="false"><i class="ph ph-compass" aria-hidden="true"></i><span class="ov-name">Known behaviour</span></button>
+    <button class="ov-item" data-target="behaviour" role="tab" aria-selected="false"><i class="ph ph-compass" aria-hidden="true"></i><span class="ov-name">Known Behaviour</span></button>
     <button class="ov-item" data-target="gaps" role="tab" aria-selected="false"><i class="ph ph-circle-dashed" aria-hidden="true"></i><span class="ov-name">Known Gaps</span><span class="count">4</span></button>
     <button class="ov-item" data-target="querying" role="tab" aria-selected="false"><i class="ph ph-funnel" aria-hidden="true"></i><span class="ov-name">Querying</span></button>
     <button class="ov-item" data-target="entities" role="tab" aria-selected="false"><i class="ph ph-graph" aria-hidden="true"></i><span class="ov-name">Entities</span></button>
@@ -203,7 +208,7 @@
 
    <div class="ov-body">
 
-    <!-- ───────────── Description: the Business Description in Markdown, the one from dbt, model type and grain ───────────── -->
+    <!-- ───────────── Description: the Business Description in Markdown, the one from dbt, model type and Grain ───────────── -->
     <section class="ov-pane" data-pane-group="ov" data-pane="description" hidden aria-label="Description">
      <div class="ov-head">
       <div style="flex:1;min-width:0"><h2 class="ov-title">Description</h2><p class="ov-lead">What Weekly lead volume is, in business language from its Owner and as dbt describes it.</p></div>
@@ -223,14 +228,15 @@
        </div>
       </div>
       <div class="sub-tile">
-       <div class="desc-head"><span class="label">Description</span><span class="origin">From dbt</span></div>
+       <div class="desc-head"><span class="label">Description</span><span class="origin">From <span class="lc-ref" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-term-dbt">dbt<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (what it means)</span></span></span><a class="text-link" href="resource-messages.html?from=report" title="Tell the Data Team this description from dbt seems wrong (FR-CV-17)"><i class="ph ph-flag"></i><span>Seems wrong?</span></a></div>
        <p class="prose">One row per week and lead source with the number of credit leads sent to KBC. A lead counts in the week it was first submitted, not when it was followed up. Test and duplicate requests are excluded.</p>
+       <p class="dbt-reported" data-pane-group="dbtrep" data-pane="reported" hidden><i class="ph-fill ph-flag"></i><span>Reported as wrong on 25 Nov; the Data Team is looking at it.</span><a class="text-link" href="resource-messages.html">See the Request</a></p>
       </div>
       <div class="sub-tile row-tile">
-       <div class="desc-head"><span class="label">What one row is</span><span class="origin">From the Data Team</span><span style="flex:1"></span><a class="text-link" data-for="datateam" href="collection-add-type.html?change=aggregate" title="Change model type, for a Data Admin"><i class="ph ph-shapes"></i><span>Change model type</span></a></div>
+       <div class="desc-head"><span class="label">What one row is</span><span class="origin">From the Data Team</span><span style="flex:1"></span><a class="text-link" data-for="datateam" href="collection-add-grain.html?from=resource" title="Grain and relations, the model type kept, for a Data Admin (DEC-UX-337)"><i class="ph ph-graph"></i><span>Edit Grain and relations</span></a><span class="lc-ref lc-after" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-grain" aria-label="Grain: what it means"><span class="lc-mark" aria-hidden="true">ⓘ</span></span><a class="text-link" data-for="datateam" href="collection-add-type.html?change=aggregate" title="Change model type, for a Data Admin"><i class="ph ph-shapes"></i><span>Change model type</span></a></div>
        <dl class="type-facts row-facts">
         <dt>Model type</dt><dd><span class="code-chip lc-ref" tabindex="0" title="Explained in Learning Card 2.3.6, Five model types">aggregate<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (explained in the Learning Centre)</span></span> One row per group, with its counts already made: add up its sums, never its unique counts.</dd>
-        <dt>Grain</dt><dd><span class="code-chip lc-ref" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-grain">week_start<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (explained in the learning centre)</span></span><span class="code-chip">lead_source</span> One week × one lead source.</dd>
+        <dt><span class="lc-ref" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-grain">Grain<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (what it means)</span></span></dt><dd><span class="code-chip">week_start</span><span class="code-chip">lead_source</span> One week × one lead source.</dd>
         <dt>Grouped by</dt><dd><span class="code-chip">lead_source</span></dd>
         <dt>Period</dt><dd><span data-pane-group="rolegone" data-pane="off"><span class="code-chip">week_start</span> a week, Monday to Sunday</span><span class="row-gone" data-pane-group="rolegone" data-pane="on" hidden><i class="ph-fill ph-warning-circle"></i>Gone: <span class="mono">week_start</span> was removed in dbt yesterday</span></dd>
         <dt>Counts and sums</dt><dd><span data-pane-group="complete" data-pane="yes"><span class="code-chip">lead_count</span> adds up</span><span class="row-gone" data-pane-group="complete" data-pane="missing" hidden><i class="ph-fill ph-warning-circle"></i>Not marked yet: <span class="mono">lead_count</span></span></dd>
@@ -275,10 +281,10 @@ The lead source is set by the form the visitor used: website, app, partner or ma
      </div>
     </section>
 
-    <!-- ───────────── Known behaviour: intended use, pitfalls, since when reliable; plain text ───────────── -->
-    <section class="ov-pane" data-pane-group="ov" data-pane="behaviour" hidden aria-label="Known behaviour">
+    <!-- ───────────── Known Behaviour: intended use, pitfalls, since when reliable; plain text ───────────── -->
+    <section class="ov-pane" data-pane-group="ov" data-pane="behaviour" hidden aria-label="Known Behaviour">
      <div class="ov-head">
-      <div style="flex:1;min-width:0"><h2 class="ov-title"><span class="lc-ref" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-term-knownBehaviour">Known behaviour<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (what it means)</span></span></h2><p class="ov-lead">What it is meant for, where it trips people up, and from when it can be trusted. Intended use and pitfalls are written in Markdown.</p></div>
+      <div style="flex:1;min-width:0"><h2 class="ov-title"><span class="lc-ref" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-term-knownBehaviour">Known Behaviour<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (what it means)</span></span></h2><p class="ov-lead">What it is meant for, where it trips people up, and from when it can be trusted. Intended use and pitfalls are written in Markdown.</p></div>
       <a class="edit-link" data-for="owner datateam" href="resource-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a>
      </div>
      <div class="ov-grid">
@@ -330,7 +336,7 @@ The lead source is set by the form the visitor used: website, app, partner or ma
         <label class="rs-choice"><input type="radio" name="rs-new" value="later"><span><b>From a later day</b><span class="meta">rows before it stay, but are not to be read as reliable</span></span></label>
         <div class="scope-row rs-later" data-rs-show="first later" hidden>
          <label class="field" data-rs-show="later" hidden><span>Day</span><input type="date"></label>
-         <label class="field"><span>On the date field</span><select><option selected>week_start · its period, as an aggregate</option><option>created_at</option><option>loaded_at</option></select></label>
+         <label class="field"><span>On the Date Field</span><select><option selected>week_start · its period, as an aggregate</option><option>created_at</option><option>loaded_at</option></select></label>
         </div>
         <label class="field" data-rs-show="later" hidden><span>Why not earlier · required</span><textarea rows="2" placeholder="Why can the rows before that day not be relied on?"></textarea></label>
         <div class="gap-form-foot"><span class="meta rs-none-yet">Nothing is chosen yet: choose one to save.</span><span class="meta" data-rs-show="first later" hidden>Goes into the history, with your name.</span><button class="btn-primary sm rs-save" type="submit" disabled>Save</button></div>
@@ -358,7 +364,7 @@ The lead source is set by the form the visitor used: website, app, partner or ma
        <label class="rs-choice"><input type="radio" name="rs-from" checked><span><b>From a later day</b><span class="meta">rows before it stay, but are not to be read as reliable</span></span></label>
        <div class="scope-row rs-later">
         <label class="field"><span>Day</span><input type="date" value="2025-01-01"></label>
-        <label class="field"><span>On the date field</span><select data-pane-group="rs" data-pane="edit"><option selected>week_start · its period, as an aggregate</option><option>created_at</option><option>loaded_at</option></select><select data-pane-group="rs" data-pane="odd" hidden><option>week_start · its period, as an aggregate</option><option selected>created_at</option><option>loaded_at</option></select></label>
+        <label class="field"><span>On the Date Field</span><select data-pane-group="rs" data-pane="edit"><option selected>week_start · its period, as an aggregate</option><option>created_at</option><option>loaded_at</option></select><select data-pane-group="rs" data-pane="odd" hidden><option>week_start · its period, as an aggregate</option><option selected>created_at</option><option>loaded_at</option></select></label>
        </div>
        <p class="meta rs-field-note">The date the rows are read on from that day: by default the one its table type gives.</p>
        <div class="key-warn rs-odd" data-pane-group="rs" data-pane="odd" hidden role="status"><i class="ph-fill ph-warning" aria-hidden="true"></i><p><b>Unusual for an aggregate.</b> Its time runs on its period, <span class="mono">week_start</span>. On <span class="mono">created_at</span>, Reliable since says when a row was made, not which week it counts. Keep it only when that is meant.</p></div>
@@ -368,10 +374,8 @@ The lead source is set by the form the visitor used: website, app, partner or ma
      </div>
      <p class="label gaps-label">The gaps, one per line</p>
      <div class="gaps-none" data-pane-group="cardfill" data-pane="empty nothing" hidden>
-      <p class="prose" data-pane-group="cardfill" data-pane="empty">No Known Gap written yet.</p>
-      <p class="meta nothing-why" data-pane-group="cardfill" data-pane="empty" data-for="owner datateam">Required to publish: add the gaps you know of, or say there are none.</p>
-      <button class="btn-quiet outline sm" type="button" data-pane-group="cardfill" data-pane="empty" data-for="owner datateam" data-go="cardfill:nothing"><i class="ph ph-check" aria-hidden="true"></i>Nothing to add</button>
-      <p class="prose" data-pane-group="cardfill" data-pane="nothing" hidden>None known, according to An Claes, on 15 Nov 2026.</p>
+      <!-- Advised, not required: no "Nothing to add"; without a gap, none are known (DEC-UX-333). -->
+      <p class="prose" data-pane-group="cardfill" data-pane="empty nothing">No Known Gaps recorded.</p>
      </div>
      <ul class="gap-list" data-pane-group="cardfill" data-pane="written">
       <li class="gap"><i class="ph-fill ph-circle-dashed" aria-hidden="true"></i><div class="gap-body"><p>No leads from the source <span class="mono">partner</span> before March 2025: the partner feed started then.</p><div class="gap-scope"><span class="scope"><i class="ph ph-calendar-blank" aria-hidden="true"></i><span class="scope-k">Period</span>until 28 Feb 2025</span><span class="scope"><i class="ph ph-rows" aria-hidden="true"></i><span class="scope-k">Rows</span><span class="mono">lead_source</span> is <span class="mono">partner</span></span></div><span class="meta">Added by Dirk Vos, Data Team · 14 Oct 2026</span></div><span class="gap-actions" data-for="owner datateam"><button class="icon-btn" type="button" aria-label="Change this gap" title="Change"><i class="ph ph-pencil-simple-line"></i></button><button class="icon-btn" type="button" aria-label="Remove this gap" title="Remove"><i class="ph ph-trash"></i></button></span></li>
@@ -399,7 +403,7 @@ The lead source is set by the form the visitor used: website, app, partner or ma
        <!-- The date field of the period (DEC-RC-31): optional; without one it follows the Date Field of the Resource.
             ?gapfield=other shows another field chosen. -->
        <div class="scope-row gap-field">
-        <label class="field"><span>On the date field · optional</span><select data-pane-group="gapfield" data-pane="date"><option selected>The Date Field of the Resource · week_start</option><option>created_at</option><option>loaded_at</option></select><select data-pane-group="gapfield" data-pane="other" hidden><option>The Date Field of the Resource · week_start</option><option>created_at</option><option selected>loaded_at</option></select></label>
+        <label class="field"><span>On the Date Field · optional</span><select data-pane-group="gapfield" data-pane="date"><option selected>The Date Field of the Resource · week_start</option><option>created_at</option><option>loaded_at</option></select><select data-pane-group="gapfield" data-pane="other" hidden><option>The Date Field of the Resource · week_start</option><option>created_at</option><option selected>loaded_at</option></select></label>
        </div>
       </div>
       <div class="scope-edit">
@@ -427,10 +431,17 @@ The lead source is set by the form the visitor used: website, app, partner or ma
        <dl class="facts"><dt>Partitioned</dt><dd>by <span class="mono">week_start</span>, a partition per week · 312 partitions</dd><dt>Clustered</dt><dd>by <span class="mono">lead_source</span>, then <span class="mono">lead_channel</span></dd><dt>Size</dt><dd>6.2 GB in all, about 20 MB a week</dd></dl>
        <p class="prose" style="font-size:12px;margin-top:10px">Filter on <span class="mono">week_start</span> first: without it, a query reads all 6.2 GB. A filter on <span class="mono">lead_source</span> then reads less again.</p>
       </div>
-      <div class="sub-tile">
-       <div class="tile-head"><div class="label"><span class="lc-ref" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-term-keyField">Key fields<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (what it means)</span></span></div><a class="edit-link" data-for="owner datateam" href="resource-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
+      <div class="sub-tile" data-pane-group="kf" data-pane="read">
+       <div class="tile-head"><div class="label"><span class="lc-ref" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-term-keyField">Key Fields<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (what it means)</span></span></div><a class="edit-link" data-for="owner datateam" data-go="kf:edit" href="#"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
        <span class="code-chip">week_start</span><span class="code-chip">lead_source</span><span class="code-chip">lead_count</span><span class="code-chip">lead_channel</span>
       </div>
+      <!-- Edit (DEC-UX-343): a purpose line on top, and the fields of the Grain marked, so a Key Field is not read as the key -->
+      <form class="sub-tile ov-wide" data-pane-group="kf" data-pane="edit" hidden onsubmit="return false" aria-label="Key Fields, editing">
+       <div class="edit-bar"><p>Editing the Key Fields</p><button class="btn-quiet outline sm" type="button" data-go="kf:read">Cancel</button><button class="btn-primary sm" type="button" data-go="kf:read">Save</button></div>
+       <div class="tile-head"><div class="label"><span class="lc-ref" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-term-keyField">Key Fields<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (what it means)</span></span></div></div>
+       <p class="kf-purpose">The two to five fields a colleague starts with: what they look at first and filter on. The EDA explores at least these. Not what makes a row unique: that is the Grain.</p>
+       <span class="code-chip">week_start<span class="kf-grain">in the Grain</span><button type="button" aria-label="Remove week_start">×</button></span><span class="code-chip">lead_source<span class="kf-grain">in the Grain</span><button type="button" aria-label="Remove lead_source">×</button></span><span class="code-chip">lead_count<button type="button" aria-label="Remove lead_count">×</button></span><span class="code-chip">lead_channel<button type="button" aria-label="Remove lead_channel">×</button></span><select class="add-chip" aria-label="Add a Key Field"><option>+ Field</option><option>lead_week_label</option><option>is_partner_feed</option></select>
+      </form>
      </div>
     </section>
 
@@ -438,14 +449,14 @@ The lead source is set by the form the visitor used: website, app, partner or ma
     <section class="ov-pane" data-pane-group="ov" data-pane="entities" hidden aria-label="Entities">
      <div class="ov-head">
       <div style="flex:1;min-width:0"><h2 class="ov-title">Entities</h2><p class="ov-lead">The Entities in its rows, and the Resources they join it to.</p></div>
-      <a class="edit-link" data-for="datateam" href="collection-add-relations.html" title="Grain and relations, for a Data Admin"><i class="ph-fill ph-graph"></i>Edit relations</a>
+      <a class="edit-link" data-for="datateam" href="collection-add-grain.html?from=resource" title="Grain and relations, for a Data Admin"><i class="ph-fill ph-graph"></i>Edit Grain and relations</a><span class="lc-ref lc-after" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-grain" aria-label="Grain: what it means"><span class="lc-mark" aria-hidden="true">ⓘ</span></span>
      </div>
      <div class="sub-tile">
       <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:14px;align-items:center">
        <div>
         <div style="font-size:12px;font-weight:500"><span class="code-chip" style="margin:0 6px 0 0">leadSource.leadSourceId</span>on <span class="mono">lead_source</span></div>
         <p class="empty" style="margin:4px 0 12px">Joins Lead sources, Credit lead funnel and Lead response time.</p>
-        <div style="font-size:12px;font-weight:500"><span class="code-chip" style="margin:0 6px 0 0">creditLead</span><span style="color:var(--text-muted);font-weight:400">no identifier at this grain</span></div>
+        <div style="font-size:12px;font-weight:500"><span class="code-chip" style="margin:0 6px 0 0">creditLead</span><span style="color:var(--text-muted);font-weight:400">no identifier at this Grain</span></div>
         <p class="empty" style="margin-top:4px">In the lineage, but counted per week: it joins nothing here.</p>
        </div>
        <svg viewBox="0 0 330 150" width="100%" role="img" aria-label="Weekly lead volume joins Lead sources, Credit lead funnel and Lead response time through leadSource">
@@ -624,7 +635,8 @@ The lead source is set by the form the visitor used: website, app, partner or ma
          <p>The number of <strong>credit leads</strong> we send to KBC each week, per lead source. Use it to follow the trend and to compare sources.</p>
          <ul><li>It counts <strong>leads, not people</strong>: someone who applies twice counts twice.</li><li>A lead counts in the week it came in, not when KBC followed it up.</li></ul>
         </div>
-        <p class="sum-dbt"><span class="origin">From dbt</span>One row per week and lead source with the number of credit leads sent to KBC. Test and duplicate requests are excluded.</p>
+        <p class="sum-dbt"><span class="origin">From <span class="lc-ref" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-term-dbt">dbt<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (what it means)</span></span></span>One row per week and lead source with the number of credit leads sent to KBC. Test and duplicate requests are excluded.<a class="text-link" href="resource-messages.html?from=report" title="Tell the Data Team this description from dbt seems wrong (FR-CV-17)"><i class="ph ph-flag"></i><span>Seems wrong?</span></a></p>
+        <p class="dbt-reported" data-pane-group="dbtrep" data-pane="reported" hidden><i class="ph-fill ph-flag"></i><span>Reported as wrong on 25 Nov; the Data Team is looking at it.</span><a class="text-link" href="resource-messages.html">See the Request</a></p>
        </div>
       </li>
       <li class="sum-part">
@@ -637,7 +649,7 @@ The lead source is set by the form the visitor used: website, app, partner or ma
       <li class="sum-part">
        <div class="sum-side"><span class="sum-n">3</span><span class="weight w1">Read first</span></div>
        <div class="sum-main">
-        <div class="sum-title"><h3>Use it for</h3><a class="text-link" data-go="ov:behaviour"><span>Known behaviour</span><i class="ph ph-arrow-right"></i></a></div>
+        <div class="sum-title"><h3>Use it for</h3><a class="text-link" data-go="ov:behaviour"><span>Known Behaviour</span><i class="ph ph-arrow-right"></i></a></div>
         <p class="sum-text-line">Weekly trends and comparing lead sources.</p>
        </div>
       </li>
@@ -646,14 +658,14 @@ The lead source is set by the form the visitor used: website, app, partner or ma
        <div class="sum-main">
         <div class="sum-title"><h3>How to query it cheaply</h3><a class="text-link" data-go="ov:querying"><span>Querying</span><i class="ph ph-arrow-right"></i></a></div>
         <p class="sum-text-line">Filter on <span class="mono">week_start</span> first, a partition per week: without it a query reads all 6.2 GB, with it about 20 MB a week. Then on <span class="mono">lead_source</span>, the first cluster column.</p>
-        <p class="sum-text-line">Key fields <span class="code-chip">week_start</span><span class="code-chip">lead_source</span><span class="code-chip">lead_count</span><span class="code-chip">lead_channel</span></p>
+        <p class="sum-text-line">Key Fields <span class="code-chip">week_start</span><span class="code-chip">lead_source</span><span class="code-chip">lead_count</span><span class="code-chip">lead_channel</span></p>
        </div>
       </li>
       <li class="sum-part">
        <div class="sum-side"><span class="sum-n">5</span><span class="weight w2">Before you query</span></div>
        <div class="sum-main">
         <div class="sum-title"><h3>What it joins</h3><a class="text-link" data-go="ov:entities"><span>Entities</span><i class="ph ph-arrow-right"></i></a></div>
-        <p class="sum-text-line"><span class="code-chip">leadSource.leadSourceId</span>on <span class="mono">lead_source</span> joins Lead sources, Credit lead funnel and Lead response time. <span class="code-chip">creditLead</span>has no identifier at this grain: it joins nothing here.</p>
+        <p class="sum-text-line"><span class="code-chip">leadSource.leadSourceId</span>on <span class="mono">lead_source</span> joins Lead sources, Credit lead funnel and Lead response time. <span class="code-chip">creditLead</span>has no identifier at this Grain: it joins nothing here.</p>
        </div>
       </li>
       <li class="sum-part">
@@ -666,7 +678,7 @@ The lead source is set by the form the visitor used: website, app, partner or ma
       <li class="sum-part">
        <div class="sum-side"><span class="sum-n">7</span><span class="weight w3">When interpreting results</span></div>
        <div class="sum-main">
-        <div class="sum-title"><h3>Watch out</h3><a class="text-link" data-go="ov:behaviour"><span>Known behaviour</span><i class="ph ph-arrow-right"></i></a></div>
+        <div class="sum-title"><h3>Watch out</h3><a class="text-link" data-go="ov:behaviour"><span>Known Behaviour</span><i class="ph ph-arrow-right"></i></a></div>
         <p class="sum-text-line">The current week is incomplete. Don’t sum across sources for unique people.</p>
        </div>
       </li>
@@ -720,12 +732,12 @@ The lead source is set by the form the visitor used: website, app, partner or ma
   </div>
 
   <div data-pane-group="tabs" data-pane="columns" hidden>
-   <div class="tile-head" style="margin:0 6px 4px"><p class="meta" style="flex:1;margin:0">Every field with its Business Description, from the Owner, next to its description from dbt.</p><a class="edit-link" href="collection-add-relations.html" data-for="datateam" title="Grain and relations, for a Data Admin" style="margin-right:12px"><i class="ph-fill ph-graph"></i>Edit relations</a><a class="edit-link" href="resource-columns-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
-   <table><thead><tr><th>Column</th><th>Type</th><th>Business Description <span class="origin">From the Owner</span></th><th>Description <span class="origin">From dbt</span></th><th>Entity</th><th></th></tr></thead><tbody>
-    <tr><td class="mono">week_start</td><td style="color:var(--text-muted)">DATE</td><td class="none" aria-label="No Business Description">–</td><td style="color:var(--text-secondary)">Monday of the week the lead was submitted</td><td></td><td><span class="pill pill-strong">Partition</span></td></tr>
-    <tr><td class="mono">lead_source</td><td style="color:var(--text-muted)">STRING</td><td>Where the lead came in: the website, the app, a partner or a mailing.</td><td style="color:var(--text-secondary)">Where the lead came from</td><td><span class="code-chip" style="margin:0">leadSource.leadSourceId</span></td><td><span class="pill pill-strong">Cluster 1</span></td></tr>
-    <tr><td class="mono">lead_count</td><td style="color:var(--text-muted)">INT64</td><td>How many credit leads went to KBC that week from this source. Someone who applies twice counts twice.</td><td style="color:var(--text-secondary)">Number of credit leads sent to KBC, without test and duplicate requests</td><td></td><td></td></tr>
-    <tr><td class="mono">lead_channel</td><td style="color:var(--text-muted)">STRING</td><td class="none" aria-label="No Business Description">–</td><td style="color:var(--text-secondary)">Channel of the first visit</td><td></td><td><span class="pill pill-strong">Cluster 2</span> <span class="pill" style="color:var(--signal-warn)">New</span></td></tr>
+   <div class="tile-head" style="margin:0 6px 4px"><p class="meta" style="flex:1;margin:0">Every field with its Business Description, from the Owner, next to its description from dbt.</p><a class="edit-link" href="collection-add-grain.html?from=resource" data-for="datateam" title="Grain and relations, for a Data Admin" style="margin-right:12px"><i class="ph-fill ph-graph"></i>Edit Grain and relations</a><span class="lc-ref lc-after" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-grain" aria-label="Grain: what it means"><span class="lc-mark" aria-hidden="true">ⓘ</span></span><a class="edit-link" href="resource-columns-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
+   <table><thead><tr><th>Column</th><th>Type</th><th>Business Description <span class="origin">From the Owner</span></th><th>Description <span class="origin">From <span class="lc-ref" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-term-dbt">dbt<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (what it means)</span></span></span></th><th>Entity</th><th></th></tr></thead><tbody>
+    <tr><td class="mono">week_start</td><td style="color:var(--text-muted)">DATE</td><td class="none" aria-label="No Business Description">–</td><td style="color:var(--text-secondary)">Monday of the week the lead was submitted<a class="text-link dbt-flag" href="resource-messages.html?from=report" title="Seems wrong? Tell the Data Team (FR-CV-17)" aria-label="Seems wrong? Tell the Data Team"><i class="ph ph-flag"></i></a></td><td></td><td><span class="pill pill-strong">Partition</span></td></tr>
+    <tr><td class="mono">lead_source</td><td style="color:var(--text-muted)">STRING</td><td>Where the lead came in: the website, the app, a partner or a mailing.</td><td style="color:var(--text-secondary)">Where the lead came from<a class="text-link dbt-flag" href="resource-messages.html?from=report" title="Seems wrong? Tell the Data Team (FR-CV-17)" aria-label="Seems wrong? Tell the Data Team"><i class="ph ph-flag"></i></a></td><td><span class="code-chip" style="margin:0">leadSource.leadSourceId</span></td><td><span class="pill pill-strong">Cluster 1</span></td></tr>
+    <tr><td class="mono">lead_count</td><td style="color:var(--text-muted)">INT64</td><td>How many credit leads went to KBC that week from this source. Someone who applies twice counts twice.</td><td style="color:var(--text-secondary)">Number of credit leads sent to KBC, without test and duplicate requests<a class="text-link dbt-flag" href="resource-messages.html?from=report" title="Seems wrong? Tell the Data Team (FR-CV-17)" aria-label="Seems wrong? Tell the Data Team"><i class="ph ph-flag"></i></a><span class="dbt-reported" data-pane-group="dbtrep" data-pane="reported" hidden><i class="ph-fill ph-flag"></i><span>Reported as wrong on 25 Nov</span><a class="text-link" href="resource-messages.html">See the Request</a></span></td><td></td><td></td></tr>
+    <tr><td class="mono">lead_channel</td><td style="color:var(--text-muted)">STRING</td><td class="none" aria-label="No Business Description">–</td><td style="color:var(--text-secondary)">Channel of the first visit<a class="text-link dbt-flag" href="resource-messages.html?from=report" title="Seems wrong? Tell the Data Team (FR-CV-17)" aria-label="Seems wrong? Tell the Data Team"><i class="ph ph-flag"></i></a></td><td></td><td><span class="pill pill-strong">Cluster 2</span> <span class="pill" style="color:var(--signal-warn)">New</span></td></tr>
    </tbody></table>
   </div>
   <p data-pane-group="tabs" data-pane="later" class="meta" style="justify-content:center;padding:40px;font-size:13px" hidden>Not designed yet.</p>
@@ -739,7 +751,8 @@ The lead source is set by the form the visitor used: website, app, partner or ma
 <div class="lc-pop" id="pop-term-pitfall" role="dialog" aria-label="Pitfall: what it means" hidden><div class="lc-pop-head"><span class="lc-mark" aria-hidden="true">ⓘ</span>What it means</div><p class="lc-pop-def"><b>Pitfall</b>A way to read a Resource wrongly that looks right: what a field means, what a figure counts or when it is final. It is about how the data is read, not the data itself: it stays true even when every row is right. A gap in the data is a Known Gap.</p><div class="lc-pop-head">Explained in 1 Learning Card</div><div class="lc-pop-items"><div class="lc-pop-item"><button class="lc-pop-open" data-float-open data-num="K5.16" data-title="Pitfalls"><span class="lc-pop-title"><i class="ph ph-compass" aria-hidden="true"></i><span><span class="lc-num">K5.16</span>Pitfalls</span></span><span class="lc-pop-gain">You avoid the mistakes others already made with a table, and spare your colleagues the traps you found yourself.</span><span class="lc-pop-seen">Not seen yet</span></button></div></div><div class="lc-pop-foot"><a class="text-link" href="learning-start.html"><span>Open the Learning Centre</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div>
 <div class="lc-pop" id="pop-term-knownBehaviour" role="dialog" aria-label="Known Behaviour: what it means" hidden><div class="lc-pop-head"><span class="lc-mark" aria-hidden="true">ⓘ</span>What it means</div><p class="lc-pop-def"><b>Known Behaviour</b>The part of the Resource Card that says how the data behaves in use: what it is meant for, its pitfalls, its Known Gaps and from when it can be trusted.</p><div class="lc-pop-head">Explained in 1 Learning Card</div><div class="lc-pop-items"><div class="lc-pop-item"><button class="lc-pop-open" data-float-open data-num="3.3.3" data-title="Reliable for which purpose"><span class="lc-pop-title"><i class="ph ph-compass" aria-hidden="true"></i><span><span class="lc-num">3.3.3</span>Reliable for which purpose</span></span><span class="lc-pop-gain">You judge whether data is good enough for your decision, without waiting for perfect data.</span><span class="lc-pop-seen">Not seen yet</span></button></div></div><div class="lc-pop-foot"><a class="text-link" href="learning-start.html"><span>Open the Learning Centre</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div>
 <div class="lc-pop" id="pop-level" role="dialog" aria-label="Explained in 2 Learning Cards" hidden><div class="lc-pop-head"><span class="lc-mark" aria-hidden="true">ⓘ</span>Explained in 2 Learning Cards</div><div class="lc-pop-items"><div class="lc-pop-item"><button class="lc-pop-open" data-float-open data-num="K5.2" data-title="The Level of a Resource"><span class="lc-pop-title"><i class="ph ph-compass" aria-hidden="true"></i><span><span class="lc-num">K5.2</span>The Level of a Resource</span></span><span class="lc-pop-gain">You know what a Level promises, so you trust a figure exactly as far as it goes.</span><span class="lc-pop-seen">Not seen yet</span></button><a class="text-link lc-pop-see" href="learning-see.html"><span>See it</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a></div><div class="lc-pop-item"><button class="lc-pop-open" data-float-open data-num="3.3.3" data-title="Reliable for which purpose"><span class="lc-pop-title"><i class="ph ph-book-open-text" aria-hidden="true"></i><span><span class="lc-num">3.3.3</span>Reliable for which purpose</span></span><span class="lc-pop-gain">You judge whether data is good enough for your decision, without waiting for perfect data.</span><span class="lc-pop-seen">Not seen yet</span></button><a class="text-link lc-pop-see" href="learning-see.html"><span>See it</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div><div class="lc-pop-foot"><a class="text-link" href="learning-start.html"><span>Open the Learning Centre</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div>
-<div class="lc-pop" id="pop-grain" role="dialog" aria-label="Explained in 3 Learning Cards" hidden><div class="lc-pop-head"><span class="lc-mark" aria-hidden="true">ⓘ</span>Explained in 3 Learning Cards</div><div class="lc-pop-items"><div class="lc-pop-item"><button class="lc-pop-open" data-float-open data-num="2.3.5" data-title="The grain question: what is one row?"><span class="lc-pop-title"><i class="ph ph-book-open-text" aria-hidden="true"></i><span><span class="lc-num">2.3.5</span>The grain question: what is one row?</span></span><span class="lc-pop-gain">You know what one row stands for before you count, so your totals mean what you think.</span><span class="lc-pop-seen">Not seen yet</span></button><a class="text-link lc-pop-see" href="learning-see.html"><span>See it</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a></div><div class="lc-pop-item"><button class="lc-pop-open" data-float-open data-num="1.2.2" data-title="Unique counts don't add up"><span class="lc-pop-title"><i class="ph ph-book-open-text" aria-hidden="true"></i><span><span class="lc-num">1.2.2</span>Unique counts don't add up</span></span><span class="lc-pop-gain">You answer "why don't the weeks add up?" yourself, in a minute, instead of asking the Data Team.</span><span class="lc-pop-seen"><i class="ph ph-eye" aria-hidden="true"></i>Seen 3 days ago</span></button><a class="text-link lc-pop-see" href="learning-see.html"><span>See it</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a></div><div class="lc-pop-item"><button class="lc-pop-open" data-float-open data-num="1.2.1" data-title="What a number counts exactly"><span class="lc-pop-title"><i class="ph ph-book-open-text" aria-hidden="true"></i><span><span class="lc-num">1.2.1</span>What a number counts exactly</span></span><span class="lc-pop-gain">You quote a figure for what it really counts, so nobody reads leads as people.</span><span class="lc-pop-seen"><i class="ph ph-check-circle" aria-hidden="true"></i>Understood on 14 Oct</span></button><a class="text-link lc-pop-see" href="learning-see.html"><span>See it</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div><div class="lc-pop-foot"><a class="text-link" href="learning-start.html"><span>Open the Learning Centre</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div>
+<div class="lc-pop" id="pop-term-dbt" role="dialog" aria-label="dbt: what it means" hidden><div class="lc-pop-head"><span class="lc-mark" aria-hidden="true">ⓘ</span>What it means</div><p class="lc-pop-def"><b>dbt</b>The tool in which the Data Team builds the tables of BigQuery from SQL models, in dbt projects. Data Hub follows those projects; the description from dbt is what its dbt project says of a table or a field.</p><div class="lc-pop-head">Explained in a Learning Card soon</div><div class="lc-pop-items"><div class="lc-pop-item"><span class="lc-pop-title"><i class="ph ph-compass" aria-hidden="true"></i><span><span class="lc-num">K2.4</span>dbt</span></span><span class="lc-pop-seen">Coming soon</span></div></div><div class="lc-pop-foot"><a class="text-link" href="learning-start.html"><span>Open the Learning Centre</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div>
+<div class="lc-pop" id="pop-grain" role="dialog" aria-label="Grain: what it means" hidden><div class="lc-pop-head"><span class="lc-mark" aria-hidden="true">ⓘ</span>What it means</div><p class="lc-pop-def"><b>Grain</b>What one row of a Resource is: the fields that together identify each row, with one sentence, such as "one row per listing per day". No two rows have the same values in them. Not a Key Field, which is where a colleague starts.</p><div class="lc-pop-head">Explained in 3 Learning Cards</div><div class="lc-pop-items"><div class="lc-pop-item"><button class="lc-pop-open" data-float-open data-num="2.3.5" data-title="The Grain question: what is one row?"><span class="lc-pop-title"><i class="ph ph-book-open-text" aria-hidden="true"></i><span><span class="lc-num">2.3.5</span>The Grain question: what is one row?</span></span><span class="lc-pop-gain">You know what one row stands for before you count, so your totals mean what you think.</span><span class="lc-pop-seen">Not seen yet</span></button><a class="text-link lc-pop-see" href="learning-see.html"><span>See it</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a></div><div class="lc-pop-item"><button class="lc-pop-open" data-float-open data-num="1.2.2" data-title="Unique counts don't add up"><span class="lc-pop-title"><i class="ph ph-book-open-text" aria-hidden="true"></i><span><span class="lc-num">1.2.2</span>Unique counts don't add up</span></span><span class="lc-pop-gain">You answer "why don't the weeks add up?" yourself, in a minute, instead of asking the Data Team.</span><span class="lc-pop-seen"><i class="ph ph-eye" aria-hidden="true"></i>Seen 3 days ago</span></button><a class="text-link lc-pop-see" href="learning-see.html"><span>See it</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a></div><div class="lc-pop-item"><button class="lc-pop-open" data-float-open data-num="1.2.1" data-title="What a number counts exactly"><span class="lc-pop-title"><i class="ph ph-book-open-text" aria-hidden="true"></i><span><span class="lc-num">1.2.1</span>What a number counts exactly</span></span><span class="lc-pop-gain">You quote a figure for what it really counts, so nobody reads leads as people.</span><span class="lc-pop-seen"><i class="ph ph-check-circle" aria-hidden="true"></i>Understood on 14 Oct</span></button><a class="text-link lc-pop-see" href="learning-see.html"><span>See it</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div><div class="lc-pop-foot"><a class="text-link" href="learning-start.html"><span>Open the Learning Centre</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div>
 <div class="lc-pop" id="pop-rec" role="dialog" aria-label="Explained in 2 Learning Cards" hidden><div class="lc-pop-head"><span class="lc-mark" aria-hidden="true">ⓘ</span>Explained in 2 Learning Cards</div><div class="lc-pop-items"><div class="lc-pop-item"><button class="lc-pop-open" data-float-open data-num="4.3.2" data-title="Versions and agreements with users"><span class="lc-pop-title"><i class="ph ph-book-open-text" aria-hidden="true"></i><span><span class="lc-num">4.3.2</span>Versions and agreements with users</span></span><span class="lc-pop-gain">You recognise a change that breaks what others built on the data, before it reaches them.</span><span class="lc-pop-seen">Not seen yet</span></button><a class="text-link lc-pop-see" href="learning-see.html"><span>See it</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a></div><div class="lc-pop-item"><button class="lc-pop-open" data-float-open data-num="4.3.1" data-title="Changing a definition, keeping trust"><span class="lc-pop-title"><i class="ph ph-book-open-text" aria-hidden="true"></i><span><span class="lc-num">4.3.1</span>Changing a definition, keeping trust</span></span><span class="lc-pop-gain">You change a definition without losing the trust of whoever relies on it.</span><span class="lc-pop-seen"><i class="ph ph-eye" aria-hidden="true"></i>Seen on 12 Oct</span></button><a class="text-link lc-pop-see" href="learning-see.html"><span>See it</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div><div class="lc-pop-foot"><a class="text-link" href="learning-start.html"><span>Open the Learning Centre</span><i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div>
 <section class="float-win lc-float" id="lc-float" role="dialog" aria-modal="false" aria-labelledby="float-title" hidden>
  <div class="float-head" title="Drag to move">
@@ -809,6 +822,14 @@ The lead source is set by the form the visitor used: website, app, partner or ma
  <button class="seg" data-target="maturity" data-go="ov:maturity" role="tab" aria-selected="false">Maturity</button>
  <button class="seg" data-target="monitoring" data-go="ov:monitoring" role="tab" aria-selected="false">Monitoring</button>
  <button class="seg" data-target="danger" data-go="ov:danger" role="tab" aria-selected="false">Danger zone</button>
+</div>
+<div class="proto-switch" data-group="kf" role="tablist" aria-label="Prototype: Key Fields" style="bottom:648px">Key Fields
+ <button class="seg on" data-target="read" role="tab" aria-selected="true">Read</button>
+ <button class="seg" data-target="edit" role="tab" aria-selected="false">Edit</button>
+</div>
+<div class="proto-switch" data-group="dbtrep" role="tablist" aria-label="Prototype: a description from dbt reported as wrong" style="bottom:600px">dbt description
+ <button class="seg on" data-target="none" role="tab" aria-selected="true">Not reported</button>
+ <button class="seg" data-target="reported" role="tab" aria-selected="false">Reported</button>
 </div>
 <div class="proto-switch" data-group="cardfill" role="tablist" aria-label="Prototype: pitfalls and Known Gaps" style="bottom:312px">Pitfalls, gaps
  <button class="seg on" data-target="written" role="tab" aria-selected="true">Written</button>

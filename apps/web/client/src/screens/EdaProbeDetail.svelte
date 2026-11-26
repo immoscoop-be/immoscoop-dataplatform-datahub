@@ -9,9 +9,10 @@
   import type { IconName } from '@datahub/ui/foundations/icons.js';
   import Sentence from '@datahub/ui/foundations/Sentence.svelte';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
+  import LearningRef from './LearningRef.svelte';
   import Button from '@datahub/ui/primitives/Button.svelte';
   import Loading from '@datahub/ui/primitives/Loading.svelte';
-  import { disguisedListsOf, type EdaClient, MARK_ICONS, markOf, number, PROBE_ABOUT, PROBE_TEXTS, type RunAsk, sameLists, STEP_TEXTS } from '../lib/eda.js';
+  import { disguisedListsOf, type EdaClient, MARK_ICONS, markOf, number, PROBE_ABOUT, PROBE_TERMS, PROBE_TEXTS, type RunAsk, sameLists, STEP_TEXTS } from '../lib/eda.js';
   import { when } from '../lib/moment.js';
   import { digPath, edaPath } from '../lib/routes.js';
   import EdaDisguisedLists from './EdaDisguisedLists.svelte';
@@ -214,13 +215,17 @@
 
   const about = $derived(PROBE_ABOUT[probe]);
   /** The EDA-Probes on every Key Field, needed or not, whose fields say no "needed" of their own. */
+  /** The term of the dictionary its name holds, whose ⓘ its title carries (DEC-UX-340). */
+  const term = $derived(PROBE_TERMS[probe]);
   const onKeyFields = $derived(probe === 'nullsPerKeyField' || probe === 'disguisedNulls');
 </script>
 
 <a class="back" href={edaPath(id)}><Icon name="arrow-left" /><span>{t('eda.detail.back')}</span></a>
 <header class="head">
   <span class="meta">{t(STEP_TEXTS[spec.step].name)} · {t(PLACE_TEXTS[spec.place])} · {t(shown?.needed ? 'eda.level.needed' : shown ? LEVEL_TEXTS[shown.level] : 'eda.level.could')}</span>
-  <h2>{name}</h2>
+  {#if term}
+    <h2><LearningRef place={term}>{#snippet children(mark)}<span>{name}{@render mark?.()}</span>{/snippet}</LearningRef></h2>
+  {:else}<h2>{name}</h2>{/if}
 </header>
 
 {#if !shown || !about || !shown.runs}

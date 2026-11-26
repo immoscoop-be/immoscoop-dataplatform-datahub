@@ -72,7 +72,7 @@ Part of that knowledge already exists, in Colleciónes and the dbt manifests, bu
 
 | Form | What it tells | Where it comes from | Who writes it |
 | --- | --- | --- | --- |
-| Structural | Model type (event, state, dimension, mart), grain, lineage, fields | Derivable from Colleciónes and the dbt manifests | Generated, supplemented by the Data Team |
+| Structural | Model type (event, state, dimension, mart), Grain, lineage, fields | Derivable from Colleciónes and the dbt manifests | Generated, supplemented by the Data Team |
 | Descriptive | How the data actually behaves: distributions, quality, patterns | The EDAs, with Data Hub as the source | The Owner, guided by the Data Team |
 | Question and data answer | How you answer a business question with data, and what the answer is | A derivative of the data and its maturity; still to be worked out, after v1 ([DEC-DH-84](#dec-dh-84)) | Still to be worked out |
 

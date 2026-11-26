@@ -8,9 +8,9 @@ import type { ResourceSpot } from './routes.js';
 
 /**
  * The steps of the Flow Box of a Resource (DEC-UX-304): the steps required to publish, the same list as its Maturity,
- * then reading it back and publishing it, which ends the flow.
+ * then reading it back and publishing it, which ends the flow. The Known Gaps are advised, so not in it (DEC-MR-22).
  */
-export type FlowStepId = 'businessDescription' | 'keyFields' | 'fields' | 'intendedUse' | 'pitfalls' | 'since' | 'gaps' | 'publish';
+export type FlowStepId = 'businessDescription' | 'keyFields' | 'fields' | 'intendedUse' | 'pitfalls' | 'since' | 'publish';
 export const FLOW_STEPS: readonly FlowStepId[] = [...(REQUIRED_TO_PUBLISH as readonly Exclude<FlowStepId, 'publish'>[]), 'publish'];
 
 /** Where each step is done: a part of the Overview or Columns; publishing opens the publication (DEC-UX-303). */
@@ -21,7 +21,6 @@ export const FLOW_PLACES: Readonly<Record<FlowStepId, ResourceSpot | null>> = {
   intendedUse: 'behaviour',
   pitfalls: 'behaviour',
   since: 'gaps',
-  gaps: 'gaps',
   publish: null,
 };
 
@@ -35,7 +34,6 @@ const TEXTS: Readonly<Record<FlowStepId, { what: string; why: string; how: strin
   intendedUse: { what: 'flow.intendedUse.what', why: 'flow.intendedUse.why', how: 'flow.intendedUse.how', go: 'flow.go.intendedUse' },
   pitfalls: { what: 'flow.pitfalls.what', why: 'flow.pitfalls.why', how: 'flow.pitfalls.how', go: 'flow.go.pitfalls' },
   since: { what: 'flow.since.what', why: 'flow.since.why', how: 'flow.since.how', go: 'flow.go.since' },
-  gaps: { what: 'flow.gaps.what', why: 'flow.gaps.why', how: 'flow.gaps.how', go: 'flow.go.gaps' },
   publish: { what: 'flow.publish.what', why: 'flow.publish.why', how: 'flow.publish.how', go: 'flow.go.publish' },
 };
 
@@ -57,7 +55,7 @@ const day = (value: string) => new Intl.DateTimeFormat(LOCALES[currentLanguage()
 /** What a step done holds, in a few words, such as "1 Jan 2025, on week_start". */
 function holds(resource: ResourceDetail, id: FlowStepId): string {
   const card = resource.card;
-  const none = (step: 'pitfalls' | 'gaps') => resource.journey?.steps.find((one) => one.id === step)?.records.find((record) => record.answer === 'nothing');
+  const none = (step: 'pitfalls') => resource.journey?.steps.find((one) => one.id === step)?.records.find((record) => record.answer === 'nothing');
   switch (id) {
     case 'keyFields':
       return card.keyFields.join(', ');
@@ -74,10 +72,6 @@ function holds(resource: ResourceDetail, id: FlowStepId): string {
       const where = on ? t('reliable.on', { field: on }) : '';
       return reliable.from === 'firstRow' ? [t('reliable.firstRow'), where].filter(Boolean).join(', ') : [day(reliable.day ?? ''), where].filter(Boolean).join(', ');
     }
-    case 'gaps': {
-      const said = none('gaps');
-      return card.knownGaps.length > 0 || !said ? t('flow.done.gaps', { count: card.knownGaps.length }) : t('flow.done.none', { by: said.by });
-    }
     default:
       return t('flow.done.written');
   }
@@ -85,7 +79,7 @@ function holds(resource: ResourceDetail, id: FlowStepId): string {
 
 /**
  * The Flow Box of a Resource, read from its state each time (DEC-UX-306): each step done or open with what it holds or
- * misses, What, Why and How, its Learning Card and the way to its place; the step to do now is the first still open.
+ * misses, Why, What and How, its Learning Card and the way to its place; the step to do now is the first still open.
  */
 export function flowOf(resource: ResourceDetail, options: { here?: ResourceSpot | null; cardTitle?: (card: string) => string | undefined } = {}): FlowOf {
   const journey = resource.journey;
