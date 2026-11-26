@@ -1,7 +1,10 @@
 import { bigquery, formatDialect } from 'sql-formatter';
 
-/** One level of the house layout of the Data Team for dbt (`docs/sql-formatting.md` in immoscoop-dataplatform-data). */
-const INDENT = '    ';
+/**
+ * One level of the house layout of the Data Team for dbt (`docs/sql-formatting.md` in immoscoop-dataplatform-data):
+ * what Format writes, and what Tab in the SQL editor adds (DEC-UX-353).
+ */
+export const INDENT = '    ';
 
 /** Date parts, as `interval 30 day` and `date_diff(…, day)` name them: in lower case, as every keyword (DEC-UX-228). */
 const DATE_PARTS = /\b(?:MICROSECOND|MILLISECOND|SECOND|MINUTE|HOUR|DAYOFWEEK|DAYOFYEAR|DAY|ISOWEEK|WEEK|MONTH|QUARTER|ISOYEAR|YEAR)\b/g;

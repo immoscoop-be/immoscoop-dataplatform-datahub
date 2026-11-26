@@ -111,11 +111,11 @@
   import { autocompletion, type Completion, type CompletionContext, completionKeymap, snippetCompletion } from '@codemirror/autocomplete';
   import { defaultKeymap, history, historyKeymap, indentWithTab, insertNewlineKeepIndent } from '@codemirror/commands';
   import { SQLDialect } from '@codemirror/lang-sql';
-  import { codeFolding, foldedRanges, foldEffect, foldGutter, foldKeymap, foldNodeProp, foldService, HighlightStyle, LanguageSupport, syntaxHighlighting, syntaxTree } from '@codemirror/language';
+  import { codeFolding, foldedRanges, foldEffect, foldGutter, foldKeymap, foldNodeProp, foldService, HighlightStyle, indentUnit, LanguageSupport, syntaxHighlighting, syntaxTree } from '@codemirror/language';
   import { EditorState, type Range, StateEffect, StateField } from '@codemirror/state';
   import { Decoration, type DecorationSet, EditorView, keymap, lineNumbers, type ViewUpdate, ViewPlugin } from '@codemirror/view';
   import { tags } from '@lezer/highlight';
-  import { formatBigQuery } from './sqlFormat.js';
+  import { formatBigQuery, INDENT } from './sqlFormat.js';
   import { onMount } from 'svelte';
   import { ICONS } from '../foundations/icons.js';
   import { t } from '../foundations/texts.svelte.js';
@@ -517,6 +517,8 @@
               },
             ],
           }),
+          // Tab and Shift+Tab move a line by one level of Format, 4 spaces, never 2 (DEC-UX-353)
+          indentUnit.of(INDENT),
           keymap.of([
             { key: 'Shift-Alt-f', run: () => formatSql() },
             {
