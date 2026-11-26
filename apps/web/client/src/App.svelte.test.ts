@@ -5479,7 +5479,7 @@ describe('Query', () => {
     expect(panel.getByRole('link', { name: /Alle projecten/ }).textContent).toContain('2 gearchiveerd');
   });
 
-  it('lists every Project in All projects, opening on Archived, and puts one back in the panel (DEC-UX-354)', async () => {
+  it('lists every Project in All projects, opening on All, and puts one back in the panel (DEC-UX-354, DEC-UX-359)', async () => {
     const credit = { id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: ['q1'] };
     const wim = { id: 'p3', name: 'Wim-Advert', description: 'Banners per zone', members: [{ id: ME_ID, name: ME.name }], queries: [], archivedAt: '2026-11-20T10:00:00Z' };
     const calls = serve({ queries: [{ ...QUERY }], projects: [credit, wim] });
@@ -5487,29 +5487,52 @@ describe('Query', () => {
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
     expect(await main.findByRole('heading', { level: 1, name: 'Alle projecten' })).toBeTruthy();
-    // It opens on Archived: only Wim-Advert, with Back in your panel.
+    // It opens on All: every Project, the archived one with Back in your panel.
     const row = await main.findByRole('link', { name: /Wim-Advert/ });
-    expect(main.queryByRole('link', { name: /Credit leads Q4/ })).toBeNull();
+    expect(main.getByRole('link', { name: /Credit leads Q4/ })).toBeTruthy();
+    expect(main.getByRole('radio', { name: /^Alle 2/ }).getAttribute('aria-checked')).toBe('true');
     expect(row.textContent).toContain('Door jou gearchiveerd op');
-    await fireEvent.click(within(row).getByRole('button', { name: /Terug in je paneel/ }));
+    // Archived narrows it to the ones out of the panel.
+    await fireEvent.click(main.getByRole('radio', { name: /^Gearchiveerd 1/ }));
+    expect(main.queryByRole('link', { name: /Credit leads Q4/ })).toBeNull();
+    await fireEvent.click(within(main.getByRole('link', { name: /Wim-Advert/ })).getByRole('button', { name: /Terug in je paneel/ }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/projects/p3/archive' }));
     // Back in the panel, and none archived any more.
     const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
     expect(await panel.findByRole('link', { name: /Wim-Advert/ })).toBeTruthy();
-    await fireEvent.click(main.getByRole('radio', { name: /^Alle 2/ }));
-    expect(main.getByRole('link', { name: /Credit leads Q4/ })).toBeTruthy();
   });
 
-  it('shows an archived Project in the panel while it is open, and leaves it archived (DEC-UX-356)', async () => {
+  it('keeps an archived Project out of the panel, also while it is open, and leaves it archived (DEC-UX-356, DEC-UX-358)', async () => {
+    const credit = { id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: [] };
     const wim = { id: 'p3', name: 'Wim-Advert', description: '', members: [{ id: ME_ID, name: ME.name }], queries: ['q1'], archivedAt: '2026-11-20T10:00:00Z' };
-    const calls = serve({ queries: [{ ...QUERY }], projects: [wim] });
+    const calls = serve({ queries: [{ ...QUERY }], projects: [credit, wim] });
     open('/query/projects/p3');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
     expect(await main.findByText(/^Je archiveerde het op/)).toBeTruthy();
     const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
-    expect((await panel.findByRole('link', { name: /Wim-Advert/ })).textContent).toContain('gearchiveerd');
+    await panel.findByRole('link', { name: /Credit leads Q4/ });
+    expect(panel.queryByRole('link', { name: /Wim-Advert/ })).toBeNull();
+    expect(panel.getByRole('link', { name: /Alle projecten/ }).textContent).toContain('1 gearchiveerd');
     expect(calls.some((call) => call.path === '/projects/p3/archive')).toBe(false);
+  });
+
+  it('takes a Project out of the panel at once when it is archived from its own page, while it is open (DEC-UX-358)', async () => {
+    const credit = { id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: ['q1'] };
+    const partner = { id: 'p2', name: 'Partner review', description: '', members: [{ id: ME_ID, name: ME.name }], queries: [] };
+    const calls = serve({ queries: [{ ...QUERY }], projects: [credit, partner] });
+    open('/query/projects/p1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
+    await panel.findByRole('link', { name: /Credit leads Q4/ });
+    await fireEvent.click(await main.findByRole('button', { name: 'Credit leads Q4 archiveren' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/projects/p1/archive' }));
+    // Out of the panel at once, though it is the active one and still open; its page says so.
+    await vi.waitFor(() => expect(panel.queryByRole('link', { name: /Credit leads Q4/ })).toBeNull());
+    expect(panel.getByRole('link', { name: /Partner review/ })).toBeTruthy();
+    expect(await main.findByText(/^Je archiveerde het op/)).toBeTruthy();
+    expect(location.pathname).toBe('/query/projects/p1');
   });
 
   it('puts the active Project first in the panel, standing out, with no Close project (DEC-UX-317)', async () => {

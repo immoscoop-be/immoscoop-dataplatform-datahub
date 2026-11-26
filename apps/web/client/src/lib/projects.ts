@@ -101,9 +101,12 @@ export const projectPath = (id: string): string => `/query/projects/${encodeURIC
 /** All projects: every Project the User is in, the archived ones too (DEC-UX-354). */
 export const ALL_PROJECTS = '/query/projects';
 
-/** The Projects in the panel: not the ones the User archived, unless it is the active one, open now (DEC-UX-356). */
-export function inPanel<T extends Pick<ProjectItem, 'id' | 'archivedAt'>>(projects: readonly T[], active: string | null | undefined): T[] {
-  return projects.filter((project) => !project.archivedAt || project.id === active);
+/**
+ * The Projects in the panel: never one the User archived, the active one neither, so that archiving it, also from its
+ * own page while it is open, takes it out at once (DEC-UX-358).
+ */
+export function inPanel<T extends Pick<ProjectItem, 'archivedAt'>>(projects: readonly T[]): T[] {
+  return projects.filter((project) => !project.archivedAt);
 }
 
 export function createProjects(config: Config, session: Pick<Session, 'accessToken'>, request?: typeof fetch) {
