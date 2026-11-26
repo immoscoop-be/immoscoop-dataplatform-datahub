@@ -50,7 +50,12 @@
     return Math.round(Math.min(Math.max(longest * CHAR + 24, 64), 440));
   }
 
-  let widths = $derived(columns.map((_, index) => fitted(index)));
+  /**
+   * The widths the User dragged, by column; any other column is as wide as its values. Kept in a state of their
+   * own: a value of $derived is not reactive within, so changing one of its widths in place moved nothing.
+   */
+  let dragged: Record<number, number> = $state({});
+  const widths = $derived(columns.map((_, index) => dragged[index] ?? fitted(index)));
   /** The rows made taller, by their number, in px: a row not in it stays on one line (DEC-UX-352). */
   let heights: Record<number, number> = $state({});
   /** A row is never dragged shorter than one line, nor taller than this. */
@@ -69,6 +74,17 @@
     selected = null;
     heights = {};
   });
+  // Other columns: each as wide as its values again. The next page of the same result keeps the widths dragged.
+  $effect(() => {
+    void columns.map((column) => column.name).join('\u0000');
+    dragged = {};
+  });
+
+  /** Fits a column to its values again, from a double click on its edge or its menu. */
+  function fit(index: number): void {
+    const { [index]: _gone, ...rest } = dragged;
+    dragged = rest;
+  }
 
   const compare = (a: string | null, b: string | null, numeric: boolean): number => {
     if (a === b) return 0;
@@ -127,7 +143,7 @@
     const width = widths[index] as number;
     const handle = event.currentTarget as HTMLElement;
     handle.setPointerCapture(event.pointerId);
-    const move = (next: PointerEvent) => (widths[index] = Math.max(48, width + next.clientX - start));
+    const move = (next: PointerEvent) => (dragged = { ...dragged, [index]: Math.max(48, width + next.clientX - start) });
     const stop = () => {
       handle.removeEventListener('pointermove', move);
       handle.removeEventListener('pointerup', stop);
@@ -175,7 +191,7 @@
   const ACTIONS: { icon: IconName; label: string; act: (column: number) => void }[] = [
     { icon: 'sort-ascending', label: 'grid.sortAscending', act: (column) => (sort = { column, direction: 'ascending' }) },
     { icon: 'sort-descending', label: 'grid.sortDescending', act: (column) => (sort = { column, direction: 'descending' }) },
-    { icon: 'arrows-out-line-horizontal', label: 'grid.fit', act: (column) => (widths[column] = fitted(column)) },
+    { icon: 'arrows-out-line-horizontal', label: 'grid.fit', act: fit },
     { icon: 'copy-fill', label: 'grid.copyName', act: (column) => copy(columns[column]?.name ?? '') },
   ];
   const total = $derived(48 + widths.reduce((sum, width) => sum + width, 0));
@@ -208,7 +224,7 @@
                 aria-orientation="vertical"
                 aria-label={t('grid.resize', { name: column.name })}
                 onpointerdown={(event) => resize(event, index)}
-                ondblclick={() => (widths[index] = fitted(index))}
+                ondblclick={() => fit(index)}
               ></span>
             </th>
           {/each}
