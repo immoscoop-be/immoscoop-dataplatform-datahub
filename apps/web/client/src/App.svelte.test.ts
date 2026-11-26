@@ -4650,6 +4650,28 @@ describe('Query', () => {
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/panel.open', body: { value: true } }));
   });
 
+  it('reads the open Project again with Refresh, its page and its row, such as a query Claude added to it meanwhile (DEC-UX-163, DEC-UX-254)', async () => {
+    const partners = { ...QUERY, id: 'q2', name: 'Partner share per week' };
+    const credit = { id: 'p1', name: 'Credit leads Q4', description: '', members: [{ id: ME_ID, name: ME.name }], queries: ['q1'] };
+    serve({ queries: [{ ...QUERY }, partners], projects: [credit] });
+    open('/query/projects/p1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const list = within(await main.findByRole('table', { name: /queries/i }, { timeout: 3000 }));
+    await list.findByText('Leads per source name');
+    const row = within(await main.findByRole('navigation', { name: 'De queries van Credit leads Q4' }, { timeout: 3000 }));
+    expect(list.queryByText('Partner share per week')).toBeNull();
+    // Claude adds a query to it meanwhile; the quick window reads it again, on the page and in the row.
+    credit.queries.push('q2');
+    await quickDo('de queries vernieuwen');
+    expect(await list.findByText('Partner share per week')).toBeTruthy();
+    expect(await row.findByRole('link', { name: /Partner share per week/ })).toBeTruthy();
+    // ↻ in the panel does the same.
+    credit.queries.reverse();
+    await fireEvent.click(within(screen.getByRole('complementary', { name: 'Query' })).getByRole('button', { name: 'De lijst van queries vernieuwen' }));
+    await vi.waitFor(() => expect(list.getAllByRole('row').map((one) => one.textContent).join(' ').indexOf('Partner share per week')).toBeLessThan(list.getAllByRole('row').map((one) => one.textContent).join(' ').indexOf('Leads per source name')));
+  });
+
   it('offers to refresh the queries only on the screens of Query (DEC-UX-254)', async () => {
     serve();
     open('/collections');
