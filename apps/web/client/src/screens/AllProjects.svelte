@@ -14,7 +14,7 @@
   /**
    * All projects, in Query (DEC-UX-354): every Project the User is in, the ones they archived too, which are in no other
    * list. Archiving takes one out of their panel only (DEC-UX-355); here it is found again and put back. A search on a
-   * name or what it is for, and In your panel, Archived and All, opening on Archived when there is any; each Project with
+   * name or what it is for, and In your panel, Archived and All, opening on All (DEC-UX-359); each Project with
    * how many queries, who is in it and when it changed, and at its end Archive, or Back in your panel. A whole row opens
    * its page, which makes it active, archived or not (DEC-UX-356).
    */
@@ -42,9 +42,8 @@
 
   const language = $derived(currentLanguage());
   let search = $state('');
-  /** Opens on Archived when there is any, as it is where the panel does not show them. */
-  let chosen = $state<Shown | null>(null);
-  const shown = $derived<Shown>(chosen ?? ((list ?? []).some((project) => project.archivedAt) ? 'archived' : 'panel'));
+  /** Opens on All, every Project the User is in; In your panel and Archived narrow it (DEC-UX-359). */
+  let shown = $state<Shown>('all');
   let busy = $state<string | null>(null);
   let problem = $state('');
 
@@ -101,7 +100,7 @@
         { value: 'all', label: `${t('projects.all')} ${count('all')}` },
       ]}
       value={shown}
-      onchange={(value) => (chosen = value)}
+      onchange={(value) => (shown = value)}
       label={t('projects.which')}
     />
   </div>

@@ -44,6 +44,29 @@ describe('the data grid of a result (DEC-UX-72)', () => {
     expect(writeText).toHaveBeenCalledWith('app');
   });
 
+  it('drags a column narrower or wider by the edge of its head, and fits it again with a double click or its menu (DEC-UX-72)', async () => {
+    render(DataGrid, { columns, rows, label: 'Result' });
+    const width = () => (screen.getByRole('grid').querySelectorAll('col')[1] as HTMLElement).style.width;
+    const fitted = width();
+    const edge = screen.getByRole('separator', { name: 'Breedte van lead_source' });
+    edge.setPointerCapture = () => {};
+    await fireEvent.pointerDown(edge, { clientX: 300, pointerId: 1 });
+    await fireEvent.pointerMove(edge, { clientX: 450, pointerId: 1 });
+    await fireEvent.pointerUp(edge, { clientX: 450, pointerId: 1 });
+    // Its width was a computed value, which changing in place did not move: the drag did nothing in the app.
+    expect(width()).toBe(`${Number.parseInt(fitted, 10) + 150}px`);
+    await fireEvent.dblClick(edge);
+    expect(width()).toBe(fitted);
+
+    await fireEvent.pointerDown(edge, { clientX: 300, pointerId: 1 });
+    await fireEvent.pointerMove(edge, { clientX: 250, pointerId: 1 });
+    await fireEvent.pointerUp(edge, { clientX: 250, pointerId: 1 });
+    expect(width()).toBe(`${Number.parseInt(fitted, 10) - 50}px`);
+    await fireEvent.click(screen.getByRole('button', { name: 'Kolom lead_source' }));
+    await fireEvent.click(screen.getByRole('menuitem', { name: 'Kolom passend maken' }));
+    expect(width()).toBe(fitted);
+  });
+
   it('drags a row taller, so that its values wrap, and puts it back on one line with a double click (DEC-UX-352)', async () => {
     const long = '{"floorNumber":"0","propertyTypes":"appartement","offerType":"te-koop","priceMax":350000}';
     render(DataGrid, { columns, rows: [[long, '1'], ['app', '84']], label: 'Result' });
