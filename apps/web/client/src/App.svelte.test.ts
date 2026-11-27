@@ -5061,6 +5061,8 @@ describe('Query', () => {
     await main.findByText('kon niet nagekeken worden: Uitvoeren kijkt opnieuw na', undefined, { timeout: 3500 });
     const run = main.getByRole('button', { name: /^Uitvoeren/ }) as HTMLButtonElement;
     expect(run.disabled).toBe(false);
+    // Nothing to explain over Run: no pop-out, which showed as an empty box on rest.
+    expect(run.parentElement?.querySelector('[role="tooltip"]')).toBeNull();
     await fireEvent.click(run);
     await vi.waitFor(() => expect(calls.some((call) => call.method === 'POST' && call.path === '/queries/q1/runs')).toBe(true));
   });
