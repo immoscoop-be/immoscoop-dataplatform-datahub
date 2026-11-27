@@ -195,8 +195,8 @@
   /** The Projects in view: those matching the search by their name or a query of theirs it found (DEC-UX-285). */
   const projectsShown = $derived.by(() => {
     // The Project the User works in comes first (DEC-UX-295).
-    // Not the Projects the User archived, unless the one active now, while it is open (DEC-UX-354, DEC-UX-356).
-    const list = inPanel(projects ?? [], active).sort((a, b) => Number(b.id === active) - Number(a.id === active));
+    // Never the Projects the User archived, the active one neither (DEC-UX-354, DEC-UX-358).
+    const list = inPanel(projects ?? []).sort((a, b) => Number(b.id === active) - Number(a.id === active));
     if (!words) return list;
     return list.filter((project) => projectMatches(project, words) || (found?.items ?? []).some((item) => item.project?.id === project.id));
   });
@@ -339,13 +339,13 @@
     {@const open = unfoldedProjects[project.id] || matched.length > 0}
     {@const listed = matched.length > 0 ? matched.map(({ id, name }) => ({ id, name, locked: false })) : projectQueries[project.id]}
     <div class="entry">
-      <a class="item card" class:unfolds={onarchive !== undefined && !project.archivedAt && project.queries > 0} class:current={project.id === currentProject || project.id === active} href={projectPath(project.id)} aria-current={project.id === currentProject ? 'page' : undefined}>
+      <a class="item card" class:unfolds={onarchive !== undefined && project.queries > 0} class:current={project.id === currentProject || project.id === active} href={projectPath(project.id)} aria-current={project.id === currentProject ? 'page' : undefined}>
         <span class="kind"><Icon name="folders-fill" label="Project" /></span>
-        <span class="text"><span class="name" title={project.name}>{project.name}</span><span class="meta">{t('row.queries', { count: project.queries })} · {withWho(project)}{#if project.archivedAt}{' · '}{t('query.projects.archivedMark')}{/if}</span></span>
+        <span class="text"><span class="name" title={project.name}>{project.name}</span><span class="meta">{t('row.queries', { count: project.queries })} · {withWho(project)}</span></span>
       </a>
       <span class="buttons">
-        <!-- Archive on hover, as the eye on a query (DEC-UX-354); not on one archived already, open now (DEC-UX-356). -->
-        {#if onarchive && !project.archivedAt}
+        <!-- Archive on hover, as the eye on a query (DEC-UX-354). -->
+        {#if onarchive}
           <button type="button" class="eye" aria-label={t('query.projects.archive', { name: project.name })} title={t('query.projects.archive.hint')} onclick={() => onarchive(project)}><Icon name="archive" /></button>
         {/if}
         {#if project.queries > 0}

@@ -5,13 +5,12 @@
   nobody else's (OP-UX-130); here it is found again. It opens from the quiet line "All projects · 2 archived" under the
   Projects in the panel, and from the quick window.
   - Its head: All projects, what archiving does, and New project.
-  - A search, and chips: In your panel, Archived, All (the first chip that has any, Archived when you come from the
-    count of archived ones).
+  - A search, and chips: In your panel, Archived, All, opening on All (DEC-UX-359).
   - One row per Project: its name and what it is for, how many queries, who is in it, its last run, and at its end
     Archive (an icon) or, for one you archived, "Back in your panel". An archived one is quieter, with when you archived it.
   - A click on a Project opens its page, which makes it active, archived or not (OP-UX-131).
   Requirements: FR-SR-74
-  Decisions: DEC-UX-354, DEC-UX-355, DEC-UX-356, DEC-UX-357.
+  Decisions: DEC-UX-354, DEC-UX-355, DEC-UX-356, DEC-UX-357, DEC-UX-358, DEC-UX-359.
   Related screens: query-project.html (the page of a Project), query.html (the panel).
   Rules: ../principles.md#projects  ·  Placeholder content only.
 -->
@@ -193,8 +192,8 @@
  <label class="search card" style="flex:1;min-width:220px;max-width:360px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="projs-search" placeholder="Search projects"></label>
  <div class="projs-segs" data-group="projs" role="tablist" aria-label="Which projects">
   <button class="seg" data-target="panel" role="tab" aria-selected="false">In your panel <span class="count">5</span></button>
-  <button class="seg on" data-target="archived" role="tab" aria-selected="true">Archived <span class="count">2</span></button>
-  <button class="seg" data-target="all" role="tab" aria-selected="false">All <span class="count">7</span></button>
+  <button class="seg" data-target="archived" role="tab" aria-selected="false">Archived <span class="count">2</span></button>
+  <button class="seg on" data-target="all" role="tab" aria-selected="true">All <span class="count">7</span></button>
  </div>
 </div>
 <div class="table-card card files proj-table projs-table"><table>
@@ -226,7 +225,7 @@
     document.querySelectorAll('[data-group=projs] [data-target]').forEach(o => { o.classList.toggle('on', o === c); o.setAttribute('aria-selected', o === c); });
     show(c.dataset.target);
   }));
-  show(new URLSearchParams(location.search).get('show') || 'archived');
+  show(new URLSearchParams(location.search).get('show') || 'all');
   if (new URLSearchParams(location.search).get('show')) document.querySelector(`[data-group=projs] [data-target=${new URLSearchParams(location.search).get('show')}]`)?.click();
   // Archive and Back in your panel, at once, without asking: both undo each other (OP-UX-129)
   document.querySelector('.projs-table tbody').addEventListener('click', e => {
