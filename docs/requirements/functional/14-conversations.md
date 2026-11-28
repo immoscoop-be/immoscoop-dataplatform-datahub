@@ -217,6 +217,17 @@ The writer of a Message deletes it, wherever it shows; the Owner Unit of a Resou
 **Makes easy:** taking back a Message posted by mistake, and an Owner keeping the conversations of their Resource clean. **Makes hard:** a mistake that stays in the Q&A for good, and someone deleting a colleague's Message on a Resource that is not theirs.
 
 *Raised in #datahub_feedback on 2026-11-25: [the remark](https://immoscoopworkspace.slack.com/archives/C0CM086EZLL/p1795616625590319).*
+<a id="fr-cv-19"></a>
+### FR-CV-19 · Marking a Message for oneself
+
+**Status:** Specified · **Source:** Max, 2026-11-28 ([DEC-UX-360](../../design/principles.md#dec-ux-360) to [DEC-UX-367](../../design/principles.md#dec-ux-367)) · **Screens:** [messages](../../design/screens/messages.html), [lens-context](../../design/screens/lens-context.html)
+
+A User marks a Message for themselves, to follow it up or to find it again: Follow up, Important or Starred. A Message carries any of the marks, each set and taken off on its own; a mark is on the Message with its replies, never on one reply, and a Message Data Hub wrote can be marked too. One button holds the marks of a Message wherever it shows, in its head in the Message Centre, in the floating window opened in context and in the slide-in on an object, and on its line in the list of the Message Centre: it shows every mark set and opens a dropdown of the marks, where a click sets or takes off a mark at once. On an opened Message the quick window does the same.
+
+In the panel of the Message Centre the marks come first, just under the search, each only while at least one Message has it, with how many Messages it holds, whatever is chosen besides. A click opens the Messages with that mark, the newest first, read or not; a Message whose mark is taken off there stays, faded, until the User goes elsewhere. A mark is the User's alone: nobody is told, nobody else sees it, and it changes nothing of the Message. It stays until the User takes it off: closing or answering the Message keeps it; a Message deleted, or one the User may no longer see, leaves it.
+
+**Makes easy:** keeping in view what one still has to do, and finding a Message again among many. **Makes hard:** losing a Message that still needs an answer in the stream of what is new, and a colleague's way of sorting changing what someone else sees.
+
 ## Edge cases
 
 <a id="ec-cv-01"></a>

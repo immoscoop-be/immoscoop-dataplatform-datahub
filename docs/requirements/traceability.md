@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 355 | 136 (30 open, 106 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 360 | 136 (25 open, 111 done) |
 | [Backlog](../overview/backlog.md) | – | – | – | 7 (5 open, 2 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
@@ -26,10 +26,10 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Beta and promotion](functional/11-beta-and-promotion.md) | – | – | – | 1 (1 done) |
 | [Permissions and Excel keys](functional/12-permissions-and-library-cards.md) | 17 (1 proposed, 16 implemented) | 4 (4 implemented) | 12 | 2 (1 open, 1 done) |
 | [Channels](functional/13-channels.md) | 6 (5 proposed, 1 implemented) | – | 6 | 4 (2 open, 2 done) |
-| [Conversations](functional/14-conversations.md) | 18 (18 implemented) | 2 (2 implemented) | 17 | 11 (11 done) |
+| [Conversations](functional/14-conversations.md) | 19 (1 specified, 18 implemented) | 2 (2 implemented) | 17 | 11 (11 done) |
 | [EDA](functional/15-eda.md) | 20 (20 implemented) | – | 37 | 13 (7 open, 6 done) |
 | [Learning](functional/16-learning.md) | 44 (13 proposed, 15 implemented, 16 withdrawn) | – | 39 | 40 (9 open, 31 done) |
-| [Claude](functional/17-claude.md) | 39 (1 proposed, 38 implemented) | 5 (5 implemented) | 23 | 12 (7 open, 5 done) |
+| [Claude](functional/17-claude.md) | 40 (1 proposed, 1 specified, 38 implemented) | 5 (5 implemented) | 23 | 12 (7 open, 5 done) |
 | [Localisation](non-functional/localisation.md) | 12 (8 specified, 3 implemented, 1 withdrawn) | – | – | – |
 | [Security](non-functional/security.md) | 4 (4 implemented) | – | – | – |
 | [Platform: technical requirements](technical/00-platform.md) | 34 (3 specified, 30 implemented, 1 withdrawn) | – | 33 | 20 (6 open, 14 done) |
@@ -428,6 +428,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-CV-16](functional/14-conversations.md#fr-cv-16) | Closing and reopening a Question or a Signal | Implemented | – | [messages](../design/screens/messages.html) | – | – |
 | [FR-CV-17](functional/14-conversations.md#fr-cv-17) | Reporting a description from dbt as wrong | Implemented | – | [resource-overview](../design/screens/resource-overview.html), [resource-messages](../design/screens/resource-messages.html) | – | [3584337](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/3584337fdeecf08b9bfef7c0c236edbe2212620a) implements, 2026-11-25<br>[bf662bf](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/bf662bf3df51673d6c11aece5fb3473f5c91202c) refs, 2026-11-25<br>[f30e92b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f30e92b1531ea04f68e1567928d5a5ec933586bb) refs, 2026-11-25 |
 | [FR-CV-18](functional/14-conversations.md#fr-cv-18) | Deleting a Message | Implemented | – | [resource-messages](../design/screens/resource-messages.html) | – | [4901a14](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4901a14431c8edd5e5d2938814e6c561c5977641) implements, 2026-11-25<br>[bf662bf](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/bf662bf3df51673d6c11aece5fb3473f5c91202c) refs, 2026-11-25<br>[f30e92b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f30e92b1531ea04f68e1567928d5a5ec933586bb) refs, 2026-11-25 |
+| [FR-CV-19](functional/14-conversations.md#fr-cv-19) | Marking a Message for oneself | Specified | – | [messages](../design/screens/messages.html), [lens-context](../design/screens/lens-context.html) | – | – |
 
 ### [EDA](functional/15-eda.md)
 
@@ -546,6 +547,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-CL-37](functional/17-claude.md#fr-cl-37) | Claude reads a Lens before it runs it | Implemented | – | [mcp-lens](../design/screens/mcp-lens.html) | – | [416c40e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/416c40e4eda03544435722d24cb59504558cef76) implements, 2026-11-18 |
 | [FR-CL-38](functional/17-claude.md#fr-cl-38) | Claude suggests the Key Fields and the descriptions of the fields, the User decides in a card | Implemented | – | [mcp-fields](../design/screens/mcp-fields.html) | – | [988014f](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/988014fdebc272d631569490d49827aa7ad8b4f3) refs, 2026-11-18<br>[f079e71](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f079e719f9ee4b539aa54de2f22dbe1d98f7be2c) implements, 2026-11-18<br>[e716171](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/e716171c67750a2d704680b24acebb33d43b58f0) refs, 2026-11-18 |
 | [FR-CL-39](functional/17-claude.md#fr-cl-39) | Claude sets up and manages a Project of the User | Implemented | – | – | – | [39bb8ca](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/39bb8ca57f59c12f409ae73903329159b3f355b9) implements, 2026-11-19 |
+| [FR-CL-40](functional/17-claude.md#fr-cl-40) | Claude and the marks of the User on Messages | Specified | – | – | – | – |
 
 ## Edge cases
 

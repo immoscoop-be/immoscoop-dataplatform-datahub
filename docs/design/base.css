@@ -845,7 +845,6 @@ a.nav-btn { display: inline-flex; align-items: center; justify-content: center; 
 .mk-row span { flex: 1; }
 .mk-check { visibility: hidden; color: var(--text-secondary); }
 .mk-row[aria-checked="true"] .mk-check { visibility: visible; }
-.mk-foot { display: flex; align-items: center; gap: 6px; margin: 4px 10px 4px; padding-top: 8px; border-top: 1px solid var(--tint-active); line-height: 1.4; }
 .mc-item.kept { opacity: .5; }
 .mk-empty { display: block; margin: 10px 8px; line-height: 1.5; }
 /* The line of a Message keeps its marks on its first row: the object shortens, the marks never wrap. */
