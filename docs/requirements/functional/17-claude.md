@@ -593,7 +593,7 @@ For a User who may make queries, Claude lists the Projects they are in, reads on
 <a id="fr-cl-40"></a>
 ### FR-CL-40 · Claude and the marks of the User on Messages
 
-**Status:** Specified · **Source:** Max, 2026-11-28 ([DEC-UX-367](../../design/principles.md#dec-ux-367))
+**Status:** Implemented · **Source:** Max, 2026-11-28 ([DEC-UX-367](../../design/principles.md#dec-ux-367))
 
 Claude sees the marks of the User, Follow up, Important and Starred, on every Message it reads, and reads the Messages that hold one mark, such as what the User still has to follow up ([FR-CV-19](14-conversations.md#fr-cv-19)). It sets or takes off a mark on a Message only when the User asks for it; as a mark is the User's alone and changes nothing for anyone else, the words of the User are their agreement, and Claude does not first show what it writes, as it does for a change others see.
 

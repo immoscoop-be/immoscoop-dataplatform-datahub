@@ -220,7 +220,7 @@ The writer of a Message deletes it, wherever it shows; the Owner Unit of a Resou
 <a id="fr-cv-19"></a>
 ### FR-CV-19 · Marking a Message for oneself
 
-**Status:** Specified · **Source:** Max, 2026-11-28 ([DEC-UX-360](../../design/principles.md#dec-ux-360) to [DEC-UX-367](../../design/principles.md#dec-ux-367)) · **Screens:** [messages](../../design/screens/messages.html), [lens-context](../../design/screens/lens-context.html)
+**Status:** Implemented · **Source:** Max, 2026-11-28 ([DEC-UX-360](../../design/principles.md#dec-ux-360) to [DEC-UX-367](../../design/principles.md#dec-ux-367)) · **Screens:** [messages](../../design/screens/messages.html), [lens-context](../../design/screens/lens-context.html)
 
 A User marks a Message for themselves, to follow it up or to find it again: Follow up, Important or Starred. A Message carries any of the marks, each set and taken off on its own; a mark is on the Message with its replies, never on one reply, and a Message Data Hub wrote can be marked too. One button holds the marks of a Message wherever it shows, in its head in the Message Centre, in the floating window opened in context and in the slide-in on an object, and on its line in the list of the Message Centre: it shows every mark set and opens a dropdown of the marks, where a click sets or takes off a mark at once. On an opened Message the quick window does the same.
 

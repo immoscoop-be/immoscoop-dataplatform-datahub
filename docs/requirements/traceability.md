@@ -26,10 +26,10 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Beta and promotion](functional/11-beta-and-promotion.md) | – | – | – | 1 (1 done) |
 | [Permissions and Excel keys](functional/12-permissions-and-library-cards.md) | 17 (1 proposed, 16 implemented) | 4 (4 implemented) | 12 | 2 (1 open, 1 done) |
 | [Channels](functional/13-channels.md) | 6 (5 proposed, 1 implemented) | – | 6 | 4 (2 open, 2 done) |
-| [Conversations](functional/14-conversations.md) | 19 (1 specified, 18 implemented) | 2 (2 implemented) | 17 | 11 (11 done) |
+| [Conversations](functional/14-conversations.md) | 19 (19 implemented) | 2 (2 implemented) | 17 | 11 (11 done) |
 | [EDA](functional/15-eda.md) | 20 (20 implemented) | – | 37 | 13 (7 open, 6 done) |
 | [Learning](functional/16-learning.md) | 44 (13 proposed, 15 implemented, 16 withdrawn) | – | 39 | 40 (9 open, 31 done) |
-| [Claude](functional/17-claude.md) | 40 (1 proposed, 1 specified, 38 implemented) | 5 (5 implemented) | 23 | 12 (7 open, 5 done) |
+| [Claude](functional/17-claude.md) | 40 (1 proposed, 39 implemented) | 5 (5 implemented) | 23 | 12 (7 open, 5 done) |
 | [Localisation](non-functional/localisation.md) | 12 (8 specified, 3 implemented, 1 withdrawn) | – | – | – |
 | [Security](non-functional/security.md) | 4 (4 implemented) | – | – | – |
 | [Platform: technical requirements](technical/00-platform.md) | 34 (3 specified, 30 implemented, 1 withdrawn) | – | 33 | 20 (6 open, 14 done) |
@@ -40,7 +40,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Log and notifications: technical requirements](technical/07-log-and-notifications.md) | 5 (5 implemented) | – | – | – |
 | [Lenses: technical requirements](technical/09-lenses.md) | 10 (10 implemented) | – | – | – |
 | [Permissions and Excel keys: technical requirements](technical/12-permissions-and-library-cards.md) | 10 (10 implemented) | – | – | – |
-| [Conversations: technical requirements](technical/14-conversations.md) | 3 (3 implemented) | – | – | – |
+| [Conversations: technical requirements](technical/14-conversations.md) | 5 (5 implemented) | – | – | – |
 | [EDA: technical requirements](technical/15-eda.md) | 12 (12 implemented) | – | – | – |
 | [Learning: technical requirements](technical/16-learning.md) | 10 (10 implemented) | – | – | – |
 
@@ -428,7 +428,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-CV-16](functional/14-conversations.md#fr-cv-16) | Closing and reopening a Question or a Signal | Implemented | – | [messages](../design/screens/messages.html) | – | – |
 | [FR-CV-17](functional/14-conversations.md#fr-cv-17) | Reporting a description from dbt as wrong | Implemented | – | [resource-overview](../design/screens/resource-overview.html), [resource-messages](../design/screens/resource-messages.html) | – | [3584337](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/3584337fdeecf08b9bfef7c0c236edbe2212620a) implements, 2026-11-25<br>[bf662bf](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/bf662bf3df51673d6c11aece5fb3473f5c91202c) refs, 2026-11-25<br>[f30e92b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f30e92b1531ea04f68e1567928d5a5ec933586bb) refs, 2026-11-25 |
 | [FR-CV-18](functional/14-conversations.md#fr-cv-18) | Deleting a Message | Implemented | – | [resource-messages](../design/screens/resource-messages.html) | – | [4901a14](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4901a14431c8edd5e5d2938814e6c561c5977641) implements, 2026-11-25<br>[bf662bf](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/bf662bf3df51673d6c11aece5fb3473f5c91202c) refs, 2026-11-25<br>[f30e92b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f30e92b1531ea04f68e1567928d5a5ec933586bb) refs, 2026-11-25 |
-| [FR-CV-19](functional/14-conversations.md#fr-cv-19) | Marking a Message for oneself | Specified | – | [messages](../design/screens/messages.html), [lens-context](../design/screens/lens-context.html) | – | – |
+| [FR-CV-19](functional/14-conversations.md#fr-cv-19) | Marking a Message for oneself | Implemented | – | [messages](../design/screens/messages.html), [lens-context](../design/screens/lens-context.html) | [TR-CV-04](technical/14-conversations.md#tr-cv-04), [TR-CV-05](technical/14-conversations.md#tr-cv-05) | [977e9fe](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/977e9fe762cdc3961a21e382564b9a4dae8f1d7d) implements, 2026-11-28<br>[7902928](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7902928651b08820c86a463a8c59e0744e1f2ff7) implements, 2026-11-28<br>[36a48dc](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/36a48dc5ace5bf454e0360fc7f5a295b2a90055a) refs, 2026-11-28 |
 
 ### [EDA](functional/15-eda.md)
 
@@ -547,7 +547,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-CL-37](functional/17-claude.md#fr-cl-37) | Claude reads a Lens before it runs it | Implemented | – | [mcp-lens](../design/screens/mcp-lens.html) | – | [416c40e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/416c40e4eda03544435722d24cb59504558cef76) implements, 2026-11-18 |
 | [FR-CL-38](functional/17-claude.md#fr-cl-38) | Claude suggests the Key Fields and the descriptions of the fields, the User decides in a card | Implemented | – | [mcp-fields](../design/screens/mcp-fields.html) | – | [988014f](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/988014fdebc272d631569490d49827aa7ad8b4f3) refs, 2026-11-18<br>[f079e71](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f079e719f9ee4b539aa54de2f22dbe1d98f7be2c) implements, 2026-11-18<br>[e716171](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/e716171c67750a2d704680b24acebb33d43b58f0) refs, 2026-11-18 |
 | [FR-CL-39](functional/17-claude.md#fr-cl-39) | Claude sets up and manages a Project of the User | Implemented | – | – | – | [39bb8ca](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/39bb8ca57f59c12f409ae73903329159b3f355b9) implements, 2026-11-19 |
-| [FR-CL-40](functional/17-claude.md#fr-cl-40) | Claude and the marks of the User on Messages | Specified | – | – | – | – |
+| [FR-CL-40](functional/17-claude.md#fr-cl-40) | Claude and the marks of the User on Messages | Implemented | – | – | [TR-CV-04](technical/14-conversations.md#tr-cv-04) | [36a48dc](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/36a48dc5ace5bf454e0360fc7f5a295b2a90055a) refs, 2026-11-28 |
 
 ## Edge cases
 
@@ -814,6 +814,8 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [TR-CV-01](technical/14-conversations.md#tr-cv-01) | catalogue keeps every conversation, by its Subject | Implemented | [FR-CV-01](functional/14-conversations.md#fr-cv-01), [FR-CV-02](functional/14-conversations.md#fr-cv-02), [FR-CV-04](functional/14-conversations.md#fr-cv-04), [FR-CV-05](functional/14-conversations.md#fr-cv-05), [FR-CV-06](functional/14-conversations.md#fr-cv-06), [FR-CV-07](functional/14-conversations.md#fr-cv-07), [EC-CV-01](functional/14-conversations.md#ec-cv-01), [EC-CV-02](functional/14-conversations.md#ec-cv-02), [DEC-CV-04](functional/14-conversations.md#dec-cv-04), [DEC-CV-09](functional/14-conversations.md#dec-cv-09) | – |
 | [TR-CV-02](technical/14-conversations.md#tr-cv-02) | query tells catalogue about its Lenses, and the decisions on them | Implemented | [FR-CV-05](functional/14-conversations.md#fr-cv-05), [FR-CV-08](functional/14-conversations.md#fr-cv-08), [FR-LE-09](functional/09-lenses.md#fr-le-09), [FR-LE-10](functional/09-lenses.md#fr-le-10), [DEC-CV-06](functional/14-conversations.md#dec-cv-06), [DEC-PF-30](technical/00-platform.md#dec-pf-30), [DEC-UX-128](../design/principles.md#dec-ux-128) | – |
 | [TR-CV-03](technical/14-conversations.md#tr-cv-03) | The web app shows the Message Centre, the Messages on an object and a Message in context | Implemented | [FR-CV-02](functional/14-conversations.md#fr-cv-02), [FR-CV-06](functional/14-conversations.md#fr-cv-06), [FR-CV-07](functional/14-conversations.md#fr-cv-07), [FR-CV-09](functional/14-conversations.md#fr-cv-09), [DEC-UX-29](../design/principles.md#dec-ux-29), [DEC-UX-30](../design/principles.md#dec-ux-30) | – |
+| [TR-CV-04](technical/14-conversations.md#tr-cv-04) | catalogue keeps the marks of each User on a conversation | Implemented | [FR-CV-19](functional/14-conversations.md#fr-cv-19), [FR-CL-40](functional/17-claude.md#fr-cl-40), [DEC-UX-360](../design/principles.md#dec-ux-360), [DEC-UX-366](../design/principles.md#dec-ux-366), [DEC-UX-367](../design/principles.md#dec-ux-367) | – |
+| [TR-CV-05](technical/14-conversations.md#tr-cv-05) | The web app shows the marks on a Message and in the panel | Implemented | [FR-CV-19](functional/14-conversations.md#fr-cv-19), [DEC-UX-361](../design/principles.md#dec-ux-361), [DEC-UX-365](../design/principles.md#dec-ux-365) | – |
 
 ### [EDA: technical requirements](technical/15-eda.md)
 
