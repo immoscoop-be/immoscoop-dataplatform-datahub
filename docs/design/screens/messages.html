@@ -23,10 +23,11 @@
   view. The marks are set in a dropdown, as more may come: one button in the head of an opened Message, and on hover on
   its line in the list, shows the marks set and opens it. A line separates the marks, Kind and On in the panel.
   Taken off in the view of that mark, a Message stays there, faded, until the User goes elsewhere.
-  ?mark=menu opens the dropdown on an opened Message, ?mark=followup opens Follow up, ?mark=emptied shows Important after its last Message lost the mark, ?mark=none a User
+  ?mark=menu opens the dropdown on an opened Message, ?mark=four shows a Message with four marks set, with Read later
+  as an example of a mark that may come, ?mark=followup opens Follow up, ?mark=emptied shows Important after its last Message lost the mark, ?mark=none a User
   without marks.
   Requirements: FR-SR-10, FR-RC-17, FR-MR-12, FR-LE-09, FR-CV-01, FR-CV-02, FR-CV-03, FR-CV-05, FR-CV-06, FR-CV-08, FR-CV-09, FR-CV-15, FR-CV-16, FR-LR-05, FR-LR-38
-  Decisions: DEC-UX-29, DEC-UX-30, DEC-UX-79, DEC-UX-179, DEC-UX-360, DEC-UX-361, DEC-CV-02, DEC-CV-06, DEC-CV-10, DEC-CV-13, DEC-RC-03, DEC-LR-11.
+  Decisions: DEC-UX-29, DEC-UX-30, DEC-UX-79, DEC-UX-179, DEC-UX-360, DEC-UX-361, DEC-UX-362, DEC-CV-02, DEC-CV-06, DEC-CV-10, DEC-CV-13, DEC-RC-03, DEC-LR-11.
   Messages of the catalogue: MSG-CNV-01, MSG-CNV-03, MSG-CNV-04, MSG-CNV-05, MSG-CNV-07, MSG-LEN-01, MSG-RES-01, MSG-RES-02, MSG-RES-03.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -46,7 +47,8 @@
   /* The view of a mark: the Messages with it, and one taken off while it is open, faded (OP-UX-135). */
   body[data-view="followup"] .mc-list .mc-item:not([data-marks~="followup"]):not(.kept),
   body[data-view="important"] .mc-list .mc-item:not([data-marks~="important"]):not(.kept),
-  body[data-view="starred"] .mc-list .mc-item:not([data-marks~="starred"]):not(.kept) { display: none; }
+  body[data-view="starred"] .mc-list .mc-item:not([data-marks~="starred"]):not(.kept),
+  body[data-view="later"] .mc-list .mc-item:not([data-marks~="later"]):not(.kept) { display: none; }
   body[data-view] .mc-chips { display: none; }
 </style>
 </head>
@@ -76,6 +78,7 @@
    <a class="mc-filter" href="#" data-mark-view="followup" title="Your mark: only you see it"><i class="ph-fill ph-flag"></i><span>Follow up</span><span class="count">3</span></a>
    <a class="mc-filter" href="#" data-mark-view="important" title="Your mark: only you see it"><i class="ph-fill ph-warning-circle"></i><span>Important</span><span class="count">1</span></a>
    <a class="mc-filter" href="#" data-mark-view="starred" title="Your mark: only you see it"><i class="ph-fill ph-star"></i><span>Starred</span><span class="count">2</span></a>
+   <a class="mc-filter" href="#" data-mark-view="later" title="Your mark: only you see it"><i class="ph-fill ph-clock"></i><span>Read later</span><span class="count">0</span></a>
    <span class="panel-rule mark-nav-rule" aria-hidden="true"></span>
   </div>
   <a class="mc-filter" href="#"><i class="ph ph-tray"></i><span>For you</span><span class="count">6</span></a>
@@ -320,11 +323,13 @@
  <button class="mk-row" type="button" role="menuitemcheckbox" aria-checked="false" data-mark="followup"><i class="ph ph-flag"></i><span>Follow up</span><i class="ph ph-check mk-check"></i></button>
  <button class="mk-row" type="button" role="menuitemcheckbox" aria-checked="false" data-mark="important"><i class="ph ph-warning-circle"></i><span>Important</span><i class="ph ph-check mk-check"></i></button>
  <button class="mk-row" type="button" role="menuitemcheckbox" aria-checked="false" data-mark="starred"><i class="ph ph-star"></i><span>Starred</span><i class="ph ph-check mk-check"></i></button>
+ <button class="mk-row" type="button" role="menuitemcheckbox" aria-checked="false" data-mark="later" data-example hidden><i class="ph ph-clock"></i><span>Read later</span><i class="ph ph-check mk-check"></i></button>
  <p class="meta mk-foot"><i class="ph ph-lock-simple"></i>Only you see your marks.</p>
 </div>
 <div class="proto-switch" data-group="mark" role="tablist" aria-label="Prototype: marks" style="bottom:124px">Marks
  <button class="seg on" data-target="unread" role="tab" aria-selected="true">Unread, with marks</button>
  <button class="seg" data-target="menu" role="tab" aria-selected="false">Marking a Message</button>
+ <button class="seg" data-target="four" role="tab" aria-selected="false">Four marks set</button>
  <button class="seg" data-target="followup" role="tab" aria-selected="false">Follow up opened</button>
  <button class="seg" data-target="emptied" role="tab" aria-selected="false">Last one taken off</button>
  <button class="seg" data-target="none" role="tab" aria-selected="false">No marks</button>
@@ -342,6 +347,8 @@
       followup: ['Follow up', 'flag', 'The Messages you marked to follow up. Only you see your marks: take the flag off once it is done.'],
       important: ['Important', 'warning-circle', 'The Messages you marked as important. Only you see your marks.'],
       starred: ['Starred', 'star', 'The Messages you starred, to find them again. Only you see your marks.'],
+      // An example of a mark that may come, to show the button with four marks set (DEC-UX-362).
+      later: ['Read later', 'clock', 'The Messages you marked to read later. Only you see your marks.'],
     };
     const ORDER = Object.keys(MARKS);
     const items = [...document.querySelectorAll('.mc-list .mc-item')];
@@ -350,7 +357,7 @@
     const plain = [title.textContent, lead.textContent];
     const empty = document.getElementById('mk-empty');
     const menu = document.getElementById('mk-menu');
-    let view = null, menuFor = null, menuButton = null;
+    let view = null, menuFor = null, menuButton = null, example = false;
     const marksOf = item => (item.dataset.marks || '').split(' ').filter(Boolean);
     const hostOf = button => button.closest('.mc-item') || items.find(item => item.dataset.key === button.dataset.of);
     const count = mark => items.filter(item => marksOf(item).includes(mark)).length;
@@ -362,6 +369,7 @@
         button.innerHTML = (marks.length ? marks.map(mark => `<i class="ph-fill ph-${MARKS[mark][1]}" aria-label="${MARKS[mark][0]}"></i>`).join('') : '<i class="ph ph-flag"></i>')
           + (button.classList.contains('in-head') ? `<span>${marks.length ? '' : 'Mark'}</span>` : '') + '<i class="ph ph-caret-down mk-caret"></i>';
       });
+      menu.querySelectorAll('[data-example]').forEach(row => { row.hidden = !example; });
       if (menuFor) menu.querySelectorAll('[data-mark]').forEach(row => {
         const on = marksOf(menuFor).includes(row.dataset.mark);
         row.setAttribute('aria-checked', on);
@@ -431,8 +439,15 @@
     document.querySelectorAll('[data-group="mark"] [data-target]').forEach(button => button.addEventListener('click', () => {
       items.forEach((item, index) => { item.dataset.marks = first[index]; });
       const state = button.dataset.target;
+      example = state === 'four';
       if (state === 'none') items.forEach(item => { item.dataset.marks = ''; });
       if (state === 'followup') return open('followup');
+      if (state === 'four') {
+        // Every mark set shows on the button, in the order of the dropdown, never a number in their place (DEC-UX-362).
+        items[0].dataset.marks = 'followup important starred later';
+        open(null);
+        return setTimeout(() => show(document.querySelector('.mc-detail:not([hidden]) .mk-btn')), 0);
+      }
       if (state === 'menu') {
         open(null);
         return setTimeout(() => show(document.querySelector('.mc-detail:not([hidden]) .mk-btn')), 0);
