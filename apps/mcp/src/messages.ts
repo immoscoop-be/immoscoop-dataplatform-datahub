@@ -1,8 +1,8 @@
 import { MESSAGE_CATALOGUE } from '@datahub/contracts/message-catalogue';
-import { renderMessage } from '@datahub/contracts/messages';
+import { MESSAGE_MARKS, renderMessage } from '@datahub/contracts/messages';
 import { z } from 'zod';
 import { answer, attempt, refusal } from './answers.js';
-import { type Context, READ, SHARE } from './context.js';
+import { type Context, READ, SHARE, WRITE } from './context.js';
 import { pages } from './datahub.js';
 
 interface Shown {
@@ -15,6 +15,8 @@ interface Shown {
   state: string | null;
   createdAt: string;
   replies?: Shown[];
+  /** The marks of the User on it (FR-CV-19). */
+  marks?: string[];
   [key: string]: unknown;
 }
 
@@ -42,6 +44,7 @@ export function messageTools({ server, hub, permits }: Context): void {
     at: message.createdAt,
     text: textOf(message),
     page: hub.page(pages.message(message.id)),
+    ...(message.marks ? { marks: message.marks } : {}),
     ...(message.replies ? { replies: message.replies.map(shown) } : {}),
   });
 
@@ -49,19 +52,47 @@ export function messageTools({ server, hub, permits }: Context): void {
     'get_messages',
     {
       title: 'Read the Messages on a Resource',
-      description: 'The Messages on a Resource, newest first, with their state; or one conversation with its replies, by the ID of its Message.',
+      description:
+        'The Messages on a Resource, newest first, with their state; or one conversation with its replies, by the ID of its Message; or the Messages the User marked with one of their marks, read or not, such as what they still have to follow up. Each Message says the marks of the User on it: followUp, important, starred; theirs alone.',
       inputSchema: {
         resource: z.string().optional().describe('The ID of the Resource.'),
         message: z.string().optional().describe('The ID of one Message, to read it with its replies.'),
+        mark: z.enum(MESSAGE_MARKS).optional().describe('A mark of the User: followUp (Follow up), important (Important) or starred (Starred); gives the Messages that hold it.'),
       },
       annotations: READ,
     },
-    ({ resource, message }) =>
+    ({ resource, message, mark }) =>
       attempt(async () => {
         if (message) return answer({ message: shown((await hub.get<{ message: Shown }>('catalogue', `/messages/${enc(message)}`)).message) });
+        if (mark) {
+          const { messages } = await hub.get<{ messages: Shown[] }>('catalogue', `/messages?view=everything&mark=${mark}`);
+          return answer({ messages: messages.map(shown), page: hub.page('/messages') }, messages.length ? undefined : 'No Message holds this mark of the User.');
+        }
         if (!resource) return answer({ messages: [] }, 'Name a Resource, or a Message.');
         const { messages } = await hub.get<{ messages: Shown[] }>('catalogue', `/messages/on/resource/${enc(resource)}`);
         return answer({ messages: messages.map(shown), page: hub.page(`${pages.resource(resource)}/messages`) });
+      }),
+  );
+
+  // A mark of the User on a Message, theirs alone (FR-CL-40, DEC-UX-367): it changes nothing for anyone else, so their
+  // asking is their agreement, and every User who sees the Message has it.
+  server.registerTool(
+    'mark_message',
+    {
+      title: 'Mark a Message for the User',
+      description:
+        'Sets or takes off a mark of the User on a Message: followUp (Follow up), important (Important) or starred (Starred). A mark is theirs alone: nobody else sees it or is told, and it changes nothing of the Message. Call this only when the User asks for it; their words are their agreement, so there is nothing to show them first.',
+      inputSchema: {
+        message: z.string().describe('The ID of the Message.'),
+        mark: z.enum(MESSAGE_MARKS).describe('The mark: followUp, important or starred.'),
+        on: z.boolean().describe('true to set the mark, false to take it off.'),
+      },
+      annotations: WRITE,
+    },
+    ({ message, mark, on }) =>
+      attempt(async () => {
+        const { marks } = await hub.send<{ marks: string[] }>('catalogue', on ? 'PUT' : 'DELETE', `/messages/${enc(message)}/marks/${mark}`);
+        return answer({ marks, page: hub.page(pages.message(message)) }, on ? 'Marked, for the User alone.' : 'The mark is taken off.');
       }),
   );
 

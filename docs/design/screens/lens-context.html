@@ -7,9 +7,10 @@
   in view while answering. The window can be moved by its head and folded to it; "All messages on this lens" opens the
   slide-in (lens-messages); close leaves the Lens as it is, without the window (DEC-UX-210), and "Message Centre" at its
   foot goes back there.
+  Its head has the button of the marks of the User, which opens their dropdown, as in the Message Centre; this Question carries Follow up (DEC-UX-360, OP-UX-134).
   The page behind is lens.html, seen by its Owner Unit; its requirements are listed there.
-  Requirements: FR-CV-02, FR-CV-03, FR-CV-07, FR-CV-09
-  Decisions: DEC-UX-30, DEC-UX-210, DEC-CV-04, DEC-CV-09.
+  Requirements: FR-CV-02, FR-CV-03, FR-CV-07, FR-CV-09, FR-CV-19
+  Decisions: DEC-UX-30, DEC-UX-210, DEC-UX-360, DEC-UX-361, DEC-UX-365, DEC-CV-04, DEC-CV-09.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="owner">
@@ -268,6 +269,7 @@
  <div class="float-head" title="Drag to move">
   <i class="ph ph-dots-six-vertical float-grip" aria-hidden="true"></i>
   <div style="flex:1;min-width:0"><div class="meta">Question on this Lens</div><div class="float-title" id="float-title">Leads per source name</div></div>
+  <button class="mk-btn in-head set" type="button" aria-haspopup="menu" aria-expanded="false" title="Your marks"><i class="ph-fill ph-flag" aria-label="Follow up"></i><i class="ph ph-caret-down mk-caret"></i></button>
   <button class="icon-btn float-fold" aria-label="Fold" aria-expanded="true"><i class="ph ph-minus"></i></button>
   <a class="icon-btn" href="lens.html" aria-label="Close"><i class="ph ph-x"></i></a>
  </div>

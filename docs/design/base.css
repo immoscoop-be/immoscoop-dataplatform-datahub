@@ -818,6 +818,41 @@ a.nav-btn { display: inline-flex; align-items: center; justify-content: center; 
 .mc-filter:hover { background: var(--tint-hover); color: var(--text-primary); }
 .mc-filter.on { background: var(--card); color: var(--text-primary); font-weight: var(--weight-medium); }
 .mc-filter .count { margin-left: auto; }
+/* Marks on a Message (DEC-UX-360): personal, in the colour of the text, filled once set; the signal colours stay
+   for what needs action. The panel lists a mark only while a Message has it. They are set in a dropdown, as more
+   marks may come (OP-UX-134). */
+.mark-nav { display: flex; flex-direction: column; }
+.mark-nav .mc-filter > i { font-size: 16px; }
+.mark-nav .mc-filter.zero { color: var(--text-muted); }
+.panel-rule { display: block; height: 1px; margin: 10px 10px 2px; background: var(--tint-active); }
+.panel-rule + .panel-label { margin-top: 10px; }
+.mk-btn { all: unset; box-sizing: border-box; flex: none; display: inline-flex; align-items: center; gap: 3px; height: 26px; padding: 0 6px; border-radius: var(--radius-pill);
+  color: var(--text-primary); font-size: 15px; cursor: pointer; }
+.mk-btn:not(.set) { color: var(--text-muted); }
+.mk-btn:hover, .mk-btn[aria-expanded="true"] { background: var(--tint-active); color: var(--text-primary); }
+.mk-btn:focus-visible { outline: 2px solid var(--text-secondary); }
+.mk-btn .mk-caret { font-size: 11px; color: var(--text-muted); }
+.mk-btn.in-head { height: 32px; padding: 0 10px; gap: 5px; outline: 1px solid var(--tint-active); }
+.mk-btn.in-head span { font-size: var(--text-small); }
+.mk-btn.in-head span:empty { display: none; }
+.mc-item .mk-btn { margin-left: auto; }
+.mc-item .mk-btn:not(.set) { visibility: hidden; }
+.mc-item:hover .mk-btn, .mc-item:focus-within .mk-btn, .mc-item.menu-on .mk-btn { visibility: visible; }
+.mk-menu { position: fixed; z-index: 60; width: 220px; padding: 6px; border-radius: var(--radius-md); background: var(--surface-solid); box-shadow: var(--sheet-shadow); outline: 1px solid var(--tint-active); }
+.mk-row { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border-radius: var(--radius-sm); font-size: var(--text-small); color: var(--text-primary); cursor: pointer; }
+.mk-row:hover, .mk-row:focus-visible { background: var(--tint-hover); }
+.mk-row > i:first-child { font-size: 16px; }
+.mk-row span { flex: 1; }
+.mk-check { visibility: hidden; color: var(--text-secondary); }
+.mk-row[aria-checked="true"] .mk-check { visibility: visible; }
+.mc-item.kept { opacity: .5; }
+.mk-empty { display: block; margin: 10px 8px; line-height: 1.5; }
+/* The line of a Message keeps its marks on its first row: the object shortens, the marks never wrap. */
+.mc-row:has(> .mk-btn) { flex-wrap: nowrap; }
+.mc-row:has(> .mk-btn) .mc-subject { display: block; flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-row:has(> .mk-btn) .mc-subject > * { display: inline; }
+.mc-row:has(> .mk-btn) .mc-subject > * + * { margin-left: 6px; }
+.mk-empty { display: block; margin: 10px 8px; line-height: 1.5; }
 /* The Messages on one object, in a slide-in over its page */
 .msg-sheet { width: max(500px, var(--sheet-width)); }
 .msg-sheet .composer { margin-top: 16px; }

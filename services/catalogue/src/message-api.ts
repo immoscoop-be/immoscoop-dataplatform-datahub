@@ -1,5 +1,6 @@
 import type { ServiceCallerVerifier } from '@datahub/auth';
 import { canWith } from '@datahub/contracts';
+import { MESSAGE_MARKS, type MessageMark } from '@datahub/contracts/messages';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { Collections, Viewer } from './collections.js';
 import {
@@ -20,6 +21,8 @@ import {
   type WrittenOn,
 } from './messages.js';
 import { forbidden, may } from './viewer.js';
+
+const isMark = (value: string): value is MessageMark => (MESSAGE_MARKS as readonly string[]).includes(value);
 
 export interface MessageRouteOptions {
   collections: Collections;
@@ -190,14 +193,16 @@ export async function messageRoutes(app: FastifyInstance, options: MessageRouteO
     }
   }
 
-  // The Message Centre (FR-CV-06): the conversations of a view, filtered on kind, kind of object and words.
-  app.get<{ Querystring: { view?: string; kind?: string; on?: string; search?: string } }>('/messages', async (request, reply) => {
-    const { view = 'forYou', kind, on, search = '' } = request.query;
+  // The Message Centre (FR-CV-06): the conversations of a view, or of one mark of the User (FR-CV-19), filtered on kind,
+  // kind of object and words.
+  app.get<{ Querystring: { view?: string; mark?: string; kind?: string; on?: string; search?: string } }>('/messages', async (request, reply) => {
+    const { view = 'forYou', mark, kind, on, search = '' } = request.query;
     if (!(VIEWS as readonly string[]).includes(view)) return reply.code(400).send({ error: 'invalid_request', message: `The view is one of ${VIEWS.join(', ')}.` });
+    if (mark !== undefined && !isMark(mark)) return reply.code(400).send({ error: 'invalid_request', message: `The mark is one of ${MESSAGE_MARKS.join(', ')}.` });
     if (kind !== undefined && !(FILTER_KINDS as readonly string[]).includes(kind)) return reply.code(400).send({ error: 'invalid_request', message: `The kind is one of ${FILTER_KINDS.join(', ')}.` });
     if (on !== undefined && !(FILTER_ON as readonly string[]).includes(on)) return reply.code(400).send({ error: 'invalid_request', message: `The object is one of ${FILTER_ON.join(', ')}.` });
     if (search.length > 200) return reply.code(400).send({ error: 'invalid_request', message: 'A search has at most 200 characters.' });
-    return messages.list(await sightOf(request), { view: view as View, kind: kind as FilterKind | undefined, on: on as FilterOn | undefined, search: search.trim() || undefined });
+    return messages.list(await sightOf(request), { view: view as View, mark, kind: kind as FilterKind | undefined, on: on as FilterOn | undefined, search: search.trim() || undefined });
   });
 
   // The number on Messages in the rail (FR-CV-06).
@@ -322,6 +327,16 @@ export async function messageRoutes(app: FastifyInstance, options: MessageRouteO
     if (outcome.outcome === 'no_description') return reply.code(409).send({ error: 'no_description', message: 'dbt has no description here to report.' });
     return { outcome: outcome.outcome, message: outcome.conversation };
   });
+
+  // A mark of the User on a conversation they see, set or taken off: theirs alone, nobody is told (FR-CV-19, DEC-UX-365).
+  for (const method of ['put', 'delete'] as const) {
+    app[method]<{ Params: { id: string; mark: string } }>('/messages/:id/marks/:mark', async (request, reply) => {
+      const { id, mark } = request.params;
+      if (!isMark(mark)) return reply.code(404).send({ error: 'not_found', message: `No such mark: a mark is one of ${MESSAGE_MARKS.join(', ')}.` });
+      const marks = await messages.mark(id, await sightOf(request), mark, method === 'put');
+      return marks === 'not_found' ? reply.code(404).send(NO_MESSAGE) : { marks };
+    });
+  }
 
   // The User read a conversation: unread again once someone else moves it.
   app.post<{ Params: { id: string } }>('/messages/:id/read', async (request, reply) =>

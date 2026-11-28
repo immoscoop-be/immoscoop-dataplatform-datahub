@@ -1,5 +1,7 @@
 import { MESSAGE_CATALOGUE } from '@datahub/contracts/message-catalogue';
-import { type Language, type MessageKind, type MessageType, type MessageValues, messageValues, renderMessage, type SubjectKind } from '@datahub/contracts/messages';
+import { type Language, MESSAGE_MARKS, type MessageKind, type MessageMark, type MessageType, type MessageValues, messageValues, renderMessage, type SubjectKind } from '@datahub/contracts/messages';
+
+export { MESSAGE_MARKS, type MessageMark };
 import { createCall } from './api.js';
 import type { Config } from './config.js';
 import type { Session } from './session.js';
@@ -138,6 +140,8 @@ export interface Message {
   mayDelete?: boolean;
   /** Whether the User may join it: a Request about a description from dbt that waits, not theirs yet (FR-CV-17). */
   mayJoin?: boolean;
+  /** The marks the User put on it, theirs alone, in their order (FR-CV-19); left out by an older catalogue. */
+  marks?: MessageMark[];
 }
 
 export interface Reply {
@@ -163,10 +167,21 @@ export interface Counts {
   written: number;
   kinds: Record<FilterKind, number>;
   on: Record<FilterOn, number>;
+  /** How many Messages hold each mark of the User, whatever is chosen besides (DEC-UX-360); left out by an older catalogue. */
+  marks?: Record<MessageMark, number>;
 }
+
+/** The name of each mark and what its view holds, as sentences (DEC-UX-363). */
+export const MARK_TEXTS: Readonly<Record<MessageMark, { name: string; about: string }>> = {
+  followUp: { name: 'messages.mark.followUp', about: 'messages.mark.followUp.about' },
+  important: { name: 'messages.mark.important', about: 'messages.mark.important.about' },
+  starred: { name: 'messages.mark.starred', about: 'messages.mark.starred.about' },
+};
 
 export interface Filter {
   view: View;
+  /** A mark of the User opened as a view, in place of the view (DEC-UX-360). */
+  mark?: MessageMark;
   kind?: FilterKind;
   on?: FilterOn;
   search?: string;
@@ -180,8 +195,8 @@ export function createMessages(config: Config, session: Pick<Session, 'accessTok
 
   return {
     /** The conversations of a view of the Message Centre, newest first, with its counts. */
-    async list({ view, kind, on, search }: Filter): Promise<{ messages: Message[]; counts: Counts }> {
-      const query = new URLSearchParams({ view, ...(kind ? { kind } : {}), ...(on ? { on } : {}), ...(search ? { search } : {}) });
+    async list({ view, mark, kind, on, search }: Filter): Promise<{ messages: Message[]; counts: Counts }> {
+      const query = new URLSearchParams({ view, ...(mark ? { mark } : {}), ...(kind ? { kind } : {}), ...(on ? { on } : {}), ...(search ? { search } : {}) });
       return (await (await call(`/messages?${query}`)).json()) as { messages: Message[]; counts: Counts };
     },
     /** How many conversations for the User moved since they read them, for the rail. */
@@ -204,6 +219,10 @@ export function createMessages(config: Config, session: Pick<Session, 'accessTok
     },
     async read(id: string): Promise<void> {
       await call(`${one(id)}/read`, { method: 'POST' });
+    },
+    /** Sets or takes off a mark of the User on a Message, theirs alone (FR-CV-19); gives their marks on it. */
+    async mark(id: string, mark: MessageMark, on: boolean): Promise<MessageMark[]> {
+      return ((await (await call(`${one(id)}/marks/${mark}`, { method: on ? 'PUT' : 'DELETE' })).json()) as { marks: MessageMark[] }).marks;
     },
     /** Closes an open Question or Signal, with an optional line why (FR-CV-16, MSG-CNV-07). */
     async close(id: string, text: string): Promise<Conversation> {

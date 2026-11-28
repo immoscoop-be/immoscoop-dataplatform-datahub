@@ -1413,8 +1413,13 @@ function serve({
         const subject = message.subject as { kind: string };
         on[subject.kind] = (on[subject.kind] ?? 0) + 1;
       }
-      const listed = new URLSearchParams(path.split('?')[1]).get('view') === 'unread' ? talk.filter((message) => message.unread) : talk;
-      return json({ messages: listed, counts: { forYou: talk.length, unread: talk.filter((message) => message.unread).length, written: 0, kinds, on } });
+      const asked = new URLSearchParams(path.split('?')[1]);
+      // The marks of the User (FR-CV-19): how many hold each, whatever is chosen, and the list of one.
+      const marksOf = (message: Record<string, unknown>) => (message.marks as string[] | undefined) ?? [];
+      const marks = Object.fromEntries(['followUp', 'important', 'starred'].map((mark) => [mark, talk.filter((message) => marksOf(message).includes(mark)).length]));
+      const mark = asked.get('mark');
+      const listed = mark ? talk.filter((message) => marksOf(message).includes(mark)) : asked.get('view') === 'unread' ? talk.filter((message) => message.unread) : talk;
+      return json({ messages: listed, counts: { forYou: talk.length, unread: talk.filter((message) => message.unread).length, written: 0, kinds, on, marks } });
     }
     const onObject = /^\/messages\/on\/(\w+)\/([^/]+)$/.exec(path);
     if (onObject) {
@@ -1452,6 +1457,13 @@ function serve({
     }
     if (message && path === `/messages/${message.id as string}`) {
       return json({ message });
+    }
+    const marking = message ? new RegExp(`^/messages/${message.id as string}/marks/(\\w+)$`).exec(path) : null;
+    if (message && marking && (method === 'PUT' || method === 'DELETE')) {
+      const mark = marking[1] as string;
+      const kept = ((message.marks as string[] | undefined) ?? []).filter((one) => one !== mark);
+      message.marks = ['followUp', 'important', 'starred'].filter((one) => (method === 'PUT' ? [...kept, mark] : kept).includes(one));
+      return json({ marks: message.marks });
     }
     if (message && path === `/messages/${message.id as string}/read`) {
       message.unread = false;
@@ -6272,6 +6284,83 @@ describe('Messages', () => {
     await fireEvent.click(main.getByRole('button', { name: /Heropenen/ }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/messages/m1/reopen' }));
     expect(await main.findByRole('button', { name: /Sluiten/ })).toBeTruthy();
+  });
+
+  it('marks a Message for the User, lists a mark in the panel only while a Message holds it, and opens it as a view (FR-CV-19, DEC-UX-360 to DEC-UX-366)', async () => {
+    const calls = serve({ groups: ['g1'], conversations: [QUESTION, { ...DESCRIBED, marks: ['starred'] }] });
+    open('/messages/m1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const panel = within(screen.getByRole('navigation', { name: 'Berichten' }));
+    // Only the marks that hold a Message, just under the search, with how many.
+    expect(await panel.findByRole('button', { name: /^Met ster\s*1/ })).toBeTruthy();
+    expect(panel.queryByRole('button', { name: /^Opvolgen/ })).toBeNull();
+    expect(panel.queryByRole('button', { name: /^Belangrijk/ })).toBeNull();
+
+    // In the head of the Message opened, one button: a dropdown of the marks, which stays open for another.
+    const detail = within(await screen.findByRole('region', { name: 'Credit leads' }));
+    await fireEvent.click(await detail.findByRole('button', { name: 'Jouw markeringen' }));
+    const menu = within(detail.getByRole('menu', { name: 'Jouw markeringen' }));
+    expect(menu.getAllByRole('menuitemcheckbox').map((item) => [item.textContent, item.getAttribute('aria-checked')])).toEqual([
+      ['Opvolgen', 'false'],
+      ['Belangrijk', 'false'],
+      ['Met ster', 'false'],
+    ]);
+    // Marks are personal, and no line says so (DEC-UX-365).
+    expect(detail.queryByText(/alleen jij/i)).toBeNull();
+    await fireEvent.click(menu.getByRole('menuitemcheckbox', { name: 'Opvolgen' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/messages/m1/marks/followUp' }));
+    await vi.waitFor(() => expect(menu.getByRole('menuitemcheckbox', { name: 'Opvolgen' }).getAttribute('aria-checked')).toBe('true'));
+    await fireEvent.click(menu.getByRole('menuitemcheckbox', { name: 'Belangrijk' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/messages/m1/marks/important' }));
+    // The button shows every mark set, never a number (DEC-UX-362); the panel counts them.
+    expect(await detail.findByRole('button', { name: 'Jouw markeringen: Opvolgen, Belangrijk' })).toBeTruthy();
+    expect(await panel.findByRole('button', { name: /^Opvolgen\s*1/ })).toBeTruthy();
+    expect(panel.getByRole('button', { name: /^Belangrijk\s*1/ })).toBeTruthy();
+
+    // A mark opened as a view: its Messages, read or not, without the chips.
+    await fireEvent.click(panel.getByRole('button', { name: /^Opvolgen\s*1/ }));
+    expect(await main.findByRole('heading', { level: 1, name: 'Opvolgen' })).toBeTruthy();
+    await vi.waitFor(() => expect(calls.some((call) => call.path === '/messages?view=unread&mark=followUp')).toBe(true));
+    expect(main.getByText('De berichten die je markeerde om op te volgen: haal de vlag weg zodra het gedaan is.')).toBeTruthy();
+    const list = within(main.getByRole('region', { name: 'Berichten' }));
+    await list.findByText('Will KBC follow-up be published this month?');
+    expect(main.queryByRole('radiogroup')).toBeNull();
+    // Taken off on its line, it stays there, faded, and the mark keeps its row at 0 until another view (DEC-UX-366).
+    await fireEvent.click(list.getByRole('button', { name: 'Jouw markeringen: Opvolgen, Belangrijk' }));
+    await fireEvent.click(within(list.getByRole('menu', { name: 'Jouw markeringen' })).getByRole('menuitemcheckbox', { name: 'Opvolgen' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/messages/m1/marks/followUp' }));
+    expect(await panel.findByRole('button', { name: /^Opvolgen\s*0/ })).toBeTruthy();
+    expect(list.getByText('Will KBC follow-up be published this month?').closest('.line')?.classList.contains('kept')).toBe(true);
+    expect(list.getByText('Niets is nog gemarkeerd als Opvolgen. Het verdwijnt uit je markeringen zodra je elders kijkt.')).toBeTruthy();
+    await fireEvent.click(panel.getByRole('button', { name: /Voor jou/ }));
+    expect(await main.findByRole('heading', { level: 1, name: 'Voor jou' })).toBeTruthy();
+    await vi.waitFor(() => expect(panel.queryByRole('button', { name: /^Opvolgen/ })).toBeNull());
+
+    // The quick window marks the Message opened, and opens a mark that holds one.
+    await quickDo('markeren: met ster');
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/messages/m1/marks/starred' }));
+    expect(await panel.findByRole('button', { name: /^Met ster\s*2/ })).toBeTruthy();
+    await quickDo('belangrijk tonen');
+    expect(await main.findByRole('heading', { level: 1, name: 'Belangrijk' })).toBeTruthy();
+  });
+
+  it('has the marks in the head of a Message opened in context and on each conversation of the slide-in (DEC-UX-365)', async () => {
+    const calls = serve({ groups: ['g1'], conversations: [{ ...QUESTION, marks: ['followUp'] }] });
+    open('/collections/c1/messages/m1');
+    render(App, { config: CONFIG });
+    const window = within(await screen.findByRole('dialog', { name: 'Credit leads' }));
+    await fireEvent.click(await window.findByRole('button', { name: 'Jouw markeringen: Opvolgen' }));
+    await fireEvent.click(within(window.getByRole('menu', { name: 'Jouw markeringen' })).getByRole('menuitemcheckbox', { name: 'Met ster' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/messages/m1/marks/starred' }));
+    expect(await window.findByRole('button', { name: 'Jouw markeringen: Opvolgen, Met ster' })).toBeTruthy();
+
+    // The slide-in on the Collection: the same button on the conversation.
+    await fireEvent.click(window.getByRole('link', { name: /bericht.* op deze/ }));
+    const sheet = within(await screen.findByRole('dialog', { name: /Credit leads/ }));
+    await fireEvent.click(await sheet.findByRole('button', { name: 'Jouw markeringen: Opvolgen, Met ster' }));
+    await fireEvent.click(within(sheet.getByRole('menu', { name: 'Jouw markeringen' })).getByRole('menuitemcheckbox', { name: 'Opvolgen' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/messages/m1/marks/followUp' }));
   });
 
   it('does the Messages from the quick window: another view, Mark all as read, Close and Reopen (DEC-UX-255)', async () => {
