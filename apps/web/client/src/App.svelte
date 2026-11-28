@@ -19,7 +19,20 @@
   import { dragging, type Mover } from './lib/dragging.svelte.js';
   import type { Config } from './lib/config.js';
   import { createIdentity, type GroupSummary, SignedOut, type Me } from './lib/identity.js';
-  import { type Conversation, type Counts, createMessages, type Filter, type Message, REPORT, SUBJECT_TITLES, WRITTEN_ON, type WrittenKind, type WrittenOn } from './lib/messages.js';
+  import {
+    type Conversation,
+    type Counts,
+    createMessages,
+    type Filter,
+    type Message,
+    MESSAGE_MARKS,
+    type MessageMark,
+    REPORT,
+    SUBJECT_TITLES,
+    WRITTEN_ON,
+    type WrittenKind,
+    type WrittenOn,
+  } from './lib/messages.js';
   import { initialsOf } from './lib/initials.js';
   import { type OpenedFrom, provideLearning } from './lib/learning-context.js';
   import { type Card, cardsIn, createLearning, drawExample, LEVELS, type LevelId, type Progress, type Step, suggestedLevels, topicOf, writtenCards } from './lib/learning.js';
@@ -805,6 +818,32 @@
     if (talkedAbout) readOnObject(talkedAbout);
     readUnread();
   }
+  /**
+   * A mark of the User set or taken off (FR-CV-19): on the Message wherever it shows, and in the counts of the panel. The
+   * list is not read again, so that a line taken off in the view of its mark stays there, faded, until another view is
+   * chosen (DEC-UX-366).
+   */
+  function markMessage(id: string, mark: MessageMark, on: boolean): void {
+    const known = centre?.messages.find((item) => item.id === id)?.marks ?? (openedMessage?.message?.id === id ? openedMessage.message.marks : undefined);
+    messages.mark(id, mark, on).then(
+      (marks) => {
+        if (openedMessage?.message?.id === id) openedMessage = { id: openedMessage.id, message: { ...openedMessage.message, marks } };
+        if (onObject?.messages) onObject = { ...onObject, messages: onObject.messages.map((item) => (item.id === id ? { ...item, marks } : item)) };
+        if (!centre) return;
+        const counted = centre.counts.marks;
+        // Its marks before were not known here: the counts are read again rather than guessed.
+        if (!counted || !known) {
+          messages.list(messageFilter).then(
+            (found) => centre && (centre = { ...centre, counts: found.counts }),
+            (error: unknown) => console.error('The counts of the marks could not be read', error),
+          );
+        }
+        const recounted = counted && known ? Object.fromEntries(MESSAGE_MARKS.map((one) => [one, counted[one] + Number(marks.includes(one)) - Number(known.includes(one))])) : counted;
+        centre = { messages: centre.messages.map((item) => (item.id === id ? { ...item, marks } : item)), counts: { ...centre.counts, ...(recounted ? { marks: recounted as Record<MessageMark, number> } : {}) } };
+      },
+      (error: unknown) => console.error('The mark could not be saved', error),
+    );
+  }
   /** A conversation deleted for everyone (FR-CV-18): it leaves the Message Centre, the window and the counts. */
   function deletedMessage(id: string): void {
     if (openedMessage?.id === id) openedMessage = undefined;
@@ -1378,6 +1417,7 @@
         onchanged={changedMessage}
         ondeleted={deletedMessage}
         onreadall={readAll}
+        onmark={markMessage}
       />
     {:else if queryPage && !mayQuery(permissions)}
       <NotFound />
@@ -1849,6 +1889,7 @@
         onchanged={changedMessage}
         ondeleted={deletedMessage}
         onclose={() => router.go(router.path.replace(/\/messages\/[^/]+$/, ''))}
+        onmark={markMessage}
       />
     {/if}
   </AppShell>

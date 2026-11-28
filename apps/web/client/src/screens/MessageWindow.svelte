@@ -3,7 +3,8 @@
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
   import Loading from '@datahub/ui/primitives/Loading.svelte';
-  import { type Conversation, type MessagesClient, SUBJECT_TITLES } from '../lib/messages.js';
+  import { type Conversation, type MessageMark, type MessagesClient, SUBJECT_TITLES } from '../lib/messages.js';
+  import MarksButton from './MarksButton.svelte';
   import { messagePath, messagesOnPath } from '../lib/routes.js';
   import MessageOpened from './MessageOpened.svelte';
   import { KIND_NAMES } from './MessageThread.svelte';
@@ -24,6 +25,7 @@
     onchanged,
     ondeleted,
     onclose,
+    onmark,
   }: {
     id: string;
     /** The Message: undefined while it comes, null when it could not be read. */
@@ -38,6 +40,8 @@
     /** Its conversation is deleted (FR-CV-18); without it, the window closes. */
     ondeleted?: (id: string) => void;
     onclose: () => void;
+    /** Sets or takes off a mark of the User on it, with the button in its head (FR-CV-19, DEC-UX-365). */
+    onmark?: (id: string, mark: MessageMark, on: boolean) => void;
   } = $props();
 
   const kindName = $derived(message ? SUBJECT_TITLES[message.subject.kind] : '');
@@ -49,6 +53,9 @@
   wide={message?.kind === 'request'}
   {onclose}
 >
+  {#snippet actions()}
+    {#if message && onmark}<MarksButton marks={message.marks ?? []} inHead onmark={(mark, on) => onmark(message.id, mark, on)} />{/if}
+  {/snippet}
   {#if message}
     {#key message.id}
       <MessageOpened {message} {client} {decides} {decideLens} {onchanged} ondeleted={ondeleted ?? (() => onclose())} />

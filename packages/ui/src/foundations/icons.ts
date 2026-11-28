@@ -178,6 +178,10 @@ import plugsConnected from '@phosphor-icons/core/assets/regular/plugs-connected.
 import shieldCheck from '@phosphor-icons/core/assets/regular/shield-check.svg?raw';
 import userPlus from '@phosphor-icons/core/assets/regular/user-plus.svg?raw';
 import flagFill from '@phosphor-icons/core/assets/fill/flag-fill.svg?raw';
+// The marks of a Message, outlined while off and filled once set (DEC-UX-363).
+import star from '@phosphor-icons/core/assets/regular/star.svg?raw';
+import starFill from '@phosphor-icons/core/assets/fill/star-fill.svg?raw';
+import warningCircle from '@phosphor-icons/core/assets/regular/warning-circle.svg?raw';
 import users from '@phosphor-icons/core/assets/regular/users.svg?raw';
 // The row on top of Query and the quick window (DEC-UX-317, DEC-UX-237).
 import arrowsInLineVertical from '@phosphor-icons/core/assets/regular/arrows-in-line-vertical.svg?raw';
@@ -374,6 +378,9 @@ export const ICONS = {
   'user-plus': userPlus,
   // A description from dbt reported as wrong, while the Data Team decides (FR-CV-17).
   'flag-fill': flagFill,
+  star,
+  'star-fill': starFill,
+  'warning-circle': warningCircle,
   users: users,
   'arrows-in-line-vertical': arrowsInLineVertical,
   'circle-notch': circleNotch,

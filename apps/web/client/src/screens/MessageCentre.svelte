@@ -15,7 +15,10 @@
     isAnswered,
     isClosed,
     isOpen,
+    MARK_TEXTS,
+    MESSAGE_MARKS,
     type Message,
+    type MessageMark,
     type MessagesClient,
     messageText,
     STATE_TEXTS,
@@ -25,6 +28,7 @@
   import { contextPath, messagePath, objectPath } from '../lib/routes.js';
   import { command, place, useScreenCommands } from '../lib/commands.svelte.js';
   import type { QuickRow } from '../lib/quick.js';
+  import MarksButton, { MARK_ICONS } from './MarksButton.svelte';
   import MessageOpened from './MessageOpened.svelte';
   import { KIND_NAMES, STATE_ICONS } from './MessageThread.svelte';
 
@@ -33,6 +37,9 @@
    * with its object, kind, state, who and when and its first lines, a dot when it is unread; chips for all,
    * open and answered. The Message opened shows on the right with its replies and "Open in context"
    * (FR-CV-09), and what it asks of the User: a reply, or the decision on a Request for who may decide on it.
+   * A mark of the User opened in the panel shows the Messages that hold it, read or not, without the chips; one whose
+   * mark is taken off there stays, faded, until another view is chosen (DEC-UX-366). Each line and the head of the
+   * Message opened have the marks button (FR-CV-19, DEC-UX-365).
    */
   let {
     filter,
@@ -45,6 +52,7 @@
     onchanged,
     ondeleted,
     onreadall,
+    onmark,
   }: {
     filter: Filter;
     /** The Messages of the view and its counts: undefined while they come, null when they could not be read. */
@@ -63,15 +71,26 @@
     ondeleted?: (id: string) => void;
     /** Marks these Messages read, those of the list shown that are unread (DEC-UX-255). */
     onreadall?: (ids: string[]) => void;
+    /** Sets or takes off a mark of the User on a Message (FR-CV-19). */
+    onmark?: (id: string, mark: MessageMark, on: boolean) => void;
   } = $props();
 
   const language = $derived(currentLanguage());
   let chip = $state<'all' | 'open' | 'answered' | 'closed'>('all');
   const messages = $derived(found?.messages ?? []);
-  const shown = $derived(messages.filter((message) => chip === 'all' || (chip === 'open' ? isOpen(message) : chip === 'closed' ? isClosed(message) : isAnswered(message))));
+  /** A mark opened shows every Message that holds it, without the chips (DEC-UX-360). */
+  const shown = $derived(
+    filter.mark ? messages : messages.filter((message) => chip === 'all' || (chip === 'open' ? isOpen(message) : chip === 'closed' ? isClosed(message) : isAnswered(message))),
+  );
   /** Nothing unread at all, not just nothing that matches a filter (DEC-UX-136). */
-  const caughtUp = $derived(filter.view === 'unread' && !filter.kind && !filter.on && !filter.search && chip === 'all');
-  const about = $derived(filter.view === 'forYou' && forDataTeam ? t('messages.about.forYou.dataTeam') : t(VIEW_TEXTS[filter.view].about));
+  const caughtUp = $derived(filter.view === 'unread' && !filter.mark && !filter.kind && !filter.on && !filter.search && chip === 'all');
+  const title = $derived(filter.mark ? t(MARK_TEXTS[filter.mark].name) : t(VIEW_TEXTS[filter.view].name));
+  const about = $derived(
+    filter.mark ? t(MARK_TEXTS[filter.mark].about) : filter.view === 'forYou' && forDataTeam ? t('messages.about.forYou.dataTeam') : t(VIEW_TEXTS[filter.view].about),
+  );
+  /** A mark opened that holds no Message any more: its view says so, its lines taken off stay faded (DEC-UX-366). */
+  const emptied = $derived(filter.mark !== undefined && found?.counts.marks?.[filter.mark] === 0);
+  const marksOf = (message: Message): MessageMark[] => message.marks ?? [];
 
   /** The icon of the kind of an object, as the panel shows it. */
   const SUBJECT_ICONS: Record<string, IconName> = { collection: 'stack', query: 'terminal-window', report: 'file-text', learningCard: 'graduation-cap-fill' };
@@ -104,7 +123,18 @@
       const open = opener(message);
       rows.push(place('messages:context', 'arrow-square-out', open.label, () => go(open.href), { meta: message.subject.name, words: t('quick.messages.context.words') }));
     }
-    for (const value of ['all', 'open', 'answered', 'closed'] as const) if (value !== chip) rows.push(command(`messages:chip:${value}`, 'funnel', t('quick.messages.chip', { name: t(CHIPS[value]) }), () => (chip = value), { words: t('quick.messages.chip.words') }));
+    // Each mark of the Message opened, set or taken off, as its dropdown does (DEC-UX-365).
+    if (message && onmark) {
+      for (const mark of MESSAGE_MARKS) {
+        const on = marksOf(message).includes(mark);
+        rows.push(
+          command(`messages:setMark:${mark}`, MARK_ICONS[mark].on, t(on ? 'quick.messages.unmark' : 'quick.messages.mark', { name: t(MARK_TEXTS[mark].name) }), () => onmark(message.id, mark, !on), {
+            words: t('quick.messages.mark.words'),
+          }),
+        );
+      }
+    }
+    if (!filter.mark) for (const value of ['all', 'open', 'answered', 'closed'] as const) if (value !== chip) rows.push(command(`messages:chip:${value}`, 'funnel', t('quick.messages.chip', { name: t(CHIPS[value]) }), () => (chip = value), { words: t('quick.messages.chip.words') }));
     // Every Message of the list shown, read at once; only a command, the list has no button for it (DEC-UX-255).
     const unread = shown.filter((message) => message.unread).map((message) => message.id);
     if (unread.length > 0 && onreadall) rows.push(command('messages:readAll', 'list-checks', t('quick.messages.readAll'), () => onreadall(unread), { meta: t('quick.messages.readAll.meta', { count: unread.length }), words: t('quick.messages.readAll.words') }));
@@ -113,12 +143,12 @@
 </script>
 
 <div class="crumb meta">{t('section.messages')}</div>
-<h1 class="page-title">{t(VIEW_TEXTS[filter.view].name)}</h1>
+<h1 class="page-title">{title}</h1>
 <p class="meta about">{about}</p>
 
 <div class="centre">
   <section class="card list" aria-label={t('section.messages')}>
-    <div class="chips">
+    <div class="chips" hidden={filter.mark !== undefined}>
       <Segmented
         options={[
           { value: 'all' as const, label: `${t('messages.all')} ${messages.length}` },
@@ -135,9 +165,11 @@
     {:else if found === undefined}
       <Loading />
     {:else if shown.length === 0}
-      <p class="meta empty">{t(caughtUp ? 'messages.caughtUp' : 'messages.none')}</p>
+      <p class="meta empty">{filter.mark ? t('messages.mark.none', { name: title }) : t(caughtUp ? 'messages.caughtUp' : 'messages.none')}</p>
     {:else}
       {#each shown as message (message.id)}
+        {@const marks = marksOf(message)}
+        <div class="line" class:kept={filter.mark !== undefined && !marks.includes(filter.mark)} class:marked={marks.length > 0} style:--room={`${marks.length > 0 ? 34 + 19 * marks.length : 48}px`}>
         <a class="item" class:on={opened?.id === message.id} class:unread={message.unread} href={messagePath(message.id)} aria-current={opened?.id === message.id ? 'true' : undefined}>
           <span class="dot" role={message.unread ? 'img' : undefined} aria-label={message.unread ? t('messages.unread') : undefined}></span>
           <span class="main">
@@ -157,7 +189,10 @@
             {#if message.replyCount > 0}<span class="row meta replies" aria-label={t('messages.replies', { count: message.replyCount })}><Icon name="chat-circle" />{message.replyCount}</span>{/if}
           </span>
         </a>
+        {#if onmark}<span class="line-marks"><MarksButton {marks} onmark={(mark, on) => onmark(message.id, mark, on)} /></span>{/if}
+        </div>
       {/each}
+      {#if emptied}<p class="meta empty">{t('messages.mark.none', { name: title })}</p>{/if}
     {/if}
   </section>
 
@@ -171,6 +206,7 @@
           <div class="meta">{SUBJECT_TITLES[message.subject.kind]}{#if message.subject.collection}{` · ${message.subject.collection.name}`}{/if}</div>
           <div class="title">{message.subject.name}</div>
         </div>
+        {#if onmark}<MarksButton marks={marksOf(message)} inHead onmark={(mark, on) => onmark(message.id, mark, on)} />{/if}
         {#if message.subject.exists}<Button variant="outline" href={open.href} title={t('messages.contextHint')}><Icon name="arrow-square-out" />{open.label}</Button>{/if}
       </div>
       {#if !message.subject.exists}<p class="meta gone">{t('messages.gone', { kind: SUBJECT_TITLES[message.subject.kind] })}</p>{/if}
@@ -196,7 +232,17 @@
   .chips { margin: 0 4px 8px; }
   .empty { padding: 12px; margin: 0; }
   .item { display: grid; grid-template-columns: 8px minmax(0, 1fr); gap: 10px; padding: 12px 12px 12px 8px; border-radius: var(--radius-md); color: var(--text-primary); text-decoration: none; }
-  .item:hover { background: var(--tint-hover); }
+  .item:hover, .line:hover .item { background: var(--tint-hover); }
+  /* The marks button sits on the first row of a line, outside its link; the object shortens to make room (DEC-UX-362). */
+  .line { position: relative; }
+  .line .subject { flex-wrap: nowrap; padding-right: var(--room); }
+  .line .subject b, .line .subject .meta { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .line .subject b { flex: 0 1 auto; }
+  .line-marks { position: absolute; top: 8px; right: 8px; }
+  .line:not(.marked) .line-marks { visibility: hidden; }
+  .line:hover .line-marks, .line:focus-within .line-marks, .line:has(:global([aria-expanded='true'])) .line-marks { visibility: visible; }
+  /* Taken off in the view of its mark, it stays faded until another view is chosen (DEC-UX-366). */
+  .kept { opacity: 0.5; }
   .item.on { background: var(--surface-sub); }
   .item:focus-visible { outline: 2px solid var(--text-secondary); }
   .dot { width: 8px; height: 8px; margin-top: 5px; border-radius: 50%; }

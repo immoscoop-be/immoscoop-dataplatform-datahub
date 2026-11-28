@@ -18,6 +18,7 @@
     onclose,
     children,
     foot,
+    actions,
   }: {
     title: string;
     /** What stands above its title, such as what it belongs to. */
@@ -28,6 +29,8 @@
     onclose: () => void;
     children: Snippet;
     foot?: Snippet;
+    /** Controls of its own in its head, before Fold, such as the marks of a Message (DEC-UX-365). */
+    actions?: Snippet;
   } = $props();
 
   let folded = $state(false);
@@ -79,6 +82,8 @@
       {#if meta}<div class="meta">{meta}</div>{/if}
       <div class="title">{title}</div>
     </div>
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    {#if actions}<span class="actions" onpointerdown={(event) => event.stopPropagation()}>{@render actions()}</span>{/if}
     <button type="button" class="button" aria-expanded={!folded} aria-label={t(folded ? 'float.unfold' : 'float.fold')} onclick={() => (folded = !folded)}>
       <Icon name={folded ? 'arrows-out-simple' : 'minus'} />
     </button>
@@ -97,6 +102,7 @@
   .wide { width: 470px; }
   .head { display: flex; align-items: center; gap: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--tint-active); cursor: grab; user-select: none; touch-action: none; }
   .folded .head { border-bottom: 0; padding-bottom: 0; }
+  .actions { display: inline-flex; flex: none; cursor: default; }
   .grip { display: inline-flex; font-size: 16px; color: var(--text-muted); }
   .icon { display: inline-flex; font-size: 17px; color: var(--text-secondary); }
   .titles { flex: 1; min-width: 0; }
