@@ -189,7 +189,9 @@ Grouped by the object or task they serve. Each is built from the layers above; i
 
 | Component | What it is | Behaviour | Built from | Used on | Rules |
 | --- | --- | --- | --- | --- | --- |
-| Message item | A Message in a list: its object, kind, state, who, when, first lines | Opens it | chip, avatar, kind icon | Message Centre | [DEC-UX-29](principles.md#dec-ux-29) |
+| Message item | A Message in a list: its object, kind, state, who, when, first lines, and the marks of the User set on it | Opens it; the mark toggles show on hover | chip, avatar, kind icon, mark toggles | Message Centre | [DEC-UX-29](principles.md#dec-ux-29), [DEC-UX-360](principles.md#dec-ux-360) |
+| Mark toggles | The three marks of the User on a Message, Follow up, Important and Starred: an icon each, outlined, filled once set | One click sets or takes off a mark, at once; only the User sees them | icon button, icons | Message item, the head of a Message wherever it shows | [DEC-UX-360](principles.md#dec-ux-360) |
+| Mark in the panel | A mark of the User with how many Messages it holds, above For you | Shows only while a Message holds it; opens its view | panel item | Message Centre | [DEC-UX-360](principles.md#dec-ux-360) |
 | Message | A Message with its replies | – | avatar, chip | Message Centre, slide-in, floating window | [Messages](principles.md#messages) |
 | Composer | A field to write, the kind to choose, who gets a notification | – | field, segmented | slide-in, Message | [FR-CV-07](../requirements/functional/14-conversations.md#fr-cv-07) |
 | Request decision | What a Request asks to decide, with Refuse and Accept for the Data Team | – | facts, composer | Request | [DEC-CV-06](../requirements/functional/14-conversations.md#dec-cv-06) |

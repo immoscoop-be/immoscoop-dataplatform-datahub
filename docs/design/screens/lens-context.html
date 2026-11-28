@@ -7,9 +7,11 @@
   in view while answering. The window can be moved by its head and folded to it; "All messages on this lens" opens the
   slide-in (lens-messages); close leaves the Lens as it is, without the window (DEC-UX-210), and "Message Centre" at its
   foot goes back there.
+  Its head has the three marks of the User, Follow up, Important and Starred, as in the Message Centre: only they see
+  them; this Question carries Follow up (DEC-UX-360, OP-UX-134).
   The page behind is lens.html, seen by its Owner Unit; its requirements are listed there.
   Requirements: FR-CV-02, FR-CV-03, FR-CV-07, FR-CV-09
-  Decisions: DEC-UX-30, DEC-UX-210, DEC-CV-04, DEC-CV-09.
+  Decisions: DEC-UX-30, DEC-UX-210, DEC-UX-360, DEC-CV-04, DEC-CV-09.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="owner">
@@ -268,6 +270,7 @@
  <div class="float-head" title="Drag to move">
   <i class="ph ph-dots-six-vertical float-grip" aria-hidden="true"></i>
   <div style="flex:1;min-width:0"><div class="meta">Question on this Lens</div><div class="float-title" id="float-title">Leads per source name</div></div>
+  <span class="mk-head" role="group" aria-label="Your marks, only you see them"><button class="mk on" type="button" aria-pressed="true" title="Follow up: only you see your marks"><i class="ph-fill ph-flag"></i></button><button class="mk" type="button" aria-pressed="false" title="Important: only you see your marks"><i class="ph ph-warning-circle"></i></button><button class="mk" type="button" aria-pressed="false" title="Starred: only you see your marks"><i class="ph ph-star"></i></button></span>
   <button class="icon-btn float-fold" aria-label="Fold" aria-expanded="true"><i class="ph ph-minus"></i></button>
   <a class="icon-btn" href="lens.html" aria-label="Close"><i class="ph ph-x"></i></a>
  </div>

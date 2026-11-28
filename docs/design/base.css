@@ -818,6 +818,29 @@ a.nav-btn { display: inline-flex; align-items: center; justify-content: center; 
 .mc-filter:hover { background: var(--tint-hover); color: var(--text-primary); }
 .mc-filter.on { background: var(--card); color: var(--text-primary); font-weight: var(--weight-medium); }
 .mc-filter .count { margin-left: auto; }
+/* Marks on a Message (DEC-UX-360): personal, in the colour of the text, filled once set; the signal colours stay
+   for what needs action. The panel lists a mark only while a Message has it. */
+.mark-nav { display: flex; flex-direction: column; }
+.mark-nav .mc-filter > i { font-size: 16px; }
+.mark-nav .mc-filter.zero { color: var(--text-muted); }
+.mark-nav-rule { height: 1px; margin: 8px 10px; background: var(--tint-active); }
+.mk-set { display: inline-flex; gap: 1px; margin-left: auto; }
+.mk-head { display: inline-flex; gap: 1px; padding: 2px; border-radius: var(--radius-pill); outline: 1px solid var(--tint-active); }
+.mk { all: unset; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: var(--radius-pill);
+  color: var(--text-muted); font-size: 15px; cursor: pointer; }
+.mk:hover { background: var(--tint-active); color: var(--text-primary); }
+.mk:focus-visible { outline: 2px solid var(--text-secondary); }
+.mk.on { color: var(--text-primary); }
+.mc-item .mk:not(.on) { visibility: hidden; }
+.mc-item:hover .mk, .mc-item:focus-within .mk { visibility: visible; }
+.mc-item.kept { opacity: .5; }
+/* The line of a Message keeps its marks on its first row: the object shortens, the marks never wrap. */
+.mc-row:has(> .mk-set) { flex-wrap: nowrap; }
+.mc-row:has(> .mk-set) .mc-subject { display: block; flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mc-row:has(> .mk-set) .mc-subject > * { display: inline; }
+.mc-row:has(> .mk-set) .mc-subject > * + * { margin-left: 6px; }
+.mk-set { flex: none; }
+.mk-empty { display: block; margin: 10px 8px; line-height: 1.5; }
 /* The Messages on one object, in a slide-in over its page */
 .msg-sheet { width: max(500px, var(--sheet-width)); }
 .msg-sheet .composer { margin-top: 16px; }
