@@ -17,7 +17,10 @@
   Data Hub knows but that is no Resource: a model, seed, snapshot or source of a dbt project it follows through its Source
   Jobs. Such a table is a quiet chip next to the Resources, its table name in a dashed outline (DEC-UX-243), and the
   query runs; a double-click on its name opens what dbt and BigQuery know of it (OP-UX-89, Proposal); a table that is a
-  Resource stays one, to add to this query, and a table Data Hub does not know stays an error. A query that reads one
+  Resource stays one, to add to this query. Any other table of the BigQuery project of Data Hub runs too, BigQuery
+  deciding whether it exists (DEC-SR-50), such as a model a job other than the Source Job built before Data Hub knows it:
+  the same dashed chip with a database icon, and its window shows only what BigQuery knows (OP-UX-137, Proposal); a table
+  BigQuery does not have, or one of another project, stays an error. A query that reads one
   cannot become a Lens (DEC-LE-22): a line under its question says so. The switch "SQL" shows it (DEC-UX-220, DEC-SR-46).
   One white frame holds two dark boxes: the editor, at the full width, and under it the Parameters, which fold open and
   shut (folded, a chip each). A Parameter has a name, a kind from a standard list (Date, Period, Whole number, Decimal
@@ -42,7 +45,7 @@
   The switch "Query" shows it Broken (DEC-UX-160, FR-SR-53, DEC-UX-81): a table or column it reads no longer exists, so
   Run is off, a callout on top names what is missing, and the query has the red dot in the panel; its SQL can still be
   changed, and a change that runs makes it work again, as does the return of what it reads.
-  Requirements: FR-SR-74, FR-SR-73, FR-SR-72, FR-SR-71, FR-SR-70, FR-SR-69, FR-SR-68, FR-SR-67, FR-SR-63, FR-SR-62, FR-SR-61, FR-SR-59, FR-SR-58, FR-SR-57, FR-SR-56, FR-SR-53, FR-SR-36, FR-SR-37, FR-SR-40, FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-45, FR-SR-47, FR-SR-48, FR-SR-51, FR-LN-05, FR-LN-06, FR-LE-07, FR-LE-08, FR-LE-16, FR-RC-18
+  Requirements: FR-SR-75, FR-SR-74, FR-SR-73, FR-SR-72, FR-SR-71, FR-SR-70, FR-SR-69, FR-SR-68, FR-SR-67, FR-SR-63, FR-SR-62, FR-SR-61, FR-SR-59, FR-SR-58, FR-SR-57, FR-SR-56, FR-SR-53, FR-SR-36, FR-SR-37, FR-SR-40, FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-45, FR-SR-47, FR-SR-48, FR-SR-51, FR-LN-05, FR-LN-06, FR-LE-07, FR-LE-08, FR-LE-16, FR-RC-18
   Decisions: DEC-UX-319, DEC-UX-318, DEC-UX-317, DEC-UX-316, DEC-UX-290, DEC-UX-289, DEC-UX-288, DEC-UX-287, DEC-UX-286, DEC-UX-285, DEC-UX-284, DEC-UX-283, DEC-UX-282, DEC-UX-238, DEC-UX-237, DEC-UX-235, DEC-UX-234, DEC-UX-225, DEC-UX-224, DEC-UX-223, DEC-UX-222, DEC-UX-221, DEC-UX-220, DEC-UX-219, DEC-UX-218, DEC-UX-163, DEC-UX-17, DEC-UX-20, DEC-UX-70, DEC-UX-71, DEC-UX-72, DEC-UX-73, DEC-UX-74, DEC-UX-76, DEC-UX-77, DEC-UX-88, DEC-UX-97, DEC-UX-99, DEC-UX-115, DEC-SR-29, DEC-SR-35, DEC-LN-01.
   Not in v1: the label "Claude" on a query in the panel (FR-SR-26, DEC-CH-02); leave it out.
   "Make it a lens" turns the query into a Lens (FR-LE-07, DEC-UX-25). The query stays, used as the Lens: then "Update the lens"
@@ -334,6 +337,8 @@
      </div></div>
     <div class="ln off" data-fold-in="weekly_lead_volume" data-variant="outside"><span class="ln-no">9</span><span class="ln-fold"></span><span class="ln-code">    and lead_source in (select lead_source from <span class="sql-key" data-table="partner_contracts">`immoscoop-dataplatform-398214.dbt_prod_stacks.partner_contracts`</span>)</span></div>
     <div class="ln off" data-fold-in="weekly_lead_volume" data-variant="known"><span class="ln-no">9</span><span class="ln-fold"></span><span class="ln-code">    and lead_id in (select lead_id from <span class="sql-key" data-table="stg_oltp__leads" data-known="staging">`immoscoop-dataplatform-398214.dbt_prod_staging.stg_oltp__leads`</span>)</span></div>
+    <div class="ln off" data-fold-in="weekly_lead_volume" data-variant="bq"><span class="ln-no">9</span><span class="ln-fold"></span><span class="ln-code">    and lead_id in (select lead_id from <span class="sql-key" data-table="intm_leads__touches" data-known="bq">`immoscoop-dataplatform-398214.dbt_prod_intermediate.intm_leads__touches`</span>)</span></div>
+    <div class="ln off" data-fold-in="weekly_lead_volume" data-variant="missing"><span class="ln-no">9</span><span class="ln-fold"></span><span class="ln-code">    and lead_id in (select lead_id from <span class="sql-key" data-table="intm_leads__touchs" data-missing="1">`immoscoop-dataplatform-398214.dbt_prod_intermediate.intm_leads__touchs`</span>)</span></div>
     <div class="ln" data-fold-in="weekly_lead_volume"><span class="ln-no">10</span><span class="ln-fold"></span><span class="ln-code">),</span></div>
     <div class="ln"><span class="ln-no">11</span><span class="ln-fold"></span><span class="ln-code"></span></div>
     <div class="ln"><span class="ln-no">12</span><span class="ln-fold"></span><span class="ln-code"><span class="sql-comment">-- The readable name of every lead source</span></span></div>
@@ -577,14 +582,14 @@
 <section class="float-win rs-win kt-win" id="kt" role="dialog" aria-modal="false" aria-labelledby="kt-title" hidden>
  <div class="float-head" title="Drag to move">
   <i class="ph ph-dots-six-vertical float-grip" aria-hidden="true"></i>
-  <i class="ph ph-cube" style="font-size:17px;color:var(--text-secondary)" aria-hidden="true"></i>
+  <i class="ph ph-cube" id="kt-icon" style="font-size:17px;color:var(--text-secondary)" aria-hidden="true"></i>
   <div style="flex:1;min-width:0"><div class="meta" id="kt-meta">Not a Resource · staging · dbt-prod</div><div class="float-title"><span class="mono" id="kt-title">stg_oltp__leads</span></div></div>
   <button class="icon-btn float-fold" aria-label="Fold" aria-expanded="true"><i class="ph ph-minus"></i></button>
   <button class="icon-btn" data-float-close aria-label="Close"><i class="ph ph-x"></i></button>
  </div>
  <div class="float-body">
-  <p class="meta rs-lead">A table Data Hub knows from a dbt project it follows. It is no Resource: no Owner, Level or Publication.</p>
-  <p class="kt-desc"><span class="origin">From dbt</span><span id="kt-desc">One row per lead as the OLTP database keeps it: renamed, typed and without test leads.</span></p>
+  <p class="meta rs-lead" id="kt-lead">A table Data Hub knows from a dbt project it follows. It is no Resource: no Owner, Level or Publication.</p>
+  <p class="kt-desc" id="kt-desc-p"><span class="origin">From dbt</span><span id="kt-desc">One row per lead as the OLTP database keeps it: renamed, typed and without test leads.</span></p>
   <div class="kt-facts">
    <div class="kt-facts-head"><span class="origin">From BigQuery, now</span></div>
    <dl class="facts" id="kt-facts"></dl>
@@ -592,7 +597,7 @@
   <div class="kt-cols-head"><span class="label">Its columns</span><span class="count" id="kt-count">14</span>
    <label class="search kt-filter"><i class="ph ph-magnifying-glass" style="font-size:13px"></i><input id="kt-q" placeholder="Filter the columns" autocomplete="off"></label></div>
   <div class="ft-cols kt-cols" id="kt-cols"></div>
-  <p class="meta kt-note">Types from BigQuery; descriptions from dbt, or from BigQuery where dbt has none.</p>
+  <p class="meta kt-note" id="kt-note">Types from BigQuery; descriptions from dbt, or from BigQuery where dbt has none.</p>
  </div>
  <div class="float-foot">
   <span class="meta" style="flex:1">Your query stays as it is.</span>
@@ -790,6 +795,8 @@
  <button class="seg on" data-target="ok" role="tab" aria-selected="true">As written</button>
  <button class="seg" data-target="outside" role="tab" aria-selected="false">With a table outside</button>
  <button class="seg" data-target="known" role="tab" aria-selected="false">A table Data Hub knows, as a power user</button>
+ <button class="seg" data-target="bq" role="tab" aria-selected="false">A table only BigQuery knows</button>
+ <button class="seg" data-target="missing" role="tab" aria-selected="false">A table BigQuery does not have</button>
 </div>
 <div class="proto-switch" data-group="find" role="tablist" aria-label="Prototype: Find a table" style="bottom:24px;top:auto;right:700px" hidden>Find
  <button class="seg on" data-target="shut" role="tab" aria-selected="true">Shut</button>
@@ -802,6 +809,7 @@
  <button class="seg" data-target="field" role="tab" aria-selected="false">A field</button>
  <button class="seg" data-target="known" role="tab" aria-selected="false">A table outside</button>
  <button class="seg" data-target="view" role="tab" aria-selected="false">A view outside</button>
+ <button class="seg" data-target="bq" role="tab" aria-selected="false">Only in BigQuery</button>
  <button class="seg" data-target="knownfield" role="tab" aria-selected="false">Its field</button>
 </div>
 <div class="role-switch" data-group="role" role="tablist" aria-label="Prototype: seen as" style="top:auto;bottom:68px;right:500px">Seen as

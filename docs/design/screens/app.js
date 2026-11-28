@@ -1052,22 +1052,28 @@ const syncRun = () => {
   const live = sel => [...editor.querySelectorAll(sel)].filter(el => !el.closest('.ln.off'));
   const scope = new Set([...document.querySelectorAll('#scope-chips [data-res]:not([hidden])')].map(c => c.dataset.res));
   // A table Data Hub knows that is no Resource is no error for a power user (DEC-UX-220)
-  live('.sql-key[data-table]').forEach(t => { const out = !scope.has(t.dataset.table) && !t.dataset.known; t.classList.toggle('outside', out); t.title = out ? 'Not a resource of this query' : t.dataset.known ? 'Double-click for what dbt and BigQuery know of it' : 'Double-click for its Summary'; });
+  // nor, since DEC-SR-50, any other table BigQuery has in the project of Data Hub (data-known="bq"); one it does not have stays an error
+  live('.sql-key[data-table]').forEach(t => { const out = !scope.has(t.dataset.table) && !t.dataset.known && !t.dataset.missing; t.classList.toggle('outside', out || !!t.dataset.missing); t.title = t.dataset.missing ? 'Not a table in BigQuery' : out ? 'Not a resource of this query' : t.dataset.known === 'bq' ? 'Double-click for what BigQuery knows of it' : t.dataset.known ? 'Double-click for what dbt and BigQuery know of it' : 'Double-click for its Summary'; });
+  const missing = [...new Set(live('.sql-key[data-missing]').map(t => t.dataset.table))];
   const known = [...new Set(live('.sql-key[data-known]').map(t => t.dataset.table + '|' + t.dataset.known))].map(k => k.split('|'));
-  const tables = [...new Set(live('.sql-key.outside').map(t => t.dataset.table))];
+  const tables = [...new Set(live('.sql-key.outside:not([data-missing])').map(t => t.dataset.table))];
   const params = [...new Set(live('.sql-param.undefined').map(t => t.dataset.param))];
   editor.querySelectorAll('[data-fold-start]').forEach(st => st.classList.toggle('has-error',
     [...editor.querySelectorAll(`[data-fold-in="${st.dataset.foldStart}"]:not(.off)`)].some(l => l.querySelector('.sql-key.outside, .sql-param.undefined'))));
   const out = document.getElementById('scope-outside');
   if (out) out.innerHTML = tables.map(t => `<span class="scope-chip outside"><i class="ph-fill ph-warning"></i><span class="mono">${t}</span> is not a resource of this query`
     + (t === removedRes ? '' : `<button class="text-link" type="button" data-add-res="${t}">Add it to this query</button>`) + '</span>').join('')
-    + known.map(([t, layer]) => `<span class="scope-chip known" title="${layer} · a table Data Hub knows from a dbt project it follows; no Resource, so no Owner, Level or Publication. Double-click its name in the SQL for what dbt and BigQuery know of it"><i class="ph ph-cube kind-icon" role="img" aria-label="Model"></i><span class="mono">${t}</span></span>`).join('');
+    + known.map(([t, layer]) => layer === 'bq'
+      // A table only BigQuery knows (OP-UX-137, Proposal): the same quiet dashed chip, a database for the cube of a dbt model
+      ? `<span class="scope-chip known" data-known="bq" title="Not in dbt · a table BigQuery has that no dbt project Data Hub follows knows, or not yet; no Resource, so no Owner, Level or Publication. Double-click its name in the SQL for what BigQuery knows of it"><i class="ph ph-database kind-icon" role="img" aria-label="Table in BigQuery"></i><span class="mono">${t}</span></span>`
+      : `<span class="scope-chip known" title="${layer} · a table Data Hub knows from a dbt project it follows; no Resource, so no Owner, Level or Publication. Double-click its name in the SQL for what dbt and BigQuery know of it"><i class="ph ph-cube kind-icon" role="img" aria-label="Model"></i><span class="mono">${t}</span></span>`).join('');
   const knownLine = document.getElementById('q-known');
-  if (knownLine) knownLine.hidden = !known.length;
+  if (knownLine) { knownLine.hidden = !known.length; knownLine.querySelector('.mono').textContent = known.map(([t]) => t).join(', '); }
   // ...and it cannot become a Lens: "Make it a lens" is greyed (DEC-LE-22)
   document.querySelectorAll('a.btn-primary[href="lens-new.html"]').forEach(a => { a.classList.toggle('is-off', known.length > 0); a.setAttribute('aria-disabled', String(known.length > 0)); });
   const notes = [];
   if (tables.length) notes.push(`${tables.map(t => `<span class="mono">${t}</span>`).join(', ')} ${tables.length > 1 ? 'are' : 'is'} not a resource of this query.`);
+  if (missing.length) notes.push(`${missing.map(t => `<span class="mono">immoscoop-dataplatform-398214.dbt_prod_intermediate.${t}</span>`).join(', ')} is not a table in BigQuery: it does not exist, or it is in another project than that of Data Hub.`);
   if (params.length) notes.push(`${params.map(n => `<span class="mono">@${n}</span>`).join(', ')} ${params.length > 1 ? 'are' : 'is'} in the query, but not a parameter.`);
   if (noFilter) notes.push('Weekly lead volume requires a filter on its partition column, <span class="mono">week_start</span>.');
   btn.disabled = notes.length > 0;
@@ -1373,6 +1379,15 @@ if (document.querySelector('.sql-editor')) colourSql(document.querySelector('.sq
         desc: 'Each lead with its latest status, from the changes of its status.',
         facts: [['Kind', 'View · a view in dbt: it stores nothing, a query on it reads the tables beneath it, as the Pre-flight measures'], ['Partitioned by', 'A view has no partitions of its own'], ['Last changed', 'Its definition, on 12 Nov 2026']],
         cols: [['lead_id', 'STRING', null, 'Id of the lead.'], ['status', 'STRING', null, 'The latest status of the lead.'], ['status_changed_at', 'TIMESTAMP', null, 'When it got that status.'], ['days_open', 'INT64', null, '']] },
+      // A table only BigQuery knows (DEC-SR-50, OP-UX-137 Proposal): built, for instance, by a job other than the Source
+      // Job; no layer, project or description from dbt, so its columns carry what BigQuery says of them
+      bq: { name: 'intm_leads__touches', meta: 'Not a Resource · not in dbt', full: 'immoscoop-dataplatform-398214.dbt_prod_intermediate.intm_leads__touches',
+        lead: 'A table BigQuery has that no dbt project Data Hub follows knows, or not yet: a job other than the one Data Hub follows may have built it. It is no Resource: no Owner, Level or Publication.',
+        desc: null, note: 'Types and descriptions from BigQuery: dbt does not know this table, or not yet.',
+        facts: [['Kind', 'Table'], ['Dataset', '<span class="mono">dbt_prod_intermediate</span>'], ['Partitioned by', '<span class="mono">touch_date</span>, per day'], ['Clustered by', '<span class="mono">lead_id</span>'],
+          ['Size', '412 MB · 2.3 million rows · 38 partitions'], ['Last changed', 'Today at 13:04']],
+        cols: [['touch_date', 'DATE', 'Partition', ''], ['lead_id', 'STRING', 'Cluster 1', 'Id of the lead.'], ['touch_id', 'STRING', null, ''], ['channel', 'STRING', null, 'Channel of the touch: web, app, mail or partner.'],
+          ['touched_at', 'TIMESTAMP', null, ''], ['loaded_datetime', 'TIMESTAMP', null, '']] },
     };
     let outside = OUTSIDE.known;
     const ktCols = () => {
@@ -1388,8 +1403,12 @@ if (document.querySelector('.sql-editor')) colourSql(document.querySelector('.sq
     const showKnown = which => {
       outside = OUTSIDE[which];
       document.getElementById('kt-title').textContent = outside.name;
+      document.getElementById('kt-icon').className = `ph ${which === 'bq' ? 'ph-database' : 'ph-cube'}`;
       document.getElementById('kt-meta').textContent = outside.meta;
-      document.getElementById('kt-desc').textContent = outside.desc;
+      document.getElementById('kt-desc').textContent = outside.desc ?? '';
+      document.getElementById('kt-desc-p').hidden = !outside.desc;
+      document.getElementById('kt-lead').textContent = outside.lead ?? 'A table Data Hub knows from a dbt project it follows. It is no Resource: no Owner, Level or Publication.';
+      document.getElementById('kt-note').textContent = outside.note ?? 'Types from BigQuery; descriptions from dbt, or from BigQuery where dbt has none.';
       document.getElementById('kt-facts').innerHTML = outside.facts.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('') + `<dt>Full name</dt><dd><span class="mono">${outside.full}</span></dd>`;
       document.getElementById('kt-q').value = '';
       ktCols();
@@ -1411,7 +1430,7 @@ if (document.querySelector('.sql-editor')) colourSql(document.querySelector('.sq
     };
     box.addEventListener('dblclick', e => {
       const key = e.target.closest('.sql-key[data-table]');
-      if (key) { if (key.dataset.known) showKnown('known'); else if (RESOURCES[key.dataset.table] && !key.classList.contains('outside')) showResource(key.dataset.table); return; }
+      if (key) { if (key.dataset.known) showKnown(key.dataset.known === 'bq' ? 'bq' : 'known'); else if (RESOURCES[key.dataset.table] && !key.classList.contains('outside')) showResource(key.dataset.table); return; }
       if (e.target.closest('.sql-param')) return;
       const field = e.target.closest('.sql-field');
       if (field && FIELDS[field.dataset.field]) { showField(field.dataset.field, field.getBoundingClientRect()); return; }
@@ -1424,7 +1443,7 @@ if (document.querySelector('.sql-editor')) colourSql(document.querySelector('.sq
       if (e.target.closest('.scope-x')) return;
       const chip = e.target.closest('.scope-chip');
       if (!chip) return;
-      if (chip.classList.contains('known')) showKnown('known');
+      if (chip.classList.contains('known')) showKnown(chip.dataset.known === 'bq' ? 'bq' : 'known');
       else if (RESOURCES[chip.dataset.res]) showResource(chip.dataset.res);
     });
     // The pop-out goes with a click elsewhere, Escape or typing; the window stays until it is closed
@@ -1448,6 +1467,7 @@ if (document.querySelector('.sql-editor')) colourSql(document.querySelector('.sq
     const knownSql = () => document.querySelector('[data-group="sqlstate"] [data-target="known"]')?.click();
     dbl('known')?.addEventListener('click', () => { document.getElementById('pm').hidden = true; knownSql(); showKnown('known'); });
     dbl('view')?.addEventListener('click', () => { document.getElementById('pm').hidden = true; knownSql(); showKnown('view'); });
+    dbl('bq')?.addEventListener('click', () => { document.getElementById('pm').hidden = true; document.querySelector('[data-group="sqlstate"] [data-target="bq"]')?.click(); showKnown('bq'); });
     dbl('knownfield')?.addEventListener('click', () => {
       rs.hidden = true; kt.hidden = true; document.getElementById('pm').hidden = true; knownSql();
       const word = box.querySelector('.ln[data-variant="known"] .sql-field[data-field="lead_id"]');
@@ -1614,6 +1634,9 @@ if (scopeBox) {
     document.querySelectorAll('.ln[data-variant]').forEach(l => l.classList.toggle('off', l.dataset.variant !== b.dataset.target));
     syncRun();
   }));
+  // ?sqlstate= and ?dbl= in the address chose a state before this listener was there: apply the one chosen
+  const chosenSql = document.querySelector('[data-group="sqlstate"] .seg.on');
+  if (chosenSql && chosenSql.dataset.target !== 'ok') chosenSql.click();
 
   // One more Resource or one less: in this query, or in a new one (DEC-UX-287)
   const sheet = $('newq-sheet');

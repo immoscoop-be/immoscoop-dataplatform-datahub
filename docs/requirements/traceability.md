@@ -9,14 +9,14 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 360 | 136 (25 open, 111 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 360 | 138 (27 open, 111 done) |
 | [Backlog](../overview/backlog.md) | – | – | – | 7 (5 open, 2 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 20 (1 proposed, 19 implemented) | 6 (1 specified, 5 implemented) | 13 | 12 (3 open, 9 done) |
 | [User management](functional/02-user-management.md) | 21 (14 implemented, 7 withdrawn) | 5 (1 implemented, 4 withdrawn) | 12 | 8 (1 open, 7 done) |
 | [Collections](functional/03-collections.md) | 45 (1 proposed, 40 implemented, 4 withdrawn) | 2 (2 specified) | 27 | 18 (1 open, 17 done) |
-| [Resources](functional/04-stacks-and-resources.md) | 74 (5 specified, 61 implemented, 8 withdrawn) | 5 (1 specified, 1 implemented, 3 withdrawn) | 49 | 25 (4 open, 21 done) |
+| [Resources](functional/04-stacks-and-resources.md) | 75 (6 specified, 61 implemented, 8 withdrawn) | 5 (1 specified, 1 implemented, 3 withdrawn) | 50 | 25 (4 open, 21 done) |
 | [Resource card](functional/05-resource-card.md) | 35 (4 proposed, 2 specified, 27 implemented, 2 withdrawn) | 1 (1 implemented) | 35 | 31 (3 open, 28 done) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 22 (3 specified, 13 implemented, 6 withdrawn) | – | 22 | 9 (2 open, 7 done) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 7 (3 proposed, 4 implemented) | 1 (1 implemented) | 8 | 8 (8 done) |
@@ -205,6 +205,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-SR-72](functional/04-stacks-and-resources.md#fr-sr-72) | The active Project follows what is open, its details first in its row | Implemented | – | [query](../design/screens/query.html), [query-project](../design/screens/query-project.html), [query-new](../design/screens/query-new.html) | [TR-SR-33](technical/04-stacks-and-resources.md#tr-sr-33) | [89362e9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/89362e99787e445f6cb56c58075547ee56c6b832) implements, 2026-11-20<br>[6dcc716](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/6dcc716e6ec1a0b5f326d41f5db03ab271b5dfdd) refs, 2026-11-20 |
 | [FR-SR-73](functional/04-stacks-and-resources.md#fr-sr-73) | Every query has a Project button | Implemented | – | [query](../design/screens/query.html) | [TR-SR-33](technical/04-stacks-and-resources.md#tr-sr-33) | [89362e9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/89362e99787e445f6cb56c58075547ee56c6b832) implements, 2026-11-20<br>[6dcc716](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/6dcc716e6ec1a0b5f326d41f5db03ab271b5dfdd) refs, 2026-11-20 |
 | [FR-SR-74](functional/04-stacks-and-resources.md#fr-sr-74) | A User archives a Project out of their panel | Implemented | – | [query-projects](../design/screens/query-projects.html), [query-project](../design/screens/query-project.html), [query](../design/screens/query.html) | [TR-SR-38](technical/04-stacks-and-resources.md#tr-sr-38) | [1293272](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1293272370fcb925ee6dafc15cff6f3999312cb4) refs, 2026-11-26<br>[ef0f61c](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/ef0f61c5862568e1c7ed80117c8d26a4bd0282d3) implements, 2026-11-26 |
+| [FR-SR-75](functional/04-stacks-and-resources.md#fr-sr-75) | A power user's query reads any table BigQuery has in the project | Specified | – | [query](../design/screens/query.html) | – | – |
 | [FR-SR-35](functional/04-stacks-and-resources.md#fr-sr-35) | A new Resource waits for a Collection | Implemented | – | [collection-add-resources](../design/screens/collection-add-resources.html), [resource-unassigned](../design/screens/resource-unassigned.html) | [TR-SR-05](technical/04-stacks-and-resources.md#tr-sr-05) | – |
 | [FR-SR-36](functional/04-stacks-and-resources.md#fr-sr-36) | A Pre-flight before every query | Implemented | – | [lens](../design/screens/lens.html), [query](../design/screens/query.html), [resource-preview](../design/screens/resource-preview.html) | [TR-SR-16](technical/04-stacks-and-resources.md#tr-sr-16) | – |
 | [FR-SR-37](functional/04-stacks-and-resources.md#fr-sr-37) | Approval above one threshold, a block above another | Implemented | – | [lens](../design/screens/lens.html), [query](../design/screens/query.html) | [TR-SR-16](technical/04-stacks-and-resources.md#tr-sr-16), [TR-SR-18](technical/04-stacks-and-resources.md#tr-sr-18) | – |
