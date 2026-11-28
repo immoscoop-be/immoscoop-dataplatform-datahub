@@ -1060,7 +1060,7 @@
   });
   /** The tables outside Data Hub the query reads: a double-click explains them, the editor never suggests them (FR-SR-62). */
   const outsideTables: TableSuggestion[] = $derived(known.map((table) => ({ id: table.key, name: table.name, fullName: table.fullName, outside: true })));
-  /** Their columns from dbt, which a double-click explains as it does a field of a Resource, without a Business Description. */
+  /** Their columns from dbt, or from BigQuery for a table only it knows (DEC-UX-368), which a double-click explains as it does a field of a Resource, without a Business Description. */
   const outsideFields: Suggestion[] = $derived(
     known.flatMap((table) =>
       (table.columns ?? []).map((column) => ({
@@ -1071,6 +1071,7 @@
         description: column.description,
         businessDescription: '',
         outside: true,
+        ...(table.layer === null ? { from: 'bigquery' as const } : {}),
       })),
     ),
   );
@@ -1252,7 +1253,7 @@
         {#if known.length > 0}
           {t('query.why.known', { count: known.length })}
           <span class="why-list">
-            {#each known as table (table.key)}<span class="why-item"><Icon name="cube" /><span class="mono">{table.name}</span><span class="meta">{table.layer}</span></span>{/each}
+            {#each known as table (table.key)}<span class="why-item"><Icon name={table.layer === null ? 'database' : 'cube'} /><span class="mono">{table.name}</span><span class="meta">{table.layer ?? t('query.known.notInDbt')}</span></span>{/each}
           </span>
           {t('query.why.known.then')}
         {:else if unpublished.length > 0}
@@ -1308,7 +1309,13 @@
           <!-- A table outside Data Hub: quiet, dashed, without Level, Owner or Publication (DEC-UX-220). -->
           <!-- Only its name; its layer and that it is no Resource on a hover (DEC-UX-243). -->
           <!-- A click opens its window, as a double-click on its name does (DEC-UX-259). -->
-          <button type="button" class="chip known" title={t('query.known.title', { layer: table.layer })} onclick={() => openTable({ id: table.key, name: table.name, fullName: table.fullName, outside: true })}><Icon name="cube" /><span class="mono">{table.name}</span></button>
+          <!-- A table only BigQuery knows: the same chip, a database for the cube of a dbt model (DEC-UX-368). -->
+          <button
+            type="button"
+            class="chip known"
+            title={table.layer === null ? t('query.known.bigquery') : t('query.known.title', { layer: table.layer })}
+            onclick={() => openTable({ id: table.key, name: table.name, fullName: table.fullName, outside: true })}><Icon name={table.layer === null ? 'database' : 'cube'} /><span class="mono">{table.name}</span></button
+          >
         {/each}
         {#each outside as table (table.name)}
           <span class="chip outside">
@@ -1470,6 +1477,23 @@
             {/snippet}
           </RunButton>
         {:else}
+          <!-- What the run reads, on rest over Run: given only once the Pre-flight knows it; else the pop-out showed empty (DEC-UX-280). -->
+          {#snippet explainRun()}
+            {#if current && current.bytes !== null}
+              {@const words = { bytes: bytes(current.bytes), approve: bytes(current.thresholds.approve), request: bytes(current.thresholds.request) }}
+              {@const own = current.thresholds.above === 'approve'}
+              {#if own && current.range === 'approve' && current.bytes > current.thresholds.request}
+                <!-- Without a limit, with a warning: above the second threshold the User approves it themselves (DEC-PL-12) -->
+                <b>{t('query.explain.large', words)}</b>
+              {:else}
+                <b>{current.range === 'request' ? t('query.explain.accepted', words) : current.range === 'approve' ? t(own ? 'query.explain.approve.own' : 'query.explain.approve', words) : t(own ? 'query.explain.free.own' : 'query.explain.free', words)}</b>
+              {/if}
+              {t('query.explain.atMost')}
+              {#if partitioned.length > 0}
+                {t('query.explain.less', { columns: partitioned.map((resource) => resource.partition?.field).join(', ') })}
+              {/if}
+            {/if}
+          {/snippet}
           <RunButton
             bytes={current?.bytes ?? null}
             approve={current?.range === 'approve' || current?.range === 'request'}
@@ -1477,24 +1501,8 @@
             busy={running}
             title={empty ? t('query.empty.run') : broken !== null ? t('query.broken.run') : current && !current.runnable ? t('query.cannotRun') : undefined}
             onclick={start}
-          >
-            {#snippet explain()}
-              {#if current?.bytes !== null && current?.bytes !== undefined}
-                {@const words = { bytes: bytes(current.bytes), approve: bytes(current.thresholds.approve), request: bytes(current.thresholds.request) }}
-                {@const own = current.thresholds.above === 'approve'}
-                {#if own && current.range === 'approve' && current.bytes > current.thresholds.request}
-                  <!-- Without a limit, with a warning: above the second threshold the User approves it themselves (DEC-PL-12) -->
-                  <b>{t('query.explain.large', words)}</b>
-                {:else}
-                  <b>{current.range === 'request' ? t('query.explain.accepted', words) : current.range === 'approve' ? t(own ? 'query.explain.approve.own' : 'query.explain.approve', words) : t(own ? 'query.explain.free.own' : 'query.explain.free', words)}</b>
-                {/if}
-                {t('query.explain.atMost')}
-                {#if partitioned.length > 0}
-                  {t('query.explain.less', { columns: partitioned.map((resource) => resource.partition?.field).join(', ') })}
-                {/if}
-              {/if}
-            {/snippet}
-          </RunButton>
+            explain={current && current.bytes !== null ? explainRun : undefined}
+          />
         {/if}
       </div>
     {/if}
@@ -1598,7 +1606,7 @@
   {/if}
   {#if outsideWindow}
     {#key outsideWindow.id}
-      <OutsideTableWindow table={outsideWindow} load={(key) => client.outsideTable(key)} onclose={() => (outsideWindow = null)} />
+      <OutsideTableWindow table={outsideWindow} load={(key, fullName) => client.outsideTable(key, fullName)} onclose={() => (outsideWindow = null)} />
     {/key}
   {/if}
   {#if fieldExplained}

@@ -7,6 +7,13 @@
  */
 
 /** The languages of the sentences of Data Hub: Dutch by default, English available (DEC-DH-65). */
+/**
+ * The marks a User puts on a Message for themselves (FR-CV-19, DEC-UX-363), in their order in the dropdown and the panel:
+ * Follow up, Important and Starred. More can come as rows of the dropdown (DEC-UX-361).
+ */
+export const MESSAGE_MARKS = ['followUp', 'important', 'starred'] as const;
+export type MessageMark = (typeof MESSAGE_MARKS)[number];
+
 export type Language = 'nl' | 'en';
 
 export const LANGUAGES: readonly Language[] = ['nl', 'en'];

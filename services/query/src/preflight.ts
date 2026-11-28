@@ -2,6 +2,7 @@ import { type BigQuery, BigQueryRefused } from './bigquery.js';
 import type { QueryResource } from './catalogue.js';
 import type { NamedResource, ResultColumn } from './database.js';
 import { bind, kindFor, type Parameter, type ParameterKind } from './parameters.js';
+import { bigQueryTable } from './outside.js';
 import type { KnownTable } from './registry.js';
 import { comparedWith, filtersOn, inOwnCase, names, recent, tablesOf, withFilter } from './sql.js';
 
@@ -27,7 +28,7 @@ export type Problem =
   | { kind: 'notVisible'; resource: Pick<NamedResource, 'id' | 'displayName'> }
   /** A table that is not one of its Resources, where it stands in the SQL if it is named there (DEC-UX-73). */
   | { kind: 'outside'; name: string; start: number | null; end: number | null }
-  /** In a power user's query: a table Data Hub does not know from a dbt project it follows (FR-SR-56). */
+  /** In a power user's query: a table BigQuery does not have in the project of Data Hub, or one of another project (DEC-SR-50). */
   | { kind: 'unknown'; name: string; start: number | null; end: number | null }
   /** An @name that is not a Parameter, where it stands, with the kind suggested from the column it is compared with (DEC-UX-71). */
   | { kind: 'undefinedParameter'; name: string; start: number; end: number; suggestedKind: ParameterKind | null }
@@ -63,7 +64,7 @@ export interface Preflight {
   thresholds: Required<Thresholds>;
   /** The Parameters that are not in the SQL: they are not sent (DEC-UX-71). */
   unused: string[];
-  /** The tables outside Data Hub it reads, for a power user: known from a dbt project Data Hub follows, no Resource (FR-SR-56). */
+  /** The tables outside Data Hub it reads, for a power user: known from a dbt project Data Hub follows, no Resource (FR-SR-56), or only by BigQuery (DEC-SR-50). */
   tables: OutsideTable[];
   /** The columns of its result, as the dry run says them; none when it did not get that far (FR-LE-19). */
   columns: ResultColumn[];
@@ -75,6 +76,12 @@ export type OutsideTable = Pick<KnownTable, 'key' | 'fullName' | 'name' | 'layer
   columns: { name: string; dataType: string | null; description: string }[];
   partition: KnownTable['partition'];
 };
+
+/** A table as written in SQL, in its own case and without quotes: `project.dataset.table`, the project of Data Hub when it names none. */
+export function fullNameOf(written: string, project: string): string {
+  const name = written.replace(/`/g, '');
+  return name.split('.').length === 2 ? `${project}.${name}` : name;
+}
 
 /** A table as written in SQL, as a Key: `project.dataset.table` in lowercase, the project of Data Hub when it names none. */
 export function keyOf(written: string, project: string): string {
@@ -216,14 +223,36 @@ export async function preflight(
     else problems.push({ kind: 'outside', name: table.name, start: bound.original(table.start, 'start'), end: bound.original(table.end, 'end') });
   }
   // A power user may also read a table Data Hub knows that is no Resource (FR-SR-56). One that is a Resource stays
-  // one, to start a new query with; one Data Hub does not know stays an error (DEC-SR-46).
+  // one, to start a new query with (DEC-SR-46). One registry does not know, BigQuery decides on: any table it has in the
+  // project of Data Hub is read too, such as a model a job other than the Source Job built; another stays an error (DEC-SR-50).
   if (known && others.length > 0) {
     const byKey = new Map((await known([...new Set(others.map((table) => keyOf(table.name, project)))])).map((table) => [table.key, table]));
+    const inBigQuery = new Map<string, Promise<KnownTable | null>>();
+    const onlyInBigQuery = (written: string): Promise<KnownTable | null> => {
+      const fullName = fullNameOf(written, project);
+      const key = fullName.toLowerCase();
+      if (key.split('.')[0] !== project.toLowerCase()) return Promise.resolve(null);
+      // Its metadata only, which BigQuery does not bill; a table it cannot find is no table.
+      const found = inBigQuery.get(key) ?? bigquery.describe(fullName).then(
+        (live) => bigQueryTable(fullName, live),
+        (error: unknown) => {
+          if (error instanceof BigQueryRefused) return null;
+          throw error;
+        },
+      );
+      inBigQuery.set(key, found);
+      return found;
+    };
     for (const table of others) {
       const found = byKey.get(keyOf(table.name, project));
       const where = { name: table.name, start: bound.original(table.start, 'start'), end: bound.original(table.end, 'end') };
       if (found && !found.resource) outside.set(found.key, found);
-      else problems.push({ kind: found ? 'outside' : 'unknown', ...where });
+      else if (found) problems.push({ kind: 'outside', ...where });
+      else {
+        const bigQueryOnly = await onlyInBigQuery(table.name);
+        if (bigQueryOnly) outside.set(bigQueryOnly.key, bigQueryOnly);
+        else problems.push({ kind: 'unknown', ...where });
+      }
     }
   }
   if (problems.length > 0) return done({ problems });

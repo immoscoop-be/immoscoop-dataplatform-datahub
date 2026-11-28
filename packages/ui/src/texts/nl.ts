@@ -20,6 +20,7 @@ export default {
   'maturity.was': '{name} (was {previous})',
   'maturity.ladder': 'Maturiteitsladder: Level {level} van 5',
   'origin.dbt': 'Uit dbt',
+  'origin.bigquery': 'Uit BigQuery',
   'origin.owner': 'Van de Owner',
   'origin.dataTeam': 'Van het Data Team',
   'description.business': 'Business Description',

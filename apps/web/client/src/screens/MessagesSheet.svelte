@@ -197,6 +197,15 @@
               return false;
             }
           }}
+          onmark={async (mark, on) => {
+            // A mark of the User alone (FR-CV-19): set or taken off at once, the slide-in read again.
+            try {
+              await client.mark(message.id, mark, on);
+              onchanged();
+            } catch (error) {
+              console.error('The mark could not be saved', error);
+            }
+          }}
         />
         {#if decides && message.kind === 'request' && message.state === 'waiting'}
           <RequestDecision

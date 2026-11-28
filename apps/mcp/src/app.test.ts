@@ -281,6 +281,28 @@ describe('Resources through Claude', () => {
     expect(sent.content[0]?.text).toContain('Sent to the Data Team');
   });
 
+  it('reads the Messages of a mark of the User, and sets or takes off a mark only as they ask (FR-CL-40, DEC-UX-367)', async () => {
+    const token = await issuer.sign();
+    const question = { id: 'm1', type: 'MSG-CNV-01', kind: 'question', subject: { kind: 'resource', id: RESOURCE_ID }, writer: { name: 'Jan' }, params: { text: 'Per province?', writer: 'Jan' }, state: 'open', createdAt: '2026-11-28T10:00:00Z', marks: ['followUp'] };
+    answers[`GET ${CATALOGUE}/messages`] = () => [200, { messages: [question], counts: {} }];
+    answers[`PUT ${CATALOGUE}/messages/m1/marks/starred`] = () => [200, { marks: ['followUp', 'starred'] }];
+    answers[`DELETE ${CATALOGUE}/messages/m1/marks/followUp`] = () => [200, { marks: ['starred'] }];
+    // What the User still has to follow up: every Message that holds the mark, read or not, with their marks on it.
+    const read = await tool('get_messages', { mark: 'followUp' }, token);
+    expect(asked.at(-1)?.url).toBe(`${CATALOGUE}/messages?view=everything&mark=followUp`);
+    expect(read.structuredContent).toMatchObject({ messages: [{ id: 'm1', marks: ['followUp'], text: 'Per province?' }], page: `${WEB}/messages` });
+    expect((await tool('get_messages', { mark: 'someday' }, token)).isError).toBe(true);
+
+    // A mark is theirs alone: set or taken off at once, as they ask, with nothing to show first.
+    const marked = await tool('mark_message', { message: 'm1', mark: 'starred', on: true }, token);
+    expect(asked.at(-1)).toMatchObject({ method: 'PUT', url: `${CATALOGUE}/messages/m1/marks/starred` });
+    expect(marked.structuredContent).toMatchObject({ marks: ['followUp', 'starred'] });
+    expect(marked.content[0]?.text).toContain('Marked, for the User alone.');
+    const taken = await tool('mark_message', { message: 'm1', mark: 'followUp', on: false }, token);
+    expect(asked.at(-1)).toMatchObject({ method: 'DELETE', url: `${CATALOGUE}/messages/m1/marks/followUp` });
+    expect(taken.structuredContent).toMatchObject({ marks: ['starred'] });
+  });
+
   it('reads a Resource with its Level, its size and whether the User may publish it (FR-CL-05, FR-CL-07)', async () => {
     answers[`GET ${CATALOGUE}/resources/${RESOURCE_ID}`] = () => [200, detail()];
     answers[`GET ${CATALOGUE}/collections/c-1`] = () => [200, collection];
@@ -862,7 +884,8 @@ describe('Projects through Claude (FR-SR-63 to FR-SR-68, DEC-SR-49)', () => {
 });
 
 describe('the Permissions of the User in Claude (TR-PL-09)', () => {
-  const READS = ['explain', 'get_lens', 'get_messages', 'get_related_resources', 'get_resource', 'get_resource_lineage', 'get_resource_log', 'guide_owner_journey', 'how_to_use', 'list_resources', 'search', 'show_learning_card', 'show_resource', 'suggest_lenses', 'who_am_i'];
+  // What every User has; mark_message among them, as a mark of the User changes nothing for anyone else (DEC-UX-367).
+  const READS = ['explain', 'get_lens', 'get_messages', 'get_related_resources', 'get_resource', 'get_resource_lineage', 'get_resource_log', 'guide_owner_journey', 'how_to_use', 'list_resources', 'mark_message', 'search', 'show_learning_card', 'show_resource', 'suggest_lenses', 'who_am_i'];
   // Every User who sees a Lens may run it, through Claude too (FR-CL-36).
   const LENS_RUNS = ['run_lens', 'run_lens_approved'];
   const QUERY_TOOLS = ['check_query', 'create_query', 'get_query', 'get_result_page', 'list_queries', 'run_query', 'run_query_approved', 'send_query_request', 'show_query', 'update_query'];
@@ -947,10 +970,14 @@ describe('the Permissions of the User in Claude (TR-PL-09)', () => {
     expect(refused.content[0]?.text).toContain('does not allow it (queries.make)');
   });
 
-  it('lets a power user make a query on SQL alone and says what it reads outside Data Hub, as the web app does (FR-SR-56)', async () => {
+  it('lets a power user make a query on SQL alone and says what it reads outside Data Hub, as the web app does (FR-SR-56, DEC-SR-50)', async () => {
     let made: unknown;
     answers[`POST ${QUERY}/queries`] = (body) => ((made = body), [201, { query: { id: QUERY_ID, name: 'Raw leads', resources: [] } }]);
-    const tables = [{ key: 'immoscoop-dataplatform.dbt_prod_staging.stg_oltp__leads', fullName: 'immoscoop-dataplatform.dbt_prod_staging.stg_oltp__leads', name: 'stg_oltp__leads', layer: 'staging' }];
+    const tables = [
+      { key: 'immoscoop-dataplatform.dbt_prod_staging.stg_oltp__leads', fullName: 'immoscoop-dataplatform.dbt_prod_staging.stg_oltp__leads', name: 'stg_oltp__leads', layer: 'staging' },
+      // A table only BigQuery knows, built by a job other than the Source Job: no layer (DEC-SR-50).
+      { key: 'immoscoop-dataplatform.colleciones_dbt.intm_touch__touchdate', fullName: 'immoscoop-dataplatform.colleciones_dbt.intm_touch__touchDate', name: 'intm_touch__touchDate', layer: null },
+    ];
     answers[`POST ${QUERY}/queries/${QUERY_ID}/preflight`] = () => [200, { preflight: { runnable: true, bytes: 1_000_000, range: 'free', partitions: null, problems: [], warnings: [], tables }, broken: null }];
     // Without the Permission, a query needs a Resource.
     expect((await tool('create_query', { name: 'Raw leads', resources: [] }, await issuer.sign())).isError).toBe(true);
@@ -960,9 +987,13 @@ describe('the Permissions of the User in Claude (TR-PL-09)', () => {
     expect((await tool('create_query', { name: 'Raw leads', resources: [] }, admin)).isError).toBeFalsy();
     expect(made).toMatchObject({ name: 'Raw leads', resources: [] });
     const checked = await tool('check_query', { id: QUERY_ID, sql: 'select lead_id from `dbt_prod_staging.stg_oltp__leads`' }, admin);
-    expect(checked.content[0]?.text).toContain('It reads stg_oltp__leads (staging) outside Data Hub: no Resource, so no Level, Owner or Publication, and this query cannot become a Lens.');
+    expect(checked.content[0]?.text).toContain(
+      'It reads stg_oltp__leads (staging), intm_touch__touchDate (not in dbt, or not yet: only BigQuery knows it) outside Data Hub: no Resource, so no Level, Owner or Publication, and this query cannot become a Lens.',
+    );
     const me = (await tool('who_am_i', {}, admin)).structuredContent as { mayDo: string[] };
-    expect(me.mayDo).toContain('Query tables outside Data Hub: every table Data Hub knows from the dbt projects it follows, also without Resources; such a query never becomes a Lens');
+    expect(me.mayDo).toContain(
+      'Query tables outside Data Hub: every table Data Hub knows from the dbt projects it follows, and any other table BigQuery has in the project of Data Hub, also without Resources; such a query never becomes a Lens',
+    );
   });
 });
 

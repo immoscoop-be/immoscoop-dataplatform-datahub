@@ -75,6 +75,7 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="log-catalogue"></a>**Log Catalogue** | The fixed list of all Log IDs. | [Log catalogue](requirements/functional/log-catalogue.md) |
 | <a id="log-entry"></a>**Log Entry** | One line in a Log: a Log ID, the Resource, the parameters as JSON, the actor and the time. Never free text. | [FR-SR-11](requirements/functional/04-stacks-and-resources.md#fr-sr-11) |
 | <a id="log-id"></a>**Log ID** | The fixed code of a kind of Log Entry, with a template and a list of parameters, for example `RES-001`. | [Resources](requirements/functional/04-stacks-and-resources.md#terms) |
+| <a id="mark"></a>**Mark** | What a User puts on a Message for themselves, to follow it up or to find it again, such as Follow up, Important or Starred. Only they see it, and it changes nothing of the Message. | [DEC-UX-360](design/principles.md#dec-ux-360) |
 | <a id="message"></a>**Message** | What a User writes on an object in Data Hub, such as a Resource, a Lens or a query, to enrich its data and inform colleagues: a Question, Remark, Signal or Request on it, or a reply; or what Data Hub writes itself about an object, such as a changed description in dbt. It is never private and not a chat with a person, and it always carries its Subject. | [DEC-CV-01](requirements/functional/14-conversations.md#dec-cv-01), [DEC-LR-11](requirements/functional/16-learning.md#dec-lr-11) |
 | <a id="message-catalogue"></a>**Message Catalogue** | The list of every type of Message, part of the source code: who sends it to whom and when, its texts, plain and laid out, in Dutch and English, the Learning Card that explains it and what it asks of whoever receives it. Its page in docs is generated from it. | [DEC-CV-07](requirements/functional/14-conversations.md#dec-cv-07), [Message catalogue](requirements/functional/message-catalogue.md) |
 | <a id="message-id"></a>**Message ID** | The fixed code of a type of Message in the Message Catalogue, such as `MSG-RES-02`. Not a requirement ID or a Log ID. | [FR-CV-10](requirements/functional/14-conversations.md#fr-cv-10) |
@@ -218,6 +219,7 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | leeszaal | reading room |
 | lens, lenzen | Lens, Lenses |
 | lezerskaart | Excel key, formerly Library Card |
+| markering | Mark |
 | master-leerplan | master learning plan |
 | maturiteitsicoon | maturity icon |
 | melding | notification |

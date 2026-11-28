@@ -438,6 +438,17 @@ function preflightOf(sql: string, parameters: { name: string }[] = []) {
   if (sql.includes('-- every year')) return { ...base, runnable: true, bytes: 4_800_000_000, range: 'request' };
   // For a Data Admin, who approves any run themselves (DEC-PL-12).
   if (sql.includes('-- five years')) return { ...base, runnable: true, bytes: 4_800_000_000, range: 'approve', thresholds: { ...base.thresholds, above: 'approve' } };
+  // A table only BigQuery knows, by its name in its own case (DEC-SR-50); and one BigQuery does not have.
+  if (sql.includes('intm_touch__touchDate')) {
+    const fullName = 'immoscoop-dataplatform-398214.colleciones_dbt.intm_touch__touchDate';
+    const columns = [{ name: 'touch_date', dataType: 'DATE', description: '' }, { name: 'lead_id', dataType: 'STRING', description: 'Id of the lead, in BigQuery.' }];
+    return { ...base, runnable: true, bytes: 40_000_000, range: 'free', tables: [{ key: fullName.toLowerCase(), fullName, name: 'intm_touch__touchDate', layer: null, columns, partition: { field: 'touch_date', unit: 'day' } }] };
+  }
+  if (sql.includes('nowhere.nothing')) {
+    const name = 'immoscoop-dataplatform-398214.nowhere.nothing';
+    const start = sql.indexOf(name) - 1;
+    return { ...base, runnable: false, bytes: null, range: null, partitions: null, problems: [{ kind: 'unknown', name, start, end: start + name.length + 2 }] };
+  }
   // A power user's query reads a table Data Hub knows that is no Resource (FR-SR-56).
   if (sql.includes('stg_oltp__leads')) {
     const key = 'immoscoop-dataplatform-398214.dbt_prod_staging.stg_oltp__leads';
@@ -1115,6 +1126,23 @@ function serve({
       const ctes = names.map((name) => `${name} as (\n    select\n        *\n    from\n        \`p.d.${name}\`\n)`);
       return json({ sql: `with\n\n${ctes.join(',\n\n')}\n\n${asked.sql}`, ctes });
     }
+    // What BigQuery knows of a table only it knows, asked by its full name in its own case (DEC-UX-368).
+    if (path.startsWith('/outside-table?key=') && path.includes('intm_touch__touchdate')) {
+      const fullName = 'immoscoop-dataplatform-398214.colleciones_dbt.intm_touch__touchDate';
+      return json({
+        table: {
+          key: fullName.toLowerCase(), fullName, name: 'intm_touch__touchDate', layer: null, resourceType: null, projectName: null, materialized: null,
+          description: '',
+          bigquery: { type: 'TABLE', bytes: 412_000_000, rows: 2_300_000, partitions: 38, modifiedAt: '2026-11-28T13:04:34.000Z' },
+          partition: { field: 'touch_date', unit: 'day', required: false },
+          clusterBy: ['lead_id'],
+          columns: [
+            { name: 'touch_date', type: 'DATE', description: '', from: null, partition: true, cluster: null },
+            { name: 'lead_id', type: 'STRING', description: 'Id of the lead, in BigQuery.', from: 'bigquery', partition: false, cluster: 1 },
+          ],
+        },
+      });
+    }
     // What dbt and BigQuery know of a table outside Data Hub (FR-SR-62).
     if (path.startsWith('/outside-table?key=')) {
       const key = 'immoscoop-dataplatform-398214.dbt_prod_staging.stg_oltp__leads';
@@ -1413,8 +1441,13 @@ function serve({
         const subject = message.subject as { kind: string };
         on[subject.kind] = (on[subject.kind] ?? 0) + 1;
       }
-      const listed = new URLSearchParams(path.split('?')[1]).get('view') === 'unread' ? talk.filter((message) => message.unread) : talk;
-      return json({ messages: listed, counts: { forYou: talk.length, unread: talk.filter((message) => message.unread).length, written: 0, kinds, on } });
+      const asked = new URLSearchParams(path.split('?')[1]);
+      // The marks of the User (FR-CV-19): how many hold each, whatever is chosen, and the list of one.
+      const marksOf = (message: Record<string, unknown>) => (message.marks as string[] | undefined) ?? [];
+      const marks = Object.fromEntries(['followUp', 'important', 'starred'].map((mark) => [mark, talk.filter((message) => marksOf(message).includes(mark)).length]));
+      const mark = asked.get('mark');
+      const listed = mark ? talk.filter((message) => marksOf(message).includes(mark)) : asked.get('view') === 'unread' ? talk.filter((message) => message.unread) : talk;
+      return json({ messages: listed, counts: { forYou: talk.length, unread: talk.filter((message) => message.unread).length, written: 0, kinds, on, marks } });
     }
     const onObject = /^\/messages\/on\/(\w+)\/([^/]+)$/.exec(path);
     if (onObject) {
@@ -1452,6 +1485,13 @@ function serve({
     }
     if (message && path === `/messages/${message.id as string}`) {
       return json({ message });
+    }
+    const marking = message ? new RegExp(`^/messages/${message.id as string}/marks/(\\w+)$`).exec(path) : null;
+    if (message && marking && (method === 'PUT' || method === 'DELETE')) {
+      const mark = marking[1] as string;
+      const kept = ((message.marks as string[] | undefined) ?? []).filter((one) => one !== mark);
+      message.marks = ['followUp', 'important', 'starred'].filter((one) => (method === 'PUT' ? [...kept, mark] : kept).includes(one));
+      return json({ marks: message.marks });
     }
     if (message && path === `/messages/${message.id as string}/read`) {
       message.unread = false;
@@ -4968,7 +5008,7 @@ describe('Query', () => {
     await fireEvent.keyDown(screen.getByRole('combobox', { name: 'Snelvenster' }), { key: 'Enter' });
     const window = within(await screen.findByRole('dialog', { name: 'stg_oltp__leads' }));
     await window.findByText('One row per lead as the OLTP database keeps it.');
-    expect(calls).toContainEqual({ method: 'GET', path: '/outside-table?key=immoscoop-dataplatform-398214.dbt_prod_staging.stg_oltp__leads' });
+    expect(calls).toContainEqual({ method: 'GET', path: '/outside-table?key=immoscoop-dataplatform-398214.dbt_prod_staging.stg_oltp__leads&name=immoscoop-dataplatform-398214.dbt_prod_staging.stg_oltp__leads' });
     const facts = (window.getByText('Uit BigQuery, nu').closest('div') as HTMLElement).textContent?.replace(/\s+/g, ' ') ?? '';
     expect(facts).toContain('Tabel · incremental in dbt');
     expect(facts).toContain('created_date, per dag · BigQuery vraagt er een filter op');
@@ -4986,6 +5026,47 @@ describe('Query', () => {
     await vi.waitFor(() => expect(screen.queryByRole('dialog', { name: 'stg_oltp__leads' })).toBeNull());
     await fireEvent.click(main.getByRole('button', { name: 'stg_oltp__leads' }));
     expect(await screen.findByRole('dialog', { name: 'stg_oltp__leads' })).toBeTruthy();
+  });
+
+  it('reads a table only BigQuery knows: a database on its chip, only what BigQuery knows in its window, and a table BigQuery does not have as an error (FR-SR-75, DEC-UX-368)', async () => {
+    const table = '`immoscoop-dataplatform-398214.colleciones_dbt.intm_touch__touchDate`';
+    const calls = serve({ as: 'admin', queries: [{ ...QUERY, resources: [], sql: `select * from ${table}\nwhere touch_date = '2026-11-28'` }] });
+    open('/query/q1');
+    const { unmount } = render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    // The same quiet chip, only its name; that dbt does not know it, or not yet, on a hover.
+    const chip = (await main.findByText('intm_touch__touchDate', { selector: '.chip .mono' }, { timeout: 3000 })).closest('.chip') as HTMLElement;
+    expect(chip.textContent?.trim()).toBe('intm_touch__touchDate');
+    expect(chip.title).toMatch(/^Niet in dbt · een tabel die BigQuery heeft, maar die geen dbt-project dat Data Hub volgt kent, of nog niet/);
+    expect(await main.findByRole('button', { name: /Uitvoeren\s*40 MB/ })).toBeTruthy();
+    const line = main.getByText(/Leest een tabel buiten Data Hub:/).closest('p') as HTMLElement;
+    expect(line.textContent).toContain('intm_touch__touchDate');
+
+    // Its window: nothing from dbt, its dataset, its columns from BigQuery, asked by its full name in its own case.
+    await fireEvent.click(chip);
+    const window = within(await screen.findByRole('dialog', { name: 'intm_touch__touchDate' }));
+    await window.findByText('Types en beschrijvingen uit BigQuery: dbt kent deze tabel niet, of nog niet.');
+    expect(calls).toContainEqual({ method: 'GET', path: `/outside-table?key=${encodeURIComponent('immoscoop-dataplatform-398214.colleciones_dbt.intm_touch__touchdate')}&name=${encodeURIComponent('immoscoop-dataplatform-398214.colleciones_dbt.intm_touch__touchDate')}` });
+    expect(window.getByText(/Geen Resource · niet in dbt/)).toBeTruthy();
+    expect(window.getByText(/Een tabel die BigQuery heeft, maar die geen dbt-project dat Data Hub volgt kent, of nog niet/)).toBeTruthy();
+    expect(window.queryByText('dbt heeft er geen beschrijving van.')).toBeNull();
+    const facts = (window.getByText('Uit BigQuery, nu').closest('div') as HTMLElement).textContent?.replace(/\s+/g, ' ') ?? '';
+    expect(facts).toContain('Datasetcolleciones_dbt');
+    // A description from BigQuery carries no tag here: all of it comes from BigQuery.
+    expect(window.getByText('Id of the lead, in BigQuery.').closest('.text')?.textContent).toBe('Id of the lead, in BigQuery.');
+    unmount();
+
+    // A table BigQuery does not have, or one in another project: an error under the SQL.
+    serve({ as: 'admin', queries: [{ ...QUERY, resources: [], sql: 'select * from `immoscoop-dataplatform-398214.nowhere.nothing`' }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    expect(
+      await within(await screen.findByRole('main')).findByText(
+        'immoscoop-dataplatform-398214.nowhere.nothing is geen tabel in BigQuery: ze bestaat niet, of ze staat in een ander project dan dat van Data Hub.',
+        undefined,
+        { timeout: 3000 },
+      ),
+    ).toBeTruthy();
   });
 
   it('checks what is typed once it pauses two seconds, a query that opens at once (DEC-UX-154)', async () => {
@@ -5061,6 +5142,8 @@ describe('Query', () => {
     await main.findByText('kon niet nagekeken worden: Uitvoeren kijkt opnieuw na', undefined, { timeout: 3500 });
     const run = main.getByRole('button', { name: /^Uitvoeren/ }) as HTMLButtonElement;
     expect(run.disabled).toBe(false);
+    // Nothing to explain over Run: no pop-out, which showed as an empty box on rest.
+    expect(run.parentElement?.querySelector('[role="tooltip"]')).toBeNull();
     await fireEvent.click(run);
     await vi.waitFor(() => expect(calls.some((call) => call.method === 'POST' && call.path === '/queries/q1/runs')).toBe(true));
   });
@@ -6270,6 +6353,83 @@ describe('Messages', () => {
     await fireEvent.click(main.getByRole('button', { name: /Heropenen/ }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/messages/m1/reopen' }));
     expect(await main.findByRole('button', { name: /Sluiten/ })).toBeTruthy();
+  });
+
+  it('marks a Message for the User, lists a mark in the panel only while a Message holds it, and opens it as a view (FR-CV-19, DEC-UX-360 to DEC-UX-366)', async () => {
+    const calls = serve({ groups: ['g1'], conversations: [QUESTION, { ...DESCRIBED, marks: ['starred'] }] });
+    open('/messages/m1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const panel = within(screen.getByRole('navigation', { name: 'Berichten' }));
+    // Only the marks that hold a Message, just under the search, with how many.
+    expect(await panel.findByRole('button', { name: /^Met ster\s*1/ })).toBeTruthy();
+    expect(panel.queryByRole('button', { name: /^Opvolgen/ })).toBeNull();
+    expect(panel.queryByRole('button', { name: /^Belangrijk/ })).toBeNull();
+
+    // In the head of the Message opened, one button: a dropdown of the marks, which stays open for another.
+    const detail = within(await screen.findByRole('region', { name: 'Credit leads' }));
+    await fireEvent.click(await detail.findByRole('button', { name: 'Jouw markeringen' }));
+    const menu = within(detail.getByRole('menu', { name: 'Jouw markeringen' }));
+    expect(menu.getAllByRole('menuitemcheckbox').map((item) => [item.textContent, item.getAttribute('aria-checked')])).toEqual([
+      ['Opvolgen', 'false'],
+      ['Belangrijk', 'false'],
+      ['Met ster', 'false'],
+    ]);
+    // Marks are personal, and no line says so (DEC-UX-365).
+    expect(detail.queryByText(/alleen jij/i)).toBeNull();
+    await fireEvent.click(menu.getByRole('menuitemcheckbox', { name: 'Opvolgen' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/messages/m1/marks/followUp' }));
+    await vi.waitFor(() => expect(menu.getByRole('menuitemcheckbox', { name: 'Opvolgen' }).getAttribute('aria-checked')).toBe('true'));
+    await fireEvent.click(menu.getByRole('menuitemcheckbox', { name: 'Belangrijk' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/messages/m1/marks/important' }));
+    // The button shows every mark set, never a number (DEC-UX-362); the panel counts them.
+    expect(await detail.findByRole('button', { name: 'Jouw markeringen: Opvolgen, Belangrijk' })).toBeTruthy();
+    expect(await panel.findByRole('button', { name: /^Opvolgen\s*1/ })).toBeTruthy();
+    expect(panel.getByRole('button', { name: /^Belangrijk\s*1/ })).toBeTruthy();
+
+    // A mark opened as a view: its Messages, read or not, without the chips.
+    await fireEvent.click(panel.getByRole('button', { name: /^Opvolgen\s*1/ }));
+    expect(await main.findByRole('heading', { level: 1, name: 'Opvolgen' })).toBeTruthy();
+    await vi.waitFor(() => expect(calls.some((call) => call.path === '/messages?view=unread&mark=followUp')).toBe(true));
+    expect(main.getByText('De berichten die je markeerde om op te volgen: haal de vlag weg zodra het gedaan is.')).toBeTruthy();
+    const list = within(main.getByRole('region', { name: 'Berichten' }));
+    await list.findByText('Will KBC follow-up be published this month?');
+    expect(main.queryByRole('radiogroup')).toBeNull();
+    // Taken off on its line, it stays there, faded, and the mark keeps its row at 0 until another view (DEC-UX-366).
+    await fireEvent.click(list.getByRole('button', { name: 'Jouw markeringen: Opvolgen, Belangrijk' }));
+    await fireEvent.click(within(list.getByRole('menu', { name: 'Jouw markeringen' })).getByRole('menuitemcheckbox', { name: 'Opvolgen' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/messages/m1/marks/followUp' }));
+    expect(await panel.findByRole('button', { name: /^Opvolgen\s*0/ })).toBeTruthy();
+    expect(list.getByText('Will KBC follow-up be published this month?').closest('.line')?.classList.contains('kept')).toBe(true);
+    expect(list.getByText('Niets is nog gemarkeerd als Opvolgen. Het verdwijnt uit je markeringen zodra je elders kijkt.')).toBeTruthy();
+    await fireEvent.click(panel.getByRole('button', { name: /Voor jou/ }));
+    expect(await main.findByRole('heading', { level: 1, name: 'Voor jou' })).toBeTruthy();
+    await vi.waitFor(() => expect(panel.queryByRole('button', { name: /^Opvolgen/ })).toBeNull());
+
+    // The quick window marks the Message opened, and opens a mark that holds one.
+    await quickDo('markeren: met ster');
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/messages/m1/marks/starred' }));
+    expect(await panel.findByRole('button', { name: /^Met ster\s*2/ })).toBeTruthy();
+    await quickDo('belangrijk tonen');
+    expect(await main.findByRole('heading', { level: 1, name: 'Belangrijk' })).toBeTruthy();
+  });
+
+  it('has the marks in the head of a Message opened in context and on each conversation of the slide-in (DEC-UX-365)', async () => {
+    const calls = serve({ groups: ['g1'], conversations: [{ ...QUESTION, marks: ['followUp'] }] });
+    open('/collections/c1/messages/m1');
+    render(App, { config: CONFIG });
+    const window = within(await screen.findByRole('dialog', { name: 'Credit leads' }));
+    await fireEvent.click(await window.findByRole('button', { name: 'Jouw markeringen: Opvolgen' }));
+    await fireEvent.click(within(window.getByRole('menu', { name: 'Jouw markeringen' })).getByRole('menuitemcheckbox', { name: 'Met ster' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/messages/m1/marks/starred' }));
+    expect(await window.findByRole('button', { name: 'Jouw markeringen: Opvolgen, Met ster' })).toBeTruthy();
+
+    // The slide-in on the Collection: the same button on the conversation.
+    await fireEvent.click(window.getByRole('link', { name: /bericht.* op deze/ }));
+    const sheet = within(await screen.findByRole('dialog', { name: /Credit leads/ }));
+    await fireEvent.click(await sheet.findByRole('button', { name: 'Jouw markeringen: Opvolgen, Met ster' }));
+    await fireEvent.click(within(sheet.getByRole('menu', { name: 'Jouw markeringen' })).getByRole('menuitemcheckbox', { name: 'Opvolgen' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/messages/m1/marks/followUp' }));
   });
 
   it('does the Messages from the quick window: another view, Mark all as read, Close and Reopen (DEC-UX-255)', async () => {

@@ -110,6 +110,8 @@ Every endpoint around Resources, with the tool that answers it. Who may use a to
 | "Did anyone ask about this?" | `get_messages` | catalogue `GET /messages/on/resource/:id`, `GET /messages/:id` | Whoever sees it | Text |
 | "Ask the Owner why March is missing" | `write_message` | catalogue `POST /messages` | Whoever sees it | Text, posted after the User agrees ([FR-CL-13](#fr-cl-13)) |
 | "Answer that it is fixed" | `reply_to_message` | catalogue `POST /messages/:id/replies` | Whoever sees the Message | Text, posted after the User agrees |
+| "What do I still have to follow up?" | `get_messages` | catalogue `GET /messages?mark=` | The User, their own marks | Text ([FR-CL-40](#fr-cl-40)) |
+| "Flag this one to follow up" | `mark_message` | catalogue `PUT` and `DELETE /messages/:id/marks/:mark` | Whoever sees the Message, for themselves | Set or taken off when the User asks ([DEC-UX-367](../../design/principles.md#dec-ux-367)) |
 | "Delete the Question I posted by mistake" | `delete_message` | catalogue `DELETE /messages/:id` | Its writer, the Owner Unit of its object, the Data Team | Deleted for everyone, after the User agrees ([DEC-CV-17](14-conversations.md#dec-cv-17)) |
 | "The description of lead_source is wrong, tell the Data Team" | `report_description` | catalogue `POST /resources/:id/description-reports` | Who may write Messages on the Resource | A Request to the Data Team, or the waiting one joined, after the User agrees to the description, what is wrong and what it should say ([FR-CV-17](14-conversations.md#fr-cv-17), [DEC-CV-17](14-conversations.md#dec-cv-17)) |
 
@@ -587,6 +589,15 @@ When the User describes the fields of a Resource they may describe, Claude sugge
 For a User who may make queries, Claude lists the Projects they are in, reads one with its queries in their order and who is in it, and, where the User asks, sets one up for an analysis: it makes a Project with a name and a sentence on what it is for, makes its queries in it with `create_query`, an empty one too, at the end of its row, adds a query the User writes, renames and describes it, puts its queries in order and takes one out, which stays with whoever made it. A query is in one Project at most: adding it to another moves it, and Claude says so to the User before it does, naming the Project it leaves. A query locked to the User in a Project, as it reads a Resource they may not see, shows only what the page of the Project shows of it ([FR-SR-65](04-stacks-and-resources.md#fr-sr-65)). Every answer links to the page of the Project in Data Hub, where the User shares it with colleagues, leaves it or deletes it: Claude does none of these ([DEC-CL-23](#dec-cl-23)). A Project holds any number of queries ([DEC-SR-49](04-stacks-and-resources.md#dec-sr-49)).
 
 **Makes easy:** keeping the many queries of one analysis together while Claude makes them, and finding them again in Data Hub under the name of that analysis. **Makes hard:** a query moved out of another Project without the User knowing, and colleagues added to or told about a Project by Claude rather than by the User.
+
+<a id="fr-cl-40"></a>
+### FR-CL-40 · Claude and the marks of the User on Messages
+
+**Status:** Implemented · **Source:** Max, 2026-11-28 ([DEC-UX-367](../../design/principles.md#dec-ux-367))
+
+Claude sees the marks of the User, Follow up, Important and Starred, on every Message it reads, and reads the Messages that hold one mark, such as what the User still has to follow up ([FR-CV-19](14-conversations.md#fr-cv-19)). It sets or takes off a mark on a Message only when the User asks for it; as a mark is the User's alone and changes nothing for anyone else, the words of the User are their agreement, and Claude does not first show what it writes, as it does for a change others see.
+
+**Makes easy:** asking Claude what is still to be done, and marking a Message while talking about it. **Makes hard:** Claude sorting the Messages of the User on its own, and a mark that someone else sees.
 
 ## Edge cases
 

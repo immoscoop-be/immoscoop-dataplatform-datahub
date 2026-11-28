@@ -19,8 +19,9 @@ export interface OutsideTableView {
   key: string;
   fullName: string;
   name: string;
-  layer: string;
-  resourceType: string;
+  /** Null for a table only BigQuery knows (DEC-SR-50, DEC-UX-368). */
+  layer: string | null;
+  resourceType: string | null;
   projectName: string | null;
   /** How dbt makes it: `table`, `view`, `incremental` and so on; null for a source. */
   materialized: string | null;
@@ -41,7 +42,8 @@ export interface OutsideTableView {
  * first, then the cluster columns in their order, then the others in the order of the table, each STRUCT with its fields.
  */
 export function outsideTable(table: KnownTable, live: TableInfo | null): OutsideTableView {
-  const fromDbt = new Map((table.columns ?? []).map((column) => [column.name.toLowerCase(), column]));
+  // A table only BigQuery knows has nothing from dbt: its columns came from BigQuery (DEC-SR-50).
+  const fromDbt = new Map((table.layer === null ? [] : (table.columns ?? [])).map((column) => [column.name.toLowerCase(), column]));
   const partition = live ? live.partition : table.partition ? { ...table.partition, required: false } : null;
   const clusterBy = live ? live.clusterBy : (table.clusterBy ?? []);
   const listed = live ? live.columns.map((column) => ({ name: column.name, type: column.type, bigquery: column.description })) : (table.columns ?? []).map((column) => ({ name: column.name, type: column.dataType, bigquery: '' }));
@@ -75,10 +77,33 @@ export function outsideTable(table: KnownTable, live: TableInfo | null): Outside
     resourceType: table.resourceType,
     projectName: table.projectName,
     materialized: table.materialized ?? null,
-    description: table.description || live?.description || '',
+    description: (table.layer === null ? '' : table.description) || live?.description || '',
     bigquery: live ? { type: live.type, bytes: live.bytes, rows: live.rows, partitions: live.partitions, modifiedAt: live.modifiedAt } : null,
     partition,
     clusterBy,
     columns: ordered.flatMap(({ group }) => group),
+  };
+}
+
+/**
+ * A table only BigQuery knows, in the project of Data Hub, as a power user's query reads it (DEC-SR-50, FR-SR-75): no
+ * layer, project or description from dbt, its columns and partitioning as BigQuery says them now. Its full name is as
+ * it was written, which BigQuery just found: BigQuery names are case-sensitive.
+ */
+export function bigQueryTable(fullName: string, live: TableInfo): KnownTable {
+  return {
+    key: fullName.toLowerCase(),
+    fullName,
+    name: fullName.split('.').at(-1) ?? fullName,
+    resourceType: null,
+    layer: null,
+    projectId: null,
+    projectName: null,
+    resource: false,
+    partition: live.partition ? { field: live.partition.field, unit: live.partition.unit } : null,
+    clusterBy: live.clusterBy,
+    materialized: null,
+    description: live.description,
+    columns: live.columns.map((column) => ({ name: column.name, dataType: column.type, description: column.description })),
   };
 }

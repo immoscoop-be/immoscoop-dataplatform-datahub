@@ -41,7 +41,8 @@
   import Avatar from '@datahub/ui/primitives/Avatar.svelte';
   import Button from '@datahub/ui/primitives/Button.svelte';
   import { initialsOf } from '../lib/initials.js';
-  import { cardOfType, type Conversation, joinersOf, messageText, REPORT, STATE_TEXTS, SUBJECT_TITLES } from '../lib/messages.js';
+  import { cardOfType, type Conversation, joinersOf, type MessageMark, messageText, REPORT, STATE_TEXTS, SUBJECT_TITLES } from '../lib/messages.js';
+  import MarksButton from './MarksButton.svelte';
   import MessageComposer from './MessageComposer.svelte';
   import LearningInline from './LearningInline.svelte';
   import MessageText from './MessageText.svelte';
@@ -59,6 +60,7 @@
     onreopen,
     ondelete,
     onjoin,
+    onmark,
     notify = '',
   }: {
     message: Conversation;
@@ -75,6 +77,8 @@
     ondelete?: (id: string) => Promise<boolean>;
     /** Offers "Join it" on a waiting Request about a description from dbt the User did not send or join (FR-CV-17). */
     onjoin?: () => Promise<boolean>;
+    /** Shows the marks of the User on it, in its head, to set or take off, as in the slide-in on an object (FR-CV-19, DEC-UX-365). */
+    onmark?: (mark: MessageMark, on: boolean) => void;
     /** Who a reply notifies, under its field. */
     notify?: string;
   } = $props();
@@ -154,6 +158,7 @@
       <span class="who">{name(message.writer)}</span>
       {#if message.writer?.as}<span class="meta">{STANDING_NAMES[message.writer.as]}</span>{/if}
       <span class="meta">{ago(message.createdAt, language)}</span>
+      {#if onmark}<span class="end marks-end"><MarksButton marks={message.marks ?? []} onmark={onmark} /></span>{/if}
       {#if closable && !closing}<span class="end"><Button variant="outline" title={t('messages.close.who')} onclick={() => (closing = true)}><Icon name="minus-circle" />{t('messages.close')}</Button></span>{/if}
       {#if reopenable}<span class="end"><Button variant="outline" disabled={reopening} onclick={reopen}><Icon name="arrow-counter-clockwise" />{t('messages.reopen')}</Button></span>{/if}
     </div>
@@ -284,6 +289,7 @@
   .link:focus-visible { outline: 2px solid var(--text-secondary); border-radius: var(--radius-sm); }
   .inline { margin-top: 10px; }
   .end { margin-left: auto; }
+  .marks-end ~ .end { margin-left: 0; }
   .failed { margin: 6px 0 0; color: var(--signal-urgent); }
   .confirm { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 8px 10px; border-radius: var(--radius-md); background: var(--surface-sub); font-size: var(--text-small); line-height: 1.5; }
   .confirm > :global(svg) { flex: none; color: var(--signal-urgent); font-size: 18px; }

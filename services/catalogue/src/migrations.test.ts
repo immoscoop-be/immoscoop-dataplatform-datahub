@@ -253,7 +253,7 @@ describe.skipIf(!url)('catalogue migrations', () => {
 
   it('lets one Request wait per description from dbt reported as wrong, whoever sent it, and the others one per writer (FR-CV-17)', async () => {
     const id = (await sql<{ id: string }>`select id from resources where key = 'p.d.journey'`.execute(admin.db)).rows[0]!.id;
-    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    const results = await migrate({ db: admin.db, schema, migrations: before('0031'), serviceUser: 'postgres' });
     expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0030-description-reports', 'Success']]);
     const report = (writer: string, field: string | null) =>
       sql`insert into messages (type, subject_kind, subject_id, writer_id, params, state) values ('MSG-RES-10', 'resource', ${id}, ${writer}, ${JSON.stringify(field ? { field } : {})}::jsonb, 'waiting')`.execute(admin.db);
@@ -267,5 +267,19 @@ describe.skipIf(!url)('catalogue migrations', () => {
     await query('u-an');
     await expect(query('u-an')).rejects.toThrow(/messages_one_waiting_request/);
     await query('u-jan');
+  });
+
+  it('keeps the marks of a User on a conversation, only the three marks, and drops them with it (FR-CV-19)', async () => {
+    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0031-message-marks', 'Success']]);
+    const message = (await sql<{ id: string }>`insert into messages (type, subject_kind, subject_id, writer_id, params, state) values ('MSG-CNV-01', 'collection', 'c-1', 'u-an', '{}'::jsonb, 'open') returning id`.execute(admin.db)).rows[0]!.id;
+    const mark = (user: string, name: string) => sql`insert into message_marks (message_id, user_id, mark) values (${message}, ${user}, ${name})`.execute(admin.db);
+    await mark('u-an', 'followUp');
+    await mark('u-an', 'starred');
+    await mark('u-jan', 'followUp');
+    await expect(mark('u-an', 'followUp')).rejects.toThrow(/message_marks_pkey/);
+    await expect(mark('u-an', 'someday')).rejects.toThrow(/check/);
+    await sql`delete from messages where id = ${message}`.execute(admin.db);
+    expect((await sql<{ count: string }>`select count(*) as count from message_marks`.execute(admin.db)).rows[0]!.count).toBe('0');
   });
 });
