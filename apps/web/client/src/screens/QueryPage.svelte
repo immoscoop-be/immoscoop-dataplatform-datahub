@@ -1470,6 +1470,23 @@
             {/snippet}
           </RunButton>
         {:else}
+          <!-- What the run reads, on rest over Run: given only once the Pre-flight knows it; else the pop-out showed empty (DEC-UX-280). -->
+          {#snippet explainRun()}
+            {#if current && current.bytes !== null}
+              {@const words = { bytes: bytes(current.bytes), approve: bytes(current.thresholds.approve), request: bytes(current.thresholds.request) }}
+              {@const own = current.thresholds.above === 'approve'}
+              {#if own && current.range === 'approve' && current.bytes > current.thresholds.request}
+                <!-- Without a limit, with a warning: above the second threshold the User approves it themselves (DEC-PL-12) -->
+                <b>{t('query.explain.large', words)}</b>
+              {:else}
+                <b>{current.range === 'request' ? t('query.explain.accepted', words) : current.range === 'approve' ? t(own ? 'query.explain.approve.own' : 'query.explain.approve', words) : t(own ? 'query.explain.free.own' : 'query.explain.free', words)}</b>
+              {/if}
+              {t('query.explain.atMost')}
+              {#if partitioned.length > 0}
+                {t('query.explain.less', { columns: partitioned.map((resource) => resource.partition?.field).join(', ') })}
+              {/if}
+            {/if}
+          {/snippet}
           <RunButton
             bytes={current?.bytes ?? null}
             approve={current?.range === 'approve' || current?.range === 'request'}
@@ -1477,24 +1494,8 @@
             busy={running}
             title={empty ? t('query.empty.run') : broken !== null ? t('query.broken.run') : current && !current.runnable ? t('query.cannotRun') : undefined}
             onclick={start}
-          >
-            {#snippet explain()}
-              {#if current?.bytes !== null && current?.bytes !== undefined}
-                {@const words = { bytes: bytes(current.bytes), approve: bytes(current.thresholds.approve), request: bytes(current.thresholds.request) }}
-                {@const own = current.thresholds.above === 'approve'}
-                {#if own && current.range === 'approve' && current.bytes > current.thresholds.request}
-                  <!-- Without a limit, with a warning: above the second threshold the User approves it themselves (DEC-PL-12) -->
-                  <b>{t('query.explain.large', words)}</b>
-                {:else}
-                  <b>{current.range === 'request' ? t('query.explain.accepted', words) : current.range === 'approve' ? t(own ? 'query.explain.approve.own' : 'query.explain.approve', words) : t(own ? 'query.explain.free.own' : 'query.explain.free', words)}</b>
-                {/if}
-                {t('query.explain.atMost')}
-                {#if partitioned.length > 0}
-                  {t('query.explain.less', { columns: partitioned.map((resource) => resource.partition?.field).join(', ') })}
-                {/if}
-              {/if}
-            {/snippet}
-          </RunButton>
+            explain={current && current.bytes !== null ? explainRun : undefined}
+          />
         {/if}
       </div>
     {/if}
