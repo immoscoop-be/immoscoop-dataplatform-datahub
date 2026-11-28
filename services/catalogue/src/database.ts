@@ -300,6 +300,13 @@ export interface CatalogueDatabase {
     userId: string;
     readAt: Timestamp;
   };
+  /** The marks of a User on a conversation, by its first Message: theirs alone (FR-CV-19). */
+  messageMarks: {
+    messageId: string;
+    userId: string;
+    mark: string;
+    markedAt: Generated<Date>;
+  };
   /** The outbox of notifications: every Message, from the moment it is written, until it went out (DEC-LN-02). */
   notifications: {
     messageId: string;

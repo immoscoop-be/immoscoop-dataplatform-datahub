@@ -1,6 +1,6 @@
 import { canWith, NO_PERMISSIONS, type Permissions, reach } from '@datahub/contracts';
 import { MESSAGE_CATALOGUE } from '@datahub/contracts/message-catalogue';
-import type { MessageKind, MessageType, SubjectKind } from '@datahub/contracts/messages';
+import { MESSAGE_MARKS, type MessageKind, type MessageMark, type MessageType, type SubjectKind } from '@datahub/contracts/messages';
 import { topicOf } from '@datahub/learning';
 import { type Kysely, type RawBuilder, type Selectable, sql, type SqlBool, type Transaction } from 'kysely';
 import type { Collection, Viewer } from './collections.js';
@@ -181,6 +181,8 @@ export interface MessageView {
    * yet, on a Resource they may write Messages on ("Join it", FR-CV-17).
    */
   mayJoin: boolean;
+  /** The marks the viewer put on it, theirs alone, in their order (FR-CV-19, DEC-UX-363). */
+  marks: MessageMark[];
 }
 
 /** A reply, the decision on a Request, or the closing of a Question or a Signal, under the Message it is about. */
@@ -207,6 +209,11 @@ export interface Counts {
   /** Within the view asked for. */
   kinds: Record<FilterKind, number>;
   on: Record<FilterOn, number>;
+  /**
+   * How many conversations the viewer sees hold each of their marks, whatever the view, the filters and the words: the
+   * panel shows a mark only while it holds one (DEC-UX-360).
+   */
+  marks: Record<MessageMark, number>;
 }
 
 /** What a User may see and what their Owner Units own, worked out once per request (FR-CV-05, FR-CV-06). */
@@ -241,8 +248,11 @@ export type Decided = { outcome: 'decided'; conversation: Conversation } | { out
 export interface Messages {
   /** What the viewer may see and owns, from the Collections they see and the Lenses query told about. */
   sight(viewer: Viewer, seen: Collection[]): Promise<Sight>;
-  /** The conversations of a view, newest first, at most 200, with the counts of the Message Centre. */
-  list(sight: Sight, filter: { view: View; kind?: FilterKind; on?: FilterOn; search?: string }): Promise<{ messages: MessageView[]; counts: Counts }>;
+  /**
+   * The conversations of a view, newest first, at most 200, with the counts of the Message Centre. With a mark, those
+   * that hold it instead, read or not (FR-CV-19).
+   */
+  list(sight: Sight, filter: { view: View; mark?: MessageMark; kind?: FilterKind; on?: FilterOn; search?: string }): Promise<{ messages: MessageView[]; counts: Counts }>;
   /** How many conversations for the viewer moved since they last read them (FR-CV-06). */
   unread(sight: Sight): Promise<number>;
   /** One conversation with its replies, if the viewer sees its object; a reply gives its conversation. */
@@ -259,6 +269,11 @@ export interface Messages {
    */
   reply(id: string, sight: Sight, text: string): Promise<Conversation | 'not_found' | 'no_replies' | 'not_allowed'>;
   read(id: string, sight: Sight): Promise<boolean>;
+  /**
+   * Sets or takes off a mark of the viewer on a conversation they see, a reply giving its conversation (FR-CV-19): theirs
+   * alone, nobody is told. Gives their marks on it, in their order.
+   */
+  mark(id: string, sight: Sight, mark: MessageMark, on: boolean): Promise<MessageMark[] | 'not_found'>;
   /**
    * Closes an open Question or Signal, by its writer, or by someone else with `messages.close` on its object (DEC-PL-04),
    * with an optional line why: the closing stands under it in its conversation, and tells its writer (FR-CV-16, MSG-CNV-07).
@@ -535,7 +550,14 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
   const writerOf = (row: Pick<Row, 'writerId' | 'params'>) =>
     row.writerId === null ? null : { id: row.writerId, name: row.params.writer ?? '', as: (row.params.as || null) as Standing };
 
-  function viewOf(row: Row & { replyCount?: number | string; unread?: boolean }, subject: MessageSubject, sight: Sight): MessageView {
+  /** The marks of the viewer, in their order (DEC-UX-362). */
+  const inOrder = (marks: readonly string[] | null | undefined): MessageMark[] => MESSAGE_MARKS.filter((mark) => marks?.includes(mark));
+
+  /** Whether the viewer put a mark on a conversation (FR-CV-19). */
+  const markedBy = (sight: Sight, mark: MessageMark) =>
+    sql<SqlBool>`exists (select 1 from message_marks mk where mk.message_id = m.id and mk.user_id = ${sight.viewer.id} and mk.mark = ${mark})`;
+
+  function viewOf(row: Row & { replyCount?: number | string; unread?: boolean; marks?: readonly string[] | null }, subject: MessageSubject, sight: Sight): MessageView {
     return {
       id: row.id,
       type: row.type,
@@ -553,6 +575,7 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
       mayReply: mayReply(row, sight),
       mayDelete: mayDelete(row, sight),
       mayJoin: mayJoin(row, sight),
+      marks: inOrder(row.marks),
     };
   }
 
@@ -646,9 +669,10 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
   async function conversations(rows: Row[], sight: Sight, from: Database = db): Promise<Conversation[]> {
     if (rows.length === 0) return [];
     const ids = rows.map((row) => row.id);
-    const [replies, reads, named] = await Promise.all([
+    const [replies, reads, marks, named] = await Promise.all([
       from.selectFrom('messages').selectAll().where('parentId', 'in', ids).orderBy('createdAt').orderBy('id').execute(),
       from.selectFrom('messageReads').select(['messageId', 'readAt']).where('messageId', 'in', ids).where('userId', '=', sight.viewer.id).execute(),
+      from.selectFrom('messageMarks').select(['messageId', 'mark']).where('messageId', 'in', ids).where('userId', '=', sight.viewer.id).execute(),
       subjects(rows, from),
     ]);
     const readAt = new Map(reads.map((read) => [read.messageId, read.readAt]));
@@ -656,7 +680,8 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
       const own = replies.filter((reply) => reply.parentId === row.id);
       const read = readAt.get(row.id);
       const unread = row.lastWriterId !== sight.viewer.id && (!read || read < row.lastAt);
-      return { ...viewOf({ ...row, replyCount: own.length, unread }, named(row), sight), replies: own.map((reply) => replyOf(reply, sight)) };
+      const marked = marks.filter((one) => one.messageId === row.id).map((one) => one.mark);
+      return { ...viewOf({ ...row, replyCount: own.length, unread, marks: marked }, named(row), sight), replies: own.map((reply) => replyOf(reply, sight)) };
     });
   }
 
@@ -713,10 +738,11 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
       };
     },
 
-    async list(sight, { view, kind, on, search }) {
+    async list(sight, { view, mark, kind, on, search }) {
       const base = sql<SqlBool>`m.parent_id is null and ${visible(sight)}`;
-      const chosen = sql<SqlBool>`${base} and ${inView(sight, view)}`;
-      const [totals, breakdown, rows] = await Promise.all([
+      // A mark opened is a view of its own: what holds it, read or not (DEC-UX-360).
+      const chosen = sql<SqlBool>`${base} and ${mark ? markedBy(sight, mark) : inView(sight, view)}`;
+      const [totals, breakdown, rows, marked] = await Promise.all([
         sql<{ forYou: string; unread: string; written: string }>`
           select count(*) filter (where ${forYou(sight)}) as for_you,
             count(*) filter (where ${forYou(sight)} and ${unreadBy(sight)}) as unread,
@@ -725,7 +751,8 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
         sql<{ type: string; subjectKind: string; count: string }>`
           select m.type, m.subject_kind, count(*) as count from messages m where ${chosen} group by m.type, m.subject_kind`.execute(db),
         sql<Row & { replyCount: string; unread: boolean }>`
-          select m.*, (select count(*) from messages r where r.parent_id = m.id) as reply_count, ${unreadBy(sight)} as unread
+          select m.*, (select count(*) from messages r where r.parent_id = m.id) as reply_count, ${unreadBy(sight)} as unread,
+            array(select mk.mark from message_marks mk where mk.message_id = m.id and mk.user_id = ${sight.viewer.id}) as marks
           from messages m
           where ${chosen}
             and ${kind ? sql`m.type = any(${list(KIND_TYPES[kind])})` : sql`true`}
@@ -733,7 +760,12 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
             and ${search ? matching(search) : sql`true`}
           order by m.last_at desc, m.id desc
           limit ${LIMIT}`.execute(db),
+        // Each mark with how many conversations the viewer sees hold it, whatever is chosen besides (DEC-UX-360).
+        sql<{ mark: string; count: string }>`
+          select mk.mark, count(*) as count from message_marks mk join messages m on m.id = mk.message_id
+          where mk.user_id = ${sight.viewer.id} and ${base} group by mk.mark`.execute(db),
       ]);
+      const marks = Object.fromEntries(MESSAGE_MARKS.map((name) => [name, Number(marked.rows.find((row) => row.mark === name)?.count ?? 0)])) as Record<MessageMark, number>;
       const kinds = Object.fromEntries(FILTER_KINDS.map((name) => [name, 0])) as Record<FilterKind, number>;
       const objects = Object.fromEntries(FILTER_ON.map((name) => [name, 0])) as Record<FilterOn, number>;
       for (const row of breakdown.rows) {
@@ -745,7 +777,7 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
       const named = await subjects(rows.rows);
       return {
         messages: rows.rows.map((row) => viewOf(row, named(row), sight)),
-        counts: { forYou: Number(total?.forYou ?? 0), unread: Number(total?.unread ?? 0), written: Number(total?.written ?? 0), kinds, on: objects },
+        counts: { forYou: Number(total?.forYou ?? 0), unread: Number(total?.unread ?? 0), written: Number(total?.written ?? 0), kinds, on: objects, marks },
       };
     },
 
@@ -848,6 +880,24 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
       if (!row || !seesRow(sight, row)) return false;
       await markRead(db, row.id, sight.viewer.id);
       return true;
+    },
+
+    async mark(id, sight, mark, on) {
+      if (!UUID.test(id)) return 'not_found';
+      const row = await first(id);
+      if (!row || !seesRow(sight, row)) return 'not_found';
+      const me = sight.viewer.id;
+      if (on) {
+        await db
+          .insertInto('messageMarks')
+          .values({ messageId: row.id, userId: me, mark })
+          .onConflict((conflict) => conflict.columns(['messageId', 'userId', 'mark']).doNothing())
+          .execute();
+      } else {
+        await db.deleteFrom('messageMarks').where('messageId', '=', row.id).where('userId', '=', me).where('mark', '=', mark).execute();
+      }
+      const marks = await db.selectFrom('messageMarks').select('mark').where('messageId', '=', row.id).where('userId', '=', me).execute();
+      return inOrder(marks.map((one) => one.mark));
     },
 
     async close(id, sight, text) {

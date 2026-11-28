@@ -1424,6 +1424,50 @@ describe.skipIf(!url)('the routes of Collections', () => {
       expect((await bert('POST', `/messages/${'0'.repeat(8)}-0000-4000-8000-${'0'.repeat(12)}/close`, {})).statusCode).toBe(404);
     });
 
+    it('keeps the marks of a User on a conversation for them alone, counts them and lists one (FR-CV-19, DEC-UX-360)', async () => {
+      const an = await user('Ann', [CREDIT]);
+      const bert = await user('Bert', [BROKERS]);
+      const talk = (await an('GET', '/collections')).json().collections.find((one: { name: string }) => one.name === 'Talk');
+      const asked = (await bert('POST', '/messages', { subjectKind: 'collection', subjectId: talk.id, kind: 'question', text: 'A test for the presentation?' })).json().message;
+      const replied = (await an('POST', `/messages/${asked.id}/replies`, { text: 'Yes.' })).json().message;
+      const remark = (await an('POST', '/messages', { subjectKind: 'collection', subjectId: talk.id, kind: 'remark', text: 'Nice.' })).json().message;
+      expect(asked.marks).toEqual([]);
+      // No marks yet: every mark counts none, so the panel shows none.
+      expect((await an('GET', '/messages')).json().counts.marks).toEqual({ followUp: 0, important: 0, starred: 0 });
+
+      // Any marks at once, each on its own, given back in their order; a reply marks its conversation.
+      expect((await an('PUT', `/messages/${asked.id}/marks/starred`)).json()).toEqual({ marks: ['starred'] });
+      expect((await an('PUT', `/messages/${replied.replies[0].id}/marks/followUp`)).json()).toEqual({ marks: ['followUp', 'starred'] });
+      expect((await an('PUT', `/messages/${asked.id}/marks/followUp`)).json()).toEqual({ marks: ['followUp', 'starred'] });
+      expect((await an('PUT', `/messages/${remark.id}/marks/followUp`)).json()).toEqual({ marks: ['followUp'] });
+      expect((await an('PUT', `/messages/${asked.id}/marks/someday`)).statusCode).toBe(404);
+      expect((await an('GET', '/messages?mark=someday')).statusCode).toBe(400);
+
+      // On the conversation wherever it is read, and counted whatever the view, the kind and the words.
+      expect((await an('GET', `/messages/${asked.id}`)).json().message.marks).toEqual(['followUp', 'starred']);
+      expect((await an('GET', `/messages/on/collection/${talk.id}`)).json().messages.find((one: { id: string }) => one.id === asked.id).marks).toEqual(['followUp', 'starred']);
+      const counted = (await an('GET', '/messages?view=written&kind=signal&search=nothing')).json();
+      expect(counted.messages).toEqual([]);
+      expect(counted.counts.marks).toEqual({ followUp: 2, important: 0, starred: 1 });
+      // A mark opened lists what holds it, read or not, the newest first.
+      const followUp = (await an('GET', '/messages?mark=followUp')).json();
+      expect(followUp.messages.map((one: { id: string }) => one.id)).toEqual([remark.id, asked.id]);
+      expect(followUp.messages[1].marks).toEqual(['followUp', 'starred']);
+      expect((await an('GET', '/messages?mark=followUp&kind=remark')).json().messages.map((one: { id: string }) => one.id)).toEqual([remark.id]);
+
+      // Theirs alone: the writer of the Question sees none of them, and is not told.
+      expect((await bert('GET', `/messages/${asked.id}`)).json().message.marks).toEqual([]);
+      expect((await bert('GET', '/messages')).json().counts.marks).toEqual({ followUp: 0, important: 0, starred: 0 });
+      expect((await bert('GET', '/messages?mark=followUp')).json().messages).toEqual([]);
+
+      // Taken off, it no longer counts; a conversation deleted takes its marks with it.
+      expect((await an('DELETE', `/messages/${asked.id}/marks/followUp`)).json()).toEqual({ marks: ['starred'] });
+      expect((await an('DELETE', `/messages/${asked.id}/marks/followUp`)).json()).toEqual({ marks: ['starred'] });
+      expect((await an('DELETE', `/messages/${remark.id}`)).statusCode).toBe(200);
+      expect((await an('GET', '/messages')).json().counts.marks).toEqual({ followUp: 0, important: 0, starred: 1 });
+      expect((await an('PUT', `/messages/${remark.id}/marks/starred`)).statusCode).toBe(404);
+    });
+
     it('knows the Lenses from query, and shows the Messages on one only to who sees it (FR-CV-05, DEC-CO-16)', async () => {
       const an = await user('Ann', [CREDIT]);
       const bert = await user('Bert', [BROKERS]);
