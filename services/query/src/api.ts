@@ -10,7 +10,7 @@ import { type Catalogue, CatalogueUnavailable, type QueryRequest, type QueryReso
 import type { NamedResource, QueryKind } from './database.js';
 import { edaRoutes } from './eda-api.js';
 import { lensRoutes } from './lens-api.js';
-import { outsideTable } from './outside.js';
+import { bigQueryTable, outsideTable } from './outside.js';
 import type { Lenses } from './lenses.js';
 import { bind, type Parameter, parseParameters } from './parameters.js';
 import { billedAtMost, type Preflight, preflight, type ResourceOfQuery, sound, type Thresholds } from './preflight.js';
@@ -491,9 +491,10 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
   /**
    * What Data Hub knows of a table outside it, for a power user who double-clicks its name in the SQL (FR-SR-62,
    * DEC-UX-247): from dbt as registry answers it for this User, and from BigQuery now, its metadata only, which BigQuery
-   * does not bill. Only a table registry knows that is no Resource; without BigQuery, what dbt knew.
+   * does not bill. A table registry knows that is no Resource, without BigQuery what dbt knew; or a table only BigQuery
+   * knows in the project of Data Hub, by its full name in its own case when given as `name` (DEC-SR-50, DEC-UX-368).
    */
-  app.get<{ Querystring: { key?: string } }>('/outside-table', async (request, reply) => {
+  app.get<{ Querystring: { key?: string; name?: string } }>('/outside-table', async (request, reply) => {
     if (!(registry && can(permissionsOf(request), 'queries.outside'))) {
       return reply.code(403).send({ error: 'forbidden', message: 'Only who may query tables outside Data Hub reads what Data Hub knows of one.', permission: 'queries.outside' });
     }
@@ -501,9 +502,23 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     if (key.length > 1024 || !/^[^\s.,`]+\.[^\s.,`]+\.[^\s.,`]+$/.test(key)) {
       return reply.code(400).send({ error: 'invalid_request', message: 'Name the table by its Key, project.dataset.table.' });
     }
+    const named = (request.query.name ?? '').trim().replace(/`/g, '');
     try {
-      const table = (await registry.knownTables([key], authorization(request))).find((known) => known.key === key && !known.resource);
-      if (!table) return reply.code(404).send({ error: 'not_found', message: 'Data Hub knows no such table outside its Resources.' });
+      const answered = await registry.knownTables([key], authorization(request));
+      const table = answered.find((known) => known.key === key && !known.resource);
+      if (!table) {
+        // A Resource stays one; a table registry does not know, BigQuery may have in the project of Data Hub.
+        const fullName = named.toLowerCase() === key ? named : key;
+        if (answered.some((known) => known.key === key) || key.split('.')[0] !== project.toLowerCase()) {
+          return reply.code(404).send({ error: 'not_found', message: 'Data Hub knows no such table outside its Resources.' });
+        }
+        const live = await bigquery.describe(fullName).catch((error: unknown) => {
+          if (error instanceof BigQueryRefused) return null;
+          throw error;
+        });
+        if (!live) return reply.code(404).send({ error: 'not_found', message: 'BigQuery has no such table in the project of Data Hub.' });
+        return { table: outsideTable(bigQueryTable(fullName, live), live) };
+      }
       const live = await bigquery.describe(table.fullName).catch((error: unknown) => {
         request.log.warn({ err: error, table: table.fullName }, 'BigQuery did not describe a table outside Data Hub; what dbt knew stands instead');
         return null;

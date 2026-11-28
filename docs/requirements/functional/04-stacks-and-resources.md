@@ -524,7 +524,7 @@ In the SQL of a query, a User with `queries.outside` ([FR-SR-56](#fr-sr-56)) dou
 
 *Note of 2026-11-14, on building it: query reads it from registry and from BigQuery by its metadata ([TR-SR-31](../technical/04-stacks-and-resources.md#tr-sr-31)).*
 
-*Note of 2026-11-28: a table only BigQuery knows shows what BigQuery knows of it, without anything from dbt ([FR-SR-75](#fr-sr-75), [OP-UX-137](../../design/principles.md#op-ux-137)).*
+*Note of 2026-11-28: a table only BigQuery knows shows what BigQuery knows of it, without anything from dbt ([FR-SR-75](#fr-sr-75), [DEC-UX-368](../../design/principles.md#dec-ux-368)).*
 
 <a id="fr-sr-63"></a>
 ### FR-SR-63 · A User works on queries together in a Project
@@ -649,7 +649,7 @@ A User archives a Project they no longer work on, from the head of its page, on 
 <a id="fr-sr-75"></a>
 ### FR-SR-75 · A power user's query reads any table BigQuery has in the project
 
-**Status:** Specified · **Source:** Max, 2026-11-28 ([DEC-SR-50](#dec-sr-50), [OP-UX-137](../../design/principles.md#op-ux-137), [OP-UX-138](../../design/principles.md#op-ux-138)) · **Screens:** [query](../../design/screens/query.html)
+**Status:** Implemented · **Source:** Max, 2026-11-28 ([DEC-SR-50](#dec-sr-50), [DEC-UX-368](../../design/principles.md#dec-ux-368), [DEC-UX-369](../../design/principles.md#dec-ux-369)) · **Screens:** [query](../../design/screens/query.html)
 
 In a query of a User with `queries.outside` ([FR-SR-56](#fr-sr-56)), a table that Data Hub does not know from a dbt project it follows is no longer refused for that: BigQuery says whether the project of Data Hub has it, and if so the query reads it as a table outside Data Hub, measured by the Pre-flight within the ranges of the User and kept in the Query Log. Such a table, for instance a model that a job other than the Source Job built, which registry learns only at the next run of that Source Job, shows next to the Resources of the query as a table outside Data Hub that dbt does not know, or not yet; what Data Hub shows of it, its columns and their descriptions, comes from BigQuery alone ([FR-SR-62](#fr-sr-62)). A table BigQuery does not have, or one in another project, keeps the query from running and says so. A query that reads one cannot become a Lens ([DEC-LE-22](09-lenses.md#dec-le-22)); Claude does the same for such a User.
 

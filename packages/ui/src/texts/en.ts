@@ -22,6 +22,7 @@ export default {
   'maturity.was': '{name} (was {previous})',
   'maturity.ladder': 'Maturity ladder: Level {level} of 5',
   'origin.dbt': 'From dbt',
+  'origin.bigquery': 'From BigQuery',
   'origin.owner': 'From the Owner',
   'origin.dataTeam': 'From the Data Team',
   'description.business': 'Business Description',

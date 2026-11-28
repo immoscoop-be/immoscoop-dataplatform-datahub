@@ -438,6 +438,17 @@ function preflightOf(sql: string, parameters: { name: string }[] = []) {
   if (sql.includes('-- every year')) return { ...base, runnable: true, bytes: 4_800_000_000, range: 'request' };
   // For a Data Admin, who approves any run themselves (DEC-PL-12).
   if (sql.includes('-- five years')) return { ...base, runnable: true, bytes: 4_800_000_000, range: 'approve', thresholds: { ...base.thresholds, above: 'approve' } };
+  // A table only BigQuery knows, by its name in its own case (DEC-SR-50); and one BigQuery does not have.
+  if (sql.includes('intm_touch__touchDate')) {
+    const fullName = 'immoscoop-dataplatform-398214.colleciones_dbt.intm_touch__touchDate';
+    const columns = [{ name: 'touch_date', dataType: 'DATE', description: '' }, { name: 'lead_id', dataType: 'STRING', description: 'Id of the lead, in BigQuery.' }];
+    return { ...base, runnable: true, bytes: 40_000_000, range: 'free', tables: [{ key: fullName.toLowerCase(), fullName, name: 'intm_touch__touchDate', layer: null, columns, partition: { field: 'touch_date', unit: 'day' } }] };
+  }
+  if (sql.includes('nowhere.nothing')) {
+    const name = 'immoscoop-dataplatform-398214.nowhere.nothing';
+    const start = sql.indexOf(name) - 1;
+    return { ...base, runnable: false, bytes: null, range: null, partitions: null, problems: [{ kind: 'unknown', name, start, end: start + name.length + 2 }] };
+  }
   // A power user's query reads a table Data Hub knows that is no Resource (FR-SR-56).
   if (sql.includes('stg_oltp__leads')) {
     const key = 'immoscoop-dataplatform-398214.dbt_prod_staging.stg_oltp__leads';
@@ -1114,6 +1125,23 @@ function serve({
       const names = [...asked.resources.map((id) => ({ r5: 'listings', r6: 'saved_searches' })[id] ?? id), ...asked.tables.map((key) => key.split('.').at(-1) as string)];
       const ctes = names.map((name) => `${name} as (\n    select\n        *\n    from\n        \`p.d.${name}\`\n)`);
       return json({ sql: `with\n\n${ctes.join(',\n\n')}\n\n${asked.sql}`, ctes });
+    }
+    // What BigQuery knows of a table only it knows, asked by its full name in its own case (DEC-UX-368).
+    if (path.startsWith('/outside-table?key=') && path.includes('intm_touch__touchdate')) {
+      const fullName = 'immoscoop-dataplatform-398214.colleciones_dbt.intm_touch__touchDate';
+      return json({
+        table: {
+          key: fullName.toLowerCase(), fullName, name: 'intm_touch__touchDate', layer: null, resourceType: null, projectName: null, materialized: null,
+          description: '',
+          bigquery: { type: 'TABLE', bytes: 412_000_000, rows: 2_300_000, partitions: 38, modifiedAt: '2026-11-28T13:04:34.000Z' },
+          partition: { field: 'touch_date', unit: 'day', required: false },
+          clusterBy: ['lead_id'],
+          columns: [
+            { name: 'touch_date', type: 'DATE', description: '', from: null, partition: true, cluster: null },
+            { name: 'lead_id', type: 'STRING', description: 'Id of the lead, in BigQuery.', from: 'bigquery', partition: false, cluster: 1 },
+          ],
+        },
+      });
     }
     // What dbt and BigQuery know of a table outside Data Hub (FR-SR-62).
     if (path.startsWith('/outside-table?key=')) {
@@ -4980,7 +5008,7 @@ describe('Query', () => {
     await fireEvent.keyDown(screen.getByRole('combobox', { name: 'Snelvenster' }), { key: 'Enter' });
     const window = within(await screen.findByRole('dialog', { name: 'stg_oltp__leads' }));
     await window.findByText('One row per lead as the OLTP database keeps it.');
-    expect(calls).toContainEqual({ method: 'GET', path: '/outside-table?key=immoscoop-dataplatform-398214.dbt_prod_staging.stg_oltp__leads' });
+    expect(calls).toContainEqual({ method: 'GET', path: '/outside-table?key=immoscoop-dataplatform-398214.dbt_prod_staging.stg_oltp__leads&name=immoscoop-dataplatform-398214.dbt_prod_staging.stg_oltp__leads' });
     const facts = (window.getByText('Uit BigQuery, nu').closest('div') as HTMLElement).textContent?.replace(/\s+/g, ' ') ?? '';
     expect(facts).toContain('Tabel · incremental in dbt');
     expect(facts).toContain('created_date, per dag · BigQuery vraagt er een filter op');
@@ -4998,6 +5026,47 @@ describe('Query', () => {
     await vi.waitFor(() => expect(screen.queryByRole('dialog', { name: 'stg_oltp__leads' })).toBeNull());
     await fireEvent.click(main.getByRole('button', { name: 'stg_oltp__leads' }));
     expect(await screen.findByRole('dialog', { name: 'stg_oltp__leads' })).toBeTruthy();
+  });
+
+  it('reads a table only BigQuery knows: a database on its chip, only what BigQuery knows in its window, and a table BigQuery does not have as an error (FR-SR-75, DEC-UX-368)', async () => {
+    const table = '`immoscoop-dataplatform-398214.colleciones_dbt.intm_touch__touchDate`';
+    const calls = serve({ as: 'admin', queries: [{ ...QUERY, resources: [], sql: `select * from ${table}\nwhere touch_date = '2026-11-28'` }] });
+    open('/query/q1');
+    const { unmount } = render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    // The same quiet chip, only its name; that dbt does not know it, or not yet, on a hover.
+    const chip = (await main.findByText('intm_touch__touchDate', { selector: '.chip .mono' }, { timeout: 3000 })).closest('.chip') as HTMLElement;
+    expect(chip.textContent?.trim()).toBe('intm_touch__touchDate');
+    expect(chip.title).toMatch(/^Niet in dbt · een tabel die BigQuery heeft, maar die geen dbt-project dat Data Hub volgt kent, of nog niet/);
+    expect(await main.findByRole('button', { name: /Uitvoeren\s*40 MB/ })).toBeTruthy();
+    const line = main.getByText(/Leest een tabel buiten Data Hub:/).closest('p') as HTMLElement;
+    expect(line.textContent).toContain('intm_touch__touchDate');
+
+    // Its window: nothing from dbt, its dataset, its columns from BigQuery, asked by its full name in its own case.
+    await fireEvent.click(chip);
+    const window = within(await screen.findByRole('dialog', { name: 'intm_touch__touchDate' }));
+    await window.findByText('Types en beschrijvingen uit BigQuery: dbt kent deze tabel niet, of nog niet.');
+    expect(calls).toContainEqual({ method: 'GET', path: `/outside-table?key=${encodeURIComponent('immoscoop-dataplatform-398214.colleciones_dbt.intm_touch__touchdate')}&name=${encodeURIComponent('immoscoop-dataplatform-398214.colleciones_dbt.intm_touch__touchDate')}` });
+    expect(window.getByText(/Geen Resource · niet in dbt/)).toBeTruthy();
+    expect(window.getByText(/Een tabel die BigQuery heeft, maar die geen dbt-project dat Data Hub volgt kent, of nog niet/)).toBeTruthy();
+    expect(window.queryByText('dbt heeft er geen beschrijving van.')).toBeNull();
+    const facts = (window.getByText('Uit BigQuery, nu').closest('div') as HTMLElement).textContent?.replace(/\s+/g, ' ') ?? '';
+    expect(facts).toContain('Datasetcolleciones_dbt');
+    // A description from BigQuery carries no tag here: all of it comes from BigQuery.
+    expect(window.getByText('Id of the lead, in BigQuery.').closest('.text')?.textContent).toBe('Id of the lead, in BigQuery.');
+    unmount();
+
+    // A table BigQuery does not have, or one in another project: an error under the SQL.
+    serve({ as: 'admin', queries: [{ ...QUERY, resources: [], sql: 'select * from `immoscoop-dataplatform-398214.nowhere.nothing`' }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    expect(
+      await within(await screen.findByRole('main')).findByText(
+        'immoscoop-dataplatform-398214.nowhere.nothing is geen tabel in BigQuery: ze bestaat niet, of ze staat in een ander project dan dat van Data Hub.',
+        undefined,
+        { timeout: 3000 },
+      ),
+    ).toBeTruthy();
   });
 
   it('checks what is typed once it pauses two seconds, a query that opens at once (DEC-UX-154)', async () => {

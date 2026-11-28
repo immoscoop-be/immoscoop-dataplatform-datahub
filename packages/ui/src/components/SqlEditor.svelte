@@ -11,6 +11,8 @@
     businessDescription: string;
     /** A column of a table outside Data Hub: it has no Owner, so no Business Description (FR-SR-62). */
     outside?: boolean;
+    /** Where its description comes from: BigQuery for a table only BigQuery knows (DEC-UX-368); dbt otherwise. */
+    from?: 'bigquery';
   }
 
   /**
@@ -369,7 +371,7 @@
       box.append(paragraph);
     };
     if (suggestion.businessDescription) describe(t('origin.owner'), suggestion.businessDescription, false);
-    describe(t('origin.dbt'), suggestion.description || '–', true);
+    describe(t(suggestion.from === 'bigquery' ? 'origin.bigquery' : 'origin.dbt'), suggestion.description || '–', true);
     return box;
   }
 

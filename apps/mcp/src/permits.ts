@@ -34,7 +34,7 @@ export interface Permits {
   results: Results;
   /** `queries.make`: make, check, run and change queries of their own. */
   query: boolean;
-  /** `queries.outside`: a power user also reads the tables Data Hub knows that are no Resource, also without Resources (FR-SR-56). */
+  /** `queries.outside`: a power user also reads the tables Data Hub knows that are no Resource, and any other table BigQuery has in the project of Data Hub, also without Resources (FR-SR-56, DEC-SR-50). */
   outside: boolean;
   /** Read queries: their own, with `queries.make`, or those of others, with `queries.seeOthers`. */
   readQueries: boolean;

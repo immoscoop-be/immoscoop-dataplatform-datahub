@@ -1064,7 +1064,7 @@ const syncRun = () => {
   if (out) out.innerHTML = tables.map(t => `<span class="scope-chip outside"><i class="ph-fill ph-warning"></i><span class="mono">${t}</span> is not a resource of this query`
     + (t === removedRes ? '' : `<button class="text-link" type="button" data-add-res="${t}">Add it to this query</button>`) + '</span>').join('')
     + known.map(([t, layer]) => layer === 'bq'
-      // A table only BigQuery knows (OP-UX-137, Proposal): the same quiet dashed chip, a database for the cube of a dbt model
+      // A table only BigQuery knows (DEC-UX-368): the same quiet dashed chip, a database for the cube of a dbt model
       ? `<span class="scope-chip known" data-known="bq" title="Not in dbt · a table BigQuery has that no dbt project Data Hub follows knows, or not yet; no Resource, so no Owner, Level or Publication. Double-click its name in the SQL for what BigQuery knows of it"><i class="ph ph-database kind-icon" role="img" aria-label="Table in BigQuery"></i><span class="mono">${t}</span></span>`
       : `<span class="scope-chip known" title="${layer} · a table Data Hub knows from a dbt project it follows; no Resource, so no Owner, Level or Publication. Double-click its name in the SQL for what dbt and BigQuery know of it"><i class="ph ph-cube kind-icon" role="img" aria-label="Model"></i><span class="mono">${t}</span></span>`).join('');
   const knownLine = document.getElementById('q-known');
@@ -1379,7 +1379,7 @@ if (document.querySelector('.sql-editor')) colourSql(document.querySelector('.sq
         desc: 'Each lead with its latest status, from the changes of its status.',
         facts: [['Kind', 'View · a view in dbt: it stores nothing, a query on it reads the tables beneath it, as the Pre-flight measures'], ['Partitioned by', 'A view has no partitions of its own'], ['Last changed', 'Its definition, on 12 Nov 2026']],
         cols: [['lead_id', 'STRING', null, 'Id of the lead.'], ['status', 'STRING', null, 'The latest status of the lead.'], ['status_changed_at', 'TIMESTAMP', null, 'When it got that status.'], ['days_open', 'INT64', null, '']] },
-      // A table only BigQuery knows (DEC-SR-50, OP-UX-137 Proposal): built, for instance, by a job other than the Source
+      // A table only BigQuery knows (DEC-SR-50, DEC-UX-368): built, for instance, by a job other than the Source
       // Job; no layer, project or description from dbt, so its columns carry what BigQuery says of them
       bq: { name: 'intm_leads__touches', meta: 'Not a Resource · not in dbt', full: 'immoscoop-dataplatform-398214.dbt_prod_intermediate.intm_leads__touches',
         lead: 'A table BigQuery has that no dbt project Data Hub follows knows, or not yet: a job other than the one Data Hub follows may have built it. It is no Resource: no Owner, Level or Publication.',

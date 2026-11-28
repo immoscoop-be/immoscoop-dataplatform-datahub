@@ -42,5 +42,17 @@ describe('a field explained from the SQL (DEC-UX-221)', () => {
     expect(pop.textContent).toContain('STRING · stg_oltp__leads');
     expect(pop.textContent).toContain('Id of the lead.');
     expect(pop.textContent).not.toContain('Nog geen Business Description.');
+    expect(pop.textContent).toContain('Uit dbt');
+  });
+
+  it('says a field of a table only BigQuery knows has its description from BigQuery (DEC-UX-368)', () => {
+    render(FieldExplain, {
+      fields: [{ name: 'lead_id', type: 'STRING', resource: 'intm_touch__touchDate', role: null, description: 'Id of the lead.', businessDescription: '', outside: true, from: 'bigquery' }],
+      at: { left: 100, right: 160, top: 100, bottom: 118 },
+      onclose: () => {},
+    });
+    const pop = screen.getByRole('dialog', { name: 'lead_id' });
+    expect(pop.textContent).toContain('Uit BigQuery');
+    expect(pop.textContent).not.toContain('Uit dbt');
   });
 });

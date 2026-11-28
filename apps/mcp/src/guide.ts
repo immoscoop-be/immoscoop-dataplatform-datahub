@@ -125,7 +125,7 @@ export function mayDo(permissions: Permissions, permits: Permits): string[] {
     can(permissions, 'queries.make') && 'Make and run queries of your own',
     can(permissions, 'queries.make') &&
       can(permissions, 'queries.outside') &&
-      'Query tables outside Data Hub: every table Data Hub knows from the dbt projects it follows, also without Resources; such a query never becomes a Lens',
+      'Query tables outside Data Hub: every table Data Hub knows from the dbt projects it follows, and any other table BigQuery has in the project of Data Hub, also without Resources; such a query never becomes a Lens',
     (can(permissions, 'queries.make') || can(permissions, 'resources.preview')) &&
       ranges.above === 'approve'
         ? `A run reads freely up to ${bytes(ranges.approve)}, and above that once you approve it, without a limit; above ${bytes(ranges.request)} with a warning first`
