@@ -20,12 +20,13 @@
   Marks, a proposal of 2026-11-28 (DEC-UX-360, OP-UX-132 to OP-UX-136): a User marks a Message for themselves, to follow it
   up or find it again: Follow up, Important, Starred. Only they see their marks. The panel lists a mark at its very top,
   just under the search, only while at least one Message has it, with how many Messages it holds; a click opens it as a
-  view. The three marks toggle in the head of an opened Message, and on hover on its line in the list, where a mark set
-  stays visible. Taken off in the view of that mark, a Message stays there, faded, until the User goes elsewhere.
-  ?mark=followup opens Follow up, ?mark=emptied shows Important after its last Message lost the mark, ?mark=none a User
+  view. The marks are set in a dropdown, as more may come: one button in the head of an opened Message, and on hover on
+  its line in the list, shows the marks set and opens it. A line separates the marks, Kind and On in the panel.
+  Taken off in the view of that mark, a Message stays there, faded, until the User goes elsewhere.
+  ?mark=menu opens the dropdown on an opened Message, ?mark=followup opens Follow up, ?mark=emptied shows Important after its last Message lost the mark, ?mark=none a User
   without marks.
   Requirements: FR-SR-10, FR-RC-17, FR-MR-12, FR-LE-09, FR-CV-01, FR-CV-02, FR-CV-03, FR-CV-05, FR-CV-06, FR-CV-08, FR-CV-09, FR-CV-15, FR-CV-16, FR-LR-05, FR-LR-38
-  Decisions: DEC-UX-29, DEC-UX-30, DEC-UX-79, DEC-UX-179, DEC-UX-360, DEC-CV-02, DEC-CV-06, DEC-CV-10, DEC-CV-13, DEC-RC-03, DEC-LR-11.
+  Decisions: DEC-UX-29, DEC-UX-30, DEC-UX-79, DEC-UX-179, DEC-UX-360, DEC-UX-361, DEC-CV-02, DEC-CV-06, DEC-CV-10, DEC-CV-13, DEC-RC-03, DEC-LR-11.
   Messages of the catalogue: MSG-CNV-01, MSG-CNV-03, MSG-CNV-04, MSG-CNV-05, MSG-CNV-07, MSG-LEN-01, MSG-RES-01, MSG-RES-02, MSG-RES-03.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -75,18 +76,20 @@
    <a class="mc-filter" href="#" data-mark-view="followup" title="Your mark: only you see it"><i class="ph-fill ph-flag"></i><span>Follow up</span><span class="count">3</span></a>
    <a class="mc-filter" href="#" data-mark-view="important" title="Your mark: only you see it"><i class="ph-fill ph-warning-circle"></i><span>Important</span><span class="count">1</span></a>
    <a class="mc-filter" href="#" data-mark-view="starred" title="Your mark: only you see it"><i class="ph-fill ph-star"></i><span>Starred</span><span class="count">2</span></a>
-   <span class="mark-nav-rule" aria-hidden="true"></span>
+   <span class="panel-rule mark-nav-rule" aria-hidden="true"></span>
   </div>
   <a class="mc-filter" href="#"><i class="ph ph-tray"></i><span>For you</span><span class="count">6</span></a>
   <a class="mc-filter on" href="#" aria-current="page"><i class="ph ph-circle"></i><span>Unread</span><span class="count">3</span></a>
   <a class="mc-filter" href="#"><i class="ph ph-pencil-simple-line"></i><span>Written by you</span><span class="count">1</span></a>
   <a class="mc-filter" href="#"><i class="ph ph-globe-simple"></i><span>Everything you may see</span></a>
+  <span class="panel-rule" aria-hidden="true"></span>
   <div class="panel-label">Kind</div>
   <a class="mc-filter" href="#"><i class="ph ph-question"></i><span>Questions</span><span class="count">4</span></a>
   <a class="mc-filter" href="#"><i class="ph ph-chat-text"></i><span>Remarks</span><span class="count">1</span></a>
   <a class="mc-filter" href="#"><i class="ph ph-warning-diamond"></i><span>Signals</span><span class="count">1</span></a>
   <a class="mc-filter" href="#"><i class="ph ph-seal-question"></i><span>Requests</span><span class="count">2</span></a>
   <a class="mc-filter" href="#"><i class="ph ph-bell-simple"></i><span>From Data Hub</span><span class="count">1</span></a>
+  <span class="panel-rule" aria-hidden="true"></span>
   <div class="panel-label">On</div>
   <a class="mc-filter" href="#"><i class="ph ph-coins"></i><span>Collections</span><span class="count">1</span></a>
   <a class="mc-filter" href="#"><i class="ph ph-table"></i><span>Resources</span><span class="count">3</span></a>
@@ -106,7 +109,7 @@
   <a class="mc-item on unread" data-key="m1" data-marks="followup" href="#" data-target="request" role="tab" aria-selected="true">
     <span class="mc-dot" aria-label="Unread"></span>
     <span style="min-width:0">
-     <span class="mc-row"><span class="mc-subject" data-href="lens-messages.html"><i class="ph ph-aperture" aria-hidden="true"></i><span class="mc-kind">Lens</span><b>Leads per source, all weeks</b><span class="meta">· Credit leads</span></span><span class="mk-set"><span class="mk" role="button" tabindex="0" data-mark="followup" aria-pressed="false" title="Follow up: only you see your marks"><i class="ph ph-flag"></i></span><span class="mk" role="button" tabindex="0" data-mark="important" aria-pressed="false" title="Important: only you see your marks"><i class="ph ph-warning-circle"></i></span><span class="mk" role="button" tabindex="0" data-mark="starred" aria-pressed="false" title="Starred: only you see your marks"><i class="ph ph-star"></i></span></span></span>
+     <span class="mc-row"><span class="mc-subject" data-href="lens-messages.html"><i class="ph ph-aperture" aria-hidden="true"></i><span class="mc-kind">Lens</span><b>Leads per source, all weeks</b><span class="meta">· Credit leads</span></span><button class="mk-btn" type="button" aria-haspopup="menu" aria-expanded="false" title="Your marks: only you see them"></button></span>
      <span class="mc-row" style="margin-top:6px"><span class="kind request">Request</span><span class="mc-status"><i class="ph ph-hourglass-medium"></i>Waiting</span><span class="item-title">Mia Peeters</span><span class="meta" style="margin-left:auto">20 min ago</span></span>
      <span class="mc-excerpt">Please accept this Lens: one run reads 6.2 GB, all 312 partitions of Weekly lead volume. For the yearly review with KBC; it runs once a month.</span>
      
@@ -114,7 +117,7 @@
    </a><a class="mc-item unread" data-key="m2" data-marks="" href="#" data-for="owner" data-target="described" role="tab" aria-selected="false">
     <span class="mc-dot" aria-label="Unread"></span>
     <span style="min-width:0">
-     <span class="mc-row"><span class="mc-subject" data-href="resource-detail.html"><i class="ph ph-table" aria-hidden="true"></i><span class="mc-kind">Resource</span><b>Weekly lead volume</b><span class="meta">· Credit leads</span></span><span class="mk-set"><span class="mk" role="button" tabindex="0" data-mark="followup" aria-pressed="false" title="Follow up: only you see your marks"><i class="ph ph-flag"></i></span><span class="mk" role="button" tabindex="0" data-mark="important" aria-pressed="false" title="Important: only you see your marks"><i class="ph ph-warning-circle"></i></span><span class="mk" role="button" tabindex="0" data-mark="starred" aria-pressed="false" title="Starred: only you see your marks"><i class="ph ph-star"></i></span></span></span>
+     <span class="mc-row"><span class="mc-subject" data-href="resource-detail.html"><i class="ph ph-table" aria-hidden="true"></i><span class="mc-kind">Resource</span><b>Weekly lead volume</b><span class="meta">· Credit leads</span></span><button class="mk-btn" type="button" aria-haspopup="menu" aria-expanded="false" title="Your marks: only you see them"></button></span>
      <span class="mc-row" style="margin-top:6px"><span class="kind">Data Hub</span><span class="item-title">Data Hub</span><span class="meta" style="margin-left:auto">yesterday</span></span>
      <span class="mc-excerpt">Two descriptions changed in dbt: the one of the table and the one of lead_count. Your Business Descriptions stay as they are, next to them.</span>
      
@@ -122,7 +125,7 @@
    </a><a class="mc-item unread" data-key="m3" data-marks="followup important" href="#" data-for="owner" data-target="question" role="tab" aria-selected="false">
     <span class="mc-dot" aria-label="Unread"></span>
     <span style="min-width:0">
-     <span class="mc-row"><span class="mc-subject" data-href="lens-messages.html"><i class="ph ph-aperture" aria-hidden="true"></i><span class="mc-kind">Lens</span><b>Leads per source name</b><span class="meta">· Credit leads</span></span><span class="mk-set"><span class="mk" role="button" tabindex="0" data-mark="followup" aria-pressed="false" title="Follow up: only you see your marks"><i class="ph ph-flag"></i></span><span class="mk" role="button" tabindex="0" data-mark="important" aria-pressed="false" title="Important: only you see your marks"><i class="ph ph-warning-circle"></i></span><span class="mk" role="button" tabindex="0" data-mark="starred" aria-pressed="false" title="Starred: only you see your marks"><i class="ph ph-star"></i></span></span></span>
+     <span class="mc-row"><span class="mc-subject" data-href="lens-messages.html"><i class="ph ph-aperture" aria-hidden="true"></i><span class="mc-kind">Lens</span><b>Leads per source name</b><span class="meta">· Credit leads</span></span><button class="mk-btn" type="button" aria-haspopup="menu" aria-expanded="false" title="Your marks: only you see them"></button></span>
      <span class="mc-row" style="margin-top:6px"><span class="kind">Question</span><span class="mc-status" data-pane-group="close" data-pane="open closing"><i class="ph ph-circle"></i>Open</span><span class="mc-status" data-pane-group="close" data-pane="closed" hidden><i class="ph ph-minus-circle"></i>Closed</span><span class="item-title">Karel Leys</span><span class="meta" style="margin-left:auto">1 hour ago</span></span>
      <span class="mc-excerpt">Mailing brings only 3.8% of the leads this year; last year it was close to 10%. Did something change in how mailing leads are tagged?</span>
      
@@ -130,7 +133,7 @@
    </a><a class="mc-item unread" data-key="m4" data-marks="followup" href="#">
     <span class="mc-dot" aria-label="Unread"></span>
     <span style="min-width:0">
-     <span class="mc-row"><span class="mc-subject" data-href="resource-messages.html"><i class="ph ph-table" aria-hidden="true"></i><span class="mc-kind">Resource</span><b>Weekly lead volume</b><span class="meta">· Credit leads</span></span><span class="mk-set"><span class="mk" role="button" tabindex="0" data-mark="followup" aria-pressed="false" title="Follow up: only you see your marks"><i class="ph ph-flag"></i></span><span class="mk" role="button" tabindex="0" data-mark="important" aria-pressed="false" title="Important: only you see your marks"><i class="ph ph-warning-circle"></i></span><span class="mk" role="button" tabindex="0" data-mark="starred" aria-pressed="false" title="Starred: only you see your marks"><i class="ph ph-star"></i></span></span></span>
+     <span class="mc-row"><span class="mc-subject" data-href="resource-messages.html"><i class="ph ph-table" aria-hidden="true"></i><span class="mc-kind">Resource</span><b>Weekly lead volume</b><span class="meta">· Credit leads</span></span><button class="mk-btn" type="button" aria-haspopup="menu" aria-expanded="false" title="Your marks: only you see them"></button></span>
      <span class="mc-row" style="margin-top:6px"><span class="kind signal">Signal</span><span class="mc-status"><i class="ph ph-circle"></i>Open</span><span class="item-title">Karel Leys</span><span class="meta" style="margin-left:auto">3 days ago</span></span>
      <span class="mc-excerpt">The count for the source partner dropped to zero in the week of 13 Oct. We usually see about forty leads there.</span>
      <span class="mc-row" style="margin-top:4px"><span class="meta"><i class="ph ph-chat-circle"></i> 1</span></span>
@@ -138,7 +141,7 @@
    </a><a class="mc-item unread" data-key="m5" data-marks="" href="#" data-for="owner">
     <span class="mc-dot" aria-label="Unread"></span>
     <span style="min-width:0">
-     <span class="mc-row"><span class="mc-subject" data-href="query.html"><i class="ph ph-terminal-window" aria-hidden="true"></i><span class="mc-kind">Query</span><b>Partner leads in September</b></span><span class="mk-set"><span class="mk" role="button" tabindex="0" data-mark="followup" aria-pressed="false" title="Follow up: only you see your marks"><i class="ph ph-flag"></i></span><span class="mk" role="button" tabindex="0" data-mark="important" aria-pressed="false" title="Important: only you see your marks"><i class="ph ph-warning-circle"></i></span><span class="mk" role="button" tabindex="0" data-mark="starred" aria-pressed="false" title="Starred: only you see your marks"><i class="ph ph-star"></i></span></span></span>
+     <span class="mc-row"><span class="mc-subject" data-href="query.html"><i class="ph ph-terminal-window" aria-hidden="true"></i><span class="mc-kind">Query</span><b>Partner leads in September</b></span><button class="mk-btn" type="button" aria-haspopup="menu" aria-expanded="false" title="Your marks: only you see them"></button></span>
      <span class="mc-row" style="margin-top:6px"><span class="kind">Question</span><span class="mc-status"><i class="ph ph-circle"></i>Open</span><span class="item-title">Karel Leys</span><span class="meta" style="margin-left:auto">yesterday</span></span>
      <span class="mc-excerpt">Can this become a Lens? I run it every month for the partner review.</span>
      
@@ -146,7 +149,7 @@
    </a><a class="mc-item" data-key="m6" data-marks="starred" href="#">
     <span class="mc-dot" aria-label=""></span>
     <span style="min-width:0">
-     <span class="mc-row"><span class="mc-subject" data-href="lens-messages.html"><i class="ph ph-aperture" aria-hidden="true"></i><span class="mc-kind">Lens</span><b>Credit funnel by region</b><span class="meta">· Credit leads</span></span><span class="mk-set"><span class="mk" role="button" tabindex="0" data-mark="followup" aria-pressed="false" title="Follow up: only you see your marks"><i class="ph ph-flag"></i></span><span class="mk" role="button" tabindex="0" data-mark="important" aria-pressed="false" title="Important: only you see your marks"><i class="ph ph-warning-circle"></i></span><span class="mk" role="button" tabindex="0" data-mark="starred" aria-pressed="false" title="Starred: only you see your marks"><i class="ph ph-star"></i></span></span></span>
+     <span class="mc-row"><span class="mc-subject" data-href="lens-messages.html"><i class="ph ph-aperture" aria-hidden="true"></i><span class="mc-kind">Lens</span><b>Credit funnel by region</b><span class="meta">· Credit leads</span></span><button class="mk-btn" type="button" aria-haspopup="menu" aria-expanded="false" title="Your marks: only you see them"></button></span>
      <span class="mc-row" style="margin-top:6px"><span class="kind request">Request</span><span class="mc-status"><i class="ph ph-check-circle"></i>Accepted</span><span class="item-title">Mia Peeters</span><span class="meta" style="margin-left:auto">3 days ago</span></span>
      <span class="mc-excerpt">Accepted by Dirk Vos: it reads 31 GB, but it runs once a quarter and nothing smaller answers the question.</span>
      <span class="mc-row" style="margin-top:4px"><span class="meta"><i class="ph ph-chat-circle"></i> 1</span></span>
@@ -154,7 +157,7 @@
    </a><a class="mc-item" data-key="m7" data-marks="" href="#" data-for="owner">
     <span class="mc-dot" aria-label=""></span>
     <span style="min-width:0">
-     <span class="mc-row"><span class="mc-subject" data-href="collection-messages.html"><i class="ph ph-coins" aria-hidden="true"></i><span class="mc-kind">Collection</span><b>Credit leads</b></span><span class="mk-set"><span class="mk" role="button" tabindex="0" data-mark="followup" aria-pressed="false" title="Follow up: only you see your marks"><i class="ph ph-flag"></i></span><span class="mk" role="button" tabindex="0" data-mark="important" aria-pressed="false" title="Important: only you see your marks"><i class="ph ph-warning-circle"></i></span><span class="mk" role="button" tabindex="0" data-mark="starred" aria-pressed="false" title="Starred: only you see your marks"><i class="ph ph-star"></i></span></span></span>
+     <span class="mc-row"><span class="mc-subject" data-href="collection-messages.html"><i class="ph ph-coins" aria-hidden="true"></i><span class="mc-kind">Collection</span><b>Credit leads</b></span><button class="mk-btn" type="button" aria-haspopup="menu" aria-expanded="false" title="Your marks: only you see them"></button></span>
      <span class="mc-row" style="margin-top:6px"><span class="kind">Question</span><span class="mc-status"><i class="ph ph-check-circle"></i>Answered</span><span class="item-title">Ruth Aerts</span><span class="meta" style="margin-left:auto">yesterday</span></span>
      <span class="mc-excerpt">Will KBC follow-up be published this month? We would like to use it in the monthly report.</span>
      <span class="mc-row" style="margin-top:4px"><span class="meta"><i class="ph ph-chat-circle"></i> 1</span></span>
@@ -162,7 +165,7 @@
    </a><a class="mc-item" data-key="m8" data-marks="starred" href="#">
     <span class="mc-dot" aria-label=""></span>
     <span style="min-width:0">
-     <span class="mc-row"><span class="mc-subject" data-href="resource-detail.html"><i class="ph ph-table" aria-hidden="true"></i><span class="mc-kind">Resource</span><b>Weekly lead volume</b><span class="meta">· Credit leads</span></span><span class="mk-set"><span class="mk" role="button" tabindex="0" data-mark="followup" aria-pressed="false" title="Follow up: only you see your marks"><i class="ph ph-flag"></i></span><span class="mk" role="button" tabindex="0" data-mark="important" aria-pressed="false" title="Important: only you see your marks"><i class="ph ph-warning-circle"></i></span><span class="mk" role="button" tabindex="0" data-mark="starred" aria-pressed="false" title="Starred: only you see your marks"><i class="ph ph-star"></i></span></span></span>
+     <span class="mc-row"><span class="mc-subject" data-href="resource-detail.html"><i class="ph ph-table" aria-hidden="true"></i><span class="mc-kind">Resource</span><b>Weekly lead volume</b><span class="meta">· Credit leads</span></span><button class="mk-btn" type="button" aria-haspopup="menu" aria-expanded="false" title="Your marks: only you see them"></button></span>
      <span class="mc-row" style="margin-top:6px"><span class="kind">Data Hub</span><span class="item-title">Data Hub</span><span class="meta" style="margin-left:auto">2 days ago</span></span>
      <span class="mc-excerpt">A field was added to Weekly lead volume since you confirmed it: lead_channel. Its Level stays 4 · Explored; mark it as seen on its page.</span>
      
@@ -170,14 +173,14 @@
    </a><a class="mc-item" data-key="m9" data-marks="" href="#">
     <span class="mc-dot" aria-label=""></span>
     <span style="min-width:0">
-     <span class="mc-row"><span class="mc-subject" data-href="resource-messages.html"><i class="ph ph-table" aria-hidden="true"></i><span class="mc-kind">Resource</span><b>Weekly lead volume</b><span class="meta">· Credit leads</span></span><span class="mk-set"><span class="mk" role="button" tabindex="0" data-mark="followup" aria-pressed="false" title="Follow up: only you see your marks"><i class="ph ph-flag"></i></span><span class="mk" role="button" tabindex="0" data-mark="important" aria-pressed="false" title="Important: only you see your marks"><i class="ph ph-warning-circle"></i></span><span class="mk" role="button" tabindex="0" data-mark="starred" aria-pressed="false" title="Starred: only you see your marks"><i class="ph ph-star"></i></span></span></span>
+     <span class="mc-row"><span class="mc-subject" data-href="resource-messages.html"><i class="ph ph-table" aria-hidden="true"></i><span class="mc-kind">Resource</span><b>Weekly lead volume</b><span class="meta">· Credit leads</span></span><button class="mk-btn" type="button" aria-haspopup="menu" aria-expanded="false" title="Your marks: only you see them"></button></span>
      <span class="mc-row" style="margin-top:6px"><span class="kind signal">Signal</span><span class="mc-status"><i class="ph ph-minus-circle"></i>Closed</span><span class="item-title">Ines Claes</span><span class="meta" style="margin-left:auto">4 days ago</span></span>
      <span class="mc-excerpt">Closed by Dirk Vos: the leads of the fair in Kortrijk are counted once again since the fix of 30 Oct.</span>
     </span>
    </a><a class="mc-item" data-key="m10" data-marks="" href="#" data-for="owner">
     <span class="mc-dot" aria-label=""></span>
     <span style="min-width:0">
-     <span class="mc-row"><span class="mc-subject" data-href="resource-messages.html"><i class="ph ph-table" aria-hidden="true"></i><span class="mc-kind">Resource</span><b>Weekly lead volume</b><span class="meta">· Credit leads</span></span><span class="mk-set"><span class="mk" role="button" tabindex="0" data-mark="followup" aria-pressed="false" title="Follow up: only you see your marks"><i class="ph ph-flag"></i></span><span class="mk" role="button" tabindex="0" data-mark="important" aria-pressed="false" title="Important: only you see your marks"><i class="ph ph-warning-circle"></i></span><span class="mk" role="button" tabindex="0" data-mark="starred" aria-pressed="false" title="Starred: only you see your marks"><i class="ph ph-star"></i></span></span></span>
+     <span class="mc-row"><span class="mc-subject" data-href="resource-messages.html"><i class="ph ph-table" aria-hidden="true"></i><span class="mc-kind">Resource</span><b>Weekly lead volume</b><span class="meta">· Credit leads</span></span><button class="mk-btn" type="button" aria-haspopup="menu" aria-expanded="false" title="Your marks: only you see them"></button></span>
      <span class="mc-row" style="margin-top:6px"><span class="kind">Question</span><span class="mc-status"><i class="ph ph-check-circle"></i>Answered</span><span class="item-title">You</span><span class="meta" style="margin-left:auto">1 week ago</span></span>
      <span class="mc-excerpt">Is a lead counted again when the same person applies twice in one week?</span>
      <span class="mc-row" style="margin-top:4px"><span class="meta"><i class="ph ph-chat-circle"></i> 1</span></span>
@@ -185,7 +188,7 @@
    </a><a class="mc-item" data-key="m11" data-marks="" href="#" data-for="datateam">
     <span class="mc-dot" aria-label=""></span>
     <span style="min-width:0">
-     <span class="mc-row"><span class="mc-subject" data-href="resource-unassigned.html"><i class="ph ph-table" aria-hidden="true"></i><span class="mc-kind">Resource</span><b>Saved searches</b></span><span class="mk-set"><span class="mk" role="button" tabindex="0" data-mark="followup" aria-pressed="false" title="Follow up: only you see your marks"><i class="ph ph-flag"></i></span><span class="mk" role="button" tabindex="0" data-mark="important" aria-pressed="false" title="Important: only you see your marks"><i class="ph ph-warning-circle"></i></span><span class="mk" role="button" tabindex="0" data-mark="starred" aria-pressed="false" title="Starred: only you see your marks"><i class="ph ph-star"></i></span></span></span>
+     <span class="mc-row"><span class="mc-subject" data-href="resource-unassigned.html"><i class="ph ph-table" aria-hidden="true"></i><span class="mc-kind">Resource</span><b>Saved searches</b></span><button class="mk-btn" type="button" aria-haspopup="menu" aria-expanded="false" title="Your marks: only you see them"></button></span>
      <span class="mc-row" style="margin-top:6px"><span class="kind">Data Hub</span><span class="item-title">Data Hub</span><span class="meta" style="margin-left:auto">2 days ago</span></span>
      <span class="mc-excerpt">Saved searches came in through the exposure <span class="mono">saved_searches</span> and waits for a Collection.</span>
      
@@ -197,7 +200,7 @@
   <div class="mc-detail-head">
    <i class="ph ph-aperture" style="font-size:22px;color:var(--text-secondary)" aria-hidden="true"></i>
    <div style="flex:1;min-width:0"><div class="meta">Lens · Credit leads · not published</div><div style="font-size:var(--text-section);font-weight:500">Leads per source, all weeks</div></div>
-   <span class="mk-head" data-of="m1" role="group" aria-label="Your marks, only you see them"><button class="mk" type="button" data-mark="followup" aria-pressed="false" title="Follow up: only you see your marks"><i class="ph ph-flag"></i></button><button class="mk" type="button" data-mark="important" aria-pressed="false" title="Important: only you see your marks"><i class="ph ph-warning-circle"></i></button><button class="mk" type="button" data-mark="starred" aria-pressed="false" title="Starred: only you see your marks"><i class="ph ph-star"></i></button></span><a data-for="owner" class="btn-quiet outline" href="lens-new-context.html?role=owner" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" title="Open the object with this Message in a floating window, to answer it with the object in view"><i class="ph ph-arrow-square-out"></i>Open in context</a><a data-for="datateam" class="btn-quiet outline" href="lens-new-context.html?role=datateam" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" title="Open the object with this Message in a floating window, to answer it with the object in view"><i class="ph ph-arrow-square-out"></i>Open in context</a>
+   <button class="mk-btn in-head" type="button" data-of="m1" aria-haspopup="menu" aria-expanded="false" title="Your marks: only you see them"></button><a data-for="owner" class="btn-quiet outline" href="lens-new-context.html?role=owner" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" title="Open the object with this Message in a floating window, to answer it with the object in view"><i class="ph ph-arrow-square-out"></i>Open in context</a><a data-for="datateam" class="btn-quiet outline" href="lens-new-context.html?role=datateam" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" title="Open the object with this Message in a floating window, to answer it with the object in view"><i class="ph ph-arrow-square-out"></i>Open in context</a>
   </div>
   <div class="thread">
     <span class="mini-avatar" style="width:28px;height:28px;font-size:10px">MP</span>
@@ -227,7 +230,7 @@
   <div class="mc-detail-head">
    <i class="ph ph-aperture" style="font-size:22px;color:var(--text-secondary)" aria-hidden="true"></i>
    <div style="flex:1;min-width:0"><div class="meta">Lens · Credit leads</div><div style="font-size:var(--text-section);font-weight:500">Leads per source name</div></div>
-   <span class="mk-head" data-of="m3" role="group" aria-label="Your marks, only you see them"><button class="mk" type="button" data-mark="followup" aria-pressed="false" title="Follow up: only you see your marks"><i class="ph ph-flag"></i></button><button class="mk" type="button" data-mark="important" aria-pressed="false" title="Important: only you see your marks"><i class="ph ph-warning-circle"></i></button><button class="mk" type="button" data-mark="starred" aria-pressed="false" title="Starred: only you see your marks"><i class="ph ph-star"></i></button></span><a class="btn-quiet outline" href="lens-context.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" title="Open the object with this Message in a floating window, to answer it with the object in view"><i class="ph ph-arrow-square-out"></i>Open in context</a>
+   <button class="mk-btn in-head" type="button" data-of="m3" aria-haspopup="menu" aria-expanded="false" title="Your marks: only you see them"></button><a class="btn-quiet outline" href="lens-context.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" title="Open the object with this Message in a floating window, to answer it with the object in view"><i class="ph ph-arrow-square-out"></i>Open in context</a>
   </div>
   <div class="thread">
     <span class="mini-avatar" style="width:28px;height:28px;font-size:10px">KL</span>
@@ -264,7 +267,7 @@
   <div class="mc-detail-head">
    <i class="ph ph-table" style="font-size:22px;color:var(--text-secondary)" aria-hidden="true"></i>
    <div style="flex:1;min-width:0"><div class="meta">Resource · Credit leads</div><div style="font-size:var(--text-section);font-weight:500">Weekly lead volume</div></div>
-   <span class="mk-head" data-of="m2" role="group" aria-label="Your marks, only you see them"><button class="mk" type="button" data-mark="followup" aria-pressed="false" title="Follow up: only you see your marks"><i class="ph ph-flag"></i></button><button class="mk" type="button" data-mark="important" aria-pressed="false" title="Important: only you see your marks"><i class="ph ph-warning-circle"></i></button><button class="mk" type="button" data-mark="starred" aria-pressed="false" title="Starred: only you see your marks"><i class="ph ph-star"></i></button></span><a class="btn-quiet outline" href="resource-detail.html?tabs=columns" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph ph-arrow-square-out"></i>Open the Resource</a>
+   <button class="mk-btn in-head" type="button" data-of="m2" aria-haspopup="menu" aria-expanded="false" title="Your marks: only you see them"></button><a class="btn-quiet outline" href="resource-detail.html?tabs=columns" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph ph-arrow-square-out"></i>Open the Resource</a>
   </div>
   <div class="thread">
     <span class="mini-avatar" style="width:28px;height:28px;font-size:10px">DH</span>
@@ -313,8 +316,15 @@
  <button class="seg" data-target="closing" data-go="msg:question" role="tab" aria-selected="false">Closing</button>
  <button class="seg" data-target="closed" data-go="msg:question" role="tab" aria-selected="false">Closed</button>
 </div>
+<div class="mk-menu" id="mk-menu" role="menu" aria-label="Your marks" hidden>
+ <button class="mk-row" type="button" role="menuitemcheckbox" aria-checked="false" data-mark="followup"><i class="ph ph-flag"></i><span>Follow up</span><i class="ph ph-check mk-check"></i></button>
+ <button class="mk-row" type="button" role="menuitemcheckbox" aria-checked="false" data-mark="important"><i class="ph ph-warning-circle"></i><span>Important</span><i class="ph ph-check mk-check"></i></button>
+ <button class="mk-row" type="button" role="menuitemcheckbox" aria-checked="false" data-mark="starred"><i class="ph ph-star"></i><span>Starred</span><i class="ph ph-check mk-check"></i></button>
+ <p class="meta mk-foot"><i class="ph ph-lock-simple"></i>Only you see your marks.</p>
+</div>
 <div class="proto-switch" data-group="mark" role="tablist" aria-label="Prototype: marks" style="bottom:124px">Marks
  <button class="seg on" data-target="unread" role="tab" aria-selected="true">Unread, with marks</button>
+ <button class="seg" data-target="menu" role="tab" aria-selected="false">Marking a Message</button>
  <button class="seg" data-target="followup" role="tab" aria-selected="false">Follow up opened</button>
  <button class="seg" data-target="emptied" role="tab" aria-selected="false">Last one taken off</button>
  <button class="seg" data-target="none" role="tab" aria-selected="false">No marks</button>
@@ -325,29 +335,37 @@
 </div>
 <script>
   // Marks on a Message (DEC-UX-360, OP-UX-132 to OP-UX-136): personal; the panel lists a mark only while a Message has
-  // it, with how many; a click opens it as a view. In this prototype a mark lives on the line of the Message in the list.
+  // it, with how many; a click opens it as a view. They are set in a dropdown, as more marks may come (OP-UX-134).
+  // In this prototype a mark lives on the line of the Message in the list.
   (() => {
     const MARKS = {
-      followup: ['Follow up', 'The Messages you marked to follow up. Only you see your marks: take the flag off once it is done.'],
-      important: ['Important', 'The Messages you marked as important. Only you see your marks.'],
-      starred: ['Starred', 'The Messages you starred, to find them again. Only you see your marks.'],
+      followup: ['Follow up', 'flag', 'The Messages you marked to follow up. Only you see your marks: take the flag off once it is done.'],
+      important: ['Important', 'warning-circle', 'The Messages you marked as important. Only you see your marks.'],
+      starred: ['Starred', 'star', 'The Messages you starred, to find them again. Only you see your marks.'],
     };
+    const ORDER = Object.keys(MARKS);
     const items = [...document.querySelectorAll('.mc-list .mc-item')];
     const first = items.map(item => item.dataset.marks);
     const title = document.getElementById('view-title'), lead = document.getElementById('view-lead');
     const plain = [title.textContent, lead.textContent];
     const empty = document.getElementById('mk-empty');
-    let view = null;
+    const menu = document.getElementById('mk-menu');
+    let view = null, menuFor = null, menuButton = null;
     const marksOf = item => (item.dataset.marks || '').split(' ').filter(Boolean);
-    const hostOf = toggle => toggle.closest('.mc-item') || items.find(item => item.dataset.key === toggle.closest('[data-of]')?.dataset.of);
+    const hostOf = button => button.closest('.mc-item') || items.find(item => item.dataset.key === button.dataset.of);
     const count = mark => items.filter(item => marksOf(item).includes(mark)).length;
     function render() {
-      document.querySelectorAll('.mk[data-mark]').forEach(toggle => {
-        const on = marksOf(hostOf(toggle)).includes(toggle.dataset.mark);
-        toggle.classList.toggle('on', on);
-        toggle.setAttribute('aria-pressed', on);
-        toggle.querySelector('i').classList.toggle('ph-fill', on);
-        toggle.querySelector('i').classList.toggle('ph', !on);
+      // The button shows the marks set, filled; with none, an outlined flag, on hover in the list.
+      document.querySelectorAll('.mk-btn').forEach(button => {
+        const marks = ORDER.filter(mark => marksOf(hostOf(button)).includes(mark));
+        button.classList.toggle('set', marks.length > 0);
+        button.innerHTML = (marks.length ? marks.map(mark => `<i class="ph-fill ph-${MARKS[mark][1]}" aria-label="${MARKS[mark][0]}"></i>`).join('') : '<i class="ph ph-flag"></i>')
+          + (button.classList.contains('in-head') ? `<span>${marks.length ? '' : 'Mark'}</span>` : '') + '<i class="ph ph-caret-down mk-caret"></i>';
+      });
+      if (menuFor) menu.querySelectorAll('[data-mark]').forEach(row => {
+        const on = marksOf(menuFor).includes(row.dataset.mark);
+        row.setAttribute('aria-checked', on);
+        row.querySelector('i').className = `${on ? 'ph-fill' : 'ph'} ph-${MARKS[row.dataset.mark][1]}`;
       });
       let shown = 0;
       document.querySelectorAll('[data-mark-view]').forEach(row => {
@@ -362,29 +380,52 @@
       document.querySelectorAll('.mc-filter:not([data-mark-view])').forEach(row => row.classList.toggle('on', !view && row.textContent.trim().startsWith('Unread')));
       if (view) document.body.dataset.view = view; else delete document.body.dataset.view;
       title.textContent = view ? MARKS[view][0] : plain[0];
-      lead.textContent = view ? MARKS[view][1] : plain[1];
+      lead.textContent = view ? MARKS[view][2] : plain[1];
       empty.hidden = !view || count(view) > 0;
       empty.textContent = view ? `Nothing is marked ${MARKS[view][0]} any more. It leaves your marks once you go elsewhere.` : '';
     }
     function open(mark) {
       view = mark;
       items.forEach(item => item.classList.remove('kept'));
+      close();
       render();
     }
-    document.querySelectorAll('.mk[data-mark]').forEach(toggle => {
-      const flip = event => {
-        event.preventDefault();
-        event.stopPropagation();
-        const host = hostOf(toggle), marks = marksOf(host), mark = toggle.dataset.mark;
-        host.dataset.marks = (marks.includes(mark) ? marks.filter(one => one !== mark) : [...marks, mark]).join(' ');
-        // Taken off in the view of that mark, it stays there, faded, until the User goes elsewhere (OP-UX-135).
-        if (view === mark && !marksOf(host).includes(mark)) host.classList.add('kept');
-        if (marksOf(host).includes(view)) host.classList.remove('kept');
-        render();
-      };
-      toggle.addEventListener('click', flip);
-      toggle.addEventListener('keydown', event => (event.key === 'Enter' || event.key === ' ') && flip(event));
-    });
+    function close() {
+      menu.hidden = true;
+      menuButton?.setAttribute('aria-expanded', 'false');
+      menuButton?.closest('.mc-item')?.classList.remove('menu-on');
+      menuFor = menuButton = null;
+    }
+    function show(button) {
+      close();
+      menuFor = hostOf(button);
+      menuButton = button;
+      button.setAttribute('aria-expanded', 'true');
+      button.closest('.mc-item')?.classList.add('menu-on');
+      menu.hidden = false;
+      const box = button.getBoundingClientRect();
+      menu.style.top = `${box.bottom + 6}px`;
+      menu.style.left = `${Math.max(8, box.right - menu.offsetWidth)}px`;
+      render();
+      menu.querySelector('[data-mark]').focus();
+    }
+    document.querySelectorAll('.mk-btn').forEach(button => button.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (menuButton === button) close(); else show(button);
+    }));
+    // A row of the dropdown sets or takes off its mark at once; the dropdown stays open for another (OP-UX-134).
+    menu.querySelectorAll('[data-mark]').forEach(row => row.addEventListener('click', event => {
+      event.stopPropagation();
+      const host = menuFor, marks = marksOf(host), mark = row.dataset.mark;
+      host.dataset.marks = (marks.includes(mark) ? marks.filter(one => one !== mark) : [...marks, mark]).join(' ');
+      // Taken off in the view of that mark, it stays there, faded, until the User goes elsewhere (OP-UX-135).
+      if (view === mark && !marksOf(host).includes(mark)) host.classList.add('kept');
+      if (marksOf(host).includes(view)) host.classList.remove('kept');
+      render();
+    }));
+    document.addEventListener('click', event => { if (!menu.hidden && !menu.contains(event.target)) close(); });
+    document.addEventListener('keydown', event => { if (event.key === 'Escape' && !menu.hidden) { menuButton?.focus(); close(); } });
     document.querySelectorAll('[data-mark-view]').forEach(row => row.addEventListener('click', event => { event.preventDefault(); open(row.dataset.markView); }));
     document.querySelectorAll('.mc-filter:not([data-mark-view])').forEach(row => row.addEventListener('click', event => { event.preventDefault(); open(null); }));
     document.querySelectorAll('[data-group="mark"] [data-target]').forEach(button => button.addEventListener('click', () => {
@@ -392,6 +433,10 @@
       const state = button.dataset.target;
       if (state === 'none') items.forEach(item => { item.dataset.marks = ''; });
       if (state === 'followup') return open('followup');
+      if (state === 'menu') {
+        open(null);
+        return setTimeout(() => show(document.querySelector('.mc-detail:not([hidden]) .mk-btn')), 0);
+      }
       if (state === 'emptied') {
         open('important');
         const last = items.find(item => marksOf(item).includes('important'));
