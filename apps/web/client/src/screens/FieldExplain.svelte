@@ -73,7 +73,8 @@
       {:else if !field.outside}
         <p class="none">{t('field.noBusiness')}</p>
       {/if}
-      <p class="dbt"><OriginTag origin="dbt" /><span>{field.description || '–'}</span></p>
+      <!-- A field of a table only BigQuery knows has its description from BigQuery (DEC-UX-368). -->
+      <p class="dbt"><OriginTag origin={field.from === 'bigquery' ? 'bigquery' : 'dbt'} /><span>{field.description || '–'}</span></p>
     </div>
   {/each}
 </div>

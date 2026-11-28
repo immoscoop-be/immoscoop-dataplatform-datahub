@@ -24,7 +24,8 @@
   }: {
     /** The table as the editor names it: `id` is its Key. */
     table: TableSuggestion;
-    load: (key: string) => Promise<OutsideTableInfo>;
+    /** Read by its Key, with its full name in its own case for a table only BigQuery knows (DEC-UX-368). */
+    load: (key: string, fullName: string) => Promise<OutsideTableInfo>;
     onclose: () => void;
   } = $props();
 
@@ -32,7 +33,7 @@
   $effect(() => {
     const key = table.id;
     info = undefined;
-    load(key).then(
+    load(key, table.fullName).then(
       (found) => table.id === key && (info = found),
       (error: unknown) => {
         console.error(`What Data Hub knows of ${table.name} could not be read`, error);
@@ -53,6 +54,9 @@
   const UNITS: Record<string, string> = { hour: 'grain.unit.hour', day: 'grain.unit.day', month: 'grain.unit.month', year: 'grain.unit.year', range: 'grain.unit.range' };
 
   const view = $derived(info?.bigquery?.type === 'VIEW');
+  /** A table only BigQuery knows: nothing from dbt, its dataset said, its columns from BigQuery (DEC-UX-368). */
+  const onlyBigQuery = $derived(info?.layer === null);
+  const dataset = $derived(info ? (info.fullName.split('.').at(-2) ?? '') : '');
   const kind = $derived.by(() => {
     if (!info) return '';
     const type = info.bigquery?.type;
@@ -99,23 +103,24 @@
 
 <FloatingWindow
   title={table.name}
-  meta={info ? [t('outside.window.notResource'), info.layer, info.projectName].filter(Boolean).join(' · ') : t('outside.window.notResource')}
-  icon="cube"
+  meta={info ? [t('outside.window.notResource'), info.layer ?? t('outside.window.notInDbt'), info.projectName].filter(Boolean).join(' · ') : t('outside.window.notResource')}
+  icon={onlyBigQuery ? 'database' : 'cube'}
   wide
   {onclose}
 >
   <div class="body">
-    <p class="lead">{t('outside.window.lead')}</p>
+    <p class="lead">{t(onlyBigQuery ? 'outside.window.leadBigQuery' : 'outside.window.lead')}</p>
     {#if info === undefined}
       <Loading />
     {:else if info === null}
       <p class="lead">{t('outside.window.failed')}</p>
     {:else}
-      <p class="desc"><OriginTag origin="dbt" /><span class:none={!info.description}>{info.description || t('outside.window.noDescription')}</span></p>
+      {#if !onlyBigQuery}<p class="desc"><OriginTag origin="dbt" /><span class:none={!info.description}>{info.description || t('outside.window.noDescription')}</span></p>{/if}
       <div class="facts">
         <span class="from">{info.bigquery ? t('outside.window.bigquery') : t('outside.window.dbtOnly')}</span>
         <dl>
           {#if kind}<dt>{t('outside.window.kind')}</dt><dd>{kind}</dd>{/if}
+          {#if onlyBigQuery && dataset}<dt>{t('outside.window.dataset')}</dt><dd class="mono">{dataset}</dd>{/if}
           <dt>{t('outside.window.partitioned')}</dt>
           <dd>{partitioned}{info.partition?.required ? ` · ${t('outside.window.required')}` : ''}</dd>
           {#if info.clusterBy.length > 0}<dt>{t('outside.window.clustered')}</dt><dd class="mono">{info.clusterBy.join(', ')}</dd>{/if}
@@ -139,14 +144,14 @@
             >
             <span class="type">{column.type ?? ''}</span>
             <span class="text" class:none={!column.description}
-              >{column.description || t('outside.window.noColumnDescription')}{#if column.from === 'bigquery'}<span class="tag">{t('outside.window.fromBigQuery')}</span>{/if}</span
+              >{column.description || t('outside.window.noColumnDescription')}{#if column.from === 'bigquery' && !onlyBigQuery}<span class="tag">{t('outside.window.fromBigQuery')}</span>{/if}</span
             >
           </div>
         {:else}
           <p class="lead">{t('outside.window.noMatch')}</p>
         {/each}
       </div>
-      <p class="lead note">{t(info.bigquery ? 'outside.window.note' : 'outside.window.noteDbt')}</p>
+      <p class="lead note">{t(onlyBigQuery ? 'outside.window.noteBigQuery' : info.bigquery ? 'outside.window.note' : 'outside.window.noteDbt')}</p>
     {/if}
   </div>
   {#snippet foot()}

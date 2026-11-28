@@ -125,7 +125,7 @@ export function queryTools({ server, hub, user, permits }: Context): void {
         title: 'Make a query',
         description: `${
           permits.outside
-            ? 'Makes a query of the User on up to 10 Resources, with a name and their question. Without SQL, Data Hub writes a start that filters on the partition column. To add a Resource later, make a new query with startedFrom. The User is a power user: the query also reads every table Data Hub knows that is no Resource, and may be made without Resources, on SQL alone (FR-SR-56). Prefer the Resources: a table that is a Resource is read as that Resource, and a query that reads a table outside Data Hub never becomes a Lens.'
+            ? 'Makes a query of the User on up to 10 Resources, with a name and their question. Without SQL, Data Hub writes a start that filters on the partition column. To add a Resource later, make a new query with startedFrom. The User is a power user: the query also reads every table Data Hub knows from dbt that is no Resource, and any other table BigQuery has in the project of Data Hub, such as one a CI/CD job just built, and may be made without Resources, on SQL alone (FR-SR-56, DEC-SR-50). Prefer the Resources: a table that is a Resource is read as that Resource, and a query that reads a table outside Data Hub never becomes a Lens.'
             : 'Makes a query of the User on 1 to 10 Resources, with a name and their question; it reads only those Resources, so choose them first. Without SQL, Data Hub writes a start that filters on the partition column. To add a Resource later, make a new query with startedFrom.'
         } With project, it is made in a Project the User is in, at the end of its row; there it may start empty, without Resources, which it gets later (FR-SR-68).`,
         inputSchema: {
@@ -186,9 +186,10 @@ export function queryTools({ server, hub, user, permits }: Context): void {
             : preflight.range === 'free'
               ? `It can run: it reads ${bytes(preflight.bytes)}.`
               : `It can run, but reads ${bytes(preflight.bytes)}: ${preflight.range === 'request' ? `above ${large}, the Data Team accepts it first` : `above ${free}, the User approves it`}. A filter on the partition column reads less.`;
-          // A power user's query that reads a table outside Data Hub: no Level, Owner or Publication, and no Lens (DEC-SR-46).
+          // A power user's query that reads a table outside Data Hub: no Level, Owner or Publication, and no Lens (DEC-SR-46);
+          // one without layer only BigQuery knows: nothing of it comes from dbt (DEC-SR-50).
           const outside = preflight.tables?.length
-            ? ` It reads ${preflight.tables.map((table) => `${table.name} (${table.layer})`).join(', ')} outside Data Hub: no Resource, so no Level, Owner or Publication, and this query cannot become a Lens. Say so to the User.`
+            ? ` It reads ${preflight.tables.map((table) => `${table.name} (${table.layer ?? 'not in dbt, or not yet: only BigQuery knows it'})`).join(', ')} outside Data Hub: no Resource, so no Level, Owner or Publication, and this query cannot become a Lens. Say so to the User.`
             : '';
           return answer({ ...checked, reads: bytes(preflight.bytes) }, `${note}${outside}`);
         }),

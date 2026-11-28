@@ -364,13 +364,17 @@ export interface Preflight {
   columns?: ResultColumn[];
 }
 
-/** A table outside Data Hub, known from a dbt project Data Hub follows, with its layer (DEC-UX-220). */
+/**
+ * A table outside Data Hub, known from a dbt project Data Hub follows, with its layer (DEC-UX-220); or a table only
+ * BigQuery knows in the project of Data Hub, without layer (DEC-SR-50, DEC-UX-368).
+ */
 export interface OutsideTable {
   key: string;
   fullName: string;
   name: string;
-  layer: string;
-  /** Its columns from dbt: a double-click on one explains it (FR-SR-62); older answers may lack them. */
+  /** Null for a table only BigQuery knows: dbt does not know it, or not yet. */
+  layer: string | null;
+  /** Its columns from dbt, or from BigQuery for a table only BigQuery knows: a double-click on one explains it (FR-SR-62); older answers may lack them. */
   columns?: { name: string; dataType: string | null; description: string }[];
   partition?: { field: string; unit: string | null } | null;
 }
@@ -380,8 +384,9 @@ export interface OutsideTableInfo {
   key: string;
   fullName: string;
   name: string;
-  layer: string;
-  resourceType: string;
+  /** Null for a table only BigQuery knows: nothing comes from dbt (DEC-UX-368). */
+  layer: string | null;
+  resourceType: string | null;
   projectName: string | null;
   /** How dbt makes it: `table`, `view`, `incremental`…; null for a source. */
   materialized: string | null;
@@ -606,9 +611,13 @@ export function createQuery(config: Config, session: Pick<Session, 'accessToken'
     },
     /** The Lenses a new query may reuse, by its Resources and the words of its question (FR-SR-47, FR-SR-48). */
     /** The SQL with a CTE at its start for each Resource and table added (FR-SR-59, DEC-UX-225), and those CTEs. */
-    /** What dbt and BigQuery know of a table outside Data Hub, for a power user (FR-SR-62). */
-    async outsideTable(key: string): Promise<OutsideTableInfo> {
-      return ((await (await call(`/outside-table?key=${encodeURIComponent(key)}`)).json()) as { table: OutsideTableInfo }).table;
+    /**
+     * What dbt and BigQuery know of a table outside Data Hub, for a power user (FR-SR-62); with its full name in its own
+     * case, which BigQuery needs for a table only it knows (DEC-UX-368).
+     */
+    async outsideTable(key: string, fullName?: string): Promise<OutsideTableInfo> {
+      const name = fullName ? `&name=${encodeURIComponent(fullName)}` : '';
+      return ((await (await call(`/outside-table?key=${encodeURIComponent(key)}${name}`)).json()) as { table: OutsideTableInfo }).table;
     },
     async ctes(sql: string, added: { resources?: readonly string[]; tables?: readonly string[] }): Promise<{ sql: string; ctes: string[] }> {
       return (await (await call('/queries/ctes', { method: 'POST', body: { sql, resources: added.resources ?? [], tables: added.tables ?? [] } })).json()) as { sql: string; ctes: string[] };

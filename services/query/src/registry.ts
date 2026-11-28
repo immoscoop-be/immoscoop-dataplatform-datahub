@@ -1,13 +1,18 @@
-/** A table Data Hub knows from a dbt project it follows, as registry names it for a power user's query (FR-SR-56). */
+/**
+ * A table Data Hub knows from a dbt project it follows, as registry names it for a power user's query (FR-SR-56); or,
+ * since DEC-SR-50, a table only BigQuery knows in the project of Data Hub, with what BigQuery says of it (`bigQueryTable`).
+ */
 export interface KnownTable {
   /** `database.schema.table` in lowercase, as the Key of a Resource is (DEC-SR-04). */
   key: string;
   /** The same in its own case, as BigQuery knows it: BigQuery names are case-sensitive. */
   fullName: string;
   name: string;
-  resourceType: string;
-  layer: string;
-  projectId: string;
+  /** `model`, `seed`, `snapshot` or `source`; null for a table only BigQuery knows. */
+  resourceType: string | null;
+  /** Its layer in dbt; null for a table only BigQuery knows: dbt does not know it, or not yet (DEC-SR-50). */
+  layer: string | null;
+  projectId: string | null;
   projectName: string | null;
   /** An exposure with the tag `datahub` depends on it: it is a Resource, read as one (DEC-SR-46). */
   resource: boolean;

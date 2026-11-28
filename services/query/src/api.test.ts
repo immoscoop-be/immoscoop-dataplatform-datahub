@@ -56,6 +56,8 @@ const DRAFT: QueryResource = { ...SOURCES, id: '9c4f5e7b-1d4a-4f6b-8c53-4e5f6a7b
 /** Tables Data Hub knows from its dbt projects, as registry answers a power user (FR-SR-56): a staging model, no Resource; and one an exposure makes a Resource. */
 const STG: KnownTable = { key: `${PROJECT}.dbt_prod_staging.stg_oltp__leads`, fullName: `${PROJECT}.dbt_prod_staging.STG_OLTP__Leads`, name: 'stg_oltp__leads', resourceType: 'model', layer: 'staging', projectId: '9367', projectName: 'dbt-prod', resource: false, partition: { field: 'created_date', unit: 'day' },
   columns: [{ name: 'lead_id', dataType: 'STRING', description: '' }, { name: 'created_date', dataType: 'DATE', description: '' }] };
+/** A table only BigQuery knows, built by a job other than the Source Job, its name in mixed case (DEC-SR-50). */
+const TOUCH = `${PROJECT}.colleciones_dbt.intm_touch__touchDate`;
 const PARTNERS: KnownTable = { ...STG, key: `${PROJECT}.dbt_prod_stacks.partner_contracts`, fullName: `${PROJECT}.dbt_prod_stacks.partner_contracts`, name: 'partner_contracts', layer: 'mart', resource: true };
 
 describe('the fields of a Lens, in a request', () => {
@@ -255,6 +257,19 @@ function fakeBigQuery() {
     // The staging table of the leads, as BigQuery keeps it: by its full name in its own case (FR-SR-62).
     async describe(key) {
       if (silent) throw new BigQueryUnavailable('BigQuery did not answer');
+      // A table registry does not know, by its full name in its own case: BigQuery names are case-sensitive (DEC-SR-50).
+      if (key === TOUCH) {
+        return {
+          type: 'TABLE', bytes: 412_000_000, rows: 2_300_000, partitions: 38, partitionField: 'touch_date', modifiedAt: '2026-11-28T13:04:34.000Z',
+          description: '',
+          partition: { field: 'touch_date', unit: 'day', required: false },
+          clusterBy: ['lead_id'],
+          columns: [
+            { name: 'lead_id', type: 'STRING', description: 'Id of the lead.' },
+            { name: 'touch_date', type: 'DATE', description: '' },
+          ],
+        };
+      }
       if (key !== STG.fullName) throw new BigQueryRefused(`Not found: Table ${key}`);
       return {
         type: 'TABLE', bytes: 3_100_000_000, rows: 4_800_000, partitions: 1412, partitionField: 'created_date', modifiedAt: '2026-11-14T06:14:00.000Z',
@@ -1649,15 +1664,63 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
       expect(fake.runs.at(-1)?.sql).toContain(`\`${STG.fullName}\``);
     });
 
-    it('keeps a Resource a Resource, and a table Data Hub does not know an error', async () => {
+    it('keeps a Resource a Resource, and a table BigQuery does not have, or of another project, an error (DEC-SR-50)', async () => {
       const raws = (await call(dataTeam, 'POST', '/queries', { name: 'Raw leads, again', resources: [] })).json().query.id as string;
       const resource = (await call(dataTeam, 'POST', `/queries/${raws}/preflight`, { sql: `select * from \`${PARTNERS.key}\`` })).json().preflight;
       expect(resource).toMatchObject({ runnable: false, tables: [], problems: [{ kind: 'outside', name: PARTNERS.key }] });
       const unknown = (await call(dataTeam, 'POST', `/queries/${raws}/preflight`, { sql: 'select * from `other-project.somewhere.something`' })).json().preflight;
       expect(unknown).toMatchObject({ runnable: false, problems: [{ kind: 'unknown', name: 'other-project.somewhere.something' }] });
+      const missing = (await call(dataTeam, 'POST', `/queries/${raws}/preflight`, { sql: `select * from \`${PROJECT}.nowhere.nothing\`` })).json().preflight;
+      expect(missing).toMatchObject({ runnable: false, tables: [], problems: [{ kind: 'unknown', name: `${PROJECT}.nowhere.nothing` }] });
       // The table it may read still shows next to the Resources while another one keeps it from running.
       const both = (await call(dataTeam, 'POST', `/queries/${raws}/preflight`, { sql: `${raw} join \`other-project.somewhere.something\` using (lead_id)` })).json().preflight;
       expect(both).toMatchObject({ runnable: false, tables: [{ key: STG.key }], problems: [{ kind: 'unknown' }] });
+    });
+
+    it('reads a table only BigQuery knows in the project of Data Hub, by its name as written, with its columns from BigQuery (DEC-SR-50, FR-SR-75)', async () => {
+      const raws = (await call(dataTeam, 'POST', '/queries', { name: 'Touches today', resources: [] })).json().query.id as string;
+      // Written without its project, as BigQuery takes it: Data Hub adds its own project.
+      const sql = "select * from `colleciones_dbt.intm_touch__touchDate` where touch_date = '2026-11-28'";
+      const checked = (await call(dataTeam, 'POST', `/queries/${raws}/preflight`, { sql })).json().preflight;
+      expect(checked).toMatchObject({
+        runnable: true,
+        problems: [],
+        tables: [{ key: TOUCH.toLowerCase(), fullName: TOUCH, name: 'intm_touch__touchDate', layer: null, partition: { field: 'touch_date', unit: 'day' }, columns: [{ name: 'lead_id', dataType: 'STRING', description: 'Id of the lead.' }, { name: 'touch_date', dataType: 'DATE', description: '' }] }],
+      });
+      // registry was asked first, by the Key in lower case.
+      expect(knownAsked.at(-1)).toEqual({ keys: [TOUCH.toLowerCase()], authorization: dataTeam });
+      const ran = await call(dataTeam, 'POST', `/queries/${raws}/runs`, { sql });
+      expect(ran.statusCode).toBe(201);
+      expect(fake.runs.at(-1)?.sql).toContain(`\`${TOUCH}\``);
+      // Still no Lens of it (DEC-LE-22).
+      expect((await call(dataTeam, 'POST', '/lenses', { queryId: raws, collectionId: CREDIT, name: 'Touches' })).json()).toMatchObject({ error: 'no_resources' });
+
+      // Its window, by its full name in its own case: only what BigQuery knows (DEC-UX-368).
+      const path = `/outside-table?key=${encodeURIComponent(TOUCH.toLowerCase())}&name=${encodeURIComponent(TOUCH)}`;
+      expect((await call(an, 'GET', path)).statusCode).toBe(403);
+      const window = await call(dataTeam, 'GET', path);
+      expect(window.statusCode).toBe(200);
+      expect(window.json().table).toEqual({
+        key: TOUCH.toLowerCase(),
+        fullName: TOUCH,
+        name: 'intm_touch__touchDate',
+        layer: null,
+        resourceType: null,
+        projectName: null,
+        materialized: null,
+        description: '',
+        bigquery: { type: 'TABLE', bytes: 412_000_000, rows: 2_300_000, partitions: 38, modifiedAt: '2026-11-28T13:04:34.000Z' },
+        partition: { field: 'touch_date', unit: 'day', required: false },
+        clusterBy: ['lead_id'],
+        columns: [
+          { name: 'touch_date', type: 'DATE', description: '', from: null, partition: true, cluster: null },
+          { name: 'lead_id', type: 'STRING', description: 'Id of the lead.', from: 'bigquery', partition: false, cluster: 1 },
+        ],
+      });
+      // Without BigQuery, nothing is known of it: the window cannot be read now.
+      fake.quiet();
+      expect((await call(dataTeam, 'GET', path)).statusCode).toBe(503);
+      fake.quiet(false);
     });
 
     it('never reads one for a colleague without the Permission, and asks registry nothing for them', async () => {
@@ -1744,9 +1807,10 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
         ],
       });
 
-      // A Resource, a table registry does not know and a name that is no Key are not read here.
+      // A Resource, a table neither registry nor BigQuery knows, one of another project and a name that is no Key are not read here.
       expect((await call(dataTeam, 'GET', `/outside-table?key=${encodeURIComponent(PARTNERS.key)}`)).statusCode).toBe(404);
       expect((await call(dataTeam, 'GET', `/outside-table?key=${PROJECT}.nowhere.nothing`)).statusCode).toBe(404);
+      expect((await call(dataTeam, 'GET', '/outside-table?key=other-project.somewhere.something')).statusCode).toBe(404);
       expect((await call(dataTeam, 'GET', '/outside-table?key=dbt_prod_staging.stg_oltp__leads')).statusCode).toBe(400);
     });
   });
